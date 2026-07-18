@@ -13,6 +13,11 @@ namespace DiaBlackJack.CoreLoop
         private readonly DeterministicRng _random = new DeterministicRng();
 
         public BlackjackDeck(IEnumerable<BlackjackCard> cards, int seed)
+            : this(cards, seed, shuffleOnCreate: true)
+        {
+        }
+
+        private BlackjackDeck(IEnumerable<BlackjackCard> cards, int seed, bool shuffleOnCreate)
         {
             if (cards == null)
             {
@@ -43,7 +48,10 @@ namespace DiaBlackJack.CoreLoop
 
             TotalCardCount = _drawPile.Count;
             _random.Reseed(seed);
-            Shuffle(_drawPile);
+            if (shuffleOnCreate)
+            {
+                Shuffle(_drawPile);
+            }
         }
 
         public int DrawCount => _drawPile.Count;
@@ -65,6 +73,18 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return new BlackjackDeck(cards, seed);
+        }
+
+        public static BlackjackDeck CreateInDrawOrder(IEnumerable<BlackjackCard> cards)
+        {
+            if (cards == null)
+            {
+                throw new ArgumentNullException(nameof(cards));
+            }
+
+            var drawPile = new List<BlackjackCard>(cards);
+            drawPile.Reverse();
+            return new BlackjackDeck(drawPile, seed: 0, shuffleOnCreate: false);
         }
 
         public BlackjackCard Draw()
