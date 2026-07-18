@@ -12,10 +12,10 @@
 | --- | --- | --- |
 | [rule.md](./rule.md) | 게임 원본 규칙 | 기준 문서 |
 | [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | 초안 v0.1 |
-| [core-loop-design.md](./core-loop-design.md) | 최소 코어 루프 기획 범위 | 3단계 구현 기준안 v0.1 |
-| [core-loop-development-spec.md](./core-loop-development-spec.md) | 코어 루프 구조·상태·검증 명세 | 3단계 구현 기준 v0.1 |
-| [core-loop-implementation-plan.md](./core-loop-implementation-plan.md) | 코어 루프 작업 순서·담당·일정·완료 증거 | 3단계 완료 v0.1 |
-| [core-loop-progress-log.md](./core-loop-progress-log.md) | 단계별 착수·구현·검증·변경 누적 기록 | 3단계 완료 v0.1 |
+| [core-loop-design.md](./core-loop-design.md) | 최소 코어 루프 기획 범위 | 4단계 완료 기준안 v0.1 |
+| [core-loop-development-spec.md](./core-loop-development-spec.md) | 코어 루프 구조·상태·검증 명세 | 4단계 검증 완료 v0.1 |
+| [core-loop-implementation-plan.md](./core-loop-implementation-plan.md) | 코어 루프 작업 순서·담당·일정·완료 증거 | 전체 완료 v0.1 |
+| [core-loop-progress-log.md](./core-loop-progress-log.md) | 단계별 착수·구현·검증·변경 누적 기록 | 4단계 완료 v0.1 |
 | [project-structure-and-mcp-reference.md](./project-structure-and-mcp-reference.md) | Unity 구조·어셈블리·MCP 참조 및 연결 확인 | 확인 완료 v0.1 |
 | [ai-usage-technical-document.md](./ai-usage-technical-document.md) | 개발 AI와 게임 내 AI 활용 기술 기록 | 지속 갱신 |
 | [team-role-technical-document.md](./team-role-technical-document.md) | 팀원별 담당 및 실제 구현 기록 | 지속 갱신 |
@@ -40,4 +40,5 @@
 | 2026-07-19 | 이천서 | 프로젝트·MCP 구조 확인 및 코어 루프 1단계 규칙 기반 구현 완료 |
 | 2026-07-19 | 이천서 | 코어 루프 2단계 전투 흐름·행동·단순 적 정책 구현 완료 |
 | 2026-07-19 | 이천서 | 코어 루프 3단계 최소 UI·입력·승패·재시작 통합 완료 |
+| 2026-07-19 | 이천서 | 코어 루프 4단계 전체 테스트·승패·재시작·씬·Console 검증과 기록 완료 |
 
