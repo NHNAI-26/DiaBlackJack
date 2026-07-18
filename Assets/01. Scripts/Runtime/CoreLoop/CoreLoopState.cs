@@ -9,4 +9,11 @@ namespace DiaBlackJack.CoreLoop
         ResolvingRound,
         BattleEnded
     }
+
+    public enum BattleOutcome
+    {
+        InProgress,
+        PlayerVictory,
+        PlayerDefeat
+    }
 }

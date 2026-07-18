@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace DiaBlackJack.CoreLoop
 {
@@ -20,6 +21,8 @@ namespace DiaBlackJack.CoreLoop
         public bool IsStanding { get; private set; }
 
         public HandValue HandValue => HandValueCalculator.Calculate(Hand.Cards);
+
+        public HandValue VisibleHandValue => HandValueCalculator.Calculate(GetVisibleCards());
 
         internal BlackjackCard Draw(bool faceUp)
         {
@@ -43,6 +46,17 @@ namespace DiaBlackJack.CoreLoop
         {
             Deck.Discard(Hand.TakeAll());
             IsStanding = false;
+        }
+
+        private IEnumerable<BlackjackCard> GetVisibleCards()
+        {
+            foreach (BlackjackCard card in Hand.Cards)
+            {
+                if (card.IsFaceUp)
+                {
+                    yield return card;
+                }
+            }
         }
     }
 }

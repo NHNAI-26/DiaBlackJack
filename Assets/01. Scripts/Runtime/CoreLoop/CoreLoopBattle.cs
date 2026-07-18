@@ -30,6 +30,23 @@ namespace DiaBlackJack.CoreLoop
 
         public RoundResolution? LastResolution { get; private set; }
 
+        public bool CanPlayerAct => State == CoreLoopState.PlayerTurn && !Player.IsStanding;
+
+        public BattleOutcome Outcome
+        {
+            get
+            {
+                if (State != CoreLoopState.BattleEnded)
+                {
+                    return BattleOutcome.InProgress;
+                }
+
+                return Enemy.Soul.IsDepleted
+                    ? BattleOutcome.PlayerVictory
+                    : BattleOutcome.PlayerDefeat;
+            }
+        }
+
         public bool Start()
         {
             if (State != CoreLoopState.Initializing)
@@ -73,7 +90,7 @@ namespace DiaBlackJack.CoreLoop
 
         private bool CanAcceptPlayerAction()
         {
-            return State == CoreLoopState.PlayerTurn && !Player.IsStanding;
+            return CanPlayerAct;
         }
 
         private void StartRound()
