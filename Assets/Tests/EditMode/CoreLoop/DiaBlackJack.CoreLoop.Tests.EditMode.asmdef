@@ -1,0 +1,21 @@
+{
+    "name": "DiaBlackJack.CoreLoop.Tests.EditMode",
+    "rootNamespace": "DiaBlackJack.CoreLoop.Tests",
+    "references": [
+        "Border"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false,
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ]
+}
