@@ -40,6 +40,7 @@
 | 2026-07-19 | 런·스테이지 진행 기획 | 진행 시스템을 코어 루프와 분리하고 런 상태, 전투 연결 경계, 작업 분해와 검증 기준 수립 | `Docs/stage-progression-design.md`, `stage-progression-development-spec.md`, `stage-progression-implementation-plan.md`, `stage-progression-progress-log.md` | AI 문서 초안 보조, SP-00에서 구현 기준 확정, 실제 구현은 별도 SP-01 기록 참조 |
 | 2026-07-19 | 런·스테이지 SP-00 | 신규 문서의 임시 결정을 구현 기준으로 확정하고 저장소·Unity MCP·기존 전투 회귀 기준선 검증 | `Docs/stage-progression-progress-log.md`, `stage-progression-implementation-plan.md` | AI 검증 보조, EditMode 27/27·씬 문제 0·게임 관련 Console 오류 0, SP-01 착수 가능 |
 | 2026-07-19 | 런·스테이지 SP-01 | 스테이지 경로, 지속 플레이어 상태, 진행 상태 전이와 입력 유효성 검사를 전투·UI와 독립된 순수 C# 기반으로 구현 관리 | `Assets/01. Scripts/Runtime/StageProgression`, `Assets/Tests/EditMode/StageProgression`, 관련 진행 문서 | AI 구현·테스트 보조, 신규 13/13·전체 EditMode 40/40·스크립트 진단·Console 검증 통과; 이천서 최종 코드 승인 대기 |
+| 2026-07-19 | 런·스테이지 SP-02 | 기존 전투 생성 동작을 보존하면서 현재 영혼 전달, 스테이지별 새 전투 생성, 전투 종료 결과와 런 상태 동기화 구현 관리 | 코어 변경 3개, `StageBattleFactory.cs`, `StageProgressionSession.cs`, `StageProgressionBattleTests.cs`, 관련 문서 | AI 구현·테스트 보조, 진행 어셈블리 18/18·전체 EditMode 45/45·스크립트 진단·Console 검증 통과; 이천서 최종 코드 승인 대기 |
 
 코어 루프 1단계 규칙 기반, 2단계 순수 C# 전투 흐름, 3단계 최소 UI·재시작 통합과 4단계 전체 기술 검증·문서 마감이 완료되었다. 최종 기획 적합성과 코드·화면 승인은 이천서가 담당한다.
 
@@ -95,7 +96,7 @@
 | --- | --- | --- | --- |
 | SP-00 | 기준 확정과 회귀 기준 기록 | 이천서(AI 검증 보조) | 완료 |
 | SP-01 | 런·스테이지 순수 상태 기반 | 이천서(AI 보조) | 완료 |
-| SP-02 | 전투 시스템 연결과 지속 영혼 동기화 | 이천서(AI 보조) | 미착수 |
+| SP-02 | 전투 시스템 연결과 지속 영혼 동기화 | 이천서(AI 보조) | 완료 |
 | SP-03 | 최소 진행 UI와 전용 씬 | 이천서(AI 보조) | 미착수 |
 | SP-04 | 전체 흐름 검증과 기록 | 이천서(AI 보조) | 미착수 |
 
@@ -113,4 +114,5 @@
 | 2026-07-19 | 이천서 | 독립 런·스테이지 진행 시스템의 기획·개발 명세·구현 계획·진행 기록 수립 기여 추가 |
 | 2026-07-19 | 이천서 | 런·스테이지 SP-00 기준 확정과 Unity 회귀 검증 기여 기록 추가 |
 | 2026-07-19 | 이천서 | 런·스테이지 SP-01 순수 상태 기반 구현과 전체 EditMode 40/40 검증 기여 기록 추가 |
+| 2026-07-19 | 이천서 | 런·스테이지 SP-02 전투 연결·지속 영혼 동기화와 전체 EditMode 45/45 검증 기여 기록 추가 |
 

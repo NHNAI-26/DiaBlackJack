@@ -6,10 +6,15 @@ namespace DiaBlackJack.CoreLoop
     public sealed class BattleParticipant
     {
         public BattleParticipant(BlackjackDeck deck, int maximumSoul)
+            : this(deck, maximumSoul, maximumSoul)
+        {
+        }
+
+        public BattleParticipant(BlackjackDeck deck, int maximumSoul, int currentSoul)
         {
             Deck = deck ?? throw new ArgumentNullException(nameof(deck));
             Hand = new BlackjackHand();
-            Soul = new SoulPool(maximumSoul);
+            Soul = new SoulPool(maximumSoul, currentSoul);
         }
 
         public BlackjackDeck Deck { get; }

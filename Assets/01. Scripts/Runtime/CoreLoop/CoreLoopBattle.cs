@@ -13,8 +13,25 @@ namespace DiaBlackJack.CoreLoop
             int playerMaximumSoul = 12,
             int enemyMaximumSoul = 3,
             SimpleEnemyPolicy enemyPolicy = null)
+            : this(
+                playerDeck,
+                enemyDeck,
+                playerMaximumSoul,
+                playerMaximumSoul,
+                enemyMaximumSoul,
+                enemyPolicy)
         {
-            Player = new BattleParticipant(playerDeck, playerMaximumSoul);
+        }
+
+        public CoreLoopBattle(
+            BlackjackDeck playerDeck,
+            BlackjackDeck enemyDeck,
+            int playerMaximumSoul,
+            int playerCurrentSoul,
+            int enemyMaximumSoul,
+            SimpleEnemyPolicy enemyPolicy = null)
+        {
+            Player = new BattleParticipant(playerDeck, playerMaximumSoul, playerCurrentSoul);
             Enemy = new BattleParticipant(enemyDeck, enemyMaximumSoul);
             _enemyPolicy = enemyPolicy ?? new SimpleEnemyPolicy();
             State = CoreLoopState.Initializing;
