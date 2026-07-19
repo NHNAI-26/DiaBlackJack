@@ -130,7 +130,7 @@ Material:
     - _GlossyReflections: 0
     - _HueShift: 12
     - _MaskMapEnabled: 0
-    - _Metallic: 1
+    - _Metallic: 0
     - _MetallicMapEnabled: 1
     - _NormalMapEnabled: 1
     - _OcclusionMapEnabled: 0
