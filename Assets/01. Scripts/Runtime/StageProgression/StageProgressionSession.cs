@@ -55,6 +55,40 @@ namespace DiaBlackJack.StageProgression
             return true;
         }
 
+        public bool TryPlayerFold()
+        {
+            if (!CanForwardBattleAction() || !_battleSession.TryPlayerFold())
+            {
+                return false;
+            }
+
+            SynchronizeFinishedBattle();
+            return true;
+        }
+
+        public bool TryBeginPlayerChange()
+        {
+            if (!CanForwardBattleAction() || !_battleSession.TryBeginPlayerChange())
+            {
+                return false;
+            }
+
+            SynchronizeFinishedBattle();
+            return true;
+        }
+
+        public bool TrySelectChangedCard(int candidateIndex)
+        {
+            if (!CanForwardBattleAction() ||
+                !_battleSession.TrySelectChangedCard(candidateIndex))
+            {
+                return false;
+            }
+
+            SynchronizeFinishedBattle();
+            return true;
+        }
+
         public bool TryAdvanceToNextStage()
         {
             if (Progress.State != StageProgressionState.StageCleared)

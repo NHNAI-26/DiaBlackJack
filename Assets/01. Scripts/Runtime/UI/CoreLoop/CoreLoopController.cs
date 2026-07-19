@@ -89,21 +89,21 @@ namespace DiaBlackJack.CoreLoop.UI
         public void RequestFold()
         {
             ProcessInput(() => IsStageBattle
-                ? _stageSession.Battle.TryPlayerFold()
+                ? _stageSession.TryPlayerFold()
                 : _session.TryPlayerFold());
         }
 
         public void RequestBeginChange()
         {
             ProcessInput(() => IsStageBattle
-                ? _stageSession.Battle.TryBeginPlayerChange()
+                ? _stageSession.TryBeginPlayerChange()
                 : _session.TryBeginPlayerChange());
         }
 
         public void RequestSelectChangedCard(int candidateIndex)
         {
             ProcessInput(() => IsStageBattle
-                ? _stageSession.Battle.TrySelectChangedCard(candidateIndex)
+                ? _stageSession.TrySelectChangedCard(candidateIndex)
                 : _session.TrySelectChangedCard(candidateIndex));
         }
 
