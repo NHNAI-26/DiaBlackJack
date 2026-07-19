@@ -5,6 +5,7 @@ namespace DiaBlackJack.CoreLoop
         Initializing,
         StartingRound,
         PlayerTurn,
+        PlayerChoosingChangeCard,
         EnemyTurn,
         ResolvingRound,
         BattleEnded

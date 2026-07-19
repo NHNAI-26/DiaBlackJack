@@ -58,6 +58,8 @@ namespace DiaBlackJack.CoreLoop
 
         public int DiscardCount => _discardPile.Count;
 
+        public int AvailableCardCount => _drawPile.Count + _discardPile.Count;
+
         public int CardsInPlayCount => TotalCardCount - _availableCardIds.Count;
 
         public int TotalCardCount { get; }
@@ -99,6 +101,16 @@ namespace DiaBlackJack.CoreLoop
             _drawPile.RemoveAt(lastIndex);
             _availableCardIds.Remove(card.Id);
             return card;
+        }
+
+        public bool CanDraw(int count)
+        {
+            if (count < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count), "Draw count cannot be negative.");
+            }
+
+            return AvailableCardCount >= count;
         }
 
         public void Discard(BlackjackCard card)

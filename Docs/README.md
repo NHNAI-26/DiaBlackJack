@@ -24,9 +24,9 @@
 | [stage-progression-implementation-plan.md](./stage-progression-implementation-plan.md) | 독립 진행 시스템 작업 순서·일정·완료 증거 | 전체 완료 v0.1 |
 | [stage-progression-progress-log.md](./stage-progression-progress-log.md) | 독립 진행 시스템 착수·구현·검증 누적 기록 | SP-04 완료 v0.1 |
 | [combat-action-design.md](./combat-action-design.md) | 폴드·체인지 전투 행동의 기획 범위와 임시 결정 | BA-00 기준안 v0.1 |
-| [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | BA-00 구현 전 명세 v0.1 |
-| [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 작업 순서와 단계별 검증 게이트 | BA-01 착수 대기 v0.1 |
-| [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | BA-00 완료 v0.1 |
+| [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | BA-01 기반 구현 완료 v0.1 |
+| [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 작업 순서와 단계별 검증 게이트 | BA-02 착수 대기 v0.1 |
+| [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | BA-01 완료 v0.1 |
 
 ## 기록 원칙
 
@@ -56,4 +56,5 @@
 | 2026-07-19 | 이천서 | 런·스테이지 SP-03 진행 UI·전용 진행 씬·공용 전투 씬 연결과 Unity EditMode 전체 50/50 검증 완료 |
 | 2026-07-19 | 이천서 | 런·스테이지 SP-04 전체 승리·중간 패배·양쪽 재시작·10회 반복과 씬·Console 최종 검증 완료 |
 | 2026-07-19 | 이천서 | 전투 행동 확장을 별도 작업으로 분리하고 폴드·체인지의 기획·개발 명세·구현 계획·진행 기록 4종 작성 |
+| 2026-07-19 | 이천서 | 전투 행동 BA-01 선택 상태·카드 이동 기반 구현과 전체 EditMode 58/58 검증 완료 |
 
