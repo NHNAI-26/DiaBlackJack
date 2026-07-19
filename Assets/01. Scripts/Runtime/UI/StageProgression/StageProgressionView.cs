@@ -20,6 +20,10 @@ namespace DiaBlackJack.StageProgression.UI
 
         public event Action RestartRunRequested;
 
+        public event Action<int> BattleRewardSelected;
+
+        public event Action BattleRewardSkipped;
+
         public void Render(StageProgressionViewModel model)
         {
             _model = model ?? throw new ArgumentNullException(nameof(model));
@@ -40,8 +44,8 @@ namespace DiaBlackJack.StageProgression.UI
             EnsureStyles();
             DrawBackground();
 
-            float panelWidth = Mathf.Min(640f, Screen.width - 32f);
-            float panelHeight = Mathf.Min(480f, Screen.height - 32f);
+            float panelWidth = Mathf.Min(860f, Screen.width - 32f);
+            float panelHeight = Mathf.Min(760f, Screen.height - 32f);
             var panel = new Rect(
                 (Screen.width - panelWidth) * 0.5f,
                 (Screen.height - panelHeight) * 0.5f,
@@ -57,8 +61,15 @@ namespace DiaBlackJack.StageProgression.UI
             GUILayout.Label(_model.StageKind, _bodyStyle);
             GUILayout.Space(24f);
             GUILayout.Label($"PLAYER SOUL  {_model.PlayerSoul}", _headingStyle);
+            GUILayout.Label($"RUN DECK  {_model.DeckCount}", _bodyStyle);
             GUILayout.Space(18f);
             GUILayout.Label(_model.Message, _messageStyle);
+            if (!string.IsNullOrEmpty(_model.RewardResult))
+            {
+                GUILayout.Space(8f);
+                GUILayout.Label(_model.RewardResult, _headingStyle);
+            }
+
             GUILayout.FlexibleSpace();
             DrawAction();
             GUILayout.Space(18f);
@@ -68,6 +79,13 @@ namespace DiaBlackJack.StageProgression.UI
         private void DrawAction()
         {
             bool previousEnabled = GUI.enabled;
+            if (_model.CanSelectReward)
+            {
+                DrawBattleReward();
+                GUI.enabled = previousEnabled;
+                return;
+            }
+
             GUI.enabled = !_inputLocked;
 
             if (_model.CanStartRun && GUILayout.Button("START RUN", _buttonStyle, GUILayout.Height(56f)))
@@ -84,6 +102,41 @@ namespace DiaBlackJack.StageProgression.UI
             }
 
             GUI.enabled = previousEnabled;
+        }
+
+        private void DrawBattleReward()
+        {
+            GUILayout.Label(_model.RewardTier, _headingStyle);
+            GUILayout.Label(_model.RewardCompletionMessage, _bodyStyle);
+            GUILayout.Space(12f);
+
+            GUILayout.BeginHorizontal();
+            foreach (BattleRewardOptionViewModel option in _model.RewardOptions)
+            {
+                GUILayout.BeginVertical(GUI.skin.box, GUILayout.MinHeight(190f));
+                GUILayout.Label($"CARD {option.Rank}", _headingStyle);
+                GUILayout.Label(option.DisplayName, _messageStyle);
+                GUILayout.Space(6f);
+                GUILayout.Label(option.EffectSummary, _bodyStyle);
+                GUILayout.FlexibleSpace();
+
+                GUI.enabled = !_inputLocked && _model.CanSelectReward;
+                if (GUILayout.Button("SELECT", _buttonStyle, GUILayout.Height(46f)))
+                {
+                    BattleRewardSelected?.Invoke(option.OptionId);
+                }
+
+                GUILayout.EndVertical();
+            }
+
+            GUILayout.EndHorizontal();
+            GUILayout.Space(12f);
+
+            GUI.enabled = !_inputLocked && _model.CanSkipReward;
+            if (GUILayout.Button("SKIP REWARD", _buttonStyle, GUILayout.Height(48f)))
+            {
+                BattleRewardSkipped?.Invoke();
+            }
         }
 
         private void EnsureStyles()

@@ -29,6 +29,8 @@ namespace DiaBlackJack.StageProgression.UI
             _view.StartRunRequested += RequestStartRun;
             _view.NextStageRequested += RequestNextStage;
             _view.RestartRunRequested += RequestRestartRun;
+            _view.BattleRewardSelected += RequestSelectBattleReward;
+            _view.BattleRewardSkipped += RequestSkipBattleReward;
             RefreshView();
         }
 
@@ -42,6 +44,8 @@ namespace DiaBlackJack.StageProgression.UI
             _view.StartRunRequested -= RequestStartRun;
             _view.NextStageRequested -= RequestNextStage;
             _view.RestartRunRequested -= RequestRestartRun;
+            _view.BattleRewardSelected -= RequestSelectBattleReward;
+            _view.BattleRewardSkipped -= RequestSkipBattleReward;
         }
 
         public void RequestStartRun()
@@ -57,6 +61,16 @@ namespace DiaBlackJack.StageProgression.UI
         public void RequestRestartRun()
         {
             ProcessInput(_runtime.Session.TryRestartRun);
+        }
+
+        public void RequestSelectBattleReward(int optionId)
+        {
+            ProcessRewardInput(() => _runtime.Session.TrySelectBattleReward(optionId));
+        }
+
+        public void RequestSkipBattleReward()
+        {
+            ProcessRewardInput(_runtime.Session.TrySkipBattleReward);
         }
 
         private void ProcessInput(Func<bool> action)
@@ -77,6 +91,27 @@ namespace DiaBlackJack.StageProgression.UI
             }
 
             _runtime.LoadBattleScene();
+        }
+
+        private void ProcessRewardInput(Func<bool> action)
+        {
+            if (_inputLocked || action == null)
+            {
+                return;
+            }
+
+            _inputLocked = true;
+            _view.SetInputLocked(true);
+            try
+            {
+                action();
+                RefreshView();
+            }
+            finally
+            {
+                _inputLocked = false;
+                _view.SetInputLocked(false);
+            }
         }
 
         private void RefreshView()

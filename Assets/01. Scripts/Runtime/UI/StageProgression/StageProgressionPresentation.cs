@@ -1,9 +1,41 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using DiaBlackJack.CoreLoop;
 
 namespace DiaBlackJack.StageProgression.UI
 {
+    public sealed class BattleRewardOptionViewModel
+    {
+        public BattleRewardOptionViewModel(
+            int optionId,
+            string definitionKey,
+            string displayName,
+            int rank,
+            string effectSummary)
+        {
+            OptionId = optionId;
+            DefinitionKey = definitionKey;
+            DisplayName = displayName;
+            Rank = rank;
+            EffectSummary = effectSummary;
+        }
+
+        public int OptionId { get; }
+
+        public string DefinitionKey { get; }
+
+        public string DisplayName { get; }
+
+        public int Rank { get; }
+
+        public string EffectSummary { get; }
+    }
+
     public sealed class StageProgressionViewModel
     {
+        private readonly ReadOnlyCollection<BattleRewardOptionViewModel> _rewardOptions;
+
         public StageProgressionViewModel(
             string stageProgress,
             string stageName,
@@ -13,7 +45,14 @@ namespace DiaBlackJack.StageProgression.UI
             string message,
             bool canStartRun,
             bool canAdvanceStage,
-            bool canRestartRun)
+            bool canRestartRun,
+            string rewardTier,
+            IEnumerable<BattleRewardOptionViewModel> rewardOptions,
+            bool canSelectReward,
+            bool canSkipReward,
+            string rewardCompletionMessage,
+            string rewardResult,
+            int deckCount)
         {
             StageProgress = stageProgress;
             StageName = stageName;
@@ -24,6 +63,15 @@ namespace DiaBlackJack.StageProgression.UI
             CanStartRun = canStartRun;
             CanAdvanceStage = canAdvanceStage;
             CanRestartRun = canRestartRun;
+            RewardTier = rewardTier;
+            _rewardOptions = new List<BattleRewardOptionViewModel>(
+                rewardOptions ?? throw new ArgumentNullException(nameof(rewardOptions)))
+                .AsReadOnly();
+            CanSelectReward = canSelectReward;
+            CanSkipReward = canSkipReward;
+            RewardCompletionMessage = rewardCompletionMessage;
+            RewardResult = rewardResult;
+            DeckCount = deckCount;
         }
 
         public string StageProgress { get; }
@@ -43,6 +91,20 @@ namespace DiaBlackJack.StageProgression.UI
         public bool CanAdvanceStage { get; }
 
         public bool CanRestartRun { get; }
+
+        public string RewardTier { get; }
+
+        public IReadOnlyList<BattleRewardOptionViewModel> RewardOptions => _rewardOptions;
+
+        public bool CanSelectReward { get; }
+
+        public bool CanSkipReward { get; }
+
+        public string RewardCompletionMessage { get; }
+
+        public string RewardResult { get; }
+
+        public int DeckCount { get; }
     }
 
     public static class StageProgressionPresenter
@@ -55,6 +117,14 @@ namespace DiaBlackJack.StageProgression.UI
             }
 
             StageDefinition stage = progress.CurrentStage;
+            bool canResolveReward = progress.State == StageProgressionState.RewardSelection;
+            PendingBattleReward pendingReward = progress.PendingReward;
+            if (canResolveReward && pendingReward == null)
+            {
+                throw new InvalidOperationException(
+                    "Reward selection state requires a pending battle reward.");
+            }
+
             return new StageProgressionViewModel(
                 $"STAGE {progress.CurrentStageIndex + 1} / {progress.Stages.Count}",
                 stage.DisplayName,
@@ -65,7 +135,110 @@ namespace DiaBlackJack.StageProgression.UI
                 progress.State == StageProgressionState.NotStarted,
                 progress.State == StageProgressionState.StageCleared,
                 progress.State == StageProgressionState.RunVictory ||
-                    progress.State == StageProgressionState.RunDefeat);
+                    progress.State == StageProgressionState.RunDefeat,
+                canResolveReward ? GetRewardTier(pendingReward.Offer.Tier) : string.Empty,
+                canResolveReward
+                    ? CreateRewardOptions(pendingReward.Offer)
+                    : Array.Empty<BattleRewardOptionViewModel>(),
+                canResolveReward,
+                canResolveReward,
+                canResolveReward
+                    ? GetRewardCompletionMessage(pendingReward.CompletionTarget)
+                    : string.Empty,
+                GetRewardResult(progress),
+                progress.Player.Deck.Count);
+        }
+
+        private static IReadOnlyList<BattleRewardOptionViewModel> CreateRewardOptions(
+            BattleRewardOffer offer)
+        {
+            var options = new List<BattleRewardOptionViewModel>(offer.Options.Count);
+            foreach (BattleRewardOption option in offer.Options)
+            {
+                CardDefinition definition = CardDefinitionCatalog.GetByKey(
+                    option.DefinitionKey);
+                options.Add(new BattleRewardOptionViewModel(
+                    option.OptionId,
+                    option.DefinitionKey,
+                    definition.DisplayName,
+                    definition.Rank,
+                    GetEffectSummary(definition)));
+            }
+
+            return options;
+        }
+
+        private static string GetRewardTier(BattleRewardTier tier)
+        {
+            switch (tier)
+            {
+                case BattleRewardTier.Normal:
+                    return "NORMAL REWARD";
+                case BattleRewardTier.HighGrade:
+                    return "HIGH-GRADE REWARD";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(tier), tier, null);
+            }
+        }
+
+        private static string GetRewardCompletionMessage(
+            BattleRewardCompletionTarget completionTarget)
+        {
+            switch (completionTarget)
+            {
+                case BattleRewardCompletionTarget.StageCleared:
+                    return "REWARD COMPLETION WILL CLEAR THIS STAGE";
+                case BattleRewardCompletionTarget.RunVictory:
+                    return "REWARD COMPLETION WILL END THE RUN";
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(completionTarget),
+                        completionTarget,
+                        null);
+            }
+        }
+
+        private static string GetEffectSummary(CardDefinition definition)
+        {
+            switch (definition.Effect)
+            {
+                case CardEffectKind.None:
+                    return definition.Activation == CardActivationKind.Passive
+                        ? "PASSIVE VALUE CARD"
+                        : "STANDARD VALUE CARD";
+                case CardEffectKind.CrystalOrb:
+                    return "PEEK AT 2 DECK CARDS";
+                case CardEffectKind.ThreatHammer:
+                    return "DISCARD 1 FACE-UP CARD";
+                case CardEffectKind.AutoPistol:
+                    return "GUESS 1 HIDDEN CARD";
+                case CardEffectKind.MilitaryKnife:
+                    return "FORCE A DRAW";
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(definition),
+                        definition.Effect,
+                        null);
+            }
+        }
+
+        private static string GetRewardResult(RunProgress progress)
+        {
+            BattleRewardResolution resolution = progress.LastRewardResolution;
+            if (resolution == null)
+            {
+                return string.Empty;
+            }
+
+            if (resolution.WasSkipped)
+            {
+                return $"REWARD SKIPPED  |  DECK {progress.Player.Deck.Count}";
+            }
+
+            CardDefinition definition = CardDefinitionCatalog.GetByKey(
+                resolution.SelectedDefinitionKey);
+            return $"ADDED  {definition.Rank} {definition.DisplayName}  |  " +
+                $"DECK {progress.Player.Deck.Count}";
         }
 
         private static string GetMessage(StageProgressionState state)
