@@ -199,7 +199,6 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(progress.TryAdvanceToNextStage(), Is.False);
             Assert.That(progress.TryDefeatRun(), Is.False);
             Assert.That(progress.TryRestartRun(), Is.False);
-            Assert.That(progress.TryCompleteCurrentStageWithoutReward(), Is.False);
             Assert.That(progress.State, Is.EqualTo(StageProgressionState.RewardSelection));
             Assert.That(progress.PendingReward.Offer, Is.SameAs(offer));
         }

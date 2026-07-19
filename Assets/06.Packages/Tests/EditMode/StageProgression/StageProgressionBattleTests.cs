@@ -19,6 +19,8 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(session.TrySelectChangedCard(0), Is.False);
             Assert.That(session.TryBeginPlayerCardUse(0), Is.False);
             Assert.That(session.TryResolvePlayerCardChoice(0), Is.False);
+            Assert.That(session.TrySelectBattleReward(0), Is.False);
+            Assert.That(session.TrySkipBattleReward(), Is.False);
             Assert.That(session.TryAdvanceToNextStage(), Is.False);
             Assert.That(session.TryRestartRun(), Is.False);
             Assert.That(session.Battle, Is.Null);
@@ -103,7 +105,7 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
-        public void BA05_ChangeSelectionSynchronizesStageClearWhenEnemyBusts()
+        public void BA05_ChangeSelectionBeginsRewardBeforeStageClear()
         {
             var session = new StageProgressionSession(
                 CreateProgress(),
@@ -118,9 +120,13 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(session.TrySelectChangedCard(1), Is.True);
 
             Assert.That(session.Battle.Outcome, Is.EqualTo(BattleOutcome.PlayerVictory));
-            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.StageCleared));
+            Assert.That(
+                session.Progress.State,
+                Is.EqualTo(StageProgressionState.RewardSelection));
             Assert.That(session.Progress.Player.CurrentSoul, Is.EqualTo(12));
             Assert.That(session.TrySelectChangedCard(0), Is.False);
+            Assert.That(session.TrySkipBattleReward(), Is.True);
+            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.StageCleared));
         }
 
         [Test]
@@ -173,9 +179,14 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(session.TryResolvePlayerCardChoice(7), Is.True);
 
             Assert.That(session.Battle.Outcome, Is.EqualTo(BattleOutcome.PlayerVictory));
-            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.StageCleared));
+            Assert.That(
+                session.Progress.State,
+                Is.EqualTo(StageProgressionState.RewardSelection));
             Assert.That(session.Progress.Player.CurrentSoul, Is.EqualTo(12));
+            PendingBattleReward pending = session.Progress.PendingReward;
             Assert.That(session.TryResolvePlayerCardChoice(7), Is.False);
+            Assert.That(session.Progress.PendingReward, Is.SameAs(pending));
+            Assert.That(session.TrySkipBattleReward(), Is.True);
             Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.StageCleared));
         }
 
@@ -220,8 +231,12 @@ namespace DiaBlackJack.StageProgression.Tests
 
             Assert.That(sourceCard.UseState, Is.EqualTo(CardUseState.Used));
             Assert.That(session.Battle.Outcome, Is.EqualTo(BattleOutcome.PlayerVictory));
-            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.StageCleared));
+            Assert.That(
+                session.Progress.State,
+                Is.EqualTo(StageProgressionState.RewardSelection));
             Assert.That(session.Progress.Player.CurrentSoul, Is.EqualTo(12));
+            Assert.That(session.TrySkipBattleReward(), Is.True);
+            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.StageCleared));
         }
 
         [Test]
@@ -246,8 +261,12 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(session.Progress.Player.CurrentSoul, Is.EqualTo(12));
 
             Assert.That(session.TryPlayerStand(), Is.True);
-            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.StageCleared));
+            Assert.That(
+                session.Progress.State,
+                Is.EqualTo(StageProgressionState.RewardSelection));
             Assert.That(session.Progress.Player.CurrentSoul, Is.EqualTo(11));
+            Assert.That(session.TrySkipBattleReward(), Is.True);
+            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.StageCleared));
 
             Assert.That(session.TryAdvanceToNextStage(), Is.True);
             Assert.That(session.Progress.CurrentStageIndex, Is.EqualTo(1));
@@ -311,10 +330,14 @@ namespace DiaBlackJack.StageProgression.Tests
             session.TryStartRun();
             Assert.That(session.TryPlayerStand(), Is.True);
 
-            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.RunVictory));
+            Assert.That(
+                session.Progress.State,
+                Is.EqualTo(StageProgressionState.RewardSelection));
             Assert.That(session.Progress.CurrentStageIndex, Is.Zero);
             Assert.That(session.TryAdvanceToNextStage(), Is.False);
             Assert.That(createdBattleCount, Is.EqualTo(1));
+            Assert.That(session.TrySkipBattleReward(), Is.True);
+            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.RunVictory));
         }
 
         [Test]

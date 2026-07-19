@@ -5,16 +5,26 @@ namespace DiaBlackJack.StageProgression
 {
     public sealed class StageProgressionSession
     {
+        private const int DefaultRewardSeed = 20260720;
+
         private readonly Func<StageDefinition, PlayerRunState, CoreLoopBattle> _battleFactory;
+        private readonly BattleRewardGenerator _rewardGenerator;
+        private readonly Func<StageDefinition, BattleRewardTier> _rewardTierSelector;
         private CoreLoopSession _battleSession;
         private CoreLoopBattle _processedBattle;
 
         public StageProgressionSession(
             RunProgress progress,
-            Func<StageDefinition, PlayerRunState, CoreLoopBattle> battleFactory = null)
+            Func<StageDefinition, PlayerRunState, CoreLoopBattle> battleFactory = null,
+            BattleRewardGenerator rewardGenerator = null,
+            Func<StageDefinition, BattleRewardTier> rewardTierSelector = null)
         {
             Progress = progress ?? throw new ArgumentNullException(nameof(progress));
             _battleFactory = battleFactory ?? StageBattleFactory.Create;
+            _rewardGenerator = rewardGenerator ?? new BattleRewardGenerator(
+                BattleRewardCatalog.CreateDefault(),
+                DefaultRewardSeed);
+            _rewardTierSelector = rewardTierSelector ?? SelectDefaultRewardTier;
         }
 
         public CoreLoopBattle Battle => _battleSession?.Battle;
@@ -137,6 +147,16 @@ namespace DiaBlackJack.StageProgression
             return true;
         }
 
+        public bool TrySelectBattleReward(int optionId)
+        {
+            return Progress.TrySelectBattleReward(optionId);
+        }
+
+        public bool TrySkipBattleReward()
+        {
+            return Progress.TrySkipBattleReward();
+        }
+
         public bool TryRestartRun()
         {
             if (!Progress.TryRestartRun())
@@ -175,7 +195,7 @@ namespace DiaBlackJack.StageProgression
             switch (battle.Outcome)
             {
                 case BattleOutcome.PlayerVictory:
-                    resultApplied = Progress.TryCompleteCurrentStageWithoutReward();
+                    resultApplied = TryBeginBattleReward();
                     break;
                 case BattleOutcome.PlayerDefeat:
                     resultApplied = Progress.TryDefeatRun();
@@ -190,6 +210,30 @@ namespace DiaBlackJack.StageProgression
             }
 
             _processedBattle = battle;
+        }
+
+        private bool TryBeginBattleReward()
+        {
+            StageDefinition stage = Progress.CurrentStage;
+            BattleRewardTier tier = stage.Kind == StageKind.FinalBossCombat
+                ? BattleRewardTier.HighGrade
+                : _rewardTierSelector(stage);
+            if (tier != BattleRewardTier.Normal && tier != BattleRewardTier.HighGrade)
+            {
+                throw new InvalidOperationException("Reward tier selector returned an unknown tier.");
+            }
+
+            BattleRewardCompletionTarget completionTarget =
+                stage.Kind == StageKind.FinalBossCombat
+                    ? BattleRewardCompletionTarget.RunVictory
+                    : BattleRewardCompletionTarget.StageCleared;
+            BattleRewardOffer offer = _rewardGenerator.Generate(tier);
+            return Progress.TryBeginBattleReward(offer, completionTarget);
+        }
+
+        private static BattleRewardTier SelectDefaultRewardTier(StageDefinition stage)
+        {
+            return BattleRewardTier.Normal;
         }
     }
 }

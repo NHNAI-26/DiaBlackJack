@@ -130,9 +130,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(battle.Outcome, Is.EqualTo(BattleOutcome.PlayerVictory));
                 Assert.That(
                     session.Progress.State,
-                    Is.EqualTo(StageProgressionState.RunVictory));
+                    Is.EqualTo(StageProgressionState.RewardSelection));
                 Assert.That(session.Progress.Player.CurrentSoul, Is.EqualTo(12));
                 Assert.That(session.TryBeginPlayerCardUse(sourceCard.Id), Is.False);
+                Assert.That(session.TrySkipBattleReward(), Is.True);
+                Assert.That(
+                    session.Progress.State,
+                    Is.EqualTo(StageProgressionState.RunVictory));
 
                 AssertRestartCreatesFreshBattle(
                     session,

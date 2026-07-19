@@ -106,19 +106,6 @@ namespace DiaBlackJack.StageProgression
             return true;
         }
 
-        internal bool TryCompleteCurrentStageWithoutReward()
-        {
-            if (State != StageProgressionState.InBattle || Player.IsDepleted)
-            {
-                return false;
-            }
-
-            State = CurrentStage.Kind == StageKind.FinalBossCombat
-                ? StageProgressionState.RunVictory
-                : StageProgressionState.StageCleared;
-            return true;
-        }
-
         public bool TryAdvanceToNextStage()
         {
             if (State != StageProgressionState.StageCleared)

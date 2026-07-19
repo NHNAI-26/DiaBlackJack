@@ -3,7 +3,7 @@
 > 프로젝트: DiaBlackJack
 > 기획·개발 책임자: 이천서
 > 버전: v0.1
-> 상태: RW-02 구현·검증 완료 · RW-03 착수 가능
+> 상태: RW-03 구현·검증 완료 · RW-04 착수 가능
 > 최종 갱신: 2026-07-20
 
 ## 1. 기술 목표
@@ -56,6 +56,21 @@
 - `BattleRewardStateTests`: RW02-U01~RW02-U07 구현
 
 기존 즉시 완료 API는 공개 경계에서 제거했다. 다만 실제 전투 승리에서 제안을 만드는 책임은 RW-03이므로, 현재 `StageProgressionSession`만 내부 `TryCompleteCurrentStageWithoutReward()` 임시 호환 경로를 사용한다. 따라서 RW-02의 순수 상태 API는 보상을 강제하지만 실제 씬 승리는 아직 자동으로 `RewardSelection`에 진입하지 않는다.
+
+### 2.3 RW-03 구현 결과
+
+2026-07-20에 실제 전투 결과와 보상 처리, 다음 전투 덱 전달을 통합했다.
+
+- `StageProgressionSession`: 승리 시 전투 영혼 동기화 뒤 제안을 한 번 생성하고 `RewardSelection`으로 전환
+- 생성기 주입: 세션 수명 동안 하나의 `BattleRewardGenerator`를 사용해 제안 순서와 ID를 유지
+- 등급 주입: 일반 스테이지는 기본 `Normal`, 미래 엘리트는 `Func<StageDefinition, BattleRewardTier>`로 `HighGrade`를 전달
+- 보스 강제 규칙: 등급 주입과 무관하게 최종 보스는 `HighGrade`와 `RunVictory` 목적지 사용
+- 세션 공개 API: 보상 선택과 건너뛰기를 `RunProgress`에 전달
+- 다음 전투: 보상 해결 뒤 현재 `PlayerRunState.Deck`으로 새 전투를 생성
+- 재시작: `RunProgress`가 최초 덱을 복구한 뒤 새 전투를 생성
+- `BattleRewardSessionTests`: RW03-I01~RW03-I06 구현
+
+RW-02의 내부 `TryCompleteCurrentStageWithoutReward()` 호환 경로는 제거했다. 이제 실제 세션의 모든 승리는 보상 대기를 거치며, 패배만 보상 없이 `RunDefeat`로 이동한다. 보상 후보 정보와 선택·건너뛰기 화면 입력은 RW-04 범위다.
 
 ## 3. 설계 원칙
 
@@ -366,7 +381,7 @@ Assets/06.Packages/Tests/EditMode/StageProgression/
 
 ## 16. 검증 기준선
 
-직전 CU-06의 확인 기준은 신규 반복 회귀 5/5, CoreLoop 122/122, StageProgression 34/34, 전체 EditMode 156/156, 두 테스트 씬 문제 0과 Console Error/Warning 0이다. RW-00은 문서만 작성했으며, RW-01에서는 신규 8/8, StageProgression 42/42와 전체 EditMode 164/164를 통과했다. RW-02에서는 신규 상태 테스트 7/7, StageProgression 49/49와 전체 EditMode 171/171을 Unity 6000.3.10f1의 로컬 MCP 연결로 통과했고 Console 컴파일 오류는 0개였다. RW-01 배치 로그의 라이선스 토큰 갱신 메시지는 컴파일·테스트 결과에 영향을 주지 않았다.
+직전 CU-06의 확인 기준은 신규 반복 회귀 5/5, CoreLoop 122/122, StageProgression 34/34, 전체 EditMode 156/156, 두 테스트 씬 문제 0과 Console Error/Warning 0이다. RW-00은 문서만 작성했으며, RW-01에서는 신규 8/8, StageProgression 42/42와 전체 EditMode 164/164를 통과했다. RW-02에서는 신규 7/7, StageProgression 49/49와 전체 EditMode 171/171을 통과했다. RW-03에서는 신규 통합 6/6, StageProgression 55/55와 전체 EditMode 177/177을 Unity 6000.3.10f1의 로컬 MCP 연결로 통과했고 C# 컴파일 오류는 0개였다. RW-01 배치 로그의 라이선스 토큰 갱신 메시지는 컴파일·테스트 결과에 영향을 주지 않았다.
 
 ## 17. 변경 기록
 
@@ -376,3 +391,4 @@ Assets/06.Packages/Tests/EditMode/StageProgression/
 | 2026-07-20 | 이천서 | 일반 풀 10개와 높은 등급 풀 6개를 정의 키 목록으로 임시 확정하고 최종 보스 보상 완료 뒤 `RunVictory` 전이를 명시 |
 | 2026-07-20 | 이천서 | RW-01 보상 카탈로그·불변 제안·결정적 생성·런 덱 추가와 재시작 복구 구현, 신규 8/8·StageProgression 42/42·전체 164/164 검증 결과 반영 |
 | 2026-07-20 | 이천서 | RW-02 보상 선택 상태·보류 제안·선택·건너뛰기·완료 결과와 목적지 검증, 신규 7/7·StageProgression 49/49·전체 171/171 결과 및 RW-03 임시 세션 경계 반영 |
+| 2026-07-20 | 이천서 | RW-03 전투 승리·보상 생성·명시적 엘리트 등급·선택/건너뛰기·다음 전투 덱·재시작 통합, 신규 6/6·StageProgression 55/55·전체 177/177 결과 반영 |
