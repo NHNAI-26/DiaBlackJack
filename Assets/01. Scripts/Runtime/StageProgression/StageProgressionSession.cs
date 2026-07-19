@@ -175,7 +175,7 @@ namespace DiaBlackJack.StageProgression
             switch (battle.Outcome)
             {
                 case BattleOutcome.PlayerVictory:
-                    resultApplied = Progress.TryCompleteCurrentStage();
+                    resultApplied = Progress.TryCompleteCurrentStageWithoutReward();
                     break;
                 case BattleOutcome.PlayerDefeat:
                     resultApplied = Progress.TryDefeatRun();

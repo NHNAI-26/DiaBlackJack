@@ -31,6 +31,10 @@ namespace DiaBlackJack.StageProgression
 
         public PlayerRunState Player { get; }
 
+        public PendingBattleReward PendingReward { get; private set; }
+
+        public BattleRewardResolution LastRewardResolution { get; private set; }
+
         public bool StartRun()
         {
             if (State != StageProgressionState.NotStarted)
@@ -42,7 +46,67 @@ namespace DiaBlackJack.StageProgression
             return true;
         }
 
-        public bool TryCompleteCurrentStage()
+        public bool TryBeginBattleReward(
+            BattleRewardOffer offer,
+            BattleRewardCompletionTarget completionTarget)
+        {
+            if (State != StageProgressionState.InBattle ||
+                Player.IsDepleted ||
+                offer == null ||
+                !IsValidCompletionTarget(completionTarget) ||
+                !RewardMatchesCurrentStage(offer, completionTarget))
+            {
+                return false;
+            }
+
+            PendingReward = new PendingBattleReward(offer, completionTarget);
+            LastRewardResolution = null;
+            State = StageProgressionState.RewardSelection;
+            return true;
+        }
+
+        public bool TrySelectBattleReward(int optionId)
+        {
+            if (State != StageProgressionState.RewardSelection || PendingReward == null)
+            {
+                return false;
+            }
+
+            BattleRewardOption selectedOption = FindRewardOption(
+                PendingReward.Offer,
+                optionId);
+            if (selectedOption == null)
+            {
+                return false;
+            }
+
+            PendingBattleReward pendingReward = PendingReward;
+            RunCardDefinition addedCard = Player.AddRewardCard(selectedOption.DefinitionKey);
+            BattleRewardResolution resolution = BattleRewardResolution.Selected(
+                pendingReward.Offer.OfferId,
+                selectedOption,
+                addedCard,
+                pendingReward.CompletionTarget);
+            CompleteBattleReward(pendingReward.CompletionTarget, resolution);
+            return true;
+        }
+
+        public bool TrySkipBattleReward()
+        {
+            if (State != StageProgressionState.RewardSelection || PendingReward == null)
+            {
+                return false;
+            }
+
+            PendingBattleReward pendingReward = PendingReward;
+            BattleRewardResolution resolution = BattleRewardResolution.Skipped(
+                pendingReward.Offer.OfferId,
+                pendingReward.CompletionTarget);
+            CompleteBattleReward(pendingReward.CompletionTarget, resolution);
+            return true;
+        }
+
+        internal bool TryCompleteCurrentStageWithoutReward()
         {
             if (State != StageProgressionState.InBattle || Player.IsDepleted)
             {
@@ -137,10 +201,59 @@ namespace DiaBlackJack.StageProgression
             return stageList.AsReadOnly();
         }
 
+        private static bool IsValidCompletionTarget(
+            BattleRewardCompletionTarget completionTarget)
+        {
+            return completionTarget == BattleRewardCompletionTarget.StageCleared ||
+                completionTarget == BattleRewardCompletionTarget.RunVictory;
+        }
+
+        private bool RewardMatchesCurrentStage(
+            BattleRewardOffer offer,
+            BattleRewardCompletionTarget completionTarget)
+        {
+            if (CurrentStage.Kind == StageKind.FinalBossCombat)
+            {
+                return completionTarget == BattleRewardCompletionTarget.RunVictory &&
+                    offer.Tier == BattleRewardTier.HighGrade;
+            }
+
+            return completionTarget == BattleRewardCompletionTarget.StageCleared;
+        }
+
+        private static BattleRewardOption FindRewardOption(
+            BattleRewardOffer offer,
+            int optionId)
+        {
+            for (int i = 0; i < offer.Options.Count; i++)
+            {
+                BattleRewardOption option = offer.Options[i];
+                if (option.OptionId == optionId)
+                {
+                    return option;
+                }
+            }
+
+            return null;
+        }
+
+        private void CompleteBattleReward(
+            BattleRewardCompletionTarget completionTarget,
+            BattleRewardResolution resolution)
+        {
+            LastRewardResolution = resolution;
+            PendingReward = null;
+            State = completionTarget == BattleRewardCompletionTarget.RunVictory
+                ? StageProgressionState.RunVictory
+                : StageProgressionState.StageCleared;
+        }
+
         private void ResetToFirstStage()
         {
             CurrentStageIndex = 0;
             Player.ResetForNewRun();
+            PendingReward = null;
+            LastRewardResolution = null;
             State = StageProgressionState.InBattle;
         }
     }

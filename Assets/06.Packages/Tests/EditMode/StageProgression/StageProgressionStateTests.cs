@@ -25,7 +25,11 @@ namespace DiaBlackJack.StageProgression.Tests
         {
             RunProgress progress = CreateProgress();
 
-            Assert.That(progress.TryCompleteCurrentStage(), Is.False);
+            Assert.That(
+                progress.TryBeginBattleReward(
+                    CreateOffer(BattleRewardTier.Normal),
+                    BattleRewardCompletionTarget.StageCleared),
+                Is.False);
             Assert.That(progress.TryAdvanceToNextStage(), Is.False);
             Assert.That(progress.TryDefeatRun(), Is.False);
             Assert.That(progress.TryRestartRun(), Is.False);
@@ -38,7 +42,7 @@ namespace DiaBlackJack.StageProgression.Tests
         {
             RunProgress progress = CreateStartedProgress();
 
-            bool completed = progress.TryCompleteCurrentStage();
+            bool completed = CompleteCurrentStageWithSkippedReward(progress);
 
             Assert.That(completed, Is.True);
             Assert.That(progress.State, Is.EqualTo(StageProgressionState.StageCleared));
@@ -49,7 +53,7 @@ namespace DiaBlackJack.StageProgression.Tests
         public void SP_U04_AdvancingMovesExactlyOneStage()
         {
             RunProgress progress = CreateStartedProgress();
-            progress.TryCompleteCurrentStage();
+            CompleteCurrentStageWithSkippedReward(progress);
 
             bool advanced = progress.TryAdvanceToNextStage();
 
@@ -64,8 +68,10 @@ namespace DiaBlackJack.StageProgression.Tests
         {
             RunProgress progress = CreateStartedProgress();
 
-            bool first = progress.TryCompleteCurrentStage();
-            bool second = progress.TryCompleteCurrentStage();
+            bool first = CompleteCurrentStageWithSkippedReward(progress);
+            bool second = progress.TryBeginBattleReward(
+                CreateOffer(BattleRewardTier.Normal),
+                BattleRewardCompletionTarget.StageCleared);
 
             Assert.That(first, Is.True);
             Assert.That(second, Is.False);
@@ -132,7 +138,7 @@ namespace DiaBlackJack.StageProgression.Tests
             CompleteAndAdvance(progress);
             CompleteAndAdvance(progress);
 
-            bool completed = progress.TryCompleteCurrentStage();
+            bool completed = CompleteCurrentStageWithSkippedReward(progress);
 
             Assert.That(completed, Is.True);
             Assert.That(progress.CurrentStage.Kind, Is.EqualTo(StageKind.FinalBossCombat));
@@ -252,8 +258,32 @@ namespace DiaBlackJack.StageProgression.Tests
 
         private static void CompleteAndAdvance(RunProgress progress)
         {
-            Assert.That(progress.TryCompleteCurrentStage(), Is.True);
+            Assert.That(CompleteCurrentStageWithSkippedReward(progress), Is.True);
             Assert.That(progress.TryAdvanceToNextStage(), Is.True);
+        }
+
+        private static bool CompleteCurrentStageWithSkippedReward(RunProgress progress)
+        {
+            bool isFinalBoss = progress.CurrentStage.Kind == StageKind.FinalBossCombat;
+            BattleRewardTier tier = isFinalBoss
+                ? BattleRewardTier.HighGrade
+                : BattleRewardTier.Normal;
+            BattleRewardCompletionTarget target = isFinalBoss
+                ? BattleRewardCompletionTarget.RunVictory
+                : BattleRewardCompletionTarget.StageCleared;
+
+            if (!progress.TryBeginBattleReward(CreateOffer(tier), target))
+            {
+                return false;
+            }
+
+            return progress.TrySkipBattleReward();
+        }
+
+        private static BattleRewardOffer CreateOffer(BattleRewardTier tier)
+        {
+            return new BattleRewardGenerator(BattleRewardCatalog.CreateDefault(), 2001)
+                .Generate(tier);
         }
     }
 }

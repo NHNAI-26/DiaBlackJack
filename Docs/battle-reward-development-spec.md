@@ -3,7 +3,7 @@
 > 프로젝트: DiaBlackJack
 > 기획·개발 책임자: 이천서
 > 버전: v0.1
-> 상태: RW-01 구현·검증 완료 · RW-02 착수 가능
+> 상태: RW-02 구현·검증 완료 · RW-03 착수 가능
 > 최종 갱신: 2026-07-20
 
 ## 1. 기술 목표
@@ -41,6 +41,21 @@
 - `BattleRewardFoundationTests`: RW01-U01~RW01-U08 구현
 
 `StageProgressionState`, `RunProgress`의 승리 전이, `StageProgressionSession`과 UI는 변경하지 않았다. 실제 보상 시작·선택·건너뛰기는 RW-02 범위다.
+
+### 2.2 RW-02 구현 결과
+
+2026-07-20에 승리 이후의 순수 보상 진행 상태와 처리 경계를 구현했다.
+
+- `StageProgressionState.RewardSelection`: 보상 해결 전 진행 입력 잠금
+- `BattleRewardCompletionTarget`: 일반 완료와 최종 보스 런 승리 목적지 구분
+- `PendingBattleReward`: 현재 제안과 완료 목적지를 함께 보존
+- `BattleRewardResolution`: 제안·선택 옵션·추가 카드·건너뛰기와 완료 목적지 기록
+- `RunProgress`: 보상 시작, 선택, 건너뛰기의 공개 `Try` API와 원자적 실패 처리
+- 최종 보스: 높은 등급 제안과 `RunVictory` 목적지만 승인
+- 재시작: 보류 제안, 최근 해결 결과와 RW-01에서 추가된 카드를 모두 초기화
+- `BattleRewardStateTests`: RW02-U01~RW02-U07 구현
+
+기존 즉시 완료 API는 공개 경계에서 제거했다. 다만 실제 전투 승리에서 제안을 만드는 책임은 RW-03이므로, 현재 `StageProgressionSession`만 내부 `TryCompleteCurrentStageWithoutReward()` 임시 호환 경로를 사용한다. 따라서 RW-02의 순수 상태 API는 보상을 강제하지만 실제 씬 승리는 아직 자동으로 `RewardSelection`에 진입하지 않는다.
 
 ## 3. 설계 원칙
 
@@ -351,7 +366,7 @@ Assets/06.Packages/Tests/EditMode/StageProgression/
 
 ## 16. 검증 기준선
 
-직전 CU-06의 확인 기준은 신규 반복 회귀 5/5, CoreLoop 122/122, StageProgression 34/34, 전체 EditMode 156/156, 두 테스트 씬 문제 0과 Console Error/Warning 0이다. RW-00은 문서만 작성했으며, RW-01에서는 신규 8/8, StageProgression 42/42와 전체 EditMode 164/164를 통과했다. Unity 배치 로그의 라이선스 토큰 갱신 메시지는 있었으나 컴파일·테스트 실패 없이 종료 코드 0으로 완료됐다.
+직전 CU-06의 확인 기준은 신규 반복 회귀 5/5, CoreLoop 122/122, StageProgression 34/34, 전체 EditMode 156/156, 두 테스트 씬 문제 0과 Console Error/Warning 0이다. RW-00은 문서만 작성했으며, RW-01에서는 신규 8/8, StageProgression 42/42와 전체 EditMode 164/164를 통과했다. RW-02에서는 신규 상태 테스트 7/7, StageProgression 49/49와 전체 EditMode 171/171을 Unity 6000.3.10f1의 로컬 MCP 연결로 통과했고 Console 컴파일 오류는 0개였다. RW-01 배치 로그의 라이선스 토큰 갱신 메시지는 컴파일·테스트 결과에 영향을 주지 않았다.
 
 ## 17. 변경 기록
 
@@ -360,3 +375,4 @@ Assets/06.Packages/Tests/EditMode/StageProgression/
 | 2026-07-20 | 이천서 | 보상 데이터, 결정적 생성, 덱 추가·초기화, 진행 상태·세션·화면 API와 RW-01~RW-05 테스트 기준을 구현 가능한 명세로 확정 |
 | 2026-07-20 | 이천서 | 일반 풀 10개와 높은 등급 풀 6개를 정의 키 목록으로 임시 확정하고 최종 보스 보상 완료 뒤 `RunVictory` 전이를 명시 |
 | 2026-07-20 | 이천서 | RW-01 보상 카탈로그·불변 제안·결정적 생성·런 덱 추가와 재시작 복구 구현, 신규 8/8·StageProgression 42/42·전체 164/164 검증 결과 반영 |
+| 2026-07-20 | 이천서 | RW-02 보상 선택 상태·보류 제안·선택·건너뛰기·완료 결과와 목적지 검증, 신규 7/7·StageProgression 49/49·전체 171/171 결과 및 RW-03 임시 세션 경계 반영 |

@@ -76,6 +76,8 @@ namespace DiaBlackJack.StageProgression.UI
                     return "READY TO START RUN";
                 case StageProgressionState.InBattle:
                     return "BATTLE IN PROGRESS";
+                case StageProgressionState.RewardSelection:
+                    return "SELECT BATTLE REWARD";
                 case StageProgressionState.StageCleared:
                     return "STAGE CLEARED";
                 case StageProgressionState.RunVictory:

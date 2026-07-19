@@ -4,6 +4,7 @@ namespace DiaBlackJack.StageProgression
     {
         NotStarted,
         InBattle,
+        RewardSelection,
         StageCleared,
         RunVictory,
         RunDefeat

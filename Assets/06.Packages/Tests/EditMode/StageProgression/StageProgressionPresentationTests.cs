@@ -43,7 +43,7 @@ namespace DiaBlackJack.StageProgression.Tests
             RunProgress progress = CreateProgress();
             progress.StartRun();
             progress.Player.SetCurrentSoul(9);
-            progress.TryCompleteCurrentStage();
+            CompleteCurrentStageWithSkippedReward(progress);
 
             StageProgressionViewModel model = StageProgressionPresenter.Create(progress);
 
@@ -61,7 +61,7 @@ namespace DiaBlackJack.StageProgression.Tests
             progress.StartRun();
             CompleteAndAdvance(progress);
             CompleteAndAdvance(progress);
-            progress.TryCompleteCurrentStage();
+            CompleteCurrentStageWithSkippedReward(progress);
 
             StageProgressionViewModel model = StageProgressionPresenter.Create(progress);
 
@@ -110,8 +110,26 @@ namespace DiaBlackJack.StageProgression.Tests
 
         private static void CompleteAndAdvance(RunProgress progress)
         {
-            Assert.That(progress.TryCompleteCurrentStage(), Is.True);
+            Assert.That(CompleteCurrentStageWithSkippedReward(progress), Is.True);
             Assert.That(progress.TryAdvanceToNextStage(), Is.True);
+        }
+
+        private static bool CompleteCurrentStageWithSkippedReward(RunProgress progress)
+        {
+            bool isFinalBoss = progress.CurrentStage.Kind == StageKind.FinalBossCombat;
+            BattleRewardTier tier = isFinalBoss
+                ? BattleRewardTier.HighGrade
+                : BattleRewardTier.Normal;
+            BattleRewardCompletionTarget target = isFinalBoss
+                ? BattleRewardCompletionTarget.RunVictory
+                : BattleRewardCompletionTarget.StageCleared;
+
+            BattleRewardOffer offer = new BattleRewardGenerator(
+                    BattleRewardCatalog.CreateDefault(),
+                    2002)
+                .Generate(tier);
+            return progress.TryBeginBattleReward(offer, target) &&
+                progress.TrySkipBattleReward();
         }
     }
 }
