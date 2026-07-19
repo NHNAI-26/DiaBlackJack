@@ -4,6 +4,58 @@ using System.Text;
 
 namespace DiaBlackJack.CoreLoop.UI
 {
+    public sealed class PlayerCardViewModel
+    {
+        public PlayerCardViewModel(
+            int cardId,
+            int rank,
+            string displayName,
+            bool isFaceUp,
+            CardUseState useState,
+            bool canUse,
+            CardUseUnavailableReason unavailableReason,
+            string disabledReason)
+        {
+            CardId = cardId;
+            Rank = rank;
+            DisplayName = displayName ?? throw new ArgumentNullException(nameof(displayName));
+            IsFaceUp = isFaceUp;
+            UseState = useState;
+            CanUse = canUse;
+            UnavailableReason = unavailableReason;
+            DisabledReason = disabledReason ?? string.Empty;
+        }
+
+        public int CardId { get; }
+
+        public int Rank { get; }
+
+        public string DisplayName { get; }
+
+        public bool IsFaceUp { get; }
+
+        public CardUseState UseState { get; }
+
+        public bool CanUse { get; }
+
+        public CardUseUnavailableReason UnavailableReason { get; }
+
+        public string DisabledReason { get; }
+    }
+
+    public sealed class CardEffectChoiceViewModel
+    {
+        public CardEffectChoiceViewModel(int optionId, string label)
+        {
+            OptionId = optionId;
+            Label = label ?? throw new ArgumentNullException(nameof(label));
+        }
+
+        public int OptionId { get; }
+
+        public string Label { get; }
+    }
+
     public sealed class CoreLoopViewModel
     {
         public CoreLoopViewModel(
@@ -27,6 +79,11 @@ namespace DiaBlackJack.CoreLoop.UI
             bool canFold,
             bool canChange,
             bool isChoosingChangeCard,
+            IReadOnlyList<PlayerCardViewModel> playerCardActions,
+            string cardEffectPrompt,
+            IReadOnlyList<CardEffectChoiceViewModel> cardEffectChoices,
+            string lastCardEffect,
+            bool isResolvingCardEffect,
             bool canRestart)
         {
             State = state;
@@ -50,6 +107,13 @@ namespace DiaBlackJack.CoreLoop.UI
             CanFold = canFold;
             CanChange = canChange;
             IsChoosingChangeCard = isChoosingChangeCard;
+            PlayerCardActions = playerCardActions ??
+                throw new ArgumentNullException(nameof(playerCardActions));
+            CardEffectPrompt = cardEffectPrompt ?? string.Empty;
+            CardEffectChoices = cardEffectChoices ??
+                throw new ArgumentNullException(nameof(cardEffectChoices));
+            LastCardEffect = lastCardEffect ?? string.Empty;
+            IsResolvingCardEffect = isResolvingCardEffect;
             CanRestart = canRestart;
         }
 
@@ -93,6 +157,16 @@ namespace DiaBlackJack.CoreLoop.UI
 
         public bool IsChoosingChangeCard { get; }
 
+        public IReadOnlyList<PlayerCardViewModel> PlayerCardActions { get; }
+
+        public string CardEffectPrompt { get; }
+
+        public IReadOnlyList<CardEffectChoiceViewModel> CardEffectChoices { get; }
+
+        public string LastCardEffect { get; }
+
+        public bool IsResolvingCardEffect { get; }
+
         public bool CanRestart { get; }
     }
 
@@ -127,7 +201,116 @@ namespace DiaBlackJack.CoreLoop.UI
                 battle.CanPlayerFold,
                 battle.CanBeginPlayerChange,
                 battle.CanSelectChangedCard,
+                FormatPlayerCardActions(battle),
+                battle.PendingPlayerCardEffect?.Prompt,
+                FormatCardEffectChoices(battle.PendingPlayerCardEffect),
+                FormatLastCardEffect(battle.LastCardEffectResult),
+                battle.State == CoreLoopState.PlayerResolvingCardEffect,
                 battle.State == CoreLoopState.BattleEnded);
+        }
+
+        private static IReadOnlyList<PlayerCardViewModel> FormatPlayerCardActions(
+            CoreLoopBattle battle)
+        {
+            IReadOnlyList<CardUseAvailability> availability =
+                battle.PlayerCardUseAvailability;
+            var availabilityByCardId = new Dictionary<int, CardUseAvailability>(
+                availability.Count);
+            foreach (CardUseAvailability item in availability)
+            {
+                availabilityByCardId.Add(item.CardId, item);
+            }
+
+            var cards = new List<PlayerCardViewModel>(battle.Player.Hand.Count);
+            foreach (BlackjackCard card in battle.Player.Hand.Cards)
+            {
+                CardUseAvailability item = availabilityByCardId[card.Id];
+                cards.Add(new PlayerCardViewModel(
+                    card.Id,
+                    card.Rank,
+                    card.Definition.DisplayName,
+                    card.IsFaceUp,
+                    card.UseState,
+                    item.CanUse,
+                    item.Reason,
+                    FormatCardDisabledReason(card, item)));
+            }
+
+            return cards.AsReadOnly();
+        }
+
+        private static IReadOnlyList<CardEffectChoiceViewModel> FormatCardEffectChoices(
+            PendingCardEffect pendingEffect)
+        {
+            if (pendingEffect == null)
+            {
+                return Array.AsReadOnly(Array.Empty<CardEffectChoiceViewModel>());
+            }
+
+            var choices = new List<CardEffectChoiceViewModel>(pendingEffect.Options.Count);
+            foreach (CardEffectChoiceOption option in pendingEffect.Options)
+            {
+                choices.Add(new CardEffectChoiceViewModel(option.Id, option.Label));
+            }
+
+            return choices.AsReadOnly();
+        }
+
+        private static string FormatCardDisabledReason(
+            BlackjackCard card,
+            CardUseAvailability availability)
+        {
+            switch (availability.Reason)
+            {
+                case CardUseUnavailableReason.None:
+                    return string.Empty;
+                case CardUseUnavailableReason.EffectInProgress:
+                    return "EFFECT IN PROGRESS";
+                case CardUseUnavailableReason.NotPlayerTurn:
+                    return "WAIT FOR PLAYER TURN";
+                case CardUseUnavailableReason.CardNotInHand:
+                    return "CARD NOT IN HAND";
+                case CardUseUnavailableReason.CardIsNotManual:
+                    return "NO MANUAL EFFECT";
+                case CardUseUnavailableReason.CardIsUnavailable:
+                    return card.UseState.ToString().ToUpperInvariant();
+                case CardUseUnavailableReason.EffectNotImplemented:
+                    return "EFFECT NOT IMPLEMENTED";
+                case CardUseUnavailableReason.EffectRequirementsNotMet:
+                    return "REQUIREMENTS NOT MET";
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private static string FormatLastCardEffect(CardEffectResult? result)
+        {
+            if (!result.HasValue)
+            {
+                return "No card effect yet";
+            }
+
+            CardEffectResult value = result.Value;
+            string outcome = value.Succeeded ? "SUCCESS" : "FAILED";
+            string continuation = value.EndedRound ? "ROUND ENDED" : "ENEMY TURN";
+            return $"{FormatEffectName(value.EffectKind)}  |  {outcome}  |  {continuation}";
+        }
+
+        private static string FormatEffectName(CardEffectKind effectKind)
+        {
+            switch (effectKind)
+            {
+                case CardEffectKind.CrystalOrb:
+                    return "CRYSTAL ORB";
+                case CardEffectKind.ThreatHammer:
+                    return "THREAT HAMMER";
+                case CardEffectKind.AutoPistol:
+                    return "AUTO PISTOL";
+                case CardEffectKind.MilitaryKnife:
+                    return "MILITARY KNIFE";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(effectKind));
+            }
         }
 
         private static string FormatFoldAction(CoreLoopBattle battle)

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using DiaBlackJack.CoreLoop.UI;
 using NUnit.Framework;
@@ -198,6 +199,128 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
         }
 
+        [Test]
+        public void CU05_PresenterShowsCardUseStateAndDisabledReason()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 2, 5, 7, 8 },
+                enemyRanks: new[] { 10, 7, 5 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            battle.Start();
+
+            CoreLoopViewModel model = CoreLoopPresenter.Create(battle);
+
+            Assert.That(model.PlayerCardActions.Count, Is.EqualTo(2));
+            PlayerCardViewModel plainCard = model.PlayerCardActions[0];
+            Assert.That(plainCard.Rank, Is.EqualTo(2));
+            Assert.That(plainCard.CanUse, Is.False);
+            Assert.That(
+                plainCard.UnavailableReason,
+                Is.EqualTo(CardUseUnavailableReason.CardIsNotManual));
+            Assert.That(plainCard.DisabledReason, Is.EqualTo("NO MANUAL EFFECT"));
+
+            PlayerCardViewModel crystalOrb = model.PlayerCardActions[1];
+            Assert.That(crystalOrb.Rank, Is.EqualTo(5));
+            Assert.That(crystalOrb.DisplayName, Is.EqualTo("수정 구슬"));
+            Assert.That(crystalOrb.IsFaceUp, Is.False);
+            Assert.That(crystalOrb.UseState, Is.EqualTo(CardUseState.Available));
+            Assert.That(crystalOrb.CanUse, Is.True);
+            Assert.That(crystalOrb.UnavailableReason, Is.EqualTo(CardUseUnavailableReason.None));
+            Assert.That(crystalOrb.DisabledReason, Is.Empty);
+        }
+
+        [Test]
+        public void CU05_PresenterShowsOnlyEffectChoicesWhileSelectionIsPending()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 2, 7 },
+                enemyRanks: new[] { 5, 7, 5 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            battle.Start();
+            battle.TryBeginPlayerCardUse(battle.Player.Hand.Cards[1].Id);
+
+            CoreLoopViewModel model = CoreLoopPresenter.Create(battle);
+
+            Assert.That(model.IsResolvingCardEffect, Is.True);
+            Assert.That(model.IsChoosingChangeCard, Is.False);
+            Assert.That(model.CanHit, Is.False);
+            Assert.That(model.CanStand, Is.False);
+            Assert.That(model.CanFold, Is.False);
+            Assert.That(model.CanChange, Is.False);
+            Assert.That(model.CardEffectPrompt, Is.Not.Empty);
+            Assert.That(
+                model.CardEffectChoices.Select(choice => choice.OptionId),
+                Is.EqualTo(Enumerable.Range(1, 10)));
+            Assert.That(model.PlayerCardActions.All(card => !card.CanUse), Is.True);
+            Assert.That(
+                model.PlayerCardActions.All(
+                    card => card.UnavailableReason ==
+                        CardUseUnavailableReason.EffectInProgress),
+                Is.True);
+        }
+
+        [Test]
+        public void CU05_PresenterShowsUsedCardAndSafeRecentEffectResult()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 2, 7 },
+                enemyRanks: new[] { 5, 7, 5 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            battle.Start();
+            BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+            battle.TryBeginPlayerCardUse(sourceCard.Id);
+            battle.TryResolvePlayerCardChoice(6);
+
+            CoreLoopViewModel model = CoreLoopPresenter.Create(battle);
+            PlayerCardViewModel sourceModel = model.PlayerCardActions.Single(
+                card => card.CardId == sourceCard.Id);
+
+            Assert.That(sourceModel.UseState, Is.EqualTo(CardUseState.Used));
+            Assert.That(sourceModel.CanUse, Is.False);
+            Assert.That(sourceModel.DisabledReason, Is.EqualTo("USED"));
+            Assert.That(model.LastCardEffect, Is.EqualTo(
+                "AUTO PISTOL  |  FAILED  |  ENEMY TURN"));
+            Assert.That(model.LastCardEffect, Does.Not.Contain("7"));
+            Assert.That(model.EnemyCards, Does.Contain("?"));
+        }
+
+        [Test]
+        public void CU05_ControllerForwardsStandaloneCardUseAndChoice()
+        {
+            GameObject gameObject = CreateControllerObject(out CoreLoopController controller);
+            try
+            {
+                var session = new CoreLoopSession(() => CreateBattle(
+                    playerRanks: new[] { 2, 5, 7, 8 },
+                    enemyRanks: new[] { 10, 7, 5 },
+                    playerMaximumSoul: 12,
+                    enemyMaximumSoul: 3));
+                ReplaceControllerSession(controller, session);
+                BlackjackCard sourceCard = controller.Battle.Player.Hand.Cards[1];
+
+                controller.RequestBeginCardUse(sourceCard.Id);
+
+                Assert.That(
+                    controller.Battle.State,
+                    Is.EqualTo(CoreLoopState.PlayerResolvingCardEffect));
+                Assert.That(controller.CurrentViewModel.IsResolvingCardEffect, Is.True);
+                Assert.That(controller.CurrentViewModel.CardEffectChoices.Count, Is.EqualTo(3));
+
+                controller.RequestResolveCardChoice(0);
+
+                Assert.That(sourceCard.UseState, Is.EqualTo(CardUseState.Used));
+                Assert.That(controller.CurrentViewModel.IsResolvingCardEffect, Is.False);
+                Assert.That(controller.CurrentViewModel.LastCardEffect, Does.Contain("SUCCESS"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+            }
+        }
+
         private static GameObject CreateControllerObject(out CoreLoopController controller)
         {
             var gameObject = new GameObject("BA04 Controller Test");
@@ -212,6 +335,29 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
 
             return gameObject;
+        }
+
+        private static void ReplaceControllerSession(
+            CoreLoopController controller,
+            CoreLoopSession session)
+        {
+            SetPrivateField(controller, "_stageSession", null);
+            SetPrivateField(controller, "_session", session);
+            MethodInfo refreshView = typeof(CoreLoopController).GetMethod(
+                "RefreshView",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            refreshView.Invoke(controller, null);
+        }
+
+        private static void SetPrivateField(
+            CoreLoopController controller,
+            string fieldName,
+            object value)
+        {
+            FieldInfo field = typeof(CoreLoopController).GetField(
+                fieldName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            field.SetValue(controller, value);
         }
 
         private static void AssertInitialState(CoreLoopBattle battle, int iteration)

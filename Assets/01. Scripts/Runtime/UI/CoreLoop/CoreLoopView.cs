@@ -23,6 +23,10 @@ namespace DiaBlackJack.CoreLoop.UI
 
         public event Action<int> ChangeCandidateRequested;
 
+        public event Action<int> CardUseRequested;
+
+        public event Action<int> CardEffectChoiceRequested;
+
         public event Action RestartRequested;
 
         public void Render(CoreLoopViewModel model)
@@ -46,7 +50,7 @@ namespace DiaBlackJack.CoreLoop.UI
             DrawBackground();
 
             float panelWidth = Mathf.Min(760f, Screen.width - 32f);
-            float panelHeight = Mathf.Min(620f, Screen.height - 32f);
+            float panelHeight = Mathf.Min(780f, Screen.height - 32f);
             var panel = new Rect(
                 (Screen.width - panelWidth) * 0.5f,
                 (Screen.height - panelHeight) * 0.5f,
@@ -78,6 +82,7 @@ namespace DiaBlackJack.CoreLoop.UI
             GUILayout.Space(14f);
             GUILayout.Label(GetBattleMessage(_model), _resultStyle);
             GUILayout.Label(_model.LastRound, _bodyStyle);
+            GUILayout.Label(_model.LastCardEffect, _bodyStyle);
             GUILayout.FlexibleSpace();
             DrawActions();
             GUILayout.Space(12f);
@@ -118,6 +123,12 @@ namespace DiaBlackJack.CoreLoop.UI
                 return;
             }
 
+            if (_model.IsResolvingCardEffect)
+            {
+                DrawCardEffectChoices();
+                return;
+            }
+
             GUILayout.BeginHorizontal();
             bool wasEnabled = GUI.enabled;
             GUI.enabled = _model.CanHit && !_inputLocked;
@@ -151,20 +162,24 @@ namespace DiaBlackJack.CoreLoop.UI
 
             GUI.enabled = wasEnabled;
             GUILayout.EndHorizontal();
+
+            GUILayout.Space(8f);
+            DrawPlayerCardActions();
         }
 
         private void DrawChangeCandidates()
         {
+            var candidates = _model.ChangeCandidates;
             GUILayout.Label("CHOOSE A NEW HIDDEN CARD", _headingStyle);
             GUILayout.Space(8f);
             GUILayout.BeginHorizontal();
 
             bool wasEnabled = GUI.enabled;
             GUI.enabled = !_inputLocked;
-            for (int i = 0; i < _model.ChangeCandidates.Count; i++)
+            for (int i = 0; i < candidates.Count; i++)
             {
                 int candidateIndex = i;
-                string label = $"CARD {i + 1}  [ {_model.ChangeCandidates[i]} ]";
+                string label = $"CARD {i + 1}  [ {candidates[i]} ]";
                 if (GUILayout.Button(label, _buttonStyle, GUILayout.Height(60f)))
                 {
                     ChangeCandidateRequested?.Invoke(candidateIndex);
@@ -173,6 +188,72 @@ namespace DiaBlackJack.CoreLoop.UI
 
             GUI.enabled = wasEnabled;
             GUILayout.EndHorizontal();
+        }
+
+        private void DrawPlayerCardActions()
+        {
+            GUILayout.Label("PLAYER CARD EFFECTS", _headingStyle);
+            GUILayout.Space(4f);
+            GUILayout.BeginHorizontal();
+
+            bool wasEnabled = GUI.enabled;
+            foreach (PlayerCardViewModel card in _model.PlayerCardActions)
+            {
+                GUILayout.BeginVertical(GUI.skin.box, GUILayout.ExpandWidth(true));
+                GUI.enabled = card.CanUse && !_inputLocked;
+                string label = $"USE  {card.Rank}\n{card.DisplayName}\n{card.UseState}";
+                if (GUILayout.Button(label, _buttonStyle, GUILayout.Height(72f)))
+                {
+                    CardUseRequested?.Invoke(card.CardId);
+                }
+
+                GUI.enabled = wasEnabled;
+                if (!string.IsNullOrEmpty(card.DisabledReason))
+                {
+                    GUILayout.Label(card.DisabledReason, _bodyStyle);
+                }
+
+                GUILayout.EndVertical();
+            }
+
+            GUI.enabled = wasEnabled;
+            GUILayout.EndHorizontal();
+        }
+
+        private void DrawCardEffectChoices()
+        {
+            var choices = _model.CardEffectChoices;
+            GUILayout.Label(_model.CardEffectPrompt, _headingStyle);
+            GUILayout.Space(8f);
+
+            const int choicesPerRow = 5;
+            bool wasEnabled = GUI.enabled;
+            GUI.enabled = !_inputLocked;
+            for (int rowStart = 0;
+                rowStart < choices.Count;
+                rowStart += choicesPerRow)
+            {
+                GUILayout.BeginHorizontal();
+                int rowEnd = Mathf.Min(
+                    rowStart + choicesPerRow,
+                    choices.Count);
+                for (int i = rowStart; i < rowEnd; i++)
+                {
+                    CardEffectChoiceViewModel choice = choices[i];
+                    if (GUILayout.Button(
+                        choice.Label,
+                        _buttonStyle,
+                        GUILayout.Height(52f)))
+                    {
+                        CardEffectChoiceRequested?.Invoke(choice.OptionId);
+                    }
+                }
+
+                GUILayout.EndHorizontal();
+                GUILayout.Space(6f);
+            }
+
+            GUI.enabled = wasEnabled;
         }
 
         private void EnsureStyles()
@@ -226,6 +307,11 @@ namespace DiaBlackJack.CoreLoop.UI
                     if (model.IsChoosingChangeCard)
                     {
                         return "CHOOSE A CHANGE CARD";
+                    }
+
+                    if (model.IsResolvingCardEffect)
+                    {
+                        return "CHOOSE CARD EFFECT";
                     }
 
                     return model.State == CoreLoopState.PlayerTurn

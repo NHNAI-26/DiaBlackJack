@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using DiaBlackJack.StageProgression;
 using DiaBlackJack.StageProgression.UI;
 using UnityEngine;
@@ -34,6 +35,8 @@ namespace DiaBlackJack.CoreLoop.UI
             _view.FoldRequested += RequestFold;
             _view.ChangeRequested += RequestBeginChange;
             _view.ChangeCandidateRequested += RequestSelectChangedCard;
+            _view.CardUseRequested += RequestBeginCardUse;
+            _view.CardEffectChoiceRequested += RequestResolveCardChoice;
             _view.RestartRequested += RequestRestart;
 
             _stageRuntime = StageProgressionRuntime.Instance;
@@ -54,11 +57,6 @@ namespace DiaBlackJack.CoreLoop.UI
 
         private void OnDestroy()
         {
-            if (Application.isPlaying)
-            {
-                CancelInvoke(nameof(UnlockInput));
-            }
-
             if (_view == null)
             {
                 return;
@@ -69,6 +67,8 @@ namespace DiaBlackJack.CoreLoop.UI
             _view.FoldRequested -= RequestFold;
             _view.ChangeRequested -= RequestBeginChange;
             _view.ChangeCandidateRequested -= RequestSelectChangedCard;
+            _view.CardUseRequested -= RequestBeginCardUse;
+            _view.CardEffectChoiceRequested -= RequestResolveCardChoice;
             _view.RestartRequested -= RequestRestart;
         }
 
@@ -105,6 +105,20 @@ namespace DiaBlackJack.CoreLoop.UI
             ProcessInput(() => IsStageBattle
                 ? _stageSession.TrySelectChangedCard(candidateIndex)
                 : _session.TrySelectChangedCard(candidateIndex));
+        }
+
+        public void RequestBeginCardUse(int cardId)
+        {
+            ProcessInput(() => IsStageBattle
+                ? _stageSession.TryBeginPlayerCardUse(cardId)
+                : _session.TryBeginPlayerCardUse(cardId));
+        }
+
+        public void RequestResolveCardChoice(int optionId)
+        {
+            ProcessInput(() => IsStageBattle
+                ? _stageSession.TryResolvePlayerCardChoice(optionId)
+                : _session.TryResolvePlayerCardChoice(optionId));
         }
 
         public void RequestRestart()
@@ -157,7 +171,7 @@ namespace DiaBlackJack.CoreLoop.UI
             }
             else
             {
-                Invoke(nameof(UnlockInput), 0f);
+                StartCoroutine(UnlockInputNextFrame());
             }
         }
 
@@ -171,6 +185,12 @@ namespace DiaBlackJack.CoreLoop.UI
         {
             _inputLocked = false;
             _view.SetInputLocked(false);
+        }
+
+        private IEnumerator UnlockInputNextFrame()
+        {
+            yield return null;
+            UnlockInput();
         }
     }
 }

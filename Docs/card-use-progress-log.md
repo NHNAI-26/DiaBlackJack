@@ -2,8 +2,8 @@
 
 > 프로젝트: DiaBlackJack  
 > 기록·구현 책임자: 이천서  
-> 현재 단계: CU-04 완료
-> 다음 단계: CU-05 — 화면과 런 전투 연결
+> 현재 단계: CU-05 완료
+> 다음 단계: CU-06 — 전체 검증과 마감
 > 최종 갱신: 2026-07-19
 
 ## 1. 기록 원칙
@@ -24,7 +24,7 @@
 | CU-02 | 완료 | 사용 가능 판정·선택 대기·효과 처리·종료 원인·세션 전달 기반 | 신규 16개·CoreLoop 87/87·전체 EditMode 117/117, Console Error/Warning 0 |
 | CU-03 | 완료 | 자동 권총 7·8의 1~10 추측·성공/실패·직접 버스트·정보 은닉 | 신규 8개·CoreLoop 95/95·전체 EditMode 125/125, Console Error/Warning 0 |
 | CU-04 | 완료 | 수정 구슬 순서 보존·해머 단일 비공개 교체·나이프 강제 드로우와 유지 정책 | 신규 18개·CoreLoop 113/113·전체 EditMode 143/143, Console Error/Warning 0 |
-| CU-05 | 대기 | 구현 없음 | 미실행 |
+| CU-05 | 완료 | 카드별 표시·사용/선택 입력·최근 결과·독립/런 세션 전달과 종료 동기화 | 신규 8개·관련 28/28·CoreLoop 117/117·StageProgression 34/34·전체 EditMode 151/151, Game View·씬·Console 통과 |
 | CU-06 | 대기 | 구현 없음 | 미실행 |
 
 ## 3. 착수 기준선
@@ -305,9 +305,47 @@ CU-00 착수 직전 작업 트리는 깨끗했다. 이번 단계에서는 카드
 
 ### CU-05 — 화면과 런 전투 연결
 
-상태: 대기
+상태: 완료
 
-카드 4종의 순수 규칙 테스트가 완료된 뒤 UI와 진행 시스템에 연결한다.
+#### 실제 구현
+
+- `PlayerCardViewModel`과 효과 선택 표시 모델에 카드별 ID·숫자·이름·사용 상태·사용 가능 여부·불가 사유, 선택 안내와 안전한 최근 결과를 추가했다.
+- `CoreLoopView`에 카드별 `USE` 버튼과 효과 선택 전용 화면을 추가하고 선택 중 일반 행동과 다른 카드 입력을 차단했다.
+- `CoreLoopController`가 카드 ID·선택 ID를 독립 `CoreLoopSession` 또는 런 `StageProgressionSession`에 전달하도록 연결했다.
+- `StageProgressionSession`에 카드 사용 시작·선택 완료 전달을 추가하고 기존 `SynchronizeFinishedBattle()`로 승리·패배와 지속 영혼을 한 번만 반영했다.
+- 플레이 모드 입력 잠금은 다음 프레임에 해제하고, GUI 이벤트 중 모델이 교체되어도 선택 목록 스냅샷을 사용하도록 보완했다.
+
+#### 변경 파일
+
+- `Assets/01. Scripts/Runtime/UI/CoreLoop/CoreLoopPresentation.cs`
+- `Assets/01. Scripts/Runtime/UI/CoreLoop/CoreLoopView.cs`
+- `Assets/01. Scripts/Runtime/UI/CoreLoop/CoreLoopController.cs`
+- `Assets/01. Scripts/Runtime/StageProgression/StageProgressionSession.cs`
+- `Assets/Tests/EditMode/CoreLoop/CoreLoopPresentationTests.cs`
+- `Assets/Tests/EditMode/StageProgression/StageProgressionBattleTests.cs`
+- 카드 사용·AI 활용·팀 역할·프로젝트 구조 관련 문서
+
+#### 검증
+
+- 신규 8개를 포함한 Presenter·진행 통합 28/28 통과(job `7c3e07ddbc2e4b6aa11636abaa0dfd82`)
+- CoreLoop 117개와 StageProgression 34개를 포함한 전체 EditMode 151/151, 실패·건너뜀 0(job `14c6473e2cb844419afd298523f7ba0e`)
+- `StageTest`에서 런 시작 후 `CoreLoopTest`가 진행 세션의 동일 전투 인스턴스를 사용하는 것을 확인했다.
+- Game View에서 수정 구슬 3개 선택, 해머 공개 카드 비용 선택, 자동 권총 1~10 선언, 군용 나이프 즉시 결과와 선택 중 일반 행동 차단·최근 결과·입력 잠금 해제를 확인했다.
+- `CoreLoopTest`, `StageTest` 각각 누락 스크립트·깨진 프리팹·기타 문제 0, 최종 Console Error/Warning 0
+- 씬 직렬화·어셈블리·패키지·외부 에셋 변경 없음
+
+#### 검증 중 보완
+
+MCP가 Unity 창의 포커스를 가져가지 않은 상태에서는 게임 프레임이 진행되지 않아 다음 프레임 입력 해제도 대기했다. 검증 세션에서만 백그라운드 실행을 켜 실제 프레임 진행을 재현했고, 프레임이 진행되면 잠금이 해제됨을 확인했다. 또한 효과 선택과 같은 GUI 이벤트 안에서 모델이 교체될 때 이전 목록 인덱스를 읽을 수 있는 경로를 선택 목록 스냅샷으로 제거했다.
+
+#### 다음 단계 진입 조건
+
+- CU-06에서 카드 4종의 정상·거절·버스트, 재드로우, 독립 재시작과 런 승리·패배·재시작을 반복 검증한다.
+- 숨은 정보 미노출과 카드 중복·유실·입력 고착 0건을 최종 확인하고 문서를 마감한다.
+
+#### 추천 커밋 제목
+
+`카드 사용 선택이 실제 전투 화면과 런 결과까지 이어지도록 연결`
 
 ### CU-06 — 전체 검증과 마감
 
@@ -325,7 +363,7 @@ CU-00 착수 직전 작업 트리는 깨끗했다. 이번 단계에서는 카드
 | CU-02 | 신규 16/16·CoreLoop 87/87 | 117/117 | 해당 없음 | 해당 없음 | Error/Warning 0 | 규칙 기반, 씬·패키지 변경 없음 |
 | CU-03 | 신규 8/8·CoreLoop 95/95 | 125/125 | 해당 없음 | 해당 없음 | Error/Warning 0 | 모델·세션, 씬·패키지 변경 없음 |
 | CU-04 | 신규 18/18·CoreLoop 113/113 | 143/143 | 해당 없음 | 해당 없음 | Error/Warning 0 | 모델·세션, 씬·패키지 변경 없음 |
-| CU-05 | 대기 | 대기 | 대기 | 대기 | 대기 | UI·진행 |
+| CU-05 | 신규 8/8·관련 28/28 | 151/151 | 카드 4종 사용·선택·결과 통과 | 문제 0 | Error/Warning 0 | UI·독립/런 전달, 씬 변경 없음 |
 | CU-06 | 대기 | 대기 | 대기 | 대기 | 대기 | 최종 마감 |
 
 ## 7. 미해결 사항
@@ -345,3 +383,4 @@ CU-00 착수 직전 작업 트리는 깨끗했다. 이번 단계에서는 카드
 | 2026-07-19 | 이천서 | CU-02 사용 검증·선택 대기·효과 처리·종료 원인 기반 구현과 신규 16개·전체 EditMode 117/117 검증 기록 |
 | 2026-07-19 | 이천서 | CU-03 자동 권총 단일 비공개 카드 추측·성공/실패·정보 은닉 구현과 신규 8개·전체 EditMode 125/125 검증 기록 |
 | 2026-07-19 | 이천서 | CU-04 수정 구슬·위협용 해머·군용 나이프 구현과 신규 18개·CoreLoop 113/113·전체 EditMode 143/143 검증 기록 |
+| 2026-07-19 | 이천서 | CU-05 카드 표시·효과 선택 UI·독립/런 세션 전달·종료 동기화 구현과 신규 8개·전체 EditMode 151/151·Game View·씬·Console 검증 기록 |

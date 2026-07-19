@@ -17,6 +17,8 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(session.TryPlayerFold(), Is.False);
             Assert.That(session.TryBeginPlayerChange(), Is.False);
             Assert.That(session.TrySelectChangedCard(0), Is.False);
+            Assert.That(session.TryBeginPlayerCardUse(0), Is.False);
+            Assert.That(session.TryResolvePlayerCardChoice(0), Is.False);
             Assert.That(session.TryAdvanceToNextStage(), Is.False);
             Assert.That(session.TryRestartRun(), Is.False);
             Assert.That(session.Battle, Is.Null);
@@ -119,6 +121,107 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.StageCleared));
             Assert.That(session.Progress.Player.CurrentSoul, Is.EqualTo(12));
             Assert.That(session.TrySelectChangedCard(0), Is.False);
+        }
+
+        [Test]
+        public void CU05_CardChoiceStaysInsideRunBattleUntilEffectCompletes()
+        {
+            var session = new StageProgressionSession(
+                CreateProgress(),
+                (stage, player) => CreateBattle(
+                    player,
+                    stage.EnemyMaximumSoul,
+                    new[] { 2, 5, 7, 8 },
+                    new[] { 10, 7, 5 }));
+
+            Assert.That(session.TryStartRun(), Is.True);
+            BlackjackCard sourceCard = session.Battle.Player.Hand.Cards[1];
+
+            Assert.That(session.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
+            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.InBattle));
+            Assert.That(
+                session.Battle.State,
+                Is.EqualTo(CoreLoopState.PlayerResolvingCardEffect));
+            Assert.That(session.TryResolvePlayerCardChoice(99), Is.False);
+            Assert.That(
+                session.Battle.State,
+                Is.EqualTo(CoreLoopState.PlayerResolvingCardEffect));
+
+            Assert.That(session.TryResolvePlayerCardChoice(0), Is.True);
+
+            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.InBattle));
+            Assert.That(session.Battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+            Assert.That(sourceCard.UseState, Is.EqualTo(CardUseState.Used));
+            Assert.That(session.Progress.Player.CurrentSoul, Is.EqualTo(12));
+        }
+
+        [Test]
+        public void CU05_ChoiceCardVictorySynchronizesStageExactlyOnce()
+        {
+            var session = new StageProgressionSession(
+                CreateProgress(),
+                (stage, player) => CreateBattle(
+                    player,
+                    enemyMaximumSoul: 1,
+                    new[] { 2, 7 },
+                    new[] { 5, 7 }));
+
+            Assert.That(session.TryStartRun(), Is.True);
+            BlackjackCard sourceCard = session.Battle.Player.Hand.Cards[1];
+            Assert.That(session.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
+
+            Assert.That(session.TryResolvePlayerCardChoice(7), Is.True);
+
+            Assert.That(session.Battle.Outcome, Is.EqualTo(BattleOutcome.PlayerVictory));
+            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.StageCleared));
+            Assert.That(session.Progress.Player.CurrentSoul, Is.EqualTo(12));
+            Assert.That(session.TryResolvePlayerCardChoice(7), Is.False);
+            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.StageCleared));
+        }
+
+        [Test]
+        public void CU05_ChoiceCardDefeatSynchronizesPersistentSoul()
+        {
+            var session = new StageProgressionSession(
+                CreateProgress(playerMaximumSoul: 2),
+                (stage, player) => CreateBattle(
+                    player,
+                    stage.EnemyMaximumSoul,
+                    new[] { 10, 5, 10, 2 },
+                    new[] { 2, 3, 4, 5 }));
+
+            Assert.That(session.TryStartRun(), Is.True);
+            BlackjackCard sourceCard = session.Battle.Player.Hand.Cards[1];
+            Assert.That(session.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
+
+            Assert.That(session.TryResolvePlayerCardChoice(1), Is.True);
+
+            Assert.That(session.Battle.Outcome, Is.EqualTo(BattleOutcome.PlayerDefeat));
+            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.RunDefeat));
+            Assert.That(session.Progress.Player.CurrentSoul, Is.Zero);
+            Assert.That(session.TryBeginPlayerCardUse(sourceCard.Id), Is.False);
+        }
+
+        [Test]
+        public void CU05_ImmediateCardVictorySynchronizesDuringUseRequest()
+        {
+            var session = new StageProgressionSession(
+                CreateProgress(),
+                (stage, player) => CreateBattle(
+                    player,
+                    enemyMaximumSoul: 1,
+                    new[] { 2, 9 },
+                    new[] { 10, 10, 2 }));
+
+            Assert.That(session.TryStartRun(), Is.True);
+            BlackjackCard sourceCard = session.Battle.Player.Hand.Cards[1];
+
+            Assert.That(session.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
+
+            Assert.That(sourceCard.UseState, Is.EqualTo(CardUseState.Used));
+            Assert.That(session.Battle.Outcome, Is.EqualTo(BattleOutcome.PlayerVictory));
+            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.StageCleared));
+            Assert.That(session.Progress.Player.CurrentSoul, Is.EqualTo(12));
         }
 
         [Test]
