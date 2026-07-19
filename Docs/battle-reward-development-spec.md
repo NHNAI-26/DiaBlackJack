@@ -3,7 +3,7 @@
 > 프로젝트: DiaBlackJack
 > 기획·개발 책임자: 이천서
 > 버전: v0.1
-> 상태: RW-04 구현·검증 완료 · RW-05 착수 가능
+> 상태: RW-00~RW-05 구현·검증 완료
 > 최종 갱신: 2026-07-20
 
 ## 1. 기술 목표
@@ -85,6 +85,20 @@ RW-02의 내부 `TryCompleteCurrentStageWithoutReward()` 호환 경로는 제거
 - `BattleRewardPresentationTests`: RW04-P01~RW04-P05 구현
 
 별도 보상 씬, 프리팹, 패키지와 외부 에셋은 추가하지 않았다. 첫 컴파일에서 테스트 정리 코드의 `Object` 이름 충돌 2건이 있었고 `UnityEngine.Object`로 명시해 해결했다.
+
+### 2.5 RW-05 구현 결과
+
+2026-07-20에 신규 기능이나 밸런스 변경 없이 완료된 공개 API의 반복 회귀와 실제 흐름을 검증해 1차 범위를 마감했다.
+
+- `BattleRewardSystemValidationTests`: 일반 선택, 일반 건너뛰기, 보스 선택, 보스 건너뛰기와 패배·재시작을 각각 10회 반복
+- 제안마다 옵션 ID와 정의 키 3개의 고유성, 한 세션의 제안 ID 고유성과 런 카드 ID 고유성을 확인
+- 일반 선택 카드는 실제 다음 전투 덱에 포함되고 건너뛰기는 덱을 바꾸지 않음을 확인
+- 보스 보상은 항상 `HighGrade`와 `RunVictory` 목적지를 사용하고, 선택·건너뛰기 뒤 재시작하면 최초 덱으로 복구됨을 확인
+- 패배에는 보류 보상과 해결 결과가 생기지 않으며 재시작 뒤 영혼·스테이지·덱·보상 상태가 초기화됨을 확인
+- 신규 5/5, CoreLoop 122/122, StageProgression 65/65, 카드 사용 검증 5/5와 전체 EditMode 187/187 통과
+- `StageTest`와 `CoreLoopTest` 씬 문제 0, 실제 일반·보스·패배 흐름과 시각 판정 98/100, 최종 Console Error/Warning 0 확인
+
+런타임, 씬, 프리팹, 패키지와 외부 에셋은 변경하지 않았다. RW-05의 제품 변경은 반복 회귀 테스트와 검증·기여 문서뿐이다.
 
 ## 3. 설계 원칙
 
@@ -395,7 +409,7 @@ Assets/06.Packages/Tests/EditMode/StageProgression/
 
 ## 16. 검증 기준선
 
-직전 CU-06의 확인 기준은 신규 반복 회귀 5/5, CoreLoop 122/122, StageProgression 34/34, 전체 EditMode 156/156, 두 테스트 씬 문제 0과 Console Error/Warning 0이다. RW-00은 문서만 작성했으며, RW-01에서는 신규 8/8, StageProgression 42/42와 전체 EditMode 164/164를 통과했다. RW-02에서는 신규 7/7, StageProgression 49/49와 전체 EditMode 171/171을 통과했다. RW-03에서는 신규 통합 6/6, StageProgression 55/55와 전체 EditMode 177/177을 통과했다. RW-04에서는 표시·입력 5/5, StageProgression 60/60와 전체 EditMode 182/182를 Unity 6000.3.10f1의 로컬 MCP 연결로 통과했다. `StageTest`와 `CoreLoopTest` 씬 문제는 0개였고, 일반 선택·건너뛰기·다음 스테이지와 보스 건너뛰기·런 승리 화면을 실제 Game View에서 확인했다. MCP WebSocket과 Test Framework 기반 시설 메시지를 확인·분류한 뒤 Console을 정리했으며 최종 Error/Warning은 0개다.
+직전 CU-06의 확인 기준은 신규 반복 회귀 5/5, CoreLoop 122/122, StageProgression 34/34, 전체 EditMode 156/156, 두 테스트 씬 문제 0과 Console Error/Warning 0이다. RW-00은 문서만 작성했으며, RW-01에서는 신규 8/8, StageProgression 42/42와 전체 EditMode 164/164를 통과했다. RW-02에서는 신규 7/7, StageProgression 49/49와 전체 EditMode 171/171을 통과했다. RW-03에서는 신규 통합 6/6, StageProgression 55/55와 전체 EditMode 177/177을 통과했다. RW-04에서는 표시·입력 5/5, StageProgression 60/60와 전체 EditMode 182/182를 통과했다. RW-05에서는 10회 반복 검증 5/5, CoreLoop 122/122, StageProgression 65/65, 카드 사용 검증 5/5와 전체 EditMode 187/187를 Unity 6000.3.10f1의 로컬 MCP 연결로 통과했다. `StageTest`와 `CoreLoopTest` 씬 문제는 0개였고, 일반 선택·건너뛰기·다음 전투, 보스 선택·건너뛰기·런 승리, 패배와 재시작을 실제 Game View에서 확인했다. MCP WebSocket과 Test Framework 기반 시설 메시지를 확인·분류한 뒤 Console을 정리했으며 최종 Error/Warning은 0개다.
 
 ## 17. 변경 기록
 
@@ -407,3 +421,4 @@ Assets/06.Packages/Tests/EditMode/StageProgression/
 | 2026-07-20 | 이천서 | RW-02 보상 선택 상태·보류 제안·선택·건너뛰기·완료 결과와 목적지 검증, 신규 7/7·StageProgression 49/49·전체 171/171 결과 및 RW-03 임시 세션 경계 반영 |
 | 2026-07-20 | 이천서 | RW-03 전투 승리·보상 생성·명시적 엘리트 등급·선택/건너뛰기·다음 전투 덱·재시작 통합, 신규 6/6·StageProgression 55/55·전체 177/177 결과 반영 |
 | 2026-07-20 | 이천서 | RW-04 후보 읽기 모델·기존 진행 화면의 선택/건너뛰기·결과 표시와 실제 일반/보스 흐름 구현, 신규 5/5·StageProgression 60/60·전체 182/182 결과 반영 |
+| 2026-07-20 | 이천서 | RW-05 다섯 흐름 각 10회 반복, 신규 5/5·CoreLoop 122/122·StageProgression 65/65·카드 사용 5/5·전체 187/187와 실제 화면·씬·Console 최종 검증 결과 반영 |
