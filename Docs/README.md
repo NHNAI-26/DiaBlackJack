@@ -2,7 +2,7 @@
 
 > 프로젝트: DiaBlackJack  
 > 문서 책임자: 이천서  
-> 최종 갱신: 2026-07-19
+> 최종 갱신: 2026-07-20
 
 이 디렉터리는 게임 규칙, 기획, 개발 명세, AI 활용, 외부 출처 및 팀 기여 기록을 관리한다.
 
@@ -27,10 +27,10 @@
 | [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | BA-05 통합 완료 v0.1 |
 | [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
 | [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | BA-05 완료 v0.1 |
-| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·프로토타입 결정 | CU-00 기준안 v0.1 |
-| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-05 완료 v0.1 |
-| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06 작업 순서와 단계별 검증 게이트 | CU-05 완료 v0.1 |
-| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-05 완료 v0.1 |
+| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·프로토타입 결정 | 1차 범위 완료 v0.1 |
+| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-06 검증 완료 v0.1 |
+| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
+| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-06 완료 v0.1 |
 
 ## 기록 원칙
 
@@ -71,4 +71,7 @@
 | 2026-07-19 | 이천서 | 카드 사용 CU-03 자동 권총 추측·성공/실패·직접 버스트·정보 은닉 구현과 전체 EditMode 125/125 검증 완료 |
 | 2026-07-19 | 이천서 | 카드 사용 CU-04 수정 구슬 순서 보존·해머 단일 비공개 교체·나이프 강제 드로우 구현과 전체 EditMode 143/143 검증 완료 |
 | 2026-07-19 | 이천서 | 카드 사용 CU-05 카드별 표시·효과 선택 UI·독립/런 세션 전달과 종료 동기화 구현, 전체 EditMode 151/151·Game View·씬·Console 검증 완료 |
+| 2026-07-20 | 이천서 | 카드 사용 CU-06 반복 회귀 5개·전체 EditMode 156/156, 실제 런 승리·패배 재시작과 씬·Console 최종 검증으로 1차 범위 마감 |
+| 2026-07-20 | 이천서 | 정식 런을 지도 없는 `전투→이벤트→전투→이벤트→보스` 구조로 변경하고 상대 2명 선택·엘리트 제한·랜덤 이벤트 규칙 확정 |
+| 2026-07-20 | 이천서 | 전투 보상을 카드 3장 중 1장 선택 또는 건너뛰기로 변경하고 엘리트 보상 3장 모두 높은 등급으로 확정 |
 
