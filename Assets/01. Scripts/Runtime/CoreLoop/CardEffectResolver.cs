@@ -31,7 +31,11 @@ namespace DiaBlackJack.CoreLoop
 
         public HandValue EnemyHandValue => _battle.Enemy.HandValue;
 
+        public HandValue EnemyVisibleHandValue => _battle.Enemy.VisibleHandValue;
+
         public bool IsEnemyStanding => _battle.Enemy.IsStanding;
+
+        public HandValue PlayerHandValue => _battle.Player.HandValue;
 
         public IReadOnlyList<BlackjackCard> GetPlayerFaceUpCards()
         {
@@ -65,6 +69,11 @@ namespace DiaBlackJack.CoreLoop
             return _battle.Player.Deck.CanDraw(count);
         }
 
+        public bool CanDrawEnemyCards(int count)
+        {
+            return _battle.Enemy.Deck.CanDraw(count);
+        }
+
         public IReadOnlyList<BlackjackCard> TakePlayerTopCards(int count)
         {
             return _battle.Player.Deck.TakeTop(count);
@@ -83,6 +92,25 @@ namespace DiaBlackJack.CoreLoop
         public bool TryDiscardPlayerCard(int cardId)
         {
             return _battle.Player.TryDiscardCard(cardId);
+        }
+
+        public bool TryDiscardEnemyCard(int cardId)
+        {
+            return _battle.Enemy.TryDiscardCard(cardId);
+        }
+
+        public bool CanReplaceStandingEnemyHiddenCard()
+        {
+            return _battle.Enemy.CanReplaceStandingHiddenCard;
+        }
+
+        public bool TryReplaceStandingEnemyHiddenCard(
+            out BlackjackCard previousHiddenCard,
+            out BlackjackCard replacementCard)
+        {
+            return _battle.Enemy.TryReplaceStandingHiddenCard(
+                out previousHiddenCard,
+                out replacementCard);
         }
 
         public BlackjackCard ForceEnemyDrawFaceUp()
@@ -104,6 +132,14 @@ namespace DiaBlackJack.CoreLoop
                 _battle.RoundNumber,
                 playerIsTarget: true,
                 sourceCardKey: SourceCard.DefinitionKey);
+        }
+
+        public RoundResolution CreateCurrentNumericResolution()
+        {
+            return RoundResolver.Resolve(
+                _battle.RoundNumber,
+                _battle.Player.Hand.Cards,
+                _battle.Enemy.Hand.Cards);
         }
     }
 
@@ -189,7 +225,11 @@ namespace DiaBlackJack.CoreLoop
 
         public static CardEffectResolver CreateDefault()
         {
-            return new CardEffectResolver(new AutoPistolEffectHandler());
+            return new CardEffectResolver(
+                new CrystalOrbEffectHandler(),
+                new ThreatHammerEffectHandler(),
+                new AutoPistolEffectHandler(),
+                new MilitaryKnifeEffectHandler());
         }
 
         public bool Supports(CardEffectKind effectKind)

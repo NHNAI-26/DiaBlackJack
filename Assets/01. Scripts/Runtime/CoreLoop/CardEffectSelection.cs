@@ -53,6 +53,7 @@ namespace DiaBlackJack.CoreLoop
     public sealed class PendingCardEffect
     {
         private readonly ReadOnlyCollection<CardEffectChoiceOption> _options;
+        private readonly ReadOnlyCollection<BlackjackCard> _temporaryCards;
 
         public PendingCardEffect(
             int sourceCardId,
@@ -60,6 +61,23 @@ namespace DiaBlackJack.CoreLoop
             string prompt,
             CardEffectChoiceKind choiceKind,
             IEnumerable<CardEffectChoiceOption> options)
+            : this(
+                sourceCardId,
+                effectKind,
+                prompt,
+                choiceKind,
+                options,
+                Array.Empty<BlackjackCard>())
+        {
+        }
+
+        internal PendingCardEffect(
+            int sourceCardId,
+            CardEffectKind effectKind,
+            string prompt,
+            CardEffectChoiceKind choiceKind,
+            IEnumerable<CardEffectChoiceOption> options,
+            IEnumerable<BlackjackCard> temporaryCards)
         {
             if (sourceCardId < 0)
             {
@@ -86,6 +104,11 @@ namespace DiaBlackJack.CoreLoop
             if (options == null)
             {
                 throw new ArgumentNullException(nameof(options));
+            }
+
+            if (temporaryCards == null)
+            {
+                throw new ArgumentNullException(nameof(temporaryCards));
             }
 
             var copiedOptions = new List<CardEffectChoiceOption>();
@@ -117,6 +140,29 @@ namespace DiaBlackJack.CoreLoop
             Prompt = prompt;
             ChoiceKind = choiceKind;
             _options = copiedOptions.AsReadOnly();
+
+            var copiedTemporaryCards = new List<BlackjackCard>();
+            var temporaryCardIds = new HashSet<int>();
+            foreach (BlackjackCard card in temporaryCards)
+            {
+                if (card == null)
+                {
+                    throw new ArgumentException(
+                        "Temporary cards cannot contain null.",
+                        nameof(temporaryCards));
+                }
+
+                if (!temporaryCardIds.Add(card.Id))
+                {
+                    throw new ArgumentException(
+                        $"Temporary card id {card.Id} is duplicated.",
+                        nameof(temporaryCards));
+                }
+
+                copiedTemporaryCards.Add(card);
+            }
+
+            _temporaryCards = copiedTemporaryCards.AsReadOnly();
         }
 
         public CardEffectChoiceKind ChoiceKind { get; }
@@ -128,6 +174,8 @@ namespace DiaBlackJack.CoreLoop
         public string Prompt { get; }
 
         public int SourceCardId { get; }
+
+        internal IReadOnlyList<BlackjackCard> TemporaryCards => _temporaryCards;
 
         internal bool TryGetOption(int optionId, out CardEffectChoiceOption option)
         {

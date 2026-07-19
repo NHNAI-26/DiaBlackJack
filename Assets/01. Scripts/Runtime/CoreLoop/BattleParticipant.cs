@@ -64,6 +64,36 @@ namespace DiaBlackJack.CoreLoop
             return true;
         }
 
+        internal bool CanReplaceStandingHiddenCard =>
+            IsStanding &&
+            Hand.HiddenCardCount == 1 &&
+            Deck.CanDraw(1);
+
+        internal bool TryReplaceStandingHiddenCard(
+            out BlackjackCard previousHiddenCard,
+            out BlackjackCard replacementCard)
+        {
+            previousHiddenCard = null;
+            replacementCard = null;
+            if (!CanReplaceStandingHiddenCard)
+            {
+                return false;
+            }
+
+            if (!Hand.TryTakeSingleHiddenCard(out previousHiddenCard))
+            {
+                throw new InvalidOperationException(
+                    "Validated participant has no replaceable hidden card.");
+            }
+
+            replacementCard = Deck.Draw();
+            replacementCard.Conceal();
+            Hand.Add(replacementCard);
+            Deck.Discard(previousHiddenCard);
+            IsStanding = false;
+            return true;
+        }
+
         internal void Stand()
         {
             IsStanding = true;
