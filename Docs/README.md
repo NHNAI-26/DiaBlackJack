@@ -24,9 +24,9 @@
 | [stage-progression-implementation-plan.md](./stage-progression-implementation-plan.md) | 독립 진행 시스템 작업 순서·일정·완료 증거 | 전체 완료 v0.1 |
 | [stage-progression-progress-log.md](./stage-progression-progress-log.md) | 독립 진행 시스템 착수·구현·검증 누적 기록 | SP-04 완료 v0.1 |
 | [combat-action-design.md](./combat-action-design.md) | 폴드·체인지 전투 행동의 기획 범위와 임시 결정 | BA-00 기준안 v0.1 |
-| [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | BA-03 체인지 구현 완료 v0.1 |
-| [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 작업 순서와 단계별 검증 게이트 | BA-04 착수 대기 v0.1 |
-| [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | BA-03 완료 v0.1 |
+| [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | BA-04 화면·입력 구현 완료 v0.1 |
+| [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 작업 순서와 단계별 검증 게이트 | BA-05 착수 가능 v0.1 |
+| [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | BA-04 완료 v0.1 |
 
 ## 기록 원칙
 
@@ -59,4 +59,5 @@
 | 2026-07-19 | 이천서 | 전투 행동 BA-01 선택 상태·카드 이동 기반 구현과 전체 EditMode 58/58 검증 완료 |
 | 2026-07-19 | 이천서 | 전투 행동 BA-02 폴드 판정·라운드 종료·세션 전달 구현과 전체 EditMode 64/64 검증 완료 |
 | 2026-07-19 | 이천서 | 전투 행동 BA-03 체인지 후보 선택·라운드당 제한·적 차례 연결 구현과 전체 EditMode 72/72 검증 완료 |
+| 2026-07-19 | 이천서 | 전투 행동 BA-04 폴드·체인지 비용·후보 표시와 화면 입력 연결, CoreLoop 55/55·전체 EditMode 78/78·Game View 검증 완료 |
 

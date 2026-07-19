@@ -19,8 +19,14 @@ namespace DiaBlackJack.CoreLoop.UI
             string playerDeck,
             string enemyDeck,
             string lastRound,
+            string foldActionText,
+            string changeActionText,
+            IReadOnlyList<string> changeCandidates,
             bool canHit,
             bool canStand,
+            bool canFold,
+            bool canChange,
+            bool isChoosingChangeCard,
             bool canRestart)
         {
             State = state;
@@ -35,8 +41,15 @@ namespace DiaBlackJack.CoreLoop.UI
             PlayerDeck = playerDeck;
             EnemyDeck = enemyDeck;
             LastRound = lastRound;
+            FoldActionText = foldActionText;
+            ChangeActionText = changeActionText;
+            ChangeCandidates = changeCandidates ??
+                throw new ArgumentNullException(nameof(changeCandidates));
             CanHit = canHit;
             CanStand = canStand;
+            CanFold = canFold;
+            CanChange = canChange;
+            IsChoosingChangeCard = isChoosingChangeCard;
             CanRestart = canRestart;
         }
 
@@ -64,9 +77,21 @@ namespace DiaBlackJack.CoreLoop.UI
 
         public string LastRound { get; }
 
+        public string FoldActionText { get; }
+
+        public string ChangeActionText { get; }
+
+        public IReadOnlyList<string> ChangeCandidates { get; }
+
         public bool CanHit { get; }
 
         public bool CanStand { get; }
+
+        public bool CanFold { get; }
+
+        public bool CanChange { get; }
+
+        public bool IsChoosingChangeCard { get; }
 
         public bool CanRestart { get; }
     }
@@ -94,9 +119,41 @@ namespace DiaBlackJack.CoreLoop.UI
                 FormatDeck(battle.Player.Deck),
                 FormatDeck(battle.Enemy.Deck),
                 FormatLastRound(battle.LastResolution),
+                FormatFoldAction(battle),
+                FormatChangeAction(battle),
+                FormatChangeCandidates(battle.PlayerChangeCandidates),
                 canPlayerAct,
                 canPlayerAct,
+                battle.CanPlayerFold,
+                battle.CanBeginPlayerChange,
+                battle.CanSelectChangedCard,
                 battle.State == CoreLoopState.BattleEnded);
+        }
+
+        private static string FormatFoldAction(CoreLoopBattle battle)
+        {
+            return battle.Player.Soul.Current == 1
+                ? "FOLD (-1 SOUL = DEFEAT)"
+                : "FOLD (-1 SOUL)";
+        }
+
+        private static string FormatChangeAction(CoreLoopBattle battle)
+        {
+            return battle.HasPlayerChangedThisRound
+                ? "CHANGE (USED)"
+                : "CHANGE (1/ROUND)";
+        }
+
+        private static IReadOnlyList<string> FormatChangeCandidates(
+            IReadOnlyList<BlackjackCard> candidates)
+        {
+            var labels = new string[candidates.Count];
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                labels[i] = candidates[i].Rank.ToString();
+            }
+
+            return Array.AsReadOnly(labels);
         }
 
         private static string FormatSoul(SoulPool soul)

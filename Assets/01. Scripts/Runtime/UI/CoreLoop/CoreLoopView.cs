@@ -17,6 +17,12 @@ namespace DiaBlackJack.CoreLoop.UI
 
         public event Action StandRequested;
 
+        public event Action FoldRequested;
+
+        public event Action ChangeRequested;
+
+        public event Action<int> ChangeCandidateRequested;
+
         public event Action RestartRequested;
 
         public void Render(CoreLoopViewModel model)
@@ -106,6 +112,12 @@ namespace DiaBlackJack.CoreLoop.UI
                 return;
             }
 
+            if (_model.IsChoosingChangeCard)
+            {
+                DrawChangeCandidates();
+                return;
+            }
+
             GUILayout.BeginHorizontal();
             bool wasEnabled = GUI.enabled;
             GUI.enabled = _model.CanHit && !_inputLocked;
@@ -118,6 +130,45 @@ namespace DiaBlackJack.CoreLoop.UI
             if (GUILayout.Button("STAND", _buttonStyle, GUILayout.Height(52f)))
             {
                 StandRequested?.Invoke();
+            }
+
+            GUI.enabled = wasEnabled;
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(8f);
+            GUILayout.BeginHorizontal();
+            GUI.enabled = _model.CanFold && !_inputLocked;
+            if (GUILayout.Button(_model.FoldActionText, _buttonStyle, GUILayout.Height(52f)))
+            {
+                FoldRequested?.Invoke();
+            }
+
+            GUI.enabled = _model.CanChange && !_inputLocked;
+            if (GUILayout.Button(_model.ChangeActionText, _buttonStyle, GUILayout.Height(52f)))
+            {
+                ChangeRequested?.Invoke();
+            }
+
+            GUI.enabled = wasEnabled;
+            GUILayout.EndHorizontal();
+        }
+
+        private void DrawChangeCandidates()
+        {
+            GUILayout.Label("CHOOSE A NEW HIDDEN CARD", _headingStyle);
+            GUILayout.Space(8f);
+            GUILayout.BeginHorizontal();
+
+            bool wasEnabled = GUI.enabled;
+            GUI.enabled = !_inputLocked;
+            for (int i = 0; i < _model.ChangeCandidates.Count; i++)
+            {
+                int candidateIndex = i;
+                string label = $"CARD {i + 1}  [ {_model.ChangeCandidates[i]} ]";
+                if (GUILayout.Button(label, _buttonStyle, GUILayout.Height(60f)))
+                {
+                    ChangeCandidateRequested?.Invoke(candidateIndex);
+                }
             }
 
             GUI.enabled = wasEnabled;
@@ -172,6 +223,11 @@ namespace DiaBlackJack.CoreLoop.UI
                 case BattleOutcome.PlayerDefeat:
                     return "DEFEAT";
                 default:
+                    if (model.IsChoosingChangeCard)
+                    {
+                        return "CHOOSE A CHANGE CARD";
+                    }
+
                     return model.State == CoreLoopState.PlayerTurn
                         ? "YOUR TURN"
                         : model.State.ToString();

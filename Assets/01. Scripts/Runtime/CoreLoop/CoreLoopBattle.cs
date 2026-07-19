@@ -54,6 +54,8 @@ namespace DiaBlackJack.CoreLoop
 
         public bool CanPlayerAct => State == CoreLoopState.PlayerTurn && !Player.IsStanding;
 
+        public bool CanPlayerFold => CanPlayerAct;
+
         public bool CanBeginPlayerChange =>
             CanPlayerAct &&
             !HasPlayerChangedThisRound &&

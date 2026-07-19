@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Reflection;
 using DiaBlackJack.CoreLoop.UI;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace DiaBlackJack.CoreLoop.Tests
 {
@@ -68,6 +70,148 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(model.EnemyCards, Is.EqualTo("10  ?"));
             Assert.That(model.PlayerTotal, Is.EqualTo(21));
             Assert.That(model.EnemyVisibleTotal, Is.EqualTo(10));
+        }
+
+        [Test]
+        public void BA04_PlayerTurnShowsFoldAndChangeActions()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 10, 2, 4, 9 },
+                enemyRanks: new[] { 10, 7 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            battle.Start();
+
+            CoreLoopViewModel model = CoreLoopPresenter.Create(battle);
+
+            Assert.That(model.CanHit, Is.True);
+            Assert.That(model.CanStand, Is.True);
+            Assert.That(model.CanFold, Is.True);
+            Assert.That(model.CanChange, Is.True);
+            Assert.That(model.IsChoosingChangeCard, Is.False);
+            Assert.That(model.ChangeCandidates, Is.Empty);
+            Assert.That(model.FoldActionText, Is.EqualTo("FOLD (-1 SOUL)"));
+            Assert.That(model.ChangeActionText, Is.EqualTo("CHANGE (1/ROUND)"));
+        }
+
+        [Test]
+        public void BA04_OneSoulFoldLabelWarnsAboutDefeat()
+        {
+            var session = new CoreLoopSession(CreatePlayerDefeatBattle);
+
+            CoreLoopViewModel model = CoreLoopPresenter.Create(session.Battle);
+
+            Assert.That(model.CanFold, Is.True);
+            Assert.That(model.FoldActionText, Does.Contain("DEFEAT"));
+        }
+
+        [Test]
+        public void BA04_ChoosingChangeShowsCandidatesAndDisablesGeneralActions()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 10, 2, 4, 9 },
+                enemyRanks: new[] { 10, 7 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            battle.Start();
+            battle.TryBeginPlayerChange();
+
+            CoreLoopViewModel model = CoreLoopPresenter.Create(battle);
+
+            Assert.That(model.CanHit, Is.False);
+            Assert.That(model.CanStand, Is.False);
+            Assert.That(model.CanFold, Is.False);
+            Assert.That(model.CanChange, Is.False);
+            Assert.That(model.IsChoosingChangeCard, Is.True);
+            Assert.That(model.ChangeCandidates, Is.EqualTo(new[] { "4", "9" }));
+            Assert.That(model.PlayerCards, Is.EqualTo("10"));
+            Assert.That(model.EnemyCards, Is.EqualTo("10  ?"));
+        }
+
+        [Test]
+        public void BA04_CompletedChangeShowsUsedStateAndClearsCandidates()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 10, 2, 4, 9 },
+                enemyRanks: new[] { 10, 7 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            battle.Start();
+            battle.TryBeginPlayerChange();
+            battle.TrySelectChangedCard(0);
+
+            CoreLoopViewModel model = CoreLoopPresenter.Create(battle);
+
+            Assert.That(model.CanHit, Is.True);
+            Assert.That(model.CanStand, Is.True);
+            Assert.That(model.CanFold, Is.True);
+            Assert.That(model.CanChange, Is.False);
+            Assert.That(model.IsChoosingChangeCard, Is.False);
+            Assert.That(model.ChangeCandidates, Is.Empty);
+            Assert.That(model.ChangeActionText, Is.EqualTo("CHANGE (USED)"));
+        }
+
+        [Test]
+        public void BA04_ControllerForwardsFoldAndRefreshesStandaloneViewModel()
+        {
+            GameObject gameObject = CreateControllerObject(out CoreLoopController controller);
+            try
+            {
+                controller.RequestFold();
+
+                Assert.That(controller.Battle.LastResolution.HasValue, Is.True);
+                Assert.That(
+                    controller.Battle.LastResolution.Value.Outcome,
+                    Is.EqualTo(RoundOutcome.PlayerFold));
+                Assert.That(controller.CurrentViewModel.LastRound, Does.Contain("fold"));
+                Assert.That(controller.CurrentViewModel.PlayerSoul, Is.EqualTo("11 / 12"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+            }
+        }
+
+        [Test]
+        public void BA04_ControllerForwardsBothChangeSteps()
+        {
+            GameObject gameObject = CreateControllerObject(out CoreLoopController controller);
+            try
+            {
+                controller.RequestBeginChange();
+
+                Assert.That(
+                    controller.Battle.State,
+                    Is.EqualTo(CoreLoopState.PlayerChoosingChangeCard));
+                Assert.That(controller.CurrentViewModel.IsChoosingChangeCard, Is.True);
+                Assert.That(controller.CurrentViewModel.ChangeCandidates.Count, Is.EqualTo(2));
+
+                controller.RequestSelectChangedCard(0);
+
+                Assert.That(controller.Battle.HasPlayerChangedThisRound, Is.True);
+                Assert.That(controller.CurrentViewModel.IsChoosingChangeCard, Is.False);
+                Assert.That(controller.CurrentViewModel.ChangeActionText, Is.EqualTo("CHANGE (USED)"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+            }
+        }
+
+        private static GameObject CreateControllerObject(out CoreLoopController controller)
+        {
+            var gameObject = new GameObject("BA04 Controller Test");
+            gameObject.AddComponent<CoreLoopView>();
+            controller = gameObject.AddComponent<CoreLoopController>();
+            if (controller.Battle == null)
+            {
+                MethodInfo awake = typeof(CoreLoopController).GetMethod(
+                    "Awake",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                awake.Invoke(controller, null);
+            }
+
+            return gameObject;
         }
 
         private static void AssertInitialState(CoreLoopBattle battle, int iteration)
