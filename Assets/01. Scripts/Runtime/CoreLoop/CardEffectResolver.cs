@@ -187,6 +187,11 @@ namespace DiaBlackJack.CoreLoop
             }
         }
 
+        public static CardEffectResolver CreateDefault()
+        {
+            return new CardEffectResolver(new AutoPistolEffectHandler());
+        }
+
         public bool Supports(CardEffectKind effectKind)
         {
             return _handlers.ContainsKey(effectKind);

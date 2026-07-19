@@ -45,7 +45,7 @@ namespace DiaBlackJack.CoreLoop
                 playerCurrentSoul,
                 enemyMaximumSoul,
                 enemyPolicy,
-                new CardEffectResolver())
+                CardEffectResolver.CreateDefault())
         {
         }
 

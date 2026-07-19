@@ -28,9 +28,9 @@
 | [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
 | [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | BA-05 완료 v0.1 |
 | [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·프로토타입 결정 | CU-00 기준안 v0.1 |
-| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-02 완료 v0.1 |
-| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06 작업 순서와 단계별 검증 게이트 | CU-02 완료 v0.1 |
-| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-02 완료 v0.1 |
+| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-03 완료 v0.1 |
+| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06 작업 순서와 단계별 검증 게이트 | CU-03 완료 v0.1 |
+| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-03 완료 v0.1 |
 
 ## 기록 원칙
 
@@ -68,4 +68,5 @@
 | 2026-07-19 | 이천서 | 카드 사용 CU-00 일반 수동 카드 4종의 기획·개발 명세·구현 계획·진행 기록 수립, CU-01 즉시 착수 기준 확정 |
 | 2026-07-19 | 이천서 | 카드 사용 CU-01 카드 정의·사용 상태·런 정의 키 보존 구현과 전체 EditMode 101/101 검증 완료 |
 | 2026-07-19 | 이천서 | 카드 사용 CU-02 사용 가능 판정·선택 대기·효과 완료·종료 원인 기반 구현과 전체 EditMode 117/117 검증 완료 |
+| 2026-07-19 | 이천서 | 카드 사용 CU-03 자동 권총 추측·성공/실패·직접 버스트·정보 은닉 구현과 전체 EditMode 125/125 검증 완료 |
 
