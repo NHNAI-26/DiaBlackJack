@@ -1,3 +1,6 @@
+using System;
+using DiaBlackJack.StageProgression;
+using DiaBlackJack.StageProgression.UI;
 using UnityEngine;
 
 namespace DiaBlackJack.CoreLoop.UI
@@ -9,11 +12,13 @@ namespace DiaBlackJack.CoreLoop.UI
         [SerializeField] private int seed = 20260719;
 
         private CoreLoopSession _session;
+        private StageProgressionSession _stageSession;
+        private StageProgressionRuntime _stageRuntime;
         private CoreLoopView _view;
         private bool _inputLocked;
         private int _battleIndex;
 
-        public CoreLoopBattle Battle => _session?.Battle;
+        public CoreLoopBattle Battle => IsStageBattle ? _stageSession.Battle : _session?.Battle;
 
         public CoreLoopViewModel CurrentViewModel { get; private set; }
 
@@ -28,7 +33,19 @@ namespace DiaBlackJack.CoreLoop.UI
             _view.StandRequested += RequestStand;
             _view.RestartRequested += RequestRestart;
 
-            _session = new CoreLoopSession(CreateBattle);
+            _stageRuntime = StageProgressionRuntime.Instance;
+            if (_stageRuntime != null &&
+                _stageRuntime.Session != null &&
+                _stageRuntime.Session.Progress.State == StageProgressionState.InBattle &&
+                _stageRuntime.Session.Battle != null)
+            {
+                _stageSession = _stageRuntime.Session;
+            }
+            else
+            {
+                _session = new CoreLoopSession(CreateBattle);
+            }
+
             RefreshView();
         }
 
@@ -47,16 +64,26 @@ namespace DiaBlackJack.CoreLoop.UI
 
         public void RequestHit()
         {
-            ProcessInput(_session.TryPlayerHit);
+            ProcessInput(() => IsStageBattle
+                ? _stageSession.TryPlayerHit()
+                : _session.TryPlayerHit());
         }
 
         public void RequestStand()
         {
-            ProcessInput(_session.TryPlayerStand);
+            ProcessInput(() => IsStageBattle
+                ? _stageSession.TryPlayerStand()
+                : _session.TryPlayerStand());
         }
 
         public void RequestRestart()
         {
+            if (IsStageBattle)
+            {
+                _stageRuntime.LoadProgressionScene();
+                return;
+            }
+
             ProcessInput(_session.TryRestart);
         }
 
@@ -69,7 +96,9 @@ namespace DiaBlackJack.CoreLoop.UI
                 BlackjackDeck.CreateStandard(battleSeed + 1));
         }
 
-        private void ProcessInput(System.Func<bool> action)
+        private bool IsStageBattle => _stageSession != null;
+
+        private void ProcessInput(Func<bool> action)
         {
             if (_inputLocked || action == null)
             {
@@ -78,21 +107,28 @@ namespace DiaBlackJack.CoreLoop.UI
 
             _inputLocked = true;
             _view.SetInputLocked(true);
-            if (!action())
+            bool accepted = action();
+            RefreshView();
+
+            if (!accepted)
             {
                 UnlockInput();
+            }
+            else if (IsStageBattle &&
+                _stageSession.Progress.State != StageProgressionState.InBattle)
+            {
+                UnlockInput();
+                _stageRuntime.LoadProgressionScene();
             }
             else
             {
                 Invoke(nameof(UnlockInput), 0f);
             }
-
-            RefreshView();
         }
 
         private void RefreshView()
         {
-            CurrentViewModel = CoreLoopPresenter.Create(_session.Battle);
+            CurrentViewModel = CoreLoopPresenter.Create(Battle);
             _view.Render(CurrentViewModel);
         }
 

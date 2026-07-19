@@ -3,7 +3,7 @@
 > 프로젝트: DiaBlackJack  
 > 계획 책임자: 이천서  
 > 버전: v0.1  
-> 상태: 구현 착수 전  
+> 상태: SP-03 완료 / SP-04 착수 준비
 > 기준 일정: 개발 3일  
 > 최종 갱신: 2026-07-19
 
@@ -55,7 +55,7 @@
 | SP-00 | 기준 확정과 회귀 기준 기록 | 경계·임시 결정 확인, 기존 27개 테스트 기준 | 없음 | 이천서 | 1시간 |
 | SP-01 | 런·스테이지 순수 상태 기반 | `StageDefinition`, `PlayerRunState`, `StageProgressionState` | SP-00 | 이천서(AI 보조) | 4시간 |
 | SP-02 | 전투 코어 루프 연결 | 진행 세션, 시작 영혼 전달, 전투 결과 동기화 | SP-01 | 이천서(AI 보조) | 5시간 |
-| SP-03 | 최소 진행 UI와 전용 씬 | 진행 표시 모델, Controller/View, `StageProgressionTest` | SP-02 | 이천서(AI 보조) | 5시간 |
+| SP-03 | 최소 진행 UI와 전용 씬 | 진행 표시 모델, Controller/View, `StageTest` | SP-02 | 이천서(AI 보조) | 5시간 |
 | SP-04 | 전체 흐름 검증과 기록 | SP-U/SP-F 테스트, 수동 흐름, 문서 갱신 | SP-03 | 이천서(AI 보조) | 4시간 |
 
 팀원이 추가되기 전에는 이천서가 통합 책임을 맡고 AI가 초안 작성과 검증을 보조한다. 실제 기여는 완료 후 팀 역할 기술서에 별도로 기록한다.
@@ -126,13 +126,22 @@
 - `StageProgressionViewModel`과 Presenter를 작성한다.
 - 현재 스테이지, 전체 수, 전투 종류와 런 결과를 표시한다.
 - `NEXT STAGE`, 전투 행동, `RESTART RUN` 입력을 상태별로 연결한다.
-- `StageProgressionTest` 씬을 만들고 코어 루프 임시 UI와 결합한다.
+- 진행 전용 `StageTest` 씬과 공용 전투 `CoreLoopTest` 씬을 연결한다.
 
 **완료 증거**
 
 - 유효 상태에서만 각 입력 활성화
 - View가 진행 규칙을 계산하지 않음
 - 씬 누락 스크립트·깨진 참조 0건
+
+**실행 결과: 완료**
+
+- `StageProgressionViewModel`·Presenter와 상태별 `START RUN`·`NEXT STAGE`·`RESTART RUN` 입력을 구현
+- `StageProgressionRuntime`이 `DontDestroyOnLoad`로 런 세션을 유지하고 `StageTest`와 `CoreLoopTest` 사이를 전환
+- `CoreLoopController`가 진행 세션이 있을 때만 이를 사용하고, 단독 실행 시 기존 `CoreLoopSession` 동작을 유지
+- 진행 표시 테스트 5개, 진행 어셈블리 23/23과 전체 EditMode 50/50 통과
+- `StageTest` 씬 검증 문제 0, 첫 스테이지 완료·진행 화면 복귀·두 번째 스테이지 진입과 영혼 유지 확인
+- 계획상의 신규 `StageProgressionTest` 대신 이천서가 미리 작성한 빈 `StageTest` 씬을 재사용
 
 ### SP-04 — 전체 흐름 검증과 기록
 
@@ -179,7 +188,8 @@
 | 표시·입력 | `Assets/01. Scripts/Runtime/UI/StageProgression` | 상태 표시와 입력 전달만 수행 |
 | 코어 연결 | `Assets/01. Scripts/Runtime/CoreLoop` | 시작 영혼 전달을 위한 최소 호환 변경 |
 | 자동 테스트 | `Assets/Tests/EditMode/StageProgression` | 별도 테스트 어셈블리 |
-| 통합 씬 | `Assets/00. Scenes/StageProgressionTest.unity` | `CoreLoopTest`와 분리 |
+| 진행 씬 | `Assets/00. Scenes/StageTest.unity` | 진행 정보·입력만 소유하고 `CoreLoopTest`와 분리 |
+| 공용 전투 씬 | `Assets/00. Scenes/CoreLoopTest.unity` | 진행 세션이 있으면 해당 전투를 표시하고, 단독 실행 호환 유지 |
 
 ## 8. 검증 게이트
 
@@ -206,7 +216,7 @@
 - [x] 이천서의 SP-00 진행 지시에 따라 신규 기획서와 개발 명세의 임시 결정을 구현 기준으로 적용했다.
 - [x] 검증용 3개 전투 경로를 구현 기준으로 확정했다.
 - [x] 기존 코어 루프 27개 테스트가 통과한다.
-- [x] `StageProgressionTest` 씬의 소유자를 이천서로 확정했다.
+- [x] 진행 전용 `StageTest` 씬의 소유자를 이천서로 확정했다.
 - [x] 새 외부 패키지를 추가하지 않기로 확인했다.
 - [x] 작업 시작 전 Git 변경 상태를 기록했다.
 
@@ -230,3 +240,4 @@
 | 2026-07-19 | 이천서 | SP-00 기준 확정과 기존 EditMode 27/27 회귀 검증을 완료하고 착수 체크리스트 확정 |
 | 2026-07-19 | 이천서 | SP-01 런·스테이지 순수 상태 기반과 신규 13개 테스트 구현·검증 완료 |
 | 2026-07-19 | 이천서 | SP-02 전투 연결·지속 영혼 동기화와 신규 5개·전체 45개 EditMode 검증 완료 |
+| 2026-07-19 | 이천서 | SP-03 진행 UI·전용 진행 씬·공용 전투 씬 전환과 신규 5개·전체 50개 EditMode 검증 완료 |
