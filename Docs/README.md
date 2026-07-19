@@ -31,10 +31,10 @@
 | [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-06 검증 완료 v0.1 |
 | [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
 | [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-06 완료 v0.1 |
-| [battle-reward-design.md](./battle-reward-design.md) | 일반·엘리트·보스 전투 보상 규칙과 프로토타입 카드 풀 | RW-00 기준안 v0.1 |
-| [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW-00 명세 완료 v0.1 |
-| [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | RW-00 완료 v0.1 |
-| [battle-reward-progress-log.md](./battle-reward-progress-log.md) | 전투 보상 결정·구현·검증 누적 기록 | RW-00 완료 v0.1 |
+| [battle-reward-design.md](./battle-reward-design.md) | 일반·엘리트·보스 전투 보상 규칙과 프로토타입 카드 풀 | RW-01 기반 완료 v0.1 |
+| [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW-01 검증 완료 v0.1 |
+| [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | RW-01 완료 v0.1 |
+| [battle-reward-progress-log.md](./battle-reward-progress-log.md) | 전투 보상 결정·구현·검증 누적 기록 | RW-01 완료 v0.1 |
 
 ## 기록 원칙
 
@@ -79,4 +79,5 @@
 | 2026-07-20 | 이천서 | 정식 런을 지도 없는 `전투→이벤트→전투→이벤트→보스` 구조로 변경하고 상대 2명 선택·엘리트 제한·랜덤 이벤트 규칙 확정 |
 | 2026-07-20 | 이천서 | 전투 보상을 카드 3장 중 1장 선택 또는 건너뛰기로 변경하고 엘리트 보상 3장 모두 높은 등급으로 확정 |
 | 2026-07-20 | 이천서 | 최종 보스도 높은 등급 보상 처리 뒤에만 런 승리로 전환하도록 명시하고 전투 보상 기획·개발 명세·구현 계획·진행 기록 4종 작성 |
+| 2026-07-20 | 이천서 | 전투 보상 RW-01 명시적 카탈로그·결정적 3장 제안·고유 런 카드 ID·최초 덱 복구 구현과 신규 8/8·전체 EditMode 164/164 검증 완료 |
 

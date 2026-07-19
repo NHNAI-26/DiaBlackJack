@@ -6,7 +6,11 @@ namespace DiaBlackJack.StageProgression
 {
     public sealed class PlayerRunState
     {
+        private readonly ReadOnlyCollection<RunCardDefinition> _initialDeck;
+        private readonly List<RunCardDefinition> _currentDeck;
         private readonly ReadOnlyCollection<RunCardDefinition> _deck;
+        private readonly int _initialLastCardId;
+        private int _lastIssuedCardId;
 
         public PlayerRunState(
             int maximumSoul,
@@ -54,7 +58,11 @@ namespace DiaBlackJack.StageProgression
 
             MaximumSoul = maximumSoul;
             CurrentSoul = currentSoul;
-            _deck = cards.AsReadOnly();
+            _initialDeck = new List<RunCardDefinition>(cards).AsReadOnly();
+            _currentDeck = new List<RunCardDefinition>(cards);
+            _deck = _currentDeck.AsReadOnly();
+            _initialLastCardId = FindMaximumCardId(cards);
+            _lastIssuedCardId = _initialLastCardId;
         }
 
         public int CurrentSoul { get; private set; }
@@ -77,9 +85,41 @@ namespace DiaBlackJack.StageProgression
             CurrentSoul = currentSoul;
         }
 
+        internal RunCardDefinition AddRewardCard(string definitionKey)
+        {
+            if (_lastIssuedCardId == int.MaxValue)
+            {
+                throw new InvalidOperationException("Run card ids are exhausted.");
+            }
+
+            int nextCardId = _lastIssuedCardId + 1;
+            var rewardCard = new RunCardDefinition(nextCardId, definitionKey);
+            _currentDeck.Add(rewardCard);
+            _lastIssuedCardId = nextCardId;
+            return rewardCard;
+        }
+
         internal void ResetForNewRun()
         {
             CurrentSoul = MaximumSoul;
+            _currentDeck.Clear();
+            foreach (RunCardDefinition card in _initialDeck)
+            {
+                _currentDeck.Add(card);
+            }
+
+            _lastIssuedCardId = _initialLastCardId;
+        }
+
+        private static int FindMaximumCardId(IReadOnlyList<RunCardDefinition> cards)
+        {
+            int maximumId = -1;
+            for (int i = 0; i < cards.Count; i++)
+            {
+                maximumId = Math.Max(maximumId, cards[i].Id);
+            }
+
+            return maximumId;
         }
     }
 }

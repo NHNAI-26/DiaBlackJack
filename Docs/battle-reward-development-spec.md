@@ -3,7 +3,7 @@
 > 프로젝트: DiaBlackJack
 > 기획·개발 책임자: 이천서
 > 버전: v0.1
-> 상태: RW-00 명세 완료 · RW-01 착수 가능
+> 상태: RW-01 구현·검증 완료 · RW-02 착수 가능
 > 최종 갱신: 2026-07-20
 
 ## 1. 기술 목표
@@ -27,6 +27,20 @@
 - 현행 `StageKind`는 일반 전투와 최종 보스만 구분한다. 엘리트 여부는 이후 상대 선택 시스템에서 보상 등급으로 전달해야 한다.
 
 따라서 RW 구현은 즉시 완료 전이를 보상 대기 전이로 바꾸고, 런 덱의 현재본·초기본을 분리하는 변경을 포함한다.
+
+### 2.1 RW-01 구현 결과
+
+2026-07-20에 진행 상태와 UI를 바꾸지 않는 보상 기반을 구현했다.
+
+- `BattleRewardTier`: 일반·높은 등급 구분
+- `BattleRewardCatalog`: 명시적 정의 키 검증과 풀별 읽기 전용 조회
+- `BattleRewardOption`, `BattleRewardOffer`: 정의 키가 중복되지 않는 불변 3장 제안
+- `BattleRewardGenerator`: 같은 시드·요청 순서에서 같은 후보와 증가하는 제안 ID 생성
+- `PlayerRunState`: 최초 덱 스냅샷, 현재 런 덱, 고유 증가 카드 ID와 재시작 복구
+- `AssemblyInfo.cs`: StageProgression EditMode 테스트에 내부 덱 변경 경계만 공개
+- `BattleRewardFoundationTests`: RW01-U01~RW01-U08 구현
+
+`StageProgressionState`, `RunProgress`의 승리 전이, `StageProgressionSession`과 UI는 변경하지 않았다. 실제 보상 시작·선택·건너뛰기는 RW-02 범위다.
 
 ## 3. 설계 원칙
 
@@ -337,7 +351,7 @@ Assets/06.Packages/Tests/EditMode/StageProgression/
 
 ## 16. 검증 기준선
 
-직전 CU-06의 확인 기준은 신규 반복 회귀 5/5, CoreLoop 122/122, StageProgression 34/34, 전체 EditMode 156/156, 두 테스트 씬 문제 0과 Console Error/Warning 0이다. RW-00은 문서만 작성하므로 Unity 테스트를 다시 실행하지 않는다. RW-01부터 각 단계가 이 기준선을 깨지 않고 신규 검증을 추가해야 한다.
+직전 CU-06의 확인 기준은 신규 반복 회귀 5/5, CoreLoop 122/122, StageProgression 34/34, 전체 EditMode 156/156, 두 테스트 씬 문제 0과 Console Error/Warning 0이다. RW-00은 문서만 작성했으며, RW-01에서는 신규 8/8, StageProgression 42/42와 전체 EditMode 164/164를 통과했다. Unity 배치 로그의 라이선스 토큰 갱신 메시지는 있었으나 컴파일·테스트 실패 없이 종료 코드 0으로 완료됐다.
 
 ## 17. 변경 기록
 
@@ -345,3 +359,4 @@ Assets/06.Packages/Tests/EditMode/StageProgression/
 | --- | --- | --- |
 | 2026-07-20 | 이천서 | 보상 데이터, 결정적 생성, 덱 추가·초기화, 진행 상태·세션·화면 API와 RW-01~RW-05 테스트 기준을 구현 가능한 명세로 확정 |
 | 2026-07-20 | 이천서 | 일반 풀 10개와 높은 등급 풀 6개를 정의 키 목록으로 임시 확정하고 최종 보스 보상 완료 뒤 `RunVictory` 전이를 명시 |
+| 2026-07-20 | 이천서 | RW-01 보상 카탈로그·불변 제안·결정적 생성·런 덱 추가와 재시작 복구 구현, 신규 8/8·StageProgression 42/42·전체 164/164 검증 결과 반영 |
