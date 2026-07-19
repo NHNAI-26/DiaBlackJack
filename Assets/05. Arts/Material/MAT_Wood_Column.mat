@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: MAT_Wood_Floor
+  m_Name: MAT_Wood_Column
   m_Shader: {fileID: 4800000, guid: 70016fb08aac4c0b96a824528187bc59, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -26,7 +26,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 767c326ec843eae448958d91006cd41b, type: 3}
+        m_Texture: {fileID: 2800000, guid: 8c3db2bf9ff666743b429a4162ac384f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -78,7 +78,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SmoothnessMap:
-        m_Texture: {fileID: 2800000, guid: 2e2b31058c953084a88fa6e427f817ea, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2962f62e6809cf7478753b67ea549017, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SpecGlossMap:
@@ -104,12 +104,12 @@ Material:
     - _AlphaToMask: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
-    - _Brightness: 1.576
+    - _Brightness: 0.312
     - _BumpScale: 1
     - _CastShadows: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
-    - _Contrast: 0.98
+    - _Contrast: 1
     - _Cull: 2
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
@@ -126,7 +126,7 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _HueShift: 12
+    - _HueShift: 11
     - _MaskMapEnabled: 0
     - _Metallic: 0
     - _MetallicMapEnabled: 0
@@ -139,8 +139,8 @@ Material:
     - _RimEnabled: 0
     - _RimIntensity: 12.09
     - _RimPower: 6.45
-    - _Saturation: 0.967
-    - _Smoothness: 0.275
+    - _Saturation: 0.688
+    - _Smoothness: 1
     - _SmoothnessMapEnabled: 1
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1

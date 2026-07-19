@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: MAT_Wood_Floor
+  m_Name: MAT_Wood_Ceiling
   m_Shader: {fileID: 4800000, guid: 70016fb08aac4c0b96a824528187bc59, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -104,7 +104,7 @@ Material:
     - _AlphaToMask: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
-    - _Brightness: 1.576
+    - _Brightness: 1.773
     - _BumpScale: 1
     - _CastShadows: 1
     - _ClearCoatMask: 0
@@ -126,7 +126,7 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _HueShift: 12
+    - _HueShift: 73
     - _MaskMapEnabled: 0
     - _Metallic: 0
     - _MetallicMapEnabled: 0
@@ -139,8 +139,8 @@ Material:
     - _RimEnabled: 0
     - _RimIntensity: 12.09
     - _RimPower: 6.45
-    - _Saturation: 0.967
-    - _Smoothness: 0.275
+    - _Saturation: 0.1
+    - _Smoothness: 0.234
     - _SmoothnessMapEnabled: 1
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1

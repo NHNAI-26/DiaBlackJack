@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: MAT_Wood_Floor
+  m_Name: MAT_Window_Glass
   m_Shader: {fileID: 4800000, guid: 70016fb08aac4c0b96a824528187bc59, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -26,7 +26,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 767c326ec843eae448958d91006cd41b, type: 3}
+        m_Texture: {fileID: 2800000, guid: 8ccba48be642535478333a2391d2747c, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -78,7 +78,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SmoothnessMap:
-        m_Texture: {fileID: 2800000, guid: 2e2b31058c953084a88fa6e427f817ea, type: 3}
+        m_Texture: {fileID: 2800000, guid: 479594e588ffa6c4e8c8e6267af7a6db, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SpecGlossMap:
@@ -104,7 +104,7 @@ Material:
     - _AlphaToMask: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
-    - _Brightness: 1.576
+    - _Brightness: 1.45
     - _BumpScale: 1
     - _CastShadows: 1
     - _ClearCoatMask: 0
@@ -139,8 +139,8 @@ Material:
     - _RimEnabled: 0
     - _RimIntensity: 12.09
     - _RimPower: 6.45
-    - _Saturation: 0.967
-    - _Smoothness: 0.275
+    - _Saturation: 0.84
+    - _Smoothness: 1
     - _SmoothnessMapEnabled: 1
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
