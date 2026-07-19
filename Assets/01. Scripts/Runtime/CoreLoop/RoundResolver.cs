@@ -9,7 +9,8 @@ namespace DiaBlackJack.CoreLoop
         EnemyBust,
         PlayerWin,
         PlayerTwentyOneWin,
-        EnemyWin
+        EnemyWin,
+        PlayerFold
     }
 
     public readonly struct RoundResolution
@@ -48,6 +49,15 @@ namespace DiaBlackJack.CoreLoop
 
     public static class RoundResolver
     {
+        public static RoundResolution ResolvePlayerFold(long resolutionId)
+        {
+            return new RoundResolution(
+                resolutionId,
+                RoundOutcome.PlayerFold,
+                playerDamage: 1,
+                enemyDamage: 0);
+        }
+
         public static RoundResolution Resolve(
             long resolutionId,
             IEnumerable<BlackjackCard> playerCards,

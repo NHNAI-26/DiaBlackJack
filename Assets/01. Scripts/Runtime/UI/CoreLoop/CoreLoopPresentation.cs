@@ -150,6 +150,8 @@ namespace DiaBlackJack.CoreLoop.UI
                     return "Player wins round  |  Enemy soul -1";
                 case RoundOutcome.EnemyWin:
                     return "Enemy wins round  |  Player soul -1";
+                case RoundOutcome.PlayerFold:
+                    return "Player folds  |  Player soul -1";
                 default:
                     throw new ArgumentOutOfRangeException();
             }

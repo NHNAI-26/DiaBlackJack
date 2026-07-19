@@ -3,8 +3,8 @@
 > 프로젝트: DiaBlackJack  
 > 기록 책임자: 이천서  
 > 버전: v0.1  
-> 현재 단계: BA-01 완료
-> 다음 단계: BA-02 폴드 규칙·라운드 종료
+> 현재 단계: BA-02 완료
+> 다음 단계: BA-03 체인지 후보 선택·라운드당 제한
 > 최종 갱신: 2026-07-19
 
 ## 1. 기록 원칙
@@ -21,7 +21,7 @@
 | --- | --- | --- | --- | --- |
 | BA-00 | 전투 행동 확장 기준 문서화 | 이천서(AI 문서 보조) | 완료 | 신규 문서 4종과 관련 기록 |
 | BA-01 | 상태·카드 이동 기반 | 이천서(AI 구현·검증 보조) | 완료 | 기반 코드 4개, 신규 테스트 8개, 전체 58/58 |
-| BA-02 | 폴드 규칙·라운드 종료 | 이천서(AI 구현 보조 예정) | 대기 | 미구현 |
+| BA-02 | 폴드 규칙·라운드 종료 | 이천서(AI 구현·검증 보조) | 완료 | 판정·전투·세션, 신규 테스트 6개, 전체 64/64 |
 | BA-03 | 체인지 후보 선택·제한 | 이천서(AI 구현 보조 예정) | 대기 | 미구현 |
 | BA-04 | 표시·버튼·입력 연결 | 이천서(AI 구현 보조 예정) | 대기 | 미구현 |
 | BA-05 | 런 연동·전체 검증·기록 마감 | 이천서(AI 검증 보조 예정) | 대기 | 미구현 |
@@ -128,9 +128,37 @@ Unity MCP는 `DiaBlackJack@5635a4cdcfecc8dd`, Unity 6000.3.10f1과 프로젝트 
 
 ### BA-02 — 폴드
 
-**상태:** 대기
+**상태:** 완료
+**담당:** 이천서
+**AI 역할:** 폴드 규칙 경계 분석, 판정·공통 종료·세션 코드와 테스트 초안, Unity MCP 회귀 검증 및 기록 보조
 
-완료 후 폴드 피해, 라운드 종료, 영혼 1 패배와 회귀 결과를 기록한다.
+#### 수행 내용
+
+- `RoundOutcome.PlayerFold`와 플레이어 피해 1의 명시적 결과를 추가했다.
+- `TryPlayerFold`가 플레이어 차례에서만 승인되고 적 행동·합계 비교 없이 라운드를 끝내도록 했다.
+- 기존 합계 판정과 폴드가 `CompleteRound`에서 피해·손패 정리·전투 종료·다음 라운드 처리를 공유하도록 했다.
+- 영혼 1에서 폴드하면 `PlayerDefeat`로 종료하고 새 라운드를 만들지 않도록 했다.
+- `CoreLoopSession`에 폴드 전달을 추가했다.
+- 새 `RoundOutcome`이 최근 결과 표시에서 예외를 만들지 않도록 폴드 문구를 추가했다.
+- UI 버튼·Controller와 `StageProgressionSession` 연결은 아직 추가하지 않았다.
+
+#### 변경 파일
+
+- `Assets/01. Scripts/Runtime/CoreLoop/RoundResolver.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/CoreLoopBattle.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/CoreLoopSession.cs`
+- `Assets/01. Scripts/Runtime/UI/CoreLoop/CoreLoopPresentation.cs`
+- `Assets/Tests/EditMode/CoreLoop/CombatActionFoldTests.cs`와 `.meta`
+- 관련 구현 계획·진행·AI 활용·팀 역할·프로젝트 구조 문서
+
+#### 검증
+
+- 구현 전 전체 EditMode 58/58 통과, job `9679bfd2bff04679b4d0f1c7df24115f`
+- Unity 재컴파일 성공, 컴파일 오류 0
+- CoreLoop 41/41 통과, job `8e402ce78f5940cab0e2864adc3a7600`
+- 전체 EditMode 64/64 통과, job `6000c101d2fd41d2918d238d1c939bba`
+- 정상 폴드, 영혼 1 패배, 시작 전 입력 거부, 중복 피해 방지, 세션 전달과 최근 결과 표시 확인
+- Console에는 MCP WebSocket 초기화 경고 1개와 Test Framework 기반 시설 메시지 6개만 있었으며, HTTP MCP 작업과 테스트는 정상 완료됐다. 분리 확인 후 초기화한 Console은 Error·Warning 0이다.
 
 ### BA-03 — 체인지
 
@@ -159,6 +187,10 @@ Unity MCP는 `DiaBlackJack@5635a4cdcfecc8dd`, Unity 6000.3.10f1과 프로젝트 
 | 2026-07-19 | BA-01 | CoreLoop EditMode | 35/35 통과 | 신규 8개 포함, job `05b3d109af5e46d58c9922ffc7c08691` |
 | 2026-07-19 | BA-01 | 전체 EditMode | 58/58 통과 | 실패·건너뜀 0, job `27be56769b124d0b84a9c4016547cbea` |
 | 2026-07-19 | BA-01 | Unity 컴파일·Console | 통과 | 컴파일·게임 오류 0, Test Framework 기반 시설 메시지 분리 |
+| 2026-07-19 | BA-02 기준선 | 전체 EditMode | 58/58 통과 | job `9679bfd2bff04679b4d0f1c7df24115f` |
+| 2026-07-19 | BA-02 | CoreLoop EditMode | 41/41 통과 | 신규 6개 포함, job `8e402ce78f5940cab0e2864adc3a7600` |
+| 2026-07-19 | BA-02 | 전체 EditMode | 64/64 통과 | 실패·건너뜀 0, job `6000c101d2fd41d2918d238d1c939bba` |
+| 2026-07-19 | BA-02 | Unity 컴파일·Console | 통과 | 컴파일·게임 오류 0, MCP·Test Framework 기반 시설 메시지 분리 후 Console 0 |
 
 ## 7. 변경 파일 누적표
 
@@ -166,7 +198,7 @@ Unity MCP는 `DiaBlackJack@5635a4cdcfecc8dd`, Unity 6000.3.10f1과 프로젝트 
 | --- | --- | --- | --- |
 | BA-00 | 전투 행동 문서 4종 | 문서 목차, AI 활용, 팀 역할 기록 | 코드·씬 변경 없음 |
 | BA-01 | `PlayerChangeSelection.cs`, 기반 테스트와 `.meta` | 상태·손패·덱, 관련 문서 | 코드 4개 기반, 테스트 8개 추가 |
-| BA-02 | 미정 | 미정 | 착수 후 기록 |
+| BA-02 | 폴드 테스트와 `.meta` | 판정·전투·세션·최근 결과, 관련 문서 | 런타임 4개 수정, 테스트 6개 추가 |
 | BA-03 | 미정 | 미정 | 착수 후 기록 |
 | BA-04 | 미정 | 미정 | 착수 후 기록 |
 | BA-05 | 미정 | 미정 | 착수 후 기록 |
@@ -184,3 +216,4 @@ Unity MCP는 `DiaBlackJack@5635a4cdcfecc8dd`, Unity 6000.3.10f1과 프로젝트 
 | --- | --- | --- |
 | 2026-07-19 | 이천서 | BA-00 완료 기록, 결정 대장, 기준선과 BA-01 착수 조건 작성 |
 | 2026-07-19 | 이천서 | BA-01 선택 상태·카드 이동 기반 구현, 신규 8개·전체 58개 테스트와 다음 BA-02 진입 조건 기록 |
+| 2026-07-19 | 이천서 | BA-02 폴드 판정·공통 라운드 종료·세션 전달 구현, 신규 6개·전체 64개 테스트와 다음 BA-03 진입 조건 기록 |

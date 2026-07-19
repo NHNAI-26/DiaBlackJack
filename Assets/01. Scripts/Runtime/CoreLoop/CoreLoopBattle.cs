@@ -105,6 +105,17 @@ namespace DiaBlackJack.CoreLoop
             return true;
         }
 
+        public bool TryPlayerFold()
+        {
+            if (!CanAcceptPlayerAction())
+            {
+                return false;
+            }
+
+            CompleteRound(RoundResolver.ResolvePlayerFold(RoundNumber));
+            return true;
+        }
+
         private bool CanAcceptPlayerAction()
         {
             return CanPlayerAct;
@@ -176,12 +187,16 @@ namespace DiaBlackJack.CoreLoop
 
         private void ResolveRound()
         {
-            State = CoreLoopState.ResolvingRound;
-
             RoundResolution resolution = RoundResolver.Resolve(
                 RoundNumber,
                 Player.Hand.Cards,
                 Enemy.Hand.Cards);
+            CompleteRound(resolution);
+        }
+
+        private void CompleteRound(RoundResolution resolution)
+        {
+            State = CoreLoopState.ResolvingRound;
             _damageApplier.TryApply(resolution, Player.Soul, Enemy.Soul);
             LastResolution = resolution;
 
