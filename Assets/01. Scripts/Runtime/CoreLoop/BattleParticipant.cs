@@ -42,6 +42,28 @@ namespace DiaBlackJack.CoreLoop
             return card;
         }
 
+        internal void AddFaceUpCard(BlackjackCard card)
+        {
+            if (card == null)
+            {
+                throw new ArgumentNullException(nameof(card));
+            }
+
+            card.Reveal();
+            Hand.Add(card);
+        }
+
+        internal bool TryDiscardCard(int cardId)
+        {
+            if (!Hand.TryTakeCard(cardId, out BlackjackCard card))
+            {
+                return false;
+            }
+
+            Deck.Discard(card);
+            return true;
+        }
+
         internal void Stand()
         {
             IsStanding = true;

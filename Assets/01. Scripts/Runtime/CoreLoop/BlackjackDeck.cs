@@ -103,6 +103,60 @@ namespace DiaBlackJack.CoreLoop
             return card;
         }
 
+        public IReadOnlyList<BlackjackCard> TakeTop(int count)
+        {
+            if (!CanDraw(count))
+            {
+                throw new InvalidOperationException($"Cannot take {count} cards from the deck.");
+            }
+
+            var cards = new List<BlackjackCard>(count);
+            for (int i = 0; i < count; i++)
+            {
+                cards.Add(Draw());
+            }
+
+            return cards.AsReadOnly();
+        }
+
+        public void ReturnToTop(IReadOnlyList<BlackjackCard> cardsInNextDrawOrder)
+        {
+            if (cardsInNextDrawOrder == null)
+            {
+                throw new ArgumentNullException(nameof(cardsInNextDrawOrder));
+            }
+
+            var returningCardIds = new HashSet<int>();
+            foreach (BlackjackCard card in cardsInNextDrawOrder)
+            {
+                if (card == null)
+                {
+                    throw new ArgumentException(
+                        "Returned cards cannot contain null.",
+                        nameof(cardsInNextDrawOrder));
+                }
+
+                if (!_knownCardIds.Contains(card.Id))
+                {
+                    throw new InvalidOperationException(
+                        $"Card id {card.Id} does not belong to this deck.");
+                }
+
+                if (_availableCardIds.Contains(card.Id) || !returningCardIds.Add(card.Id))
+                {
+                    throw new InvalidOperationException(
+                        $"Card id {card.Id} is already available in this deck or duplicated.");
+                }
+            }
+
+            for (int i = cardsInNextDrawOrder.Count - 1; i >= 0; i--)
+            {
+                BlackjackCard card = cardsInNextDrawOrder[i];
+                _availableCardIds.Add(card.Id);
+                _drawPile.Add(card);
+            }
+        }
+
         public bool CanDraw(int count)
         {
             if (count < 0)

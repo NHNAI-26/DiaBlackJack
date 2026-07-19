@@ -2,8 +2,8 @@
 
 > 프로젝트: DiaBlackJack  
 > 기록·구현 책임자: 이천서  
-> 현재 단계: CU-01 완료
-> 다음 단계: CU-02 — 효과 선택과 처리 기반
+> 현재 단계: CU-02 완료
+> 다음 단계: CU-03 — 자동 권총 세로 기능
 > 최종 갱신: 2026-07-19
 
 ## 1. 기록 원칙
@@ -21,7 +21,7 @@
 | --- | --- | --- | --- |
 | CU-00 | 완료 | 카드 사용 전용 문서 4종과 공통 기록 갱신 | 규칙·기획·현재 코드 정적 대조, Unity 미실행 |
 | CU-01 | 완료 | 카드 정의·카탈로그·물리 카드 사용 상태·런 정의 키 보존 | 신규 19개 포함 전체 EditMode 101/101, Console Error/Warning 0 |
-| CU-02 | 대기 | 구현 없음 | 미실행 |
+| CU-02 | 완료 | 사용 가능 판정·선택 대기·효과 처리·종료 원인·세션 전달 기반 | 신규 16개·CoreLoop 87/87·전체 EditMode 117/117, Console Error/Warning 0 |
 | CU-03 | 대기 | 구현 없음 | 미실행 |
 | CU-04 | 대기 | 구현 없음 | 미실행 |
 | CU-05 | 대기 | 구현 없음 | 미실행 |
@@ -61,6 +61,8 @@ CU-00 착수 직전 작업 트리는 깨끗했다. 이번 단계에서는 카드
 | CU-D06 | 2026-07-19 | 순수 C# 카드 카탈로그로 시작 | 기존 규칙 테스트 유지와 ScriptableObject 의존 방지 | 카드 편집 도구 착수 전 |
 | CU-D07 | 2026-07-19 | 타입이 있는 명령 경계만 공통화 | 계약 재사용 가능성을 남기되 범용 DSL 과설계 방지 | 계약 명세 확정 후 |
 | CU-D08 | 2026-07-19 | 사용 상태 초기화는 `BlackjackHand.Add`에 집중 | 일반 드로우·체인지·후속 효과 드로우가 같은 손 진입 규칙을 공유 | 별도 카드 보관 영역 추가 시 |
+| CU-D09 | 2026-07-19 | 출시 카탈로그의 실제 효과 처리기는 카드별 단계에서 등록 | CU-02 기반 검증을 위해 가짜 출시 카드를 남기지 않음 | CU-03 실제 자동 권총 처리기 등록 시 |
+| CU-D10 | 2026-07-19 | 효과 시작 조건 조회는 상태를 바꾸지 않음 | 승인 전 실패의 원자성과 UI용 가능 여부 조회를 같은 규칙으로 보장 | 새 처리기 `CanStart` 구현 시 |
 
 ## 5. 단계별 기록
 
@@ -157,9 +159,55 @@ CU-00 착수 직전 작업 트리는 깨끗했다. 이번 단계에서는 카드
 
 ### CU-02 — 효과 선택과 처리 기반
 
-상태: 대기
+상태: 완료
 
-CU-01 완료 증거를 확보했다. 공통 선택·효과 처리 기반만 다음 범위로 착수한다.
+#### 수행 내용
+
+- `PlayerResolvingCardEffect`와 기계 판독 가능한 카드 사용 불가 사유를 추가했다.
+- `PendingCardEffect`, 선택 종류·옵션과 `CardEffectResult`를 불변 모델로 작성했다.
+- `CardEffectResolver`가 타입별 처리기를 등록하고 선택 없음·단일 선택·연속 선택을 같은 단계 결과로 반환하게 했다.
+- `TryBeginPlayerCardUse`는 모든 시작 조건을 먼저 검사한 뒤 승인된 카드만 공개·`Resolving`으로 전이한다.
+- `TryResolvePlayerCardChoice`는 현재 보류 목록의 유효 옵션만 처리하고 잘못된 입력은 상태와 호출 횟수를 유지한다.
+- 선택 대기 중 히트·스탠드·폴드·체인지·다른 카드 사용을 모두 차단했다.
+- 손패 ID 조회·인출, 덱 상단 임시 분리·다음 드로우 순서 반환과 카드 이동 명령 경계를 추가했다.
+- `RoundEndCause.CardEffectBust`와 원인 카드 키를 기록하고, 효과 종료 시 적 차례를 건너뛰게 했다.
+- `CoreLoopSession`에 카드 사용 시작·선택 전달을 추가했다.
+- 실제 카드 효과·View·진행 세션 전달은 추가하지 않았고 출시 전투에서는 미구현 효과를 명시적으로 거절한다.
+
+#### 변경 파일
+
+- `Assets/01. Scripts/Runtime/CoreLoop/CardUseAvailability.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/CardEffectSelection.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/CardEffectResult.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/CardEffectResolver.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/BlackjackHand.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/BlackjackDeck.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/BattleParticipant.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/CoreLoopBattle.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/CoreLoopSession.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/CoreLoopState.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/RoundResolver.cs`
+- `Assets/Tests/EditMode/CoreLoop/CardEffectFoundationTests.cs`
+- 관련 문서
+
+#### 검증
+
+- Unity 6000.3.10f1 프로젝트와 MCP 연결·활성 `StageTest` 씬 일치 확인
+- CU-02 신규 경계 테스트 16개 통과
+- CoreLoop EditMode 87/87 통과(job `ee94e86a485b4a7c8a291cd3edfb64db`)
+- 전체 EditMode 117/117, 실패·건너뜀 0(job `28d0d40c89da4842a50663c3817e3281`)
+- 테스트 기반 시설 메시지를 정리한 뒤 Unity Console Error/Warning 0
+- 규칙 기반 단계이므로 Game View·씬 검증은 해당 없음
+- 새 런타임·테스트 어셈블리, 패키지와 외부 에셋 변경 없음
+
+#### 다음 단계 진입 조건
+
+- CU-03에서는 실제 자동 권총 처리기만 등록해 숫자 선택·성공·실패·효과 버스트를 세로로 완성한다.
+- View와 `StageProgressionSession` 전달은 CU-05 전까지 추가하지 않는다.
+
+#### 추천 커밋 제목
+
+`카드 효과를 안전하게 처리하도록 선택과 완료 경계를 고정`
 
 ### CU-03 — 자동 권총 세로 기능
 
@@ -192,7 +240,7 @@ CU-02의 원자성·선택 잠금·종료 테스트 통과 후 착수한다.
 | 착수 기준 | BA-05 진행 27/27 | 82/82 | 통과 | 문제 0 | 오류 0 | 선행 작업에서 확보 |
 | CU-00 | 미실행 | 미실행 | 미실행 | 미실행 | 미실행 | 문서 전용 |
 | CU-01 | 신규 19/19·관련 어셈블리 101/101 | 101/101 | 해당 없음 | 해당 없음 | Error/Warning 0 | 데이터 기반, 씬 변경 없음 |
-| CU-02 | 대기 | 대기 | 해당 없음 | 해당 없음 | 대기 | 규칙 기반 |
+| CU-02 | 신규 16/16·CoreLoop 87/87 | 117/117 | 해당 없음 | 해당 없음 | Error/Warning 0 | 규칙 기반, 씬·패키지 변경 없음 |
 | CU-03 | 대기 | 대기 | 해당 없음 | 해당 없음 | 대기 | 모델·세션 |
 | CU-04 | 대기 | 대기 | 해당 없음 | 해당 없음 | 대기 | 모델·세션 |
 | CU-05 | 대기 | 대기 | 대기 | 대기 | 대기 | UI·진행 |
@@ -212,3 +260,4 @@ CU-02의 원자성·선택 잠금·종료 테스트 통과 후 착수한다.
 | --- | --- | --- |
 | 2026-07-19 | 이천서 | 카드 사용 CU-00 기준선, 결정 대장, 단계별 상태와 검증 누적표 작성 |
 | 2026-07-19 | 이천서 | CU-01 카드 정의·사용 상태·런 정의 키 보존 구현과 신규 19개·전체 EditMode 101/101 검증 기록 |
+| 2026-07-19 | 이천서 | CU-02 사용 검증·선택 대기·효과 처리·종료 원인 기반 구현과 신규 16개·전체 EditMode 117/117 검증 기록 |

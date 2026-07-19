@@ -13,9 +13,34 @@ namespace DiaBlackJack.CoreLoop
         PlayerFold
     }
 
+    public enum RoundEndCause
+    {
+        TotalComparison,
+        NumericBust,
+        Fold,
+        CardEffectBust
+    }
+
     public readonly struct RoundResolution
     {
         public RoundResolution(long id, RoundOutcome outcome, int playerDamage, int enemyDamage)
+            : this(
+                id,
+                outcome,
+                playerDamage,
+                enemyDamage,
+                GetDefaultCause(outcome),
+                sourceCardKey: null)
+        {
+        }
+
+        public RoundResolution(
+            long id,
+            RoundOutcome outcome,
+            int playerDamage,
+            int enemyDamage,
+            RoundEndCause cause,
+            string sourceCardKey = null)
         {
             if (id < 0)
             {
@@ -32,11 +57,28 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentOutOfRangeException(nameof(enemyDamage));
             }
 
+            if (!Enum.IsDefined(typeof(RoundEndCause), cause))
+            {
+                throw new ArgumentOutOfRangeException(nameof(cause));
+            }
+
+            if (cause == RoundEndCause.CardEffectBust &&
+                string.IsNullOrWhiteSpace(sourceCardKey))
+            {
+                throw new ArgumentException(
+                    "Card effect bust requires a source card key.",
+                    nameof(sourceCardKey));
+            }
+
             Id = id;
             Outcome = outcome;
             PlayerDamage = playerDamage;
             EnemyDamage = enemyDamage;
+            Cause = cause;
+            SourceCardKey = sourceCardKey;
         }
+
+        public RoundEndCause Cause { get; }
 
         public long Id { get; }
 
@@ -44,7 +86,23 @@ namespace DiaBlackJack.CoreLoop
 
         public int PlayerDamage { get; }
 
+        public string SourceCardKey { get; }
+
         public int EnemyDamage { get; }
+
+        private static RoundEndCause GetDefaultCause(RoundOutcome outcome)
+        {
+            switch (outcome)
+            {
+                case RoundOutcome.PlayerBust:
+                case RoundOutcome.EnemyBust:
+                    return RoundEndCause.NumericBust;
+                case RoundOutcome.PlayerFold:
+                    return RoundEndCause.Fold;
+                default:
+                    return RoundEndCause.TotalComparison;
+            }
+        }
     }
 
     public static class RoundResolver
@@ -56,6 +114,28 @@ namespace DiaBlackJack.CoreLoop
                 RoundOutcome.PlayerFold,
                 playerDamage: 1,
                 enemyDamage: 0);
+        }
+
+        public static RoundResolution ResolveCardEffectBust(
+            long resolutionId,
+            bool playerIsTarget,
+            string sourceCardKey)
+        {
+            return playerIsTarget
+                ? new RoundResolution(
+                    resolutionId,
+                    RoundOutcome.PlayerBust,
+                    playerDamage: 2,
+                    enemyDamage: 0,
+                    cause: RoundEndCause.CardEffectBust,
+                    sourceCardKey: sourceCardKey)
+                : new RoundResolution(
+                    resolutionId,
+                    RoundOutcome.EnemyBust,
+                    playerDamage: 0,
+                    enemyDamage: 1,
+                    cause: RoundEndCause.CardEffectBust,
+                    sourceCardKey: sourceCardKey);
         }
 
         public static RoundResolution Resolve(

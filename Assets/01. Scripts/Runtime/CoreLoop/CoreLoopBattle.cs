@@ -9,7 +9,10 @@ namespace DiaBlackJack.CoreLoop
             Array.AsReadOnly(Array.Empty<BlackjackCard>());
 
         private readonly SimpleEnemyPolicy _enemyPolicy;
+        private readonly CardEffectResolver _cardEffectResolver;
         private readonly RoundDamageApplier _damageApplier = new RoundDamageApplier();
+        private CardEffectContext _activeCardEffectContext;
+        private PendingCardEffect _pendingPlayerCardEffect;
         private PlayerChangeSelection _playerChangeSelection;
 
         public CoreLoopBattle(
@@ -35,10 +38,31 @@ namespace DiaBlackJack.CoreLoop
             int playerCurrentSoul,
             int enemyMaximumSoul,
             SimpleEnemyPolicy enemyPolicy = null)
+            : this(
+                playerDeck,
+                enemyDeck,
+                playerMaximumSoul,
+                playerCurrentSoul,
+                enemyMaximumSoul,
+                enemyPolicy,
+                new CardEffectResolver())
+        {
+        }
+
+        internal CoreLoopBattle(
+            BlackjackDeck playerDeck,
+            BlackjackDeck enemyDeck,
+            int playerMaximumSoul,
+            int playerCurrentSoul,
+            int enemyMaximumSoul,
+            SimpleEnemyPolicy enemyPolicy,
+            CardEffectResolver cardEffectResolver)
         {
             Player = new BattleParticipant(playerDeck, playerMaximumSoul, playerCurrentSoul);
             Enemy = new BattleParticipant(enemyDeck, enemyMaximumSoul);
             _enemyPolicy = enemyPolicy ?? new SimpleEnemyPolicy();
+            _cardEffectResolver = cardEffectResolver ??
+                throw new ArgumentNullException(nameof(cardEffectResolver));
             State = CoreLoopState.Initializing;
         }
 
@@ -51,6 +75,8 @@ namespace DiaBlackJack.CoreLoop
         public int RoundNumber { get; private set; }
 
         public RoundResolution? LastResolution { get; private set; }
+
+        public CardEffectResult? LastCardEffectResult { get; private set; }
 
         public bool CanPlayerAct => State == CoreLoopState.PlayerTurn && !Player.IsStanding;
 
@@ -71,6 +97,22 @@ namespace DiaBlackJack.CoreLoop
 
         public IReadOnlyList<BlackjackCard> PlayerChangeCandidates =>
             _playerChangeSelection?.Candidates ?? NoChangeCandidates;
+
+        public PendingCardEffect PendingPlayerCardEffect => _pendingPlayerCardEffect;
+
+        public IReadOnlyList<CardUseAvailability> PlayerCardUseAvailability
+        {
+            get
+            {
+                var availability = new List<CardUseAvailability>(Player.Hand.Count);
+                foreach (BlackjackCard card in Player.Hand.Cards)
+                {
+                    availability.Add(EvaluatePlayerCardUse(card.Id));
+                }
+
+                return availability.AsReadOnly();
+            }
+        }
 
         public BattleOutcome Outcome
         {
@@ -95,6 +137,51 @@ namespace DiaBlackJack.CoreLoop
             }
 
             StartRound();
+            return true;
+        }
+
+        public bool CanUsePlayerCard(int cardId)
+        {
+            return EvaluatePlayerCardUse(cardId).CanUse;
+        }
+
+        public bool TryBeginPlayerCardUse(int cardId)
+        {
+            if (!CanUsePlayerCard(cardId) ||
+                !Player.Hand.TryGetCard(cardId, out BlackjackCard card))
+            {
+                return false;
+            }
+
+            var context = new CardEffectContext(this, card);
+            if (!card.TryBeginUse())
+            {
+                throw new InvalidOperationException("Validated card could not begin use.");
+            }
+
+            card.Reveal();
+            _activeCardEffectContext = context;
+            ApplyCardEffectStep(_cardEffectResolver.Begin(context));
+            return true;
+        }
+
+        public bool TryResolvePlayerCardChoice(int optionId)
+        {
+            if (State != CoreLoopState.PlayerResolvingCardEffect ||
+                _pendingPlayerCardEffect == null ||
+                _activeCardEffectContext == null ||
+                !_pendingPlayerCardEffect.TryGetOption(
+                    optionId,
+                    out CardEffectChoiceOption selectedOption))
+            {
+                return false;
+            }
+
+            CardEffectStep step = _cardEffectResolver.ResolveChoice(
+                _activeCardEffectContext,
+                _pendingPlayerCardEffect,
+                selectedOption);
+            ApplyCardEffectStep(step);
             return true;
         }
 
@@ -178,10 +265,72 @@ namespace DiaBlackJack.CoreLoop
             return CanPlayerAct;
         }
 
+        internal CardUseAvailability EvaluatePlayerCardUse(int cardId)
+        {
+            return CardUseValidator.Evaluate(this, _cardEffectResolver, cardId);
+        }
+
+        private void ApplyCardEffectStep(CardEffectStep step)
+        {
+            if (step == null)
+            {
+                throw new InvalidOperationException("Card effect handler returned no step.");
+            }
+
+            BlackjackCard sourceCard = _activeCardEffectContext?.SourceCard ??
+                throw new InvalidOperationException("Card effect has no active source card.");
+
+            if (step.PendingEffect != null)
+            {
+                if (step.PendingEffect.SourceCardId != sourceCard.Id ||
+                    step.PendingEffect.EffectKind != sourceCard.Definition.Effect)
+                {
+                    throw new InvalidOperationException(
+                        "Pending card effect does not match the active source card.");
+                }
+
+                _pendingPlayerCardEffect = step.PendingEffect;
+                State = CoreLoopState.PlayerResolvingCardEffect;
+                return;
+            }
+
+            if (!step.Result.HasValue)
+            {
+                throw new InvalidOperationException("Card effect step is neither pending nor complete.");
+            }
+
+            CardEffectResult result = step.Result.Value;
+            if (result.SourceCardId != sourceCard.Id ||
+                result.EffectKind != sourceCard.Definition.Effect)
+            {
+                throw new InvalidOperationException(
+                    "Card effect result does not match the active source card.");
+            }
+
+            if (!sourceCard.TryCompleteUse())
+            {
+                throw new InvalidOperationException("Active card effect could not complete its source card.");
+            }
+
+            LastCardEffectResult = result;
+            _pendingPlayerCardEffect = null;
+            _activeCardEffectContext = null;
+
+            if (step.RoundResolution.HasValue)
+            {
+                CompleteRound(step.RoundResolution.Value);
+                return;
+            }
+
+            RunEnemyTurn();
+        }
+
         private void StartRound()
         {
             State = CoreLoopState.StartingRound;
             RoundNumber++;
+            _activeCardEffectContext = null;
+            _pendingPlayerCardEffect = null;
             _playerChangeSelection = null;
             HasPlayerChangedThisRound = false;
 

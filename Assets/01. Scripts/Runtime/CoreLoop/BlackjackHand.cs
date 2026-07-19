@@ -39,6 +39,58 @@ namespace DiaBlackJack.CoreLoop
             _cards.Add(card);
         }
 
+        public bool Contains(int cardId)
+        {
+            return TryGetCard(cardId, out _);
+        }
+
+        public IReadOnlyList<BlackjackCard> GetFaceUpCards()
+        {
+            var faceUpCards = new List<BlackjackCard>();
+            foreach (BlackjackCard card in _cards)
+            {
+                if (card.IsFaceUp)
+                {
+                    faceUpCards.Add(card);
+                }
+            }
+
+            return faceUpCards.AsReadOnly();
+        }
+
+        public bool TryGetCard(int cardId, out BlackjackCard card)
+        {
+            foreach (BlackjackCard candidate in _cards)
+            {
+                if (candidate.Id == cardId)
+                {
+                    card = candidate;
+                    return true;
+                }
+            }
+
+            card = null;
+            return false;
+        }
+
+        public bool TryTakeCard(int cardId, out BlackjackCard card)
+        {
+            for (int i = 0; i < _cards.Count; i++)
+            {
+                if (_cards[i].Id != cardId)
+                {
+                    continue;
+                }
+
+                card = _cards[i];
+                _cards.RemoveAt(i);
+                return true;
+            }
+
+            card = null;
+            return false;
+        }
+
         public BlackjackCard[] TakeAll()
         {
             BlackjackCard[] cards = _cards.ToArray();
