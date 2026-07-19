@@ -19,10 +19,10 @@
 | [project-structure-and-mcp-reference.md](./project-structure-and-mcp-reference.md) | Unity 구조·어셈블리·MCP 참조 및 연결 확인 | 확인 완료 v0.1 |
 | [ai-usage-technical-document.md](./ai-usage-technical-document.md) | 개발 AI와 게임 내 AI 활용 기술 기록 | 지속 갱신 |
 | [team-role-technical-document.md](./team-role-technical-document.md) | 팀원별 담당 및 실제 구현 기록 | 지속 갱신 |
-| [stage-progression-design.md](./stage-progression-design.md) | 코어 루프와 분리된 런·스테이지 진행 기획 범위 | 구현 전 기준안 v0.1 |
-| [stage-progression-development-spec.md](./stage-progression-development-spec.md) | 런 상태·스테이지 전이·전투 연결·검증 명세 | 구현 전 기준안 v0.1 |
-| [stage-progression-implementation-plan.md](./stage-progression-implementation-plan.md) | 독립 진행 시스템 작업 순서·일정·완료 증거 | SP-00 완료 v0.1 |
-| [stage-progression-progress-log.md](./stage-progression-progress-log.md) | 독립 진행 시스템 착수·구현·검증 누적 기록 | SP-00 완료 v0.1 |
+| [stage-progression-design.md](./stage-progression-design.md) | 코어 루프와 분리된 런·스테이지 진행 기획 범위 | SP-01 반영 v0.1 |
+| [stage-progression-development-spec.md](./stage-progression-development-spec.md) | 런 상태·스테이지 전이·전투 연결·검증 명세 | SP-01 반영 v0.1 |
+| [stage-progression-implementation-plan.md](./stage-progression-implementation-plan.md) | 독립 진행 시스템 작업 순서·일정·완료 증거 | SP-01 완료 v0.1 |
+| [stage-progression-progress-log.md](./stage-progression-progress-log.md) | 독립 진행 시스템 착수·구현·검증 누적 기록 | SP-01 완료 v0.1 |
 
 ## 기록 원칙
 
@@ -47,4 +47,5 @@
 | 2026-07-19 | 이천서 | 코어 루프 4단계 전체 테스트·승패·재시작·씬·Console 검증과 기록 완료 |
 | 2026-07-19 | 이천서 | 런·스테이지 진행을 코어 루프와 분리하고 기획·개발 명세·구현 계획·진행 기록 체계 작성 |
 | 2026-07-19 | 이천서 | 런·스테이지 SP-00 기준 확정과 Unity EditMode 27/27 회귀 검증 완료 |
+| 2026-07-19 | 이천서 | 런·스테이지 SP-01 순수 상태 기반 구현과 Unity EditMode 전체 40/40 검증 완료 |
 
