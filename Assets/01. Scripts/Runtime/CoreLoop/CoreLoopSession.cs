@@ -29,6 +29,16 @@ namespace DiaBlackJack.CoreLoop
             return Battle.TryPlayerFold();
         }
 
+        public bool TryBeginPlayerChange()
+        {
+            return Battle.TryBeginPlayerChange();
+        }
+
+        public bool TrySelectChangedCard(int candidateIndex)
+        {
+            return Battle.TrySelectChangedCard(candidateIndex);
+        }
+
         public bool TryRestart()
         {
             if (Battle.State != CoreLoopState.BattleEnded)

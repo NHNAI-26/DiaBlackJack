@@ -1,11 +1,16 @@
 using System;
+using System.Collections.Generic;
 
 namespace DiaBlackJack.CoreLoop
 {
     public sealed class CoreLoopBattle
     {
+        private static readonly IReadOnlyList<BlackjackCard> NoChangeCandidates =
+            Array.AsReadOnly(Array.Empty<BlackjackCard>());
+
         private readonly SimpleEnemyPolicy _enemyPolicy;
         private readonly RoundDamageApplier _damageApplier = new RoundDamageApplier();
+        private PlayerChangeSelection _playerChangeSelection;
 
         public CoreLoopBattle(
             BlackjackDeck playerDeck,
@@ -48,6 +53,22 @@ namespace DiaBlackJack.CoreLoop
         public RoundResolution? LastResolution { get; private set; }
 
         public bool CanPlayerAct => State == CoreLoopState.PlayerTurn && !Player.IsStanding;
+
+        public bool CanBeginPlayerChange =>
+            CanPlayerAct &&
+            !HasPlayerChangedThisRound &&
+            _playerChangeSelection == null &&
+            Player.Hand.HiddenCardCount == 1 &&
+            Player.Deck.CanDraw(2);
+
+        public bool CanSelectChangedCard =>
+            State == CoreLoopState.PlayerChoosingChangeCard &&
+            _playerChangeSelection != null;
+
+        public bool HasPlayerChangedThisRound { get; private set; }
+
+        public IReadOnlyList<BlackjackCard> PlayerChangeCandidates =>
+            _playerChangeSelection?.Candidates ?? NoChangeCandidates;
 
         public BattleOutcome Outcome
         {
@@ -116,6 +137,40 @@ namespace DiaBlackJack.CoreLoop
             return true;
         }
 
+        public bool TryBeginPlayerChange()
+        {
+            if (!CanBeginPlayerChange)
+            {
+                return false;
+            }
+
+            if (!Player.TryBeginChange(out PlayerChangeSelection selection))
+            {
+                return false;
+            }
+
+            _playerChangeSelection = selection;
+            State = CoreLoopState.PlayerChoosingChangeCard;
+            return true;
+        }
+
+        public bool TrySelectChangedCard(int candidateIndex)
+        {
+            if (!CanSelectChangedCard ||
+                !_playerChangeSelection.TrySelectCandidate(candidateIndex))
+            {
+                return false;
+            }
+
+            PlayerChangeSelection completedSelection = _playerChangeSelection;
+            Player.CompleteChange(completedSelection);
+            _playerChangeSelection = null;
+            HasPlayerChangedThisRound = true;
+
+            RunEnemyTurn();
+            return true;
+        }
+
         private bool CanAcceptPlayerAction()
         {
             return CanPlayerAct;
@@ -125,6 +180,8 @@ namespace DiaBlackJack.CoreLoop
         {
             State = CoreLoopState.StartingRound;
             RoundNumber++;
+            _playerChangeSelection = null;
+            HasPlayerChangedThisRound = false;
 
             Player.Draw(faceUp: true);
             Enemy.Draw(faceUp: true);

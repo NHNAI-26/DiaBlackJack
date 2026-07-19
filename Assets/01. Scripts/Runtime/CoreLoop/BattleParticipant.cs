@@ -47,6 +47,47 @@ namespace DiaBlackJack.CoreLoop
             IsStanding = true;
         }
 
+        internal bool TryBeginChange(out PlayerChangeSelection selection)
+        {
+            selection = null;
+            if (Hand.HiddenCardCount != 1 || !Deck.CanDraw(2))
+            {
+                return false;
+            }
+
+            if (!Hand.TryTakeSingleHiddenCard(out BlackjackCard previousHiddenCard))
+            {
+                return false;
+            }
+
+            BlackjackCard firstCandidate = Deck.Draw();
+            BlackjackCard secondCandidate = Deck.Draw();
+            firstCandidate.Reveal();
+            secondCandidate.Reveal();
+
+            selection = new PlayerChangeSelection(
+                previousHiddenCard,
+                firstCandidate,
+                secondCandidate);
+            return true;
+        }
+
+        internal void CompleteChange(PlayerChangeSelection selection)
+        {
+            if (selection == null)
+            {
+                throw new ArgumentNullException(nameof(selection));
+            }
+
+            if (!selection.IsCompleted)
+            {
+                throw new InvalidOperationException("Change selection must be completed first.");
+            }
+
+            Hand.Add(selection.SelectedCard);
+            Deck.Discard(selection.DiscardedCards);
+        }
+
         internal void ClearRound()
         {
             Deck.Discard(Hand.TakeAll());
