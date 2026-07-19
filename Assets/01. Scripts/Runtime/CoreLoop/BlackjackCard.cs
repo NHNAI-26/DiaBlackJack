@@ -6,24 +6,31 @@ namespace DiaBlackJack.CoreLoop
     {
         public BlackjackCard(int id, int rank, bool isFaceUp = false)
         {
-            if (id < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(id), "Card id cannot be negative.");
-            }
-
-            if (rank < 1 || rank > 10)
-            {
-                throw new ArgumentOutOfRangeException(nameof(rank), "Card rank must be between 1 and 10.");
-            }
-
+            ValidateId(id);
             Id = id;
-            Rank = rank;
+            Definition = CardDefinitionCatalog.GetDefaultForRank(rank);
             IsFaceUp = isFaceUp;
         }
 
+        public BlackjackCard(int id, CardDefinition definition, bool isFaceUp = false)
+        {
+            ValidateId(id);
+            Id = id;
+            Definition = definition ?? throw new ArgumentNullException(nameof(definition));
+            IsFaceUp = isFaceUp;
+        }
+
+        public bool CanUse => UseState == CardUseState.Available;
+
+        public CardDefinition Definition { get; }
+
+        public string DefinitionKey => Definition.Key;
+
         public int Id { get; }
 
-        public int Rank { get; }
+        public int Rank => Definition.Rank;
+
+        public CardUseState UseState { get; private set; }
 
         public bool IsFaceUp { get; private set; }
 
@@ -35,6 +42,43 @@ namespace DiaBlackJack.CoreLoop
         public void Conceal()
         {
             IsFaceUp = false;
+        }
+
+        internal void PrepareForHand()
+        {
+            UseState = Definition.Activation == CardActivationKind.Manual
+                ? CardUseState.Available
+                : CardUseState.Unavailable;
+        }
+
+        internal bool TryBeginUse()
+        {
+            if (UseState != CardUseState.Available)
+            {
+                return false;
+            }
+
+            UseState = CardUseState.Resolving;
+            return true;
+        }
+
+        internal bool TryCompleteUse()
+        {
+            if (UseState != CardUseState.Resolving)
+            {
+                return false;
+            }
+
+            UseState = CardUseState.Used;
+            return true;
+        }
+
+        private static void ValidateId(int id)
+        {
+            if (id < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(id), "Card id cannot be negative.");
+            }
         }
     }
 }

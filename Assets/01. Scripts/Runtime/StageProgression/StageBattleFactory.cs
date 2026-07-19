@@ -21,7 +21,8 @@ namespace DiaBlackJack.StageProgression
             var playerCards = new List<BlackjackCard>(player.Deck.Count);
             foreach (RunCardDefinition card in player.Deck)
             {
-                playerCards.Add(new BlackjackCard(card.Id, card.Rank));
+                CardDefinition definition = CardDefinitionCatalog.GetByKey(card.DefinitionKey);
+                playerCards.Add(new BlackjackCard(card.Id, definition));
             }
 
             return new CoreLoopBattle(

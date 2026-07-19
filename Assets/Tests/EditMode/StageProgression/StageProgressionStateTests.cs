@@ -165,8 +165,29 @@ namespace DiaBlackJack.StageProgression.Tests
 
             Assert.That(player.Deck.Count, Is.EqualTo(2));
             Assert.That(player.Deck[0].Id, Is.Zero);
+            Assert.That(player.Deck[0].DefinitionKey, Is.EqualTo("standard-ace-1"));
             Assert.That(player.Deck[1].Rank, Is.EqualTo(10));
+            Assert.That(player.Deck[1].DefinitionKey, Is.EqualTo("military-knife-10"));
             Assert.That(player.CurrentSoul, Is.EqualTo(8));
+        }
+
+        [Test]
+        public void CU_U08_RunCardDefinitionSupportsLegacyRankAndStableKey()
+        {
+            var legacyCard = new RunCardDefinition(3, 5);
+            var keyedCard = new RunCardDefinition(4, "auto-pistol-8");
+
+            Assert.That(legacyCard.DefinitionKey, Is.EqualTo("crystal-orb-5"));
+            Assert.That(legacyCard.Rank, Is.EqualTo(5));
+            Assert.That(keyedCard.DefinitionKey, Is.EqualTo("auto-pistol-8"));
+            Assert.That(keyedCard.Rank, Is.EqualTo(8));
+        }
+
+        [Test]
+        public void CU_U09_RunCardDefinitionRejectsUnknownKey()
+        {
+            Assert.Throws<KeyNotFoundException>(() =>
+                new RunCardDefinition(0, "missing-card"));
         }
 
         [Test]

@@ -245,6 +245,33 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(battle.Enemy.Deck.TotalCardCount, Is.EqualTo(20));
         }
 
+        [Test]
+        public void CU_U10_BattleFactoryPreservesRunCardDefinitionKeys()
+        {
+            var player = new PlayerRunState(
+                12,
+                12,
+                new[]
+                {
+                    new RunCardDefinition(7, "auto-pistol-7"),
+                    new RunCardDefinition(9, "military-knife-10")
+                });
+            var stage = new StageDefinition(
+                "normal",
+                "Normal",
+                StageKind.NormalCombat,
+                4,
+                10,
+                11);
+
+            CoreLoopBattle battle = StageBattleFactory.Create(stage, player);
+            Assert.That(battle.Start(), Is.True);
+
+            Assert.That(
+                battle.Player.Hand.Cards.Select(card => card.DefinitionKey),
+                Is.EquivalentTo(new[] { "auto-pistol-7", "military-knife-10" }));
+        }
+
         private static RunProgress CreateProgress(int playerMaximumSoul = 12)
         {
             return new RunProgress(

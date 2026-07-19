@@ -35,6 +35,7 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentNullException(nameof(card));
             }
 
+            card.PrepareForHand();
             _cards.Add(card);
         }
 

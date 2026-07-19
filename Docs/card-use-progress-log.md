@@ -2,8 +2,8 @@
 
 > 프로젝트: DiaBlackJack  
 > 기록·구현 책임자: 이천서  
-> 현재 단계: CU-00 완료  
-> 다음 단계: CU-01 — 카드 정의와 사용 상태 기반  
+> 현재 단계: CU-01 완료
+> 다음 단계: CU-02 — 효과 선택과 처리 기반
 > 최종 갱신: 2026-07-19
 
 ## 1. 기록 원칙
@@ -20,7 +20,7 @@
 | 단계 | 상태 | 실제 결과 | 검증 |
 | --- | --- | --- | --- |
 | CU-00 | 완료 | 카드 사용 전용 문서 4종과 공통 기록 갱신 | 규칙·기획·현재 코드 정적 대조, Unity 미실행 |
-| CU-01 | 대기 | 구현 없음 | 미실행 |
+| CU-01 | 완료 | 카드 정의·카탈로그·물리 카드 사용 상태·런 정의 키 보존 | 신규 19개 포함 전체 EditMode 101/101, Console Error/Warning 0 |
 | CU-02 | 대기 | 구현 없음 | 미실행 |
 | CU-03 | 대기 | 구현 없음 | 미실행 |
 | CU-04 | 대기 | 구현 없음 | 미실행 |
@@ -60,6 +60,7 @@ CU-00 착수 직전 작업 트리는 깨끗했다. 이번 단계에서는 카드
 | CU-D05 | 2026-07-19 | 상태 하나와 보류 선택 모델 사용 | 카드별 상태 열거형 증가 방지 | 복수 동시 효과 필요 시 |
 | CU-D06 | 2026-07-19 | 순수 C# 카드 카탈로그로 시작 | 기존 규칙 테스트 유지와 ScriptableObject 의존 방지 | 카드 편집 도구 착수 전 |
 | CU-D07 | 2026-07-19 | 타입이 있는 명령 경계만 공통화 | 계약 재사용 가능성을 남기되 범용 DSL 과설계 방지 | 계약 명세 확정 후 |
+| CU-D08 | 2026-07-19 | 사용 상태 초기화는 `BlackjackHand.Add`에 집중 | 일반 드로우·체인지·후속 효과 드로우가 같은 손 진입 규칙을 공유 | 별도 카드 보관 영역 추가 시 |
 
 ## 5. 단계별 기록
 
@@ -106,15 +107,59 @@ CU-00 착수 직전 작업 트리는 깨끗했다. 이번 단계에서는 카드
 
 ### CU-01 — 카드 정의와 사용 상태 기반
 
-상태: 대기
+상태: 완료
 
-착수 시 실제 변경 파일, 호환 전략, 테스트 수와 Unity 검증 작업 ID를 기록한다.
+#### 수행 내용
+
+- `CardDefinition`과 발동·효과·사용 상태 열거형을 추가했다.
+- 숫자 1~10을 문서의 안정된 키와 카드 효과 유형에 연결하는 순수 C# 카탈로그를 추가했다.
+- 기존 `BlackjackCard(int id, int rank, bool isFaceUp = false)` 생성자는 그대로 유지하고 정의 기반 생성 경로를 추가했다.
+- 물리 카드별 `Unavailable`, `Available`, `Resolving`, `Used` 상태와 안전한 내부 전이를 구현했다.
+- `BlackjackHand.Add`에서 수동 카드만 사용 가능하게 초기화해 일반 드로우·체인지·재드로우가 같은 경계를 사용하게 했다.
+- `RunCardDefinition`에 `DefinitionKey`를 추가하고 기존 숫자 생성자와 `StageBattleFactory`를 카탈로그에 연결했다.
+- 알 수 없는 정의 키는 효과 없는 카드로 대체하지 않고 명시적 예외로 처리했다.
+- 카드 효과 실행, 공개 사용 API, UI, 씬, 패키지와 외부 에셋은 추가하지 않았다.
+
+#### 변경 파일
+
+- `Assets/01. Scripts/Runtime/CoreLoop/CardActivationKind.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/CardEffectKind.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/CardUseState.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/CardDefinition.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/CardDefinitionCatalog.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/BlackjackCard.cs`
+- `Assets/01. Scripts/Runtime/CoreLoop/BlackjackHand.cs`
+- `Assets/01. Scripts/Runtime/StageProgression/RunCardDefinition.cs`
+- `Assets/01. Scripts/Runtime/StageProgression/StageBattleFactory.cs`
+- `Assets/01. Scripts/Runtime/AssemblyInfo.cs`
+- `Assets/Tests/EditMode/CoreLoop/CardDefinitionTests.cs`
+- `Assets/Tests/EditMode/StageProgression/StageProgressionStateTests.cs`
+- `Assets/Tests/EditMode/StageProgression/StageProgressionBattleTests.cs`
+- 관련 문서
+
+#### 검증
+
+- Unity 6000.3.10f1 프로젝트와 MCP 연결 일치 확인
+- 스크립트 컴파일 완료, Unity Console Error/Warning 0
+- 신규 CU-01 테스트 19개 통과
+- CoreLoop·StageProgression 대상 어셈블리 101/101 통과
+- 전체 EditMode 101/101 통과
+- 데이터 기반 단계이므로 Game View·씬 검증은 해당 없음
+
+#### 다음 단계 진입 조건
+
+- CU-02에서는 이 정의·상태를 사용해 공통 검증, 보류 선택과 타입이 있는 효과 처리 경계만 구현한다.
+- 카드별 실제 효과와 UI를 미리 추가하지 않는다.
+
+#### 추천 커밋 제목
+
+`카드 효과를 안전하게 확장할 수 있도록 정의와 사용 상태를 분리`
 
 ### CU-02 — 효과 선택과 처리 기반
 
 상태: 대기
 
-CU-01 완료 증거 없이 착수하지 않는다.
+CU-01 완료 증거를 확보했다. 공통 선택·효과 처리 기반만 다음 범위로 착수한다.
 
 ### CU-03 — 자동 권총 세로 기능
 
@@ -146,7 +191,7 @@ CU-02의 원자성·선택 잠금·종료 테스트 통과 후 착수한다.
 | --- | --- | --- | --- | --- | --- | --- |
 | 착수 기준 | BA-05 진행 27/27 | 82/82 | 통과 | 문제 0 | 오류 0 | 선행 작업에서 확보 |
 | CU-00 | 미실행 | 미실행 | 미실행 | 미실행 | 미실행 | 문서 전용 |
-| CU-01 | 대기 | 대기 | 해당 없음 | 해당 없음 | 대기 | 데이터 기반 |
+| CU-01 | 신규 19/19·관련 어셈블리 101/101 | 101/101 | 해당 없음 | 해당 없음 | Error/Warning 0 | 데이터 기반, 씬 변경 없음 |
 | CU-02 | 대기 | 대기 | 해당 없음 | 해당 없음 | 대기 | 규칙 기반 |
 | CU-03 | 대기 | 대기 | 해당 없음 | 해당 없음 | 대기 | 모델·세션 |
 | CU-04 | 대기 | 대기 | 해당 없음 | 해당 없음 | 대기 | 모델·세션 |
@@ -166,3 +211,4 @@ CU-02의 원자성·선택 잠금·종료 테스트 통과 후 착수한다.
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
 | 2026-07-19 | 이천서 | 카드 사용 CU-00 기준선, 결정 대장, 단계별 상태와 검증 누적표 작성 |
+| 2026-07-19 | 이천서 | CU-01 카드 정의·사용 상태·런 정의 키 보존 구현과 신규 19개·전체 EditMode 101/101 검증 기록 |
