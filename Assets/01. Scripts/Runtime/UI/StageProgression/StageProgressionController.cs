@@ -34,6 +34,7 @@ namespace DiaBlackJack.StageProgression.UI
             _view.BattleRewardSelected += RequestSelectBattleReward;
             _view.BattleRewardSkipped += RequestSkipBattleReward;
             _view.OpponentFocused += RequestFocusOpponent;
+            _view.OpponentConfirmed += RequestConfirmOpponent;
             RefreshView();
         }
 
@@ -50,6 +51,7 @@ namespace DiaBlackJack.StageProgression.UI
             _view.BattleRewardSelected -= RequestSelectBattleReward;
             _view.BattleRewardSkipped -= RequestSkipBattleReward;
             _view.OpponentFocused -= RequestFocusOpponent;
+            _view.OpponentConfirmed -= RequestConfirmOpponent;
         }
 
         public void RequestStartRun()
@@ -100,6 +102,22 @@ namespace DiaBlackJack.StageProgression.UI
             _focusedOpponentProfileKey = profileKey;
             CurrentViewModel = requestedModel;
             _view.Render(CurrentViewModel);
+        }
+
+        public void RequestConfirmOpponent()
+        {
+            if (_inputLocked ||
+                CurrentViewModel == null ||
+                !CurrentViewModel.CanConfirmOpponent ||
+                !CurrentViewModel.OpponentOfferId.HasValue)
+            {
+                return;
+            }
+
+            int offerId = CurrentViewModel.OpponentOfferId.Value;
+            string profileKey = CurrentViewModel.FocusedOpponentProfileKey;
+            ProcessInput(() =>
+                _runtime.Session.TrySelectOpponent(offerId, profileKey));
         }
 
         private void ProcessInput(Func<bool> action)

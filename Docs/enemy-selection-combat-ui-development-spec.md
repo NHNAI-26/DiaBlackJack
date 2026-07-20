@@ -4,7 +4,7 @@
 > 기획·개발 책임자: 이천서  
 > 작업 식별자: EUI-00~EUI-05  
 > 버전: v0.1  
-> 상태: EUI-02 상대 선택 표시·포커스·씬 이동 차단 구현·검증 완료
+> 상태: EUI-03 선택 상대의 실제 전투·보상 통합 구현·검증 완료
 > 최종 갱신: 2026-07-20
 
 ## 1. 기술 목표
@@ -38,10 +38,12 @@ EnemyCombatProfileCatalog.Previews
 - `StageProgressionRuntime`은 EUI-02부터 결정적 상대 생성기를 주입하고 일반전 진입 시 선택 제안을 만든다.
 - `StageProgressionPresenter`는 기존 `RunProgress` 호환 오버로드와 세션·집중 키 오버로드를 제공하고 후보 2명의 안전 미리보기를 표시한다.
 - `StageProgressionController`는 현재 제안 ID와 집중 키를 로컬로 소유하며 선택 상태에서는 전투 씬을 열지 않고 같은 화면을 갱신한다.
-- `StageProgressionView`는 후보 비교 카드·단일 집중 강조·확정 가능 상태를 기존 IMGUI 안에 표시한다. 확정 요청의 세션 처리와 실제 전투 이동은 EUI-03 범위다.
+- `StageProgressionView`는 후보 비교 카드·단일 집중 강조·확정 가능 상태를 기존 IMGUI 안에 표시하며 확정 이벤트는 Controller의 EUI-03 세션 처리로 연결된다.
+- `StageProgressionSession.TrySelectOpponent(offerId, profileKey)`가 현재 제안·스테이지 인덱스·정확한 후보 키를 검증하고, 템플릿 ID·시드와 미리보기 이름으로 해석 완료 스테이지·전투를 먼저 준비한 뒤 성공 시에만 상태를 교체한다.
+- `StageProgressionController`는 확정 이벤트를 현재 OfferId·집중 키와 함께 세션에 전달하고 성공한 `InBattle + Battle`에서만 `CoreLoopTest`를 연다.
 - `CoreLoopPresenter`는 전투 객체만 받아 적 프로필 이름·등급·추론 정보를 알 수 없다.
 - `EnemyInferenceDisplayModel`과 `BossCombatDisplayModel`은 있으나 실제 View에 연결되지 않았다.
-- EUI-02 기준 신규 9/9, StageProgression 103/103, CoreLoop 179/179, 전체 EditMode 282/282와 변경 스크립트 진단 0, 1280×720·1920×1080 실제 선택 화면 검증을 통과했다.
+- EUI-03 기준 신규 14/14, StageProgression 117/117, CoreLoop 179/179, 전체 EditMode 296/296와 변경 스크립트 진단 0, 실제 `StageTest` 확정→집행관 영혼 5·덱 10장→`CoreLoopTest` 전환을 통과했다.
 
 ## 3. 설계 원칙
 
@@ -146,7 +148,7 @@ public bool IsOpponentSelectionEnabled { get; }
 public bool TrySelectOpponent(int offerId, string profileKey);
 ```
 
-EUI-01에서는 선택 대기 진입과 기존 입력 차단까지만 구현했다. 위 확정 API와 선택 프로필 전투 생성은 EUI-03 구현 범위다.
+EUI-03에서 위 확정 API와 선택 프로필 전투 생성을 구현했다.
 
 처리 순서:
 
@@ -364,15 +366,17 @@ EUI-00 기준 전체 EditMode 260/260을 회귀 기준으로 사용한다.
 | EUI02-I01 | 후보 클릭은 세션·런·전투 상태를 변경하지 않음 |
 | EUI02-I02 | 입력 잠금 중 중복 클릭·확정 차단 |
 
-### EUI-03 실제 전투 통합 — 최소 8개
+### EUI-03 실제 전투 통합 — 14개 완료
 
 | ID | 검증 내용 |
 | --- | --- |
-| EUI03-U01~04 | 일반 3종·엘리트 선택이 실제 키·덱 10장·영혼·정책·보상과 일치 |
-| EUI03-U05 | 이전 OfferId·후보 외 키·보스 키 실패 원자성 |
-| EUI03-U06 | 선택 성공 뒤 Pending 제거·ActiveStage 설정·InBattle 전이 |
-| EUI03-I01 | 첫 선택→전투→보상→다음 선택에서 영혼·덱 유지 |
-| EUI03-I02 | 두 번째 선택→전투→보상→고정 보스 진입 |
+| EUI03-I01 4건 | 일반 3종·엘리트 선택이 실제 키·덱 10장·영혼·정책과 일치하고 Pending 제거·ActiveStage 설정·InBattle 전이 |
+| EUI03-U01 4건 | 이전 OfferId·후보 외 보스 키·대소문자 불일치·빈 키 실패 원자성 |
+| EUI03-U02 | 전투 Factory 예외에서 제안·진행·플레이어 상태 무변경 |
+| EUI03-I02 2건 | 일반·엘리트 선택이 각각 Standard·HighGrade 보상으로 연결 |
+| EUI03-I03 | 첫 선택→전투→보상→다음 선택에서 영혼·덱 유지와 OfferId 증가 |
+| EUI03-I04 | 두 번째 선택→전투→보상→고정 보스 진입 |
+| EUI03-I05 | 보스 승리·보상 뒤 재시작에서 첫 제안·영혼·덱 초기화 |
 
 ### EUI-04 전투 정보 UI — 최소 10개
 
@@ -461,3 +465,4 @@ Assets/06.Packages/Tests/EditMode/CoreLoop/
 | 2026-07-20 | 이천서 | EUI-01 후보 불변 타입·결정적 생성기·선택 대기 상태·세션 주입과 신규 13/13·전체 EditMode 273/273 검증 결과 반영 |
 | 2026-07-20 | 이천서 | 후보 생성·OfferId·선택 상태·ActiveStage·등급별 안전 표시 스냅샷·Presenter/View/Controller 연결과 EUI 테스트 명세를 구현 가능한 기준으로 확정 |
 | 2026-07-20 | 이천서 | EUI-02 후보 ViewModel·세션 Presenter·로컬 집중·선택 상태 화면 갱신·프로토타입 Runtime 활성화와 신규 9/9·전체 EditMode 282/282·두 해상도 화면 검증 결과 반영 |
+| 2026-07-20 | 이천서 | EUI-03 OfferId+ProfileKey 확정·실패 원자성·실제 프로필 전투/보상·두 번째 선택·고정 보스·재시작 통합과 신규 14/14·전체 EditMode 296/296·실제 씬 전환 검증 결과 반영 |

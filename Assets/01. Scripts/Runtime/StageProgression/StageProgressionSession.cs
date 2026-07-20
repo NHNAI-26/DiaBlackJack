@@ -173,6 +173,48 @@ namespace DiaBlackJack.StageProgression
             return Progress.TrySkipBattleReward();
         }
 
+        public bool TrySelectOpponent(int offerId, string profileKey)
+        {
+            OpponentSelectionOffer offer = PendingOpponentSelection;
+            if (Progress.State != StageProgressionState.OpponentSelection ||
+                offer == null ||
+                offer.OfferId != offerId ||
+                offer.StageIndex != Progress.CurrentStageIndex)
+            {
+                return false;
+            }
+
+            OpponentSelectionCandidate selectedCandidate = FindCandidate(
+                offer,
+                profileKey);
+            if (selectedCandidate == null)
+            {
+                return false;
+            }
+
+            StageDefinition template = Progress.CurrentStage;
+            StageDefinition selectedStage = StageDefinition.CreateForEnemyProfile(
+                template.Id,
+                selectedCandidate.Preview.DisplayName,
+                template.Kind,
+                selectedCandidate.ProfileKey,
+                template.PlayerDeckSeed,
+                template.EnemyDeckSeed);
+            CoreLoopSession selectedBattleSession = CreateBattleSession(selectedStage);
+
+            if (!Progress.TryBeginBattleFromOpponentSelection())
+            {
+                throw new InvalidOperationException(
+                    "Run progress rejected a validated opponent selection.");
+            }
+
+            ActiveStage = selectedStage;
+            PendingOpponentSelection = null;
+            _battleSession = selectedBattleSession;
+            _processedBattle = null;
+            return true;
+        }
+
         public bool TryRestartRun()
         {
             if (!Progress.TryRestartRun())
@@ -232,6 +274,26 @@ namespace DiaBlackJack.StageProgression
         {
             return IsOpponentSelectionEnabled &&
                 stage.Kind != StageKind.FinalBossCombat;
+        }
+
+        private static OpponentSelectionCandidate FindCandidate(
+            OpponentSelectionOffer offer,
+            string profileKey)
+        {
+            if (string.IsNullOrEmpty(profileKey))
+            {
+                return null;
+            }
+
+            foreach (OpponentSelectionCandidate candidate in offer.Candidates)
+            {
+                if (StringComparer.Ordinal.Equals(candidate.ProfileKey, profileKey))
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
         }
 
         private void SynchronizeFinishedBattle()
