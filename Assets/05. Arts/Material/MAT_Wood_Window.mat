@@ -126,6 +126,9 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
+    - _HeightFadeEnabled: 0
+    - _HeightFadeLower: 0
+    - _HeightFadeUpper: 1
     - _HueShift: 15
     - _MaskMapEnabled: 0
     - _Metallic: 0
@@ -140,7 +143,7 @@ Material:
     - _RimIntensity: 12.09
     - _RimPower: 6.45
     - _Saturation: 0.411
-    - _Smoothness: 1
+    - _Smoothness: 0.3
     - _SmoothnessMapEnabled: 1
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -159,6 +162,7 @@ Material:
     - _DissolvePanning: {r: 0, g: 0, b: 0, a: 0}
     - _DissolveTilingOffset: {r: 0.1, g: 0.1, b: 0, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
+    - _HeightFadeTint: {r: 0.24999997, g: 0.24999997, b: 0.24999997, a: 1}
     - _RimColor: {r: 1, g: 1, b: 1, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []

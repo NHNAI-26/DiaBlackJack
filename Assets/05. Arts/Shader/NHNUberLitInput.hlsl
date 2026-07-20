@@ -17,6 +17,7 @@ CBUFFER_START(UnityPerMaterial)
     half _Contrast;
     half4 _EmissionColor;
     half4 _RimColor;
+    half4 _HeightFadeTint;
     half4 _DissolveEdgeColor;
     half4 _DissolvePanning;
     half _Cutoff;
@@ -27,6 +28,8 @@ CBUFFER_START(UnityPerMaterial)
     half _EmissionIntensity;
     half _RimPower;
     half _RimIntensity;
+    float _HeightFadeLower;
+    float _HeightFadeUpper;
     half _DissolveAmount;
     half _DissolveEdgeWidth;
     half _DissolveEdgeIntensity;
@@ -141,6 +144,17 @@ inline half3 NHNEvaluateRim(half3 normalWS, half3 viewDirectionWS)
     return _RimColor.rgb * max(_RimIntensity, 0.0h) * fresnel;
 #else
     return 0.0h;
+#endif
+}
+
+inline half3 NHNEvaluateHeightFade(float worldY)
+{
+#if defined(_HEIGHT_FADE_ON)
+    float heightFactor = saturate((worldY - _HeightFadeLower) /
+        max(_HeightFadeUpper - _HeightFadeLower, 0.0001));
+    return lerp(_HeightFadeTint.rgb, half3(1.0h, 1.0h, 1.0h), heightFactor);
+#else
+    return half3(1.0h, 1.0h, 1.0h);
 #endif
 }
 

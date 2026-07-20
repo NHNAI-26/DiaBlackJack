@@ -43,6 +43,11 @@ Shader "Shader/Uber Lit"
         [Sub(Rim_RIM_ON)] _RimPower("Power", Range(0.1,16)) = 4
         [Sub(Rim_RIM_ON)] _RimIntensity("Intensity", Range(0,16)) = 1
 
+        [Main(HeightFade, _HEIGHT_FADE_ON, on)] _HeightFadeEnabled("Height Fade", Float) = 0
+        [Sub(HeightFade_HEIGHT_FADE_ON)] _HeightFadeLower("Lower Height", Float) = 0
+        [Sub(HeightFade_HEIGHT_FADE_ON)] _HeightFadeUpper("Upper Height", Float) = 1
+        [Sub(HeightFade_HEIGHT_FADE_ON)] _HeightFadeTint("Lower Tint", Color) = (0.25,0.25,0.25,1)
+
         [Main(Dissolve, _DISSOLVE_ON, on)] _DissolveEnabled("Dissolve", Float) = 0
         [Tex(Dissolve_DISSOLVE_ON)] [NoScaleOffset] _DissolveNoiseMap("Noise Map", 2D) = "white" {}
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveTilingOffset("Tiling XY / Offset ZW", Vector) = (1, 1, 0, 0)
@@ -85,6 +90,7 @@ Shader "Shader/Uber Lit"
             #pragma shader_feature_local_fragment _EMISSION
             #pragma shader_feature_local_fragment _RIM_ON
             #pragma shader_feature_local_fragment _DISSOLVE_ON
+            #pragma multi_compile_local_fragment _ _HEIGHT_FADE_ON
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma shader_feature_local_fragment _SURFACE_TYPE_TRANSPARENT
             #pragma shader_feature_local_fragment _ _ALPHAPREMULTIPLY_ON _ALPHAMODULATE_ON
