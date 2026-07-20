@@ -70,6 +70,12 @@ namespace DiaBlackJack.CoreLoop.UI
             int enemyVisibleTotal,
             string playerDeck,
             string enemyDeck,
+            string enemyDisplayName,
+            string enemyGrade,
+            string enemySummary,
+            string enemyInformationTitle,
+            IReadOnlyList<string> enemyInformationLines,
+            string enemyWarning,
             string lastRound,
             string foldActionText,
             string changeActionText,
@@ -97,6 +103,13 @@ namespace DiaBlackJack.CoreLoop.UI
             EnemyVisibleTotal = enemyVisibleTotal;
             PlayerDeck = playerDeck;
             EnemyDeck = enemyDeck;
+            EnemyDisplayName = enemyDisplayName ?? string.Empty;
+            EnemyGrade = enemyGrade ?? string.Empty;
+            EnemySummary = enemySummary ?? string.Empty;
+            EnemyInformationTitle = enemyInformationTitle ?? string.Empty;
+            EnemyInformationLines = enemyInformationLines ??
+                throw new ArgumentNullException(nameof(enemyInformationLines));
+            EnemyWarning = enemyWarning ?? string.Empty;
             LastRound = lastRound;
             FoldActionText = foldActionText;
             ChangeActionText = changeActionText;
@@ -139,6 +152,18 @@ namespace DiaBlackJack.CoreLoop.UI
 
         public string EnemyDeck { get; }
 
+        public string EnemyDisplayName { get; }
+
+        public string EnemyGrade { get; }
+
+        public string EnemyInformationTitle { get; }
+
+        public IReadOnlyList<string> EnemyInformationLines { get; }
+
+        public string EnemySummary { get; }
+
+        public string EnemyWarning { get; }
+
         public string LastRound { get; }
 
         public string FoldActionText { get; }
@@ -172,7 +197,9 @@ namespace DiaBlackJack.CoreLoop.UI
 
     public static class CoreLoopPresenter
     {
-        public static CoreLoopViewModel Create(CoreLoopBattle battle)
+        public static CoreLoopViewModel Create(
+            CoreLoopBattle battle,
+            string profileKey = null)
         {
             if (battle == null)
             {
@@ -180,6 +207,8 @@ namespace DiaBlackJack.CoreLoop.UI
             }
 
             bool canPlayerAct = battle.CanPlayerAct;
+            EnemyCombatDisplaySnapshot enemyDisplay =
+                EnemyCombatDisplaySnapshotFactory.Create(battle, profileKey);
             return new CoreLoopViewModel(
                 battle.State,
                 battle.Outcome,
@@ -192,6 +221,12 @@ namespace DiaBlackJack.CoreLoop.UI
                 battle.Enemy.VisibleHandValue.Total,
                 FormatDeck(battle.Player.Deck),
                 FormatDeck(battle.Enemy.Deck),
+                enemyDisplay.DisplayName,
+                FormatEnemyGrade(enemyDisplay),
+                enemyDisplay.Summary,
+                FormatEnemyInformationTitle(enemyDisplay),
+                FormatEnemyInformationLines(enemyDisplay),
+                FormatEnemyWarning(enemyDisplay),
                 FormatLastRound(battle.LastResolution),
                 FormatFoldAction(battle),
                 FormatChangeAction(battle),
@@ -207,6 +242,141 @@ namespace DiaBlackJack.CoreLoop.UI
                 FormatLastCardEffect(battle.LastCardEffectResult),
                 battle.State == CoreLoopState.PlayerResolvingCardEffect,
                 battle.State == CoreLoopState.BattleEnded);
+        }
+
+        private static string FormatEnemyGrade(
+            EnemyCombatDisplaySnapshot snapshot)
+        {
+            return snapshot.Grade.HasValue
+                ? snapshot.Grade.Value.ToString().ToUpperInvariant()
+                : "UNPROFILED";
+        }
+
+        private static string FormatEnemyInformationTitle(
+            EnemyCombatDisplaySnapshot snapshot)
+        {
+            if (!snapshot.Grade.HasValue)
+            {
+                return "ENEMY INFORMATION";
+            }
+
+            switch (snapshot.Grade.Value)
+            {
+                case EnemyGrade.Normal:
+                    return "INFERENCE";
+                case EnemyGrade.Elite:
+                    return "ELITE INFERENCE";
+                case EnemyGrade.Boss:
+                    return "BOSS PATTERN";
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private static IReadOnlyList<string> FormatEnemyInformationLines(
+            EnemyCombatDisplaySnapshot snapshot)
+        {
+            var lines = new List<string>();
+            if (!snapshot.HasProfile)
+            {
+                lines.Add("NO PROFILE INFORMATION");
+                return lines.AsReadOnly();
+            }
+
+            switch (snapshot.Grade.Value)
+            {
+                case EnemyGrade.Normal:
+                    foreach (EnemyInferenceDisplayEntry entry in
+                        snapshot.InferenceEntries)
+                    {
+                        lines.Add($"{entry.Number}  {entry.ProbabilityPercent.Value}%");
+                    }
+
+                    if (lines.Count == 0)
+                    {
+                        lines.Add("NO PUBLIC INFERENCE");
+                    }
+
+                    break;
+                case EnemyGrade.Elite:
+                    lines.Add(FormatLikelyNumbers(snapshot.InferenceEntries));
+                    lines.Add($"CONFIDENCE {snapshot.Confidence.Value.ToString().ToUpperInvariant()}");
+                    break;
+                case EnemyGrade.Boss:
+                    lines.Add($"PHASE {FormatBossPhase(snapshot.BossPhase.Value)}");
+                    lines.Add($"DIRECTION {FormatBossDirection(snapshot.BossInferenceDirection.Value)}");
+                    lines.Add($"CONFIDENCE {snapshot.Confidence.Value.ToString().ToUpperInvariant()}");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
+            return lines.AsReadOnly();
+        }
+
+        private static string FormatLikelyNumbers(
+            IReadOnlyList<EnemyInferenceDisplayEntry> entries)
+        {
+            if (entries.Count == 0)
+            {
+                return "LIKELY UNKNOWN";
+            }
+
+            var builder = new StringBuilder("LIKELY ");
+            for (int i = 0; i < entries.Count; i++)
+            {
+                if (i > 0)
+                {
+                    builder.Append(" · ");
+                }
+
+                builder.Append(entries[i].Number);
+            }
+
+            return builder.ToString();
+        }
+
+        private static string FormatEnemyWarning(
+            EnemyCombatDisplaySnapshot snapshot)
+        {
+            if (!snapshot.BossTelegraphedAction.HasValue)
+            {
+                return string.Empty;
+            }
+
+            switch (snapshot.BossTelegraphedAction.Value)
+            {
+                case BossTelegraphedAction.None:
+                    return string.Empty;
+                case BossTelegraphedAction.NumberGuess:
+                    return "WARNING · NUMBER GUESS PREPARED";
+                case BossTelegraphedAction.ForcedDraw:
+                    return "WARNING · FORCED DRAW PREPARED";
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        private static string FormatBossPhase(FinalBossPhase phase)
+        {
+            return phase.ToString().ToUpperInvariant();
+        }
+
+        private static string FormatBossDirection(BossInferenceDirection direction)
+        {
+            switch (direction)
+            {
+                case BossInferenceDirection.Unknown:
+                    return "UNKNOWN";
+                case BossInferenceDirection.LowNumbers:
+                    return "LOW NUMBERS";
+                case BossInferenceDirection.Balanced:
+                    return "BALANCED";
+                case BossInferenceDirection.HighNumbers:
+                    return "HIGH NUMBERS";
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(direction));
+            }
         }
 
         private static IReadOnlyList<PlayerCardViewModel> FormatPlayerCardActions(

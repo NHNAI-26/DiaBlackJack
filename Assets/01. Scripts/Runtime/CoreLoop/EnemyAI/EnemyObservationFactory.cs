@@ -20,11 +20,10 @@ namespace DiaBlackJack.CoreLoop
             IReadOnlyList<PublicCardObservation> playerDiscardedCards =
                 CreatePublicCards(battle.Player.Deck.GetDiscardedCards());
             IReadOnlyList<EnemyNumberInference> numberInferences =
-                EnemyNumberInferenceCalculator.Calculate(
-                    battle.Player.Deck.GetKnownRankCounts(),
+                CreateNumberInferences(
+                    battle,
                     playerFaceUpCards,
-                    playerDiscardedCards,
-                    battle.Player.Hand.HiddenCardCount);
+                    playerDiscardedCards);
 
             return new EnemyObservation(
                 battle.Enemy.HandValue,
@@ -45,6 +44,32 @@ namespace DiaBlackJack.CoreLoop
                 numberInferences,
                 battle.PendingEnemyCardEffect?.EffectKind,
                 decisionSeed);
+        }
+
+        internal static IReadOnlyList<EnemyNumberInference> CreateNumberInferences(
+            CoreLoopBattle battle)
+        {
+            if (battle == null)
+            {
+                throw new ArgumentNullException(nameof(battle));
+            }
+
+            return CreateNumberInferences(
+                battle,
+                CreatePublicCards(battle.Player.Hand.GetFaceUpCards()),
+                CreatePublicCards(battle.Player.Deck.GetDiscardedCards()));
+        }
+
+        private static IReadOnlyList<EnemyNumberInference> CreateNumberInferences(
+            CoreLoopBattle battle,
+            IReadOnlyList<PublicCardObservation> playerFaceUpCards,
+            IReadOnlyList<PublicCardObservation> playerDiscardedCards)
+        {
+            return EnemyNumberInferenceCalculator.Calculate(
+                battle.Player.Deck.GetKnownRankCounts(),
+                playerFaceUpCards,
+                playerDiscardedCards,
+                battle.Player.Hand.HiddenCardCount);
         }
 
         private static IReadOnlyList<EnemyOwnedCardObservation> CreateOwnCards(

@@ -10,7 +10,9 @@ namespace DiaBlackJack.CoreLoop.UI
         private GUIStyle _headingStyle;
         private GUIStyle _bodyStyle;
         private GUIStyle _resultStyle;
+        private GUIStyle _warningStyle;
         private GUIStyle _buttonStyle;
+        private int _styleScreenHeight;
         private bool _inputLocked;
 
         public event Action HitRequested;
@@ -50,7 +52,7 @@ namespace DiaBlackJack.CoreLoop.UI
             DrawBackground();
 
             float panelWidth = Mathf.Min(760f, Screen.width - 32f);
-            float panelHeight = Mathf.Min(780f, Screen.height - 32f);
+            float panelHeight = Mathf.Min(780f, Screen.height - 8f);
             var panel = new Rect(
                 (Screen.width - panelWidth) * 0.5f,
                 (Screen.height - panelHeight) * 0.5f,
@@ -58,10 +60,10 @@ namespace DiaBlackJack.CoreLoop.UI
                 panelHeight);
 
             GUILayout.BeginArea(panel, GUI.skin.box);
-            GUILayout.Space(12f);
+            GUILayout.Space(4f);
             GUILayout.Label("DEVIL BLACKJACK", _titleStyle);
             GUILayout.Label($"ROUND {_model.RoundNumber}  |  {_model.State}", _headingStyle);
-            GUILayout.Space(12f);
+            GUILayout.Space(4f);
 
             GUILayout.BeginHorizontal();
             DrawParticipant(
@@ -79,14 +81,44 @@ namespace DiaBlackJack.CoreLoop.UI
                 _model.EnemyDeck);
             GUILayout.EndHorizontal();
 
-            GUILayout.Space(14f);
+            GUILayout.Space(4f);
+            DrawEnemyInformation();
+            GUILayout.Space(4f);
             GUILayout.Label(GetBattleMessage(_model), _resultStyle);
             GUILayout.Label(_model.LastRound, _bodyStyle);
             GUILayout.Label(_model.LastCardEffect, _bodyStyle);
             GUILayout.FlexibleSpace();
             DrawActions();
-            GUILayout.Space(12f);
+            GUILayout.Space(4f);
             GUILayout.EndArea();
+        }
+
+        private void DrawEnemyInformation()
+        {
+            GUILayout.BeginVertical(GUI.skin.box, GUILayout.ExpandWidth(true));
+            GUILayout.Label(
+                $"{_model.EnemyDisplayName}  |  {_model.EnemyGrade}",
+                _headingStyle);
+            GUILayout.Label(_model.EnemySummary, _bodyStyle);
+            GUILayout.Space(2f);
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(
+                _model.EnemyInformationTitle,
+                _headingStyle,
+                GUILayout.Width(190f));
+            foreach (string line in _model.EnemyInformationLines)
+            {
+                GUILayout.Label(line, _bodyStyle, GUILayout.ExpandWidth(true));
+            }
+
+            GUILayout.EndHorizontal();
+            if (!string.IsNullOrEmpty(_model.EnemyWarning))
+            {
+                GUILayout.Label(_model.EnemyWarning, _warningStyle);
+            }
+
+            GUILayout.EndVertical();
         }
 
         private void DrawParticipant(string name, string soul, string cards, string total, string deck)
@@ -94,10 +126,10 @@ namespace DiaBlackJack.CoreLoop.UI
             GUILayout.BeginVertical(GUI.skin.box, GUILayout.ExpandWidth(true));
             GUILayout.Label(name, _headingStyle);
             GUILayout.Label($"SOUL  {soul}", _bodyStyle);
-            GUILayout.Space(8f);
+            GUILayout.Space(4f);
             GUILayout.Label($"CARDS  [ {cards} ]", _bodyStyle);
             GUILayout.Label($"TOTAL  {total}", _bodyStyle);
-            GUILayout.Space(8f);
+            GUILayout.Space(4f);
             GUILayout.Label(deck, _bodyStyle);
             GUILayout.EndVertical();
         }
@@ -108,7 +140,7 @@ namespace DiaBlackJack.CoreLoop.UI
             {
                 bool previousEnabled = GUI.enabled;
                 GUI.enabled = _model.CanRestart && !_inputLocked;
-                if (GUILayout.Button("RESTART", _buttonStyle, GUILayout.Height(52f)))
+                if (GUILayout.Button("RESTART", _buttonStyle, GUILayout.Height(40f)))
                 {
                     RestartRequested?.Invoke();
                 }
@@ -132,13 +164,13 @@ namespace DiaBlackJack.CoreLoop.UI
             GUILayout.BeginHorizontal();
             bool wasEnabled = GUI.enabled;
             GUI.enabled = _model.CanHit && !_inputLocked;
-            if (GUILayout.Button("HIT", _buttonStyle, GUILayout.Height(52f)))
+            if (GUILayout.Button("HIT", _buttonStyle, GUILayout.Height(40f)))
             {
                 HitRequested?.Invoke();
             }
 
             GUI.enabled = _model.CanStand && !_inputLocked;
-            if (GUILayout.Button("STAND", _buttonStyle, GUILayout.Height(52f)))
+            if (GUILayout.Button("STAND", _buttonStyle, GUILayout.Height(40f)))
             {
                 StandRequested?.Invoke();
             }
@@ -146,16 +178,16 @@ namespace DiaBlackJack.CoreLoop.UI
             GUI.enabled = wasEnabled;
             GUILayout.EndHorizontal();
 
-            GUILayout.Space(8f);
+            GUILayout.Space(4f);
             GUILayout.BeginHorizontal();
             GUI.enabled = _model.CanFold && !_inputLocked;
-            if (GUILayout.Button(_model.FoldActionText, _buttonStyle, GUILayout.Height(52f)))
+            if (GUILayout.Button(_model.FoldActionText, _buttonStyle, GUILayout.Height(40f)))
             {
                 FoldRequested?.Invoke();
             }
 
             GUI.enabled = _model.CanChange && !_inputLocked;
-            if (GUILayout.Button(_model.ChangeActionText, _buttonStyle, GUILayout.Height(52f)))
+            if (GUILayout.Button(_model.ChangeActionText, _buttonStyle, GUILayout.Height(40f)))
             {
                 ChangeRequested?.Invoke();
             }
@@ -163,7 +195,7 @@ namespace DiaBlackJack.CoreLoop.UI
             GUI.enabled = wasEnabled;
             GUILayout.EndHorizontal();
 
-            GUILayout.Space(8f);
+            GUILayout.Space(4f);
             DrawPlayerCardActions();
         }
 
@@ -193,7 +225,7 @@ namespace DiaBlackJack.CoreLoop.UI
         private void DrawPlayerCardActions()
         {
             GUILayout.Label("PLAYER CARD EFFECTS", _headingStyle);
-            GUILayout.Space(4f);
+            GUILayout.Space(2f);
             GUILayout.BeginHorizontal();
 
             bool wasEnabled = GUI.enabled;
@@ -202,7 +234,8 @@ namespace DiaBlackJack.CoreLoop.UI
                 GUILayout.BeginVertical(GUI.skin.box, GUILayout.ExpandWidth(true));
                 GUI.enabled = card.CanUse && !_inputLocked;
                 string label = $"USE  {card.Rank}\n{card.DisplayName}\n{card.UseState}";
-                if (GUILayout.Button(label, _buttonStyle, GUILayout.Height(72f)))
+                float buttonHeight = _styleScreenHeight <= 720 ? 60f : 72f;
+                if (GUILayout.Button(label, _buttonStyle, GUILayout.Height(buttonHeight)))
                 {
                     CardUseRequested?.Invoke(card.CardId);
                 }
@@ -258,39 +291,46 @@ namespace DiaBlackJack.CoreLoop.UI
 
         private void EnsureStyles()
         {
-            if (_titleStyle != null)
+            if (_titleStyle != null && _styleScreenHeight == Screen.height)
             {
                 return;
             }
 
+            _styleScreenHeight = Screen.height;
+            bool compact = Screen.height <= 720;
             _titleStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 30,
+                fontSize = compact ? 24 : 30,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = new Color(0.95f, 0.75f, 0.25f) }
             };
             _headingStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 20,
+                fontSize = compact ? 17 : 20,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = Color.white }
             };
             _bodyStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 17,
+                fontSize = compact ? 14 : 17,
                 normal = { textColor = new Color(0.9f, 0.9f, 0.9f) }
             };
             _resultStyle = new GUIStyle(_headingStyle)
             {
-                fontSize = 23,
+                fontSize = compact ? 19 : 23,
                 normal = { textColor = new Color(0.9f, 0.3f, 0.25f) }
+            };
+            _warningStyle = new GUIStyle(_headingStyle)
+            {
+                fontSize = compact ? 15 : 18,
+                normal = { textColor = new Color(1f, 0.45f, 0.2f) }
             };
             _buttonStyle = new GUIStyle(GUI.skin.button)
             {
-                fontSize = 20,
+                fontSize = compact ? 17 : 20,
                 fontStyle = FontStyle.Bold
             };
         }

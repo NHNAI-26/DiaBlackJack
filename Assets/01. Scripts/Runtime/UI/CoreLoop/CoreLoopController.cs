@@ -177,7 +177,10 @@ namespace DiaBlackJack.CoreLoop.UI
 
         private void RefreshView()
         {
-            CurrentViewModel = CoreLoopPresenter.Create(Battle);
+            string profileKey = IsStageBattle
+                ? _stageSession.ActiveStage?.BattleProfileKey
+                : null;
+            CurrentViewModel = CoreLoopPresenter.Create(Battle, profileKey);
             _view.Render(CurrentViewModel);
         }
 

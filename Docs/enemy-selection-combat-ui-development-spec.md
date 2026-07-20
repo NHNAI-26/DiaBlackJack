@@ -4,7 +4,7 @@
 > 기획·개발 책임자: 이천서  
 > 작업 식별자: EUI-00~EUI-05  
 > 버전: v0.1  
-> 상태: EUI-03 선택 상대의 실제 전투·보상 통합 구현·검증 완료
+> 상태: EUI-04 일반·엘리트·보스 전투 정보 UI 구현·검증 완료
 > 최종 갱신: 2026-07-20
 
 ## 1. 기술 목표
@@ -41,9 +41,12 @@ EnemyCombatProfileCatalog.Previews
 - `StageProgressionView`는 후보 비교 카드·단일 집중 강조·확정 가능 상태를 기존 IMGUI 안에 표시하며 확정 이벤트는 Controller의 EUI-03 세션 처리로 연결된다.
 - `StageProgressionSession.TrySelectOpponent(offerId, profileKey)`가 현재 제안·스테이지 인덱스·정확한 후보 키를 검증하고, 템플릿 ID·시드와 미리보기 이름으로 해석 완료 스테이지·전투를 먼저 준비한 뒤 성공 시에만 상태를 교체한다.
 - `StageProgressionController`는 확정 이벤트를 현재 OfferId·집중 키와 함께 세션에 전달하고 성공한 `InBattle + Battle`에서만 `CoreLoopTest`를 연다.
-- `CoreLoopPresenter`는 전투 객체만 받아 적 프로필 이름·등급·추론 정보를 알 수 없다.
-- `EnemyInferenceDisplayModel`과 `BossCombatDisplayModel`은 있으나 실제 View에 연결되지 않았다.
-- EUI-03 기준 신규 14/14, StageProgression 117/117, CoreLoop 179/179, 전체 EditMode 296/296와 변경 스크립트 진단 0, 실제 `StageTest` 확정→집행관 영혼 5·덱 10장→`CoreLoopTest` 전환을 통과했다.
+- `EnemyObservationFactory.CreateNumberInferences(...)`가 정책 관측과 UI 표시에서 같은 공개 숫자 추론 계산을 재사용한다.
+- `EnemyCombatDisplaySnapshotFactory`가 현재 전투와 프로필 키를 일반·엘리트·보스별 안전 표시 스냅샷으로 변환하며 정책 `Decide`를 호출하지 않는다.
+- `CoreLoopPresenter`는 선택적으로 프로필 키를 받아 적 이름·등급·성향·정보 제목·값·경고를 ViewModel 문자열로 만든다.
+- `CoreLoopController`는 진행 전투일 때만 `ActiveStage.BattleProfileKey`를 전달하고 프로필 없는 독립 전투는 명시적인 호환 표시를 사용한다.
+- `CoreLoopView`는 기존 IMGUI 안에 적 정보 패널을 표시하며 720p에서 글꼴·여백·버튼 높이를 조정하는 반응형 규칙을 적용한다.
+- EUI-04 기준 신규 14/14, StageProgression 117/117, CoreLoop 193/193, 전체 EditMode 310/310과 실제 일반·엘리트·보스의 1280×720·1920×1080 화면을 통과했다.
 
 ## 3. 설계 원칙
 
@@ -378,18 +381,20 @@ EUI-00 기준 전체 EditMode 260/260을 회귀 기준으로 사용한다.
 | EUI03-I04 | 두 번째 선택→전투→보상→고정 보스 진입 |
 | EUI03-I05 | 보스 승리·보상 뒤 재시작에서 첫 제안·영혼·덱 초기화 |
 
-### EUI-04 전투 정보 UI — 최소 10개
+### EUI-04 전투 정보 UI — 14개 완료
 
 | ID | 검증 내용 |
 | --- | --- |
 | EUI04-U01 | 일반 상위 3개 확률·정렬·동률 순서 |
 | EUI04-U02 | 일반 표시와 정책 입력 추론 값 일치 |
 | EUI04-U03 | 엘리트 상위 2개·신뢰도, 원시 확률 미노출 |
-| EUI04-U04 | 보스 영혼별 구간 표시 |
-| EUI04-U05 | 보스 추론 방향·신뢰도 표시 |
-| EUI04-U06 | 보스 예고 범주 표시·해제 동기화 |
-| EUI04-U07 | 비공개 카드 없음·추론 불가 안전 표시 |
-| EUI04-U08 | 프로필 없는 독립 전투의 호환 표시 |
+| EUI04-U04 | 첫 정책 결정 전에도 보스 구간·방향·신뢰도 안전 표시 |
+| EUI04-U05 | 보스 예고 범주 표시·실행 뒤 해제 동기화 |
+| EUI04-U06 | 비공개 카드 없음·추론 불가 안전 표시 |
+| EUI04-U07 | 프로필 없는 독립 전투의 명시적 호환 표시 |
+| EUI04-U08~U10 | 일반·엘리트·보스 Presenter 문자열과 정보량 규칙 |
+| EUI04-U11 | 표시 생성 과정에서 적 정책 `Decide` 미호출 |
+| EUI04-U12 | 알 수 없는 프로필 키에 임의 대체 정보 미생성 |
 | EUI04-I01 | 플레이어 행동 뒤 Presenter 새 정보 반영 |
 | EUI04-I02 | 표시 객체에 비공개 값·덱 순서·카드 ID·정확한 다음 행동 없음 |
 
@@ -466,3 +471,4 @@ Assets/06.Packages/Tests/EditMode/CoreLoop/
 | 2026-07-20 | 이천서 | 후보 생성·OfferId·선택 상태·ActiveStage·등급별 안전 표시 스냅샷·Presenter/View/Controller 연결과 EUI 테스트 명세를 구현 가능한 기준으로 확정 |
 | 2026-07-20 | 이천서 | EUI-02 후보 ViewModel·세션 Presenter·로컬 집중·선택 상태 화면 갱신·프로토타입 Runtime 활성화와 신규 9/9·전체 EditMode 282/282·두 해상도 화면 검증 결과 반영 |
 | 2026-07-20 | 이천서 | EUI-03 OfferId+ProfileKey 확정·실패 원자성·실제 프로필 전투/보상·두 번째 선택·고정 보스·재시작 통합과 신규 14/14·전체 EditMode 296/296·실제 씬 전환 검증 결과 반영 |
+| 2026-07-20 | 이천서 | EUI-04 공개 추론 공유 계산·등급별 안전 표시 스냅샷·Presenter/View/Controller 연결과 신규 14/14·CoreLoop 193/193·StageProgression 117/117·전체 EditMode 310/310·두 해상도 화면 검증 결과 반영 |
