@@ -143,7 +143,7 @@ namespace DiaBlackJack.CoreLoop
                     "집행관",
                     EnemyGrade.Elite,
                     5,
-                    EnemyBehaviorPolicyCatalog.Simple,
+                    EnemyBehaviorPolicyCatalog.Enforcer,
                     new[]
                     {
                         "standard-ace-1", "standard-plain-2", "standard-plain-3",

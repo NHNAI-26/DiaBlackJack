@@ -29,7 +29,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 EnemyBattleConfigurationFactory.Create(
                     EnemyCombatProfileCatalog.EnforcerKey,
                     1).BehaviorPolicy,
-                Is.TypeOf<SimpleEnemyPolicy>());
+                Is.TypeOf<EnforcerEnemyPolicy>());
             Assert.That(
                 EnemyBattleConfigurationFactory.Create(
                     EnemyCombatProfileCatalog.FinalBossKey,

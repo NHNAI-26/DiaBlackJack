@@ -37,7 +37,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 EnemyCombatProfileCatalog.EnforcerKey,
                 EnemyGrade.Elite,
                 5,
-                EnemyBehaviorPolicyCatalog.Simple);
+                EnemyBehaviorPolicyCatalog.Enforcer);
             AssertProfile(
                 catalog,
                 EnemyCombatProfileCatalog.FinalBossKey,

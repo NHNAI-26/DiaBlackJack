@@ -89,7 +89,10 @@ namespace DiaBlackJack.CoreLoop
 
                 foreach (CardEffectChoiceOption option in pendingEffect.Options)
                 {
-                    BlackjackCard optionCard = FindTemporaryCard(pendingEffect, option.CardId);
+                    BlackjackCard optionCard = FindOptionCard(
+                        battle,
+                        pendingEffect,
+                        option.CardId);
                     candidates.Add(new EnemyActionCandidate(
                         EnemyActionType.UseCard,
                         sourceCard.Id,
@@ -132,7 +135,8 @@ namespace DiaBlackJack.CoreLoop
             return candidates.AsReadOnly();
         }
 
-        private static BlackjackCard FindTemporaryCard(
+        private static BlackjackCard FindOptionCard(
+            CoreLoopBattle battle,
             PendingCardEffect pendingEffect,
             int? cardId)
         {
@@ -149,8 +153,13 @@ namespace DiaBlackJack.CoreLoop
                 }
             }
 
+            if (battle.Enemy.Hand.TryGetCard(cardId.Value, out BlackjackCard ownedCard))
+            {
+                return ownedCard;
+            }
+
             throw new InvalidOperationException(
-                "Enemy card option references a missing temporary card.");
+                "Enemy card option references a missing temporary or owned card.");
         }
 
         private static IReadOnlyList<PublicCardObservation> CreatePublicCards(
