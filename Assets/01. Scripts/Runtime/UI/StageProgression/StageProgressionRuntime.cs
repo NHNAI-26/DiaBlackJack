@@ -27,7 +27,11 @@ namespace DiaBlackJack.StageProgression.UI
 
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            Session = new StageProgressionSession(CreatePrototypeProgress());
+            Session = new StageProgressionSession(
+                CreatePrototypeProgress(),
+                opponentSelectionGenerator: new OpponentSelectionGenerator(
+                    EnemyCombatProfileCatalog.Default,
+                    seed));
         }
 
         private void OnDestroy()

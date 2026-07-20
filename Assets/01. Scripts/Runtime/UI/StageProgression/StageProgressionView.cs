@@ -12,6 +12,8 @@ namespace DiaBlackJack.StageProgression.UI
         private GUIStyle _bodyStyle;
         private GUIStyle _messageStyle;
         private GUIStyle _buttonStyle;
+        private GUIStyle _candidateBodyStyle;
+        private GUIStyle _selectedStyle;
         private bool _inputLocked;
 
         public event Action StartRunRequested;
@@ -23,6 +25,10 @@ namespace DiaBlackJack.StageProgression.UI
         public event Action<int> BattleRewardSelected;
 
         public event Action BattleRewardSkipped;
+
+        public event Action<string> OpponentFocused;
+
+        public event Action OpponentConfirmed;
 
         public void Render(StageProgressionViewModel model)
         {
@@ -79,6 +85,13 @@ namespace DiaBlackJack.StageProgression.UI
         private void DrawAction()
         {
             bool previousEnabled = GUI.enabled;
+            if (_model.CanFocusOpponent)
+            {
+                DrawOpponentSelection();
+                GUI.enabled = previousEnabled;
+                return;
+            }
+
             if (_model.CanSelectReward)
             {
                 DrawBattleReward();
@@ -102,6 +115,78 @@ namespace DiaBlackJack.StageProgression.UI
             }
 
             GUI.enabled = previousEnabled;
+        }
+
+        private void DrawOpponentSelection()
+        {
+            GUILayout.BeginHorizontal();
+            foreach (OpponentCandidateViewModel candidate in _model.OpponentCandidates)
+            {
+                Color previousBackgroundColor = GUI.backgroundColor;
+                if (candidate.IsFocused)
+                {
+                    GUI.backgroundColor = new Color(0.95f, 0.55f, 0.18f, 1f);
+                }
+
+                GUILayout.BeginVertical(
+                    GUI.skin.box,
+                    GUILayout.MinHeight(250f),
+                    GUILayout.ExpandWidth(true));
+                GUILayout.Label(candidate.DisplayName, _messageStyle);
+                GUILayout.Label(
+                    $"{candidate.Grade}  ·  {candidate.MaximumSoul}",
+                    _headingStyle);
+                GUILayout.Space(8f);
+                GUILayout.Label(candidate.Summary, _candidateBodyStyle);
+                GUILayout.FlexibleSpace();
+                GUILayout.Label(candidate.RewardTier, _bodyStyle);
+                GUILayout.Space(8f);
+
+                GUI.enabled = !_inputLocked && _model.CanFocusOpponent;
+                if (GUILayout.Button(
+                    candidate.IsFocused ? "SELECTED" : "SELECT",
+                    _buttonStyle,
+                    GUILayout.Height(46f)))
+                {
+                    OpponentFocused?.Invoke(candidate.ProfileKey);
+                }
+
+                GUILayout.EndVertical();
+                GUI.backgroundColor = previousBackgroundColor;
+            }
+
+            GUILayout.EndHorizontal();
+            GUILayout.Space(12f);
+
+            string selectedName = GetFocusedOpponentDisplayName();
+            GUILayout.Label(
+                selectedName == null
+                    ? "SELECT AN OPPONENT"
+                    : $"SELECTED: {selectedName}",
+                _selectedStyle);
+            GUILayout.Space(8f);
+
+            GUI.enabled = !_inputLocked && _model.CanConfirmOpponent;
+            if (GUILayout.Button(
+                "CONFIRM OPPONENT",
+                _buttonStyle,
+                GUILayout.Height(52f)))
+            {
+                OpponentConfirmed?.Invoke();
+            }
+        }
+
+        private string GetFocusedOpponentDisplayName()
+        {
+            foreach (OpponentCandidateViewModel candidate in _model.OpponentCandidates)
+            {
+                if (candidate.IsFocused)
+                {
+                    return candidate.DisplayName;
+                }
+            }
+
+            return null;
         }
 
         private void DrawBattleReward()
@@ -175,6 +260,15 @@ namespace DiaBlackJack.StageProgression.UI
             {
                 fontSize = 20,
                 fontStyle = FontStyle.Bold
+            };
+            _candidateBodyStyle = new GUIStyle(_bodyStyle)
+            {
+                alignment = TextAnchor.UpperCenter,
+                wordWrap = true
+            };
+            _selectedStyle = new GUIStyle(_headingStyle)
+            {
+                normal = { textColor = new Color(0.95f, 0.75f, 0.25f) }
             };
         }
 

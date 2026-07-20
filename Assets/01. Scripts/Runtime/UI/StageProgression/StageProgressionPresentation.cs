@@ -5,6 +5,41 @@ using DiaBlackJack.CoreLoop;
 
 namespace DiaBlackJack.StageProgression.UI
 {
+    public sealed class OpponentCandidateViewModel
+    {
+        public OpponentCandidateViewModel(
+            string profileKey,
+            string displayName,
+            string grade,
+            string maximumSoul,
+            string summary,
+            string rewardTier,
+            bool isFocused)
+        {
+            ProfileKey = profileKey;
+            DisplayName = displayName;
+            Grade = grade;
+            MaximumSoul = maximumSoul;
+            Summary = summary;
+            RewardTier = rewardTier;
+            IsFocused = isFocused;
+        }
+
+        public string ProfileKey { get; }
+
+        public string DisplayName { get; }
+
+        public string Grade { get; }
+
+        public string MaximumSoul { get; }
+
+        public string Summary { get; }
+
+        public string RewardTier { get; }
+
+        public bool IsFocused { get; }
+    }
+
     public sealed class BattleRewardOptionViewModel
     {
         public BattleRewardOptionViewModel(
@@ -35,6 +70,7 @@ namespace DiaBlackJack.StageProgression.UI
     public sealed class StageProgressionViewModel
     {
         private readonly ReadOnlyCollection<BattleRewardOptionViewModel> _rewardOptions;
+        private readonly ReadOnlyCollection<OpponentCandidateViewModel> _opponentCandidates;
 
         public StageProgressionViewModel(
             string stageProgress,
@@ -52,7 +88,12 @@ namespace DiaBlackJack.StageProgression.UI
             bool canSkipReward,
             string rewardCompletionMessage,
             string rewardResult,
-            int deckCount)
+            int deckCount,
+            int? opponentOfferId,
+            IEnumerable<OpponentCandidateViewModel> opponentCandidates,
+            string focusedOpponentProfileKey,
+            bool canFocusOpponent,
+            bool canConfirmOpponent)
         {
             StageProgress = stageProgress;
             StageName = stageName;
@@ -72,6 +113,14 @@ namespace DiaBlackJack.StageProgression.UI
             RewardCompletionMessage = rewardCompletionMessage;
             RewardResult = rewardResult;
             DeckCount = deckCount;
+            OpponentOfferId = opponentOfferId;
+            _opponentCandidates = new List<OpponentCandidateViewModel>(
+                opponentCandidates ?? throw new ArgumentNullException(
+                    nameof(opponentCandidates)))
+                .AsReadOnly();
+            FocusedOpponentProfileKey = focusedOpponentProfileKey;
+            CanFocusOpponent = canFocusOpponent;
+            CanConfirmOpponent = canConfirmOpponent;
         }
 
         public string StageProgress { get; }
@@ -105,6 +154,17 @@ namespace DiaBlackJack.StageProgression.UI
         public string RewardResult { get; }
 
         public int DeckCount { get; }
+
+        public int? OpponentOfferId { get; }
+
+        public IReadOnlyList<OpponentCandidateViewModel> OpponentCandidates =>
+            _opponentCandidates;
+
+        public string FocusedOpponentProfileKey { get; }
+
+        public bool CanFocusOpponent { get; }
+
+        public bool CanConfirmOpponent { get; }
     }
 
     public static class StageProgressionPresenter
@@ -115,6 +175,45 @@ namespace DiaBlackJack.StageProgression.UI
             {
                 throw new ArgumentNullException(nameof(progress));
             }
+
+            return Create(progress, null, null);
+        }
+
+        public static StageProgressionViewModel Create(
+            StageProgressionSession session,
+            string focusedProfileKey = null)
+        {
+            if (session == null)
+            {
+                throw new ArgumentNullException(nameof(session));
+            }
+
+            return Create(session.Progress, session.PendingOpponentSelection, focusedProfileKey);
+        }
+
+        private static StageProgressionViewModel Create(
+            RunProgress progress,
+            OpponentSelectionOffer opponentOffer,
+            string focusedProfileKey)
+        {
+            bool isOpponentSelection =
+                progress.State == StageProgressionState.OpponentSelection;
+            if (isOpponentSelection && opponentOffer == null)
+            {
+                throw new InvalidOperationException(
+                    "Opponent selection state requires a pending opponent offer.");
+            }
+
+            string validatedFocusedProfileKey = isOpponentSelection &&
+                ContainsProfileKey(opponentOffer, focusedProfileKey)
+                    ? focusedProfileKey
+                    : null;
+            IReadOnlyList<OpponentCandidateViewModel> opponentCandidates =
+                isOpponentSelection
+                    ? CreateOpponentCandidates(
+                        opponentOffer,
+                        validatedFocusedProfileKey)
+                    : Array.Empty<OpponentCandidateViewModel>();
 
             StageDefinition stage = progress.CurrentStage;
             bool canResolveReward = progress.State == StageProgressionState.RewardSelection;
@@ -146,7 +245,55 @@ namespace DiaBlackJack.StageProgression.UI
                     ? GetRewardCompletionMessage(pendingReward.CompletionTarget)
                     : string.Empty,
                 GetRewardResult(progress),
-                progress.Player.Deck.Count);
+                progress.Player.Deck.Count,
+                isOpponentSelection ? opponentOffer.OfferId : (int?)null,
+                opponentCandidates,
+                validatedFocusedProfileKey,
+                isOpponentSelection,
+                isOpponentSelection && validatedFocusedProfileKey != null);
+        }
+
+        private static IReadOnlyList<OpponentCandidateViewModel> CreateOpponentCandidates(
+            OpponentSelectionOffer offer,
+            string focusedProfileKey)
+        {
+            var candidates = new List<OpponentCandidateViewModel>(offer.Candidates.Count);
+            foreach (OpponentSelectionCandidate candidate in offer.Candidates)
+            {
+                EnemyProfilePreview preview = candidate.Preview;
+                candidates.Add(new OpponentCandidateViewModel(
+                    candidate.ProfileKey,
+                    preview.DisplayName,
+                    preview.Grade.ToString().ToUpperInvariant(),
+                    $"SOUL {preview.MaximumSoul}",
+                    preview.Summary,
+                    GetRewardTier(preview.ExpectedRewardTier),
+                    StringComparer.Ordinal.Equals(
+                        candidate.ProfileKey,
+                        focusedProfileKey)));
+            }
+
+            return candidates;
+        }
+
+        private static bool ContainsProfileKey(
+            OpponentSelectionOffer offer,
+            string profileKey)
+        {
+            if (offer == null || string.IsNullOrEmpty(profileKey))
+            {
+                return false;
+            }
+
+            foreach (OpponentSelectionCandidate candidate in offer.Candidates)
+            {
+                if (StringComparer.Ordinal.Equals(candidate.ProfileKey, profileKey))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static IReadOnlyList<BattleRewardOptionViewModel> CreateRewardOptions(
@@ -247,6 +394,8 @@ namespace DiaBlackJack.StageProgression.UI
             {
                 case StageProgressionState.NotStarted:
                     return "READY TO START RUN";
+                case StageProgressionState.OpponentSelection:
+                    return "CHOOSE OPPONENT";
                 case StageProgressionState.InBattle:
                     return "BATTLE IN PROGRESS";
                 case StageProgressionState.RewardSelection:

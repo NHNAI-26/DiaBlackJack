@@ -4,7 +4,7 @@
 > 기획·개발 책임자: 이천서  
 > 작업 식별자: EUI-00~EUI-05  
 > 버전: v0.1  
-> 상태: EUI-01 후보·상태 기반 구현·검증 완료
+> 상태: EUI-02 상대 선택 표시·포커스·씬 이동 차단 구현·검증 완료
 > 최종 갱신: 2026-07-20
 
 ## 1. 기술 목표
@@ -35,12 +35,13 @@ EnemyCombatProfileCatalog.Previews
 - `StageProgressionSession`은 선택된 프로필의 보상 등급을 사용한다.
 - `StageProgressionState.OpponentSelection`과 후보·제안·결정적 생성기가 EUI-01에서 구현되었다.
 - `StageProgressionSession`은 선택 기능을 선택적으로 주입받고 Pending Offer·ActiveStage·활성 여부를 제공한다.
-- `StageProgressionRuntime`은 총잡이·집행관·최종 보스의 고정 경로를 사용한다.
-- `StageProgressionPresenter`는 `RunProgress`만 받아 선택 제안을 표시할 수 없다.
-- `StageProgressionController`는 시작·다음 스테이지 성공 시 항상 전투 씬을 연다.
+- `StageProgressionRuntime`은 EUI-02부터 결정적 상대 생성기를 주입하고 일반전 진입 시 선택 제안을 만든다.
+- `StageProgressionPresenter`는 기존 `RunProgress` 호환 오버로드와 세션·집중 키 오버로드를 제공하고 후보 2명의 안전 미리보기를 표시한다.
+- `StageProgressionController`는 현재 제안 ID와 집중 키를 로컬로 소유하며 선택 상태에서는 전투 씬을 열지 않고 같은 화면을 갱신한다.
+- `StageProgressionView`는 후보 비교 카드·단일 집중 강조·확정 가능 상태를 기존 IMGUI 안에 표시한다. 확정 요청의 세션 처리와 실제 전투 이동은 EUI-03 범위다.
 - `CoreLoopPresenter`는 전투 객체만 받아 적 프로필 이름·등급·추론 정보를 알 수 없다.
 - `EnemyInferenceDisplayModel`과 `BossCombatDisplayModel`은 있으나 실제 View에 연결되지 않았다.
-- EUI-01 기준 신규 13/13, StageProgression 94/94, CoreLoop 179/179, 전체 EditMode 273/273와 스크립트 진단·최종 Console Error/Warning 0이다.
+- EUI-02 기준 신규 9/9, StageProgression 103/103, CoreLoop 179/179, 전체 EditMode 282/282와 변경 스크립트 진단 0, 1280×720·1920×1080 실제 선택 화면 검증을 통과했다.
 
 ## 3. 설계 원칙
 
@@ -459,3 +460,4 @@ Assets/06.Packages/Tests/EditMode/CoreLoop/
 | --- | --- | --- |
 | 2026-07-20 | 이천서 | EUI-01 후보 불변 타입·결정적 생성기·선택 대기 상태·세션 주입과 신규 13/13·전체 EditMode 273/273 검증 결과 반영 |
 | 2026-07-20 | 이천서 | 후보 생성·OfferId·선택 상태·ActiveStage·등급별 안전 표시 스냅샷·Presenter/View/Controller 연결과 EUI 테스트 명세를 구현 가능한 기준으로 확정 |
+| 2026-07-20 | 이천서 | EUI-02 후보 ViewModel·세션 Presenter·로컬 집중·선택 상태 화면 갱신·프로토타입 Runtime 활성화와 신규 9/9·전체 EditMode 282/282·두 해상도 화면 검증 결과 반영 |
