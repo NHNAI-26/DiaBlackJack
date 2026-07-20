@@ -6,17 +6,20 @@ using DiaBlackJack.CoreLoop.UI;
 namespace DiaBlackJack.GameScene
 {
     /// <summary>
-    /// A single card projected for world-space sprite rendering. For a face-down card the
-    /// <see cref="Rank"/> is deliberately omitted (left at 0): the hidden rank must never cross
-    /// into the view layer, mirroring the "?" rule enforced by <see cref="CoreLoopPresenter"/>.
+    /// A single card projected for world-space rendering. <see cref="IsFaceUp"/> is the *physical*
+    /// orientation (drives the card back visual). <see cref="RevealRank"/> is whether the rank may be
+    /// shown to the viewer: true for all of the player's own cards (a player sees their own hidden
+    /// card), but for the enemy only when the card is face-up. When <see cref="RevealRank"/> is false
+    /// the <see cref="Rank"/> is forced to 0 — the hidden enemy rank never crosses into the view.
     /// </summary>
     public sealed class GameSceneCardViewModel
     {
-        public GameSceneCardViewModel(int cardId, int rank, bool isFaceUp, string displayName)
+        public GameSceneCardViewModel(int cardId, int rank, bool isFaceUp, bool revealRank, string displayName)
         {
             CardId = cardId;
             Rank = rank;
             IsFaceUp = isFaceUp;
+            RevealRank = revealRank;
             DisplayName = displayName ?? string.Empty;
         }
 
@@ -25,6 +28,8 @@ namespace DiaBlackJack.GameScene
         public int Rank { get; }
 
         public bool IsFaceUp { get; }
+
+        public bool RevealRank { get; }
 
         public string DisplayName { get; }
     }
@@ -74,10 +79,12 @@ namespace DiaBlackJack.GameScene
             var cards = new List<GameSceneCardViewModel>(core.PlayerCardActions.Count);
             foreach (PlayerCardViewModel card in core.PlayerCardActions)
             {
+                // The player sees every one of their own cards, including the face-down one.
                 cards.Add(new GameSceneCardViewModel(
                     card.CardId,
                     card.Rank,
                     card.IsFaceUp,
+                    revealRank: true,
                     card.DisplayName));
             }
 
@@ -96,6 +103,7 @@ namespace DiaBlackJack.GameScene
                     card.Id,
                     faceUp ? card.Rank : 0,
                     faceUp,
+                    revealRank: faceUp,
                     faceUp ? card.Definition.DisplayName : string.Empty));
             }
 
