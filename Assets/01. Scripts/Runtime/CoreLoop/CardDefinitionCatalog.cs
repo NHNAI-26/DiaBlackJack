@@ -52,25 +52,25 @@ namespace DiaBlackJack.CoreLoop
                     CardEffectKind.ThreatHammer),
                 new CardDefinition(
                     "auto-pistol-7",
-                    "자동 권총",
+                    "리볼버",
                     7,
                     CardActivationKind.Manual,
                     CardEffectKind.AutoPistol),
                 new CardDefinition(
                     "auto-pistol-8",
-                    "자동 권총",
+                    "리볼버",
                     8,
                     CardActivationKind.Manual,
                     CardEffectKind.AutoPistol),
                 new CardDefinition(
                     "military-knife-9",
-                    "군용 나이프",
+                    "보위 나이프",
                     9,
                     CardActivationKind.Manual,
                     CardEffectKind.MilitaryKnife),
                 new CardDefinition(
                     "military-knife-10",
-                    "군용 나이프",
+                    "보위 나이프",
                     10,
                     CardActivationKind.Manual,
                     CardEffectKind.MilitaryKnife)

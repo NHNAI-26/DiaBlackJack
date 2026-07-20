@@ -52,7 +52,7 @@
 | 2026-07-19 | 카드 사용 CU-00 | 일반 수동 카드 4종의 범위·임시 규칙·카드 정의·효과 선택·UI·진행 연결과 CU-00~CU-06 검증 계획 수립 | `Docs/card-use-design.md`, `card-use-development-spec.md`, `card-use-implementation-plan.md`, `card-use-progress-log.md` | AI 문서 초안·구조 대조 보조, 코드·씬·Unity 테스트 없음; 이천서 기획 기준 최종 검토 필요 |
 | 2026-07-19 | 카드 사용 CU-01 | 숫자별 카드 정의·카탈로그, 물리 카드 사용 상태, 기존 생성자 호환과 런 정의 키 보존 구현 관리 | CoreLoop·StageProgression 런타임, `CardDefinitionTests.cs`, 진행 테스트와 관련 문서 | AI 구현·테스트·기록 보조, 신규 19개·전체 EditMode 101/101·Unity Console Error/Warning 0; 씬·패키지·외부 에셋 변경 없음, 이천서 최종 코드 승인 대기 |
 | 2026-07-19 | 카드 사용 CU-02 | 승인 전 사용 검증, 선택 대기·효과 처리·완료 결과, 카드 이동 명령과 효과 버스트 종료 원인 구현 관리 | CoreLoop 런타임, `CardEffectFoundationTests.cs`, 관련 문서 | AI 구현·테스트·기록 보조, 신규 16개·CoreLoop 87/87·전체 EditMode 117/117·Unity Console Error/Warning 0; 실제 카드·UI·씬·외부 에셋 변경 없음, 이천서 최종 코드 승인 대기 |
-| 2026-07-19 | 카드 사용 CU-03 | 자동 권총 7·8의 단일 비공개 카드 추측, 성공·실패·직접 버스트와 정보 은닉 구현 관리 | `AutoPistolEffectHandler.cs`, 효과 등록·전투 변경, `AutoPistolEffectTests.cs`, 관련 문서 | AI 구현·테스트·기록 보조, 신규 8개·CoreLoop 95/95·전체 EditMode 125/125·Unity Console Error/Warning 0; 다중 비공개 카드 기능·UI·씬·외부 에셋 변경 없음, 이천서 최종 코드 승인 대기 |
+| 2026-07-19 | 카드 사용 CU-03 | 리볼버 7·8의 단일 비공개 카드 추측, 성공·실패·직접 버스트와 정보 은닉 구현 관리 | `AutoPistolEffectHandler.cs`, 효과 등록·전투 변경, `AutoPistolEffectTests.cs`, 관련 문서 | AI 구현·테스트·기록 보조, 신규 8개·CoreLoop 95/95·전체 EditMode 125/125·Unity Console Error/Warning 0; 다중 비공개 카드 기능·UI·씬·외부 에셋 변경 없음, 이천서 최종 코드 승인 대기 |
 | 2026-07-19 | 카드 사용 CU-04 | 수정 구슬 후보 순서·소유권, 해머 비용·단일 비공개 교체, 나이프 강제 드로우·유지 정책 구현 관리 | 카드 처리기 3개, `CardEffectResolver.cs`, `CardEffectSelection.cs`, `BattleParticipant.cs`, `RemainingCardEffectTests.cs`, 관련 문서 | AI 구현·테스트·기록 보조, 신규 18개·CoreLoop 113/113·전체 EditMode 143/143·Unity Console Error/Warning 0; 다중 비공개 카드 기능·UI·씬·외부 에셋 변경 없음, 이천서 최종 코드 승인 대기 |
 | 2026-07-19 | 카드 사용 CU-05 | 카드별 사용 상태·불가 사유·효과 선택·최근 결과 표시, 독립/런 전투 입력 전달과 종료·지속 영혼 동기화 구현 관리 | `Assets/01. Scripts/Runtime/UI/CoreLoop`, `StageProgressionSession.cs`, Presenter·진행 통합 테스트 8개, 관련 문서 | AI 구현·테스트·화면 검증 보조, 관련 28/28·CoreLoop 117/117·StageProgression 34/34·전체 EditMode 151/151·Game View·양쪽 씬·Console 통과; 씬·패키지·외부 에셋 변경 없음, 이천서 최종 코드·화면 승인 대기 |
 | 2026-07-20 | 카드 사용 CU-06 | 카드 소유권·정보 은닉·독립 및 런 재시작 반복 회귀, 실제 런 승리·패배·재시작과 최종 기록 관리 | `CardUseSystemValidationTests.cs`, 카드 사용 문서 4종, AI 활용·팀 역할·프로젝트 구조 기록 | AI 테스트·MCP 검증·기록 보조, 신규 5/5·CoreLoop 122/122·StageProgression 34/34·전체 EditMode 156/156·양쪽 씬·Console 통과; 런타임·씬·패키지·외부 에셋 변경 없음, 이천서 최종 승인 대기 |
@@ -153,7 +153,7 @@
 | CU-00 | 기획·개발 명세·구현 계획·진행 기록 | 이천서(AI 문서 보조) | 완료 |
 | CU-01 | 카드 정의·인스턴스 사용 상태 | 이천서(AI 구현·검증 보조) | 완료 |
 | CU-02 | 효과 선택·명령·종료 기반 | 이천서(AI 구현·검증 보조) | 완료 |
-| CU-03 | 자동 권총 세로 기능 | 이천서(AI 구현·검증 보조) | 완료 |
+| CU-03 | 리볼버 세로 기능 | 이천서(AI 구현·검증 보조) | 완료 |
 | CU-04 | 수정 구슬·해머·나이프 | 이천서(AI 구현·검증 보조) | 완료 |
 | CU-05 | 화면 입력·런 전투 연결 | 이천서(AI 구현·화면·검증 보조) | 완료 |
 | CU-06 | 전체 회귀·실제 흐름·기록 마감 | 이천서(AI 구현·검증·기록 보조) | 완료 |
@@ -229,7 +229,7 @@
 | 2026-07-19 | 이천서 | 카드 사용 CU-00 일반 수동 카드 4종의 기획·기술 명세와 CU-00~CU-06 구현·검증 계획 수립 기여 추가 |
 | 2026-07-19 | 이천서 | 카드 사용 CU-01 카드 정의·사용 상태·런 정의 키 보존 구현과 신규 19개·전체 EditMode 101/101 검증 기여 추가 |
 | 2026-07-19 | 이천서 | 카드 사용 CU-02 사용 검증·선택 대기·효과 처리·종료 원인 기반 구현과 신규 16개·전체 EditMode 117/117 검증 기여 추가 |
-| 2026-07-19 | 이천서 | 카드 사용 CU-03 자동 권총 단일 비공개 카드 추측·성공/실패·정보 은닉 구현과 신규 8개·전체 EditMode 125/125 검증 기여 추가 |
+| 2026-07-19 | 이천서 | 카드 사용 CU-03 리볼버 단일 비공개 카드 추측·성공/실패·정보 은닉 구현과 신규 8개·전체 EditMode 125/125 검증 기여 추가 |
 | 2026-07-19 | 이천서 | 카드 사용 CU-04 수정 구슬 순서 보존·해머 단일 비공개 교체·나이프 강제 드로우 구현과 신규 18개·전체 EditMode 143/143 검증 기여 추가 |
 | 2026-07-19 | 이천서 | 카드 사용 CU-05 카드 표시·효과 선택 UI·독립/런 세션 전달·종료 동기화 구현과 신규 8개·전체 EditMode 151/151·Game View·씬·Console 검증 기여 추가 |
 | 2026-07-20 | 이천서 | 카드 사용 CU-06 반복 회귀 5개·전체 EditMode 156/156, 실제 런 승리·패배 재시작과 씬·Console 최종 검증·기록 마감 기여 추가 |

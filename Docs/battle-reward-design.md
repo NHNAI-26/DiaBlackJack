@@ -113,10 +113,10 @@ InBattle
 | `standard-plain-4` | 기본 카드 | 4 |
 | `crystal-orb-5` | 수정 구슬 | 5 |
 | `threat-hammer-6` | 위협용 해머 | 6 |
-| `auto-pistol-7` | 자동 권총 | 7 |
-| `auto-pistol-8` | 자동 권총 | 8 |
-| `military-knife-9` | 군용 나이프 | 9 |
-| `military-knife-10` | 군용 나이프 | 10 |
+| `auto-pistol-7` | 리볼버 | 7 |
+| `auto-pistol-8` | 리볼버 | 8 |
+| `military-knife-9` | 보위 나이프 | 9 |
+| `military-knife-10` | 보위 나이프 | 10 |
 
 ### 6.2 높은 등급 보상 풀
 
@@ -126,10 +126,10 @@ InBattle
 | --- | --- | ---: |
 | `crystal-orb-5` | 수정 구슬 | 5 |
 | `threat-hammer-6` | 위협용 해머 | 6 |
-| `auto-pistol-7` | 자동 권총 | 7 |
-| `auto-pistol-8` | 자동 권총 | 8 |
-| `military-knife-9` | 군용 나이프 | 9 |
-| `military-knife-10` | 군용 나이프 | 10 |
+| `auto-pistol-7` | 리볼버 | 7 |
+| `auto-pistol-8` | 리볼버 | 8 |
+| `military-knife-9` | 보위 나이프 | 9 |
+| `military-knife-10` | 보위 나이프 | 10 |
 
 이 목록은 카드 등급 체계가 생기기 전의 프로토타입 결정이다. 높은 등급을 숫자 7 이상처럼 숫자만으로 판단하지 않는다. 숫자는 블랙잭 확률과 직접 연결되므로 등급과 분리한다.
 

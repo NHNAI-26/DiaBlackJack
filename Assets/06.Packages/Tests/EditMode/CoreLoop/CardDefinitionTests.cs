@@ -12,10 +12,10 @@ namespace DiaBlackJack.CoreLoop.Tests
         [TestCase(4, "standard-plain-4", "기본 카드", CardActivationKind.None, CardEffectKind.None)]
         [TestCase(5, "crystal-orb-5", "수정 구슬", CardActivationKind.Manual, CardEffectKind.CrystalOrb)]
         [TestCase(6, "threat-hammer-6", "위협용 해머", CardActivationKind.Manual, CardEffectKind.ThreatHammer)]
-        [TestCase(7, "auto-pistol-7", "자동 권총", CardActivationKind.Manual, CardEffectKind.AutoPistol)]
-        [TestCase(8, "auto-pistol-8", "자동 권총", CardActivationKind.Manual, CardEffectKind.AutoPistol)]
-        [TestCase(9, "military-knife-9", "군용 나이프", CardActivationKind.Manual, CardEffectKind.MilitaryKnife)]
-        [TestCase(10, "military-knife-10", "군용 나이프", CardActivationKind.Manual, CardEffectKind.MilitaryKnife)]
+        [TestCase(7, "auto-pistol-7", "리볼버", CardActivationKind.Manual, CardEffectKind.AutoPistol)]
+        [TestCase(8, "auto-pistol-8", "리볼버", CardActivationKind.Manual, CardEffectKind.AutoPistol)]
+        [TestCase(9, "military-knife-9", "보위 나이프", CardActivationKind.Manual, CardEffectKind.MilitaryKnife)]
+        [TestCase(10, "military-knife-10", "보위 나이프", CardActivationKind.Manual, CardEffectKind.MilitaryKnife)]
         public void CU_U01_DefaultCatalogMapsRankToStableDefinition(
             int rank,
             string expectedKey,
