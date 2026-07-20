@@ -43,6 +43,10 @@
 | [enemy-selection-combat-ui-development-spec.md](./enemy-selection-combat-ui-development-spec.md) | 후보 생성·선택 상태·전투 변환·안전 표시 스냅샷과 테스트 명세 | EUI-05 최종 검증 완료 v0.1 |
 | [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI-00~EUI-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
 | [enemy-selection-combat-ui-progress-log.md](./enemy-selection-combat-ui-progress-log.md) | 상대 선택·적 전투 정보 UI 결정·구현·검증 누적 기록 | EUI-05 완료 v0.1 |
+| [formal-run-flow-design.md](./formal-run-flow-design.md) | 골드·상점과 `전투→이벤트→전투→이벤트→보스` 정식 진행 규칙 | RF-00 기준안 v0.1 |
+| [formal-run-flow-development-spec.md](./formal-run-flow-development-spec.md) | 골드 정산·상점 거래·정식 런 조정 API와 테스트 명세 | RF-01 착수 가능 v0.1 |
+| [formal-run-flow-implementation-plan.md](./formal-run-flow-implementation-plan.md) | RF-00~RF-05 HONG 인수인계 작업 순서와 검증 게이트 | RF-00 완료 v0.1 |
+| [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | RF-00 완료 v0.1 |
 
 ## 기록 원칙
 
@@ -86,6 +90,7 @@
 | 2026-07-20 | 이천서 | 카드 사용 CU-06 반복 회귀 5개·전체 EditMode 156/156, 실제 런 승리·패배 재시작과 씬·Console 최종 검증으로 1차 범위 마감 |
 | 2026-07-20 | 이천서 | 정식 런을 지도 없는 `전투→이벤트→전투→이벤트→보스` 구조로 변경하고 상대 2명 선택·엘리트 제한·랜덤 이벤트 규칙 확정 |
 | 2026-07-20 | 이천서 | 전투 보상을 카드 3장 중 1장 선택 또는 건너뛰기로 변경하고 엘리트 보상 3장 모두 높은 등급으로 확정 |
+| 2026-07-20 | 이천서 | 전투 승리 골드·강한 적과 엘리트의 추가 골드, 상점 내 유료 휴식, 첫 개발의 전투 후 상점 고정 구조 확정 |
 | 2026-07-20 | 이천서 | 최종 보스도 높은 등급 보상 처리 뒤에만 런 승리로 전환하도록 명시하고 전투 보상 기획·개발 명세·구현 계획·진행 기록 4종 작성 |
 | 2026-07-20 | 이천서 | 전투 보상 RW-01 명시적 카탈로그·결정적 3장 제안·고유 런 카드 ID·최초 덱 복구 구현과 신규 8/8·전체 EditMode 164/164 검증 완료 |
 | 2026-07-20 | 이천서 | 전투 보상 RW-02 선택 대기·선택·건너뛰기·일반/보스 완료 목적지와 실패 원자성 구현, 신규 7/7·전체 EditMode 171/171 검증 완료 |
@@ -105,4 +110,5 @@
 | 2026-07-20 | 이천서 | EUI-03 선택 상대의 원자적 확정·프로필 전투·보상·두 선택·고정 보스·재시작을 통합하고 신규 14/14·StageProgression 117/117·CoreLoop 179/179·전체 EditMode 296/296·실제 전투 씬 전환 검증 완료 |
 | 2026-07-20 | 이천서 | EUI-04 일반·엘리트·보스 공개 정보와 보스 예고를 실제 전투 화면에 연결하고 신규 14/14·StageProgression 117/117·CoreLoop 193/193·전체 EditMode 310/310·1280×720·1920×1080 화면 검증 완료 |
 | 2026-07-20 | 이천서 | EUI-05 후보·두 선택·보상·고정 보스·재시작·상태 격리 10회 반복 검증과 신규 5/5·StageProgression 122/122·CoreLoop 193/193·전체 EditMode 315/315·실제 두 씬·두 해상도·Console 0으로 1차 범위 마감 |
+| 2026-07-20 | 이천서 | RF-00에서 최신 골드·상점 규칙을 반영해 HONG 인계용 정식 런 기획·개발 명세·구현 계획·진행 기록 4종 작성 |
 
