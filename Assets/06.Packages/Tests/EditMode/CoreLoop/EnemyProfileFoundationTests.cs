@@ -43,7 +43,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 EnemyCombatProfileCatalog.FinalBossKey,
                 EnemyGrade.Boss,
                 7,
-                EnemyBehaviorPolicyCatalog.Simple);
+                EnemyBehaviorPolicyCatalog.FinalBoss);
         }
 
         [Test]

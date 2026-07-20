@@ -9,7 +9,7 @@ namespace DiaBlackJack.CoreLoop.Tests
     public sealed class EnemyElitePolicyTests
     {
         [Test]
-        public void EP04_U01_EnforcerUsesElitePolicyAndBossKeepsSimplePolicy()
+        public void EP04_U01_EnforcerAndBossUseTheirDedicatedPolicies()
         {
             EnemyBattleConfiguration enforcer = EnemyBattleConfigurationFactory.Create(
                 EnemyCombatProfileCatalog.EnforcerKey,
@@ -22,7 +22,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(enforcer.EnemyMaximumSoul, Is.EqualTo(5));
             Assert.That(enforcer.BehaviorPolicy, Is.TypeOf<EnforcerEnemyPolicy>());
             Assert.That(enforcer.ExpectedRewardTier, Is.EqualTo(BattleRewardTier.HighGrade));
-            Assert.That(boss.BehaviorPolicy, Is.TypeOf<SimpleEnemyPolicy>());
+            Assert.That(boss.BehaviorPolicy, Is.TypeOf<FinalBossEnemyPolicy>());
         }
 
         [Test]

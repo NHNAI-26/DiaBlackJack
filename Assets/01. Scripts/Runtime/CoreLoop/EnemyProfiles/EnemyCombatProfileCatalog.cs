@@ -158,7 +158,7 @@ namespace DiaBlackJack.CoreLoop
                     "최종 보스",
                     EnemyGrade.Boss,
                     7,
-                    EnemyBehaviorPolicyCatalog.Simple,
+                    EnemyBehaviorPolicyCatalog.FinalBoss,
                     new[]
                     {
                         "standard-ace-1", "standard-plain-2", "standard-plain-3",

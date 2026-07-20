@@ -10,6 +10,7 @@ namespace DiaBlackJack.CoreLoop
         public const string Cultist = "cultist-aggressive-risk";
         public const string Trickster = "trickster-information-control";
         public const string Enforcer = "enforcer-disruption-pressure";
+        public const string FinalBoss = "final-boss-three-phase";
 
         public static IEnemyBehaviorPolicy CreateByKey(string key)
         {
@@ -39,6 +40,11 @@ namespace DiaBlackJack.CoreLoop
                 return new EnforcerEnemyPolicy();
             }
 
+            if (StringComparer.Ordinal.Equals(key, FinalBoss))
+            {
+                return new FinalBossEnemyPolicy();
+            }
+
             throw new KeyNotFoundException($"Enemy behavior policy '{key}' does not exist.");
         }
 
@@ -49,7 +55,8 @@ namespace DiaBlackJack.CoreLoop
                     StringComparer.Ordinal.Equals(key, Gunslinger) ||
                     StringComparer.Ordinal.Equals(key, Cultist) ||
                     StringComparer.Ordinal.Equals(key, Trickster) ||
-                    StringComparer.Ordinal.Equals(key, Enforcer));
+                    StringComparer.Ordinal.Equals(key, Enforcer) ||
+                    StringComparer.Ordinal.Equals(key, FinalBoss));
         }
 
         private static void ValidateKey(string key)

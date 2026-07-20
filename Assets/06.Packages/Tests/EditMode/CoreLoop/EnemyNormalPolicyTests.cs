@@ -34,7 +34,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 EnemyBattleConfigurationFactory.Create(
                     EnemyCombatProfileCatalog.FinalBossKey,
                     1).BehaviorPolicy,
-                Is.TypeOf<SimpleEnemyPolicy>());
+                Is.TypeOf<FinalBossEnemyPolicy>());
         }
 
         [Test]

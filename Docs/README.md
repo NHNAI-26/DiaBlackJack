@@ -35,10 +35,10 @@
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW-05 최종 검증 완료 v0.1 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
 | [battle-reward-progress-log.md](./battle-reward-progress-log.md) | 전투 보상 결정·구현·검증 누적 기록 | RW-05 완료 v0.1 |
-| [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 일반 적 3종·엘리트·보스의 전투 성향과 책임 경계 | EP-04 엘리트 정책 반영 v0.4 |
-| [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | EP-04 구현 기준 v0.4 |
-| [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP-00~EP-06 작업 순서와 단계별 검증 게이트 | EP-04 완료 v0.5 |
-| [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | EP-04 완료 v0.5 |
+| [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 일반 적 3종·엘리트·보스의 전투 성향과 책임 경계 | EP-05 보스 정책 반영 v0.5 |
+| [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | EP-05 구현 기준 v0.5 |
+| [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP-00~EP-06 작업 순서와 단계별 검증 게이트 | EP-05 완료 v0.6 |
+| [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | EP-05 완료 v0.6 |
 
 ## 기록 원칙
 
@@ -93,4 +93,5 @@
 | 2026-07-20 | 이천서 | 적 전투 프로필 EP-02에서 공개 관측·유효 행동 후보·결정 재검증·적 카드 행위자/대상과 대칭 폴드를 구현하고 신규 8/8·CoreLoop 142/142·전체 EditMode 207/207 검증 완료 |
 | 2026-07-20 | 이천서 | 적 전투 프로필 EP-03에서 공개 구성 기반 숫자 추론과 총잡이·광신도·사기꾼 전용 정책을 구현하고 신규 10/10·CoreLoop 152/152·전체 EditMode 217/217 검증 완료 |
 | 2026-07-20 | 이천서 | 적 전투 프로필 EP-04에서 집행관 해머·나이프 후속 평가, 엘리트 추론 표시와 높은 등급 보상 연결을 구현하고 신규 11/11·CoreLoop 163/163·전체 EditMode 228/228 검증 완료 |
+| 2026-07-20 | 이천서 | 적 전투 프로필 EP-05에서 최종 보스 3구간 정책·강행동 예고·추론 방향 표시와 높은 등급 보상 뒤 런 승리를 구현하고 신규 16/16·CoreLoop 179/179·전체 EditMode 244/244 검증 완료 |
 
