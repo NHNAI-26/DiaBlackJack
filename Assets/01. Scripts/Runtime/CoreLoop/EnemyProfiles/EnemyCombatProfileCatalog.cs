@@ -91,8 +91,6 @@ namespace DiaBlackJack.CoreLoop
 
         private static EnemyCombatProfile[] CreateDefaultProfiles()
         {
-            const string policy = EnemyBehaviorPolicyCatalog.Simple;
-
             return new[]
             {
                 new EnemyCombatProfile(
@@ -100,7 +98,7 @@ namespace DiaBlackJack.CoreLoop
                     "총잡이",
                     EnemyGrade.Normal,
                     3,
-                    policy,
+                    EnemyBehaviorPolicyCatalog.Gunslinger,
                     new[]
                     {
                         "standard-ace-1", "standard-plain-2", "standard-plain-3",
@@ -115,7 +113,7 @@ namespace DiaBlackJack.CoreLoop
                     "광신도",
                     EnemyGrade.Normal,
                     3,
-                    policy,
+                    EnemyBehaviorPolicyCatalog.Cultist,
                     new[]
                     {
                         "standard-ace-1", "standard-plain-2", "standard-plain-3",
@@ -130,7 +128,7 @@ namespace DiaBlackJack.CoreLoop
                     "사기꾼",
                     EnemyGrade.Normal,
                     4,
-                    policy,
+                    EnemyBehaviorPolicyCatalog.Trickster,
                     new[]
                     {
                         "standard-ace-1", "standard-plain-2", "standard-plain-3",
@@ -145,7 +143,7 @@ namespace DiaBlackJack.CoreLoop
                     "집행관",
                     EnemyGrade.Elite,
                     5,
-                    policy,
+                    EnemyBehaviorPolicyCatalog.Simple,
                     new[]
                     {
                         "standard-ace-1", "standard-plain-2", "standard-plain-3",
@@ -160,7 +158,7 @@ namespace DiaBlackJack.CoreLoop
                     "최종 보스",
                     EnemyGrade.Boss,
                     7,
-                    policy,
+                    EnemyBehaviorPolicyCatalog.Simple,
                     new[]
                     {
                         "standard-ace-1", "standard-plain-2", "standard-plain-3",

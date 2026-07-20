@@ -14,11 +14,36 @@ namespace DiaBlackJack.CoreLoop.Tests
             EnemyCombatProfileCatalog catalog = EnemyCombatProfileCatalog.Default;
 
             Assert.That(catalog.Profiles.Count, Is.EqualTo(5));
-            AssertProfile(catalog, EnemyCombatProfileCatalog.GunslingerKey, EnemyGrade.Normal, 3);
-            AssertProfile(catalog, EnemyCombatProfileCatalog.CultistKey, EnemyGrade.Normal, 3);
-            AssertProfile(catalog, EnemyCombatProfileCatalog.TricksterKey, EnemyGrade.Normal, 4);
-            AssertProfile(catalog, EnemyCombatProfileCatalog.EnforcerKey, EnemyGrade.Elite, 5);
-            AssertProfile(catalog, EnemyCombatProfileCatalog.FinalBossKey, EnemyGrade.Boss, 7);
+            AssertProfile(
+                catalog,
+                EnemyCombatProfileCatalog.GunslingerKey,
+                EnemyGrade.Normal,
+                3,
+                EnemyBehaviorPolicyCatalog.Gunslinger);
+            AssertProfile(
+                catalog,
+                EnemyCombatProfileCatalog.CultistKey,
+                EnemyGrade.Normal,
+                3,
+                EnemyBehaviorPolicyCatalog.Cultist);
+            AssertProfile(
+                catalog,
+                EnemyCombatProfileCatalog.TricksterKey,
+                EnemyGrade.Normal,
+                4,
+                EnemyBehaviorPolicyCatalog.Trickster);
+            AssertProfile(
+                catalog,
+                EnemyCombatProfileCatalog.EnforcerKey,
+                EnemyGrade.Elite,
+                5,
+                EnemyBehaviorPolicyCatalog.Simple);
+            AssertProfile(
+                catalog,
+                EnemyCombatProfileCatalog.FinalBossKey,
+                EnemyGrade.Boss,
+                7,
+                EnemyBehaviorPolicyCatalog.Simple);
         }
 
         [Test]
@@ -208,14 +233,15 @@ namespace DiaBlackJack.CoreLoop.Tests
             EnemyCombatProfileCatalog catalog,
             string key,
             EnemyGrade expectedGrade,
-            int expectedMaximumSoul)
+            int expectedMaximumSoul,
+            string expectedPolicyKey)
         {
             EnemyCombatProfile profile = catalog.GetByKey(key);
 
             Assert.That(profile.Key, Is.EqualTo(key));
             Assert.That(profile.Grade, Is.EqualTo(expectedGrade));
             Assert.That(profile.MaximumSoul, Is.EqualTo(expectedMaximumSoul));
-            Assert.That(profile.BehaviorPolicyKey, Is.EqualTo(EnemyBehaviorPolicyCatalog.Simple));
+            Assert.That(profile.BehaviorPolicyKey, Is.EqualTo(expectedPolicyKey));
             Assert.That(profile.DeckDefinitionKeys, Is.Not.Empty);
         }
 

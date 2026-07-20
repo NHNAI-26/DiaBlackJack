@@ -15,11 +15,21 @@ namespace DiaBlackJack.CoreLoop
             IReadOnlyList<EnemyOwnedCardObservation> ownCards = CreateOwnCards(battle);
             IReadOnlyList<EnemyActionCandidate> actionCandidates =
                 CreateActionCandidates(battle, ownCards);
+            IReadOnlyList<PublicCardObservation> playerFaceUpCards =
+                CreatePublicCards(battle.Player.Hand.GetFaceUpCards());
+            IReadOnlyList<PublicCardObservation> playerDiscardedCards =
+                CreatePublicCards(battle.Player.Deck.GetDiscardedCards());
+            IReadOnlyList<EnemyNumberInference> numberInferences =
+                EnemyNumberInferenceCalculator.Calculate(
+                    battle.Player.Deck.GetKnownRankCounts(),
+                    playerFaceUpCards,
+                    playerDiscardedCards,
+                    battle.Player.Hand.HiddenCardCount);
 
             return new EnemyObservation(
                 battle.Enemy.HandValue,
                 ownCards,
-                CreatePublicCards(battle.Player.Hand.GetFaceUpCards()),
+                playerFaceUpCards,
                 battle.Player.Hand.HiddenCardCount,
                 new SoulObservation(battle.Player.Soul.Current, battle.Player.Soul.Maximum),
                 new SoulObservation(battle.Enemy.Soul.Current, battle.Enemy.Soul.Maximum),
@@ -29,10 +39,10 @@ namespace DiaBlackJack.CoreLoop
                 battle.Enemy.Deck.AvailableCardCount,
                 battle.Player.Deck.AvailableCardCount,
                 CreatePublicCards(battle.Enemy.Deck.GetDiscardedCards()),
-                CreatePublicCards(battle.Player.Deck.GetDiscardedCards()),
+                playerDiscardedCards,
                 battle.PublicActionHistory,
                 actionCandidates,
-                Array.Empty<EnemyNumberInference>(),
+                numberInferences,
                 battle.PendingEnemyCardEffect?.EffectKind,
                 decisionSeed);
         }
@@ -79,11 +89,15 @@ namespace DiaBlackJack.CoreLoop
 
                 foreach (CardEffectChoiceOption option in pendingEffect.Options)
                 {
+                    BlackjackCard optionCard = FindTemporaryCard(pendingEffect, option.CardId);
                     candidates.Add(new EnemyActionCandidate(
                         EnemyActionType.UseCard,
                         sourceCard.Id,
                         sourceCard.DefinitionKey,
-                        option.Id));
+                        option.Id,
+                        option.NumericValue,
+                        optionCard?.Id,
+                        optionCard?.Rank));
                 }
 
                 return candidates.AsReadOnly();
@@ -116,6 +130,27 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return candidates.AsReadOnly();
+        }
+
+        private static BlackjackCard FindTemporaryCard(
+            PendingCardEffect pendingEffect,
+            int? cardId)
+        {
+            if (!cardId.HasValue)
+            {
+                return null;
+            }
+
+            foreach (BlackjackCard card in pendingEffect.TemporaryCards)
+            {
+                if (card.Id == cardId.Value)
+                {
+                    return card;
+                }
+            }
+
+            throw new InvalidOperationException(
+                "Enemy card option references a missing temporary card.");
         }
 
         private static IReadOnlyList<PublicCardObservation> CreatePublicCards(

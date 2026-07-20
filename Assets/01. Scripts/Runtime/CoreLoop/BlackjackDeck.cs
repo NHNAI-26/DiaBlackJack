@@ -10,6 +10,7 @@ namespace DiaBlackJack.CoreLoop
         private readonly List<BlackjackCard> _discardPile = new List<BlackjackCard>();
         private readonly HashSet<int> _knownCardIds = new HashSet<int>();
         private readonly HashSet<int> _availableCardIds = new HashSet<int>();
+        private readonly int[] _knownRankCounts = new int[11];
         private readonly DeterministicRng _random = new DeterministicRng();
 
         public BlackjackDeck(IEnumerable<BlackjackCard> cards, int seed)
@@ -38,6 +39,7 @@ namespace DiaBlackJack.CoreLoop
                 }
 
                 _availableCardIds.Add(card.Id);
+                _knownRankCounts[card.Rank]++;
                 _drawPile.Add(card);
             }
 
@@ -67,6 +69,11 @@ namespace DiaBlackJack.CoreLoop
         internal IReadOnlyList<BlackjackCard> GetDiscardedCards()
         {
             return _discardPile.AsReadOnly();
+        }
+
+        internal IReadOnlyList<int> GetKnownRankCounts()
+        {
+            return Array.AsReadOnly((int[])_knownRankCounts.Clone());
         }
 
         public static BlackjackDeck CreateStandard(int seed)

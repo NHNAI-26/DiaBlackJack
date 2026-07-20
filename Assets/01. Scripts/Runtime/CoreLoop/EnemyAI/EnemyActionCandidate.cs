@@ -8,7 +8,10 @@ namespace DiaBlackJack.CoreLoop
             EnemyActionType actionType,
             int? cardId = null,
             string cardDefinitionKey = null,
-            int? cardEffectOptionId = null)
+            int? cardEffectOptionId = null,
+            int? cardEffectOptionNumericValue = null,
+            int? cardEffectOptionCardId = null,
+            int? cardEffectOptionCardRank = null)
         {
             if (!Enum.IsDefined(typeof(EnemyActionType), actionType))
             {
@@ -35,10 +38,40 @@ namespace DiaBlackJack.CoreLoop
                 {
                     throw new ArgumentOutOfRangeException(nameof(cardEffectOptionId));
                 }
+
+                if (!cardEffectOptionId.HasValue &&
+                    (cardEffectOptionNumericValue.HasValue ||
+                        cardEffectOptionCardId.HasValue ||
+                        cardEffectOptionCardRank.HasValue))
+                {
+                    throw new ArgumentException(
+                        "Card effect option details require an option id.");
+                }
+
+                if (cardEffectOptionCardId < 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(cardEffectOptionCardId));
+                }
+
+                if (cardEffectOptionCardRank.HasValue &&
+                    (cardEffectOptionCardRank.Value < 1 ||
+                        cardEffectOptionCardRank.Value > 10))
+                {
+                    throw new ArgumentOutOfRangeException(nameof(cardEffectOptionCardRank));
+                }
+
+                if (cardEffectOptionCardId.HasValue != cardEffectOptionCardRank.HasValue)
+                {
+                    throw new ArgumentException(
+                        "Card effect option card id and rank must be provided together.");
+                }
             }
             else if (cardId.HasValue ||
                 cardDefinitionKey != null ||
-                cardEffectOptionId.HasValue)
+                cardEffectOptionId.HasValue ||
+                cardEffectOptionNumericValue.HasValue ||
+                cardEffectOptionCardId.HasValue ||
+                cardEffectOptionCardRank.HasValue)
             {
                 throw new ArgumentException(
                     "Only card use candidates can contain card selection values.");
@@ -48,6 +81,9 @@ namespace DiaBlackJack.CoreLoop
             CardId = cardId;
             CardDefinitionKey = cardDefinitionKey;
             CardEffectOptionId = cardEffectOptionId;
+            CardEffectOptionNumericValue = cardEffectOptionNumericValue;
+            CardEffectOptionCardId = cardEffectOptionCardId;
+            CardEffectOptionCardRank = cardEffectOptionCardRank;
         }
 
         public EnemyActionType ActionType { get; }
@@ -55,6 +91,12 @@ namespace DiaBlackJack.CoreLoop
         public string CardDefinitionKey { get; }
 
         public int? CardEffectOptionId { get; }
+
+        public int? CardEffectOptionNumericValue { get; }
+
+        public int? CardEffectOptionCardId { get; }
+
+        public int? CardEffectOptionCardRank { get; }
 
         public int? CardId { get; }
 
