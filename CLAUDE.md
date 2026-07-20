@@ -39,15 +39,19 @@ Baseline as of the last recorded run: **315 EditMode tests, 0 failures** (CoreLo
 
 ## Architecture
 
-Everything under `Assets/01. Scripts/Runtime/` compiles into **one** assembly, `Border` (`Border.asmdef`). Layering is by namespace and discipline, not by asmdef:
+`Assets/01. Scripts/Runtime/` holds **two** runtime assemblies: `Border` (`Border.asmdef` — everything below except `Input/`) and `Border.Input` (`Input/Border.Input.asmdef`, references `Unity.InputSystem`, define-gated `BORDER_INPUTSYSTEM`). Inside `Border`, layering is by namespace and discipline, not by asmdef:
 
 ```
-Border/
-  Core/              DeterministicRng, Log, ScreenshotManager   (Log/Screenshot use UnityEngine)
-  CoreLoop/          one battle: rules, state, cards, enemy AI  — PURE C#
-  StageProgression/  one run: stages, player state, rewards     — PURE C#
-  UI/                MonoBehaviours + IMGUI                     — Unity-facing
+Assets/01. Scripts/Runtime/          asmdef Border  (except Input/)
+  Core/              DeterministicRng, Log, ScreenshotManager   Border.Core   (Log/Screenshot use UnityEngine)
+  CoreLoop/          one battle: rules, state, cards, enemy AI  DiaBlackJack.CoreLoop          — PURE C#
+  StageProgression/  one run: stages, player state, rewards     DiaBlackJack.StageProgression  — PURE C#
+  UI/                game screens (Presentation/View/Controller) DiaBlackJack.*.UI + Border.UI — Unity-facing
+  Events/ Settings/ SaveLoad/ Localization/   menu/settings/save infra   Border.*  — Unity-facing, untested
+  Input/             GameInput + InputReader   Border.Input  (separate asmdef)
 ```
+
+**The namespace does not follow the asmdef name.** Game code declares `DiaBlackJack.*` (`DiaBlackJack.CoreLoop`, `DiaBlackJack.StageProgression`, `DiaBlackJack.CoreLoop.UI`, `DiaBlackJack.GameScene`, …); the cross-cutting infra folders declare `Border.*` (`Border.Core`, `Border.Events`, `Border.Settings`, `Border.SaveLoad`, `Border.Localization`, `Border.UI`, `Border.Input`). A rules type is reached with `using DiaBlackJack.CoreLoop`, **not** `Border.CoreLoop` — despite the asmdef and its `rootNamespace` both being `Border`.
 
 ### The purity rule (most important constraint)
 
@@ -114,7 +118,7 @@ The **run card id** is a stable identity threaded all the way through: `PlayerRu
 
 ### UI — the Presentation / View / Controller triple
 
-Both `UI/CoreLoop/` and `UI/StageProgression/` use the same three-part shape:
+`UI/CoreLoop/`, `UI/StageProgression/`, and `UI/GameScene/` use the same three-part shape:
 
 | File | Type | Responsibility |
 | --- | --- | --- |
@@ -126,9 +130,24 @@ New display logic belongs in `*Presentation.cs` so it can be tested; the view sh
 
 **The UI is IMGUI (`OnGUI` + `GUILayout`), not uGUI.** There are no prefabs, no Canvas, no serialized `UnityEngine.UI` references — styles are constructed in code and the scenes hold only bare GameObjects with the two scripts. A UI change is therefore a pure code edit with no `.unity`/`.prefab` churn and no risk of breaking serialized references. Views are responsive by hand: they branch on screen height for 720p vs 1080p, and both resolutions are part of the manual verification checklist.
 
+**Exception — `UI/GameScene/`** (newest, MVP): a *world-space* renderer, not IMGUI screens. `GameSceneView` spawns card quads under designer-placed scene anchors (`playerHandAnchor`/`enemyHandAnchor`), draws souls/round on a code-built `ScreenSpaceOverlay` Canvas (uGUI + TMP), and — temporarily — HIT/STAND/RESTART as `OnGUI` buttons (diegetic sprite clicks come later; `ClickableSprite` exists for that, since the new Input System means legacy `OnMouseDown` does not fire). `GameSceneController` is **standalone-only**: it always builds its own `CoreLoopSession` (seed `20260719`, `BlackjackDeck.CreateStandard`) with **no** `StageProgression` branch, unlike the dual-mode `CoreLoopController`. Still no prefabs or serialized `UnityEngine.UI` references — the Canvas and materials are built in code.
+
+### Supporting infrastructure (`Border.*`, Unity-facing, untested)
+
+A layer of support systems sits beside the game core, in `Border.*` namespaces. They are **not** under the purity rule and **not** in the EditMode suite — they serve the menu/settings/save flow (mainly `SampleScene`), not blackjack rules, and they lean on uGUI + the Inspector rather than the game screens' code-built IMGUI:
+
+- **`Events/`** — 7 `ScriptableObject` event channels (`VoidEventChannelSO`, `Bool/Int/Float/String/Vector2EventChannelSO`, `FadeChannelSO`). Authored as assets, wired in the Inspector; `RaiseEvent()` fans out a `UnityAction`.
+- **`Settings/`** — `SettingsSO` + `SettingsSystem` over `ISettingsRepository`, plus ~7 `UISettings*` MonoBehaviours (audio, graphics, dropdown, slider, check).
+- **`SaveLoad/`** — `SaveLoadSystem` (SO) serializes `Save` to JSON via `FileManager` (disk I/O).
+- **`Localization/`** — `LocalizationManager`, `LocalizationTable`, `LocalizeKeyAttribute`, `UILocalizeText`.
+- **`Input/`** — generated `GameInput` (Input System actions) + `InputReader`; its own assembly `Border.Input`.
+- top-level **`UI/`** helpers — `UIGenericButton`, `SelectableExtraGraphics`, `UISelectionFrameHook` (`Border.UI`): shared uGUI widgets.
+
+Editing these means Inspector / serialized-reference wiring — the "pure code edit, no serialized refs" convenience of the game screens does not apply here.
+
 ### Scenes
 
-Build settings: `StageTest` (0), `CoreLoopTest` (1), `SampleScene` (2). `LevelDesign*` scenes are art work-in-progress and are not in the build.
+Build settings: `StageTest` (0), `CoreLoopTest` (1), `SampleScene` (2) — only these three. `Assets/00. Scenes/` also contains `GameScene.unity` (the world-space `UI/GameScene/` MVP) and `LevelDesign.unity` (art WIP) — **neither is in the build settings.**
 
 `StageProgressionRuntime` (`[DefaultExecutionOrder(-100)]`) is the cross-scene carrier: **static `Instance` + `DontDestroyOnLoad`**, self-destroying on duplicate. It builds the session once from a serialized seed and the hardcoded 3-stage prototype path (Ash Gate/gunslinger → Blood Hall/enforcer → Black Throne/final-boss). `StageTest` contains it; `CoreLoopTest` does **not** — the instance survives the load.
 
