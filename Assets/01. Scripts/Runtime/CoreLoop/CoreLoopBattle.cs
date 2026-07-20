@@ -81,6 +81,8 @@ namespace DiaBlackJack.CoreLoop
 
         public BattleParticipant Enemy { get; }
 
+        internal IEnemyBehaviorPolicy EnemyBehaviorPolicy => _enemyPolicy;
+
         public CoreLoopState State { get; private set; }
 
         public int RoundNumber { get; private set; }

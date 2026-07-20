@@ -2,8 +2,8 @@
 
 > 프로젝트: DiaBlackJack  
 > 기획·개발 책임자: 이천서  
-> 버전: v0.5
-> 상태: EP-05 최종 보스 3구간 정책 구현 완료
+> 버전: v0.6
+> 상태: EP-06 선택 전투 통합·반복 검증 완료, 1차 범위 마감
 > 최종 갱신: 2026-07-20
 
 ## 1. 기술 목표
@@ -21,8 +21,8 @@
 - 적 차례는 히트·스탠드만 반복하며 적 카드 사용·폴드·체인지·계약 경계가 없다.
 - `CardEffectResolver`에는 수정 구슬, 위협용 해머, 자동 권총과 군용 나이프 처리기가 등록되어 있다.
 - 현재 카드 카탈로그에는 거짓말 탐지기와 악마 계약 카드가 없다.
-- `StageDefinition`이 표시 이름, 적 최대 영혼과 양쪽 덱 시드를 직접 가진다.
-- `StageBattleFactory.Create(StageDefinition, PlayerRunState)`는 적 표준 덱과 기본 정책으로 전투를 만든다.
+- `StageDefinition`은 기존 직접 최대 영혼 생성 경로와 프로필 키 기반 생성 경로를 함께 제공한다.
+- `StageBattleFactory.Create(StageDefinition, PlayerRunState)`는 프로필 키가 있으면 전용 적 덱·최대 영혼·새 행동 정책을 사용하고, 키가 없으면 기존 표준 덱과 기본 정책을 유지한다.
 - `StageProgressionSession`은 전투 생성 함수와 보상 등급 선택 함수를 주입받을 수 있다.
 - `StageProgressionRuntime`은 일반전 2개와 보스 1개를 코드에 하드코딩한다.
 - 상대 후보·선택 결과·적 프로필 카탈로그는 아직 없다.
@@ -272,7 +272,7 @@ Selected BattleProfileKey
 
 ### 11.2 전투 생성
 
-기존 `StageBattleFactory` 또는 이름이 명확한 별도 어댑터가 프로필 카탈로그를 조회해 `CoreLoopBattle`을 만든다. 어느 방식을 쓰든 프로필 규칙을 `StageProgressionSession`에 직접 복사하지 않는다.
+`StageDefinition.CreateForEnemyProfile(...)`가 프로필 미리보기에서 최대 영혼을 파생하고 일반/엘리트와 보스 스테이지 종류의 불일치를 거절한다. `StageBattleFactory`는 저장된 키를 `EnemyBattleConfigurationFactory`에 전달해 전용 적 덱과 매 전투 새 정책 인스턴스로 `CoreLoopBattle`을 만든다. 프로필 키가 없는 기존 스테이지는 표준 덱과 `SimpleEnemyPolicy`를 계속 사용한다.
 
 ### 11.3 보상 연결
 
@@ -283,6 +283,8 @@ Selected BattleProfileKey
 | Boss | `BattleRewardTier.HighGrade` | 보상 처리 뒤 `RunVictory` |
 
 최종 보스 강제 높은 등급 규칙은 기존 전투 보상 시스템을 유지한다.
+
+일반·엘리트의 기본 보상 등급은 `StageProgressionSession`이 `BattleProfileKey`로 안전 미리보기를 조회해 결정한다. 따라서 선택 담당이 보상 등급을 별도로 전달하거나 덮어쓰지 않는다.
 
 ## 12. 상태와 실패 원자성
 
@@ -441,6 +443,8 @@ EP-04 완료 기준은 신규 11/11, CoreLoop 163/163과 전체 EditMode 228/228
 
 EP-05 완료 기준은 신규 16/16, CoreLoop 179/179와 전체 EditMode 244/244 통과, Unity 컴파일 오류와 Console Error 0이다. EP-05는 보스 전용 정책·표시 모델과 테스트만 추가하고 기존 카드 효과·보상·런 재시작 경계를 재사용했으며 UI·씬·프리팹·패키지·외부 에셋을 변경하지 않았다.
 
+EP-06 완료 기준은 신규 16/16, StageProgression 81/81, CoreLoop 179/179와 전체 EditMode 260/260 통과다. `StageTest` 실제 실행에서 `gunslinger → enforcer → final-boss`, 최대 영혼 `3 → 5 → 7`을 확인했고 첫 전투가 10장 전용 덱과 `GunslingerEnemyPolicy`로 시작했다. `StageTest`·`CoreLoopTest` 씬 문제 0, 최종 Console Error 0이며 씬·프리팹·패키지·외부 에셋은 변경하지 않았다.
+
 ## 18. 변경 기록
 
 | 날짜 | 작성자 | 변경 내용 |
@@ -450,3 +454,4 @@ EP-05 완료 기준은 신규 16/16, CoreLoop 179/179와 전체 EditMode 244/244
 | 2026-07-20 | 이천서 | EP-03 공개 덱 구성 기반 추론 계산, 일반 적 정책 3종·정책 키·선택형 카드 옵션 정보와 신규 10/10·CoreLoop 152/152·전체 217/217 검증 기준 반영 |
 | 2026-07-20 | 이천서 | EP-04 집행관 전용 정책·해머 적 소유 비용 카드 관측·나이프 공개 후속 평가·엘리트 표시 모델과 신규 11/11·CoreLoop 163/163·전체 228/228 검증 기준 반영 |
 | 2026-07-20 | 이천서 | EP-05 보스 전용 3구간 정책·강행동 예고 상태·추론 방향 표시·기존 런 승리 통합과 신규 16/16·CoreLoop 179/179·전체 244/244 검증 기준 반영 |
+| 2026-07-20 | 이천서 | EP-06 `StageDefinition.CreateForEnemyProfile`·`StageBattleFactory`·기본 보상 등급 경계, 기존 스테이지 호환과 신규 16/16·StageProgression 81/81·CoreLoop 179/179·전체 260/260·실제 씬 검증 기준 반영 |

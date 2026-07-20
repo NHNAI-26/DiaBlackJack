@@ -25,12 +25,33 @@ namespace DiaBlackJack.StageProgression
                 playerCards.Add(new BlackjackCard(card.Id, definition));
             }
 
+            var playerDeck = new BlackjackDeck(playerCards, stage.PlayerDeckSeed);
+            if (stage.BattleProfileKey == null)
+            {
+                return new CoreLoopBattle(
+                    playerDeck,
+                    BlackjackDeck.CreateStandard(stage.EnemyDeckSeed),
+                    player.MaximumSoul,
+                    player.CurrentSoul,
+                    stage.EnemyMaximumSoul);
+            }
+
+            EnemyBattleConfiguration enemy = EnemyBattleConfigurationFactory.Create(
+                stage.BattleProfileKey,
+                stage.EnemyDeckSeed);
+            if (enemy.EnemyMaximumSoul != stage.EnemyMaximumSoul)
+            {
+                throw new InvalidOperationException(
+                    "The selected enemy profile no longer matches the stage soul configuration.");
+            }
+
             return new CoreLoopBattle(
-                new BlackjackDeck(playerCards, stage.PlayerDeckSeed),
-                BlackjackDeck.CreateStandard(stage.EnemyDeckSeed),
+                playerDeck,
+                enemy.CreateEnemyDeck(),
                 player.MaximumSoul,
                 player.CurrentSoul,
-                stage.EnemyMaximumSoul);
+                enemy.EnemyMaximumSoul,
+                enemy.BehaviorPolicy);
         }
     }
 }

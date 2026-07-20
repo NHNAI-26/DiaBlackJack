@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DiaBlackJack.CoreLoop;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -60,25 +61,25 @@ namespace DiaBlackJack.StageProgression.UI
             var player = new PlayerRunState(12, 12, cards);
             var stages = new[]
             {
-                new StageDefinition(
+                StageDefinition.CreateForEnemyProfile(
                     "normal-1",
                     "Ash Gate",
                     StageKind.NormalCombat,
-                    3,
+                    EnemyCombatProfileCatalog.GunslingerKey,
                     seed,
                     seed + 1),
-                new StageDefinition(
+                StageDefinition.CreateForEnemyProfile(
                     "normal-2",
                     "Blood Hall",
                     StageKind.NormalCombat,
-                    4,
+                    EnemyCombatProfileCatalog.EnforcerKey,
                     seed + 2,
                     seed + 3),
-                new StageDefinition(
+                StageDefinition.CreateForEnemyProfile(
                     "final-boss",
                     "Black Throne",
                     StageKind.FinalBossCombat,
-                    7,
+                    EnemyCombatProfileCatalog.FinalBossKey,
                     seed + 4,
                     seed + 5)
             };

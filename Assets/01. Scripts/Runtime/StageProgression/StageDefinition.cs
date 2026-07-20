@@ -1,4 +1,5 @@
 using System;
+using DiaBlackJack.CoreLoop;
 
 namespace DiaBlackJack.StageProgression
 {
@@ -11,6 +12,25 @@ namespace DiaBlackJack.StageProgression
             int enemyMaximumSoul,
             int playerDeckSeed,
             int enemyDeckSeed)
+            : this(
+                id,
+                displayName,
+                kind,
+                enemyMaximumSoul,
+                playerDeckSeed,
+                enemyDeckSeed,
+                null)
+        {
+        }
+
+        private StageDefinition(
+            string id,
+            string displayName,
+            StageKind kind,
+            int enemyMaximumSoul,
+            int playerDeckSeed,
+            int enemyDeckSeed,
+            string battleProfileKey)
         {
             if (string.IsNullOrWhiteSpace(id))
             {
@@ -40,7 +60,10 @@ namespace DiaBlackJack.StageProgression
             EnemyMaximumSoul = enemyMaximumSoul;
             PlayerDeckSeed = playerDeckSeed;
             EnemyDeckSeed = enemyDeckSeed;
+            BattleProfileKey = battleProfileKey;
         }
+
+        public string BattleProfileKey { get; }
 
         public string Id { get; }
 
@@ -53,5 +76,34 @@ namespace DiaBlackJack.StageProgression
         public int PlayerDeckSeed { get; }
 
         public int EnemyDeckSeed { get; }
+
+        public static StageDefinition CreateForEnemyProfile(
+            string id,
+            string displayName,
+            StageKind kind,
+            string battleProfileKey,
+            int playerDeckSeed,
+            int enemyDeckSeed)
+        {
+            EnemyProfilePreview preview =
+                EnemyCombatProfileCatalog.Default.GetPreviewByKey(battleProfileKey);
+            bool isBossProfile = preview.Grade == EnemyGrade.Boss;
+            bool isFinalBossStage = kind == StageKind.FinalBossCombat;
+            if (isBossProfile != isFinalBossStage)
+            {
+                throw new ArgumentException(
+                    "Boss profiles must be used only for final boss stages, and final boss stages require a boss profile.",
+                    nameof(battleProfileKey));
+            }
+
+            return new StageDefinition(
+                id,
+                displayName,
+                kind,
+                preview.MaximumSoul,
+                playerDeckSeed,
+                enemyDeckSeed,
+                preview.ProfileKey);
+        }
     }
 }

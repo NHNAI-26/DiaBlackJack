@@ -233,6 +233,13 @@ namespace DiaBlackJack.StageProgression
 
         private static BattleRewardTier SelectDefaultRewardTier(StageDefinition stage)
         {
+            if (stage.BattleProfileKey != null)
+            {
+                return EnemyCombatProfileCatalog.Default
+                    .GetPreviewByKey(stage.BattleProfileKey)
+                    .ExpectedRewardTier;
+            }
+
             return BattleRewardTier.Normal;
         }
     }
