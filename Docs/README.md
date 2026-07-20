@@ -39,6 +39,10 @@
 | [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | EP-06 검증 완료 v0.6 |
 | [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP-00~EP-06 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.6 |
 | [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | EP-06 완료 v0.6 |
+| [enemy-selection-combat-ui-design.md](./enemy-selection-combat-ui-design.md) | 상대 후보 2명 비교·확정과 등급별 전투 정보 표시 규칙 | EUI-00 기준 확정 v0.1 |
+| [enemy-selection-combat-ui-development-spec.md](./enemy-selection-combat-ui-development-spec.md) | 후보 생성·선택 상태·전투 변환·안전 표시 스냅샷과 테스트 명세 | EUI-00 명세 확정 v0.1 |
+| [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI-00~EUI-05 작업 순서와 단계별 검증 게이트 | EUI-00 완료 v0.1 |
+| [enemy-selection-combat-ui-progress-log.md](./enemy-selection-combat-ui-progress-log.md) | 상대 선택·적 전투 정보 UI 결정·구현·검증 누적 기록 | EUI-00 완료 v0.1 |
 
 ## 기록 원칙
 
@@ -95,4 +99,5 @@
 | 2026-07-20 | 이천서 | 적 전투 프로필 EP-04에서 집행관 해머·나이프 후속 평가, 엘리트 추론 표시와 높은 등급 보상 연결을 구현하고 신규 11/11·CoreLoop 163/163·전체 EditMode 228/228 검증 완료 |
 | 2026-07-20 | 이천서 | 적 전투 프로필 EP-05에서 최종 보스 3구간 정책·강행동 예고·추론 방향 표시와 높은 등급 보상 뒤 런 승리를 구현하고 신규 16/16·CoreLoop 179/179·전체 EditMode 244/244 검증 완료 |
 | 2026-07-20 | 이천서 | 적 전투 프로필 EP-06에서 선택 키를 실제 덱·영혼·정책·보상으로 연결하고 50회 상태 격리·엘리트/보스 결과·실제 런을 검증해 신규 16/16·StageProgression 81/81·CoreLoop 179/179·전체 EditMode 260/260으로 1차 범위 마감 |
+| 2026-07-20 | 이천서 | 상대 선택·적 전투 정보 UI를 이천서 담당으로 변경하고 후보 2명 비교·확정, 등급별 추론·보스 예고 표시와 EUI-00~EUI-05 구현·검증 문서 4종 수립 |
 
