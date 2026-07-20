@@ -35,6 +35,10 @@
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW-05 최종 검증 완료 v0.1 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
 | [battle-reward-progress-log.md](./battle-reward-progress-log.md) | 전투 보상 결정·구현·검증 누적 기록 | RW-05 완료 v0.1 |
+| [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 일반 적 3종·엘리트·보스의 전투 성향과 책임 경계 | EP-00 기준안 v0.1 |
+| [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | EP-00 기술 기준안 v0.1 |
+| [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP-00~EP-06 작업 순서와 단계별 검증 게이트 | EP-00 완료 v0.1 |
+| [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | EP-00 완료 v0.1 |
 
 ## 기록 원칙
 
@@ -84,4 +88,5 @@
 | 2026-07-20 | 이천서 | 전투 보상 RW-03 실제 전투 승리·보상 생성·등급 주입·선택/건너뛰기·다음 전투 덱·재시작 통합과 신규 6/6·전체 EditMode 177/177 검증 완료 |
 | 2026-07-20 | 이천서 | 전투 보상 RW-04 후보 3장·선택·건너뛰기·완료 목적지·결과 표시를 기존 진행 화면에 연결하고 신규 5/5·전체 EditMode 182/182·Game View 검증 완료 |
 | 2026-07-20 | 이천서 | 전투 보상 RW-05 일반·보스 선택/건너뛰기와 패배·재시작을 각 10회 검증하고 전체 EditMode 187/187·씬·Console·Game View 최종 검증으로 1차 범위 마감 |
+| 2026-07-20 | 이천서 | 적 전투 프로필 EP-00에서 일반 적 3종·엘리트·보스의 성향, 공개 정보 AI, 카드 효과·전투 생성·상대 선택 연동과 EP-01~EP-06 구현·검증 문서 4종 수립 |
 
