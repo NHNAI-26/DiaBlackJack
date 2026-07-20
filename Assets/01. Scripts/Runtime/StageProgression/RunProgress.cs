@@ -46,6 +46,29 @@ namespace DiaBlackJack.StageProgression
             return true;
         }
 
+        internal bool TryBeginOpponentSelection()
+        {
+            if (State != StageProgressionState.InBattle ||
+                CurrentStage.Kind == StageKind.FinalBossCombat)
+            {
+                return false;
+            }
+
+            State = StageProgressionState.OpponentSelection;
+            return true;
+        }
+
+        internal bool TryBeginBattleFromOpponentSelection()
+        {
+            if (State != StageProgressionState.OpponentSelection)
+            {
+                return false;
+            }
+
+            State = StageProgressionState.InBattle;
+            return true;
+        }
+
         public bool TryBeginBattleReward(
             BattleRewardOffer offer,
             BattleRewardCompletionTarget completionTarget)

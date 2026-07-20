@@ -4,7 +4,7 @@
 > 기획·개발 책임자: 이천서  
 > 작업 식별자: EUI-00~EUI-05  
 > 버전: v0.1  
-> 상태: EUI-00 구현 명세 확정  
+> 상태: EUI-01 후보·상태 기반 구현·검증 완료
 > 최종 갱신: 2026-07-20
 
 ## 1. 기술 목표
@@ -33,13 +33,14 @@ EnemyCombatProfileCatalog.Previews
 - `StageDefinition.CreateForEnemyProfile(...)`가 키에서 최대 영혼을 파생하고 보스/일반 스테이지 불일치를 거절한다.
 - `StageBattleFactory`가 프로필 전용 10장 덱과 새 정책 인스턴스로 실제 전투를 만든다.
 - `StageProgressionSession`은 선택된 프로필의 보상 등급을 사용한다.
-- `StageProgressionState`에는 아직 상대 선택 상태가 없다.
+- `StageProgressionState.OpponentSelection`과 후보·제안·결정적 생성기가 EUI-01에서 구현되었다.
+- `StageProgressionSession`은 선택 기능을 선택적으로 주입받고 Pending Offer·ActiveStage·활성 여부를 제공한다.
 - `StageProgressionRuntime`은 총잡이·집행관·최종 보스의 고정 경로를 사용한다.
 - `StageProgressionPresenter`는 `RunProgress`만 받아 선택 제안을 표시할 수 없다.
 - `StageProgressionController`는 시작·다음 스테이지 성공 시 항상 전투 씬을 연다.
 - `CoreLoopPresenter`는 전투 객체만 받아 적 프로필 이름·등급·추론 정보를 알 수 없다.
 - `EnemyInferenceDisplayModel`과 `BossCombatDisplayModel`은 있으나 실제 View에 연결되지 않았다.
-- EP-06 기준 신규 16/16, StageProgression 81/81, CoreLoop 179/179, 전체 EditMode 260/260과 양쪽 씬 문제 0·Console Error 0이다.
+- EUI-01 기준 신규 13/13, StageProgression 94/94, CoreLoop 179/179, 전체 EditMode 273/273와 스크립트 진단·최종 Console Error/Warning 0이다.
 
 ## 3. 설계 원칙
 
@@ -143,6 +144,8 @@ public bool IsOpponentSelectionEnabled { get; }
 ```csharp
 public bool TrySelectOpponent(int offerId, string profileKey);
 ```
+
+EUI-01에서는 선택 대기 진입과 기존 입력 차단까지만 구현했다. 위 확정 API와 선택 프로필 전투 생성은 EUI-03 구현 범위다.
 
 처리 순서:
 
@@ -346,6 +349,8 @@ EUI-00 기준 전체 EditMode 260/260을 회귀 기준으로 사용한다.
 | EUI01-I01 | 보스 스테이지는 선택 없이 전투 시작 |
 | EUI01-I02 | 선택 상태에서 전투·보상 입력 전부 거절 |
 
+실제 EUI-01은 위 조건을 세분화한 13개 테스트로 구현했으며, 다음 스테이지 선택 제안과 재시작 시 OfferId 초기화도 함께 검증했다.
+
 ### EUI-02 선택 화면 — 최소 7개
 
 | ID | 검증 내용 |
@@ -452,4 +457,5 @@ Assets/06.Packages/Tests/EditMode/CoreLoop/
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-20 | 이천서 | EUI-01 후보 불변 타입·결정적 생성기·선택 대기 상태·세션 주입과 신규 13/13·전체 EditMode 273/273 검증 결과 반영 |
 | 2026-07-20 | 이천서 | 후보 생성·OfferId·선택 상태·ActiveStage·등급별 안전 표시 스냅샷·Presenter/View/Controller 연결과 EUI 테스트 명세를 구현 가능한 기준으로 확정 |

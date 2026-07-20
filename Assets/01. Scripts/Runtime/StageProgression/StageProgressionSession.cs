@@ -10,6 +10,7 @@ namespace DiaBlackJack.StageProgression
         private readonly Func<StageDefinition, PlayerRunState, CoreLoopBattle> _battleFactory;
         private readonly BattleRewardGenerator _rewardGenerator;
         private readonly Func<StageDefinition, BattleRewardTier> _rewardTierSelector;
+        private OpponentSelectionGenerator _opponentSelectionGenerator;
         private CoreLoopSession _battleSession;
         private CoreLoopBattle _processedBattle;
 
@@ -17,7 +18,8 @@ namespace DiaBlackJack.StageProgression
             RunProgress progress,
             Func<StageDefinition, PlayerRunState, CoreLoopBattle> battleFactory = null,
             BattleRewardGenerator rewardGenerator = null,
-            Func<StageDefinition, BattleRewardTier> rewardTierSelector = null)
+            Func<StageDefinition, BattleRewardTier> rewardTierSelector = null,
+            OpponentSelectionGenerator opponentSelectionGenerator = null)
         {
             Progress = progress ?? throw new ArgumentNullException(nameof(progress));
             _battleFactory = battleFactory ?? StageBattleFactory.Create;
@@ -25,9 +27,19 @@ namespace DiaBlackJack.StageProgression
                 BattleRewardCatalog.CreateDefault(),
                 DefaultRewardSeed);
             _rewardTierSelector = rewardTierSelector ?? SelectDefaultRewardTier;
+            _opponentSelectionGenerator = opponentSelectionGenerator;
+            ActiveStage = opponentSelectionGenerator == null
+                ? progress.CurrentStage
+                : null;
         }
 
+        public StageDefinition ActiveStage { get; private set; }
+
         public CoreLoopBattle Battle => _battleSession?.Battle;
+
+        public bool IsOpponentSelectionEnabled => _opponentSelectionGenerator != null;
+
+        public OpponentSelectionOffer PendingOpponentSelection { get; private set; }
 
         public RunProgress Progress { get; }
 
@@ -38,8 +50,7 @@ namespace DiaBlackJack.StageProgression
                 return false;
             }
 
-            _battleSession = CreateBattleSession(Progress.CurrentStage);
-            _processedBattle = null;
+            PrepareCurrentStage();
             return true;
         }
 
@@ -136,14 +147,19 @@ namespace DiaBlackJack.StageProgression
                 throw new InvalidOperationException("A cleared stage must have a following stage.");
             }
 
-            CoreLoopSession nextBattleSession = CreateBattleSession(Progress.Stages[nextStageIndex]);
+            StageDefinition nextStage = Progress.Stages[nextStageIndex];
+            OpponentSelectionOffer nextOffer = ShouldOfferOpponentSelection(nextStage)
+                ? _opponentSelectionGenerator.Generate(nextStageIndex)
+                : null;
+            CoreLoopSession nextBattleSession = nextOffer == null
+                ? CreateBattleSession(nextStage)
+                : null;
             if (!Progress.TryAdvanceToNextStage())
             {
                 throw new InvalidOperationException("Run progress rejected a validated stage advance.");
             }
 
-            _battleSession = nextBattleSession;
-            _processedBattle = null;
+            ApplyPreparedStage(nextStage, nextOffer, nextBattleSession);
             return true;
         }
 
@@ -164,8 +180,12 @@ namespace DiaBlackJack.StageProgression
                 return false;
             }
 
-            _battleSession = CreateBattleSession(Progress.CurrentStage);
-            _processedBattle = null;
+            if (_opponentSelectionGenerator != null)
+            {
+                _opponentSelectionGenerator = _opponentSelectionGenerator.CreateFresh();
+            }
+
+            PrepareCurrentStage();
             return true;
         }
 
@@ -177,6 +197,41 @@ namespace DiaBlackJack.StageProgression
         private CoreLoopSession CreateBattleSession(StageDefinition stage)
         {
             return new CoreLoopSession(() => _battleFactory(stage, Progress.Player));
+        }
+
+        private void PrepareCurrentStage()
+        {
+            StageDefinition stage = Progress.CurrentStage;
+            OpponentSelectionOffer offer = ShouldOfferOpponentSelection(stage)
+                ? _opponentSelectionGenerator.Generate(Progress.CurrentStageIndex)
+                : null;
+            CoreLoopSession battleSession = offer == null
+                ? CreateBattleSession(stage)
+                : null;
+            ApplyPreparedStage(stage, offer, battleSession);
+        }
+
+        private void ApplyPreparedStage(
+            StageDefinition stage,
+            OpponentSelectionOffer offer,
+            CoreLoopSession battleSession)
+        {
+            if (offer != null && !Progress.TryBeginOpponentSelection())
+            {
+                throw new InvalidOperationException(
+                    "Run progress rejected a validated opponent selection.");
+            }
+
+            ActiveStage = offer == null ? stage : null;
+            PendingOpponentSelection = offer;
+            _battleSession = battleSession;
+            _processedBattle = null;
+        }
+
+        private bool ShouldOfferOpponentSelection(StageDefinition stage)
+        {
+            return IsOpponentSelectionEnabled &&
+                stage.Kind != StageKind.FinalBossCombat;
         }
 
         private void SynchronizeFinishedBattle()
@@ -214,7 +269,8 @@ namespace DiaBlackJack.StageProgression
 
         private bool TryBeginBattleReward()
         {
-            StageDefinition stage = Progress.CurrentStage;
+            StageDefinition stage = ActiveStage ?? throw new InvalidOperationException(
+                "A finished battle must have an active stage.");
             BattleRewardTier tier = stage.Kind == StageKind.FinalBossCombat
                 ? BattleRewardTier.HighGrade
                 : _rewardTierSelector(stage);
