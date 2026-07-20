@@ -10,7 +10,8 @@ namespace DiaBlackJack.CoreLoop
         PlayerWin,
         PlayerTwentyOneWin,
         EnemyWin,
-        PlayerFold
+        PlayerFold,
+        EnemyFold
     }
 
     public enum RoundEndCause
@@ -98,6 +99,7 @@ namespace DiaBlackJack.CoreLoop
                 case RoundOutcome.EnemyBust:
                     return RoundEndCause.NumericBust;
                 case RoundOutcome.PlayerFold:
+                case RoundOutcome.EnemyFold:
                     return RoundEndCause.Fold;
                 default:
                     return RoundEndCause.TotalComparison;
@@ -114,6 +116,15 @@ namespace DiaBlackJack.CoreLoop
                 RoundOutcome.PlayerFold,
                 playerDamage: 1,
                 enemyDamage: 0);
+        }
+
+        public static RoundResolution ResolveEnemyFold(long resolutionId)
+        {
+            return new RoundResolution(
+                resolutionId,
+                RoundOutcome.EnemyFold,
+                playerDamage: 0,
+                enemyDamage: 1);
         }
 
         public static RoundResolution ResolveCardEffectBust(

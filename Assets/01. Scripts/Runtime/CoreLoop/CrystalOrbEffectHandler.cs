@@ -11,7 +11,7 @@ namespace DiaBlackJack.CoreLoop
 
         public bool CanStart(CardEffectContext context)
         {
-            return context.CanDrawPlayerCards(2);
+            return context.CanDrawActorCards(2);
         }
 
         public CardEffectStep Begin(CardEffectContext context)
@@ -22,7 +22,7 @@ namespace DiaBlackJack.CoreLoop
                     "Crystal orb requires two available player deck cards.");
             }
 
-            IReadOnlyList<BlackjackCard> peekedCards = context.TakePlayerTopCards(2);
+            IReadOnlyList<BlackjackCard> peekedCards = context.TakeActorTopCards(2);
             var options = new[]
             {
                 new CardEffectChoiceOption(TakeNoneOptionId, "가져오지 않음"),
@@ -61,13 +61,13 @@ namespace DiaBlackJack.CoreLoop
                 }
             }
 
-            context.ReturnPlayerCardsToTop(returningCards);
+            context.ReturnActorCardsToTop(returningCards);
             if (selectedCard != null)
             {
-                context.AddPlayerCardFaceUp(selectedCard);
+                context.AddActorCardFaceUp(selectedCard);
             }
 
-            bool endedRound = context.PlayerHandValue.IsBust;
+            bool endedRound = context.ActorHandValue.IsBust;
             var result = new CardEffectResult(
                 context.SourceCard.Id,
                 EffectKind,

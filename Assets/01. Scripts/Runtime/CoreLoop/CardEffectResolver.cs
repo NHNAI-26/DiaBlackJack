@@ -22,30 +22,50 @@ namespace DiaBlackJack.CoreLoop
         private readonly CoreLoopBattle _battle;
 
         public CardEffectContext(CoreLoopBattle battle, BlackjackCard sourceCard)
+            : this(battle, CombatantSide.Player, sourceCard)
+        {
+        }
+
+        public CardEffectContext(
+            CoreLoopBattle battle,
+            CombatantSide actorSide,
+            BlackjackCard sourceCard)
         {
             _battle = battle ?? throw new ArgumentNullException(nameof(battle));
+            if (!Enum.IsDefined(typeof(CombatantSide), actorSide))
+            {
+                throw new ArgumentOutOfRangeException(nameof(actorSide));
+            }
+
+            ActorSide = actorSide;
             SourceCard = sourceCard ?? throw new ArgumentNullException(nameof(sourceCard));
         }
 
+        public CombatantSide ActorSide { get; }
+
         public BlackjackCard SourceCard { get; }
 
-        public HandValue EnemyHandValue => _battle.Enemy.HandValue;
+        public HandValue ActorHandValue => Actor.HandValue;
 
-        public HandValue EnemyVisibleHandValue => _battle.Enemy.VisibleHandValue;
+        public HandValue OpponentHandValue => Opponent.HandValue;
 
-        public bool IsEnemyStanding => _battle.Enemy.IsStanding;
+        public HandValue OpponentVisibleHandValue => Opponent.VisibleHandValue;
 
-        public HandValue PlayerHandValue => _battle.Player.HandValue;
+        public bool IsOpponentStanding => Opponent.IsStanding;
 
-        public IReadOnlyList<BlackjackCard> GetPlayerFaceUpCards()
+        private BattleParticipant Actor => _battle.GetParticipant(ActorSide);
+
+        private BattleParticipant Opponent => _battle.GetOpponent(ActorSide);
+
+        public IReadOnlyList<BlackjackCard> GetActorFaceUpCards()
         {
-            return _battle.Player.Hand.GetFaceUpCards();
+            return Actor.Hand.GetFaceUpCards();
         }
 
-        public bool TryGetSingleEnemyHiddenCard(out BlackjackCard hiddenCard)
+        public bool TryGetSingleOpponentHiddenCard(out BlackjackCard hiddenCard)
         {
             hiddenCard = null;
-            foreach (BlackjackCard card in _battle.Enemy.Hand.Cards)
+            foreach (BlackjackCard card in Opponent.Hand.Cards)
             {
                 if (card.IsFaceUp)
                 {
@@ -64,74 +84,79 @@ namespace DiaBlackJack.CoreLoop
             return hiddenCard != null;
         }
 
-        public bool CanDrawPlayerCards(int count)
+        public bool CanDrawActorCards(int count)
         {
-            return _battle.Player.Deck.CanDraw(count);
+            return Actor.Deck.CanDraw(count);
         }
 
-        public bool CanDrawEnemyCards(int count)
+        public bool CanDrawOpponentCards(int count)
         {
-            return _battle.Enemy.Deck.CanDraw(count);
+            return Opponent.Deck.CanDraw(count);
         }
 
-        public IReadOnlyList<BlackjackCard> TakePlayerTopCards(int count)
+        public IReadOnlyList<BlackjackCard> TakeActorTopCards(int count)
         {
-            return _battle.Player.Deck.TakeTop(count);
+            return Actor.Deck.TakeTop(count);
         }
 
-        public void ReturnPlayerCardsToTop(IReadOnlyList<BlackjackCard> cardsInNextDrawOrder)
+        public void ReturnActorCardsToTop(IReadOnlyList<BlackjackCard> cardsInNextDrawOrder)
         {
-            _battle.Player.Deck.ReturnToTop(cardsInNextDrawOrder);
+            Actor.Deck.ReturnToTop(cardsInNextDrawOrder);
         }
 
-        public void AddPlayerCardFaceUp(BlackjackCard card)
+        public void AddActorCardFaceUp(BlackjackCard card)
         {
-            _battle.Player.AddFaceUpCard(card);
+            Actor.AddFaceUpCard(card);
         }
 
-        public bool TryDiscardPlayerCard(int cardId)
+        public bool TryDiscardActorCard(int cardId)
         {
-            return _battle.Player.TryDiscardCard(cardId);
+            return Actor.TryDiscardCard(cardId);
         }
 
-        public bool TryDiscardEnemyCard(int cardId)
+        public bool TryDiscardOpponentCard(int cardId)
         {
-            return _battle.Enemy.TryDiscardCard(cardId);
+            return Opponent.TryDiscardCard(cardId);
         }
 
-        public bool CanReplaceStandingEnemyHiddenCard()
+        public bool CanReplaceStandingOpponentHiddenCard()
         {
-            return _battle.Enemy.CanReplaceStandingHiddenCard;
+            return Opponent.CanReplaceStandingHiddenCard;
         }
 
-        public bool TryReplaceStandingEnemyHiddenCard(
+        public bool TryReplaceStandingOpponentHiddenCard(
             out BlackjackCard previousHiddenCard,
             out BlackjackCard replacementCard)
         {
-            return _battle.Enemy.TryReplaceStandingHiddenCard(
+            return Opponent.TryReplaceStandingHiddenCard(
                 out previousHiddenCard,
                 out replacementCard);
         }
 
-        public BlackjackCard ForceEnemyDrawFaceUp()
+        public BlackjackCard ForceOpponentDrawFaceUp()
         {
-            return _battle.Enemy.Draw(faceUp: true);
+            return Opponent.Draw(faceUp: true);
+        }
+
+        public RoundResolution CreateOpponentCardEffectBustResolution()
+        {
+            return RoundResolver.ResolveCardEffectBust(
+                _battle.RoundNumber,
+                playerIsTarget: ActorSide == CombatantSide.Enemy,
+                sourceCardKey: SourceCard.DefinitionKey);
+        }
+
+        public RoundResolution CreateActorCardEffectBustResolution()
+        {
+            return RoundResolver.ResolveCardEffectBust(
+                _battle.RoundNumber,
+                playerIsTarget: ActorSide == CombatantSide.Player,
+                sourceCardKey: SourceCard.DefinitionKey);
         }
 
         public RoundResolution CreateEnemyCardEffectBustResolution()
         {
-            return RoundResolver.ResolveCardEffectBust(
-                _battle.RoundNumber,
-                playerIsTarget: false,
-                sourceCardKey: SourceCard.DefinitionKey);
-        }
-
-        public RoundResolution CreatePlayerCardEffectBustResolution()
-        {
-            return RoundResolver.ResolveCardEffectBust(
-                _battle.RoundNumber,
-                playerIsTarget: true,
-                sourceCardKey: SourceCard.DefinitionKey);
+            return CreateOpponentCardEffectBustResolution();
         }
 
         public RoundResolution CreateCurrentNumericResolution()
@@ -299,17 +324,46 @@ namespace DiaBlackJack.CoreLoop
             CardEffectResolver resolver,
             int cardId)
         {
-            if (battle.State == CoreLoopState.PlayerResolvingCardEffect)
+            return EvaluateForActor(
+                battle,
+                resolver,
+                CombatantSide.Player,
+                cardId);
+        }
+
+        public static CardUseAvailability EvaluateForActor(
+            CoreLoopBattle battle,
+            CardEffectResolver resolver,
+            CombatantSide actorSide,
+            int cardId)
+        {
+            if (battle == null)
+            {
+                throw new ArgumentNullException(nameof(battle));
+            }
+
+            if (resolver == null)
+            {
+                throw new ArgumentNullException(nameof(resolver));
+            }
+
+            if (!Enum.IsDefined(typeof(CombatantSide), actorSide))
+            {
+                throw new ArgumentOutOfRangeException(nameof(actorSide));
+            }
+
+            if (battle.HasActiveCardEffect)
             {
                 return Unavailable(cardId, CardUseUnavailableReason.EffectInProgress);
             }
 
-            if (!battle.CanPlayerAct)
+            if (!battle.CanActorUseCard(actorSide))
             {
                 return Unavailable(cardId, CardUseUnavailableReason.NotPlayerTurn);
             }
 
-            if (!battle.Player.Hand.TryGetCard(cardId, out BlackjackCard card))
+            BattleParticipant actor = battle.GetParticipant(actorSide);
+            if (!actor.Hand.TryGetCard(cardId, out BlackjackCard card))
             {
                 return Unavailable(cardId, CardUseUnavailableReason.CardNotInHand);
             }
@@ -329,7 +383,7 @@ namespace DiaBlackJack.CoreLoop
                 return Unavailable(cardId, CardUseUnavailableReason.EffectNotImplemented);
             }
 
-            var context = new CardEffectContext(battle, card);
+            var context = new CardEffectContext(battle, actorSide, card);
             if (!resolver.CanStart(context))
             {
                 return Unavailable(cardId, CardUseUnavailableReason.EffectRequirementsNotMet);

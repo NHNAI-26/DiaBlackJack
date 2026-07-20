@@ -2,8 +2,8 @@
 
 > 프로젝트: DiaBlackJack  
 > 기획·개발 책임자: 이천서  
-> 버전: v0.1  
-> 상태: EP-00 기술 기준안  
+> 버전: v0.2
+> 상태: EP-02 공개 관측·공통 행동 구현 완료
 > 최종 갱신: 2026-07-20
 
 ## 1. 기술 목표
@@ -133,6 +133,17 @@ UseCard
 
 UI에 직접 노출되는 객체가 아니며 비공개 추론 원본을 포함하지 않는다.
 
+### 5.7 `EnemyActionCandidate`
+
+정책이 평가하고 실행기가 승인하는 불변 후보다.
+
+- 공개 행동 종류: 히트·스탠드·폴드·카드 사용
+- 카드 사용이면 적이 소유한 물리 카드 ID와 정의
+- 선택형 효과면 현재 효과가 공개한 옵션 ID
+- 행동·카드·옵션의 정확한 일치 여부
+
+후보 생성은 상태를 변경하지 않는다. 정책이 임의로 만든 카드 ID나 옵션은 실행 직전 `EnemyDecisionValidator`에서 거절한다.
+
 ## 6. 정책 인터페이스
 
 목표 인터페이스는 다음 책임을 가진다.
@@ -195,6 +206,8 @@ public interface IEnemyBehaviorPolicy
 | 최종 보스 | 구현된 핵심 카드 조합 | 일부 존재 | 영혼 구간에 따라 가중치 조정 |
 
 기존 처리기가 플레이어 행위자를 가정한다면 억지로 재사용하지 않고 공통 효과 명령과 행위자 컨텍스트를 먼저 분리한다.
+
+EP-02에서는 `CardEffectContext`를 `Actor`와 `Opponent` 기준으로 일반화했다. 기존 플레이어 공개 API와 처리기는 같은 경계를 계속 사용하며, 적 카드 실행만 별도 복제하지 않는다. 적 선택형 효과는 새 UI 상태 없이 `EnemyTurn` 안에서 유효 옵션 후보를 정책이 선택한다.
 
 ## 9. 프로필 카탈로그
 
@@ -262,6 +275,8 @@ Selected BattleProfileKey
 - 기본 스탠드는 실제로 스탠드 가능한 상태에서만 사용한다.
 - 전투가 끝난 뒤 정책 호출과 카드 사용을 거절한다.
 - 프로필 키가 없는 전투는 기존 기본 정책으로만 명시적으로 생성한다. 선택된 상대 키의 조회 실패를 기본 적으로 숨기지 않는다.
+- 정책이 연속 두 번 무효 결정을 반환하면 스탠드, 스탠드가 불가능하면 첫 유효 후보를 선택한다.
+- 폴드는 양측 공통 행동으로 취급하며 적 폴드도 적 영혼 1을 소모하고 라운드를 종료한다. 원문에 적 비용이 별도로 명시되지 않아 첫 밸런스 테스트까지 유지하는 임시 대칭 규칙이다.
 
 ## 13. 관측·추론 로그
 
@@ -336,10 +351,14 @@ Selected BattleProfileKey
 
 ```text
 Assets/01. Scripts/Runtime/CoreLoop/EnemyAI/
+├─ CombatantSide.cs
+├─ EnemyActionCandidate.cs
 ├─ EnemyActionType.cs
 ├─ EnemyBehaviorPolicyCatalog.cs
 ├─ EnemyDecision.cs
+├─ EnemyDecisionValidator.cs
 ├─ EnemyObservation.cs
+├─ EnemyObservationFactory.cs
 ├─ IEnemyBehaviorPolicy.cs
 └─ Policies/
 
@@ -376,10 +395,11 @@ Assets/06.Packages/Tests/EditMode/StageProgression/
 
 EP-00 착수 직전 전투 보상 RW-05 기준은 CoreLoop 122/122, StageProgression 65/65와 전체 EditMode 187/187, `CoreLoopTest`·`StageTest` 씬 문제 0, 최종 Console Error/Warning 0이다.
 
-EP-00은 문서 전용 단계다. 코드·테스트·씬·프리팹·패키지·외부 에셋을 변경하거나 Unity 테스트를 다시 실행하지 않는다.
+EP-02 완료 기준은 신규 8/8, CoreLoop 142/142와 전체 EditMode 207/207 통과, 전체 에셋 강제 갱신 뒤 Unity 컴파일 오류와 Console Error 0이다. EP-02는 UI·씬·프리팹·패키지·외부 에셋을 변경하지 않았다.
 
 ## 18. 변경 기록
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
 | 2026-07-20 | 이천서 | 현재 단순 적 정책·카드 처리·전투 생성 구조를 기준으로 프로필, 공개 관측, 정책 인터페이스, 적 카드 실행, 상대 선택·보상 연결과 EP-01~EP-06 테스트 명세 수립 |
+| 2026-07-20 | 이천서 | EP-02 실제 구현에 맞춰 공개 관측 생성, 유효 행동 후보·결정 재검증, 행위자·상대 카드 컨텍스트, 적 선택형 효과와 대칭 폴드 규칙 및 207/207 검증 기준 반영 |

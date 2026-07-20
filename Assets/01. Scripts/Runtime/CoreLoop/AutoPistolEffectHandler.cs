@@ -12,7 +12,7 @@ namespace DiaBlackJack.CoreLoop
 
         public bool CanStart(CardEffectContext context)
         {
-            return context.TryGetSingleEnemyHiddenCard(out _);
+            return context.TryGetSingleOpponentHiddenCard(out _);
         }
 
         public CardEffectStep Begin(CardEffectContext context)
@@ -44,7 +44,7 @@ namespace DiaBlackJack.CoreLoop
                 throw new InvalidOperationException("Auto pistol received an invalid number choice.");
             }
 
-            if (!context.TryGetSingleEnemyHiddenCard(out BlackjackCard hiddenCard))
+            if (!context.TryGetSingleOpponentHiddenCard(out BlackjackCard hiddenCard))
             {
                 throw new InvalidOperationException(
                     "Auto pistol lost its single enemy hidden card while resolving.");
@@ -60,7 +60,7 @@ namespace DiaBlackJack.CoreLoop
             return succeeded
                 ? CardEffectStep.Complete(
                     result,
-                    context.CreateEnemyCardEffectBustResolution())
+                    context.CreateOpponentCardEffectBustResolution())
                 : CardEffectStep.Complete(result);
         }
 

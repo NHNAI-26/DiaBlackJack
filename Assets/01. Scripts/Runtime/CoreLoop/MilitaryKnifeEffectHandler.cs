@@ -28,8 +28,8 @@ namespace DiaBlackJack.CoreLoop
 
         public bool CanStart(CardEffectContext context)
         {
-            return context.EnemyVisibleHandValue.Total <= 16 &&
-                context.CanDrawEnemyCards(1);
+            return context.OpponentVisibleHandValue.Total <= 16 &&
+                context.CanDrawOpponentCards(1);
         }
 
         public CardEffectStep Begin(CardEffectContext context)
@@ -40,16 +40,16 @@ namespace DiaBlackJack.CoreLoop
                     "Military knife requires enemy visible total at most 16 and one deck card.");
             }
 
-            BlackjackCard drawnCard = context.ForceEnemyDrawFaceUp();
-            if (context.EnemyHandValue.IsBust)
+            BlackjackCard drawnCard = context.ForceOpponentDrawFaceUp();
+            if (context.OpponentHandValue.IsBust)
             {
                 return CardEffectStep.Complete(
                     CreateResult(context, endedRound: true),
                     context.CreateCurrentNumericResolution());
             }
 
-            if (!_retentionPolicy.ShouldKeep(context.EnemyHandValue, drawnCard) &&
-                !context.TryDiscardEnemyCard(drawnCard.Id))
+            if (!_retentionPolicy.ShouldKeep(context.OpponentHandValue, drawnCard) &&
+                !context.TryDiscardOpponentCard(drawnCard.Id))
             {
                 throw new InvalidOperationException(
                     "Military knife could not discard the forced draw card.");

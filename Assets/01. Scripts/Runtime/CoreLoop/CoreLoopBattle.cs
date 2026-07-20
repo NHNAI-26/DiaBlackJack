@@ -3,6 +3,13 @@ using System.Collections.Generic;
 
 namespace DiaBlackJack.CoreLoop
 {
+    internal enum CardEffectApplicationResult
+    {
+        Pending,
+        Completed,
+        RoundEnded
+    }
+
     public sealed class CoreLoopBattle
     {
         private static readonly IReadOnlyList<BlackjackCard> NoChangeCandidates =
@@ -11,8 +18,12 @@ namespace DiaBlackJack.CoreLoop
         private readonly IEnemyBehaviorPolicy _enemyPolicy;
         private readonly CardEffectResolver _cardEffectResolver;
         private readonly RoundDamageApplier _damageApplier = new RoundDamageApplier();
+        private readonly List<PublicCombatAction> _publicActionHistory =
+            new List<PublicCombatAction>();
         private CardEffectContext _activeCardEffectContext;
-        private PendingCardEffect _pendingPlayerCardEffect;
+        private CombatantSide? _activeCardEffectActorSide;
+        private PendingCardEffect _pendingCardEffect;
+        private int _enemyDecisionOrdinal;
         private PlayerChangeSelection _playerChangeSelection;
 
         public CoreLoopBattle(
@@ -78,6 +89,10 @@ namespace DiaBlackJack.CoreLoop
 
         public CardEffectResult? LastCardEffectResult { get; private set; }
 
+        public CombatantSide? LastCardEffectActorSide { get; private set; }
+
+        public EnemyDecision LastEnemyDecision { get; private set; }
+
         public bool CanPlayerAct => State == CoreLoopState.PlayerTurn && !Player.IsStanding;
 
         public bool CanPlayerFold => CanPlayerAct;
@@ -98,7 +113,10 @@ namespace DiaBlackJack.CoreLoop
         public IReadOnlyList<BlackjackCard> PlayerChangeCandidates =>
             _playerChangeSelection?.Candidates ?? NoChangeCandidates;
 
-        public PendingCardEffect PendingPlayerCardEffect => _pendingPlayerCardEffect;
+        public PendingCardEffect PendingPlayerCardEffect =>
+            _activeCardEffectActorSide == CombatantSide.Player
+                ? _pendingCardEffect
+                : null;
 
         public IReadOnlyList<CardUseAvailability> PlayerCardUseAvailability
         {
@@ -147,42 +165,12 @@ namespace DiaBlackJack.CoreLoop
 
         public bool TryBeginPlayerCardUse(int cardId)
         {
-            if (!CanUsePlayerCard(cardId) ||
-                !Player.Hand.TryGetCard(cardId, out BlackjackCard card))
-            {
-                return false;
-            }
-
-            var context = new CardEffectContext(this, card);
-            if (!card.TryBeginUse())
-            {
-                throw new InvalidOperationException("Validated card could not begin use.");
-            }
-
-            card.Reveal();
-            _activeCardEffectContext = context;
-            ApplyCardEffectStep(_cardEffectResolver.Begin(context));
-            return true;
+            return TryBeginCardUse(CombatantSide.Player, cardId);
         }
 
         public bool TryResolvePlayerCardChoice(int optionId)
         {
-            if (State != CoreLoopState.PlayerResolvingCardEffect ||
-                _pendingPlayerCardEffect == null ||
-                _activeCardEffectContext == null ||
-                !_pendingPlayerCardEffect.TryGetOption(
-                    optionId,
-                    out CardEffectChoiceOption selectedOption))
-            {
-                return false;
-            }
-
-            CardEffectStep step = _cardEffectResolver.ResolveChoice(
-                _activeCardEffectContext,
-                _pendingPlayerCardEffect,
-                selectedOption);
-            ApplyCardEffectStep(step);
-            return true;
+            return TryResolveCardChoice(CombatantSide.Player, optionId);
         }
 
         public bool TryPlayerHit()
@@ -192,6 +180,7 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
+            RecordPublicAction(CombatantSide.Player, PublicCombatActionType.Hit);
             Player.Draw(faceUp: true);
             if (Player.HandValue.IsBust)
             {
@@ -210,6 +199,7 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
+            RecordPublicAction(CombatantSide.Player, PublicCombatActionType.Stand);
             Player.Stand();
             RunEnemyTurn();
             return true;
@@ -222,6 +212,7 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
+            RecordPublicAction(CombatantSide.Player, PublicCombatActionType.Fold);
             CompleteRound(RoundResolver.ResolvePlayerFold(RoundNumber));
             return true;
         }
@@ -255,6 +246,7 @@ namespace DiaBlackJack.CoreLoop
             Player.CompleteChange(completedSelection);
             _playerChangeSelection = null;
             HasPlayerChangedThisRound = true;
+            RecordPublicAction(CombatantSide.Player, PublicCombatActionType.Change);
 
             RunEnemyTurn();
             return true;
@@ -270,7 +262,135 @@ namespace DiaBlackJack.CoreLoop
             return CardUseValidator.Evaluate(this, _cardEffectResolver, cardId);
         }
 
-        private void ApplyCardEffectStep(CardEffectStep step)
+        internal CardUseAvailability EvaluateCardUse(
+            CombatantSide actorSide,
+            int cardId)
+        {
+            return CardUseValidator.EvaluateForActor(
+                this,
+                _cardEffectResolver,
+                actorSide,
+                cardId);
+        }
+
+        internal bool CanActorUseCard(CombatantSide actorSide)
+        {
+            switch (actorSide)
+            {
+                case CombatantSide.Player:
+                    return CanPlayerAct;
+                case CombatantSide.Enemy:
+                    return State == CoreLoopState.EnemyTurn && !Enemy.IsStanding;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(actorSide));
+            }
+        }
+
+        internal bool HasActiveCardEffect => _activeCardEffectContext != null;
+
+        internal PendingCardEffect PendingEnemyCardEffect =>
+            _activeCardEffectActorSide == CombatantSide.Enemy
+                ? _pendingCardEffect
+                : null;
+
+        internal IReadOnlyList<PublicCombatAction> PublicActionHistory =>
+            _publicActionHistory.AsReadOnly();
+
+        internal BattleParticipant GetParticipant(CombatantSide side)
+        {
+            switch (side)
+            {
+                case CombatantSide.Player:
+                    return Player;
+                case CombatantSide.Enemy:
+                    return Enemy;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(side));
+            }
+        }
+
+        internal BattleParticipant GetOpponent(CombatantSide side)
+        {
+            switch (side)
+            {
+                case CombatantSide.Player:
+                    return Enemy;
+                case CombatantSide.Enemy:
+                    return Player;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(side));
+            }
+        }
+
+        private bool TryBeginCardUse(CombatantSide actorSide, int cardId)
+        {
+            if (!EvaluateCardUse(actorSide, cardId).CanUse)
+            {
+                return false;
+            }
+
+            BattleParticipant actor = GetParticipant(actorSide);
+            if (!actor.Hand.TryGetCard(cardId, out BlackjackCard card))
+            {
+                return false;
+            }
+
+            var context = new CardEffectContext(this, actorSide, card);
+            if (!card.TryBeginUse())
+            {
+                throw new InvalidOperationException("Validated card could not begin use.");
+            }
+
+            card.Reveal();
+            CardEffectStep step = _cardEffectResolver.Begin(context);
+            _activeCardEffectContext = context;
+            _activeCardEffectActorSide = actorSide;
+            RecordPublicAction(
+                actorSide,
+                PublicCombatActionType.UseCard,
+                card.DefinitionKey);
+
+            CardEffectApplicationResult applicationResult = ApplyCardEffectStep(step);
+            if (actorSide == CombatantSide.Player &&
+                applicationResult == CardEffectApplicationResult.Completed)
+            {
+                RunEnemyTurn();
+            }
+
+            return true;
+        }
+
+        private bool TryResolveCardChoice(CombatantSide actorSide, int optionId)
+        {
+            CoreLoopState expectedState = actorSide == CombatantSide.Player
+                ? CoreLoopState.PlayerResolvingCardEffect
+                : CoreLoopState.EnemyTurn;
+            if (State != expectedState ||
+                _activeCardEffectActorSide != actorSide ||
+                _pendingCardEffect == null ||
+                _activeCardEffectContext == null ||
+                !_pendingCardEffect.TryGetOption(
+                    optionId,
+                    out CardEffectChoiceOption selectedOption))
+            {
+                return false;
+            }
+
+            CardEffectStep step = _cardEffectResolver.ResolveChoice(
+                _activeCardEffectContext,
+                _pendingCardEffect,
+                selectedOption);
+            CardEffectApplicationResult applicationResult = ApplyCardEffectStep(step);
+            if (actorSide == CombatantSide.Player &&
+                applicationResult == CardEffectApplicationResult.Completed)
+            {
+                RunEnemyTurn();
+            }
+
+            return true;
+        }
+
+        private CardEffectApplicationResult ApplyCardEffectStep(CardEffectStep step)
         {
             if (step == null)
             {
@@ -289,9 +409,11 @@ namespace DiaBlackJack.CoreLoop
                         "Pending card effect does not match the active source card.");
                 }
 
-                _pendingPlayerCardEffect = step.PendingEffect;
-                State = CoreLoopState.PlayerResolvingCardEffect;
-                return;
+                _pendingCardEffect = step.PendingEffect;
+                State = _activeCardEffectActorSide == CombatantSide.Player
+                    ? CoreLoopState.PlayerResolvingCardEffect
+                    : CoreLoopState.EnemyTurn;
+                return CardEffectApplicationResult.Pending;
             }
 
             if (!step.Result.HasValue)
@@ -313,16 +435,23 @@ namespace DiaBlackJack.CoreLoop
             }
 
             LastCardEffectResult = result;
-            _pendingPlayerCardEffect = null;
+            LastCardEffectActorSide = _activeCardEffectActorSide;
+            CombatantSide actorSide = _activeCardEffectActorSide ??
+                throw new InvalidOperationException("Card effect has no actor side.");
+            _pendingCardEffect = null;
             _activeCardEffectContext = null;
+            _activeCardEffectActorSide = null;
 
             if (step.RoundResolution.HasValue)
             {
                 CompleteRound(step.RoundResolution.Value);
-                return;
+                return CardEffectApplicationResult.RoundEnded;
             }
 
-            RunEnemyTurn();
+            State = actorSide == CombatantSide.Player
+                ? CoreLoopState.PlayerTurn
+                : CoreLoopState.EnemyTurn;
+            return CardEffectApplicationResult.Completed;
         }
 
         private void StartRound()
@@ -330,8 +459,11 @@ namespace DiaBlackJack.CoreLoop
             State = CoreLoopState.StartingRound;
             RoundNumber++;
             _activeCardEffectContext = null;
-            _pendingPlayerCardEffect = null;
+            _activeCardEffectActorSide = null;
+            _pendingCardEffect = null;
             _playerChangeSelection = null;
+            _publicActionHistory.Clear();
+            _enemyDecisionOrdinal = 0;
             HasPlayerChangedThisRound = false;
 
             Player.Draw(faceUp: true);
@@ -346,9 +478,9 @@ namespace DiaBlackJack.CoreLoop
         {
             State = CoreLoopState.EnemyTurn;
 
-            while (true)
+            while (State == CoreLoopState.EnemyTurn)
             {
-                if (Enemy.IsStanding)
+                if (Enemy.IsStanding && PendingEnemyCardEffect == null)
                 {
                     if (Player.IsStanding)
                     {
@@ -362,15 +494,84 @@ namespace DiaBlackJack.CoreLoop
                     return;
                 }
 
-                EnemyDecision decision = _enemyPolicy.Decide(
-                    new EnemyObservation(Enemy.HandValue));
-                if (decision == null)
+                int decisionSeed = CreateEnemyDecisionSeed();
+                EnemyDecision decision = DecideEnemyAction(decisionSeed);
+                if (!TryExecuteEnemyDecision(decision, decisionSeed))
                 {
-                    throw new InvalidOperationException("Enemy policy returned no decision.");
+                    throw new InvalidOperationException(
+                        "Validated enemy decision could not be executed.");
+                }
+            }
+        }
+
+        private EnemyDecision DecideEnemyAction(int decisionSeed)
+        {
+            EnemyObservation observation = null;
+            for (int attempt = 0; attempt < 2; attempt++)
+            {
+                observation = EnemyObservationFactory.Create(this, decisionSeed);
+                EnemyDecision decision = _enemyPolicy.Decide(observation);
+                if (EnemyDecisionValidator.CanExecute(observation, decision))
+                {
+                    LastEnemyDecision = decision;
+                    return decision;
+                }
+            }
+
+            EnemyActionCandidate fallback = null;
+            foreach (EnemyActionCandidate candidate in observation.ActionCandidates)
+            {
+                if (fallback == null || candidate.ActionType == EnemyActionType.Stand)
+                {
+                    fallback = candidate;
                 }
 
-                if (decision.ActionType == EnemyActionType.Stand)
+                if (candidate.ActionType == EnemyActionType.Stand)
                 {
+                    break;
+                }
+            }
+
+            if (fallback == null)
+            {
+                throw new InvalidOperationException("Enemy turn has no executable fallback action.");
+            }
+
+            LastEnemyDecision = EnemyDecision.FromCandidate(
+                fallback,
+                "fallback-after-invalid-policy-decision");
+            return LastEnemyDecision;
+        }
+
+        private bool TryExecuteEnemyDecision(EnemyDecision decision, int decisionSeed)
+        {
+            EnemyObservation currentObservation =
+                EnemyObservationFactory.Create(this, decisionSeed);
+            if (!EnemyDecisionValidator.CanExecute(currentObservation, decision))
+            {
+                return false;
+            }
+
+            bool executed;
+            switch (decision.ActionType)
+            {
+                case EnemyActionType.Hit:
+                    RecordPublicAction(CombatantSide.Enemy, PublicCombatActionType.Hit);
+                    Enemy.Draw(faceUp: true);
+                    if (Enemy.HandValue.IsBust)
+                    {
+                        ResolveRound();
+                    }
+                    else if (!Player.IsStanding)
+                    {
+                        State = CoreLoopState.PlayerTurn;
+                    }
+
+                    executed = true;
+                    break;
+
+                case EnemyActionType.Stand:
+                    RecordPublicAction(CombatantSide.Enemy, PublicCombatActionType.Stand);
                     Enemy.Stand();
                     if (Player.IsStanding)
                     {
@@ -381,28 +582,64 @@ namespace DiaBlackJack.CoreLoop
                         State = CoreLoopState.PlayerTurn;
                     }
 
-                    return;
-                }
+                    executed = true;
+                    break;
 
-                if (decision.ActionType != EnemyActionType.Hit)
-                {
-                    throw new InvalidOperationException(
-                        $"Enemy action '{decision.ActionType}' is not supported in EP-01.");
-                }
+                case EnemyActionType.Fold:
+                    RecordPublicAction(CombatantSide.Enemy, PublicCombatActionType.Fold);
+                    CompleteRound(RoundResolver.ResolveEnemyFold(RoundNumber));
+                    executed = true;
+                    break;
 
-                Enemy.Draw(faceUp: true);
-                if (Enemy.HandValue.IsBust)
-                {
-                    ResolveRound();
-                    return;
-                }
+                case EnemyActionType.UseCard:
+                    bool wasPending = PendingEnemyCardEffect != null;
+                    executed = wasPending
+                        ? decision.CardEffectOptionId.HasValue &&
+                            TryResolveCardChoice(
+                                CombatantSide.Enemy,
+                                decision.CardEffectOptionId.Value)
+                        : decision.CardId.HasValue &&
+                            TryBeginCardUse(CombatantSide.Enemy, decision.CardId.Value);
 
-                if (!Player.IsStanding)
-                {
-                    State = CoreLoopState.PlayerTurn;
-                    return;
-                }
+                    if (executed &&
+                        PendingEnemyCardEffect == null &&
+                        State == CoreLoopState.EnemyTurn &&
+                        !Player.IsStanding)
+                    {
+                        State = CoreLoopState.PlayerTurn;
+                    }
+
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(decision));
             }
+
+            if (executed)
+            {
+                _enemyDecisionOrdinal++;
+            }
+
+            return executed;
+        }
+
+        private int CreateEnemyDecisionSeed()
+        {
+            unchecked
+            {
+                return (RoundNumber * 397) ^ _enemyDecisionOrdinal;
+            }
+        }
+
+        private void RecordPublicAction(
+            CombatantSide actorSide,
+            PublicCombatActionType actionType,
+            string sourceCardDefinitionKey = null)
+        {
+            _publicActionHistory.Add(new PublicCombatAction(
+                actorSide,
+                actionType,
+                sourceCardDefinitionKey));
         }
 
         private void ResolveRound()

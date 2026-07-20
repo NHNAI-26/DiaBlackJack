@@ -64,6 +64,11 @@ namespace DiaBlackJack.CoreLoop
 
         public int TotalCardCount { get; }
 
+        internal IReadOnlyList<BlackjackCard> GetDiscardedCards()
+        {
+            return _discardPile.AsReadOnly();
+        }
+
         public static BlackjackDeck CreateStandard(int seed)
         {
             var cards = new List<BlackjackCard>(20);

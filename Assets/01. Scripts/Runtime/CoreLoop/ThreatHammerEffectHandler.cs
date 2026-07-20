@@ -10,14 +10,14 @@ namespace DiaBlackJack.CoreLoop
         public bool CanStart(CardEffectContext context)
         {
             bool hasDiscardCost = context.SourceCard.IsFaceUp ||
-                context.GetPlayerFaceUpCards().Count > 0;
+                context.GetActorFaceUpCards().Count > 0;
             return hasDiscardCost &&
-                (!context.IsEnemyStanding || context.CanReplaceStandingEnemyHiddenCard());
+                (!context.IsOpponentStanding || context.CanReplaceStandingOpponentHiddenCard());
         }
 
         public CardEffectStep Begin(CardEffectContext context)
         {
-            IReadOnlyList<BlackjackCard> faceUpCards = context.GetPlayerFaceUpCards();
+            IReadOnlyList<BlackjackCard> faceUpCards = context.GetActorFaceUpCards();
             if (faceUpCards.Count == 0)
             {
                 throw new InvalidOperationException(
@@ -48,23 +48,23 @@ namespace DiaBlackJack.CoreLoop
         {
             if (pendingEffect.ChoiceKind != CardEffectChoiceKind.DiscardOwnFaceUpCard ||
                 !selectedOption.CardId.HasValue ||
-                !context.TryDiscardPlayerCard(selectedOption.CardId.Value))
+                !context.TryDiscardActorCard(selectedOption.CardId.Value))
             {
                 throw new InvalidOperationException("Threat hammer received an invalid discard choice.");
             }
 
-            if (!context.IsEnemyStanding)
+            if (!context.IsOpponentStanding)
             {
                 return Complete(context, endedRound: false);
             }
 
-            if (!context.TryReplaceStandingEnemyHiddenCard(out _, out _))
+            if (!context.TryReplaceStandingOpponentHiddenCard(out _, out _))
             {
                 throw new InvalidOperationException(
                     "Threat hammer could not replace the standing enemy hidden card.");
             }
 
-            bool endedRound = context.EnemyHandValue.IsBust;
+            bool endedRound = context.OpponentHandValue.IsBust;
             return endedRound
                 ? CardEffectStep.Complete(
                     CreateResult(context, endedRound: true),
