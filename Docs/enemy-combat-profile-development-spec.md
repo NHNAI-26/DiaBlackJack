@@ -337,13 +337,16 @@ Selected BattleProfileKey
 ```text
 Assets/01. Scripts/Runtime/CoreLoop/EnemyAI/
 ├─ EnemyActionType.cs
+├─ EnemyBehaviorPolicyCatalog.cs
 ├─ EnemyDecision.cs
 ├─ EnemyObservation.cs
 ├─ IEnemyBehaviorPolicy.cs
 └─ Policies/
 
 Assets/01. Scripts/Runtime/CoreLoop/EnemyProfiles/
+├─ EnemyBattleConfiguration.cs
 ├─ EnemyGrade.cs
+├─ EnemyInformationMode.cs
 ├─ EnemyCombatProfile.cs
 ├─ EnemyProfilePreview.cs
 └─ EnemyCombatProfileCatalog.cs
@@ -380,4 +383,3 @@ EP-00은 문서 전용 단계다. 코드·테스트·씬·프리팹·패키지·
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
 | 2026-07-20 | 이천서 | 현재 단순 적 정책·카드 처리·전투 생성 구조를 기준으로 프로필, 공개 관측, 정책 인터페이스, 적 카드 실행, 상대 선택·보상 연결과 EP-01~EP-06 테스트 명세 수립 |
-

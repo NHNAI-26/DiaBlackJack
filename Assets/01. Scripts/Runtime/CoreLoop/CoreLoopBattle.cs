@@ -8,7 +8,7 @@ namespace DiaBlackJack.CoreLoop
         private static readonly IReadOnlyList<BlackjackCard> NoChangeCandidates =
             Array.AsReadOnly(Array.Empty<BlackjackCard>());
 
-        private readonly SimpleEnemyPolicy _enemyPolicy;
+        private readonly IEnemyBehaviorPolicy _enemyPolicy;
         private readonly CardEffectResolver _cardEffectResolver;
         private readonly RoundDamageApplier _damageApplier = new RoundDamageApplier();
         private CardEffectContext _activeCardEffectContext;
@@ -20,7 +20,7 @@ namespace DiaBlackJack.CoreLoop
             BlackjackDeck enemyDeck,
             int playerMaximumSoul = 12,
             int enemyMaximumSoul = 3,
-            SimpleEnemyPolicy enemyPolicy = null)
+            IEnemyBehaviorPolicy enemyPolicy = null)
             : this(
                 playerDeck,
                 enemyDeck,
@@ -37,7 +37,7 @@ namespace DiaBlackJack.CoreLoop
             int playerMaximumSoul,
             int playerCurrentSoul,
             int enemyMaximumSoul,
-            SimpleEnemyPolicy enemyPolicy = null)
+            IEnemyBehaviorPolicy enemyPolicy = null)
             : this(
                 playerDeck,
                 enemyDeck,
@@ -55,7 +55,7 @@ namespace DiaBlackJack.CoreLoop
             int playerMaximumSoul,
             int playerCurrentSoul,
             int enemyMaximumSoul,
-            SimpleEnemyPolicy enemyPolicy,
+            IEnemyBehaviorPolicy enemyPolicy,
             CardEffectResolver cardEffectResolver)
         {
             Player = new BattleParticipant(playerDeck, playerMaximumSoul, playerCurrentSoul);
@@ -362,8 +362,14 @@ namespace DiaBlackJack.CoreLoop
                     return;
                 }
 
-                EnemyAction action = _enemyPolicy.Decide(Enemy.HandValue);
-                if (action == EnemyAction.Stand)
+                EnemyDecision decision = _enemyPolicy.Decide(
+                    new EnemyObservation(Enemy.HandValue));
+                if (decision == null)
+                {
+                    throw new InvalidOperationException("Enemy policy returned no decision.");
+                }
+
+                if (decision.ActionType == EnemyActionType.Stand)
                 {
                     Enemy.Stand();
                     if (Player.IsStanding)
@@ -376,6 +382,12 @@ namespace DiaBlackJack.CoreLoop
                     }
 
                     return;
+                }
+
+                if (decision.ActionType != EnemyActionType.Hit)
+                {
+                    throw new InvalidOperationException(
+                        $"Enemy action '{decision.ActionType}' is not supported in EP-01.");
                 }
 
                 Enemy.Draw(faceUp: true);
