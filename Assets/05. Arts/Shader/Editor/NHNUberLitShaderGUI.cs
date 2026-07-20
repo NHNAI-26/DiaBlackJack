@@ -8,6 +8,7 @@ public class NHNUberLitShaderGUI : LWGUI.LWGUI
         SeedKeyword(properties, "_EmissionEnabled", "_EMISSION");
         SeedKeyword(properties, "_RimEnabled", "_RIM_ON");
         SeedKeyword(properties, "_HeightFadeEnabled", "_HEIGHT_FADE_ON");
+        SeedKeyword(properties, "_GlassGlowEnabled", "_GLASS_GLOW_ON");
         SeedKeyword(properties, "_DissolveEnabled", "_DISSOLVE_ON");
 
         base.OnGUI(materialEditor, properties);

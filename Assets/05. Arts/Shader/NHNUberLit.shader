@@ -48,6 +48,10 @@ Shader "Shader/Uber Lit"
         [Sub(HeightFade_HEIGHT_FADE_ON)] _HeightFadeUpper("Upper Height", Float) = 1
         [Sub(HeightFade_HEIGHT_FADE_ON)] _HeightFadeTint("Lower Tint", Color) = (0.25,0.25,0.25,1)
 
+        [Main(GlassGlow, _GLASS_GLOW_ON, on)] _GlassGlowEnabled("Glowing Glass", Float) = 0
+        [Sub(GlassGlow_GLASS_GLOW_ON)] [HDR] _GlassGlowColor("Glow Color", Color) = (1,1,1,1)
+        [Sub(GlassGlow_GLASS_GLOW_ON)] _GlassGlowOffset("Offset", Range(0,1)) = 0
+
         [Main(Dissolve, _DISSOLVE_ON, on)] _DissolveEnabled("Dissolve", Float) = 0
         [Tex(Dissolve_DISSOLVE_ON)] [NoScaleOffset] _DissolveNoiseMap("Noise Map", 2D) = "white" {}
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveTilingOffset("Tiling XY / Offset ZW", Vector) = (1, 1, 0, 0)
@@ -91,6 +95,7 @@ Shader "Shader/Uber Lit"
             #pragma shader_feature_local_fragment _RIM_ON
             #pragma shader_feature_local_fragment _DISSOLVE_ON
             #pragma multi_compile_local_fragment _ _HEIGHT_FADE_ON
+            #pragma multi_compile_local_fragment _ _GLASS_GLOW_ON
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma shader_feature_local_fragment _SURFACE_TYPE_TRANSPARENT
             #pragma shader_feature_local_fragment _ _ALPHAPREMULTIPLY_ON _ALPHAMODULATE_ON

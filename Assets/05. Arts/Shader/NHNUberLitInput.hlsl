@@ -18,6 +18,7 @@ CBUFFER_START(UnityPerMaterial)
     half4 _EmissionColor;
     half4 _RimColor;
     half4 _HeightFadeTint;
+    half4 _GlassGlowColor;
     half4 _DissolveEdgeColor;
     half4 _DissolvePanning;
     half _Cutoff;
@@ -30,6 +31,7 @@ CBUFFER_START(UnityPerMaterial)
     half _RimIntensity;
     float _HeightFadeLower;
     float _HeightFadeUpper;
+    half _GlassGlowOffset;
     half _DissolveAmount;
     half _DissolveEdgeWidth;
     half _DissolveEdgeIntensity;
@@ -158,6 +160,18 @@ inline half3 NHNEvaluateHeightFade(float worldY)
 #endif
 }
 
+inline half3 NHNEvaluateGlassGlow(half3 baseColor)
+{
+#if defined(_GLASS_GLOW_ON)
+    half safeOffset = min(_GlassGlowOffset, 0.999h);
+    half luminance = Luminance(baseColor);
+    half mask = saturate((luminance - safeOffset) / max(1.0h - safeOffset, 0.0001h));
+    return _GlassGlowColor.rgb * mask;
+#else
+    return 0.0h;
+#endif
+}
+
 inline void InitializeNHNUberLitSurfaceData(float2 rawUV, out SurfaceData surfaceData,
     out half dissolveEdge)
 {
@@ -174,7 +188,8 @@ inline void InitializeNHNUberLitSurfaceData(float2 rawUV, out SurfaceData surfac
     surfaceData.normalTS = SampleNormal(surfaceUV,
         TEXTURE2D_ARGS(_BumpMap, sampler_BumpMap), _BumpScale);
     surfaceData.occlusion = NHNSampleOcclusion(surfaceUV);
-    surfaceData.emission = NHNSampleEmission(surfaceUV) + NHNGetDissolveEdgeEmission(dissolveEdge);
+    surfaceData.emission = NHNSampleEmission(surfaceUV) + NHNGetDissolveEdgeEmission(dissolveEdge)
+        + NHNEvaluateGlassGlow(baseSample.rgb);
     surfaceData.clearCoatMask = 0.0h;
     surfaceData.clearCoatSmoothness = 0.0h;
 }
