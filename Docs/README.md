@@ -23,10 +23,10 @@
 | [stage-progression-development-spec.md](./stage-progression-development-spec.md) | 런 상태·스테이지 전이·전투·씬 연결·검증 명세 | SP-04 검증 완료 v0.1 |
 | [stage-progression-implementation-plan.md](./stage-progression-implementation-plan.md) | 독립 진행 시스템 작업 순서·일정·완료 증거 | 전체 완료 v0.1 |
 | [stage-progression-progress-log.md](./stage-progression-progress-log.md) | 독립 진행 시스템 착수·구현·검증 누적 기록 | SP-04 완료 v0.1 |
-| [combat-action-design.md](./combat-action-design.md) | 폴드 삭제, 체인지 누적 비용과 패배 피해의 현행 전투 행동 규칙 | 현행 기획 v0.2·구현 이관 대기 |
-| [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | BA-05 통합 완료 v0.1 |
-| [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
-| [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | BA-05 완료 v0.1 |
+| [combat-action-design.md](./combat-action-design.md) | 폴드 삭제, 체인지 누적 비용과 패배 피해의 현행 전투 행동 규칙 | 현행 기획·코드 이관 완료 v0.2 |
+| [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | 현행 규칙 이관 완료 v0.2 |
+| [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 이력과 현행 규칙 이관 결과 | 현행 규칙 이관 완료 v0.2 |
+| [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | 현행 규칙 이관 완료 v0.2 |
 | [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·프로토타입 결정 | 1차 범위 완료 v0.1 |
 | [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-06 검증 완료 v0.1 |
 | [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
@@ -35,7 +35,7 @@
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW-05 최종 검증 완료 v0.1 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
 | [battle-reward-progress-log.md](./battle-reward-progress-log.md) | 전투 보상 결정·구현·검증 누적 기록 | RW-05 완료 v0.1 |
-| [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 일반 적 3종·엘리트·보스의 전투 성향과 책임 경계 | 현행 폴드 삭제 반영 v0.7·구현 이관 대기 |
+| [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 일반 적 3종·엘리트·보스의 전투 성향과 책임 경계 | 현행 폴드 삭제·코드 이관 완료 v0.7 |
 | [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | EP-06 검증 완료 v0.6 |
 | [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP-00~EP-06 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.6 |
 | [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | EP-06 완료 v0.6 |
@@ -63,6 +63,7 @@
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
 | 2026-07-21 | 이천서 | 폴드를 플레이어·적 행동에서 삭제하고 체인지 비용을 전투 내 `0→1→2→3…` 영혼 누적·다음 전투 초기화 방식으로 변경 |
+| 2026-07-21 | 이천서 | 폴드 계약 제거, 체인지 누적 비용·엄격한 영혼 조건·기존 비공개 카드 공개 폐기를 코드에 이관하고 전체 EditMode 306/306 검증 완료, `GameScene` 변경 없음 |
 | 2026-07-21 | 이천서 | 테이블의 양측 덱·버림패, 비공개·사용 완료 카드 표시, 계약 영역, 행동 버튼과 상시 무기 장식 배치 확정 및 콘셉트 이미지 추가 |
 | 2026-07-21 | 이천서 | 고정 카메라 2.5D 서부 술집, 월드 카드·덱, 3D 무기 연출과 동일 테이블 상인 전환 방향 확정 |
 | 2026-07-20 | 이천서 | 서부 시대 결투 콘셉트에 맞춰 카드 표시명을 자동 권총에서 리볼버로, 군용 나이프에서 보위 나이프로 변경하고 위협용 해머는 유지 |

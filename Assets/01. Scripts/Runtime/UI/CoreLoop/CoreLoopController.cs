@@ -32,7 +32,6 @@ namespace DiaBlackJack.CoreLoop.UI
 
             _view.HitRequested += RequestHit;
             _view.StandRequested += RequestStand;
-            _view.FoldRequested += RequestFold;
             _view.ChangeRequested += RequestBeginChange;
             _view.ChangeCandidateRequested += RequestSelectChangedCard;
             _view.CardUseRequested += RequestBeginCardUse;
@@ -64,7 +63,6 @@ namespace DiaBlackJack.CoreLoop.UI
 
             _view.HitRequested -= RequestHit;
             _view.StandRequested -= RequestStand;
-            _view.FoldRequested -= RequestFold;
             _view.ChangeRequested -= RequestBeginChange;
             _view.ChangeCandidateRequested -= RequestSelectChangedCard;
             _view.CardUseRequested -= RequestBeginCardUse;
@@ -84,13 +82,6 @@ namespace DiaBlackJack.CoreLoop.UI
             ProcessInput(() => IsStageBattle
                 ? _stageSession.TryPlayerStand()
                 : _session.TryPlayerStand());
-        }
-
-        public void RequestFold()
-        {
-            ProcessInput(() => IsStageBattle
-                ? _stageSession.TryPlayerFold()
-                : _session.TryPlayerFold());
         }
 
         public void RequestBeginChange()

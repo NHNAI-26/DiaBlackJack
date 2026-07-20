@@ -77,12 +77,10 @@ namespace DiaBlackJack.CoreLoop.UI
             IReadOnlyList<string> enemyInformationLines,
             string enemyWarning,
             string lastRound,
-            string foldActionText,
             string changeActionText,
             IReadOnlyList<string> changeCandidates,
             bool canHit,
             bool canStand,
-            bool canFold,
             bool canChange,
             bool isChoosingChangeCard,
             IReadOnlyList<PlayerCardViewModel> playerCardActions,
@@ -111,13 +109,11 @@ namespace DiaBlackJack.CoreLoop.UI
                 throw new ArgumentNullException(nameof(enemyInformationLines));
             EnemyWarning = enemyWarning ?? string.Empty;
             LastRound = lastRound;
-            FoldActionText = foldActionText;
             ChangeActionText = changeActionText;
             ChangeCandidates = changeCandidates ??
                 throw new ArgumentNullException(nameof(changeCandidates));
             CanHit = canHit;
             CanStand = canStand;
-            CanFold = canFold;
             CanChange = canChange;
             IsChoosingChangeCard = isChoosingChangeCard;
             PlayerCardActions = playerCardActions ??
@@ -166,8 +162,6 @@ namespace DiaBlackJack.CoreLoop.UI
 
         public string LastRound { get; }
 
-        public string FoldActionText { get; }
-
         public string ChangeActionText { get; }
 
         public IReadOnlyList<string> ChangeCandidates { get; }
@@ -175,8 +169,6 @@ namespace DiaBlackJack.CoreLoop.UI
         public bool CanHit { get; }
 
         public bool CanStand { get; }
-
-        public bool CanFold { get; }
 
         public bool CanChange { get; }
 
@@ -228,12 +220,10 @@ namespace DiaBlackJack.CoreLoop.UI
                 FormatEnemyInformationLines(enemyDisplay),
                 FormatEnemyWarning(enemyDisplay),
                 FormatLastRound(battle.LastResolution),
-                FormatFoldAction(battle),
                 FormatChangeAction(battle),
                 FormatChangeCandidates(battle.PlayerChangeCandidates),
                 canPlayerAct,
                 canPlayerAct,
-                battle.CanPlayerFold,
                 battle.CanBeginPlayerChange,
                 battle.CanSelectChangedCard,
                 FormatPlayerCardActions(battle),
@@ -475,26 +465,23 @@ namespace DiaBlackJack.CoreLoop.UI
                 case CardEffectKind.ThreatHammer:
                     return "THREAT HAMMER";
                 case CardEffectKind.AutoPistol:
-                    return "AUTO PISTOL";
+                    return "REVOLVER";
                 case CardEffectKind.MilitaryKnife:
-                    return "MILITARY KNIFE";
+                    return "BOWIE KNIFE";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(effectKind));
             }
         }
 
-        private static string FormatFoldAction(CoreLoopBattle battle)
-        {
-            return battle.Player.Soul.Current == 1
-                ? "FOLD (-1 SOUL = DEFEAT)"
-                : "FOLD (-1 SOUL)";
-        }
-
         private static string FormatChangeAction(CoreLoopBattle battle)
         {
-            return battle.HasPlayerChangedThisRound
-                ? "CHANGE (USED)"
-                : "CHANGE (1/ROUND)";
+            int cost = battle.NextPlayerChangeSoulCost;
+            int remainingSoul = battle.Player.Soul.Current - cost;
+            return remainingSoul > 0
+                ? cost == 0
+                    ? $"CHANGE (FREE | {remainingSoul} SOUL LEFT)"
+                    : $"CHANGE (-{cost} SOUL | {remainingSoul} LEFT)"
+                : $"CHANGE (-{cost} SOUL | NEED {cost + 1}+)";
         }
 
         private static IReadOnlyList<string> FormatChangeCandidates(
@@ -560,8 +547,6 @@ namespace DiaBlackJack.CoreLoop.UI
                     return "Player wins round  |  Enemy soul -1";
                 case RoundOutcome.EnemyWin:
                     return "Enemy wins round  |  Player soul -1";
-                case RoundOutcome.PlayerFold:
-                    return "Player folds  |  Player soul -1";
                 default:
                     throw new ArgumentOutOfRangeException();
             }

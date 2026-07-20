@@ -26,8 +26,6 @@ namespace DiaBlackJack.CoreLoop
                         candidate,
                         observation.OwnHandValue.Total >= 17 ? 700 : 200,
                         "enforcer-basic-stand");
-                case EnemyActionType.Fold:
-                    return Score(candidate, -500, "enforcer-avoid-fold");
                 case EnemyActionType.UseCard:
                     return EvaluateCard(observation, candidate);
                 default:

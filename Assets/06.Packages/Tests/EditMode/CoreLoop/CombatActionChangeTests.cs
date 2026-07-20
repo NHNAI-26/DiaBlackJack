@@ -21,7 +21,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerChoosingChangeCard));
             Assert.That(battle.CanBeginPlayerChange, Is.False);
             Assert.That(battle.CanSelectChangedCard, Is.True);
-            Assert.That(battle.HasPlayerChangedThisRound, Is.False);
+            Assert.That(battle.CompletedPlayerChangeCount, Is.Zero);
+            Assert.That(battle.NextPlayerChangeSoulCost, Is.Zero);
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(12));
             Assert.That(battle.Player.Hand.Count, Is.EqualTo(1));
             Assert.That(battle.Player.Hand.HiddenCardCount, Is.Zero);
             Assert.That(
@@ -30,7 +32,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 battle.PlayerChangeCandidates.All(card => card.IsFaceUp),
                 Is.True);
-            Assert.That(battle.Player.Deck.CardsInPlayCount, Is.EqualTo(4));
+            Assert.That(battle.Player.Deck.CardsInPlayCount, Is.EqualTo(3));
+            Assert.That(battle.Player.Deck.DiscardCount, Is.EqualTo(1));
+            Assert.That(battle.Player.Deck.GetDiscardedCards().Single().Rank, Is.EqualTo(2));
+            Assert.That(battle.Player.Deck.GetDiscardedCards().Single().IsFaceUp, Is.True);
             Assert.That(battle.Enemy.Hand.Count, Is.EqualTo(2));
             Assert.That(battle.Enemy.VisibleHandValue.Total, Is.EqualTo(enemyVisibleValue.Total));
         }
@@ -55,8 +60,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.PlayerChangeCandidates, Is.EqualTo(candidates));
             Assert.That(battle.Player.Hand.Count, Is.EqualTo(1));
             Assert.That(battle.Player.Deck.AvailableCardCount, Is.EqualTo(availableCardCount));
-            Assert.That(battle.Player.Deck.DiscardCount, Is.Zero);
-            Assert.That(battle.HasPlayerChangedThisRound, Is.False);
+            Assert.That(battle.Player.Deck.DiscardCount, Is.EqualTo(1));
+            Assert.That(battle.CompletedPlayerChangeCount, Is.Zero);
         }
 
         [Test]
@@ -75,7 +80,8 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(accepted, Is.True);
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
-            Assert.That(battle.HasPlayerChangedThisRound, Is.True);
+            Assert.That(battle.CompletedPlayerChangeCount, Is.EqualTo(1));
+            Assert.That(battle.NextPlayerChangeSoulCost, Is.EqualTo(1));
             Assert.That(battle.CanSelectChangedCard, Is.False);
             Assert.That(battle.PlayerChangeCandidates, Is.Empty);
             Assert.That(battle.Player.Hand.Count, Is.EqualTo(2));
@@ -99,7 +105,6 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(battle.TryPlayerHit(), Is.False);
             Assert.That(battle.TryPlayerStand(), Is.False);
-            Assert.That(battle.TryPlayerFold(), Is.False);
             Assert.That(battle.TryBeginPlayerChange(), Is.False);
             Assert.That(battle.Enemy.Hand.Count, Is.EqualTo(2));
 
@@ -112,25 +117,57 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void BA03_ChangeCannotBeReusedUntilNextRound()
+        public void BA03_ChangeCanRepeatAndKeepsIncreasingCostAcrossRounds()
         {
             CoreLoopBattle battle = CreateBattle(
-                playerRanks: new[] { 10, 8, 5, 6, 9, 7, 4, 3 },
+                playerRanks: new[] { 10, 8, 5, 6, 9, 7, 4, 3, 2, 6, 5, 4 },
                 enemyRanks: new[] { 10, 7, 9, 7 });
             battle.Start();
             battle.TryBeginPlayerChange();
             battle.TrySelectChangedCard(0);
 
-            Assert.That(battle.HasPlayerChangedThisRound, Is.True);
-            Assert.That(battle.TryBeginPlayerChange(), Is.False);
+            Assert.That(battle.CompletedPlayerChangeCount, Is.EqualTo(1));
+            Assert.That(battle.NextPlayerChangeSoulCost, Is.EqualTo(1));
+            Assert.That(battle.TryBeginPlayerChange(), Is.True);
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(11));
+            Assert.That(battle.TrySelectChangedCard(0), Is.True);
+            Assert.That(battle.CompletedPlayerChangeCount, Is.EqualTo(2));
+            Assert.That(battle.NextPlayerChangeSoulCost, Is.EqualTo(2));
 
             battle.TryPlayerStand();
 
             Assert.That(battle.RoundNumber, Is.EqualTo(2));
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
-            Assert.That(battle.HasPlayerChangedThisRound, Is.False);
+            Assert.That(battle.CompletedPlayerChangeCount, Is.EqualTo(2));
             Assert.That(battle.TryBeginPlayerChange(), Is.True);
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(9));
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerChoosingChangeCard));
+        }
+
+        [Test]
+        public void BA03_ChangeRejectsWhenCostWouldSpendLastSoul()
+        {
+            CoreLoopBattle battle = new CoreLoopBattle(
+                CreateDeck(new[] { 10, 2, 4, 9, 6, 7 }),
+                CreateDeck(new[] { 10, 7 }),
+                playerMaximumSoul: 1,
+                playerCurrentSoul: 1,
+                enemyMaximumSoul: 3);
+            battle.Start();
+            battle.TryBeginPlayerChange();
+            battle.TrySelectChangedCard(0);
+            BlackjackCard[] hand = battle.Player.Hand.Cards.ToArray();
+            int availableCards = battle.Player.Deck.AvailableCardCount;
+
+            bool accepted = battle.TryBeginPlayerChange();
+
+            Assert.That(accepted, Is.False);
+            Assert.That(battle.CompletedPlayerChangeCount, Is.EqualTo(1));
+            Assert.That(battle.NextPlayerChangeSoulCost, Is.EqualTo(1));
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(1));
+            Assert.That(battle.Player.Hand.Cards, Is.EqualTo(hand));
+            Assert.That(battle.Player.Deck.AvailableCardCount, Is.EqualTo(availableCards));
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
         }
 
         [Test]
@@ -190,7 +227,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(began, Is.True);
             Assert.That(selected, Is.True);
             Assert.That(session.Battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
-            Assert.That(session.Battle.HasPlayerChangedThisRound, Is.True);
+            Assert.That(session.Battle.CompletedPlayerChangeCount, Is.EqualTo(1));
             Assert.That(session.Battle.Player.Hand.HiddenCardCount, Is.EqualTo(1));
         }
 

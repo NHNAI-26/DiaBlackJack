@@ -292,7 +292,6 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(session.TryStartRun(), Is.False);
             Assert.That(session.TryPlayerHit(), Is.False);
             Assert.That(session.TryPlayerStand(), Is.False);
-            Assert.That(session.TryPlayerFold(), Is.False);
             Assert.That(session.TryBeginPlayerChange(), Is.False);
             Assert.That(session.TrySelectChangedCard(0), Is.False);
             Assert.That(session.TryBeginPlayerCardUse(0), Is.False);

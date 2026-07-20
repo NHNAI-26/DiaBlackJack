@@ -142,7 +142,6 @@ namespace DiaBlackJack.CoreLoop
             }
 
             candidates.Add(new EnemyActionCandidate(EnemyActionType.Stand));
-            candidates.Add(new EnemyActionCandidate(EnemyActionType.Fold));
 
             foreach (EnemyOwnedCardObservation card in ownCards)
             {

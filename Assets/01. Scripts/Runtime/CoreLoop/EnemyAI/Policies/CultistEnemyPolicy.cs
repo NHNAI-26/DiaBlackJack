@@ -31,8 +31,6 @@ namespace DiaBlackJack.CoreLoop
                             ? 700
                             : 350,
                         "cultist-delay-safe-stand");
-                case EnemyActionType.Fold:
-                    return Score(candidate, -300, "cultist-reject-self-damage-fold");
                 case EnemyActionType.UseCard:
                     return Score(candidate, 500, "cultist-use-implemented-aggression-card");
                 default:

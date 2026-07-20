@@ -112,8 +112,10 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
+            previousHiddenCard.Reveal();
             BlackjackCard firstCandidate = Deck.Draw();
             BlackjackCard secondCandidate = Deck.Draw();
+            Deck.Discard(previousHiddenCard);
             firstCandidate.Reveal();
             secondCandidate.Reveal();
 

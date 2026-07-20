@@ -28,8 +28,6 @@ namespace DiaBlackJack.CoreLoop
                         candidate,
                         observation.OwnHandValue.Total >= 17 ? 600 : 100,
                         "gunslinger-basic-stand");
-                case EnemyActionType.Fold:
-                    return Score(candidate, -300, "gunslinger-avoid-fold");
                 case EnemyActionType.UseCard:
                     return EvaluateCard(observation, candidate, mostLikely);
                 default:

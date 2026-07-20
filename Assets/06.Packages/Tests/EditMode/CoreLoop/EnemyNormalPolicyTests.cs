@@ -150,8 +150,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             EnemyActionCandidate[] candidates =
             {
                 new EnemyActionCandidate(EnemyActionType.Hit),
-                new EnemyActionCandidate(EnemyActionType.Stand),
-                new EnemyActionCandidate(EnemyActionType.Fold)
+                new EnemyActionCandidate(EnemyActionType.Stand)
             };
             var policy = new CultistEnemyPolicy();
 

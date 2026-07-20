@@ -74,7 +74,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void BA04_PlayerTurnShowsFoldAndChangeActions()
+        public void BA04_PlayerTurnShowsFreeChangeAction()
         {
             CoreLoopBattle battle = CreateBattle(
                 playerRanks: new[] { 10, 2, 4, 9 },
@@ -87,23 +87,10 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(model.CanHit, Is.True);
             Assert.That(model.CanStand, Is.True);
-            Assert.That(model.CanFold, Is.True);
             Assert.That(model.CanChange, Is.True);
             Assert.That(model.IsChoosingChangeCard, Is.False);
             Assert.That(model.ChangeCandidates, Is.Empty);
-            Assert.That(model.FoldActionText, Is.EqualTo("FOLD (-1 SOUL)"));
-            Assert.That(model.ChangeActionText, Is.EqualTo("CHANGE (1/ROUND)"));
-        }
-
-        [Test]
-        public void BA04_OneSoulFoldLabelWarnsAboutDefeat()
-        {
-            var session = new CoreLoopSession(CreatePlayerDefeatBattle);
-
-            CoreLoopViewModel model = CoreLoopPresenter.Create(session.Battle);
-
-            Assert.That(model.CanFold, Is.True);
-            Assert.That(model.FoldActionText, Does.Contain("DEFEAT"));
+            Assert.That(model.ChangeActionText, Is.EqualTo("CHANGE (FREE | 12 SOUL LEFT)"));
         }
 
         [Test]
@@ -121,7 +108,6 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(model.CanHit, Is.False);
             Assert.That(model.CanStand, Is.False);
-            Assert.That(model.CanFold, Is.False);
             Assert.That(model.CanChange, Is.False);
             Assert.That(model.IsChoosingChangeCard, Is.True);
             Assert.That(model.ChangeCandidates, Is.EqualTo(new[] { "4", "9" }));
@@ -145,32 +131,28 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(model.CanHit, Is.True);
             Assert.That(model.CanStand, Is.True);
-            Assert.That(model.CanFold, Is.True);
-            Assert.That(model.CanChange, Is.False);
+            Assert.That(model.CanChange, Is.True);
             Assert.That(model.IsChoosingChangeCard, Is.False);
             Assert.That(model.ChangeCandidates, Is.Empty);
-            Assert.That(model.ChangeActionText, Is.EqualTo("CHANGE (USED)"));
+            Assert.That(model.ChangeActionText, Is.EqualTo("CHANGE (-1 SOUL | 11 LEFT)"));
         }
 
         [Test]
-        public void BA04_ControllerForwardsFoldAndRefreshesStandaloneViewModel()
+        public void BA04_LastSoulRuleDisablesPaidChangeAndShowsRequiredSoul()
         {
-            GameObject gameObject = CreateControllerObject(out CoreLoopController controller);
-            try
-            {
-                controller.RequestFold();
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 10, 2, 4, 9 },
+                enemyRanks: new[] { 10, 7 },
+                playerMaximumSoul: 1,
+                enemyMaximumSoul: 3);
+            battle.Start();
+            battle.TryBeginPlayerChange();
+            battle.TrySelectChangedCard(0);
 
-                Assert.That(controller.Battle.LastResolution.HasValue, Is.True);
-                Assert.That(
-                    controller.Battle.LastResolution.Value.Outcome,
-                    Is.EqualTo(RoundOutcome.PlayerFold));
-                Assert.That(controller.CurrentViewModel.LastRound, Does.Contain("fold"));
-                Assert.That(controller.CurrentViewModel.PlayerSoul, Is.EqualTo("11 / 12"));
-            }
-            finally
-            {
-                Object.DestroyImmediate(gameObject);
-            }
+            CoreLoopViewModel model = CoreLoopPresenter.Create(battle);
+
+            Assert.That(model.CanChange, Is.False);
+            Assert.That(model.ChangeActionText, Is.EqualTo("CHANGE (-1 SOUL | NEED 2+)"));
         }
 
         [Test]
@@ -189,9 +171,11 @@ namespace DiaBlackJack.CoreLoop.Tests
 
                 controller.RequestSelectChangedCard(0);
 
-                Assert.That(controller.Battle.HasPlayerChangedThisRound, Is.True);
+                Assert.That(controller.Battle.CompletedPlayerChangeCount, Is.EqualTo(1));
                 Assert.That(controller.CurrentViewModel.IsChoosingChangeCard, Is.False);
-                Assert.That(controller.CurrentViewModel.ChangeActionText, Is.EqualTo("CHANGE (USED)"));
+                Assert.That(
+                    controller.CurrentViewModel.ChangeActionText,
+                    Is.EqualTo("CHANGE (-1 SOUL | 11 LEFT)"));
             }
             finally
             {
@@ -247,7 +231,6 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(model.IsChoosingChangeCard, Is.False);
             Assert.That(model.CanHit, Is.False);
             Assert.That(model.CanStand, Is.False);
-            Assert.That(model.CanFold, Is.False);
             Assert.That(model.CanChange, Is.False);
             Assert.That(model.CardEffectPrompt, Is.Not.Empty);
             Assert.That(
@@ -282,7 +265,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(sourceModel.CanUse, Is.False);
             Assert.That(sourceModel.DisabledReason, Is.EqualTo("USED"));
             Assert.That(model.LastCardEffect, Is.EqualTo(
-                "AUTO PISTOL  |  FAILED  |  ENEMY TURN"));
+                "REVOLVER  |  FAILED  |  ENEMY TURN"));
             Assert.That(model.LastCardEffect, Does.Not.Contain("7"));
             Assert.That(model.EnemyCards, Does.Contain("?"));
         }

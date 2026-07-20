@@ -196,7 +196,7 @@ namespace DiaBlackJack.StageProgression.Tests
                 AssertFreshRun(session, expectedSoul: 1, iteration);
                 CoreLoopBattle defeatedBattle = session.Battle;
 
-                Assert.That(session.TryPlayerFold(), Is.True, $"Fold {iteration}");
+                Assert.That(session.TryPlayerStand(), Is.True, $"Stand {iteration}");
                 Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.RunDefeat));
                 Assert.That(session.Progress.Player.CurrentSoul, Is.Zero);
                 Assert.That(session.Progress.PendingReward, Is.Null);

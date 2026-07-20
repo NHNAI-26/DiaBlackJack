@@ -64,7 +64,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(resolvedModel.EnemyCards, Does.Contain("?"));
                 Assert.That(
                     resolvedModel.LastCardEffect,
-                    Is.EqualTo("AUTO PISTOL  |  FAILED  |  ENEMY TURN"));
+                    Is.EqualTo("REVOLVER  |  FAILED  |  ENEMY TURN"));
                 Assert.That(battle.LastCardEffectResult.Value.SourceCardId, Is.EqualTo(sourceCard.Id));
                 Assert.That(
                     battle.LastCardEffectResult.Value.EffectKind,

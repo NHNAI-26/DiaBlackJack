@@ -97,20 +97,20 @@ namespace DiaBlackJack.CoreLoop
 
         public bool CanPlayerAct => State == CoreLoopState.PlayerTurn && !Player.IsStanding;
 
-        public bool CanPlayerFold => CanPlayerAct;
-
         public bool CanBeginPlayerChange =>
             CanPlayerAct &&
-            !HasPlayerChangedThisRound &&
             _playerChangeSelection == null &&
             Player.Hand.HiddenCardCount == 1 &&
-            Player.Deck.CanDraw(2);
+            Player.Deck.CanDraw(2) &&
+            Player.Soul.Current > NextPlayerChangeSoulCost;
 
         public bool CanSelectChangedCard =>
             State == CoreLoopState.PlayerChoosingChangeCard &&
             _playerChangeSelection != null;
 
-        public bool HasPlayerChangedThisRound { get; private set; }
+        public int CompletedPlayerChangeCount { get; private set; }
+
+        public int NextPlayerChangeSoulCost => CompletedPlayerChangeCount;
 
         public IReadOnlyList<BlackjackCard> PlayerChangeCandidates =>
             _playerChangeSelection?.Candidates ?? NoChangeCandidates;
@@ -207,18 +207,6 @@ namespace DiaBlackJack.CoreLoop
             return true;
         }
 
-        public bool TryPlayerFold()
-        {
-            if (!CanAcceptPlayerAction())
-            {
-                return false;
-            }
-
-            RecordPublicAction(CombatantSide.Player, PublicCombatActionType.Fold);
-            CompleteRound(RoundResolver.ResolvePlayerFold(RoundNumber));
-            return true;
-        }
-
         public bool TryBeginPlayerChange()
         {
             if (!CanBeginPlayerChange)
@@ -226,9 +214,11 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
+            Player.Soul.ApplyDamage(NextPlayerChangeSoulCost);
             if (!Player.TryBeginChange(out PlayerChangeSelection selection))
             {
-                return false;
+                throw new InvalidOperationException(
+                    "Validated player change could not begin.");
             }
 
             _playerChangeSelection = selection;
@@ -247,7 +237,7 @@ namespace DiaBlackJack.CoreLoop
             PlayerChangeSelection completedSelection = _playerChangeSelection;
             Player.CompleteChange(completedSelection);
             _playerChangeSelection = null;
-            HasPlayerChangedThisRound = true;
+            CompletedPlayerChangeCount = checked(CompletedPlayerChangeCount + 1);
             RecordPublicAction(CombatantSide.Player, PublicCombatActionType.Change);
 
             RunEnemyTurn();
@@ -466,7 +456,6 @@ namespace DiaBlackJack.CoreLoop
             _playerChangeSelection = null;
             _publicActionHistory.Clear();
             _enemyDecisionOrdinal = 0;
-            HasPlayerChangedThisRound = false;
 
             Player.Draw(faceUp: true);
             Enemy.Draw(faceUp: true);
@@ -584,12 +573,6 @@ namespace DiaBlackJack.CoreLoop
                         State = CoreLoopState.PlayerTurn;
                     }
 
-                    executed = true;
-                    break;
-
-                case EnemyActionType.Fold:
-                    RecordPublicAction(CombatantSide.Enemy, PublicCombatActionType.Fold);
-                    CompleteRound(RoundResolver.ResolveEnemyFold(RoundNumber));
                     executed = true;
                     break;
 

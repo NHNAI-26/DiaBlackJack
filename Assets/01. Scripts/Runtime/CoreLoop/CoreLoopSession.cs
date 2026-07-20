@@ -24,11 +24,6 @@ namespace DiaBlackJack.CoreLoop
             return Battle.TryPlayerStand();
         }
 
-        public bool TryPlayerFold()
-        {
-            return Battle.TryPlayerFold();
-        }
-
         public bool TryBeginPlayerChange()
         {
             return Battle.TryBeginPlayerChange();

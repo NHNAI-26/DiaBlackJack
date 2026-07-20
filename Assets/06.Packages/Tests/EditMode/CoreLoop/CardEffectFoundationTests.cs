@@ -155,7 +155,6 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(battle.TryPlayerHit(), Is.False);
             Assert.That(battle.TryPlayerStand(), Is.False);
-            Assert.That(battle.TryPlayerFold(), Is.False);
             Assert.That(battle.TryBeginPlayerChange(), Is.False);
             Assert.That(battle.TrySelectChangedCard(0), Is.False);
             Assert.That(battle.TryBeginPlayerCardUse(otherCard.Id), Is.False);
@@ -292,9 +291,8 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CU02_U12_RoundResolutionKeepsExistingAndCardEffectCausesDistinct()
+        public void CU02_U12_RoundResolutionDistinguishesNumericAndCardEffectBusts()
         {
-            RoundResolution fold = RoundResolver.ResolvePlayerFold(1);
             RoundResolution numericBust = RoundResolver.Resolve(
                 2,
                 CreateCards(10, 8, 4),
@@ -304,7 +302,6 @@ namespace DiaBlackJack.CoreLoop.Tests
                 playerIsTarget: false,
                 sourceCardKey: "auto-pistol-7");
 
-            Assert.That(fold.Cause, Is.EqualTo(RoundEndCause.Fold));
             Assert.That(numericBust.Cause, Is.EqualTo(RoundEndCause.NumericBust));
             Assert.That(cardEffectBust.Cause, Is.EqualTo(RoundEndCause.CardEffectBust));
             Assert.That(cardEffectBust.EnemyDamage, Is.EqualTo(1));

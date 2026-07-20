@@ -76,17 +76,6 @@ namespace DiaBlackJack.StageProgression
             return true;
         }
 
-        public bool TryPlayerFold()
-        {
-            if (!CanForwardBattleAction() || !_battleSession.TryPlayerFold())
-            {
-                return false;
-            }
-
-            SynchronizeFinishedBattle();
-            return true;
-        }
-
         public bool TryBeginPlayerChange()
         {
             if (!CanForwardBattleAction() || !_battleSession.TryBeginPlayerChange())

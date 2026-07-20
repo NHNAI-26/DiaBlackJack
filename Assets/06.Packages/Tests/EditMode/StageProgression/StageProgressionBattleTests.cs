@@ -14,7 +14,6 @@ namespace DiaBlackJack.StageProgression.Tests
 
             Assert.That(session.TryPlayerHit(), Is.False);
             Assert.That(session.TryPlayerStand(), Is.False);
-            Assert.That(session.TryPlayerFold(), Is.False);
             Assert.That(session.TryBeginPlayerChange(), Is.False);
             Assert.That(session.TrySelectChangedCard(0), Is.False);
             Assert.That(session.TryBeginPlayerCardUse(0), Is.False);
@@ -25,52 +24,6 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(session.TryRestartRun(), Is.False);
             Assert.That(session.Battle, Is.Null);
             Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.NotStarted));
-        }
-
-        [Test]
-        public void BA05_FoldKeepsRunInBattleWhenPlayerSurvives()
-        {
-            var session = new StageProgressionSession(
-                CreateProgress(),
-                (stage, player) => CreateBattle(
-                    player,
-                    stage.EnemyMaximumSoul,
-                    new[] { 10, 2, 10, 2 },
-                    new[] { 10, 7, 10, 7 }));
-
-            Assert.That(session.TryStartRun(), Is.True);
-            Assert.That(session.TryPlayerFold(), Is.True);
-
-            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.InBattle));
-            Assert.That(session.Battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
-            Assert.That(session.Battle.RoundNumber, Is.EqualTo(2));
-            Assert.That(session.Battle.Player.Soul.Current, Is.EqualTo(11));
-            Assert.That(session.Progress.Player.CurrentSoul, Is.EqualTo(12));
-            Assert.That(
-                session.Battle.LastResolution.Value.Outcome,
-                Is.EqualTo(RoundOutcome.PlayerFold));
-        }
-
-        [Test]
-        public void BA05_FoldDefeatSynchronizesRunStateAndSoul()
-        {
-            var session = new StageProgressionSession(
-                CreateProgress(playerMaximumSoul: 1),
-                (stage, player) => CreateBattle(
-                    player,
-                    stage.EnemyMaximumSoul,
-                    new[] { 10, 2 },
-                    new[] { 10, 7 }));
-
-            Assert.That(session.TryStartRun(), Is.True);
-            Assert.That(session.TryPlayerFold(), Is.True);
-
-            Assert.That(session.Battle.Outcome, Is.EqualTo(BattleOutcome.PlayerDefeat));
-            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.RunDefeat));
-            Assert.That(session.Progress.Player.CurrentSoul, Is.Zero);
-            Assert.That(session.TryPlayerFold(), Is.False);
-            Assert.That(session.TryBeginPlayerChange(), Is.False);
-            Assert.That(session.TrySelectChangedCard(0), Is.False);
         }
 
         [Test]
@@ -95,13 +48,15 @@ namespace DiaBlackJack.StageProgression.Tests
 
             Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.InBattle));
             Assert.That(session.Battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
-            Assert.That(session.Battle.HasPlayerChangedThisRound, Is.True);
+            Assert.That(session.Battle.CompletedPlayerChangeCount, Is.EqualTo(1));
+            Assert.That(session.Battle.NextPlayerChangeSoulCost, Is.EqualTo(1));
             Assert.That(session.Battle.PlayerChangeCandidates, Is.Empty);
             Assert.That(session.Battle.Player.Hand.HiddenCardCount, Is.EqualTo(1));
             Assert.That(
                 session.Battle.Player.Hand.Cards.Single(card => !card.IsFaceUp).Rank,
                 Is.EqualTo(4));
-            Assert.That(session.TryBeginPlayerChange(), Is.False);
+            Assert.That(session.TryBeginPlayerChange(), Is.True);
+            Assert.That(session.Battle.Player.Soul.Current, Is.EqualTo(11));
         }
 
         [Test]

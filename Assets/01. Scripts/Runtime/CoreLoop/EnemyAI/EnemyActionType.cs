@@ -4,7 +4,6 @@ namespace DiaBlackJack.CoreLoop
     {
         Hit,
         Stand,
-        Fold,
         UseCard
     }
 }

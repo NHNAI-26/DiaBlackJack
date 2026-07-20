@@ -19,8 +19,6 @@ namespace DiaBlackJack.CoreLoop.UI
 
         public event Action StandRequested;
 
-        public event Action FoldRequested;
-
         public event Action ChangeRequested;
 
         public event Action<int> ChangeCandidateRequested;
@@ -180,12 +178,6 @@ namespace DiaBlackJack.CoreLoop.UI
 
             GUILayout.Space(4f);
             GUILayout.BeginHorizontal();
-            GUI.enabled = _model.CanFold && !_inputLocked;
-            if (GUILayout.Button(_model.FoldActionText, _buttonStyle, GUILayout.Height(40f)))
-            {
-                FoldRequested?.Invoke();
-            }
-
             GUI.enabled = _model.CanChange && !_inputLocked;
             if (GUILayout.Button(_model.ChangeActionText, _buttonStyle, GUILayout.Height(40f)))
             {

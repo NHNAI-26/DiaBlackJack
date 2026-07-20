@@ -68,8 +68,6 @@ namespace DiaBlackJack.CoreLoop
                     return ownHand.Total <= 16 ? 100 : 0;
                 case EnemyActionType.Stand:
                     return ownHand.Total >= 17 ? 100 : 0;
-                case EnemyActionType.Fold:
-                    return -100;
                 case EnemyActionType.UseCard:
                     return -1000;
                 default:

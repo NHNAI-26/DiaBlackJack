@@ -108,7 +108,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.False);
             Assert.That(
                 observation.ActionCandidates.Select(candidate => candidate.ActionType),
-                Is.EqualTo(new[] { EnemyActionType.Stand, EnemyActionType.Fold }));
+                Is.EqualTo(new[] { EnemyActionType.Stand }));
         }
 
         [Test]
@@ -186,25 +186,6 @@ namespace DiaBlackJack.CoreLoop.Tests
                 policy.PendingObservation.PlayerFaceUpCards.Any(card => card.Rank == 7),
                 Is.False);
             Assert.That(policy.PendingObservation.PlayerHiddenCardCount, Is.EqualTo(1));
-        }
-
-        [Test]
-        public void EP02_U05_EnemyFoldAppliesSymmetricSoulCostAndEndsRound()
-        {
-            CoreLoopBattle battle = CreateBattle(
-                playerRanks: new[] { 2, 3, 4, 5 },
-                enemyRanks: new[] { 8, 7, 6 },
-                new SelectActionPolicy(EnemyActionType.Fold));
-            battle.Start();
-
-            battle.TryPlayerHit();
-
-            Assert.That(battle.LastResolution.Value.Outcome, Is.EqualTo(RoundOutcome.EnemyFold));
-            Assert.That(battle.LastResolution.Value.Cause, Is.EqualTo(RoundEndCause.Fold));
-            Assert.That(battle.Player.Soul.Current, Is.EqualTo(12));
-            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(2));
-            Assert.That(battle.RoundNumber, Is.EqualTo(2));
-            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
         }
 
         [Test]

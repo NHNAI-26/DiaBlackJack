@@ -118,7 +118,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void BA01_SelectionCompletesOnceAndPartitionsAllCards()
+        public void BA01_SelectionCompletesOnceAndPartitionsCandidates()
         {
             var previous = new BlackjackCard(0, 2);
             var firstCandidate = new BlackjackCard(1, 3);
@@ -133,10 +133,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(selection.IsCompleted, Is.True);
             Assert.That(selection.SelectedCard, Is.SameAs(secondCandidate));
             Assert.That(selection.SelectedCard.IsFaceUp, Is.False);
-            Assert.That(selection.DiscardedCards, Is.EquivalentTo(new[] { previous, firstCandidate }));
+            Assert.That(selection.DiscardedCards, Is.EquivalentTo(new[] { firstCandidate }));
             Assert.That(
                 selection.DiscardedCards.Append(selection.SelectedCard).Select(card => card.Id),
-                Is.EquivalentTo(new[] { 0, 1, 2 }));
+                Is.EquivalentTo(new[] { 1, 2 }));
         }
 
         private static PlayerChangeSelection CreateSelection()

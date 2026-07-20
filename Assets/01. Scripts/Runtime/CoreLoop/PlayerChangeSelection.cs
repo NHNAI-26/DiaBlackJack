@@ -8,7 +8,6 @@ namespace DiaBlackJack.CoreLoop
         private static readonly IReadOnlyList<BlackjackCard> NoCards =
             Array.AsReadOnly(Array.Empty<BlackjackCard>());
 
-        private readonly BlackjackCard _previousHiddenCard;
         private readonly BlackjackCard[] _candidates;
         private readonly IReadOnlyList<BlackjackCard> _candidateView;
         private IReadOnlyList<BlackjackCard> _discardedCards = NoCards;
@@ -18,8 +17,10 @@ namespace DiaBlackJack.CoreLoop
             BlackjackCard firstCandidate,
             BlackjackCard secondCandidate)
         {
-            _previousHiddenCard = previousHiddenCard ??
+            if (previousHiddenCard == null)
+            {
                 throw new ArgumentNullException(nameof(previousHiddenCard));
+            }
 
             if (firstCandidate == null)
             {
@@ -57,7 +58,7 @@ namespace DiaBlackJack.CoreLoop
 
             int discardedCandidateIndex = candidateIndex == 0 ? 1 : 0;
             _discardedCards = Array.AsReadOnly(
-                new[] { _previousHiddenCard, _candidates[discardedCandidateIndex] });
+                new[] { _candidates[discardedCandidateIndex] });
             IsCompleted = true;
             return true;
         }

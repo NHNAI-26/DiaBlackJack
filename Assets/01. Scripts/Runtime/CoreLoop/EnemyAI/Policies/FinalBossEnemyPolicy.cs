@@ -305,8 +305,6 @@ namespace DiaBlackJack.CoreLoop
                         candidate,
                         observation.OwnHandValue.Total > hitMaximum ? 800 : 200,
                         $"{reasonPrefix}-stand");
-                case EnemyActionType.Fold:
-                    return Score(candidate, -600, $"{reasonPrefix}-avoid-fold");
                 default:
                     throw new ArgumentOutOfRangeException(nameof(candidate));
             }
