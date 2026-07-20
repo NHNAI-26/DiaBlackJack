@@ -39,10 +39,10 @@
 | [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | EP-06 검증 완료 v0.6 |
 | [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP-00~EP-06 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.6 |
 | [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | EP-06 완료 v0.6 |
-| [enemy-selection-combat-ui-design.md](./enemy-selection-combat-ui-design.md) | 상대 후보 2명 비교·확정과 등급별 전투 정보 표시 규칙 | EUI-04 정보 UI 완료 v0.1 |
-| [enemy-selection-combat-ui-development-spec.md](./enemy-selection-combat-ui-development-spec.md) | 후보 생성·선택 상태·전투 변환·안전 표시 스냅샷과 테스트 명세 | EUI-04 검증 완료 v0.1 |
-| [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI-00~EUI-05 작업 순서와 단계별 검증 게이트 | EUI-04 완료 v0.1 |
-| [enemy-selection-combat-ui-progress-log.md](./enemy-selection-combat-ui-progress-log.md) | 상대 선택·적 전투 정보 UI 결정·구현·검증 누적 기록 | EUI-04 완료 v0.1 |
+| [enemy-selection-combat-ui-design.md](./enemy-selection-combat-ui-design.md) | 상대 후보 2명 비교·확정과 등급별 전투 정보 표시 규칙 | EUI-05 1차 범위 완료 v0.1 |
+| [enemy-selection-combat-ui-development-spec.md](./enemy-selection-combat-ui-development-spec.md) | 후보 생성·선택 상태·전투 변환·안전 표시 스냅샷과 테스트 명세 | EUI-05 최종 검증 완료 v0.1 |
+| [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI-00~EUI-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
+| [enemy-selection-combat-ui-progress-log.md](./enemy-selection-combat-ui-progress-log.md) | 상대 선택·적 전투 정보 UI 결정·구현·검증 누적 기록 | EUI-05 완료 v0.1 |
 
 ## 기록 원칙
 
@@ -104,4 +104,5 @@
 | 2026-07-20 | 이천서 | EUI-02 상대 후보 비교·로컬 집중·확정 가능 상태와 선택 상태 화면 유지를 구현하고 신규 9/9·StageProgression 103/103·CoreLoop 179/179·전체 EditMode 282/282·1280×720·1920×1080 화면 검증 완료 |
 | 2026-07-20 | 이천서 | EUI-03 선택 상대의 원자적 확정·프로필 전투·보상·두 선택·고정 보스·재시작을 통합하고 신규 14/14·StageProgression 117/117·CoreLoop 179/179·전체 EditMode 296/296·실제 전투 씬 전환 검증 완료 |
 | 2026-07-20 | 이천서 | EUI-04 일반·엘리트·보스 공개 정보와 보스 예고를 실제 전투 화면에 연결하고 신규 14/14·StageProgression 117/117·CoreLoop 193/193·전체 EditMode 310/310·1280×720·1920×1080 화면 검증 완료 |
+| 2026-07-20 | 이천서 | EUI-05 후보·두 선택·보상·고정 보스·재시작·상태 격리 10회 반복 검증과 신규 5/5·StageProgression 122/122·CoreLoop 193/193·전체 EditMode 315/315·실제 두 씬·두 해상도·Console 0으로 1차 범위 마감 |
 

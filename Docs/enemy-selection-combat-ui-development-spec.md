@@ -4,7 +4,7 @@
 > 기획·개발 책임자: 이천서  
 > 작업 식별자: EUI-00~EUI-05  
 > 버전: v0.1  
-> 상태: EUI-04 일반·엘리트·보스 전투 정보 UI 구현·검증 완료
+> 상태: EUI-05 반복·실제 검증 완료, 1차 범위 마감
 > 최종 갱신: 2026-07-20
 
 ## 1. 기술 목표
@@ -398,7 +398,7 @@ EUI-00 기준 전체 EditMode 260/260을 회귀 기준으로 사용한다.
 | EUI04-I01 | 플레이어 행동 뒤 Presenter 새 정보 반영 |
 | EUI04-I02 | 표시 객체에 비공개 값·덱 순서·카드 ID·정확한 다음 행동 없음 |
 
-### EUI-05 반복·실제 검증 — 최소 5개
+### EUI-05 반복·실제 검증 — 5개 완료
 
 | ID | 검증 내용 |
 | --- | --- |
@@ -407,6 +407,8 @@ EUI-00 기준 전체 EditMode 260/260을 회귀 기준으로 사용한다.
 | EUI05-I03 | 두 선택 전투→고정 보스→보상→재시작 10회 |
 | EUI05-I04 | 오래된 제안·중복 확정·씬 왕복 상태 누출 10회 |
 | EUI05-I05 | 기존 고정 세션·독립 전투·카드·보상 전체 회귀 |
+
+실제 구현은 `OpponentSelectionSystemValidationTests`의 `EUI05-V01`~`V05` 다섯 테스트로 위 시나리오를 고정했다. V01·V03·V04·V05는 각 10회, V02는 일반과 엘리트를 각각 10회 실행한다. 카드 사용·보상 내부 규칙은 중복 테스트를 만들지 않고 기존 CoreLoop 193개와 StageProgression 122개 전체 회귀로 함께 검증한다.
 
 ## 12. 예상 파일 배치
 
@@ -434,7 +436,8 @@ Assets/01. Scripts/Runtime/UI/CoreLoop/
 Assets/06.Packages/Tests/EditMode/StageProgression/
 ├─ OpponentSelectionFoundationTests.cs
 ├─ OpponentSelectionPresentationTests.cs
-└─ OpponentSelectionIntegrationTests.cs
+├─ OpponentSelectionIntegrationTests.cs
+└─ OpponentSelectionSystemValidationTests.cs
 
 Assets/06.Packages/Tests/EditMode/CoreLoop/
 └─ EnemyCombatPresentationTests.cs
@@ -472,3 +475,4 @@ Assets/06.Packages/Tests/EditMode/CoreLoop/
 | 2026-07-20 | 이천서 | EUI-02 후보 ViewModel·세션 Presenter·로컬 집중·선택 상태 화면 갱신·프로토타입 Runtime 활성화와 신규 9/9·전체 EditMode 282/282·두 해상도 화면 검증 결과 반영 |
 | 2026-07-20 | 이천서 | EUI-03 OfferId+ProfileKey 확정·실패 원자성·실제 프로필 전투/보상·두 번째 선택·고정 보스·재시작 통합과 신규 14/14·전체 EditMode 296/296·실제 씬 전환 검증 결과 반영 |
 | 2026-07-20 | 이천서 | EUI-04 공개 추론 공유 계산·등급별 안전 표시 스냅샷·Presenter/View/Controller 연결과 신규 14/14·CoreLoop 193/193·StageProgression 117/117·전체 EditMode 310/310·두 해상도 화면 검증 결과 반영 |
+| 2026-07-20 | 이천서 | EUI-05 반복 검증 5종·StageProgression 122/122·CoreLoop 193/193·전체 EditMode 315/315, 실제 두 선택·보상·고정 보스·재시작 씬 왕복과 두 해상도·Console 0 결과를 반영해 명세를 마감 |
