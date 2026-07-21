@@ -14,7 +14,10 @@ namespace DiaBlackJack.GameScene
     /// new-Input-System-only, so legacy OnMouseDown / Input.GetKey do not fire), and on every action
     /// re-presents through <see cref="GameScenePresenter"/> into the HUD and the two hands. Rendering
     /// lives in <see cref="GameHudView"/> and <see cref="CardHand"/>; this type only orchestrates.
-    /// MVP surface: hit, stand, restart.
+    /// MVP surface: hit, stand, restart, and a post-victory shop delegated to <see cref="ShopController"/>
+    /// (gold reward + merchant + goods on the table + leave). The shop is GameScene-local (no
+    /// StageProgression); leaving it restarts into the next battle with gold kept, while a defeat
+    /// restart starts a fresh run with gold reset to 0.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameManager : MonoBehaviour
@@ -26,6 +29,9 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private CharacterView playerCharacter;
         [SerializeField] private CharacterView enemyCharacter;
         [SerializeField] private TableTotalsView totals;
+
+        [Header("Shop (MVP)")]
+        [SerializeField] private ShopController shop;
 
         [Header("Presentation pacing")]
         [SerializeField] private float stepSeconds = 1.0f;
@@ -161,10 +167,22 @@ namespace DiaBlackJack.GameScene
 
             if (_core.State == CoreLoopState.BattleEnded)
             {
-                DrawButtonRow(
-                    new[] { "RESTART" },
-                    new[] { _core.CanRestart },
-                    new Func<bool>[] { _session.TryRestart });
+                if (shop != null && shop.IsOpen)
+                {
+                    DrawHeading("SHOP — 상품을 둘러보고 나가세요");
+                    DrawButtonRow(
+                        new[] { "상점 나가기" },
+                        new[] { true },
+                        new Func<bool>[] { LeaveShop });
+                }
+                else
+                {
+                    DrawButtonRow(
+                        new[] { "RESTART" },
+                        new[] { _core.CanRestart },
+                        new Func<bool>[] { RestartRun });
+                }
+
                 return;
             }
 
@@ -348,7 +366,9 @@ namespace DiaBlackJack.GameScene
 
         private void RefreshView()
         {
-            ApplyView(GameScenePresenter.Create(Battle));
+            GameSceneViewModel vm = GameScenePresenter.Create(Battle);
+            MaybeOpenShop(vm);
+            ApplyView(vm);
         }
 
         private void ApplyView(GameSceneViewModel vm)
@@ -358,6 +378,14 @@ namespace DiaBlackJack.GameScene
             if (hud != null)
             {
                 hud.Render(vm.Core);
+                hud.SetGold(shop != null ? shop.Gold : 0);
+            }
+
+            // While the shop is open its presentation (merchant, hidden combat objects, goods) is owned
+            // by ShopController; skip the combat re-render so it doesn't repaint the enemy over the merchant.
+            if (shop != null && shop.IsOpen)
+            {
+                return;
             }
 
             if (playerHand != null)
@@ -384,6 +412,49 @@ namespace DiaBlackJack.GameScene
             {
                 totals.Render(vm.Core.PlayerTotal, vm.Core.EnemyVisibleTotal);
             }
+        }
+
+        // Open the shop the moment a battle is won. Called from RefreshView, which lands on the true
+        // post-turn state (BattleEnded is not itself a Stepped beat). ShopController.Open guards against
+        // repeat opens, so this fires the shop exactly once per victory; a defeat opens no shop.
+        private void MaybeOpenShop(GameSceneViewModel vm)
+        {
+            if (shop == null || shop.IsOpen ||
+                vm.Core.State != CoreLoopState.BattleEnded ||
+                vm.Core.Outcome != BattleOutcome.PlayerVictory)
+            {
+                return;
+            }
+
+            shop.Open();
+        }
+
+        // Leave the shop and start the next battle. Gold is KEPT by ShopController — it accumulates
+        // across the run's battles; only a defeat restart resets it. TryRestart swaps in a fresh battle
+        // and emits no Stepped events, so ProcessInput re-presents immediately via RefreshView.
+        private bool LeaveShop()
+        {
+            bool restarted = _session.TryRestart();
+            if (restarted && shop != null)
+            {
+                shop.Close();
+            }
+
+            return restarted;
+        }
+
+        // Restart after a defeat: a fresh run, so the shop closes (a no-op if it was never open) and
+        // gold returns to 0.
+        private bool RestartRun()
+        {
+            bool restarted = _session.TryRestart();
+            if (restarted && shop != null)
+            {
+                shop.Close();
+                shop.ResetGold();
+            }
+
+            return restarted;
         }
 
         private void UnlockInput()

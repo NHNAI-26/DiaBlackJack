@@ -17,6 +17,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private TMP_Text playerSoulText;
         [SerializeField] private TMP_Text enemySoulText;
         [SerializeField] private TMP_Text roundText;
+        [SerializeField] private TMP_Text goldText;
 
         public void Render(CoreLoopViewModel core)
         {
@@ -38,6 +39,18 @@ namespace DiaBlackJack.GameScene
             if (roundText != null)
             {
                 roundText.text = BuildRoundText(core);
+            }
+        }
+
+        /// <summary>
+        /// Writes the run gold counter (top-left, beside souls). Separate from <see cref="Render"/>
+        /// because gold is GameScene-local state in the MVP, not part of the battle view-model.
+        /// </summary>
+        public void SetGold(int gold)
+        {
+            if (goldText != null)
+            {
+                goldText.text = $"GOLD\n{gold}";
             }
         }
 

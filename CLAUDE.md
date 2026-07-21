@@ -52,7 +52,7 @@ Assets/01. Scripts/          asmdef Border (except Input/) + AssemblyInfo.cs
                      GameScenePresentation.cs (PURE) + gameplay MonoBehaviours (GameManager, CharacterView,
                      TableTotalsView, DeckClickable) + Card/ (CardView, CardHand)
   UI/                screens + HUD + shared widgets (MonoBehaviour, Unity-facing)  DiaBlackJack.*.UI + Border.UI:
-                     CoreLoop/ + StageProgression/ (View+Controller), GameScene/GameHudView (HUD), Border.UI widgets
+                     CoreLoop/ + StageProgression/ (View+Controller), GameHudView.cs (HUD, in UI/ root), Border.UI widgets
   Bootstrap/         StageProgressionRuntime — cross-scene run carrier (DontDestroyOnLoad)  DiaBlackJack.StageProgression.UI
   Events/ Settings/ SaveLoad/ Localization/   menu/settings/save infra   Border.*  — Unity-facing, untested
   Input/             GameInput + InputReader   Border.Input  (separate asmdef)
@@ -127,7 +127,7 @@ The **run card id** is a stable identity threaded all the way through: `PlayerRu
 
 ### UI — the Presentation / View / Controller triple
 
-Each feature (`CoreLoop`, `StageProgression`, `GameScene`) uses the same three-part shape. Since the folder flatten, the **pure `*Presentation.cs` lives beside the game logic** (`CoreLoop/`, `StageProgression/`, `GameScene/`) and only the two MonoBehaviours (`*View.cs`, `*Controller.cs`) remain under `UI/{CoreLoop,StageProgression,GameScene}/`:
+`CoreLoop` and `StageProgression` use the same three-part shape. Since the folder flatten, the **pure `*Presentation.cs` lives beside the game logic** (`CoreLoop/`, `StageProgression/`) and only the two MonoBehaviours (`*View.cs`, `*Controller.cs`) remain under `UI/{CoreLoop,StageProgression}/`. **`GameScene` does *not* follow this triple** — it is the world-space renderer described in the exception below, coordinated by `GameManager` inside `GameScene/` (there is no `UI/GameScene/` folder):
 
 | File | Type | Responsibility |
 | --- | --- | --- |
@@ -139,7 +139,9 @@ New display logic belongs in `*Presentation.cs` so it can be tested; the view sh
 
 **The UI is IMGUI (`OnGUI` + `GUILayout`), not uGUI.** There are no prefabs, no Canvas, no serialized `UnityEngine.UI` references — styles are constructed in code and the scenes hold only bare GameObjects with the two scripts. A UI change is therefore a pure code edit with no `.unity`/`.prefab` churn and no risk of breaking serialized references. Views are responsive by hand: they branch on screen height for 720p vs 1080p, and both resolutions are part of the manual verification checklist.
 
-**Exception — `UI/GameScene/`** (newest, MVP): a *world-space* renderer, not IMGUI screens. `GameSceneView` spawns card quads under designer-placed scene anchors (`playerHandAnchor`/`enemyHandAnchor`), draws souls/round on a code-built `ScreenSpaceOverlay` Canvas (uGUI + TMP), and — temporarily — HIT/STAND/RESTART as `OnGUI` buttons (diegetic sprite clicks come later; `ClickableSprite` exists for that, since the new Input System means legacy `OnMouseDown` does not fire). `GameSceneController` is **standalone-only**: it always builds its own `CoreLoopSession` (seed `20260719`, `BlackjackDeck.CreateStandard`) with **no** `StageProgression` branch, unlike the dual-mode `CoreLoopController`. Still no prefabs or serialized `UnityEngine.UI` references — the Canvas and materials are built in code.
+**Exception — the world-space `GameScene/` MVP** (newest): a *world-space* renderer, not an IMGUI screen and not a View/Controller triple. `GameManager` is the **standalone** coordinator — in `Awake` it builds its own `CoreLoopSession` (serialized `seed = 20260719`, per-battle `battleSeed = seed + battleIndex*2`, `BlackjackDeck.CreateStandard`) with **no** `StageProgression` branch, unlike the dual-mode `CoreLoopController`. It renders Hit/Stand/Change and the effect choices as **`OnGUI`** buttons, and — because the new Input System means legacy `OnMouseDown` does not fire — **raycasts the pointer itself** for diegetic card/deck clicks (`DeckClickable`, `CardView`). `CharacterView`, `TableTotalsView`, `CardHand`/`CardView`, and `UI/GameHudView` are the scene-placed renderers; the HUD is **authored in the scene** (`GameHudView` holds serialized `TMP_Text` refs) rather than built in code.
+
+**Unlike every IMGUI screen, this path DOES use prefabs and serialized references.** `Assets/03. Prefabs/` holds `Card`, `RemainingDeck`, `DiscardDeck`, `PlayerCharacter`, `EnemyCharacter`, and `HUD` prefabs (+ materials, `OverlayUnlit.shader`); `CardHand.cardPrefab`, `CardView.front`/`back`/`badge`, and the `GameHudView` labels are wired in the Inspector. So a `GameScene/` change is **not** the "pure code edit, no serialized-ref risk" that an IMGUI-screen edit is — editing these can break serialized wiring, and the prefab/scene files carry the usual no-YAML-merge-driver hazard.
 
 ### Supporting infrastructure (`Border.*`, Unity-facing, untested)
 
@@ -167,6 +169,8 @@ Build settings: `StageTest` (0), `CoreLoopTest` (1), `SampleScene` (2) — only 
 `Border.Core.DeterministicRng` (xorshift32, GC-free, `Reseed(int)`) is the only RNG — do not introduce `System.Random` or `UnityEngine.Random` into rules code. `BlackjackDeck` takes a **mandatory** seed; seeds flow from `StageDefinition.PlayerDeckSeed`/`EnemyDeckSeed`.
 
 Tests bypass RNG entirely with `BlackjackDeck.CreateInDrawOrder(cards)`, which yields the exact declared draw order. Reach for that rather than hunting for a seed that produces the hand you want.
+
+`BlackjackDeck` **cycles**: draws come off a draw pile, spent cards go to a discard pile, and when the draw pile empties the discard is reshuffled back in (fixed in commit `3da76d8`). It exposes **composition, never order** — `GetDrawPileRankCounts()` and `GetDiscardPileRankCounts()` (rank 1..10, index 0 unused) for the draw/discard deck UIs. These replaced the old single `GetRemainingRankCounts()`; grep for the new names.
 
 ## Conventions
 

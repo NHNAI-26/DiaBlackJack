@@ -35,7 +35,14 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float loseScale = 0.90f;
         [SerializeField] private float useCardScale = 1.08f;
 
+        [Header("Merchant (shop mode)")]
+        [Tooltip("Optional. When assigned, the enemy swaps to this sprite in the shop; otherwise the dark tint + shrink alone reads as the merchant.")]
+        [SerializeField] private Sprite merchantSprite;
+        [SerializeField] private Color merchantTint = new Color(0.32f, 0.30f, 0.36f);
+        [SerializeField] private float merchantScale = 0.8f;
+
         private Vector3 _baseScale;
+        private Sprite _defaultSprite;
         private bool _initialized;
 
         private void Awake()
@@ -66,6 +73,47 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        /// <summary>
+        /// Shop mode: turn this character into the small dark merchant that stands where the enemy was.
+        /// Swaps to <see cref="merchantSprite"/> when one is assigned; otherwise the dark tint + shrink
+        /// alone reads as the merchant, so this works before merchant art exists.
+        /// </summary>
+        public void EnterMerchant()
+        {
+            EnsureInitialized();
+
+            if (sprite != null)
+            {
+                if (merchantSprite != null)
+                {
+                    sprite.sprite = merchantSprite;
+                }
+
+                sprite.color = merchantTint;
+            }
+
+            transform.localScale = _baseScale * merchantScale;
+
+            if (actionLabel != null)
+            {
+                actionLabel.enabled = false;
+            }
+        }
+
+        /// <summary>
+        /// Leave shop mode: restore the combat sprite. Color and scale are reset by the next
+        /// <see cref="Render"/> call once the following battle starts.
+        /// </summary>
+        public void ExitMerchant()
+        {
+            EnsureInitialized();
+
+            if (sprite != null)
+            {
+                sprite.sprite = _defaultSprite;
+            }
+        }
+
         private void EnsureInitialized()
         {
             if (_initialized)
@@ -84,6 +132,7 @@ namespace DiaBlackJack.GameScene
             }
 
             _baseScale = transform.localScale;
+            _defaultSprite = sprite != null ? sprite.sprite : null;
             _initialized = true;
         }
 
