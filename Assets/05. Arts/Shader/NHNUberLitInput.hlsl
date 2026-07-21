@@ -33,6 +33,8 @@ CBUFFER_START(UnityPerMaterial)
     float _HeightFadeUpper;
     half _GlassGlowOffset;
     half _DissolveAmount;
+    half _DissolveMinOffset;
+    half _DissolveMaxOffset;
     half _DissolveEdgeWidth;
     half _DissolveEdgeIntensity;
     half _Surface;
@@ -130,7 +132,8 @@ inline half NHNApplySurfaceClipping(float2 rawUV, half baseAlpha, half vertexAlp
     float2 dissolveUV = rawUV * _DissolveTilingOffset.xy + _DissolveTilingOffset.zw;
     dissolveUV += _DissolvePanning.xy * _Time.y;
     half noise = SAMPLE_TEXTURE2D(_DissolveNoiseMap, sampler_DissolveNoiseMap, dissolveUV).r;
-    half threshold = saturate(_DissolveAmount);
+    half amount = saturate(_DissolveAmount);
+    half threshold = lerp(_DissolveMinOffset, 1.0h + _DissolveMaxOffset, amount);
     clip(noise - threshold);
     dissolveEdge = 1.0h - saturate((noise - threshold) / max(_DissolveEdgeWidth, 0.0001h));
 #else

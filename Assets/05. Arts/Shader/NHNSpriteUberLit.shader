@@ -51,6 +51,8 @@ Shader "Shader/Sprite Uber Lit"
         [Tex(Dissolve_DISSOLVE_ON)] [NoScaleOffset] _DissolveNoiseMap("Noise Map", 2D) = "white" {}
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveTilingOffset("Tiling XY / Offset ZW", Vector) = (1,1,0,0)
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveAmount("Amount", Range(0,1)) = 0
+        [Sub(Dissolve_DISSOLVE_ON)] _DissolveMinOffset("Minimum Offset", Range(-1,1)) = 0
+        [Sub(Dissolve_DISSOLVE_ON)] _DissolveMaxOffset("Maximum Offset", Range(-1,1)) = 0
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveEdgeWidth("Edge Width", Range(0,1)) = 0.05
         [Sub(Dissolve_DISSOLVE_ON)] [HDR] _DissolveEdgeColor("Edge Color", Color) = (1,0.5,0,1)
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveEdgeIntensity("Edge Intensity", Range(0,16)) = 1
