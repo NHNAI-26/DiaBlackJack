@@ -354,15 +354,15 @@ namespace DiaBlackJack.GameScene
                     card.DisplayName,
                     abilityDescription: ResolveAbilityDescription(battle, card.CardId));
 
-                // CardHand lays index 0 at the left edge. Keep model order untouched and move only
-                // the presentation projection so the player's hidden card is always leftmost.
+                // The camera mirrors local X, so the highest index renders at the screen-LEFT edge.
+                // The player's hidden card belongs on the screen left → append it last (face-ups first).
                 if (card.IsFaceUp)
                 {
-                    cards.Add(projectedCard);
+                    cards.Insert(cards.Count - hiddenCardCount, projectedCard);
                 }
                 else
                 {
-                    cards.Insert(hiddenCardCount, projectedCard);
+                    cards.Add(projectedCard);
                     hiddenCardCount++;
                 }
             }
@@ -466,8 +466,9 @@ namespace DiaBlackJack.GameScene
                     canUse: false,
                     faceUp ? card.Definition.DisplayName : string.Empty);
 
-                // The enemy hand is viewed from the opposite side of the table. Its final layout
-                // slot is the player's left edge, so keep hidden cards in the presentation suffix.
+                // Both sides' hidden cards sit on the screen LEFT (each player's own right, mirrored
+                // across the table). The camera mirrors local X, so screen-left = highest index →
+                // append the enemy's hidden card last too (face-ups first).
                 if (faceUp)
                 {
                     cards.Insert(cards.Count - hiddenCardCount, projectedCard);
