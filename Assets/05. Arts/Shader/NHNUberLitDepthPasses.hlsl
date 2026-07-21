@@ -13,6 +13,9 @@ struct NHNDepthAttributes
     float3 normalOS : NORMAL;
     float4 tangentOS : TANGENT;
     float2 uv : TEXCOORD0;
+#if defined(NHN_SPRITE_UBER)
+    half4 color : COLOR;
+#endif
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -21,12 +24,15 @@ struct NHNSilhouetteVaryings
 #if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON)
     float2 rawUV : TEXCOORD0;
 #endif
+#if defined(NHN_SPRITE_UBER)
+    half vertexAlpha : TEXCOORD1;
+#endif
     float4 positionCS : SV_POSITION;
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
-inline void NHNClipSilhouette(float2 rawUV)
+inline void NHNClipSilhouette(float2 rawUV, half vertexAlpha)
 {
     half dissolveEdge;
 #if defined(_ALPHATEST_ON)
@@ -34,7 +40,7 @@ inline void NHNClipSilhouette(float2 rawUV)
 #else
     half baseAlpha = 1.0h;
 #endif
-    NHNApplySurfaceClipping(rawUV, baseAlpha, dissolveEdge);
+    NHNApplySurfaceClipping(rawUV, baseAlpha, vertexAlpha, dissolveEdge);
 }
 
 NHNSilhouetteVaryings NHNShadowVertex(NHNDepthAttributes input)
@@ -46,8 +52,15 @@ NHNSilhouetteVaryings NHNShadowVertex(NHNDepthAttributes input)
 #if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON)
     output.rawUV = input.uv;
 #endif
+#if defined(NHN_SPRITE_UBER)
+    output.vertexAlpha = input.color.a;
+#endif
     float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+#if defined(NHN_SPRITE_UBER)
+    float3 normalWS = TransformObjectToWorldNormal(float3(0.0, 0.0, -1.0));
+#else
     float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
+#endif
 #if defined(_CASTING_PUNCTUAL_LIGHT_SHADOW)
     float3 lightDirectionWS = normalize(_LightPosition - positionWS);
 #else
@@ -67,6 +80,9 @@ NHNSilhouetteVaryings NHNDepthOnlyVertex(NHNDepthAttributes input)
 #if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON)
     output.rawUV = input.uv;
 #endif
+#if defined(NHN_SPRITE_UBER)
+    output.vertexAlpha = input.color.a;
+#endif
     output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
     return output;
 }
@@ -76,7 +92,11 @@ half4 NHNSilhouetteFragment(NHNSilhouetteVaryings input) : SV_Target
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 #if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON)
-    NHNClipSilhouette(input.rawUV);
+#if defined(NHN_SPRITE_UBER)
+    NHNClipSilhouette(input.rawUV, input.vertexAlpha);
+#else
+    NHNClipSilhouette(input.rawUV, 1.0h);
+#endif
 #endif
     return 0.0h;
 }
@@ -90,6 +110,9 @@ struct NHNDepthNormalsVaryings
 #if defined(_NORMALMAP)
     half4 tangentWS : TEXCOORD2;
 #endif
+#if defined(NHN_SPRITE_UBER)
+    half vertexAlpha : TEXCOORD3;
+#endif
     float4 positionCS : SV_POSITION;
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
@@ -101,13 +124,26 @@ NHNDepthNormalsVaryings NHNDepthNormalsVertex(NHNDepthAttributes input)
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+#if defined(NHN_SPRITE_UBER)
+    const float3 normalOS = float3(0.0, 0.0, -1.0);
+    const float4 tangentOS = float4(1.0, 0.0, 0.0, -1.0);
+    VertexNormalInputs normalInputs = GetVertexNormalInputs(normalOS, tangentOS);
+#else
     VertexNormalInputs normalInputs = GetVertexNormalInputs(input.normalOS, input.tangentOS);
+#endif
 #if defined(_NORMALMAP) || defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON)
     output.rawUV = input.uv;
 #endif
+#if defined(NHN_SPRITE_UBER)
+    output.vertexAlpha = input.color.a;
+#endif
     output.normalWS = normalInputs.normalWS;
 #if defined(_NORMALMAP)
+#if defined(NHN_SPRITE_UBER)
+    output.tangentWS = half4(normalInputs.tangentWS, tangentOS.w * GetOddNegativeScale());
+#else
     output.tangentWS = half4(normalInputs.tangentWS, input.tangentOS.w * GetOddNegativeScale());
+#endif
 #endif
     output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
     return output;
@@ -128,11 +164,19 @@ half4 NHNDepthNormalsFragment(NHNDepthNormalsVaryings input) : SV_Target
     baseAlpha = NHNSampleBase(input.rawUV).a;
 #endif
 #elif defined(_NORMALMAP)
+#if defined(NHN_SPRITE_UBER)
+    surfaceUV = input.rawUV;
+#else
     surfaceUV = TRANSFORM_TEX(input.rawUV, _BaseMap);
+#endif
 #endif
 #if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON)
     half dissolveEdge;
+#if defined(NHN_SPRITE_UBER)
+    NHNApplySurfaceClipping(input.rawUV, baseAlpha, input.vertexAlpha, dissolveEdge);
+#else
     NHNApplySurfaceClipping(input.rawUV, baseAlpha, dissolveEdge);
+#endif
 #endif
 #if defined(_NORMALMAP)
     half3 normalTS = SampleNormal(surfaceUV, TEXTURE2D_ARGS(_BumpMap, sampler_BumpMap), _BumpScale);

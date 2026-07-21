@@ -11,6 +11,9 @@ struct NHNForwardAttributes
     float4 tangentOS : TANGENT;
     float2 uv : TEXCOORD0;
     float2 staticLightmapUV : TEXCOORD1;
+#if defined(NHN_SPRITE_UBER)
+    half4 color : COLOR;
+#endif
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -27,6 +30,9 @@ struct NHNForwardVaryings
 #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
     float4 shadowCoord : TEXCOORD6;
 #endif
+#if defined(NHN_SPRITE_UBER)
+    half4 color : COLOR;
+#endif
     float4 positionCS : SV_POSITION;
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
@@ -40,13 +46,26 @@ NHNForwardVaryings NHNUberLitVertex(NHNForwardAttributes input)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
     VertexPositionInputs positionInputs = GetVertexPositionInputs(input.positionOS.xyz);
+#if defined(NHN_SPRITE_UBER)
+    const float3 normalOS = float3(0.0, 0.0, -1.0);
+    const float4 tangentOS = float4(1.0, 0.0, 0.0, -1.0);
+    VertexNormalInputs normalInputs = GetVertexNormalInputs(normalOS, tangentOS);
+#else
     VertexNormalInputs normalInputs = GetVertexNormalInputs(input.normalOS, input.tangentOS);
+#endif
     output.rawUV = input.uv;
     output.positionWS = positionInputs.positionWS;
     output.positionCS = positionInputs.positionCS;
     output.normalWS = normalInputs.normalWS;
+#if defined(NHN_SPRITE_UBER)
+    output.color = input.color;
+#endif
 #if defined(_NORMALMAP)
+#if defined(NHN_SPRITE_UBER)
+    output.tangentWS = half4(normalInputs.tangentWS, tangentOS.w * GetOddNegativeScale());
+#else
     output.tangentWS = half4(normalInputs.tangentWS, input.tangentOS.w * GetOddNegativeScale());
+#endif
 #endif
     half fog = ComputeFogFactor(positionInputs.positionCS.z);
     output.fogAndVertexLight = half4(fog, VertexLighting(positionInputs.positionWS, normalInputs.normalWS));
@@ -89,7 +108,11 @@ half4 NHNUberLitFragment(NHNForwardVaryings input) : SV_Target
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
     SurfaceData surfaceData;
     half dissolveEdge;
+#if defined(NHN_SPRITE_UBER)
+    InitializeNHNUberLitSurfaceData(input.rawUV, input.color, surfaceData, dissolveEdge);
+#else
     InitializeNHNUberLitSurfaceData(input.rawUV, surfaceData, dissolveEdge);
+#endif
     InputData inputData;
     NHNInitializeInputData(input, surfaceData.normalTS, inputData);
     half4 color = UniversalFragmentPBR(inputData, surfaceData);

@@ -46,13 +46,22 @@ TEXTURE2D(_OcclusionMap);
 SAMPLER(sampler_OcclusionMap);
 TEXTURE2D(_DissolveNoiseMap);
 SAMPLER(sampler_DissolveNoiseMap);
+#if defined(NHN_SPRITE_UBER)
+TEXTURE2D(_MainTex);
+SAMPLER(sampler_MainTex);
+#endif
 
 // Public entry points accept raw mesh UV. Surface textures share _BaseMap_ST;
 // dissolve clipping transforms the raw UV independently with its own ST.
 inline half4 NHNSampleBase(float2 rawUV, out float2 surfaceUV)
 {
+#if defined(NHN_SPRITE_UBER)
+    surfaceUV = rawUV;
+    return SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, rawUV);
+#else
     surfaceUV = TRANSFORM_TEX(rawUV, _BaseMap);
     return SampleAlbedoAlpha(surfaceUV, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap));
+#endif
 }
 
 inline half4 NHNSampleBase(float2 rawUV)
@@ -107,9 +116,10 @@ inline half3 NHNSampleEmission(float2 surfaceUV)
 
 // Shared by ForwardLit, ShadowCaster, DepthOnly, and DepthNormals. The caller
 // supplies the already-sampled base alpha so ForwardLit does not sample twice.
-inline half NHNApplySurfaceClipping(float2 rawUV, half baseAlpha, out half dissolveEdge)
+inline half NHNApplySurfaceClipping(float2 rawUV, half baseAlpha, half vertexAlpha,
+    out half dissolveEdge)
 {
-    half alpha = baseAlpha * _BaseColor.a;
+    half alpha = baseAlpha * _BaseColor.a * vertexAlpha;
 
 #if defined(_ALPHATEST_ON)
     clip(alpha - _Cutoff);
@@ -127,6 +137,11 @@ inline half NHNApplySurfaceClipping(float2 rawUV, half baseAlpha, out half disso
 #endif
 
     return alpha;
+}
+
+inline half NHNApplySurfaceClipping(float2 rawUV, half baseAlpha, out half dissolveEdge)
+{
+    return NHNApplySurfaceClipping(rawUV, baseAlpha, 1.0h, dissolveEdge);
 }
 
 inline half3 NHNGetDissolveEdgeEmission(half dissolveEdge)
@@ -172,15 +187,15 @@ inline half3 NHNEvaluateGlassGlow(half3 baseColor)
 #endif
 }
 
-inline void InitializeNHNUberLitSurfaceData(float2 rawUV, out SurfaceData surfaceData,
-    out half dissolveEdge)
+inline void InitializeNHNUberLitSurfaceData(float2 rawUV, half4 vertexColor,
+    out SurfaceData surfaceData, out half dissolveEdge)
 {
     float2 surfaceUV;
     half4 baseSample = NHNSampleBase(rawUV, surfaceUV);
     half2 metallicSmoothness = NHNSampleMetallicSmoothness(surfaceUV);
 
-    surfaceData.alpha = NHNApplySurfaceClipping(rawUV, baseSample.a, dissolveEdge);
-    surfaceData.albedo = NHNAdjustBaseColor(baseSample.rgb * _BaseColor.rgb);
+    surfaceData.alpha = NHNApplySurfaceClipping(rawUV, baseSample.a, vertexColor.a, dissolveEdge);
+    surfaceData.albedo = NHNAdjustBaseColor(baseSample.rgb * _BaseColor.rgb * vertexColor.rgb);
     surfaceData.albedo = AlphaModulate(surfaceData.albedo, surfaceData.alpha);
     surfaceData.metallic = metallicSmoothness.x;
     surfaceData.specular = half3(0.0h, 0.0h, 0.0h);
@@ -192,6 +207,14 @@ inline void InitializeNHNUberLitSurfaceData(float2 rawUV, out SurfaceData surfac
         + NHNEvaluateGlassGlow(baseSample.rgb);
     surfaceData.clearCoatMask = 0.0h;
     surfaceData.clearCoatSmoothness = 0.0h;
+}
+
+
+inline void InitializeNHNUberLitSurfaceData(float2 rawUV, out SurfaceData surfaceData,
+    out half dissolveEdge)
+{
+    InitializeNHNUberLitSurfaceData(rawUV, half4(1.0h, 1.0h, 1.0h, 1.0h),
+        surfaceData, dissolveEdge);
 }
 
 #endif // NHN_UBER_LIT_INPUT_INCLUDED
