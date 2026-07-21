@@ -28,6 +28,11 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float scaleLerp = 12f;
         [SerializeField] private Color glowColor = new Color(1f, 0.85f, 0.3f);
 
+        [Header("Face-down tint")]
+        [Tooltip("Tint applied to the card back (face-down) so a hidden card is distinguishable from a "
+            + "face-up one even when both faces share the same sprite material. Per-instance, no extra material.")]
+        [SerializeField] private Color backTint = new Color(0.72f, 0.28f, 0.28f, 1f);
+
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
         private MaterialPropertyBlock _propertyBlock;
@@ -124,24 +129,36 @@ namespace DiaBlackJack.GameScene
                 badge.SetActive(lit);
             }
 
-            // Clear both faces first so a stale tint never lingers on the hidden side, then glow the
-            // face that is actually showing.
-            ClearGlow(FrontRenderer());
-            ClearGlow(BackRenderer());
-            if (lit)
+            // Front keeps its own material look (cleared MPB); the hover glow overrides it when it is
+            // the face-up card being hovered.
+            if (lit && _isFaceUp)
             {
-                Renderer active = _isFaceUp ? FrontRenderer() : BackRenderer();
-                if (active != null)
-                {
-                    _propertyBlock ??= new MaterialPropertyBlock();
-                    active.GetPropertyBlock(_propertyBlock);
-                    _propertyBlock.SetColor(BaseColorId, glowColor);
-                    active.SetPropertyBlock(_propertyBlock);
-                }
+                ApplyTint(FrontRenderer(), glowColor);
             }
+            else
+            {
+                ClearTint(FrontRenderer());
+            }
+
+            // Back is tinted so a face-down card is distinguishable even though it shares the front's
+            // sprite material; the glow overrides it when the face-down card is the hovered usable one.
+            ApplyTint(BackRenderer(), lit && !_isFaceUp ? glowColor : backTint);
         }
 
-        private static void ClearGlow(Renderer renderer)
+        private void ApplyTint(Renderer renderer, Color color)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            _propertyBlock ??= new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(_propertyBlock);
+            _propertyBlock.SetColor(BaseColorId, color);
+            renderer.SetPropertyBlock(_propertyBlock);
+        }
+
+        private static void ClearTint(Renderer renderer)
         {
             if (renderer != null)
             {
