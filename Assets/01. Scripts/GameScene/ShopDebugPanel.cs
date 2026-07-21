@@ -49,7 +49,12 @@ namespace DiaBlackJack.GameScene
                 var battle = gameManager != null ? gameManager.Battle : null;
                 if (battle != null)
                 {
+                    // Kill the enemy, then finish the round via STAND so the battle ends in a real
+                    // PlayerVictory, then nudge GameManager to re-present so its own MaybeOpenShop opens
+                    // the shop through the production path (natural gold + the "상점 나가기" button).
                     battle.Enemy.Soul.ApplyDamage(9999);
+                    battle.TryPlayerStand();
+                    Represent();
                 }
             }
 
@@ -88,6 +93,22 @@ namespace DiaBlackJack.GameScene
             {
                 hud.SetGold(shop.Gold);
             }
+        }
+
+        // GameManager's re-present (RefreshView) is private; from this editor-only debug tool we invoke
+        // it reflectively so "Win Now" reaches the same MaybeOpenShop path a real STAND would — without
+        // widening any production API.
+        private void Represent()
+        {
+            if (gameManager == null)
+            {
+                return;
+            }
+
+            System.Reflection.MethodInfo method = typeof(GameManager).GetMethod(
+                "RefreshView",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            method?.Invoke(gameManager, null);
         }
 #endif
     }
