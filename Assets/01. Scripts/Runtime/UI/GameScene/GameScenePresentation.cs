@@ -232,6 +232,7 @@ namespace DiaBlackJack.GameScene
 
             CardEffectKind kind;
             CombatantSide actor;
+            CardEffectResult? completedResult = null;
 
             PendingCardEffect pending = battle.PendingPlayerCardEffect;
             if (pending != null)
@@ -244,7 +245,8 @@ namespace DiaBlackJack.GameScene
                      battle.LastCardEffectResult.HasValue &&
                      battle.LastCardEffectActorSide.HasValue)
             {
-                kind = battle.LastCardEffectResult.Value.EffectKind;
+                completedResult = battle.LastCardEffectResult.Value;
+                kind = completedResult.Value.EffectKind;
                 actor = battle.LastCardEffectActorSide.Value;
             }
             else
@@ -260,7 +262,12 @@ namespace DiaBlackJack.GameScene
             CombatantSide target = EffectTargetSide(kind, actor);
             if (side == target)
             {
-                result = (CharacterVisualState.UseCard, EffectActionLabel(kind));
+                // While choosing, show what the effect will do; once resolved, show its outcome —
+                // in particular the revolver's hit vs miss, which otherwise has no visible feedback.
+                string label = completedResult.HasValue
+                    ? EffectResultLabel(kind, completedResult.Value)
+                    : EffectActionLabel(kind);
+                result = (CharacterVisualState.UseCard, label);
                 return true;
             }
 
@@ -303,6 +310,18 @@ namespace DiaBlackJack.GameScene
                 default:
                     return string.Empty;
             }
+        }
+
+        // Target label once the effect has resolved. The revolver's guess distinguishes hit vs miss;
+        // every other effect reads the same as its action label.
+        private static string EffectResultLabel(CardEffectKind kind, CardEffectResult result)
+        {
+            if (kind == CardEffectKind.AutoPistol)
+            {
+                return result.Succeeded ? "HIT!" : "MISS";
+            }
+
+            return EffectActionLabel(kind);
         }
 
         // One-line Korean ability text per manual effect, for the hover badge. There is no such text
@@ -349,6 +368,52 @@ namespace DiaBlackJack.GameScene
             }
 
             return string.Empty;
+        }
+
+        /// <summary>
+        /// Human-readable composition of the player's remaining deck (draw + discard) for the
+        /// "click the deck to view remaining cards" panel — rank×count, plus the total. Order is not
+        /// shown. Rendered in IMGUI, so Korean needs no special TMP font.
+        /// </summary>
+        public static string FormatRemainingDeck(CoreLoopBattle battle)
+        {
+            if (battle == null)
+            {
+                return string.Empty;
+            }
+
+            IReadOnlyList<int> counts = battle.Player.Deck.GetRemainingRankCounts();
+            var parts = new List<string>();
+            int total = 0;
+            for (int rank = 1; rank <= 10; rank++)
+            {
+                int count = counts[rank];
+                if (count <= 0)
+                {
+                    continue;
+                }
+
+                parts.Add(rank + " x" + count);
+                total += count;
+            }
+
+            string body;
+            if (parts.Count == 0)
+            {
+                body = "-";
+            }
+            else
+            {
+                var lines = new List<string>();
+                for (int i = 0; i < parts.Count; i += 5)
+                {
+                    lines.Add(string.Join("    ", parts.GetRange(i, Math.Min(5, parts.Count - i))));
+                }
+
+                body = string.Join("\n", lines);
+            }
+
+            return "남은 카드  " + total + "장\n\n" + body;
         }
 
         private static IReadOnlyList<GameSceneCardViewModel> CreateEnemyCards(CoreLoopBattle battle)
