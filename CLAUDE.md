@@ -39,17 +39,26 @@ Baseline as of the last recorded run: **315 EditMode tests, 0 failures** (CoreLo
 
 ## Architecture
 
-`Assets/01. Scripts/Runtime/` holds **two** runtime assemblies: `Border` (`Border.asmdef` — everything below except `Input/`) and `Border.Input` (`Input/Border.Input.asmdef`, references `Unity.InputSystem`, define-gated `BORDER_INPUTSYSTEM`). Inside `Border`, layering is by namespace and discipline, not by asmdef:
+`Assets/01. Scripts/` holds **two** runtime assemblies: `Border` (`Border.asmdef` at the `01. Scripts/` root — everything below except `Input/`) and `Border.Input` (`Input/Border.Input.asmdef`, references `Unity.InputSystem`, define-gated `BORDER_INPUTSYSTEM`). (There is no longer a `Runtime/` sub-layer — it was flattened away.) Inside `Border`, layering is by namespace and discipline, not by asmdef:
 
 ```
-Assets/01. Scripts/Runtime/          asmdef Border  (except Input/)
+Assets/01. Scripts/          asmdef Border (except Input/) + AssemblyInfo.cs
   Core/              DeterministicRng, Log, ScreenshotManager   Border.Core   (Log/Screenshot use UnityEngine)
   CoreLoop/          one battle: rules, state, cards, enemy AI  DiaBlackJack.CoreLoop          — PURE C#
+                     + CoreLoopPresentation.cs (view-models + presenter, namespace DiaBlackJack.CoreLoop.UI)
   StageProgression/  one run: stages, player state, rewards     DiaBlackJack.StageProgression  — PURE C#
-  UI/                game screens (Presentation/View/Controller) DiaBlackJack.*.UI + Border.UI — Unity-facing
+                     + StageProgressionPresentation.cs (namespace DiaBlackJack.StageProgression.UI)
+  GameScene/         world-space battle scene, all DiaBlackJack.GameScene:
+                     GameScenePresentation.cs (PURE) + gameplay MonoBehaviours (GameManager, CharacterView,
+                     TableTotalsView, DeckClickable) + Card/ (CardView, CardHand)
+  UI/                screens + HUD + shared widgets (MonoBehaviour, Unity-facing)  DiaBlackJack.*.UI + Border.UI:
+                     CoreLoop/ + StageProgression/ (View+Controller), GameScene/GameHudView (HUD), Border.UI widgets
+  Bootstrap/         StageProgressionRuntime — cross-scene run carrier (DontDestroyOnLoad)  DiaBlackJack.StageProgression.UI
   Events/ Settings/ SaveLoad/ Localization/   menu/settings/save infra   Border.*  — Unity-facing, untested
   Input/             GameInput + InputReader   Border.Input  (separate asmdef)
 ```
+
+Split by role, not just "UI vs not": the **pure `*Presentation.cs`** of each feature sits beside its game logic (`CoreLoop/`, `StageProgression/`, `GameScene/`). `GameScene/` also holds the **world-space gameplay MonoBehaviours** (the battle coordinator `GameManager`, `CharacterView`, `TableTotalsView`, `DeckClickable`, and `Card/` renderers) — these are Unity-facing but **not** "UI". `UI/` is now **only** actual screens/HUD/widgets (the CoreLoop/StageProgression IMGUI View+Controller, `GameScene/GameHudView`, and the shared `Border.UI` widgets). The cross-scene carrier `StageProgressionRuntime` lives in `Bootstrap/`. Namespaces are unchanged by every move (decoupled from folders — see below).
 
 **The namespace does not follow the asmdef name.** Game code declares `DiaBlackJack.*` (`DiaBlackJack.CoreLoop`, `DiaBlackJack.StageProgression`, `DiaBlackJack.CoreLoop.UI`, `DiaBlackJack.GameScene`, …); the cross-cutting infra folders declare `Border.*` (`Border.Core`, `Border.Events`, `Border.Settings`, `Border.SaveLoad`, `Border.Localization`, `Border.UI`, `Border.Input`). A rules type is reached with `using DiaBlackJack.CoreLoop`, **not** `Border.CoreLoop` — despite the asmdef and its `rootNamespace` both being `Border`.
 
@@ -118,7 +127,7 @@ The **run card id** is a stable identity threaded all the way through: `PlayerRu
 
 ### UI — the Presentation / View / Controller triple
 
-`UI/CoreLoop/`, `UI/StageProgression/`, and `UI/GameScene/` use the same three-part shape:
+Each feature (`CoreLoop`, `StageProgression`, `GameScene`) uses the same three-part shape. Since the folder flatten, the **pure `*Presentation.cs` lives beside the game logic** (`CoreLoop/`, `StageProgression/`, `GameScene/`) and only the two MonoBehaviours (`*View.cs`, `*Controller.cs`) remain under `UI/{CoreLoop,StageProgression,GameScene}/`:
 
 | File | Type | Responsibility |
 | --- | --- | --- |
