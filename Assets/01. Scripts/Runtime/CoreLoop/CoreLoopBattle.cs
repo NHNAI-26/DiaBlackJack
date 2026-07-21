@@ -89,6 +89,15 @@ namespace DiaBlackJack.CoreLoop
 
         public RoundResolution? LastResolution { get; private set; }
 
+        /// <summary>
+        /// Raised after each observable sub-step of a turn — player/enemy draw or stand, round
+        /// resolution (before the hands are cleared), and a fresh deal. A single player action runs
+        /// the enemy to completion synchronously, so a view that only re-reads at the end sees just
+        /// the final state; subscribing lets it snapshot the public state at each step and pace the
+        /// display. Emits no data — the handler reads public state — so it cannot leak hidden info.
+        /// </summary>
+        public event Action Stepped;
+
         public CardEffectResult? LastCardEffectResult { get; private set; }
 
         public CombatantSide? LastCardEffectActorSide { get; private set; }
@@ -184,6 +193,7 @@ namespace DiaBlackJack.CoreLoop
 
             RecordPublicAction(CombatantSide.Player, PublicCombatActionType.Hit);
             Player.Draw(faceUp: true);
+            RaiseStepped();
             if (Player.HandValue.IsBust)
             {
                 ResolveRound();
@@ -203,6 +213,7 @@ namespace DiaBlackJack.CoreLoop
 
             RecordPublicAction(CombatantSide.Player, PublicCombatActionType.Stand);
             Player.Stand();
+            RaiseStepped();
             RunEnemyTurn();
             return true;
         }
@@ -287,6 +298,15 @@ namespace DiaBlackJack.CoreLoop
 
         internal IReadOnlyList<PublicCombatAction> PublicActionHistory =>
             _publicActionHistory.AsReadOnly();
+
+        /// <summary>
+        /// The most recent public action of the current round (both sides), or null right after a
+        /// deal (the history is cleared each round). Lets a view label what just happened at a step.
+        /// </summary>
+        public PublicCombatAction LastPublicAction =>
+            _publicActionHistory.Count > 0
+                ? _publicActionHistory[_publicActionHistory.Count - 1]
+                : null;
 
         internal BattleParticipant GetParticipant(CombatantSide side)
         {
@@ -433,6 +453,7 @@ namespace DiaBlackJack.CoreLoop
             _pendingCardEffect = null;
             _activeCardEffectContext = null;
             _activeCardEffectActorSide = null;
+            RaiseStepped();
 
             if (step.RoundResolution.HasValue)
             {
@@ -463,6 +484,7 @@ namespace DiaBlackJack.CoreLoop
             Enemy.Draw(faceUp: false);
 
             State = CoreLoopState.PlayerTurn;
+            RaiseStepped();
         }
 
         private void RunEnemyTurn()
@@ -549,6 +571,7 @@ namespace DiaBlackJack.CoreLoop
                 case EnemyActionType.Hit:
                     RecordPublicAction(CombatantSide.Enemy, PublicCombatActionType.Hit);
                     Enemy.Draw(faceUp: true);
+                    RaiseStepped();
                     if (Enemy.HandValue.IsBust)
                     {
                         ResolveRound();
@@ -564,6 +587,7 @@ namespace DiaBlackJack.CoreLoop
                 case EnemyActionType.Stand:
                     RecordPublicAction(CombatantSide.Enemy, PublicCombatActionType.Stand);
                     Enemy.Stand();
+                    RaiseStepped();
                     if (Player.IsStanding)
                     {
                         ResolveRound();
@@ -616,6 +640,11 @@ namespace DiaBlackJack.CoreLoop
             }
         }
 
+        private void RaiseStepped()
+        {
+            Stepped?.Invoke();
+        }
+
         private void RecordPublicAction(
             CombatantSide actorSide,
             PublicCombatActionType actionType,
@@ -641,6 +670,7 @@ namespace DiaBlackJack.CoreLoop
             State = CoreLoopState.ResolvingRound;
             _damageApplier.TryApply(resolution, Player.Soul, Enemy.Soul);
             LastResolution = resolution;
+            RaiseStepped();
 
             Player.ClearRound();
             Enemy.ClearRound();

@@ -456,7 +456,7 @@ namespace DiaBlackJack.CoreLoop.UI
             return $"{FormatEffectName(value.EffectKind)}  |  {outcome}  |  {continuation}";
         }
 
-        private static string FormatEffectName(CardEffectKind effectKind)
+        internal static string FormatEffectName(CardEffectKind effectKind)
         {
             switch (effectKind)
             {
