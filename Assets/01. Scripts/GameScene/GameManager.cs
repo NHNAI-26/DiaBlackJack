@@ -40,7 +40,7 @@ namespace DiaBlackJack.GameScene
         private GUIStyle _buttonStyle;
         private GUIStyle _labelStyle;
         private GUIStyle _panelStyle;
-        private bool _deckPanelOpen;
+        private DeckClickable _hoveredDeck;
         private readonly List<GameSceneViewModel> _timeline = new List<GameSceneViewModel>();
 
         public CoreLoopBattle Battle => _session?.Battle;
@@ -71,8 +71,8 @@ namespace DiaBlackJack.GameScene
             // Hover is visual-only, so it runs even while input is locked (during timeline playback).
             UpdateHover(pointed);
 
-            // The remaining-cards panel shows while the pointer hovers the deck (not on click).
-            _deckPanelOpen = hasHit && hit.collider.GetComponentInParent<DeckClickable>() != null;
+            // A deck's card-list panel shows while the pointer hovers it (draw or discard).
+            _hoveredDeck = hasHit ? hit.collider.GetComponentInParent<DeckClickable>() : null;
 
             if (_inputLocked)
             {
@@ -154,9 +154,9 @@ namespace DiaBlackJack.GameScene
                 normal = { textColor = Color.white }
             };
 
-            if (_deckPanelOpen)
+            if (_hoveredDeck != null)
             {
-                DrawDeckPanel();
+                DrawDeckPanel(_hoveredDeck.Kind);
             }
 
             if (_core.State == CoreLoopState.BattleEnded)
@@ -253,7 +253,7 @@ namespace DiaBlackJack.GameScene
             }
         }
 
-        private void DrawDeckPanel()
+        private void DrawDeckPanel(DeckKind kind)
         {
             _panelStyle ??= new GUIStyle(GUI.skin.box)
             {
@@ -266,8 +266,14 @@ namespace DiaBlackJack.GameScene
 
             const float w = 430f;
             const float h = 200f;
-            var rect = new Rect(28f, (Screen.height - h) * 0.5f, w, h);
-            GUI.Box(rect, GameScenePresenter.FormatRemainingDeck(Battle), _panelStyle);
+            bool draw = kind == DeckKind.Draw;
+            string content = draw
+                ? GameScenePresenter.FormatDrawDeck(Battle)
+                : GameScenePresenter.FormatDiscardDeck(Battle);
+            // Draw-deck panel on the left, discard-deck panel on the right, so they never overlap.
+            float x = draw ? 28f : Screen.width - w - 28f;
+            var rect = new Rect(x, (Screen.height - h) * 0.5f, w, h);
+            GUI.Box(rect, content, _panelStyle);
         }
 
         private void DrawHeading(string text)

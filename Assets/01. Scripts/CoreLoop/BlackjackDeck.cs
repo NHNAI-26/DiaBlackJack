@@ -77,19 +77,29 @@ namespace DiaBlackJack.CoreLoop
         }
 
         /// <summary>
-        /// Count of each rank still in the deck (draw pile + discard pile — i.e. every card not
-        /// currently in a hand or in play), indexed by rank 1..10 (index 0 unused). Composition only:
-        /// draw order is deliberately not exposed. For the "view remaining deck" UI.
+        /// Count of each rank still in the <b>draw pile</b> (the cards left to draw), indexed by rank
+        /// 1..10 (index 0 unused). Composition only — draw order is deliberately not exposed. For the
+        /// "view the draw deck" UI.
         /// </summary>
-        public IReadOnlyList<int> GetRemainingRankCounts()
+        public IReadOnlyList<int> GetDrawPileRankCounts()
+        {
+            return CountRanks(_drawPile);
+        }
+
+        /// <summary>
+        /// Count of each rank in the <b>discard pile</b> (cards discarded this run, waiting to be
+        /// reshuffled back when the draw pile empties), indexed by rank 1..10. Composition only.
+        /// For the "view the discard deck" UI.
+        /// </summary>
+        public IReadOnlyList<int> GetDiscardPileRankCounts()
+        {
+            return CountRanks(_discardPile);
+        }
+
+        private static IReadOnlyList<int> CountRanks(List<BlackjackCard> pile)
         {
             int[] counts = new int[11];
-            foreach (BlackjackCard card in _drawPile)
-            {
-                counts[card.Rank]++;
-            }
-
-            foreach (BlackjackCard card in _discardPile)
+            foreach (BlackjackCard card in pile)
             {
                 counts[card.Rank]++;
             }

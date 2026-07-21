@@ -372,18 +372,37 @@ namespace DiaBlackJack.GameScene
         }
 
         /// <summary>
-        /// Human-readable composition of the player's remaining deck (draw + discard) for the
-        /// "click the deck to view remaining cards" panel — rank×count, plus the total. Order is not
-        /// shown. Rendered in IMGUI, so Korean needs no special TMP font.
+        /// Composition of the player's <b>draw pile</b> (cards still to draw) for the draw-deck hover
+        /// panel — rank×count + total, order not shown. Discarded cards are NOT here (they show in the
+        /// discard-deck panel). Rendered in IMGUI, so Korean needs no special TMP font.
         /// </summary>
-        public static string FormatRemainingDeck(CoreLoopBattle battle)
+        public static string FormatDrawDeck(CoreLoopBattle battle)
         {
             if (battle == null)
             {
                 return string.Empty;
             }
 
-            IReadOnlyList<int> counts = battle.Player.Deck.GetRemainingRankCounts();
+            return FormatRankCounts(battle.Player.Deck.GetDrawPileRankCounts(), "뽑을 카드");
+        }
+
+        /// <summary>
+        /// Composition of the player's <b>discard pile</b> (cards discarded this run) for the
+        /// discard-deck hover panel. Reshuffled back into the draw pile when it empties.
+        /// </summary>
+        public static string FormatDiscardDeck(CoreLoopBattle battle)
+        {
+            if (battle == null)
+            {
+                return string.Empty;
+            }
+
+            return FormatRankCounts(battle.Player.Deck.GetDiscardPileRankCounts(), "버린 카드");
+        }
+
+        // rank×count composition, 5 per row, with a "<header>  N장" heading. Shared by both deck panels.
+        private static string FormatRankCounts(IReadOnlyList<int> counts, string header)
+        {
             var parts = new List<string>();
             int total = 0;
             for (int rank = 1; rank <= 10; rank++)
@@ -414,7 +433,7 @@ namespace DiaBlackJack.GameScene
                 body = string.Join("\n", lines);
             }
 
-            return "남은 카드  " + total + "장\n\n" + body;
+            return header + "  " + total + "장\n\n" + body;
         }
 
         private static IReadOnlyList<GameSceneCardViewModel> CreateEnemyCards(CoreLoopBattle battle)
