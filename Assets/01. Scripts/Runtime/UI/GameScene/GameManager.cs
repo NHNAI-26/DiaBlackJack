@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using DiaBlackJack.CoreLoop;
 using DiaBlackJack.CoreLoop.UI;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace DiaBlackJack.GameScene
 {
@@ -24,11 +26,18 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private CharacterView playerCharacter;
         [SerializeField] private CharacterView enemyCharacter;
 
+        [Header("Presentation pacing")]
+        [SerializeField] private float stepSeconds = 0.8f;
+        [SerializeField] private float resolveHoldSeconds = 1.1f;
+
         private CoreLoopSession _session;
         private CoreLoopViewModel _core;
+        private Camera _camera;
         private bool _inputLocked;
         private int _battleIndex;
         private GUIStyle _buttonStyle;
+        private GUIStyle _labelStyle;
+        private readonly List<GameSceneViewModel> _timeline = new List<GameSceneViewModel>();
 
         public CoreLoopBattle Battle => _session?.Battle;
 
@@ -40,6 +49,46 @@ namespace DiaBlackJack.GameScene
         private void Start()
         {
             RefreshView();
+        }
+
+        // Diegetic input: click a usable hand card to activate its manual effect. New Input System —
+        // legacy OnMouseDown does not fire, so we raycast the pointer ourselves. Hit/Stand/Change and
+        // the change/effect choices stay as OnGUI buttons.
+        private void Update()
+        {
+            if (_inputLocked || _core == null)
+            {
+                return;
+            }
+
+            Mouse mouse = Mouse.current;
+            if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
+            {
+                return;
+            }
+
+            if (_camera == null)
+            {
+                _camera = Camera.main;
+            }
+
+            if (_camera == null)
+            {
+                return;
+            }
+
+            Ray ray = _camera.ScreenPointToRay(mouse.position.ReadValue());
+            if (!Physics.Raycast(ray, out RaycastHit hit, 200f))
+            {
+                return;
+            }
+
+            CardView card = hit.collider.GetComponentInParent<CardView>();
+            if (card != null && card.CanUse)
+            {
+                int cardId = card.CardId;
+                ProcessInput(() => _session.TryBeginPlayerCardUse(cardId));
+            }
         }
 
         private CoreLoopBattle CreateBattle()
@@ -58,44 +107,119 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            _buttonStyle ??= new GUIStyle(GUI.skin.button) { fontSize = 20, fixedHeight = 46f };
-
-            bool live = !_inputLocked;
-            bool ended = _core.State == CoreLoopState.BattleEnded;
-
-            const float w = 150f;
-            const float h = 46f;
-            float y = Screen.height - h - 24f;
-            float cx = Screen.width * 0.5f;
-
-            if (ended)
+            _buttonStyle ??= new GUIStyle(GUI.skin.button) { fontSize = 18, fontStyle = FontStyle.Bold };
+            _labelStyle ??= new GUIStyle(GUI.skin.label)
             {
-                using (new GUIEnabledScope(live && _core.CanRestart))
-                {
-                    if (GUI.Button(new Rect(cx - w * 0.5f, y, w, h), "RESTART", _buttonStyle))
-                    {
-                        ProcessInput(_session.TryRestart);
-                    }
-                }
+                fontSize = 20,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter,
+                normal = { textColor = Color.white }
+            };
 
+            if (_core.State == CoreLoopState.BattleEnded)
+            {
+                DrawButtonRow(
+                    new[] { "RESTART" },
+                    new[] { _core.CanRestart },
+                    new Func<bool>[] { _session.TryRestart });
                 return;
             }
 
-            using (new GUIEnabledScope(live && _core.CanHit))
+            if (_core.IsChoosingChangeCard)
             {
-                if (GUI.Button(new Rect(cx - w - 8f, y, w, h), "HIT", _buttonStyle))
-                {
-                    ProcessInput(_session.TryPlayerHit);
-                }
+                DrawChangeCandidates();
+                return;
             }
 
-            using (new GUIEnabledScope(live && _core.CanStand))
+            if (_core.IsResolvingCardEffect)
             {
-                if (GUI.Button(new Rect(cx + 8f, y, w, h), "STAND", _buttonStyle))
+                DrawCardEffectChoices();
+                return;
+            }
+
+            DrawHeading("CLICK A LIT CARD TO USE ITS EFFECT");
+            DrawButtonRow(
+                new[] { "HIT", "STAND", _core.ChangeActionText },
+                new[] { _core.CanHit, _core.CanStand, _core.CanChange },
+                new Func<bool>[] { _session.TryPlayerHit, _session.TryPlayerStand, _session.TryBeginPlayerChange });
+        }
+
+        private void DrawChangeCandidates()
+        {
+            var candidates = _core.ChangeCandidates;
+            int count = candidates.Count;
+            var labels = new string[count];
+            var enabled = new bool[count];
+            var actions = new Func<bool>[count];
+            for (int i = 0; i < count; i++)
+            {
+                int index = i;
+                labels[i] = $"[ {candidates[i]} ]";
+                enabled[i] = true;
+                actions[i] = () => _session.TrySelectChangedCard(index);
+            }
+
+            DrawHeading("CHOOSE A NEW HIDDEN CARD");
+            DrawButtonRow(labels, enabled, actions);
+        }
+
+        private void DrawCardEffectChoices()
+        {
+            var choices = _core.CardEffectChoices;
+            int count = choices.Count;
+            var labels = new string[count];
+            var enabled = new bool[count];
+            var actions = new Func<bool>[count];
+            for (int i = 0; i < count; i++)
+            {
+                CardEffectChoiceViewModel choice = choices[i];
+                labels[i] = choice.Label;
+                enabled[i] = true;
+                actions[i] = () => _session.TryResolvePlayerCardChoice(choice.OptionId);
+            }
+
+            DrawHeading(_core.CardEffectPrompt);
+            DrawButtonRow(labels, enabled, actions);
+        }
+
+        // Bottom-anchored, screen-centered row. Width shrinks to always fit one row on screen.
+        private void DrawButtonRow(string[] labels, bool[] enabled, Func<bool>[] actions)
+        {
+            int n = labels.Length;
+            if (n == 0)
+            {
+                return;
+            }
+
+            const float h = 48f;
+            const float gap = 8f;
+            float w = Mathf.Min(160f, (Screen.width - 40f - (n - 1) * gap) / n);
+            float totalWidth = n * w + (n - 1) * gap;
+            float x0 = (Screen.width - totalWidth) * 0.5f;
+            float y = Screen.height - h - 24f;
+
+            for (int i = 0; i < n; i++)
+            {
+                using (new GUIEnabledScope(!_inputLocked && enabled[i]))
                 {
-                    ProcessInput(_session.TryPlayerStand);
+                    if (GUI.Button(new Rect(x0 + i * (w + gap), y, w, h), labels[i], _buttonStyle))
+                    {
+                        ProcessInput(actions[i]);
+                    }
                 }
             }
+        }
+
+        private void DrawHeading(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return;
+            }
+
+            const float h = 30f;
+            float y = Screen.height - 48f - 24f - h - 6f;
+            GUI.Label(new Rect(0f, y, Screen.width, h), text, _labelStyle);
         }
 
         private void ProcessInput(Func<bool> action)
@@ -106,22 +230,63 @@ namespace DiaBlackJack.GameScene
             }
 
             _inputLocked = true;
-            bool accepted = action();
-            RefreshView();
 
-            if (!accepted || !Application.isPlaying)
+            // The battle runs the whole turn synchronously; Stepped fires once per sub-step, so we
+            // snapshot each into a timeline and then pace them out over PlayTimeline.
+            CoreLoopBattle battle = Battle;
+            _timeline.Clear();
+            if (battle != null)
             {
-                UnlockInput();
+                battle.Stepped += OnBattleStepped;
+            }
+
+            bool accepted = action();
+
+            if (battle != null)
+            {
+                battle.Stepped -= OnBattleStepped;
+            }
+
+            if (accepted && Application.isPlaying && _timeline.Count > 0)
+            {
+                StartCoroutine(PlayTimeline());
             }
             else
             {
-                StartCoroutine(UnlockInputNextFrame());
+                RefreshView();
+                UnlockInput();
             }
+        }
+
+        // Fires synchronously for each sub-step while the battle resolves the turn. Snapshots the
+        // public view state at that instant so PlayTimeline can reveal them one beat at a time.
+        private void OnBattleStepped()
+        {
+            _timeline.Add(GameScenePresenter.Create(Battle));
+        }
+
+        private IEnumerator PlayTimeline()
+        {
+            foreach (GameSceneViewModel vm in _timeline)
+            {
+                ApplyView(vm);
+
+                bool resolveBeat = vm.Core.State == CoreLoopState.ResolvingRound;
+                yield return new WaitForSeconds(resolveBeat ? resolveHoldSeconds : stepSeconds);
+            }
+
+            // Land on the true current state — e.g. BattleEnded, which is not itself a step.
+            RefreshView();
+            UnlockInput();
         }
 
         private void RefreshView()
         {
-            GameSceneViewModel vm = GameScenePresenter.Create(Battle);
+            ApplyView(GameScenePresenter.Create(Battle));
+        }
+
+        private void ApplyView(GameSceneViewModel vm)
+        {
             _core = vm.Core;
 
             if (hud != null)
@@ -153,12 +318,6 @@ namespace DiaBlackJack.GameScene
         private void UnlockInput()
         {
             _inputLocked = false;
-        }
-
-        private IEnumerator UnlockInputNextFrame()
-        {
-            yield return null;
-            UnlockInput();
         }
 
         private readonly struct GUIEnabledScope : IDisposable

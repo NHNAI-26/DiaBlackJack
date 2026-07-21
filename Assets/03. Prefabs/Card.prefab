@@ -62,7 +62,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -109,7 +109,7 @@ MonoBehaviour:
   m_text: 0
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 0}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -417,6 +417,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1859650830208200288}
   - component: {fileID: 2250541817930894918}
+  - component: {fileID: 4320678956030072837}
   m_Layer: 0
   m_Name: Card
   m_TagString: Untagged
@@ -457,3 +458,26 @@ MonoBehaviour:
   front: {fileID: 7366520915214099447}
   back: {fileID: 7359149338926229531}
   rankText: {fileID: 1943276075832970879}
+  normalTint: {r: 0.96, g: 0.95, b: 0.9, a: 1}
+  usableTint: {r: 1, g: 0.85, b: 0.3, a: 1}
+--- !u!65 &4320678956030072837
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7797684679087765860}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.9, y: 1.3, z: 0.1}
+  m_Center: {x: 0, y: 0, z: 0}

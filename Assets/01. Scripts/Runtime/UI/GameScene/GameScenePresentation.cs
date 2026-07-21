@@ -29,12 +29,19 @@ namespace DiaBlackJack.GameScene
     /// </summary>
     public sealed class GameSceneCardViewModel
     {
-        public GameSceneCardViewModel(int cardId, int rank, bool isFaceUp, bool revealRank, string displayName)
+        public GameSceneCardViewModel(
+            int cardId,
+            int rank,
+            bool isFaceUp,
+            bool revealRank,
+            bool canUse,
+            string displayName)
         {
             CardId = cardId;
             Rank = rank;
             IsFaceUp = isFaceUp;
             RevealRank = revealRank;
+            CanUse = canUse;
             DisplayName = displayName ?? string.Empty;
         }
 
@@ -45,6 +52,12 @@ namespace DiaBlackJack.GameScene
         public bool IsFaceUp { get; }
 
         public bool RevealRank { get; }
+
+        /// <summary>
+        /// Whether this card's manual effect can be activated right now — drives the diegetic click
+        /// on the player's hand. Always false for enemy cards (the player never uses those).
+        /// </summary>
+        public bool CanUse { get; }
 
         public string DisplayName { get; }
     }
@@ -165,6 +178,7 @@ namespace DiaBlackJack.GameScene
                     card.Rank,
                     card.IsFaceUp,
                     revealRank: true,
+                    canUse: card.CanUse,
                     card.DisplayName));
             }
 
@@ -184,6 +198,7 @@ namespace DiaBlackJack.GameScene
                     faceUp ? card.Rank : 0,
                     faceUp,
                     revealRank: faceUp,
+                    canUse: false,
                     faceUp ? card.Definition.DisplayName : string.Empty));
             }
 
