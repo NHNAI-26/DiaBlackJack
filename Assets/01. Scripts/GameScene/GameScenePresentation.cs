@@ -341,17 +341,30 @@ namespace DiaBlackJack.GameScene
             CoreLoopBattle battle)
         {
             var cards = new List<GameSceneCardViewModel>(core.PlayerCardActions.Count);
+            int hiddenCardCount = 0;
             foreach (PlayerCardViewModel card in core.PlayerCardActions)
             {
                 // The player sees every one of their own cards, including the face-down one.
-                cards.Add(new GameSceneCardViewModel(
+                var projectedCard = new GameSceneCardViewModel(
                     card.CardId,
                     card.Rank,
                     card.IsFaceUp,
                     revealRank: true,
                     canUse: card.CanUse,
                     card.DisplayName,
-                    abilityDescription: ResolveAbilityDescription(battle, card.CardId)));
+                    abilityDescription: ResolveAbilityDescription(battle, card.CardId));
+
+                // CardHand lays index 0 at the left edge. Keep model order untouched and move only
+                // the presentation projection so the player's hidden card is always leftmost.
+                if (card.IsFaceUp)
+                {
+                    cards.Add(projectedCard);
+                }
+                else
+                {
+                    cards.Insert(hiddenCardCount, projectedCard);
+                    hiddenCardCount++;
+                }
             }
 
             return cards.AsReadOnly();
@@ -440,17 +453,30 @@ namespace DiaBlackJack.GameScene
         {
             IReadOnlyList<BlackjackCard> hand = battle.Enemy.Hand.Cards;
             var cards = new List<GameSceneCardViewModel>(hand.Count);
+            int hiddenCardCount = 0;
             foreach (BlackjackCard card in hand)
             {
                 // Face-down enemy card: emit no rank. This is the information-hiding boundary.
                 bool faceUp = card.IsFaceUp;
-                cards.Add(new GameSceneCardViewModel(
+                var projectedCard = new GameSceneCardViewModel(
                     card.Id,
                     faceUp ? card.Rank : 0,
                     faceUp,
                     revealRank: faceUp,
                     canUse: false,
-                    faceUp ? card.Definition.DisplayName : string.Empty));
+                    faceUp ? card.Definition.DisplayName : string.Empty);
+
+                // The enemy hand is viewed from the opposite side of the table. Its final layout
+                // slot is the player's left edge, so keep hidden cards in the presentation suffix.
+                if (faceUp)
+                {
+                    cards.Insert(cards.Count - hiddenCardCount, projectedCard);
+                }
+                else
+                {
+                    cards.Add(projectedCard);
+                    hiddenCardCount++;
+                }
             }
 
             return cards.AsReadOnly();

@@ -75,6 +75,65 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GameSceneProjectsHiddenCardsAtPlayerPerspectiveLeftEdgesWithoutChangingHandOrder()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 10, 2, 4 },
+                enemyRanks: new[] { 10, 7, 5 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            battle.Start();
+            int playerFaceUpCardId = battle.Player.Hand.Cards[0].Id;
+            int playerHiddenCardId = battle.Player.Hand.Cards[1].Id;
+            int playerDrawnFaceUpCardId = battle.Player.Draw(faceUp: true).Id;
+            int enemyFaceUpCardId = battle.Enemy.Hand.Cards[0].Id;
+            int enemyHiddenCardId = battle.Enemy.Hand.Cards[1].Id;
+            int enemyDrawnFaceUpCardId = battle.Enemy.Draw(faceUp: true).Id;
+
+            GameSceneViewModel model = GameScenePresenter.Create(battle);
+
+            Assert.That(
+                battle.Player.Hand.Cards.Select(card => card.Id),
+                Is.EqualTo(new[]
+                {
+                    playerFaceUpCardId,
+                    playerHiddenCardId,
+                    playerDrawnFaceUpCardId,
+                }));
+            Assert.That(
+                battle.Enemy.Hand.Cards.Select(card => card.Id),
+                Is.EqualTo(new[]
+                {
+                    enemyFaceUpCardId,
+                    enemyHiddenCardId,
+                    enemyDrawnFaceUpCardId,
+                }));
+            Assert.That(
+                model.PlayerCards.Select(card => card.CardId),
+                Is.EqualTo(new[]
+                {
+                    playerHiddenCardId,
+                    playerFaceUpCardId,
+                    playerDrawnFaceUpCardId,
+                }));
+            Assert.That(
+                model.EnemyCards.Select(card => card.CardId),
+                Is.EqualTo(new[]
+                {
+                    enemyFaceUpCardId,
+                    enemyDrawnFaceUpCardId,
+                    enemyHiddenCardId,
+                }));
+            Assert.That(model.PlayerCards[0].IsFaceUp, Is.False);
+            Assert.That(model.PlayerCards.Skip(1).All(card => card.IsFaceUp), Is.True);
+            Assert.That(
+                model.EnemyCards.Take(model.EnemyCards.Count - 1).All(card => card.IsFaceUp),
+                Is.True);
+            Assert.That(model.EnemyCards.Last().IsFaceUp, Is.False);
+            Assert.That(model.EnemyCards.Last().RevealRank, Is.False);
+        }
+
+        [Test]
         public void BA04_PlayerTurnShowsFreeChangeAction()
         {
             CoreLoopBattle battle = CreateBattle(
