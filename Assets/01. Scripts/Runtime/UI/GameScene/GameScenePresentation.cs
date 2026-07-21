@@ -18,6 +18,7 @@ namespace DiaBlackJack.GameScene
         Bust,
         Win,
         Lose,
+        UseCard,
     }
 
     /// <summary>
@@ -35,7 +36,8 @@ namespace DiaBlackJack.GameScene
             bool isFaceUp,
             bool revealRank,
             bool canUse,
-            string displayName)
+            string displayName,
+            string abilityDescription = "")
         {
             CardId = cardId;
             Rank = rank;
@@ -43,6 +45,7 @@ namespace DiaBlackJack.GameScene
             RevealRank = revealRank;
             CanUse = canUse;
             DisplayName = displayName ?? string.Empty;
+            AbilityDescription = abilityDescription ?? string.Empty;
         }
 
         public int CardId { get; }
@@ -60,6 +63,12 @@ namespace DiaBlackJack.GameScene
         public bool CanUse { get; }
 
         public string DisplayName { get; }
+
+        /// <summary>
+        /// One-line Korean description of the card's manual ability, for the hover badge. Empty for
+        /// cards without a usable effect (ranks 1–4) and for enemy cards.
+        /// </summary>
+        public string AbilityDescription { get; }
     }
 
     /// <summary>
@@ -74,13 +83,17 @@ namespace DiaBlackJack.GameScene
             IReadOnlyList<GameSceneCardViewModel> playerCards,
             IReadOnlyList<GameSceneCardViewModel> enemyCards,
             CharacterVisualState playerVisual,
-            CharacterVisualState enemyVisual)
+            CharacterVisualState enemyVisual,
+            string playerActionLabel,
+            string enemyActionLabel)
         {
             Core = core ?? throw new ArgumentNullException(nameof(core));
             PlayerCards = playerCards ?? throw new ArgumentNullException(nameof(playerCards));
             EnemyCards = enemyCards ?? throw new ArgumentNullException(nameof(enemyCards));
             PlayerVisual = playerVisual;
             EnemyVisual = enemyVisual;
+            PlayerActionLabel = playerActionLabel ?? string.Empty;
+            EnemyActionLabel = enemyActionLabel ?? string.Empty;
         }
 
         public CoreLoopViewModel Core { get; }
@@ -92,6 +105,11 @@ namespace DiaBlackJack.GameScene
         public CharacterVisualState PlayerVisual { get; }
 
         public CharacterVisualState EnemyVisual { get; }
+
+        /// <summary>Short action token shown above the player character this step ("HIT", "USE: REVOLVER", "BUST"…). Empty = no label.</summary>
+        public string PlayerActionLabel { get; }
+
+        public string EnemyActionLabel { get; }
     }
 
     public static class GameScenePresenter
@@ -104,70 +122,203 @@ namespace DiaBlackJack.GameScene
             }
 
             CoreLoopViewModel core = CoreLoopPresenter.Create(battle, profileKey);
+            (CharacterVisualState playerVisual, string playerLabel) =
+                ResolveSide(battle, CombatantSide.Player);
+            (CharacterVisualState enemyVisual, string enemyLabel) =
+                ResolveSide(battle, CombatantSide.Enemy);
             return new GameSceneViewModel(
                 core,
-                CreatePlayerCards(core),
+                CreatePlayerCards(core, battle),
                 CreateEnemyCards(battle),
-                ResolvePlayerVisual(battle),
-                ResolveEnemyVisual(battle));
+                playerVisual,
+                enemyVisual,
+                playerLabel,
+                enemyLabel);
         }
 
-        // MVP visual feedback: read only public battle state, one coarse state per side.
-        // Bust is transient (the hand is cleared the instant a round resolves), so it is read from
-        // the surviving LastResolution rather than the live hand value.
-        private static CharacterVisualState ResolvePlayerVisual(CoreLoopBattle battle)
+        // MVP presentation: derive one coarse visual + short action label per side from public
+        // battle state only. Priority: battle end > round resolution > this side's last action >
+        // resting. Bust is transient (the hand clears the instant a round resolves), so round
+        // results are read from the surviving LastResolution rather than a live hand value.
+        private static (CharacterVisualState Visual, string Label) ResolveSide(
+            CoreLoopBattle battle,
+            CombatantSide side)
         {
-            switch (battle.Outcome)
+            if (battle.Outcome != BattleOutcome.InProgress)
             {
-                case BattleOutcome.PlayerVictory:
-                    return CharacterVisualState.Win;
-                case BattleOutcome.PlayerDefeat:
-                    return CharacterVisualState.Lose;
+                bool won =
+                    (side == CombatantSide.Player && battle.Outcome == BattleOutcome.PlayerVictory) ||
+                    (side == CombatantSide.Enemy && battle.Outcome == BattleOutcome.PlayerDefeat);
+                return won
+                    ? (CharacterVisualState.Win, "WIN")
+                    : (CharacterVisualState.Lose, "LOSE");
             }
 
-            if (battle.LastResolution.HasValue &&
-                battle.LastResolution.Value.Outcome == RoundOutcome.PlayerBust)
+            if (battle.State == CoreLoopState.ResolvingRound && battle.LastResolution.HasValue)
             {
-                return CharacterVisualState.Bust;
+                return ResolveRoundResult(battle.LastResolution.Value.Outcome, side);
             }
 
-            if (battle.Player.IsStanding)
+            // A card effect surfaces on the actor ("USE: <name>") and on the character it lands on
+            // ("GUESS" / "DRAW" / "DISCARD") — during the choosing (pending) phase and the use beat.
+            if (TryResolveCardEffect(battle, side, out (CharacterVisualState Visual, string Label) effect))
             {
-                return CharacterVisualState.Stand;
+                return effect;
             }
 
-            return battle.State == CoreLoopState.PlayerTurn
-                ? CharacterVisualState.Active
-                : CharacterVisualState.Idle;
+            PublicCombatAction last = battle.LastPublicAction;
+            if (last != null && last.ActorSide == side)
+            {
+                switch (last.ActionType)
+                {
+                    case PublicCombatActionType.Hit:
+                        return (CharacterVisualState.Active, "HIT");
+                    case PublicCombatActionType.Stand:
+                        return (CharacterVisualState.Stand, "STAND");
+                    case PublicCombatActionType.Change:
+                        return (CharacterVisualState.Active, "CHANGE");
+                }
+            }
+
+            BattleParticipant self = side == CombatantSide.Player ? battle.Player : battle.Enemy;
+            return self.IsStanding
+                ? (CharacterVisualState.Stand, "STAND")
+                : (CharacterVisualState.Idle, string.Empty);
         }
 
-        private static CharacterVisualState ResolveEnemyVisual(CoreLoopBattle battle)
+        // Per-side reaction to a round result: winner "WIN"/"21!", loser "BUST" (busted) or "LOSE".
+        private static (CharacterVisualState Visual, string Label) ResolveRoundResult(
+            RoundOutcome outcome,
+            CombatantSide side)
         {
-            switch (battle.Outcome)
+            switch (outcome)
             {
-                case BattleOutcome.PlayerDefeat:
-                    return CharacterVisualState.Win;
-                case BattleOutcome.PlayerVictory:
-                    return CharacterVisualState.Lose;
+                case RoundOutcome.PlayerBust:
+                    return side == CombatantSide.Player
+                        ? (CharacterVisualState.Bust, "BUST")
+                        : (CharacterVisualState.Win, "WIN");
+                case RoundOutcome.EnemyBust:
+                    return side == CombatantSide.Enemy
+                        ? (CharacterVisualState.Bust, "BUST")
+                        : (CharacterVisualState.Win, "WIN");
+                case RoundOutcome.PlayerTwentyOneWin:
+                    return side == CombatantSide.Player
+                        ? (CharacterVisualState.Win, "21!")
+                        : (CharacterVisualState.Lose, "LOSE");
+                case RoundOutcome.PlayerWin:
+                    return side == CombatantSide.Player
+                        ? (CharacterVisualState.Win, "WIN")
+                        : (CharacterVisualState.Lose, "LOSE");
+                case RoundOutcome.EnemyWin:
+                    return side == CombatantSide.Enemy
+                        ? (CharacterVisualState.Win, "WIN")
+                        : (CharacterVisualState.Lose, "LOSE");
+                default:
+                    return (CharacterVisualState.Idle, string.Empty);
             }
-
-            if (battle.LastResolution.HasValue &&
-                battle.LastResolution.Value.Outcome == RoundOutcome.EnemyBust)
-            {
-                return CharacterVisualState.Bust;
-            }
-
-            if (battle.Enemy.IsStanding)
-            {
-                return CharacterVisualState.Stand;
-            }
-
-            return battle.State == CoreLoopState.EnemyTurn
-                ? CharacterVisualState.Active
-                : CharacterVisualState.Idle;
         }
 
-        private static IReadOnlyList<GameSceneCardViewModel> CreatePlayerCards(CoreLoopViewModel core)
+        // A card effect surfaces on two characters: the ACTOR who played it ("USE: <name>") and the
+        // TARGET it lands on. Shown while the player is still choosing (PendingPlayerCardEffect) and on
+        // the use beat (LastPublicAction == UseCard). REVOLVER (7,8) guesses the OPPONENT's hidden card;
+        // BOWIE KNIFE (9,10) forces the OPPONENT to draw; CRYSTAL ORB (5) draws for SELF; THREAT HAMMER
+        // (6) discards the actor's own card.
+        private static bool TryResolveCardEffect(
+            CoreLoopBattle battle,
+            CombatantSide side,
+            out (CharacterVisualState Visual, string Label) result)
+        {
+            result = default;
+
+            CardEffectKind kind;
+            CombatantSide actor;
+
+            PendingCardEffect pending = battle.PendingPlayerCardEffect;
+            if (pending != null)
+            {
+                kind = pending.EffectKind;
+                actor = CombatantSide.Player;
+            }
+            else if (battle.LastPublicAction != null &&
+                     battle.LastPublicAction.ActionType == PublicCombatActionType.UseCard &&
+                     battle.LastCardEffectResult.HasValue &&
+                     battle.LastCardEffectActorSide.HasValue)
+            {
+                kind = battle.LastCardEffectResult.Value.EffectKind;
+                actor = battle.LastCardEffectActorSide.Value;
+            }
+            else
+            {
+                return false;
+            }
+
+            if (kind == CardEffectKind.None)
+            {
+                return false;
+            }
+
+            CombatantSide target = EffectTargetSide(kind, actor);
+            if (side == target)
+            {
+                result = (CharacterVisualState.UseCard, EffectActionLabel(kind));
+                return true;
+            }
+
+            if (side == actor)
+            {
+                result = (CharacterVisualState.UseCard, "USE: " + CoreLoopPresenter.FormatEffectName(kind));
+                return true;
+            }
+
+            return false;
+        }
+
+        // The character an effect's visible action lands on. REVOLVER / BOWIE KNIFE hit the opponent;
+        // CRYSTAL ORB / THREAT HAMMER act on the actor's own hand.
+        private static CombatantSide EffectTargetSide(CardEffectKind kind, CombatantSide actor)
+        {
+            switch (kind)
+            {
+                case CardEffectKind.AutoPistol:
+                case CardEffectKind.MilitaryKnife:
+                    return actor == CombatantSide.Player ? CombatantSide.Enemy : CombatantSide.Player;
+                default:
+                    return actor;
+            }
+        }
+
+        // Short token for what the effect does to its target character.
+        private static string EffectActionLabel(CardEffectKind kind)
+        {
+            switch (kind)
+            {
+                case CardEffectKind.AutoPistol:
+                    return "GUESS";
+                case CardEffectKind.MilitaryKnife:
+                    return "DRAW";
+                case CardEffectKind.CrystalOrb:
+                    return "DRAW";
+                case CardEffectKind.ThreatHammer:
+                    return "DISCARD";
+                default:
+                    return string.Empty;
+            }
+        }
+
+        // One-line Korean ability text per manual effect, for the hover badge. There is no such text
+        // anywhere in the model, so it is authored here in the view layer.
+        private static readonly Dictionary<CardEffectKind, string> AbilityDescriptions =
+            new Dictionary<CardEffectKind, string>
+            {
+                { CardEffectKind.CrystalOrb, "덱 맨 위 2장 훔쳐보고 1장 가져오기" },
+                { CardEffectKind.ThreatHammer, "내 공개카드 버리고 스탠드한 적 비공개 교체" },
+                { CardEffectKind.AutoPistol, "적 비공개 숫자 맞히면 적 즉사" },
+                { CardEffectKind.MilitaryKnife, "적에게 공개카드 1장 강제로 뽑게 함" },
+            };
+
+        private static IReadOnlyList<GameSceneCardViewModel> CreatePlayerCards(
+            CoreLoopViewModel core,
+            CoreLoopBattle battle)
         {
             var cards = new List<GameSceneCardViewModel>(core.PlayerCardActions.Count);
             foreach (PlayerCardViewModel card in core.PlayerCardActions)
@@ -179,10 +330,25 @@ namespace DiaBlackJack.GameScene
                     card.IsFaceUp,
                     revealRank: true,
                     canUse: card.CanUse,
-                    card.DisplayName));
+                    card.DisplayName,
+                    abilityDescription: ResolveAbilityDescription(battle, card.CardId)));
             }
 
             return cards.AsReadOnly();
+        }
+
+        private static string ResolveAbilityDescription(CoreLoopBattle battle, int cardId)
+        {
+            foreach (BlackjackCard card in battle.Player.Hand.Cards)
+            {
+                if (card.Id == cardId &&
+                    AbilityDescriptions.TryGetValue(card.Definition.Effect, out string description))
+                {
+                    return description;
+                }
+            }
+
+            return string.Empty;
         }
 
         private static IReadOnlyList<GameSceneCardViewModel> CreateEnemyCards(CoreLoopBattle battle)

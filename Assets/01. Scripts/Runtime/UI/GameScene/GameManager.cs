@@ -27,12 +27,13 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private CharacterView enemyCharacter;
 
         [Header("Presentation pacing")]
-        [SerializeField] private float stepSeconds = 0.8f;
+        [SerializeField] private float stepSeconds = 1.0f;
         [SerializeField] private float resolveHoldSeconds = 1.1f;
 
         private CoreLoopSession _session;
         private CoreLoopViewModel _core;
         private Camera _camera;
+        private CardView _hoveredCard;
         private bool _inputLocked;
         private int _battleIndex;
         private GUIStyle _buttonStyle;
@@ -51,12 +52,22 @@ namespace DiaBlackJack.GameScene
             RefreshView();
         }
 
-        // Diegetic input: click a usable hand card to activate its manual effect. New Input System —
-        // legacy OnMouseDown does not fire, so we raycast the pointer ourselves. Hit/Stand/Change and
-        // the change/effect choices stay as OnGUI buttons.
+        // Diegetic input: hover any card to enlarge it (usable cards also glow + show a badge), and
+        // click a usable card to activate its effect. New Input System — legacy OnMouseDown does not
+        // fire, so we raycast the pointer ourselves. Hit/Stand/Change and the choices stay as OnGUI.
         private void Update()
         {
-            if (_inputLocked || _core == null)
+            if (_core == null)
+            {
+                return;
+            }
+
+            CardView pointed = RaycastCard();
+
+            // Hover is visual-only, so it runs even while input is locked (during timeline playback).
+            UpdateHover(pointed);
+
+            if (_inputLocked)
             {
                 return;
             }
@@ -67,27 +78,48 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            if (pointed != null && pointed.CanUse)
+            {
+                int cardId = pointed.CardId;
+                ProcessInput(() => _session.TryBeginPlayerCardUse(cardId));
+            }
+        }
+
+        private CardView RaycastCard()
+        {
             if (_camera == null)
             {
                 _camera = Camera.main;
             }
 
-            if (_camera == null)
+            Mouse mouse = Mouse.current;
+            if (_camera == null || mouse == null)
             {
-                return;
+                return null;
             }
 
             Ray ray = _camera.ScreenPointToRay(mouse.position.ReadValue());
-            if (!Physics.Raycast(ray, out RaycastHit hit, 200f))
+            return Physics.Raycast(ray, out RaycastHit hit, 200f)
+                ? hit.collider.GetComponentInParent<CardView>()
+                : null;
+        }
+
+        private void UpdateHover(CardView pointed)
+        {
+            if (pointed == _hoveredCard)
             {
                 return;
             }
 
-            CardView card = hit.collider.GetComponentInParent<CardView>();
-            if (card != null && card.CanUse)
+            if (_hoveredCard != null)
             {
-                int cardId = card.CardId;
-                ProcessInput(() => _session.TryBeginPlayerCardUse(cardId));
+                _hoveredCard.SetHovered(false);
+            }
+
+            _hoveredCard = pointed;
+            if (_hoveredCard != null)
+            {
+                _hoveredCard.SetHovered(true);
             }
         }
 
@@ -306,12 +338,12 @@ namespace DiaBlackJack.GameScene
 
             if (playerCharacter != null)
             {
-                playerCharacter.Render(vm.PlayerVisual);
+                playerCharacter.Render(vm.PlayerVisual, vm.PlayerActionLabel);
             }
 
             if (enemyCharacter != null)
             {
-                enemyCharacter.Render(vm.EnemyVisual);
+                enemyCharacter.Render(vm.EnemyVisual, vm.EnemyActionLabel);
             }
         }
 
