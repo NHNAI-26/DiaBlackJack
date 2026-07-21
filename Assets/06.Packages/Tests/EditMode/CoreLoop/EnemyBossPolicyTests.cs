@@ -135,15 +135,15 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void EP05_U06_HammerPaysLowestPublicCost()
+        public void EP05_U06_HammerDiscardsHighestPublicTarget()
         {
-            EnemyActionCandidate highCost = CreateOptionCandidate(
+            EnemyActionCandidate highTarget = CreateOptionCandidate(
                 10,
                 "threat-hammer-6",
                 optionId: 1,
                 optionCardId: 20,
                 optionCardRank: 6);
-            EnemyActionCandidate lowCost = CreateOptionCandidate(
+            EnemyActionCandidate lowTarget = CreateOptionCandidate(
                 10,
                 "threat-hammer-6",
                 optionId: 2,
@@ -153,10 +153,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                 CreateObservation(
                     16,
                     4,
-                    new[] { highCost, lowCost },
+                    new[] { highTarget, lowTarget },
                     pendingCardEffectKind: CardEffectKind.ThreatHammer));
 
-            Assert.That(decision.CardEffectOptionId, Is.EqualTo(2));
+            Assert.That(decision.CardEffectOptionId, Is.EqualTo(1));
+            Assert.That(
+                decision.ReasonCode,
+                Is.EqualTo("boss-discard-highest-hammer-target"));
         }
 
         [Test]

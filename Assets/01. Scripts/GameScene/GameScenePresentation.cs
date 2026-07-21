@@ -222,7 +222,7 @@ namespace DiaBlackJack.GameScene
         // TARGET it lands on. Shown while the player is still choosing (PendingPlayerCardEffect) and on
         // the use beat (LastPublicAction == UseCard). REVOLVER (7,8) guesses the OPPONENT's hidden card;
         // BOWIE KNIFE (9,10) forces the OPPONENT to draw; CRYSTAL ORB (5) draws for SELF; THREAT HAMMER
-        // (6) discards the actor's own card.
+        // (6) discards an OPPONENT face-up card.
         private static bool TryResolveCardEffect(
             CoreLoopBattle battle,
             CombatantSide side,
@@ -280,14 +280,15 @@ namespace DiaBlackJack.GameScene
             return false;
         }
 
-        // The character an effect's visible action lands on. REVOLVER / BOWIE KNIFE hit the opponent;
-        // CRYSTAL ORB / THREAT HAMMER act on the actor's own hand.
+        // The character an effect's visible action lands on. REVOLVER / BOWIE KNIFE / THREAT HAMMER
+        // hit the opponent; CRYSTAL ORB acts on the actor's own hand.
         private static CombatantSide EffectTargetSide(CardEffectKind kind, CombatantSide actor)
         {
             switch (kind)
             {
                 case CardEffectKind.AutoPistol:
                 case CardEffectKind.MilitaryKnife:
+                case CardEffectKind.ThreatHammer:
                     return actor == CombatantSide.Player ? CombatantSide.Enemy : CombatantSide.Player;
                 default:
                     return actor;
@@ -330,7 +331,7 @@ namespace DiaBlackJack.GameScene
             new Dictionary<CardEffectKind, string>
             {
                 { CardEffectKind.CrystalOrb, "덱 맨 위 2장 훔쳐보고 1장 가져오기" },
-                { CardEffectKind.ThreatHammer, "내 공개카드 버리고 스탠드한 적 비공개 교체" },
+                { CardEffectKind.ThreatHammer, "적 공개 카드 1장 제거; 스탠드면 비공개 교체" },
                 { CardEffectKind.AutoPistol, "적 비공개 숫자 맞히면 적 즉사" },
                 { CardEffectKind.MilitaryKnife, "적에게 공개카드 1장 강제로 뽑게 함" },
             };

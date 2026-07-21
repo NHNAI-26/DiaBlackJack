@@ -169,21 +169,26 @@ namespace DiaBlackJack.CoreLoop
                 return null;
             }
 
-            foreach (BlackjackCard card in pendingEffect.TemporaryCards)
+            if (pendingEffect.ChoiceKind == CardEffectChoiceKind.TakePeekedCard)
             {
-                if (card.Id == cardId.Value)
+                foreach (BlackjackCard card in pendingEffect.TemporaryCards)
                 {
-                    return card;
+                    if (card.Id == cardId.Value)
+                    {
+                        return card;
+                    }
                 }
             }
 
-            if (battle.Enemy.Hand.TryGetCard(cardId.Value, out BlackjackCard ownedCard))
+            if (pendingEffect.ChoiceKind == CardEffectChoiceKind.DiscardOpponentFaceUpCard &&
+                battle.Player.Hand.TryGetCard(cardId.Value, out BlackjackCard opponentCard) &&
+                opponentCard.IsFaceUp)
             {
-                return ownedCard;
+                return opponentCard;
             }
 
             throw new InvalidOperationException(
-                "Enemy card option references a missing temporary or owned card.");
+                "Enemy card option references a missing temporary or public opponent card.");
         }
 
         private static IReadOnlyList<PublicCardObservation> CreatePublicCards(

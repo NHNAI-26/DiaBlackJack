@@ -63,26 +63,20 @@ namespace DiaBlackJack.CoreLoop
         {
             if (observation.PendingCardEffectKind == CardEffectKind.ThreatHammer)
             {
-                int costRank = candidate.CardEffectOptionCardRank ?? 10;
+                int targetRank = candidate.CardEffectOptionCardRank ?? 0;
                 return Score(
                     candidate,
-                    3000 - (costRank * 10),
-                    "enforcer-pay-lowest-hammer-cost");
-            }
-
-            if (!observation.PlayerIsStanding)
-            {
-                return Score(
-                    candidate,
-                    -400,
-                    "enforcer-hold-hammer-until-player-stands");
+                    3000 + (targetRank * 10),
+                    "enforcer-discard-highest-hammer-target");
             }
 
             int visiblePressure = CalculateBestTotal(observation.PlayerFaceUpCards);
             return Score(
                 candidate,
-                2100 + visiblePressure,
-                "enforcer-break-player-stand-and-evaluate-follow-up");
+                (observation.PlayerIsStanding ? 2100 : 1300) + visiblePressure,
+                observation.PlayerIsStanding
+                    ? "enforcer-remove-public-card-and-break-stand"
+                    : "enforcer-remove-high-pressure-public-card");
         }
 
         private static int EstimateMilitaryKnifeBustChance(EnemyObservation observation)

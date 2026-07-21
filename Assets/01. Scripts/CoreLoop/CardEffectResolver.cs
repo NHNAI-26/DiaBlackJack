@@ -62,6 +62,11 @@ namespace DiaBlackJack.CoreLoop
             return Actor.Hand.GetFaceUpCards();
         }
 
+        public IReadOnlyList<BlackjackCard> GetOpponentFaceUpCards()
+        {
+            return Opponent.Hand.GetFaceUpCards();
+        }
+
         public bool TryGetSingleOpponentHiddenCard(out BlackjackCard hiddenCard)
         {
             hiddenCard = null;

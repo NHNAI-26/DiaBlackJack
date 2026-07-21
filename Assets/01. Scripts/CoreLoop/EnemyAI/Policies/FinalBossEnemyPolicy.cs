@@ -268,11 +268,11 @@ namespace DiaBlackJack.CoreLoop
                             -2000 - resultingTotal,
                             "boss-orb-reject-busting-card");
                 case CardEffectKind.ThreatHammer:
-                    int costRank = candidate.CardEffectOptionCardRank ?? 10;
+                    int targetRank = candidate.CardEffectOptionCardRank ?? 0;
                     return Score(
                         candidate,
-                        3000 - (costRank * 10),
-                        "boss-pay-lowest-hammer-cost");
+                        3000 + (targetRank * 10),
+                        "boss-discard-highest-hammer-target");
                 case CardEffectKind.AutoPistol:
                     int probability = FindInferenceProbability(
                         observation,

@@ -118,50 +118,78 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CU04_U06_ThreatHammerOffersEveryOwnFaceUpCardIncludingItsSource()
+        public void CU04_U06_ThreatHammerOffersOnlyOpponentFaceUpCards()
         {
             CoreLoopBattle battle = CreateStartedBattle(
                 playerRanks: new[] { 2, 6, 3 },
-                enemyRanks: new[] { 10, 7, 5 });
+                enemyRanks: new[] { 10, 7, 5, 4 });
             BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+            battle.Enemy.Draw(faceUp: true);
 
             bool accepted = battle.TryBeginPlayerCardUse(sourceCard.Id);
 
             Assert.That(accepted, Is.True);
             Assert.That(sourceCard.IsFaceUp, Is.True);
+            Assert.That(battle.Player.Hand.Cards.Contains(sourceCard), Is.True);
             Assert.That(
                 battle.PendingPlayerCardEffect.Options.Select(option => option.CardId),
-                Is.EqualTo(new int?[] { 0, 1 }));
+                Is.EqualTo(new int?[] { 0, 2 }));
             Assert.That(
                 battle.PendingPlayerCardEffect.ChoiceKind,
-                Is.EqualTo(CardEffectChoiceKind.DiscardOwnFaceUpCard));
+                Is.EqualTo(CardEffectChoiceKind.DiscardOpponentFaceUpCard));
+            Assert.That(
+                battle.PendingPlayerCardEffect.Prompt,
+                Is.EqualTo("버릴 상대 공개 카드를 선택하세요."));
         }
 
-        [TestCase(0, false)]
-        [TestCase(1, true)]
-        public void CU04_U07_ThreatHammerPaysChosenCostWhenEnemyIsNotStanding(
+        [TestCase(0, 10)]
+        [TestCase(2, 5)]
+        public void CU04_U07_ThreatHammerDiscardsChosenOpponentCardWithoutOwnCost(
             int optionId,
-            bool discardsSource)
+            int discardedRank)
         {
             CoreLoopBattle battle = CreateStartedBattle(
                 playerRanks: new[] { 2, 6, 3 },
-                enemyRanks: new[] { 10, 7, 5 });
+                enemyRanks: new[] { 10, 7, 5, 4 });
             BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+            battle.Enemy.Draw(faceUp: true);
 
             Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
             Assert.That(battle.TryResolvePlayerCardChoice(optionId), Is.True);
 
             Assert.That(sourceCard.UseState, Is.EqualTo(CardUseState.Used));
-            Assert.That(battle.Player.Hand.Contains(optionId), Is.False);
-            Assert.That(battle.Player.Hand.Contains(sourceCard.Id), Is.EqualTo(!discardsSource));
-            Assert.That(battle.Player.Deck.DiscardCount, Is.EqualTo(1));
-            Assert.That(battle.Enemy.Hand.Count, Is.EqualTo(2));
-            Assert.That(battle.Enemy.IsStanding, Is.True);
+            Assert.That(battle.Player.Hand.Cards.Contains(sourceCard), Is.True);
+            Assert.That(battle.Player.Deck.DiscardCount, Is.Zero);
+            Assert.That(
+                battle.Enemy.Deck.GetDiscardedCards().Select(card => card.Rank),
+                Does.Contain(discardedRank));
+            Assert.That(battle.Enemy.Hand.Contains(optionId), Is.False);
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
         }
 
         [Test]
-        public void CU04_U08_ThreatHammerStandingReplacementRejectsAtomicallyWithoutDeckCard()
+        public void CU04_U08_ThreatHammerRejectsWithoutOpponentFaceUpCard()
+        {
+            CoreLoopBattle battle = CreateStartedBattle(
+                playerRanks: new[] { 2, 6, 3 },
+                enemyRanks: new[] { 5, 7, 4 });
+            BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+            BlackjackCard enemyFaceUpCard = battle.Enemy.Hand.Cards[0];
+            Assert.That(battle.Enemy.TryDiscardCard(enemyFaceUpCard.Id), Is.True);
+
+            bool accepted = battle.TryBeginPlayerCardUse(sourceCard.Id);
+
+            Assert.That(accepted, Is.False);
+            Assert.That(sourceCard.IsFaceUp, Is.False);
+            Assert.That(sourceCard.UseState, Is.EqualTo(CardUseState.Available));
+            Assert.That(battle.PendingPlayerCardEffect, Is.Null);
+            Assert.That(
+                battle.EvaluatePlayerCardUse(sourceCard.Id).Reason,
+                Is.EqualTo(CardUseUnavailableReason.EffectRequirementsNotMet));
+        }
+
+        [Test]
+        public void CU04_U09_ThreatHammerStandingReplacementRejectsAtomicallyWithoutDeckCard()
         {
             CoreLoopBattle battle = CreateStartedBattle(
                 playerRanks: new[] { 2, 6, 3 },
@@ -182,7 +210,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CU04_U09_ThreatHammerReplacesOnlyHiddenCardAndCancelsStand()
+        public void CU04_U10_ThreatHammerDiscardsPublicAndReplacesHiddenWhenStanding()
         {
             CoreLoopBattle battle = CreateStartedBattle(
                 playerRanks: new[] { 2, 6 },
@@ -192,12 +220,18 @@ namespace DiaBlackJack.CoreLoop.Tests
             battle.Enemy.Stand();
 
             Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
-            Assert.That(battle.TryResolvePlayerCardChoice(sourceCard.Id), Is.True);
+            Assert.That(battle.TryResolvePlayerCardChoice(0), Is.True);
 
+            Assert.That(sourceCard.UseState, Is.EqualTo(CardUseState.Used));
+            Assert.That(battle.Player.Hand.Cards.Contains(sourceCard), Is.True);
+            Assert.That(battle.Player.Deck.DiscardCount, Is.Zero);
             Assert.That(previousHiddenCard.IsFaceUp, Is.False);
-            Assert.That(battle.Enemy.Deck.DiscardCount, Is.EqualTo(1));
+            Assert.That(battle.Enemy.Deck.DiscardCount, Is.EqualTo(2));
+            Assert.That(
+                battle.Enemy.Deck.GetDiscardedCards().Select(card => card.Rank),
+                Is.EquivalentTo(new[] { 5, 7 }));
             Assert.That(battle.Enemy.Hand.Cards.Select(card => card.Rank),
-                Is.EqualTo(new[] { 5, 6, 5 }));
+                Is.EqualTo(new[] { 6, 5 }));
             Assert.That(battle.Enemy.Hand.HiddenCardCount, Is.EqualTo(1));
             Assert.That(battle.Enemy.Hand.Cards.Single(card => !card.IsFaceUp).Rank,
                 Is.EqualTo(6));
@@ -206,19 +240,20 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CU04_U10_ThreatHammerReplacementBustResolvesAsNumericBust()
+        public void CU04_U11_ThreatHammerReplacementBustResolvesAsNumericBust()
         {
             CoreLoopBattle battle = CreateStartedBattle(
                 playerRanks: new[] { 2, 6 },
-                enemyRanks: new[] { 10, 2, 5, 8 },
+                enemyRanks: new[] { 10, 2, 8, 7, 9 },
                 enemyMaximumSoul: 1);
             BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
             BlackjackCard previousHiddenCard = battle.Enemy.Hand.Cards[1];
             battle.Enemy.Draw(faceUp: true);
+            battle.Enemy.Draw(faceUp: true);
             battle.Enemy.Stand();
 
             Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
-            Assert.That(battle.TryResolvePlayerCardChoice(sourceCard.Id), Is.True);
+            Assert.That(battle.TryResolvePlayerCardChoice(3), Is.True);
 
             Assert.That(previousHiddenCard.IsFaceUp, Is.False);
             Assert.That(battle.Enemy.Soul.Current, Is.Zero);
@@ -230,7 +265,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CU04_U11_MilitaryKnifeRejectsVisibleTotalOverSixteenOrEmptyDeck()
+        public void CU04_U12_MilitaryKnifeRejectsVisibleTotalOverSixteenOrEmptyDeck()
         {
             CoreLoopBattle highTotalBattle = CreateStartedBattle(
                 playerRanks: new[] { 2, 9 },
@@ -253,7 +288,7 @@ namespace DiaBlackJack.CoreLoop.Tests
 
         [TestCase(9)]
         [TestCase(10)]
-        public void CU04_U12_MilitaryKnifeDefaultPolicyKeepsForcedCard(int sourceRank)
+        public void CU04_U13_MilitaryKnifeDefaultPolicyKeepsForcedCard(int sourceRank)
         {
             CoreLoopBattle battle = CreateStartedBattle(
                 playerRanks: new[] { 2, sourceRank },
@@ -274,7 +309,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CU04_U13_MilitaryKnifeForcedDrawBustResolvesBeforeEnemyTurn()
+        public void CU04_U14_MilitaryKnifeForcedDrawBustResolvesBeforeEnemyTurn()
         {
             CoreLoopBattle battle = CreateStartedBattle(
                 playerRanks: new[] { 2, 9 },
@@ -296,7 +331,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CU04_U14_MilitaryKnifeRetentionPolicyCanDiscardForcedCard()
+        public void CU04_U15_MilitaryKnifeRetentionPolicyCanDiscardForcedCard()
         {
             var resolver = new CardEffectResolver(
                 new MilitaryKnifeEffectHandler(new DiscardForcedDrawPolicy()));
@@ -315,7 +350,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CU04_U15_CoreLoopSessionUsesProductionCrystalOrbHandler()
+        public void CU04_U16_CoreLoopSessionUsesProductionCrystalOrbHandler()
         {
             var session = new CoreLoopSession(() => CreateBattle(
                 playerRanks: new[] { 2, 5, 7, 8 },

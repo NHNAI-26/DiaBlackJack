@@ -64,16 +64,16 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void EP04_U03_EnforcerPaysLowestPublicHammerCost()
+        public void EP04_U03_EnforcerDiscardsHighestPublicHammerTarget()
         {
-            var highCost = new EnemyActionCandidate(
+            var highTarget = new EnemyActionCandidate(
                 EnemyActionType.UseCard,
                 cardId: 10,
                 cardDefinitionKey: "threat-hammer-6",
                 cardEffectOptionId: 10,
                 cardEffectOptionCardId: 10,
                 cardEffectOptionCardRank: 6);
-            var lowCost = new EnemyActionCandidate(
+            var lowTarget = new EnemyActionCandidate(
                 EnemyActionType.UseCard,
                 cardId: 10,
                 cardDefinitionKey: "threat-hammer-6",
@@ -82,18 +82,20 @@ namespace DiaBlackJack.CoreLoop.Tests
                 cardEffectOptionCardRank: 2);
             EnemyObservation observation = CreateObservation(
                 ownTotal: 17,
-                candidates: new[] { highCost, lowCost },
+                candidates: new[] { highTarget, lowTarget },
                 playerIsStanding: true,
                 pendingCardEffectKind: CardEffectKind.ThreatHammer);
 
             EnemyDecision decision = new EnforcerEnemyPolicy().Decide(observation);
 
-            Assert.That(decision.CardEffectOptionId, Is.EqualTo(12));
-            Assert.That(decision.ReasonCode, Is.EqualTo("enforcer-pay-lowest-hammer-cost"));
+            Assert.That(decision.CardEffectOptionId, Is.EqualTo(10));
+            Assert.That(
+                decision.ReasonCode,
+                Is.EqualTo("enforcer-discard-highest-hammer-target"));
         }
 
         [Test]
-        public void EP04_I01_EnemyHammerBreaksPlayerStandWithEnemyOwnedCost()
+        public void EP04_I01_EnemyHammerRemovesPlayerPublicCardAndBreaksStand()
         {
             var battle = new CoreLoopBattle(
                 CreateRankDeck(10, 7, 3, 2),
@@ -109,14 +111,18 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.TryPlayerStand(), Is.True);
 
             Assert.That(hammer.UseState, Is.EqualTo(CardUseState.Used));
-            Assert.That(battle.Enemy.Hand.Cards.Contains(hammer), Is.False);
+            Assert.That(battle.Enemy.Hand.Cards.Contains(hammer), Is.True);
             Assert.That(battle.Player.IsStanding, Is.False);
             Assert.That(
                 battle.Player.Hand.Cards.Single(card => !card.IsFaceUp).Rank,
                 Is.EqualTo(3));
             Assert.That(
                 battle.Player.Deck.GetDiscardedCards().Select(card => card.Rank),
+                Does.Contain(10));
+            Assert.That(
+                battle.Player.Deck.GetDiscardedCards().Select(card => card.Rank),
                 Does.Contain(7));
+            Assert.That(battle.Enemy.Deck.DiscardCount, Is.Zero);
             Assert.That(battle.LastCardEffectActorSide, Is.EqualTo(CombatantSide.Enemy));
             Assert.That(
                 battle.LastCardEffectResult.Value.EffectKind,

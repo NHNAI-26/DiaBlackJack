@@ -8,7 +8,7 @@ namespace DiaBlackJack.CoreLoop
     {
         None,
         TakePeekedCard,
-        DiscardOwnFaceUpCard,
+        DiscardOpponentFaceUpCard,
         DeclareNumber
     }
 

@@ -9,19 +9,17 @@ namespace DiaBlackJack.CoreLoop
 
         public bool CanStart(CardEffectContext context)
         {
-            bool hasDiscardCost = context.SourceCard.IsFaceUp ||
-                context.GetActorFaceUpCards().Count > 0;
-            return hasDiscardCost &&
+            return context.GetOpponentFaceUpCards().Count > 0 &&
                 (!context.IsOpponentStanding || context.CanReplaceStandingOpponentHiddenCard());
         }
 
         public CardEffectStep Begin(CardEffectContext context)
         {
-            IReadOnlyList<BlackjackCard> faceUpCards = context.GetActorFaceUpCards();
+            IReadOnlyList<BlackjackCard> faceUpCards = context.GetOpponentFaceUpCards();
             if (faceUpCards.Count == 0)
             {
                 throw new InvalidOperationException(
-                    "Threat hammer requires a player face-up card to discard.");
+                    "Threat hammer requires an opponent face-up card to discard.");
             }
 
             var options = new List<CardEffectChoiceOption>(faceUpCards.Count);
@@ -36,8 +34,8 @@ namespace DiaBlackJack.CoreLoop
             return CardEffectStep.AwaitChoice(new PendingCardEffect(
                 context.SourceCard.Id,
                 EffectKind,
-                "버릴 공개 카드를 선택하세요.",
-                CardEffectChoiceKind.DiscardOwnFaceUpCard,
+                "버릴 상대 공개 카드를 선택하세요.",
+                CardEffectChoiceKind.DiscardOpponentFaceUpCard,
                 options));
         }
 
@@ -46,11 +44,12 @@ namespace DiaBlackJack.CoreLoop
             PendingCardEffect pendingEffect,
             CardEffectChoiceOption selectedOption)
         {
-            if (pendingEffect.ChoiceKind != CardEffectChoiceKind.DiscardOwnFaceUpCard ||
+            if (pendingEffect.ChoiceKind != CardEffectChoiceKind.DiscardOpponentFaceUpCard ||
                 !selectedOption.CardId.HasValue ||
-                !context.TryDiscardActorCard(selectedOption.CardId.Value))
+                !context.TryDiscardOpponentCard(selectedOption.CardId.Value))
             {
-                throw new InvalidOperationException("Threat hammer received an invalid discard choice.");
+                throw new InvalidOperationException(
+                    "Threat hammer received an invalid opponent discard choice.");
             }
 
             if (!context.IsOpponentStanding)

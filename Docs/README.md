@@ -27,10 +27,10 @@
 | [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | 현행 규칙 이관 완료 v0.2 |
 | [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 이력과 현행 규칙 이관 결과 | 현행 규칙 이관 완료 v0.2 |
 | [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | 현행 규칙 이관 완료 v0.2 |
-| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | 현행 해머 기획 v0.2·코드 이관 필요 |
-| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-06 검증 완료 v0.1 |
-| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
-| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-06 완료 v0.1 |
+| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | 해머 현행 규칙 이관 완료 v0.4 |
+| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M01 검증 완료 v0.2 |
+| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01 작업 순서와 단계별 검증 게이트 | 해머 이관 완료 v0.2 |
+| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M01 완료 |
 | [battle-reward-design.md](./battle-reward-design.md) | 일반·엘리트·보스 전투 보상 규칙과 프로토타입 카드 풀 | RW-00~RW-05 완료 v0.1 |
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW-05 최종 검증 완료 v0.1 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
@@ -64,6 +64,7 @@
 | --- | --- | --- |
 | 2026-07-22 | 이천서 | 상점을 일반 카드 3장·악마 카드 2장, `SOLD OUT`, 라이터·위스키 1회 서비스로 구체화하고 화면 콘셉트 추가 |
 | 2026-07-22 | 이천서 | 독극물을 즉시 스탠드 또는 영혼 베팅으로, 루시퍼를 무작위 악마 카드 5개 선택·영혼 1 대가로 확정 |
+| 2026-07-22 | 이천서 | 위협용 해머의 상대 공개 카드 제거 규칙을 코드·적 AI·GameScene 표시·자동 테스트에 이관하고 전체 EditMode 308/308을 확인 |
 | 2026-07-21 | 이천서 | 위협용 해머를 상대 공개 카드 제거 효과로 바로잡고, 폴드에 의존했던 독극물·루시퍼를 재설계 전까지 제외한 뒤 전체 카드를 개별 재검토 |
 | 2026-07-21 | 이천서 | 계약을 전투 스테이지당 원칙적으로 1회로 제한하고 일반·악마 카드 덱을 분리했으며, 상점을 판매 카드 5장·개별 재고·새로고침 없음·1회 휴식으로 확정하고 가격·회복량은 미정으로 유지 |
 | 2026-07-21 | 이천서 | 폴드를 플레이어·적 행동에서 삭제하고 체인지 비용을 전투 내 `0→1→2→3…` 영혼 누적·다음 전투 초기화 방식으로 변경 |

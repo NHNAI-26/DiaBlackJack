@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using DiaBlackJack.CoreLoop.UI;
+using DiaBlackJack.GameScene;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -242,6 +243,31 @@ namespace DiaBlackJack.CoreLoop.Tests
                     card => card.UnavailableReason ==
                         CardUseUnavailableReason.EffectInProgress),
                 Is.True);
+        }
+
+        [Test]
+        public void CU05_GameSceneShowsHammerAsOpponentTargetingEffect()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 2, 6, 3 },
+                enemyRanks: new[] { 10, 7, 5 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            battle.Start();
+            BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+
+            Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
+
+            GameSceneViewModel model = GameScenePresenter.Create(battle);
+            GameSceneCardViewModel sourceModel = model.PlayerCards.Single(
+                card => card.CardId == sourceCard.Id);
+            Assert.That(model.PlayerVisual, Is.EqualTo(CharacterVisualState.UseCard));
+            Assert.That(model.PlayerActionLabel, Is.EqualTo("USE: THREAT HAMMER"));
+            Assert.That(model.EnemyVisual, Is.EqualTo(CharacterVisualState.UseCard));
+            Assert.That(model.EnemyActionLabel, Is.EqualTo("DISCARD"));
+            Assert.That(
+                sourceModel.AbilityDescription,
+                Is.EqualTo("적 공개 카드 1장 제거; 스탠드면 비공개 교체"));
         }
 
         [Test]
