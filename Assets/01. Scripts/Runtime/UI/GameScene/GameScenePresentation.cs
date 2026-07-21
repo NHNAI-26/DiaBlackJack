@@ -6,6 +6,21 @@ using DiaBlackJack.CoreLoop.UI;
 namespace DiaBlackJack.GameScene
 {
     /// <summary>
+    /// A coarse per-side visual state for the world-space character sprite. MVP stand-in for the
+    /// eventual per-action animations: the view maps each value to a small tint/scale change so a
+    /// hit/stand/bust/win/loss is visible at a glance. Derived from public battle state only.
+    /// </summary>
+    public enum CharacterVisualState
+    {
+        Idle,
+        Active,
+        Stand,
+        Bust,
+        Win,
+        Lose,
+    }
+
+    /// <summary>
     /// A single card projected for world-space rendering. <see cref="IsFaceUp"/> is the *physical*
     /// orientation (drives the card back visual). <see cref="RevealRank"/> is whether the rank may be
     /// shown to the viewer: true for all of the player's own cards (a player sees their own hidden
@@ -44,11 +59,15 @@ namespace DiaBlackJack.GameScene
         public GameSceneViewModel(
             CoreLoopViewModel core,
             IReadOnlyList<GameSceneCardViewModel> playerCards,
-            IReadOnlyList<GameSceneCardViewModel> enemyCards)
+            IReadOnlyList<GameSceneCardViewModel> enemyCards,
+            CharacterVisualState playerVisual,
+            CharacterVisualState enemyVisual)
         {
             Core = core ?? throw new ArgumentNullException(nameof(core));
             PlayerCards = playerCards ?? throw new ArgumentNullException(nameof(playerCards));
             EnemyCards = enemyCards ?? throw new ArgumentNullException(nameof(enemyCards));
+            PlayerVisual = playerVisual;
+            EnemyVisual = enemyVisual;
         }
 
         public CoreLoopViewModel Core { get; }
@@ -56,6 +75,10 @@ namespace DiaBlackJack.GameScene
         public IReadOnlyList<GameSceneCardViewModel> PlayerCards { get; }
 
         public IReadOnlyList<GameSceneCardViewModel> EnemyCards { get; }
+
+        public CharacterVisualState PlayerVisual { get; }
+
+        public CharacterVisualState EnemyVisual { get; }
     }
 
     public static class GameScenePresenter
@@ -71,7 +94,64 @@ namespace DiaBlackJack.GameScene
             return new GameSceneViewModel(
                 core,
                 CreatePlayerCards(core),
-                CreateEnemyCards(battle));
+                CreateEnemyCards(battle),
+                ResolvePlayerVisual(battle),
+                ResolveEnemyVisual(battle));
+        }
+
+        // MVP visual feedback: read only public battle state, one coarse state per side.
+        // Bust is transient (the hand is cleared the instant a round resolves), so it is read from
+        // the surviving LastResolution rather than the live hand value.
+        private static CharacterVisualState ResolvePlayerVisual(CoreLoopBattle battle)
+        {
+            switch (battle.Outcome)
+            {
+                case BattleOutcome.PlayerVictory:
+                    return CharacterVisualState.Win;
+                case BattleOutcome.PlayerDefeat:
+                    return CharacterVisualState.Lose;
+            }
+
+            if (battle.LastResolution.HasValue &&
+                battle.LastResolution.Value.Outcome == RoundOutcome.PlayerBust)
+            {
+                return CharacterVisualState.Bust;
+            }
+
+            if (battle.Player.IsStanding)
+            {
+                return CharacterVisualState.Stand;
+            }
+
+            return battle.State == CoreLoopState.PlayerTurn
+                ? CharacterVisualState.Active
+                : CharacterVisualState.Idle;
+        }
+
+        private static CharacterVisualState ResolveEnemyVisual(CoreLoopBattle battle)
+        {
+            switch (battle.Outcome)
+            {
+                case BattleOutcome.PlayerDefeat:
+                    return CharacterVisualState.Win;
+                case BattleOutcome.PlayerVictory:
+                    return CharacterVisualState.Lose;
+            }
+
+            if (battle.LastResolution.HasValue &&
+                battle.LastResolution.Value.Outcome == RoundOutcome.EnemyBust)
+            {
+                return CharacterVisualState.Bust;
+            }
+
+            if (battle.Enemy.IsStanding)
+            {
+                return CharacterVisualState.Stand;
+            }
+
+            return battle.State == CoreLoopState.EnemyTurn
+                ? CharacterVisualState.Active
+                : CharacterVisualState.Idle;
         }
 
         private static IReadOnlyList<GameSceneCardViewModel> CreatePlayerCards(CoreLoopViewModel core)

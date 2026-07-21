@@ -21,6 +21,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameHudView hud;
         [SerializeField] private CardHand playerHand;
         [SerializeField] private CardHand enemyHand;
+        [SerializeField] private CharacterView playerCharacter;
+        [SerializeField] private CharacterView enemyCharacter;
 
         private CoreLoopSession _session;
         private CoreLoopViewModel _core;
@@ -135,6 +137,16 @@ namespace DiaBlackJack.GameScene
             if (enemyHand != null)
             {
                 enemyHand.Render(vm.EnemyCards);
+            }
+
+            if (playerCharacter != null)
+            {
+                playerCharacter.Render(vm.PlayerVisual);
+            }
+
+            if (enemyCharacter != null)
+            {
+                enemyCharacter.Render(vm.EnemyVisual);
             }
         }
 
