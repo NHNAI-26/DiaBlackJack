@@ -68,9 +68,10 @@ namespace DiaBlackJack.StageProgression.Tests
                     player,
                     enemyMaximumSoul: 1,
                     new[] { 10, 2, 4, 9 },
-                    new[] { 10, 6, 10 }));
+                    new[] { 10, 2, 4, 10 }));
 
             Assert.That(session.TryStartRun(), Is.True);
+            session.Battle.Enemy.Draw(faceUp: true);
             Assert.That(session.TryBeginPlayerChange(), Is.True);
             Assert.That(session.TrySelectChangedCard(1), Is.True);
 
@@ -177,10 +178,11 @@ namespace DiaBlackJack.StageProgression.Tests
                     player,
                     enemyMaximumSoul: 1,
                     new[] { 2, 9 },
-                    new[] { 10, 10, 2 }));
+                    new[] { 10, 2, 6, 10 }));
 
             Assert.That(session.TryStartRun(), Is.True);
             BlackjackCard sourceCard = session.Battle.Player.Hand.Cards[1];
+            session.Battle.Enemy.Draw(faceUp: true);
 
             Assert.That(session.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
 

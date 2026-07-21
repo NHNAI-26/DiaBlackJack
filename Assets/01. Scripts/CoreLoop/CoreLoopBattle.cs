@@ -194,9 +194,11 @@ namespace DiaBlackJack.CoreLoop
             RecordPublicAction(CombatantSide.Player, PublicCombatActionType.Hit);
             Player.Draw(faceUp: true);
             RaiseStepped();
-            if (Player.HandValue.IsBust)
+            if (Player.VisibleHandValue.IsBust)
             {
-                ResolveRound();
+                CompleteRound(RoundResolver.ResolveNumericBust(
+                    RoundNumber,
+                    playerIsTarget: true));
                 return true;
             }
 
@@ -572,9 +574,11 @@ namespace DiaBlackJack.CoreLoop
                     RecordPublicAction(CombatantSide.Enemy, PublicCombatActionType.Hit);
                     Enemy.Draw(faceUp: true);
                     RaiseStepped();
-                    if (Enemy.HandValue.IsBust)
+                    if (Enemy.VisibleHandValue.IsBust)
                     {
-                        ResolveRound();
+                        CompleteRound(RoundResolver.ResolveNumericBust(
+                            RoundNumber,
+                            playerIsTarget: false));
                     }
                     else if (!Player.IsStanding)
                     {

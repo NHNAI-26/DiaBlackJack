@@ -67,14 +67,14 @@ namespace DiaBlackJack.CoreLoop
                 context.AddActorCardFaceUp(selectedCard);
             }
 
-            bool endedRound = context.ActorHandValue.IsBust;
+            bool endedRound = context.ActorVisibleHandValue.IsBust;
             var result = new CardEffectResult(
                 context.SourceCard.Id,
                 EffectKind,
                 succeeded: true,
                 endedRound);
             return endedRound
-                ? CardEffectStep.Complete(result, context.CreateCurrentNumericResolution())
+                ? CardEffectStep.Complete(result, context.CreateActorNumericBustResolution())
                 : CardEffectStep.Complete(result);
         }
 

@@ -103,6 +103,25 @@ namespace DiaBlackJack.CoreLoop
 
     public static class RoundResolver
     {
+        public static RoundResolution ResolveNumericBust(
+            long resolutionId,
+            bool playerIsTarget)
+        {
+            return playerIsTarget
+                ? new RoundResolution(
+                    resolutionId,
+                    RoundOutcome.PlayerBust,
+                    playerDamage: 2,
+                    enemyDamage: 0,
+                    cause: RoundEndCause.NumericBust)
+                : new RoundResolution(
+                    resolutionId,
+                    RoundOutcome.EnemyBust,
+                    playerDamage: 0,
+                    enemyDamage: 1,
+                    cause: RoundEndCause.NumericBust);
+        }
+
         public static RoundResolution ResolveCardEffectBust(
             long resolutionId,
             bool playerIsTarget,

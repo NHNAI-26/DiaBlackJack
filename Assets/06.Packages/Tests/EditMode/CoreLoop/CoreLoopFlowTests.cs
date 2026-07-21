@@ -48,22 +48,50 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CL_F02_PlayerHitBustAppliesDamageAndStartsNextRound()
+        public void CL_F02_PlayerIntermediateBustUsesVisibleTotal()
         {
             CoreLoopBattle battle = CreateBattle(
-                playerRanks: new[] { 10, 8, 4 },
+                playerRanks: new[] { 10, 8, 10, 2 },
                 enemyRanks: new[] { 10, 9 });
             battle.Start();
 
-            bool accepted = battle.TryPlayerHit();
+            bool firstHitAccepted = battle.TryPlayerHit();
 
-            Assert.That(accepted, Is.True);
+            Assert.That(firstHitAccepted, Is.True);
+            Assert.That(battle.Player.HandValue.Total, Is.EqualTo(28));
+            Assert.That(battle.Player.VisibleHandValue.Total, Is.EqualTo(20));
+            Assert.That(battle.LastResolution.HasValue, Is.False);
+
+            bool secondHitAccepted = battle.TryPlayerHit();
+
+            Assert.That(secondHitAccepted, Is.True);
             Assert.That(battle.LastResolution.HasValue, Is.True);
             Assert.That(battle.LastResolution.Value.Outcome, Is.EqualTo(RoundOutcome.PlayerBust));
+            Assert.That(battle.LastResolution.Value.Cause, Is.EqualTo(RoundEndCause.NumericBust));
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(10));
             Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(3));
             Assert.That(battle.RoundNumber, Is.EqualTo(2));
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+        }
+
+        [Test]
+        public void CL_F02_FinalShowdownIncludesHiddenCardInBustTotal()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 10, 10, 2 },
+                enemyRanks: new[] { 10, 7 });
+            battle.Start();
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(battle.Player.HandValue.Total, Is.EqualTo(22));
+            Assert.That(battle.Player.VisibleHandValue.Total, Is.EqualTo(12));
+            Assert.That(battle.LastResolution.HasValue, Is.False);
+
+            Assert.That(battle.TryPlayerStand(), Is.True);
+
+            Assert.That(battle.LastResolution.HasValue, Is.True);
+            Assert.That(battle.LastResolution.Value.Outcome, Is.EqualTo(RoundOutcome.PlayerBust));
+            Assert.That(battle.LastResolution.Value.Cause, Is.EqualTo(RoundEndCause.NumericBust));
         }
 
         [Test]

@@ -45,9 +45,7 @@ namespace DiaBlackJack.CoreLoop
 
         public BlackjackCard SourceCard { get; }
 
-        public HandValue ActorHandValue => Actor.HandValue;
-
-        public HandValue OpponentHandValue => Opponent.HandValue;
+        public HandValue ActorVisibleHandValue => Actor.VisibleHandValue;
 
         public HandValue OpponentVisibleHandValue => Opponent.VisibleHandValue;
 
@@ -164,12 +162,18 @@ namespace DiaBlackJack.CoreLoop
             return CreateOpponentCardEffectBustResolution();
         }
 
-        public RoundResolution CreateCurrentNumericResolution()
+        public RoundResolution CreateActorNumericBustResolution()
         {
-            return RoundResolver.Resolve(
+            return RoundResolver.ResolveNumericBust(
                 _battle.RoundNumber,
-                _battle.Player.Hand.Cards,
-                _battle.Enemy.Hand.Cards);
+                playerIsTarget: ActorSide == CombatantSide.Player);
+        }
+
+        public RoundResolution CreateOpponentNumericBustResolution()
+        {
+            return RoundResolver.ResolveNumericBust(
+                _battle.RoundNumber,
+                playerIsTarget: ActorSide == CombatantSide.Enemy);
         }
     }
 

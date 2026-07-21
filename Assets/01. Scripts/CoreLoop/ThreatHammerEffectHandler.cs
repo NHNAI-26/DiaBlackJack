@@ -63,11 +63,11 @@ namespace DiaBlackJack.CoreLoop
                     "Threat hammer could not replace the standing enemy hidden card.");
             }
 
-            bool endedRound = context.OpponentHandValue.IsBust;
+            bool endedRound = context.OpponentVisibleHandValue.IsBust;
             return endedRound
                 ? CardEffectStep.Complete(
                     CreateResult(context, endedRound: true),
-                    context.CreateCurrentNumericResolution())
+                    context.CreateOpponentNumericBustResolution())
                 : Complete(context, endedRound: false);
         }
 

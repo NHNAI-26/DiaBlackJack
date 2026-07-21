@@ -2,28 +2,8 @@ using System;
 
 namespace DiaBlackJack.CoreLoop
 {
-    internal interface IForcedDrawRetentionPolicy
-    {
-        bool ShouldKeep(HandValue enemyHandAfterDraw, BlackjackCard drawnCard);
-    }
-
-    internal sealed class SimpleForcedDrawRetentionPolicy : IForcedDrawRetentionPolicy
-    {
-        public bool ShouldKeep(HandValue enemyHandAfterDraw, BlackjackCard drawnCard)
-        {
-            return true;
-        }
-    }
-
     internal sealed class MilitaryKnifeEffectHandler : ICardEffectHandler
     {
-        private readonly IForcedDrawRetentionPolicy _retentionPolicy;
-
-        public MilitaryKnifeEffectHandler(IForcedDrawRetentionPolicy retentionPolicy = null)
-        {
-            _retentionPolicy = retentionPolicy ?? new SimpleForcedDrawRetentionPolicy();
-        }
-
         public CardEffectKind EffectKind => CardEffectKind.MilitaryKnife;
 
         public bool CanStart(CardEffectContext context)
@@ -41,15 +21,14 @@ namespace DiaBlackJack.CoreLoop
             }
 
             BlackjackCard drawnCard = context.ForceOpponentDrawFaceUp();
-            if (context.OpponentHandValue.IsBust)
+            if (context.OpponentVisibleHandValue.IsBust)
             {
                 return CardEffectStep.Complete(
                     CreateResult(context, endedRound: true),
-                    context.CreateCurrentNumericResolution());
+                    context.CreateOpponentNumericBustResolution());
             }
 
-            if (!_retentionPolicy.ShouldKeep(context.OpponentHandValue, drawnCard) &&
-                !context.TryDiscardOpponentCard(drawnCard.Id))
+            if (!context.TryDiscardOpponentCard(drawnCard.Id))
             {
                 throw new InvalidOperationException(
                     "Military knife could not discard the forced draw card.");

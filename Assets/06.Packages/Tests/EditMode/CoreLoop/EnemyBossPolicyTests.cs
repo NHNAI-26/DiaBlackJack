@@ -220,7 +220,10 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(battle.LastEnemyDecision.ActionType, Is.EqualTo(EnemyActionType.UseCard));
             Assert.That(knife.UseState, Is.EqualTo(CardUseState.Used));
-            Assert.That(battle.Player.Hand.Cards.Last().Rank, Is.EqualTo(10));
+            Assert.That(battle.Player.Hand.Cards.Last().Rank, Is.EqualTo(2));
+            Assert.That(
+                battle.Player.Deck.GetDiscardedCards().Select(card => card.Rank),
+                Does.Contain(10));
             Assert.That(battle.LastCardEffectActorSide, Is.EqualTo(CombatantSide.Enemy));
             Assert.That(
                 battle.LastCardEffectResult.Value.EffectKind,

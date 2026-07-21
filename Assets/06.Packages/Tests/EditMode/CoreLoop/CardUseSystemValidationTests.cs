@@ -115,7 +115,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 playerMaximumSoul: 12,
                 enemyMaximumSoul: 1,
                 playerRanks: new[] { 2, 9 },
-                enemyRanks: new[] { 10, 5, 10 });
+                enemyRanks: new[] { 10, 2, 6, 10 });
             Assert.That(session.TryStartRun(), Is.True);
 
             for (int iteration = 0; iteration < 10; iteration++)
@@ -123,6 +123,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 CoreLoopBattle battle = session.Battle;
                 BlackjackCard sourceCard = battle.Player.Hand.Cards.Single(
                     card => card.Rank == 9);
+                battle.Enemy.Draw(faceUp: true);
                 Assert.That(sourceCard.UseState, Is.EqualTo(CardUseState.Available));
                 Assert.That(battle.Player.Soul.Current, Is.EqualTo(12));
 
