@@ -36,6 +36,7 @@ CBUFFER_START(UnityPerMaterial)
     half _DissolveEdgeWidth;
     half _DissolveEdgeIntensity;
     half _Surface;
+    half _Cull;
 CBUFFER_END
 
 TEXTURE2D(_MetallicMap);

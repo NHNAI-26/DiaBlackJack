@@ -102,7 +102,12 @@ inline void NHNInitializeInputData(NHNForwardVaryings input, half3 normalTS, out
     inputData.shadowMask = SAMPLE_SHADOWMASK(input.staticLightmapUV);
 }
 
+#if defined(NHN_SPRITE_UBER)
+half4 NHNUberLitFragment(NHNForwardVaryings input,
+    FRONT_FACE_TYPE frontFace : FRONT_FACE_SEMANTIC) : SV_Target
+#else
 half4 NHNUberLitFragment(NHNForwardVaryings input) : SV_Target
+#endif
 {
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -110,6 +115,16 @@ half4 NHNUberLitFragment(NHNForwardVaryings input) : SV_Target
     half dissolveEdge;
 #if defined(NHN_SPRITE_UBER)
     InitializeNHNUberLitSurfaceData(input.rawUV, input.color, surfaceData, dissolveEdge);
+    // Both (Cull Off): choose the outward normal per fragment.
+    // Back face (Cull Front): use the reversed planar normal.
+    // Front face (Cull Back): use the authored planar normal.
+    half faceSign = (_Cull < 0.5h)
+        ? IS_FRONT_VFACE(frontFace, 1.0h, -1.0h)
+        : ((_Cull < 1.5h) ? -1.0h : 1.0h);
+    input.normalWS *= faceSign;
+    #if defined(_NORMALMAP)
+        input.tangentWS.w *= faceSign;
+    #endif
 #else
     InitializeNHNUberLitSurfaceData(input.rawUV, surfaceData, dissolveEdge);
 #endif

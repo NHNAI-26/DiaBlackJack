@@ -10,7 +10,11 @@ Shader "Shader/Sprite Uber Lit"
         [Sub(Surface_ALPHATEST_ON)] _Cutoff("Threshold", Range(0,1)) = 0.5
         [SubToggle(Surface, _)] _ReceiveShadows("Receive Shadows", Float) = 1
         [SubToggle(Surface, _)] _CastShadows("Cast Shadows", Float) = 1
-        [KWEnum(Surface, Both, _, Front, _, Back, _)] _Cull("Render Face", Float) = 0
+        // CullMode.Front (1) leaves the back face visible; CullMode.Back (2)
+        // leaves the front face visible. Keep the displayed face labels aligned
+        // with what is actually rendered.
+        [KWEnum(Surface, Both, _, Back, _, Front, _)] _Cull("Render Face", Float) = 0
+        [Enum(UnityEngine.Rendering.CullMode)] _ShadowCull("Shadow Face", Float) = 2
         [Sub(Surface)] _QueueOffset("Sorting Priority", Range(-50,50)) = 0
 
         [Main(SurfaceInputs, _, on, off)] _SurfaceInputs("Surface Inputs", Float) = 1
@@ -76,7 +80,7 @@ Shader "Shader/Sprite Uber Lit"
             AlphaToMask [_AlphaToMask]
             HLSLPROGRAM
             #define NHN_SPRITE_UBER 1
-            #pragma target 2.0
+            #pragma target 3.0
             #pragma vertex NHNUberLitVertex
             #pragma fragment NHNUberLitFragment
             #pragma shader_feature_local _NORMALMAP
@@ -118,7 +122,7 @@ Shader "Shader/Sprite Uber Lit"
             ZWrite On
             ZTest LEqual
             ColorMask 0
-            Cull [_Cull]
+            Cull [_ShadowCull]
             HLSLPROGRAM
             #define NHN_SPRITE_UBER 1
             #pragma target 2.0
