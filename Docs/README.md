@@ -27,10 +27,14 @@
 | [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | 현행 규칙 이관 완료 v0.2 |
 | [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 이력과 현행 규칙 이관 결과 | 현행 규칙 이관 완료 v0.2 |
 | [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | 현행 규칙 이관 완료 v0.2 |
-| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | 해머 현행 규칙 이관 완료 v0.4 |
-| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M01 검증 완료 v0.2 |
-| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01 작업 순서와 단계별 검증 게이트 | 해머 이관 완료 v0.2 |
-| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M01 완료 |
+| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | CU-M03 현행 기준 v0.5 |
+| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M03 검증 완료 v0.3 |
+| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M03 작업 순서와 단계별 검증 게이트 | CU-M03 완료 v0.3 |
+| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M03 완료 |
+| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속·우선 악마 4종의 프로토타입 규칙 | DC-00 기준안 v0.1 |
+| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·테스트 명세 | DC-01 착수 가능 v0.1 |
+| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-07 구현 순서와 단계별 검증 게이트 | DC-00 완료 v0.1 |
+| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | DC-00 완료, 구현 미착수 |
 | [battle-reward-design.md](./battle-reward-design.md) | 일반·엘리트·보스 전투 보상 규칙과 프로토타입 카드 풀 | RW-00~RW-05 완료 v0.1 |
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW-05 최종 검증 완료 v0.1 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
@@ -62,6 +66,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-22 | 이천서 | 카드 사용 문서 상태를 CU-M03 기준으로 정리하고 악마 계약 DC-00 기획·개발 명세·구현 계획·진행 기록 4종 수립 |
 | 2026-07-22 | 이천서 | 상점을 일반 카드 3장·악마 카드 2장, `SOLD OUT`, 라이터·위스키 1회 서비스로 구체화하고 화면 콘셉트 추가 |
 | 2026-07-22 | 이천서 | 독극물을 즉시 스탠드 또는 영혼 베팅으로, 루시퍼를 무작위 악마 카드 5개 선택·영혼 1 대가로 확정 |
 | 2026-07-22 | 이천서 | 위협용 해머의 상대 공개 카드 제거 규칙을 코드·적 AI·GameScene 표시·자동 테스트에 이관하고 전체 EditMode 308/308을 확인 |
