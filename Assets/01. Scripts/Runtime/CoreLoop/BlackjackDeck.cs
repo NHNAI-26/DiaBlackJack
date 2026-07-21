@@ -76,6 +76,27 @@ namespace DiaBlackJack.CoreLoop
             return Array.AsReadOnly((int[])_knownRankCounts.Clone());
         }
 
+        /// <summary>
+        /// Count of each rank still in the deck (draw pile + discard pile — i.e. every card not
+        /// currently in a hand or in play), indexed by rank 1..10 (index 0 unused). Composition only:
+        /// draw order is deliberately not exposed. For the "view remaining deck" UI.
+        /// </summary>
+        public IReadOnlyList<int> GetRemainingRankCounts()
+        {
+            int[] counts = new int[11];
+            foreach (BlackjackCard card in _drawPile)
+            {
+                counts[card.Rank]++;
+            }
+
+            foreach (BlackjackCard card in _discardPile)
+            {
+                counts[card.Rank]++;
+            }
+
+            return Array.AsReadOnly(counts);
+        }
+
         public static BlackjackDeck CreateStandard(int seed)
         {
             var cards = new List<BlackjackCard>(20);

@@ -25,6 +25,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private CardHand enemyHand;
         [SerializeField] private CharacterView playerCharacter;
         [SerializeField] private CharacterView enemyCharacter;
+        [SerializeField] private TableTotalsView totals;
 
         [Header("Presentation pacing")]
         [SerializeField] private float stepSeconds = 1.0f;
@@ -38,6 +39,8 @@ namespace DiaBlackJack.GameScene
         private int _battleIndex;
         private GUIStyle _buttonStyle;
         private GUIStyle _labelStyle;
+        private GUIStyle _panelStyle;
+        private bool _deckPanelOpen;
         private readonly List<GameSceneViewModel> _timeline = new List<GameSceneViewModel>();
 
         public CoreLoopBattle Battle => _session?.Battle;
@@ -62,10 +65,14 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            CardView pointed = RaycastCard();
+            bool hasHit = RaycastPointer(out RaycastHit hit);
+            CardView pointed = hasHit ? hit.collider.GetComponentInParent<CardView>() : null;
 
             // Hover is visual-only, so it runs even while input is locked (during timeline playback).
             UpdateHover(pointed);
+
+            // The remaining-cards panel shows while the pointer hovers the deck (not on click).
+            _deckPanelOpen = hasHit && hit.collider.GetComponentInParent<DeckClickable>() != null;
 
             if (_inputLocked)
             {
@@ -85,8 +92,9 @@ namespace DiaBlackJack.GameScene
             }
         }
 
-        private CardView RaycastCard()
+        private bool RaycastPointer(out RaycastHit hit)
         {
+            hit = default;
             if (_camera == null)
             {
                 _camera = Camera.main;
@@ -95,13 +103,11 @@ namespace DiaBlackJack.GameScene
             Mouse mouse = Mouse.current;
             if (_camera == null || mouse == null)
             {
-                return null;
+                return false;
             }
 
             Ray ray = _camera.ScreenPointToRay(mouse.position.ReadValue());
-            return Physics.Raycast(ray, out RaycastHit hit, 200f)
-                ? hit.collider.GetComponentInParent<CardView>()
-                : null;
+            return Physics.Raycast(ray, out hit, 200f);
         }
 
         private void UpdateHover(CardView pointed)
@@ -147,6 +153,11 @@ namespace DiaBlackJack.GameScene
                 alignment = TextAnchor.MiddleCenter,
                 normal = { textColor = Color.white }
             };
+
+            if (_deckPanelOpen)
+            {
+                DrawDeckPanel();
+            }
 
             if (_core.State == CoreLoopState.BattleEnded)
             {
@@ -240,6 +251,23 @@ namespace DiaBlackJack.GameScene
                     }
                 }
             }
+        }
+
+        private void DrawDeckPanel()
+        {
+            _panelStyle ??= new GUIStyle(GUI.skin.box)
+            {
+                fontSize = 20,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.UpperCenter,
+                padding = new RectOffset(18, 18, 18, 18),
+                normal = { textColor = Color.white }
+            };
+
+            const float w = 430f;
+            const float h = 200f;
+            var rect = new Rect(28f, (Screen.height - h) * 0.5f, w, h);
+            GUI.Box(rect, GameScenePresenter.FormatRemainingDeck(Battle), _panelStyle);
         }
 
         private void DrawHeading(string text)
@@ -344,6 +372,11 @@ namespace DiaBlackJack.GameScene
             if (enemyCharacter != null)
             {
                 enemyCharacter.Render(vm.EnemyVisual, vm.EnemyActionLabel);
+            }
+
+            if (totals != null)
+            {
+                totals.Render(vm.Core.PlayerTotal, vm.Core.EnemyVisibleTotal);
             }
         }
 
