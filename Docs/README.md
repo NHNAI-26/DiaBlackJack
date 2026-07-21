@@ -2,7 +2,7 @@
 
 > 프로젝트: DiaBlackJack  
 > 문서 책임자: 이천서  
-> 최종 갱신: 2026-07-21
+> 최종 갱신: 2026-07-22
 
 이 디렉터리는 게임 규칙, 기획, 개발 명세, AI 활용, 외부 출처 및 팀 기여 기록을 관리한다.
 
@@ -43,11 +43,11 @@
 | [enemy-selection-combat-ui-development-spec.md](./enemy-selection-combat-ui-development-spec.md) | 후보 생성·선택 상태·전투 변환·안전 표시 스냅샷과 테스트 명세 | EUI-05 최종 검증 완료 v0.1 |
 | [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI-00~EUI-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
 | [enemy-selection-combat-ui-progress-log.md](./enemy-selection-combat-ui-progress-log.md) | 상대 선택·적 전투 정보 UI 결정·구현·검증 누적 기록 | EUI-05 완료 v0.1 |
-| [formal-run-flow-design.md](./formal-run-flow-design.md) | 골드·상점과 `전투→이벤트→전투→이벤트→보스` 정식 진행 규칙 | 현행 상점 기획 v0.2·기술 이관 필요 |
+| [formal-run-flow-design.md](./formal-run-flow-design.md) | 골드·상점과 `전투→이벤트→전투→이벤트→보스` 정식 진행 규칙 | 현행 상점 기획 v0.3·기술 이관 필요 |
 | [formal-run-flow-development-spec.md](./formal-run-flow-development-spec.md) | 골드 정산·상점 거래·정식 런 조정 API와 테스트 명세 | RF-01 착수 가능 v0.1 |
 | [formal-run-flow-implementation-plan.md](./formal-run-flow-implementation-plan.md) | RF-00~RF-05 HONG 인수인계 작업 순서와 검증 게이트 | RF-00 완료 v0.1 |
 | [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | RF-00 완료 v0.1 |
-| [scene-presentation-design.md](./scene-presentation-design.md) | 2.5D 술집 테이블의 씬 흐름·월드 오브젝트·UI·상점 전환 기획 | 현행 기준안 v0.2 |
+| [scene-presentation-design.md](./scene-presentation-design.md) | 2.5D 술집 테이블의 씬 흐름·월드 오브젝트·UI·상점 전환 기획 | 현행 기준안 v0.3 |
 
 ## 기록 원칙
 
@@ -62,6 +62,8 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-22 | 이천서 | 상점을 일반 카드 3장·악마 카드 2장, `SOLD OUT`, 라이터·위스키 1회 서비스로 구체화하고 화면 콘셉트 추가 |
+| 2026-07-22 | 이천서 | 독극물을 즉시 스탠드 또는 영혼 베팅으로, 루시퍼를 무작위 악마 카드 5개 선택·영혼 1 대가로 확정 |
 | 2026-07-21 | 이천서 | 위협용 해머를 상대 공개 카드 제거 효과로 바로잡고, 폴드에 의존했던 독극물·루시퍼를 재설계 전까지 제외한 뒤 전체 카드를 개별 재검토 |
 | 2026-07-21 | 이천서 | 계약을 전투 스테이지당 원칙적으로 1회로 제한하고 일반·악마 카드 덱을 분리했으며, 상점을 판매 카드 5장·개별 재고·새로고침 없음·1회 휴식으로 확정하고 가격·회복량은 미정으로 유지 |
 | 2026-07-21 | 이천서 | 폴드를 플레이어·적 행동에서 삭제하고 체인지 비용을 전투 내 `0→1→2→3…` 영혼 누적·다음 전투 초기화 방식으로 변경 |
