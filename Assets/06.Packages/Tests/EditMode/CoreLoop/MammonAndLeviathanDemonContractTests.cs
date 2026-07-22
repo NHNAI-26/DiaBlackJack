@@ -146,7 +146,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DC04_U06_LeviathanRunsOnlyAfterFailedPistolAndBustsHiddenTotal()
+        public void DC04_U06_LeviathanIgnoresHiddenTotalBeforeShowdown()
         {
             var enemyPolicy = new SequenceEnemyPolicy(EnemyActionType.Hit);
             CoreLoopBattle battle = CreateLeviathanBattle(
@@ -160,15 +160,14 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(battle.LastCardEffectResult.Value.Succeeded, Is.False);
             Assert.That(hiddenEnemyCard.IsFaceUp, Is.False);
-            Assert.That(battle.LastResolution.Value.Cause,
-                Is.EqualTo(RoundEndCause.ContractEffectBust));
-            Assert.That(battle.LastResolution.Value.SourceCardKey, Is.Null);
-            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(2));
+            Assert.That(battle.LastResolution, Is.Null);
+            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(3));
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(10));
             Assert.That(battle.LastDemonContractEffectResult.Triggered, Is.True);
             Assert.That(battle.LastDemonContractEffectResult.BustedTarget,
-                Is.EqualTo(CombatantSide.Enemy));
-            Assert.That(battle.LastDemonContractEffectResult.PaidSoulCost, Is.Zero);
-            Assert.That(enemyPolicy.DecisionCount, Is.EqualTo(1));
+                Is.Null);
+            Assert.That(battle.LastDemonContractEffectResult.PaidSoulCost, Is.EqualTo(1));
+            Assert.That(enemyPolicy.DecisionCount, Is.EqualTo(2));
         }
 
         [Test]

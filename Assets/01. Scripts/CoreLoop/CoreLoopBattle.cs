@@ -14,6 +14,8 @@ namespace DiaBlackJack.CoreLoop
     {
         public const int BasePlayerDemonContractSoulCost = 1;
         public const int BasePlayerDemonContractUseLimit = 1;
+        public const int BaseEnemyDemonContractSoulCost = 1;
+        public const int BaseEnemyDemonContractUseLimit = 1;
 
         private static readonly IReadOnlyList<BlackjackCard> NoChangeCandidates =
             Array.AsReadOnly(Array.Empty<BlackjackCard>());
@@ -23,6 +25,8 @@ namespace DiaBlackJack.CoreLoop
         private readonly DemonContractResolver _demonContractResolver;
         private readonly RoundDamageApplier _damageApplier = new RoundDamageApplier();
         private readonly List<ActiveDemonContract> _activePlayerDemonContracts =
+            new List<ActiveDemonContract>();
+        private readonly List<ActiveDemonContract> _activeEnemyDemonContracts =
             new List<ActiveDemonContract>();
         private readonly List<PublicCombatAction> _publicActionHistory =
             new List<PublicCombatAction>();
@@ -36,6 +40,11 @@ namespace DiaBlackJack.CoreLoop
         private PlayerDemonContractPreview _playerDemonContractPreview;
         private IReadOnlyList<DemonContractCard> _playerDemonContractCandidates;
         private int _playerDemonContractSoulAfterCost;
+        private PendingDemonContractInteraction _pendingEnemyDemonContractInteraction;
+        private PlayerDemonContractPreview _enemyDemonContractPreview;
+        private IReadOnlyList<DemonContractCard> _enemyDemonContractCandidates;
+        private int _enemyDemonContractSoulAfterCost;
+        private int _playerFinalBonusForEnemyChoice;
         private PlayerChangeSelection _playerChangeSelection;
 
         public CoreLoopBattle(
@@ -44,7 +53,8 @@ namespace DiaBlackJack.CoreLoop
             int playerMaximumSoul = 12,
             int enemyMaximumSoul = 3,
             IEnemyBehaviorPolicy enemyPolicy = null,
-            DemonContractDeck playerDemonDeck = null)
+            DemonContractDeck playerDemonDeck = null,
+            DemonContractDeck enemyDemonDeck = null)
             : this(
                 playerDeck,
                 enemyDeck,
@@ -52,7 +62,8 @@ namespace DiaBlackJack.CoreLoop
                 playerMaximumSoul,
                 enemyMaximumSoul,
                 enemyPolicy,
-                playerDemonDeck)
+                playerDemonDeck,
+                enemyDemonDeck)
         {
         }
 
@@ -63,7 +74,8 @@ namespace DiaBlackJack.CoreLoop
             int playerCurrentSoul,
             int enemyMaximumSoul,
             IEnemyBehaviorPolicy enemyPolicy = null,
-            DemonContractDeck playerDemonDeck = null)
+            DemonContractDeck playerDemonDeck = null,
+            DemonContractDeck enemyDemonDeck = null)
             : this(
                 playerDeck,
                 enemyDeck,
@@ -72,7 +84,8 @@ namespace DiaBlackJack.CoreLoop
                 enemyMaximumSoul,
                 enemyPolicy,
                 CardEffectResolver.CreateDefault(),
-                playerDemonDeck)
+                playerDemonDeck,
+                enemyDemonDeck: enemyDemonDeck)
         {
         }
 
@@ -85,11 +98,14 @@ namespace DiaBlackJack.CoreLoop
             IEnemyBehaviorPolicy enemyPolicy,
             CardEffectResolver cardEffectResolver,
             DemonContractDeck playerDemonDeck = null,
-            DemonContractResolver demonContractResolver = null)
+            DemonContractResolver demonContractResolver = null,
+            DemonContractDeck enemyDemonDeck = null)
         {
             Player = new BattleParticipant(playerDeck, playerMaximumSoul, playerCurrentSoul);
             Enemy = new BattleParticipant(enemyDeck, enemyMaximumSoul);
             PlayerDemonDeck = playerDemonDeck ??
+                new DemonContractDeck(Array.Empty<DemonContractCard>(), seed: 0);
+            EnemyDemonDeck = enemyDemonDeck ??
                 new DemonContractDeck(Array.Empty<DemonContractCard>(), seed: 0);
             _enemyPolicy = enemyPolicy ?? new SimpleEnemyPolicy();
             _cardEffectResolver = cardEffectResolver ??
@@ -102,6 +118,8 @@ namespace DiaBlackJack.CoreLoop
         public BattleParticipant Player { get; }
 
         public DemonContractDeck PlayerDemonDeck { get; }
+
+        public DemonContractDeck EnemyDemonDeck { get; }
 
         public BattleParticipant Enemy { get; }
 
@@ -136,6 +154,14 @@ namespace DiaBlackJack.CoreLoop
                 this,
                 _activePlayerDemonContracts);
 
+        public bool CanEnemyStand =>
+            State == CoreLoopState.EnemyTurn &&
+            !Enemy.IsStanding &&
+            _demonContractResolver.CanOwnerStand(
+                this,
+                _activeEnemyDemonContracts,
+                CombatantSide.Enemy);
+
         public bool CanBeginPlayerChange =>
             CanPlayerAct &&
             _playerChangeSelection == null &&
@@ -162,7 +188,12 @@ namespace DiaBlackJack.CoreLoop
         public IReadOnlyList<ActiveDemonContract> ActivePlayerDemonContracts =>
             _activePlayerDemonContracts.AsReadOnly();
 
+        public IReadOnlyList<ActiveDemonContract> ActiveEnemyDemonContracts =>
+            _activeEnemyDemonContracts.AsReadOnly();
+
         public int UsedPlayerBaseDemonContractCount { get; private set; }
+
+        public int UsedEnemyBaseDemonContractCount { get; private set; }
 
         public DemonContractResult LastDemonContractResult { get; private set; }
 
@@ -173,6 +204,12 @@ namespace DiaBlackJack.CoreLoop
 
         public PlayerDemonContractPreview PlayerDemonContractPreview =>
             _playerDemonContractPreview;
+
+        public PendingDemonContractInteraction PendingEnemyDemonContractInteraction =>
+            _pendingEnemyDemonContractInteraction;
+
+        internal PlayerDemonContractPreview EnemyDemonContractPreview =>
+            _enemyDemonContractPreview;
 
         public DemonContractAvailability PlayerDemonContractAvailability
         {
@@ -187,6 +224,24 @@ namespace DiaBlackJack.CoreLoop
                 return new DemonContractAvailability(
                     EvaluatePlayerDemonContractFailureReason(),
                     BasePlayerDemonContractSoulCost,
+                    soulAfterCost,
+                    remainingBaseUses);
+            }
+        }
+
+        public DemonContractAvailability EnemyDemonContractAvailability
+        {
+            get
+            {
+                int remainingBaseUses = Math.Max(
+                    0,
+                    BaseEnemyDemonContractUseLimit - UsedEnemyBaseDemonContractCount);
+                int soulAfterCost = Math.Max(
+                    0,
+                    Enemy.Soul.Current - BaseEnemyDemonContractSoulCost);
+                return new DemonContractAvailability(
+                    EvaluateEnemyDemonContractFailureReason(),
+                    BaseEnemyDemonContractSoulCost,
                     soulAfterCost,
                     remainingBaseUses);
             }
@@ -303,6 +358,280 @@ namespace DiaBlackJack.CoreLoop
                 default:
                     throw new ArgumentOutOfRangeException(nameof(pending));
             }
+        }
+
+        private bool TryBeginEnemyDemonContract()
+        {
+            DemonContractAvailability availability = EnemyDemonContractAvailability;
+            if (!availability.CanBegin)
+            {
+                return false;
+            }
+
+            Enemy.Soul.ApplyDamage(availability.SoulCost);
+            UsedEnemyBaseDemonContractCount = checked(
+                UsedEnemyBaseDemonContractCount + 1);
+            _enemyDemonContractSoulAfterCost = Enemy.Soul.Current;
+            _enemyDemonContractCandidates = EnemyDemonDeck.TakeCandidates();
+            if (_enemyDemonContractCandidates.Count != DemonContractDeck.CandidateCount)
+            {
+                throw new InvalidOperationException(
+                    "Validated enemy demon contract deck returned an invalid candidate count.");
+            }
+
+            int interactionId = TakeNextDemonContractInteractionId();
+            _pendingEnemyDemonContractInteraction = CreateContractChoiceInteraction(
+                interactionId,
+                _enemyDemonContractCandidates);
+            RaiseStepped();
+            return true;
+        }
+
+        private bool TryResolveEnemyDemonContract(
+            int optionId,
+            out bool completedOwnerAction)
+        {
+            completedOwnerAction = false;
+            PendingDemonContractInteraction pending =
+                _pendingEnemyDemonContractInteraction;
+            if (State != CoreLoopState.EnemyTurn ||
+                pending == null ||
+                !pending.TryGetOption(optionId, out DemonContractOption selectedOption))
+            {
+                return false;
+            }
+
+            switch (pending.Kind)
+            {
+                case DemonContractInteractionKind.ChooseContract:
+                    completedOwnerAction = true;
+                    return TryResolveEnemyContractChoice(pending, selectedOption);
+                case DemonContractInteractionKind.BelphegorTopCard:
+                    completedOwnerAction = true;
+                    return TryResolveEnemyBelphegorTopCard(pending, selectedOption);
+                case DemonContractInteractionKind.MammonReroll:
+                    return TryResolveEnemyMammonReroll(pending, selectedOption);
+                case DemonContractInteractionKind.MammonApplyDie:
+                    return TryResolveEnemyMammonFinalChoice(pending, selectedOption);
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(pending));
+            }
+        }
+
+        private bool TryResolveEnemyContractChoice(
+            PendingDemonContractInteraction pending,
+            DemonContractOption selectedOption)
+        {
+            if (_enemyDemonContractCandidates == null ||
+                !selectedOption.ContractCardId.HasValue)
+            {
+                return false;
+            }
+
+            DemonContractCard selectedCard = null;
+            var discardedCards = new List<DemonContractCard>(
+                DemonContractDeck.CandidateCount - 1);
+            foreach (DemonContractCard candidate in _enemyDemonContractCandidates)
+            {
+                if (candidate.Id == selectedOption.ContractCardId.Value)
+                {
+                    selectedCard = candidate;
+                }
+                else
+                {
+                    discardedCards.Add(candidate);
+                }
+            }
+
+            if (selectedCard == null ||
+                discardedCards.Count != DemonContractDeck.CandidateCount - 1)
+            {
+                return false;
+            }
+
+            EnemyDemonDeck.Discard(discardedCards);
+            var activeContract = new ActiveDemonContract(
+                selectedCard,
+                CombatantSide.Enemy,
+                new EmptyDemonContractRuntimeState());
+            _activeEnemyDemonContracts.Add(activeContract);
+            ClearEnemyDemonContractInteraction();
+            activeContract.SetRuntimeState(
+                _demonContractResolver.Activate(this, activeContract));
+            RecordPublicAction(
+                CombatantSide.Enemy,
+                PublicCombatActionType.DemonContract,
+                activeContract.Definition.Key);
+
+            bool enemyDepleted = Enemy.Soul.IsDepleted;
+            LastDemonContractResult = new DemonContractResult(
+                pending.InteractionId,
+                activeContract,
+                BaseEnemyDemonContractSoulCost,
+                _enemyDemonContractSoulAfterCost,
+                Enemy.Soul.Current,
+                endedBattle: enemyDepleted);
+
+            if (activeContract.RuntimeState is MammonRuntimeState mammonState &&
+                mammonState.CurrentDieValue == 6 &&
+                !PreventsEnemyBust())
+            {
+                LastDemonContractEffectResult = new DemonContractEffectResult(
+                    triggered: true,
+                    bustedTarget: CombatantSide.Enemy,
+                    paidSoulCost: 0);
+                CompleteRound(RoundResolver.ResolveContractEffectBust(
+                    RoundNumber,
+                    playerIsTarget: false));
+                return true;
+            }
+
+            if (enemyDepleted)
+            {
+                EndBattleWithoutRound();
+                return true;
+            }
+
+            State = CoreLoopState.EnemyTurn;
+            RaiseStepped();
+            return true;
+        }
+
+        private bool TryBeginEnemyBelphegorTopCardPreview(
+            ActiveDemonContract previewContract)
+        {
+            if (previewContract == null ||
+                previewContract.Kind != DemonContractKind.Belphegor ||
+                !Enemy.Deck.TryPeekTop(out BlackjackCard previewCard))
+            {
+                return false;
+            }
+
+            int interactionId = TakeNextDemonContractInteractionId();
+            _pendingEnemyDemonContractInteraction =
+                CreateBelphegorTopCardInteraction(
+                    interactionId,
+                    previewContract.SourceCardId);
+            _enemyDemonContractPreview = new PlayerDemonContractPreview(
+                interactionId,
+                previewContract.SourceCardId,
+                DemonContractKind.Belphegor,
+                previewCard);
+            RaiseStepped();
+            return true;
+        }
+
+        private bool TryResolveEnemyBelphegorTopCard(
+            PendingDemonContractInteraction pending,
+            DemonContractOption selectedOption)
+        {
+            PlayerDemonContractPreview preview = _enemyDemonContractPreview;
+            if (pending.ContractKind != DemonContractKind.Belphegor ||
+                preview == null ||
+                preview.InteractionId != pending.InteractionId ||
+                preview.ContractKind != DemonContractKind.Belphegor ||
+                !TryGetPendingEnemyActiveContract(
+                    pending,
+                    DemonContractKind.Belphegor,
+                    out _))
+            {
+                return false;
+            }
+
+            switch (selectedOption.OptionId)
+            {
+                case BelphegorDemonContractHandler.KeepTopCardOptionId:
+                    ClearEnemyDemonContractInteraction();
+                    RecordPublicAction(CombatantSide.Enemy, PublicCombatActionType.Hit);
+                    BlackjackCard drawnCard = Enemy.Draw(faceUp: true);
+                    if (drawnCard.Id != preview.CardId)
+                    {
+                        throw new InvalidOperationException(
+                            "Enemy card drawn after a demon preview did not match the preview.");
+                    }
+
+                    RaiseStepped();
+                    if (Enemy.VisibleHandValue.IsBust && !PreventsEnemyBust())
+                    {
+                        CompleteRound(RoundResolver.ResolveNumericBust(
+                            RoundNumber,
+                            playerIsTarget: false));
+                    }
+
+                    return true;
+
+                case BelphegorDemonContractHandler.MoveTopCardToBottomOptionId:
+                    if (!Enemy.Deck.TryMoveTopToBottom(preview.CardId))
+                    {
+                        return false;
+                    }
+
+                    ClearEnemyDemonContractInteraction();
+                    RaiseStepped();
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
+        private bool TryResolveEnemyMammonReroll(
+            PendingDemonContractInteraction pending,
+            DemonContractOption selectedOption)
+        {
+            if (!TryGetPendingEnemyActiveContract(
+                pending,
+                DemonContractKind.Mammon,
+                out ActiveDemonContract activeContract))
+            {
+                return false;
+            }
+
+            DemonContractTurnChoiceResult result =
+                _demonContractResolver.ResolveOwnerTurnChoice(
+                    this,
+                    activeContract,
+                    selectedOption.OptionId);
+            ClearEnemyDemonContractInteraction();
+
+            if (result.OwnerBusted && !PreventsEnemyBust())
+            {
+                LastDemonContractEffectResult = new DemonContractEffectResult(
+                    triggered: true,
+                    bustedTarget: CombatantSide.Enemy,
+                    paidSoulCost: 0);
+                CompleteRound(RoundResolver.ResolveContractEffectBust(
+                    RoundNumber,
+                    playerIsTarget: false));
+                return true;
+            }
+
+            State = CoreLoopState.EnemyTurn;
+            RaiseStepped();
+            return true;
+        }
+
+        private bool TryResolveEnemyMammonFinalChoice(
+            PendingDemonContractInteraction pending,
+            DemonContractOption selectedOption)
+        {
+            if (!TryGetPendingEnemyActiveContract(
+                pending,
+                DemonContractKind.Mammon,
+                out ActiveDemonContract activeContract))
+            {
+                return false;
+            }
+
+            int enemyBonus = _demonContractResolver.ResolveOwnerFinalChoice(
+                this,
+                activeContract,
+                selectedOption.OptionId);
+            ClearEnemyDemonContractInteraction();
+            int playerBonus = _playerFinalBonusForEnemyChoice;
+            _playerFinalBonusForEnemyChoice = 0;
+            ResolveRoundWithBonuses(playerBonus, enemyBonus);
+            return true;
         }
 
         private bool TryResolveContractChoice(
@@ -435,7 +764,9 @@ namespace DiaBlackJack.CoreLoop
 
             int interactionId = TakeNextDemonContractInteractionId();
             _pendingPlayerDemonContractInteraction =
-                CreateBelphegorTopCardInteraction(interactionId);
+                CreateBelphegorTopCardInteraction(
+                    interactionId,
+                    previewContract.SourceCardId);
             _playerDemonContractPreview = new PlayerDemonContractPreview(
                 interactionId,
                 previewContract.SourceCardId,
@@ -541,7 +872,7 @@ namespace DiaBlackJack.CoreLoop
                 activeContract,
                 selectedOption.OptionId);
             ClearPlayerDemonContractInteraction();
-            ResolveRoundWithPlayerBonus(playerBonus);
+            ResolveRoundWithEnemyFinalChoice(playerBonus);
             return true;
         }
 
@@ -645,6 +976,51 @@ namespace DiaBlackJack.CoreLoop
             return DemonContractFailureReason.None;
         }
 
+        private DemonContractFailureReason EvaluateEnemyDemonContractFailureReason()
+        {
+            if (_pendingEnemyDemonContractInteraction != null ||
+                _pendingPlayerDemonContractInteraction != null ||
+                _pendingCardEffect != null ||
+                State == CoreLoopState.PlayerResolvingDemonContract ||
+                State == CoreLoopState.PlayerChoosingChangeCard ||
+                State == CoreLoopState.PlayerResolvingCardEffect)
+            {
+                return DemonContractFailureReason.PendingInteraction;
+            }
+
+            if (State == CoreLoopState.PlayerTurn)
+            {
+                return DemonContractFailureReason.NotPlayerTurn;
+            }
+
+            if (State != CoreLoopState.EnemyTurn)
+            {
+                return DemonContractFailureReason.BattleNotActive;
+            }
+
+            if (Enemy.IsStanding)
+            {
+                return DemonContractFailureReason.PlayerStanding;
+            }
+
+            if (UsedEnemyBaseDemonContractCount >= BaseEnemyDemonContractUseLimit)
+            {
+                return DemonContractFailureReason.BaseUseLimitReached;
+            }
+
+            if (Enemy.Soul.Current <= BaseEnemyDemonContractSoulCost)
+            {
+                return DemonContractFailureReason.InsufficientSoul;
+            }
+
+            if (!EnemyDemonDeck.CanTakeCandidates)
+            {
+                return DemonContractFailureReason.InsufficientCandidates;
+            }
+
+            return DemonContractFailureReason.None;
+        }
+
         private static PendingDemonContractInteraction CreateContractChoiceInteraction(
             int interactionId,
             IReadOnlyList<DemonContractCard> candidates)
@@ -670,7 +1046,8 @@ namespace DiaBlackJack.CoreLoop
         }
 
         private static PendingDemonContractInteraction CreateBelphegorTopCardInteraction(
-            int interactionId)
+            int interactionId,
+            int sourceContractCardId)
         {
             var options = new[]
             {
@@ -691,7 +1068,8 @@ namespace DiaBlackJack.CoreLoop
                 DemonContractInteractionKind.BelphegorTopCard,
                 DemonContractKind.Belphegor,
                 options,
-                "확인한 덱 위 카드를 처리하십시오.");
+                "확인한 덱 위 카드를 처리하십시오.",
+                sourceContractCardId);
         }
 
         private static PendingDemonContractInteraction CreateMammonRerollInteraction(
@@ -801,10 +1179,46 @@ namespace DiaBlackJack.CoreLoop
             return false;
         }
 
+        private bool TryGetPendingEnemyActiveContract(
+            PendingDemonContractInteraction pending,
+            DemonContractKind kind,
+            out ActiveDemonContract activeContract)
+        {
+            if (pending == null ||
+                pending.ContractKind != kind ||
+                !pending.SourceContractCardId.HasValue)
+            {
+                activeContract = null;
+                return false;
+            }
+
+            foreach (ActiveDemonContract candidate in _activeEnemyDemonContracts)
+            {
+                if (candidate.SourceCardId == pending.SourceContractCardId.Value &&
+                    candidate.Kind == kind &&
+                    candidate.OwnerSide == CombatantSide.Enemy)
+                {
+                    activeContract = candidate;
+                    return true;
+                }
+            }
+
+            activeContract = null;
+            return false;
+        }
+
         private void ClearPlayerDemonContractInteraction()
         {
             _pendingPlayerDemonContractInteraction = null;
             _playerDemonContractPreview = null;
+            _playerDemonContractCandidates = null;
+        }
+
+        private void ClearEnemyDemonContractInteraction()
+        {
+            _pendingEnemyDemonContractInteraction = null;
+            _enemyDemonContractPreview = null;
+            _enemyDemonContractCandidates = null;
         }
 
         internal CardUseAvailability EvaluatePlayerCardUse(int cardId)
@@ -830,7 +1244,9 @@ namespace DiaBlackJack.CoreLoop
                 case CombatantSide.Player:
                     return CanPlayerAct;
                 case CombatantSide.Enemy:
-                    return State == CoreLoopState.EnemyTurn && !Enemy.IsStanding;
+                    return State == CoreLoopState.EnemyTurn &&
+                        !Enemy.IsStanding &&
+                        _pendingEnemyDemonContractInteraction == null;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(actorSide));
             }
@@ -990,8 +1406,7 @@ namespace DiaBlackJack.CoreLoop
 
             RoundResolution? roundResolution = step.RoundResolution;
             if (roundResolution.HasValue &&
-                roundResolution.Value.Outcome == RoundOutcome.PlayerBust &&
-                PreventsPlayerBust())
+                IsBustPrevented(roundResolution.Value))
             {
                 result = new CardEffectResult(
                     result.SourceCardId,
@@ -1021,23 +1436,39 @@ namespace DiaBlackJack.CoreLoop
                 return CardEffectApplicationResult.RoundEnded;
             }
 
-            if (actorSide == CombatantSide.Player &&
-                _demonContractResolver.TryResolvePlayerAfterCardEffect(
+            IReadOnlyList<ActiveDemonContract> ownerContracts =
+                actorSide == CombatantSide.Player
+                    ? _activePlayerDemonContracts
+                    : _activeEnemyDemonContracts;
+            if (_demonContractResolver.TryResolveOwnerAfterCardEffect(
                     this,
-                    _activePlayerDemonContracts,
+                    ownerContracts,
+                    actorSide,
                     result,
                     out DemonContractAfterCardEffectStep contractStep))
             {
-                LastDemonContractEffectResult = contractStep.Result;
+                RoundResolution? contractResolution = contractStep.RoundResolution;
+                DemonContractEffectResult contractResult = contractStep.Result;
+                if (contractResolution.HasValue &&
+                    IsBustPrevented(contractResolution.Value))
+                {
+                    contractResolution = null;
+                    contractResult = new DemonContractEffectResult(
+                        triggered: true,
+                        bustedTarget: null,
+                        contractResult.PaidSoulCost);
+                }
+
+                LastDemonContractEffectResult = contractResult;
                 RaiseStepped();
 
-                if (contractStep.RoundResolution.HasValue)
+                if (contractResolution.HasValue)
                 {
-                    CompleteRound(contractStep.RoundResolution.Value);
+                    CompleteRound(contractResolution.Value);
                     return CardEffectApplicationResult.RoundEnded;
                 }
 
-                if (Player.Soul.IsDepleted)
+                if (GetParticipant(actorSide).Soul.IsDepleted)
                 {
                     EndBattleWithoutRound();
                     return CardEffectApplicationResult.RoundEnded;
@@ -1050,6 +1481,19 @@ namespace DiaBlackJack.CoreLoop
             return CardEffectApplicationResult.Completed;
         }
 
+        private bool IsBustPrevented(RoundResolution resolution)
+        {
+            switch (resolution.Outcome)
+            {
+                case RoundOutcome.PlayerBust:
+                    return PreventsPlayerBust();
+                case RoundOutcome.EnemyBust:
+                    return PreventsEnemyBust();
+                default:
+                    return false;
+            }
+        }
+
         private void StartRound()
         {
             State = CoreLoopState.StartingRound;
@@ -1057,6 +1501,9 @@ namespace DiaBlackJack.CoreLoop
             _activeCardEffectContext = null;
             _activeCardEffectActorSide = null;
             _pendingCardEffect = null;
+            ClearPlayerDemonContractInteraction();
+            ClearEnemyDemonContractInteraction();
+            _playerFinalBonusForEnemyChoice = 0;
             _playerChangeSelection = null;
             _publicActionHistory.Clear();
             _enemyDecisionOrdinal = 0;
@@ -1155,14 +1602,36 @@ namespace DiaBlackJack.CoreLoop
 
             if (!Enemy.IsStanding &&
                 PendingEnemyCardEffect == null &&
-                !HandleNormalTurnStarted(CombatantSide.Enemy))
+                _pendingEnemyDemonContractInteraction == null)
             {
-                return;
+                if (!HandleNormalTurnStarted(CombatantSide.Enemy))
+                {
+                    return;
+                }
+
+                _demonContractResolver.NotifyOwnerTurnStarted(
+                    this,
+                    _activeEnemyDemonContracts,
+                    CombatantSide.Enemy);
+
+                if (_demonContractResolver.TryGetOwnerTurnChoiceContract(
+                    this,
+                    _activeEnemyDemonContracts,
+                    CombatantSide.Enemy,
+                    out ActiveDemonContract choiceContract))
+                {
+                    int interactionId = TakeNextDemonContractInteractionId();
+                    _pendingEnemyDemonContractInteraction =
+                        CreateMammonRerollInteraction(interactionId, choiceContract);
+                    RaiseStepped();
+                }
             }
 
             while (State == CoreLoopState.EnemyTurn)
             {
-                if (Enemy.IsStanding && PendingEnemyCardEffect == null)
+                if (Enemy.IsStanding &&
+                    PendingEnemyCardEffect == null &&
+                    _pendingEnemyDemonContractInteraction == null)
                 {
                     if (Player.IsStanding)
                     {
@@ -1238,18 +1707,29 @@ namespace DiaBlackJack.CoreLoop
             switch (decision.ActionType)
             {
                 case EnemyActionType.Hit:
+                    if (_demonContractResolver.TryGetOwnerHitPreviewContract(
+                        this,
+                        _activeEnemyDemonContracts,
+                        CombatantSide.Enemy,
+                        out ActiveDemonContract previewContract))
+                    {
+                        executed = TryBeginEnemyBelphegorTopCardPreview(
+                            previewContract);
+                        break;
+                    }
+
                     RecordPublicAction(CombatantSide.Enemy, PublicCombatActionType.Hit);
                     Enemy.Draw(faceUp: true);
                     RaiseStepped();
-                    if (Enemy.VisibleHandValue.IsBust)
+                    if (Enemy.VisibleHandValue.IsBust && !PreventsEnemyBust())
                     {
                         CompleteRound(RoundResolver.ResolveNumericBust(
                             RoundNumber,
                             playerIsTarget: false));
                     }
-                    else if (!Player.IsStanding)
+                    else
                     {
-                        BeginPlayerTurn();
+                        CompleteEnemyAction();
                     }
 
                     executed = true;
@@ -1259,14 +1739,7 @@ namespace DiaBlackJack.CoreLoop
                     RecordPublicAction(CombatantSide.Enemy, PublicCombatActionType.Stand);
                     Enemy.Stand();
                     RaiseStepped();
-                    if (Player.IsStanding)
-                    {
-                        ResolveRound();
-                    }
-                    else
-                    {
-                        BeginPlayerTurn();
-                    }
+                    CompleteEnemyAction();
 
                     executed = true;
                     break;
@@ -1283,10 +1756,27 @@ namespace DiaBlackJack.CoreLoop
 
                     if (executed &&
                         PendingEnemyCardEffect == null &&
-                        State == CoreLoopState.EnemyTurn &&
-                        !Player.IsStanding)
+                        State == CoreLoopState.EnemyTurn)
                     {
-                        BeginPlayerTurn();
+                        CompleteEnemyAction();
+                    }
+
+                    break;
+
+                case EnemyActionType.DemonContract:
+                    bool completedOwnerAction = false;
+                    executed = decision.DemonContractOptionId.HasValue
+                        ? TryResolveEnemyDemonContract(
+                            decision.DemonContractOptionId.Value,
+                            out completedOwnerAction)
+                        : TryBeginEnemyDemonContract();
+
+                    if (executed &&
+                        completedOwnerAction &&
+                        State == CoreLoopState.EnemyTurn &&
+                        _pendingEnemyDemonContractInteraction == null)
+                    {
+                        CompleteEnemyAction();
                     }
 
                     break;
@@ -1301,6 +1791,47 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return executed;
+        }
+
+        private void CompleteEnemyAction()
+        {
+            if (State != CoreLoopState.EnemyTurn ||
+                PendingEnemyCardEffect != null ||
+                _pendingEnemyDemonContractInteraction != null)
+            {
+                return;
+            }
+
+            if (!Enemy.IsStanding &&
+                CanEnemyStand &&
+                _demonContractResolver.TryConsumeOwnerAutoStand(
+                    this,
+                    _activeEnemyDemonContracts,
+                    CombatantSide.Enemy))
+            {
+                RecordPublicAction(CombatantSide.Enemy, PublicCombatActionType.Stand);
+                Enemy.Stand();
+                RaiseStepped();
+            }
+
+            if (Enemy.IsStanding)
+            {
+                if (Player.IsStanding)
+                {
+                    ResolveRound();
+                }
+                else
+                {
+                    BeginPlayerTurn();
+                }
+
+                return;
+            }
+
+            if (!Player.IsStanding)
+            {
+                BeginPlayerTurn();
+            }
         }
 
         private int CreateEnemyDecisionSeed()
@@ -1342,7 +1873,7 @@ namespace DiaBlackJack.CoreLoop
                 return;
             }
 
-            ResolveRoundWithPlayerBonus(playerBonus: 0);
+            ResolveRoundWithEnemyFinalChoice(playerBonus: 0);
         }
 
         private bool PreventsPlayerBust()
@@ -1352,40 +1883,77 @@ namespace DiaBlackJack.CoreLoop
                 _activePlayerDemonContracts);
         }
 
+        private bool PreventsEnemyBust()
+        {
+            return _demonContractResolver.PreventsOwnerBust(
+                this,
+                _activeEnemyDemonContracts,
+                CombatantSide.Enemy);
+        }
+
         private bool HandleNormalTurnStarted(CombatantSide actorSide)
         {
-            int soulBefore = Player.Soul.Current;
-            IReadOnlyList<ActiveDemonContract> endedContracts =
+            int playerSoulBefore = Player.Soul.Current;
+            int enemySoulBefore = Enemy.Soul.Current;
+            IReadOnlyList<ActiveDemonContract> endedPlayerContracts =
                 _demonContractResolver.NotifyNormalTurnStarted(
                     this,
                     _activePlayerDemonContracts,
                     actorSide);
-            foreach (ActiveDemonContract endedContract in endedContracts)
+            IReadOnlyList<ActiveDemonContract> endedEnemyContracts =
+                _demonContractResolver.NotifyNormalTurnStarted(
+                    this,
+                    _activeEnemyDemonContracts,
+                    actorSide);
+            foreach (ActiveDemonContract endedContract in endedPlayerContracts)
             {
                 _activePlayerDemonContracts.Remove(endedContract);
             }
 
-            int paidSoulCost = soulBefore - Player.Soul.Current;
-            if (paidSoulCost > 0)
+            foreach (ActiveDemonContract endedContract in endedEnemyContracts)
+            {
+                _activeEnemyDemonContracts.Remove(endedContract);
+            }
+
+            int playerPaidSoulCost = playerSoulBefore - Player.Soul.Current;
+            if (playerPaidSoulCost > 0)
             {
                 LastDemonContractEffectResult = new DemonContractEffectResult(
                     triggered: true,
                     bustedTarget: null,
-                    paidSoulCost);
+                    playerPaidSoulCost);
                 RaiseStepped();
             }
 
-            if (Player.Soul.IsDepleted)
+            int enemyPaidSoulCost = enemySoulBefore - Enemy.Soul.Current;
+            if (enemyPaidSoulCost > 0)
+            {
+                LastDemonContractEffectResult = new DemonContractEffectResult(
+                    triggered: true,
+                    bustedTarget: null,
+                    enemyPaidSoulCost);
+                RaiseStepped();
+            }
+
+            if (Player.Soul.IsDepleted || Enemy.Soul.IsDepleted)
             {
                 EndBattleWithoutRound();
                 return false;
             }
 
-            if (endedContracts.Count > 0 && Player.VisibleHandValue.IsBust)
+            if (endedPlayerContracts.Count > 0 && Player.VisibleHandValue.IsBust)
             {
                 CompleteRound(RoundResolver.ResolveNumericBust(
                     RoundNumber,
                     playerIsTarget: true));
+                return false;
+            }
+
+            if (endedEnemyContracts.Count > 0 && Enemy.VisibleHandValue.IsBust)
+            {
+                CompleteRound(RoundResolver.ResolveNumericBust(
+                    RoundNumber,
+                    playerIsTarget: false));
                 return false;
             }
 
@@ -1395,9 +1963,13 @@ namespace DiaBlackJack.CoreLoop
         private void EndBattleWithoutRound()
         {
             ClearPlayerDemonContractInteraction();
+            ClearEnemyDemonContractInteraction();
             _demonContractResolver.NotifyRoundEnded(
                 this,
                 _activePlayerDemonContracts);
+            _demonContractResolver.NotifyRoundEnded(
+                this,
+                _activeEnemyDemonContracts);
             CleanupBattleContracts();
             State = CoreLoopState.BattleEnded;
             RaiseStepped();
@@ -1408,25 +1980,63 @@ namespace DiaBlackJack.CoreLoop
             _demonContractResolver.NotifyBattleEnded(
                 this,
                 _activePlayerDemonContracts);
+            _demonContractResolver.NotifyBattleEnded(
+                this,
+                _activeEnemyDemonContracts);
             _activePlayerDemonContracts.Clear();
+            _activeEnemyDemonContracts.Clear();
         }
 
-        private void ResolveRoundWithPlayerBonus(int playerBonus)
+        private void ResolveRoundWithEnemyFinalChoice(int playerBonus)
+        {
+            if (_demonContractResolver.TryGetOwnerFinalChoiceContract(
+                this,
+                _activeEnemyDemonContracts,
+                CombatantSide.Enemy,
+                out ActiveDemonContract choiceContract))
+            {
+                _playerFinalBonusForEnemyChoice = playerBonus;
+                int interactionId = TakeNextDemonContractInteractionId();
+                _pendingEnemyDemonContractInteraction =
+                    CreateMammonFinalChoiceInteraction(interactionId, choiceContract);
+                State = CoreLoopState.EnemyTurn;
+                RaiseStepped();
+
+                int decisionSeed = CreateEnemyDecisionSeed();
+                EnemyDecision decision = DecideEnemyAction(decisionSeed);
+                if (!TryExecuteEnemyDecision(decision, decisionSeed))
+                {
+                    throw new InvalidOperationException(
+                        "Validated enemy final contract decision could not be executed.");
+                }
+
+                return;
+            }
+
+            ResolveRoundWithBonuses(playerBonus, enemyBonus: 0);
+        }
+
+        private void ResolveRoundWithBonuses(int playerBonus, int enemyBonus)
         {
             RoundResolution resolution = RoundResolver.Resolve(
                 RoundNumber,
                 Player.Hand.Cards,
                 Enemy.Hand.Cards,
-                playerBonus);
+                playerBonus,
+                enemyBonus);
             CompleteRound(resolution);
         }
 
         private void CompleteRound(RoundResolution resolution)
         {
             ClearPlayerDemonContractInteraction();
+            ClearEnemyDemonContractInteraction();
             _demonContractResolver.NotifyRoundEnded(
                 this,
                 _activePlayerDemonContracts);
+            _demonContractResolver.NotifyRoundEnded(
+                this,
+                _activeEnemyDemonContracts);
             State = CoreLoopState.ResolvingRound;
             _damageApplier.TryApply(resolution, Player.Soul, Enemy.Soul);
             LastResolution = resolution;

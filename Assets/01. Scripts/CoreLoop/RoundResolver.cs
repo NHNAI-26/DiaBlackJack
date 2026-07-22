@@ -182,10 +182,27 @@ namespace DiaBlackJack.CoreLoop
             IEnumerable<BlackjackCard> enemyCards,
             int playerBonus)
         {
+            return Resolve(
+                resolutionId,
+                playerCards,
+                enemyCards,
+                playerBonus,
+                enemyBonus: 0);
+        }
+
+        internal static RoundResolution Resolve(
+            long resolutionId,
+            IEnumerable<BlackjackCard> playerCards,
+            IEnumerable<BlackjackCard> enemyCards,
+            int playerBonus,
+            int enemyBonus)
+        {
             HandValue player = HandValueCalculator.CalculateWithBonus(
                 playerCards,
                 playerBonus);
-            HandValue enemy = HandValueCalculator.Calculate(enemyCards);
+            HandValue enemy = HandValueCalculator.CalculateWithBonus(
+                enemyCards,
+                enemyBonus);
 
             if (player.IsBust && !enemy.IsBust)
             {

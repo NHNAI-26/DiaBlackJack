@@ -177,6 +177,8 @@ namespace DiaBlackJack.GameScene
                         return (CharacterVisualState.Stand, "STAND");
                     case PublicCombatActionType.Change:
                         return (CharacterVisualState.Active, "CHANGE");
+                    case PublicCombatActionType.DemonContract:
+                        return (CharacterVisualState.Active, "CONTRACT");
                 }
             }
 

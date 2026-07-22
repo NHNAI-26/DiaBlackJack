@@ -49,6 +49,12 @@ namespace DiaBlackJack.StageProgression
                     "The selected enemy profile no longer matches the stage soul configuration.");
             }
 
+            DemonContractDeck enemyDemonDeck =
+                stage.BattleProfileKey == EnemyCombatProfileCatalog.CultistKey
+                    ? DemonContractDeck.CreatePrototype(
+                        DeriveEnemyDemonDeckSeed(stage.EnemyDeckSeed))
+                    : null;
+
             return new CoreLoopBattle(
                 playerDeck,
                 enemy.CreateEnemyDeck(),
@@ -56,7 +62,8 @@ namespace DiaBlackJack.StageProgression
                 player.CurrentSoul,
                 enemy.EnemyMaximumSoul,
                 enemy.BehaviorPolicy,
-                playerDemonDeck);
+                playerDemonDeck,
+                enemyDemonDeck);
         }
 
         private static DemonContractDeck CreateDemonDeck(
@@ -79,6 +86,14 @@ namespace DiaBlackJack.StageProgression
             unchecked
             {
                 return playerDeckSeed ^ (int)0x6D2B79F5u;
+            }
+        }
+
+        private static int DeriveEnemyDemonDeckSeed(int enemyDeckSeed)
+        {
+            unchecked
+            {
+                return enemyDeckSeed ^ (int)0x4C957F2Du;
             }
         }
     }

@@ -239,8 +239,12 @@ namespace DiaBlackJack.CoreLoop.UI
         private static IReadOnlyList<string> FormatActiveContracts(
             CoreLoopBattle battle)
         {
-            IReadOnlyList<ActiveDemonContract> contracts =
-                battle.ActivePlayerDemonContracts;
+            var contracts = new List<ActiveDemonContract>(
+                battle.ActivePlayerDemonContracts.Count +
+                battle.ActiveEnemyDemonContracts.Count);
+            contracts.AddRange(battle.ActivePlayerDemonContracts);
+            contracts.AddRange(battle.ActiveEnemyDemonContracts);
+
             var labels = new List<string>(contracts.Count);
             foreach (ActiveDemonContract contract in contracts)
             {
@@ -252,8 +256,9 @@ namespace DiaBlackJack.CoreLoop.UI
                 else if (contract.RuntimeState is SatanRuntimeState satan)
                 {
                     string powerFace = "권능 위치 이동 중";
-                    if (TryFindPlayerCard(
+                    if (TryFindOwnerCard(
                         battle,
+                        contract.OwnerSide,
                         satan.PowerCardId,
                         out BlackjackCard powerCard))
                     {
@@ -280,23 +285,29 @@ namespace DiaBlackJack.CoreLoop.UI
                     status = "효과 구현 예정";
                 }
 
-                labels.Add($"{contract.Definition.DisplayName} · {status}");
+                string ownerPrefix = contract.OwnerSide == CombatantSide.Enemy
+                    ? "상대 · "
+                    : string.Empty;
+                labels.Add(
+                    $"{ownerPrefix}{contract.Definition.DisplayName} · {status}");
             }
 
             return labels.AsReadOnly();
         }
 
-        private static bool TryFindPlayerCard(
+        private static bool TryFindOwnerCard(
             CoreLoopBattle battle,
+            CombatantSide ownerSide,
             int cardId,
             out BlackjackCard card)
         {
-            if (battle.Player.Hand.TryGetCard(cardId, out card))
+            BattleParticipant owner = battle.GetParticipant(ownerSide);
+            if (owner.Hand.TryGetCard(cardId, out card))
             {
                 return true;
             }
 
-            return battle.Player.Deck.TryGetKnownCard(cardId, out card);
+            return owner.Deck.TryGetKnownCard(cardId, out card);
         }
 
         private static string FormatOwnerPreview(PlayerDemonContractPreview preview)
@@ -313,7 +324,10 @@ namespace DiaBlackJack.CoreLoop.UI
                 return string.Empty;
             }
 
-            return $"계약 완료 · {result.ActiveContract.Definition.DisplayName} · " +
+            string ownerPrefix = result.ActiveContract.OwnerSide == CombatantSide.Enemy
+                ? "상대 계약 완료"
+                : "계약 완료";
+            return $"{ownerPrefix} · {result.ActiveContract.Definition.DisplayName} · " +
                 $"영혼 -{result.PaidSoulCost} · 현재 {result.OwnerSoulAfterResolution}";
         }
 

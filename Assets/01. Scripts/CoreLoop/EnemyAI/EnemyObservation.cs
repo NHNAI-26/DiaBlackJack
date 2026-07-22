@@ -118,19 +118,20 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentOutOfRangeException(nameof(actionType));
             }
 
-            if (actionType == PublicCombatActionType.UseCard)
+            if (actionType == PublicCombatActionType.UseCard ||
+                actionType == PublicCombatActionType.DemonContract)
             {
                 if (string.IsNullOrWhiteSpace(sourceCardDefinitionKey))
                 {
                     throw new ArgumentException(
-                        "Public card action requires a definition key.",
+                    "Public card or contract action requires a definition key.",
                         nameof(sourceCardDefinitionKey));
                 }
             }
             else if (sourceCardDefinitionKey != null)
             {
                 throw new ArgumentException(
-                    "Only public card actions can contain a card definition key.");
+                    "Only public card or contract actions can contain a definition key.");
             }
 
             ActorSide = actorSide;

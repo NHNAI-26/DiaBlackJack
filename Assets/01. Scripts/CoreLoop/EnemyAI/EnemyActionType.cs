@@ -4,6 +4,7 @@ namespace DiaBlackJack.CoreLoop
     {
         Hit,
         Stand,
-        UseCard
+        UseCard,
+        DemonContract
     }
 }

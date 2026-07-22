@@ -12,7 +12,8 @@ namespace DiaBlackJack.CoreLoop
                 cardId: null,
                 cardEffectOptionId: null,
                 reasonCode,
-                Array.Empty<EnemyActionScore>())
+                Array.Empty<EnemyActionScore>(),
+                demonContractOptionId: null)
         {
         }
 
@@ -21,7 +22,8 @@ namespace DiaBlackJack.CoreLoop
             int? cardId,
             int? cardEffectOptionId,
             string reasonCode,
-            IEnumerable<EnemyActionScore> candidateScores)
+            IEnumerable<EnemyActionScore> candidateScores,
+            int? demonContractOptionId = null)
         {
             if (!Enum.IsDefined(typeof(EnemyActionType), actionType))
             {
@@ -51,8 +53,29 @@ namespace DiaBlackJack.CoreLoop
                 {
                     throw new ArgumentOutOfRangeException(nameof(cardEffectOptionId));
                 }
+
+                if (demonContractOptionId.HasValue)
+                {
+                    throw new ArgumentException(
+                        "Card decisions cannot contain a demon contract option.");
+                }
             }
-            else if (cardId.HasValue || cardEffectOptionId.HasValue)
+            else if (actionType == EnemyActionType.DemonContract)
+            {
+                if (cardId.HasValue || cardEffectOptionId.HasValue)
+                {
+                    throw new ArgumentException(
+                        "Demon contract decisions cannot contain card selection values.");
+                }
+
+                if (demonContractOptionId < 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(demonContractOptionId));
+                }
+            }
+            else if (cardId.HasValue ||
+                cardEffectOptionId.HasValue ||
+                demonContractOptionId.HasValue)
             {
                 throw new ArgumentException(
                     "Only card use decisions can contain card selection values.");
@@ -74,6 +97,7 @@ namespace DiaBlackJack.CoreLoop
             ActionType = actionType;
             CardId = cardId;
             CardEffectOptionId = cardEffectOptionId;
+            DemonContractOptionId = demonContractOptionId;
             ReasonCode = reasonCode;
             CandidateScores = new ReadOnlyCollection<EnemyActionScore>(copiedScores);
         }
@@ -83,6 +107,8 @@ namespace DiaBlackJack.CoreLoop
         public int? CardEffectOptionId { get; }
 
         public int? CardId { get; }
+
+        public int? DemonContractOptionId { get; }
 
         public IReadOnlyList<EnemyActionScore> CandidateScores { get; }
 
@@ -103,7 +129,8 @@ namespace DiaBlackJack.CoreLoop
                 candidate.CardId,
                 candidate.CardEffectOptionId,
                 reasonCode,
-                scores ?? Array.Empty<EnemyActionScore>());
+                scores ?? Array.Empty<EnemyActionScore>(),
+                candidate.DemonContractOptionId);
         }
     }
 }

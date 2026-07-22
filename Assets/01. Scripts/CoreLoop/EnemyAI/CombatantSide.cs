@@ -11,6 +11,7 @@ namespace DiaBlackJack.CoreLoop
         Hit,
         Stand,
         Change,
-        UseCard
+        UseCard,
+        DemonContract
     }
 }

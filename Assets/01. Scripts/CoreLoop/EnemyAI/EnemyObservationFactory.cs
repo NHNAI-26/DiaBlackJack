@@ -131,6 +131,14 @@ namespace DiaBlackJack.CoreLoop
                 return candidates.AsReadOnly();
             }
 
+            PendingDemonContractInteraction pendingContract =
+                battle.PendingEnemyDemonContractInteraction;
+            if (pendingContract != null)
+            {
+                AddDemonContractCandidates(battle, pendingContract, candidates);
+                return candidates.AsReadOnly();
+            }
+
             if (battle.Enemy.IsStanding)
             {
                 return candidates.AsReadOnly();
@@ -141,7 +149,16 @@ namespace DiaBlackJack.CoreLoop
                 candidates.Add(new EnemyActionCandidate(EnemyActionType.Hit));
             }
 
-            candidates.Add(new EnemyActionCandidate(EnemyActionType.Stand));
+            if (battle.CanEnemyStand)
+            {
+                candidates.Add(new EnemyActionCandidate(EnemyActionType.Stand));
+            }
+
+            if (battle.EnemyDemonContractAvailability.CanBegin)
+            {
+                candidates.Add(new EnemyActionCandidate(
+                    EnemyActionType.DemonContract));
+            }
 
             foreach (EnemyOwnedCardObservation card in ownCards)
             {
@@ -157,6 +174,89 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return candidates.AsReadOnly();
+        }
+
+        private static void AddDemonContractCandidates(
+            CoreLoopBattle battle,
+            PendingDemonContractInteraction pending,
+            ICollection<EnemyActionCandidate> candidates)
+        {
+            int? privateNumericValue = null;
+            string definitionKey = null;
+
+            if (pending.Kind == DemonContractInteractionKind.BelphegorTopCard)
+            {
+                PlayerDemonContractPreview preview = battle.EnemyDemonContractPreview;
+                if (preview == null ||
+                    preview.InteractionId != pending.InteractionId)
+                {
+                    throw new InvalidOperationException(
+                        "Pending enemy Belphegor choice lost its private preview.");
+                }
+
+                privateNumericValue = preview.Rank;
+                definitionKey = DemonContractCatalog.BelphegorKey;
+            }
+            else if (pending.Kind == DemonContractInteractionKind.MammonReroll ||
+                pending.Kind == DemonContractInteractionKind.MammonApplyDie)
+            {
+                ActiveDemonContract activeContract = FindActiveEnemyContract(
+                    battle,
+                    pending);
+                if (!(activeContract.RuntimeState is MammonRuntimeState mammonState))
+                {
+                    throw new InvalidOperationException(
+                        "Pending enemy Mammon choice has an invalid runtime state.");
+                }
+
+                privateNumericValue = mammonState.CurrentDieValue;
+                definitionKey = activeContract.Definition.Key;
+            }
+
+            foreach (DemonContractOption option in pending.Options)
+            {
+                DemonContractKind? contractKind = pending.ContractKind;
+                string optionDefinitionKey = definitionKey;
+                if (pending.Kind == DemonContractInteractionKind.ChooseContract)
+                {
+                    DemonContractDefinition definition = DemonContractCatalog.Default
+                        .GetByKey(option.ContractDefinitionKey);
+                    contractKind = definition.Kind;
+                    optionDefinitionKey = definition.Key;
+                }
+
+                candidates.Add(new EnemyActionCandidate(
+                    EnemyActionType.DemonContract,
+                    demonContractOptionId: option.OptionId,
+                    demonContractInteractionKind: pending.Kind,
+                    demonContractKind: contractKind,
+                    demonContractDefinitionKey: optionDefinitionKey,
+                    demonContractOptionNumericValue: privateNumericValue));
+            }
+        }
+
+        private static ActiveDemonContract FindActiveEnemyContract(
+            CoreLoopBattle battle,
+            PendingDemonContractInteraction pending)
+        {
+            if (!pending.SourceContractCardId.HasValue)
+            {
+                throw new InvalidOperationException(
+                    "Pending enemy contract choice has no active source contract.");
+            }
+
+            foreach (ActiveDemonContract activeContract in
+                battle.ActiveEnemyDemonContracts)
+            {
+                if (activeContract.SourceCardId == pending.SourceContractCardId.Value &&
+                    activeContract.OwnerSide == CombatantSide.Enemy)
+                {
+                    return activeContract;
+                }
+            }
+
+            throw new InvalidOperationException(
+                "Pending enemy contract choice lost its active contract.");
         }
 
         private static BlackjackCard FindOptionCard(

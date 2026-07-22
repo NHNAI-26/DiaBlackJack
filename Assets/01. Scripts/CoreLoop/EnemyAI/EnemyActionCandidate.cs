@@ -11,7 +11,12 @@ namespace DiaBlackJack.CoreLoop
             int? cardEffectOptionId = null,
             int? cardEffectOptionNumericValue = null,
             int? cardEffectOptionCardId = null,
-            int? cardEffectOptionCardRank = null)
+            int? cardEffectOptionCardRank = null,
+            int? demonContractOptionId = null,
+            DemonContractInteractionKind? demonContractInteractionKind = null,
+            DemonContractKind? demonContractKind = null,
+            string demonContractDefinitionKey = null,
+            int? demonContractOptionNumericValue = null)
         {
             if (!Enum.IsDefined(typeof(EnemyActionType), actionType))
             {
@@ -65,13 +70,87 @@ namespace DiaBlackJack.CoreLoop
                     throw new ArgumentException(
                         "Card effect option card id and rank must be provided together.");
                 }
+
+                if (demonContractOptionId.HasValue ||
+                    demonContractInteractionKind.HasValue ||
+                    demonContractKind.HasValue ||
+                    demonContractDefinitionKey != null ||
+                    demonContractOptionNumericValue.HasValue)
+                {
+                    throw new ArgumentException(
+                        "Card candidates cannot contain demon contract values.");
+                }
+            }
+            else if (actionType == EnemyActionType.DemonContract)
+            {
+                if (cardId.HasValue ||
+                    cardDefinitionKey != null ||
+                    cardEffectOptionId.HasValue ||
+                    cardEffectOptionNumericValue.HasValue ||
+                    cardEffectOptionCardId.HasValue ||
+                    cardEffectOptionCardRank.HasValue)
+                {
+                    throw new ArgumentException(
+                        "Demon contract candidates cannot contain card effect values.");
+                }
+
+                if (demonContractOptionId < 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(demonContractOptionId));
+                }
+
+                if (demonContractInteractionKind.HasValue &&
+                    !Enum.IsDefined(
+                        typeof(DemonContractInteractionKind),
+                        demonContractInteractionKind.Value))
+                {
+                    throw new ArgumentOutOfRangeException(
+                        nameof(demonContractInteractionKind));
+                }
+
+                if (demonContractKind.HasValue &&
+                    !Enum.IsDefined(typeof(DemonContractKind), demonContractKind.Value))
+                {
+                    throw new ArgumentOutOfRangeException(nameof(demonContractKind));
+                }
+
+                if (demonContractOptionId.HasValue !=
+                    demonContractInteractionKind.HasValue)
+                {
+                    throw new ArgumentException(
+                        "A demon contract option and interaction kind must be provided together.");
+                }
+
+                if (!demonContractOptionId.HasValue &&
+                    (demonContractKind.HasValue ||
+                        demonContractDefinitionKey != null ||
+                        demonContractOptionNumericValue.HasValue))
+                {
+                    throw new ArgumentException(
+                        "Starting a demon contract cannot expose unresolved option values.");
+                }
+
+                if (demonContractInteractionKind ==
+                    global::DiaBlackJack.CoreLoop.DemonContractInteractionKind
+                        .ChooseContract &&
+                    (!demonContractKind.HasValue ||
+                        string.IsNullOrWhiteSpace(demonContractDefinitionKey)))
+                {
+                    throw new ArgumentException(
+                        "A contract choice requires its public kind and definition key.");
+                }
             }
             else if (cardId.HasValue ||
                 cardDefinitionKey != null ||
                 cardEffectOptionId.HasValue ||
                 cardEffectOptionNumericValue.HasValue ||
                 cardEffectOptionCardId.HasValue ||
-                cardEffectOptionCardRank.HasValue)
+                cardEffectOptionCardRank.HasValue ||
+                demonContractOptionId.HasValue ||
+                demonContractInteractionKind.HasValue ||
+                demonContractKind.HasValue ||
+                demonContractDefinitionKey != null ||
+                demonContractOptionNumericValue.HasValue)
             {
                 throw new ArgumentException(
                     "Only card use candidates can contain card selection values.");
@@ -84,6 +163,14 @@ namespace DiaBlackJack.CoreLoop
             CardEffectOptionNumericValue = cardEffectOptionNumericValue;
             CardEffectOptionCardId = cardEffectOptionCardId;
             CardEffectOptionCardRank = cardEffectOptionCardRank;
+            DemonContractOptionId = demonContractOptionId;
+            DemonContractInteractionKind = demonContractInteractionKind;
+            DemonContractKind = demonContractKind;
+            DemonContractDefinitionKey = string.IsNullOrWhiteSpace(
+                demonContractDefinitionKey)
+                    ? null
+                    : demonContractDefinitionKey.Trim();
+            DemonContractOptionNumericValue = demonContractOptionNumericValue;
         }
 
         public EnemyActionType ActionType { get; }
@@ -100,12 +187,23 @@ namespace DiaBlackJack.CoreLoop
 
         public int? CardId { get; }
 
+        public string DemonContractDefinitionKey { get; }
+
+        public DemonContractInteractionKind? DemonContractInteractionKind { get; }
+
+        public DemonContractKind? DemonContractKind { get; }
+
+        public int? DemonContractOptionId { get; }
+
+        public int? DemonContractOptionNumericValue { get; }
+
         internal bool Matches(EnemyDecision decision)
         {
             return decision != null &&
                 ActionType == decision.ActionType &&
                 CardId == decision.CardId &&
-                CardEffectOptionId == decision.CardEffectOptionId;
+                CardEffectOptionId == decision.CardEffectOptionId &&
+                DemonContractOptionId == decision.DemonContractOptionId;
         }
     }
 
