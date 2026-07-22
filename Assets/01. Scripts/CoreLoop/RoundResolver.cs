@@ -16,7 +16,8 @@ namespace DiaBlackJack.CoreLoop
     {
         TotalComparison,
         NumericBust,
-        CardEffectBust
+        CardEffectBust,
+        ContractEffectBust
     }
 
     public readonly struct RoundResolution
@@ -144,12 +145,46 @@ namespace DiaBlackJack.CoreLoop
                     sourceCardKey: sourceCardKey);
         }
 
+        public static RoundResolution ResolveContractEffectBust(
+            long resolutionId,
+            bool playerIsTarget)
+        {
+            return playerIsTarget
+                ? new RoundResolution(
+                    resolutionId,
+                    RoundOutcome.PlayerBust,
+                    playerDamage: 2,
+                    enemyDamage: 0,
+                    cause: RoundEndCause.ContractEffectBust)
+                : new RoundResolution(
+                    resolutionId,
+                    RoundOutcome.EnemyBust,
+                    playerDamage: 0,
+                    enemyDamage: 1,
+                    cause: RoundEndCause.ContractEffectBust);
+        }
+
         public static RoundResolution Resolve(
             long resolutionId,
             IEnumerable<BlackjackCard> playerCards,
             IEnumerable<BlackjackCard> enemyCards)
         {
-            HandValue player = HandValueCalculator.Calculate(playerCards);
+            return Resolve(
+                resolutionId,
+                playerCards,
+                enemyCards,
+                playerBonus: 0);
+        }
+
+        internal static RoundResolution Resolve(
+            long resolutionId,
+            IEnumerable<BlackjackCard> playerCards,
+            IEnumerable<BlackjackCard> enemyCards,
+            int playerBonus)
+        {
+            HandValue player = HandValueCalculator.CalculateWithBonus(
+                playerCards,
+                playerBonus);
             HandValue enemy = HandValueCalculator.Calculate(enemyCards);
 
             if (player.IsBust && !enemy.IsBust)

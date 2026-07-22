@@ -21,12 +21,24 @@ namespace DiaBlackJack.CoreLoop
     {
         public static HandValue Calculate(IEnumerable<BlackjackCard> cards)
         {
+            return CalculateWithBonus(cards, bonus: 0);
+        }
+
+        internal static HandValue CalculateWithBonus(
+            IEnumerable<BlackjackCard> cards,
+            int bonus)
+        {
             if (cards == null)
             {
                 throw new ArgumentNullException(nameof(cards));
             }
 
-            int total = 0;
+            if (bonus < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(bonus));
+            }
+
+            int total = bonus;
             int aceCount = 0;
             foreach (BlackjackCard card in cards)
             {

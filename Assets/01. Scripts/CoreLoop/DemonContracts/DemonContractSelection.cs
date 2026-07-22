@@ -19,7 +19,9 @@ namespace DiaBlackJack.CoreLoop
     public enum DemonContractInteractionKind
     {
         ChooseContract,
-        BelphegorTopCard
+        BelphegorTopCard,
+        MammonReroll,
+        MammonApplyDie
     }
 
     public sealed class DemonContractAvailability
@@ -116,7 +118,8 @@ namespace DiaBlackJack.CoreLoop
             DemonContractInteractionKind kind,
             DemonContractKind? contractKind,
             IEnumerable<DemonContractOption> options,
-            string publicPrompt)
+            string publicPrompt,
+            int? sourceContractCardId = null)
         {
             if (interactionId <= 0)
             {
@@ -132,6 +135,11 @@ namespace DiaBlackJack.CoreLoop
                 !Enum.IsDefined(typeof(DemonContractKind), contractKind.Value))
             {
                 throw new ArgumentOutOfRangeException(nameof(contractKind));
+            }
+
+            if (sourceContractCardId < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceContractCardId));
             }
 
             if (options == null)
@@ -185,7 +193,7 @@ namespace DiaBlackJack.CoreLoop
 
             if (kind == DemonContractInteractionKind.ChooseContract)
             {
-                if (contractKind.HasValue ||
+                if (contractKind.HasValue || sourceContractCardId.HasValue ||
                     copiedOptions.Count != DemonContractDeck.CandidateCount)
                 {
                     throw new ArgumentException(
@@ -223,10 +231,33 @@ namespace DiaBlackJack.CoreLoop
                     }
                 }
             }
+            else if (kind == DemonContractInteractionKind.MammonReroll ||
+                kind == DemonContractInteractionKind.MammonApplyDie)
+            {
+                if (contractKind != DemonContractKind.Mammon ||
+                    !sourceContractCardId.HasValue ||
+                    copiedOptions.Count != 2)
+                {
+                    throw new ArgumentException(
+                        "Mammon choice requires two options and a physical source contract.",
+                        nameof(options));
+                }
+
+                foreach (DemonContractOption option in copiedOptions)
+                {
+                    if (option.ContractCardId.HasValue || option.NumericValue.HasValue)
+                    {
+                        throw new ArgumentException(
+                            "Mammon public options cannot contain card or future roll data.",
+                            nameof(options));
+                    }
+                }
+            }
 
             InteractionId = interactionId;
             Kind = kind;
             ContractKind = contractKind;
+            SourceContractCardId = sourceContractCardId;
             _options = copiedOptions.AsReadOnly();
             PublicPrompt = publicPrompt.Trim();
         }
@@ -240,6 +271,8 @@ namespace DiaBlackJack.CoreLoop
         public IReadOnlyList<DemonContractOption> Options => _options;
 
         public string PublicPrompt { get; }
+
+        public int? SourceContractCardId { get; }
 
         internal bool TryGetOption(int optionId, out DemonContractOption option)
         {
@@ -403,5 +436,41 @@ namespace DiaBlackJack.CoreLoop
         public int PaidSoulCost { get; }
 
         public int SoulAfterBaseCost { get; }
+    }
+
+    public sealed class DemonContractEffectResult
+    {
+        internal DemonContractEffectResult(
+            bool triggered,
+            CombatantSide? bustedTarget,
+            int paidSoulCost)
+        {
+            if (bustedTarget.HasValue &&
+                !Enum.IsDefined(typeof(CombatantSide), bustedTarget.Value))
+            {
+                throw new ArgumentOutOfRangeException(nameof(bustedTarget));
+            }
+
+            if (paidSoulCost < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(paidSoulCost));
+            }
+
+            if (!triggered && (bustedTarget.HasValue || paidSoulCost != 0))
+            {
+                throw new ArgumentException(
+                    "An inactive contract effect cannot bust a target or pay soul.");
+            }
+
+            Triggered = triggered;
+            BustedTarget = bustedTarget;
+            PaidSoulCost = paidSoulCost;
+        }
+
+        public CombatantSide? BustedTarget { get; }
+
+        public int PaidSoulCost { get; }
+
+        public bool Triggered { get; }
     }
 }

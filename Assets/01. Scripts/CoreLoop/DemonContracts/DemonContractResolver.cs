@@ -47,9 +47,23 @@ namespace DiaBlackJack.CoreLoop
 
         public bool OpponentIsStanding => Opponent.IsStanding;
 
+        public CombatantSide OpponentSide => ActiveContract.OwnerSide == CombatantSide.Player
+            ? CombatantSide.Enemy
+            : CombatantSide.Player;
+
+        public HandValue OpponentHandValue =>
+            HandValueCalculator.Calculate(Opponent.Hand.Cards);
+
         public void ApplyOwnerSoulDamage(int amount)
         {
             Owner.Soul.ApplyDamage(amount);
+        }
+
+        public RoundResolution CreateOpponentContractEffectBustResolution()
+        {
+            return RoundResolver.ResolveContractEffectBust(
+                _battle.RoundNumber,
+                playerIsTarget: OpponentSide == CombatantSide.Player);
         }
 
         private BattleParticipant Owner =>
@@ -98,7 +112,11 @@ namespace DiaBlackJack.CoreLoop
 
         public static DemonContractResolver CreateDefault()
         {
-            return new DemonContractResolver(new BelphegorDemonContractHandler());
+            return new DemonContractResolver(
+                new BelphegorDemonContractHandler(),
+                new MammonDemonContractHandler(
+                    new DeterministicDemonDieRoller(seed: 20260722)),
+                new LeviathanDemonContractHandler());
         }
 
         public DemonContractRuntimeState Activate(
@@ -174,6 +192,97 @@ namespace DiaBlackJack.CoreLoop
                 (handler, context) => handler.OnOwnerTurnStarted(context));
         }
 
+        public bool TryGetPlayerTurnChoiceContract(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            out ActiveDemonContract choiceContract)
+        {
+            return TryGetPlayerChoiceContract<IDemonContractOwnerTurnChoiceHandler>(
+                battle,
+                activeContracts,
+                (handler, context) => handler.RequiresOwnerTurnChoice(context),
+                out choiceContract);
+        }
+
+        public DemonContractTurnChoiceResult ResolvePlayerTurnChoice(
+            CoreLoopBattle battle,
+            ActiveDemonContract activeContract,
+            int optionId)
+        {
+            IDemonContractOwnerTurnChoiceHandler handler =
+                GetSpecializedHandler<IDemonContractOwnerTurnChoiceHandler>(activeContract);
+            return handler.ResolveOwnerTurnChoice(
+                new DemonContractContext(battle, activeContract),
+                optionId);
+        }
+
+        public bool TryGetPlayerFinalChoiceContract(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            out ActiveDemonContract choiceContract)
+        {
+            return TryGetPlayerChoiceContract<IDemonContractFinalChoiceHandler>(
+                battle,
+                activeContracts,
+                (handler, context) => handler.RequiresFinalChoice(context),
+                out choiceContract);
+        }
+
+        public int ResolvePlayerFinalChoice(
+            CoreLoopBattle battle,
+            ActiveDemonContract activeContract,
+            int optionId)
+        {
+            IDemonContractFinalChoiceHandler handler =
+                GetSpecializedHandler<IDemonContractFinalChoiceHandler>(activeContract);
+            return handler.ResolveFinalChoice(
+                new DemonContractContext(battle, activeContract),
+                optionId);
+        }
+
+        public bool TryResolvePlayerAfterCardEffect(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            CardEffectResult cardEffectResult,
+            out DemonContractAfterCardEffectStep step)
+        {
+            if (battle == null)
+            {
+                throw new ArgumentNullException(nameof(battle));
+            }
+
+            if (activeContracts == null)
+            {
+                throw new ArgumentNullException(nameof(activeContracts));
+            }
+
+            foreach (ActiveDemonContract activeContract in activeContracts)
+            {
+                if (activeContract.OwnerSide != CombatantSide.Player ||
+                    !_handlers.TryGetValue(activeContract.Kind, out IDemonContractHandler handler) ||
+                    !(handler is IDemonContractAfterCardEffectHandler afterCardHandler))
+                {
+                    continue;
+                }
+
+                var context = new DemonContractContext(battle, activeContract);
+                if (!afterCardHandler.CanResolveAfterOwnerCardEffect(
+                    context,
+                    cardEffectResult))
+                {
+                    continue;
+                }
+
+                step = afterCardHandler.ResolveAfterOwnerCardEffect(
+                    context,
+                    cardEffectResult);
+                return true;
+            }
+
+            step = null;
+            return false;
+        }
+
         public bool TryConsumePlayerAutoStand(
             CoreLoopBattle battle,
             IReadOnlyList<ActiveDemonContract> activeContracts)
@@ -233,6 +342,69 @@ namespace DiaBlackJack.CoreLoop
 
                 visit(turnHandler, new DemonContractContext(battle, activeContract));
             }
+        }
+
+        private bool TryGetPlayerChoiceContract<THandler>(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            Func<THandler, DemonContractContext, bool> requiresChoice,
+            out ActiveDemonContract choiceContract)
+            where THandler : class
+        {
+            if (battle == null)
+            {
+                throw new ArgumentNullException(nameof(battle));
+            }
+
+            if (activeContracts == null)
+            {
+                throw new ArgumentNullException(nameof(activeContracts));
+            }
+
+            if (requiresChoice == null)
+            {
+                throw new ArgumentNullException(nameof(requiresChoice));
+            }
+
+            foreach (ActiveDemonContract activeContract in activeContracts)
+            {
+                if (activeContract.OwnerSide != CombatantSide.Player ||
+                    !_handlers.TryGetValue(activeContract.Kind, out IDemonContractHandler handler) ||
+                    !(handler is THandler choiceHandler))
+                {
+                    continue;
+                }
+
+                if (requiresChoice(
+                    choiceHandler,
+                    new DemonContractContext(battle, activeContract)))
+                {
+                    choiceContract = activeContract;
+                    return true;
+                }
+            }
+
+            choiceContract = null;
+            return false;
+        }
+
+        private THandler GetSpecializedHandler<THandler>(
+            ActiveDemonContract activeContract)
+            where THandler : class
+        {
+            if (activeContract == null)
+            {
+                throw new ArgumentNullException(nameof(activeContract));
+            }
+
+            if (!_handlers.TryGetValue(activeContract.Kind, out IDemonContractHandler handler) ||
+                !(handler is THandler specializedHandler))
+            {
+                throw new InvalidOperationException(
+                    $"Demon contract handler for {activeContract.Kind} does not support {typeof(THandler).Name}.");
+            }
+
+            return specializedHandler;
         }
     }
 }

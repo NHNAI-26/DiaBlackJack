@@ -159,6 +159,8 @@ namespace DiaBlackJack.CoreLoop
 
         public DemonContractResult LastDemonContractResult { get; private set; }
 
+        public DemonContractEffectResult LastDemonContractEffectResult { get; private set; }
+
         public PendingDemonContractInteraction PendingPlayerDemonContractInteraction =>
             _pendingPlayerDemonContractInteraction;
 
@@ -287,6 +289,10 @@ namespace DiaBlackJack.CoreLoop
                     return TryResolveContractChoice(pending, selectedOption);
                 case DemonContractInteractionKind.BelphegorTopCard:
                     return TryResolveBelphegorTopCard(pending, selectedOption);
+                case DemonContractInteractionKind.MammonReroll:
+                    return TryResolveMammonReroll(pending, selectedOption);
+                case DemonContractInteractionKind.MammonApplyDie:
+                    return TryResolveMammonFinalChoice(pending, selectedOption);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(pending));
             }
@@ -342,6 +348,19 @@ namespace DiaBlackJack.CoreLoop
                 _playerDemonContractSoulAfterCost,
                 Player.Soul.Current,
                 endedBattle: playerDepleted);
+
+            if (activeContract.RuntimeState is MammonRuntimeState mammonState &&
+                mammonState.CurrentDieValue == 6)
+            {
+                LastDemonContractEffectResult = new DemonContractEffectResult(
+                    triggered: true,
+                    bustedTarget: CombatantSide.Player,
+                    paidSoulCost: 0);
+                CompleteRound(RoundResolver.ResolveContractEffectBust(
+                    RoundNumber,
+                    playerIsTarget: true));
+                return true;
+            }
 
             if (playerDepleted)
             {
@@ -464,6 +483,63 @@ namespace DiaBlackJack.CoreLoop
                 default:
                     return false;
             }
+        }
+
+        private bool TryResolveMammonReroll(
+            PendingDemonContractInteraction pending,
+            DemonContractOption selectedOption)
+        {
+            if (!TryGetPendingActiveContract(
+                pending,
+                DemonContractKind.Mammon,
+                out ActiveDemonContract activeContract))
+            {
+                return false;
+            }
+
+            DemonContractTurnChoiceResult result =
+                _demonContractResolver.ResolvePlayerTurnChoice(
+                    this,
+                    activeContract,
+                    selectedOption.OptionId);
+            ClearPlayerDemonContractInteraction();
+
+            if (result.OwnerBusted)
+            {
+                LastDemonContractEffectResult = new DemonContractEffectResult(
+                    triggered: true,
+                    bustedTarget: CombatantSide.Player,
+                    paidSoulCost: 0);
+                CompleteRound(RoundResolver.ResolveContractEffectBust(
+                    RoundNumber,
+                    playerIsTarget: true));
+                return true;
+            }
+
+            State = CoreLoopState.PlayerTurn;
+            RaiseStepped();
+            return true;
+        }
+
+        private bool TryResolveMammonFinalChoice(
+            PendingDemonContractInteraction pending,
+            DemonContractOption selectedOption)
+        {
+            if (!TryGetPendingActiveContract(
+                pending,
+                DemonContractKind.Mammon,
+                out ActiveDemonContract activeContract))
+            {
+                return false;
+            }
+
+            int playerBonus = _demonContractResolver.ResolvePlayerFinalChoice(
+                this,
+                activeContract,
+                selectedOption.OptionId);
+            ClearPlayerDemonContractInteraction();
+            ResolveRoundWithPlayerBonus(playerBonus);
+            return true;
         }
 
         public bool TryPlayerStand()
@@ -614,6 +690,60 @@ namespace DiaBlackJack.CoreLoop
                 "확인한 덱 위 카드를 처리하십시오.");
         }
 
+        private static PendingDemonContractInteraction CreateMammonRerollInteraction(
+            int interactionId,
+            ActiveDemonContract activeContract)
+        {
+            var options = new[]
+            {
+                new DemonContractOption(
+                    MammonDemonContractHandler.KeepDieOptionId,
+                    contractCardId: null,
+                    numericValue: null,
+                    "현재 주사위 유지"),
+                new DemonContractOption(
+                    MammonDemonContractHandler.RerollDieOptionId,
+                    contractCardId: null,
+                    numericValue: null,
+                    "주사위 다시 굴리기")
+            };
+
+            return new PendingDemonContractInteraction(
+                interactionId,
+                DemonContractInteractionKind.MammonReroll,
+                DemonContractKind.Mammon,
+                options,
+                "현재 값을 유지하거나 주사위를 한 번 다시 굴리십시오.",
+                activeContract.SourceCardId);
+        }
+
+        private static PendingDemonContractInteraction CreateMammonFinalChoiceInteraction(
+            int interactionId,
+            ActiveDemonContract activeContract)
+        {
+            var options = new[]
+            {
+                new DemonContractOption(
+                    MammonDemonContractHandler.DoNotApplyDieOptionId,
+                    contractCardId: null,
+                    numericValue: null,
+                    "주사위 값 적용 안 함"),
+                new DemonContractOption(
+                    MammonDemonContractHandler.ApplyDieOptionId,
+                    contractCardId: null,
+                    numericValue: null,
+                    "주사위 값 적용")
+            };
+
+            return new PendingDemonContractInteraction(
+                interactionId,
+                DemonContractInteractionKind.MammonApplyDie,
+                DemonContractKind.Mammon,
+                options,
+                "최종 승부에 현재 주사위 값을 적용할지 선택하십시오.",
+                activeContract.SourceCardId);
+        }
+
         private int TakeNextDemonContractInteractionId()
         {
             int interactionId = _nextDemonContractInteractionId;
@@ -636,6 +766,34 @@ namespace DiaBlackJack.CoreLoop
                 }
             }
 
+            return false;
+        }
+
+        private bool TryGetPendingActiveContract(
+            PendingDemonContractInteraction pending,
+            DemonContractKind kind,
+            out ActiveDemonContract activeContract)
+        {
+            if (pending == null ||
+                pending.ContractKind != kind ||
+                !pending.SourceContractCardId.HasValue)
+            {
+                activeContract = null;
+                return false;
+            }
+
+            foreach (ActiveDemonContract candidate in _activePlayerDemonContracts)
+            {
+                if (candidate.SourceCardId == pending.SourceContractCardId.Value &&
+                    candidate.Kind == kind &&
+                    candidate.OwnerSide == CombatantSide.Player)
+                {
+                    activeContract = candidate;
+                    return true;
+                }
+            }
+
+            activeContract = null;
             return false;
         }
 
@@ -846,6 +1004,34 @@ namespace DiaBlackJack.CoreLoop
                 return CardEffectApplicationResult.RoundEnded;
             }
 
+            if (actorSide == CombatantSide.Player &&
+                _demonContractResolver.TryResolvePlayerAfterCardEffect(
+                    this,
+                    _activePlayerDemonContracts,
+                    result,
+                    out DemonContractAfterCardEffectStep contractStep))
+            {
+                LastDemonContractEffectResult = contractStep.Result;
+                RaiseStepped();
+
+                if (contractStep.RoundResolution.HasValue)
+                {
+                    CompleteRound(contractStep.RoundResolution.Value);
+                    return CardEffectApplicationResult.RoundEnded;
+                }
+
+                if (Player.Soul.IsDepleted)
+                {
+                    ClearPlayerDemonContractInteraction();
+                    _demonContractResolver.NotifyRoundEnded(
+                        this,
+                        _activePlayerDemonContracts);
+                    State = CoreLoopState.BattleEnded;
+                    RaiseStepped();
+                    return CardEffectApplicationResult.RoundEnded;
+                }
+            }
+
             State = actorSide == CombatantSide.Player
                 ? CoreLoopState.PlayerTurn
                 : CoreLoopState.EnemyTurn;
@@ -899,6 +1085,18 @@ namespace DiaBlackJack.CoreLoop
             _demonContractResolver.NotifyPlayerTurnStarted(
                 this,
                 _activePlayerDemonContracts);
+
+            if (_demonContractResolver.TryGetPlayerTurnChoiceContract(
+                this,
+                _activePlayerDemonContracts,
+                out ActiveDemonContract choiceContract))
+            {
+                int interactionId = TakeNextDemonContractInteractionId();
+                _pendingPlayerDemonContractInteraction =
+                    CreateMammonRerollInteraction(interactionId, choiceContract);
+                State = CoreLoopState.PlayerResolvingDemonContract;
+                RaiseStepped();
+            }
         }
 
         private void RunEnemyTurn()
@@ -1074,10 +1272,29 @@ namespace DiaBlackJack.CoreLoop
 
         private void ResolveRound()
         {
+            if (_demonContractResolver.TryGetPlayerFinalChoiceContract(
+                this,
+                _activePlayerDemonContracts,
+                out ActiveDemonContract choiceContract))
+            {
+                int interactionId = TakeNextDemonContractInteractionId();
+                _pendingPlayerDemonContractInteraction =
+                    CreateMammonFinalChoiceInteraction(interactionId, choiceContract);
+                State = CoreLoopState.PlayerResolvingDemonContract;
+                RaiseStepped();
+                return;
+            }
+
+            ResolveRoundWithPlayerBonus(playerBonus: 0);
+        }
+
+        private void ResolveRoundWithPlayerBonus(int playerBonus)
+        {
             RoundResolution resolution = RoundResolver.Resolve(
                 RoundNumber,
                 Player.Hand.Cards,
-                Enemy.Hand.Cards);
+                Enemy.Hand.Cards,
+                playerBonus);
             CompleteRound(resolution);
         }
 
