@@ -5,6 +5,12 @@ namespace DiaBlackJack.CoreLoop
     public sealed class CultistEnemyPolicy : IEnemyBehaviorPolicy
     {
         public const int AggressiveHitCeiling = 18;
+        public const int MammonRerollCeiling = 2;
+
+        private const int PreferredContractScore = 950;
+        private const int SafeSatanScore = 970;
+        private const int UsefulLeviathanScore = 960;
+        private const int AvoidContractScore = -1000;
 
         public EnemyDecision Decide(EnemyObservation observation)
         {
@@ -76,16 +82,28 @@ namespace DiaBlackJack.CoreLoop
                         SatanDemonContractHandler.ExpirationSoulCost;
                     return Score(
                         candidate,
-                        guaranteedDeath ? -1000 : 930,
+                        guaranteedDeath ? AvoidContractScore : SafeSatanScore,
                         guaranteedDeath
                             ? "cultist-avoid-fatal-satan"
                             : "cultist-select-satan");
                 case DemonContractKind.Belphegor:
-                    return Score(candidate, 980, "cultist-select-belphegor");
+                    return Score(
+                        candidate,
+                        PreferredContractScore,
+                        "cultist-select-belphegor");
                 case DemonContractKind.Mammon:
-                    return Score(candidate, 900, "cultist-select-mammon");
+                    return Score(
+                        candidate,
+                        PreferredContractScore,
+                        "cultist-select-mammon");
                 case DemonContractKind.Leviathan:
-                    return Score(candidate, 860, "cultist-select-leviathan");
+                    bool hasRevolver = HasUnusedRevolver(observation);
+                    return Score(
+                        candidate,
+                        hasRevolver ? UsefulLeviathanScore : AvoidContractScore,
+                        hasRevolver
+                            ? "cultist-select-leviathan-with-revolver"
+                            : "cultist-avoid-leviathan-without-revolver");
                 default:
                     throw new InvalidOperationException(
                         "Cultist received an unknown demon contract choice.");
@@ -118,7 +136,7 @@ namespace DiaBlackJack.CoreLoop
             int dieValue = candidate.DemonContractOptionNumericValue ??
                 throw new InvalidOperationException(
                     "Cultist Mammon turn choice requires the current die value.");
-            bool shouldReroll = dieValue <= 2;
+            bool shouldReroll = dieValue <= MammonRerollCeiling;
             bool isReroll = candidate.DemonContractOptionId ==
                 MammonDemonContractHandler.RerollDieOptionId;
             return Score(
@@ -163,6 +181,21 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return total;
+        }
+
+        private static bool HasUnusedRevolver(EnemyObservation observation)
+        {
+            foreach (EnemyOwnedCardObservation card in observation.OwnCards)
+            {
+                if (card.UseState == CardUseState.Available &&
+                    CardDefinitionCatalog.GetByKey(card.DefinitionKey).Effect ==
+                        CardEffectKind.AutoPistol)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static EnemyActionScore Score(

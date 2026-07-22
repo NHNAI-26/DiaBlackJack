@@ -31,10 +31,10 @@
 | [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M03 검증 완료 v0.3 |
 | [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M03 작업 순서와 단계별 검증 게이트 | CU-M03 완료 v0.3 |
 | [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M03 완료 |
-| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속·우선 악마 4종의 프로토타입 규칙 | DC-07 1차 범위 완료 v0.9 |
-| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | DC-07 검증 완료 v0.9 |
-| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-07 구현 순서와 단계별 검증 게이트 | 전체 완료 v0.9 |
-| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | DC-07 완료, 대상 12/12·전체 389/389 |
+| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속·우선 악마 4종과 광신도 선택 밸런스 | DC-08 완료 v1.0 |
+| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | DC-08 검증 완료 v1.0 |
+| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 구현 순서와 단계별 검증 게이트 | 전체 완료 v1.0 |
+| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | DC-08 완료, 대상 8/8·400시드·100자동전투·전체 397/397 |
 | [battle-reward-design.md](./battle-reward-design.md) | 일반·엘리트·보스 전투 보상 규칙과 프로토타입 카드 풀 | RW-00~RW-05 완료 v0.1 |
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW-05 최종 검증 완료 v0.1 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
@@ -66,6 +66,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-23 | 이천서 | 악마 계약 DC-08 광신도 사탄·레비아탄 효용 조건과 벨페고르·마몬 결정적 균형 분산을 구현하고 400시드·100자동전투·대상 8/8·CoreLoop 268/268·전체 397/397로 검증 |
 | 2026-07-23 | 이천서 | 악마 계약 DC-07 광신도 계약 정책·적 소유 4종 대칭 처리·Cultist 전용 덱·안전 표시와 반복 회귀를 구현하고 대상 12/12·CoreLoop 260/260·전체 389/389·Console 0으로 1차 범위를 완료 |
 | 2026-07-23 | 이천서 | 악마 계약 DC-06 정상 차례 카운터·스탠드/버스트 제한·영혼 대가·양면 권능·화면을 구현하고 대상 8/8·전체 377/377·두 씬·두 해상도 검증 뒤 DC-07로 전환 |
 | 2026-07-23 | 이천서 | 악마 계약 DC-05 비용 확인·후보 3장·활성 상태·소유자 전용 미리보기·독립/런 UI를 구현하고 대상 7/7·전체 369/369·두 씬·두 해상도 검증 뒤 DC-06 결정 게이트로 전환 |
