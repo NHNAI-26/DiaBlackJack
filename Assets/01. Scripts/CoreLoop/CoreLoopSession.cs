@@ -44,6 +44,16 @@ namespace DiaBlackJack.CoreLoop
             return Battle.TryResolvePlayerCardChoice(optionId);
         }
 
+        public bool TryBeginPlayerDemonContract()
+        {
+            return Battle.TryBeginPlayerDemonContract();
+        }
+
+        public bool TryResolvePlayerDemonContract(int interactionId, int optionId)
+        {
+            return Battle.TryResolvePlayerDemonContract(interactionId, optionId);
+        }
+
         public bool TryRestart()
         {
             if (Battle.State != CoreLoopState.BattleEnded)

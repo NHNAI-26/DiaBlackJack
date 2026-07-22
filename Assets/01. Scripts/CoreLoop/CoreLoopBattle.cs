@@ -12,18 +12,28 @@ namespace DiaBlackJack.CoreLoop
 
     public sealed class CoreLoopBattle
     {
+        public const int BasePlayerDemonContractSoulCost = 1;
+        public const int BasePlayerDemonContractUseLimit = 1;
+
         private static readonly IReadOnlyList<BlackjackCard> NoChangeCandidates =
             Array.AsReadOnly(Array.Empty<BlackjackCard>());
 
         private readonly IEnemyBehaviorPolicy _enemyPolicy;
         private readonly CardEffectResolver _cardEffectResolver;
+        private readonly DemonContractResolver _demonContractResolver;
         private readonly RoundDamageApplier _damageApplier = new RoundDamageApplier();
+        private readonly List<ActiveDemonContract> _activePlayerDemonContracts =
+            new List<ActiveDemonContract>();
         private readonly List<PublicCombatAction> _publicActionHistory =
             new List<PublicCombatAction>();
         private CardEffectContext _activeCardEffectContext;
         private CombatantSide? _activeCardEffectActorSide;
         private PendingCardEffect _pendingCardEffect;
         private int _enemyDecisionOrdinal;
+        private int _nextDemonContractInteractionId = 1;
+        private PendingDemonContractInteraction _pendingPlayerDemonContractInteraction;
+        private IReadOnlyList<DemonContractCard> _playerDemonContractCandidates;
+        private int _playerDemonContractSoulAfterCost;
         private PlayerChangeSelection _playerChangeSelection;
 
         public CoreLoopBattle(
@@ -72,7 +82,8 @@ namespace DiaBlackJack.CoreLoop
             int enemyMaximumSoul,
             IEnemyBehaviorPolicy enemyPolicy,
             CardEffectResolver cardEffectResolver,
-            DemonContractDeck playerDemonDeck = null)
+            DemonContractDeck playerDemonDeck = null,
+            DemonContractResolver demonContractResolver = null)
         {
             Player = new BattleParticipant(playerDeck, playerMaximumSoul, playerCurrentSoul);
             Enemy = new BattleParticipant(enemyDeck, enemyMaximumSoul);
@@ -81,6 +92,8 @@ namespace DiaBlackJack.CoreLoop
             _enemyPolicy = enemyPolicy ?? new SimpleEnemyPolicy();
             _cardEffectResolver = cardEffectResolver ??
                 throw new ArgumentNullException(nameof(cardEffectResolver));
+            _demonContractResolver = demonContractResolver ??
+                DemonContractResolver.CreateDefault();
             State = CoreLoopState.Initializing;
         }
 
@@ -138,6 +151,34 @@ namespace DiaBlackJack.CoreLoop
                 ? _pendingCardEffect
                 : null;
 
+        public IReadOnlyList<ActiveDemonContract> ActivePlayerDemonContracts =>
+            _activePlayerDemonContracts.AsReadOnly();
+
+        public int UsedPlayerBaseDemonContractCount { get; private set; }
+
+        public DemonContractResult LastDemonContractResult { get; private set; }
+
+        public PendingDemonContractInteraction PendingPlayerDemonContractInteraction =>
+            _pendingPlayerDemonContractInteraction;
+
+        public DemonContractAvailability PlayerDemonContractAvailability
+        {
+            get
+            {
+                int remainingBaseUses = Math.Max(
+                    0,
+                    BasePlayerDemonContractUseLimit - UsedPlayerBaseDemonContractCount);
+                int soulAfterCost = Math.Max(
+                    0,
+                    Player.Soul.Current - BasePlayerDemonContractSoulCost);
+                return new DemonContractAvailability(
+                    EvaluatePlayerDemonContractFailureReason(),
+                    BasePlayerDemonContractSoulCost,
+                    soulAfterCost,
+                    remainingBaseUses);
+            }
+        }
+
         public IReadOnlyList<CardUseAvailability> PlayerCardUseAvailability
         {
             get
@@ -191,6 +232,107 @@ namespace DiaBlackJack.CoreLoop
         public bool TryResolvePlayerCardChoice(int optionId)
         {
             return TryResolveCardChoice(CombatantSide.Player, optionId);
+        }
+
+        public bool TryBeginPlayerDemonContract()
+        {
+            DemonContractAvailability availability = PlayerDemonContractAvailability;
+            if (!availability.CanBegin)
+            {
+                return false;
+            }
+
+            Player.Soul.ApplyDamage(availability.SoulCost);
+            UsedPlayerBaseDemonContractCount = checked(
+                UsedPlayerBaseDemonContractCount + 1);
+            _playerDemonContractSoulAfterCost = Player.Soul.Current;
+
+            IReadOnlyList<DemonContractCard> candidates =
+                PlayerDemonDeck.TakeCandidates();
+            if (candidates.Count != DemonContractDeck.CandidateCount)
+            {
+                throw new InvalidOperationException(
+                    "Validated demon contract deck returned an invalid candidate count.");
+            }
+
+            int interactionId = _nextDemonContractInteractionId;
+            _nextDemonContractInteractionId = checked(
+                _nextDemonContractInteractionId + 1);
+            _playerDemonContractCandidates = candidates;
+            _pendingPlayerDemonContractInteraction = CreateContractChoiceInteraction(
+                interactionId,
+                candidates);
+            State = CoreLoopState.PlayerResolvingDemonContract;
+            RaiseStepped();
+            return true;
+        }
+
+        public bool TryResolvePlayerDemonContract(int interactionId, int optionId)
+        {
+            PendingDemonContractInteraction pending =
+                _pendingPlayerDemonContractInteraction;
+            if (State != CoreLoopState.PlayerResolvingDemonContract ||
+                pending == null ||
+                pending.InteractionId != interactionId ||
+                _playerDemonContractCandidates == null ||
+                !pending.TryGetOption(optionId, out DemonContractOption selectedOption) ||
+                !selectedOption.ContractCardId.HasValue)
+            {
+                return false;
+            }
+
+            DemonContractCard selectedCard = null;
+            var discardedCards = new List<DemonContractCard>(
+                DemonContractDeck.CandidateCount - 1);
+            foreach (DemonContractCard candidate in _playerDemonContractCandidates)
+            {
+                if (candidate.Id == selectedOption.ContractCardId.Value)
+                {
+                    selectedCard = candidate;
+                }
+                else
+                {
+                    discardedCards.Add(candidate);
+                }
+            }
+
+            if (selectedCard == null ||
+                discardedCards.Count != DemonContractDeck.CandidateCount - 1)
+            {
+                return false;
+            }
+
+            PlayerDemonDeck.Discard(discardedCards);
+            var activeContract = new ActiveDemonContract(
+                selectedCard,
+                CombatantSide.Player,
+                new EmptyDemonContractRuntimeState());
+            _activePlayerDemonContracts.Add(activeContract);
+            _pendingPlayerDemonContractInteraction = null;
+            _playerDemonContractCandidates = null;
+
+            activeContract.SetRuntimeState(
+                _demonContractResolver.Activate(this, activeContract));
+            bool playerDepleted = Player.Soul.IsDepleted;
+            LastDemonContractResult = new DemonContractResult(
+                pending.InteractionId,
+                activeContract,
+                BasePlayerDemonContractSoulCost,
+                _playerDemonContractSoulAfterCost,
+                Player.Soul.Current,
+                endedBattle: playerDepleted);
+
+            if (playerDepleted)
+            {
+                State = CoreLoopState.BattleEnded;
+                RaiseStepped();
+                return true;
+            }
+
+            State = CoreLoopState.PlayerTurn;
+            RaiseStepped();
+            RunEnemyTurn();
+            return true;
         }
 
         public bool TryPlayerHit()
@@ -269,6 +411,72 @@ namespace DiaBlackJack.CoreLoop
         private bool CanAcceptPlayerAction()
         {
             return CanPlayerAct;
+        }
+
+        private DemonContractFailureReason EvaluatePlayerDemonContractFailureReason()
+        {
+            if (State == CoreLoopState.PlayerResolvingDemonContract ||
+                _pendingPlayerDemonContractInteraction != null ||
+                State == CoreLoopState.PlayerChoosingChangeCard ||
+                State == CoreLoopState.PlayerResolvingCardEffect)
+            {
+                return DemonContractFailureReason.PendingInteraction;
+            }
+
+            if (State == CoreLoopState.EnemyTurn)
+            {
+                return DemonContractFailureReason.NotPlayerTurn;
+            }
+
+            if (State != CoreLoopState.PlayerTurn)
+            {
+                return DemonContractFailureReason.BattleNotActive;
+            }
+
+            if (Player.IsStanding)
+            {
+                return DemonContractFailureReason.PlayerStanding;
+            }
+
+            if (UsedPlayerBaseDemonContractCount >= BasePlayerDemonContractUseLimit)
+            {
+                return DemonContractFailureReason.BaseUseLimitReached;
+            }
+
+            if (Player.Soul.Current <= BasePlayerDemonContractSoulCost)
+            {
+                return DemonContractFailureReason.InsufficientSoul;
+            }
+
+            if (!PlayerDemonDeck.CanTakeCandidates)
+            {
+                return DemonContractFailureReason.InsufficientCandidates;
+            }
+
+            return DemonContractFailureReason.None;
+        }
+
+        private static PendingDemonContractInteraction CreateContractChoiceInteraction(
+            int interactionId,
+            IReadOnlyList<DemonContractCard> candidates)
+        {
+            var options = new List<DemonContractOption>(candidates.Count);
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                DemonContractCard candidate = candidates[i];
+                options.Add(new DemonContractOption(
+                    i,
+                    candidate.Id,
+                    numericValue: null,
+                    candidate.Definition.DisplayName));
+            }
+
+            return new PendingDemonContractInteraction(
+                interactionId,
+                DemonContractInteractionKind.ChooseContract,
+                contractKind: null,
+                options,
+                "계약할 악마를 선택하십시오.");
         }
 
         internal CardUseAvailability EvaluatePlayerCardUse(int cardId)
