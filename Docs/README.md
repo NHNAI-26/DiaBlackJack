@@ -31,6 +31,10 @@
 | [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M03 검증 완료 v0.3 |
 | [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M03 작업 순서와 단계별 검증 게이트 | CU-M03 완료 v0.3 |
 | [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M03 완료 |
+| [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | AC-00 완료·구현 미착수 v0.1 |
+| [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | AC-01 착수 가능 v0.1 |
+| [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 구현 순서와 단계별 검증 게이트 | AC-00 완료 v0.1 |
+| [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | AC-00 완료·다음 AC-01 v0.1 |
 | [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속·우선 악마 4종과 광신도 선택 밸런스 | DC-08 완료 v1.0 |
 | [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | DC-08 검증 완료 v1.0 |
 | [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 구현 순서와 단계별 검증 게이트 | 전체 완료 v1.0 |
@@ -66,6 +70,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-23 | 이천서 | 자동 발동 카드의 최초 배분 예외, 공개 유입·효과·버스트 순서, 5종 카드 프로토타입 결정과 AC-00~AC-06 기획·개발 명세·구현 계획·진행 기록 4종 수립 |
 | 2026-07-23 | 이천서 | 악마 계약 DC-08 광신도 사탄·레비아탄 효용 조건과 벨페고르·마몬 결정적 균형 분산을 구현하고 400시드·100자동전투·대상 8/8·CoreLoop 268/268·전체 397/397로 검증 |
 | 2026-07-23 | 이천서 | 악마 계약 DC-07 광신도 계약 정책·적 소유 4종 대칭 처리·Cultist 전용 덱·안전 표시와 반복 회귀를 구현하고 대상 12/12·CoreLoop 260/260·전체 389/389·Console 0으로 1차 범위를 완료 |
 | 2026-07-23 | 이천서 | 악마 계약 DC-06 정상 차례 카운터·스탠드/버스트 제한·영혼 대가·양면 권능·화면을 구현하고 대상 8/8·전체 377/377·두 씬·두 해상도 검증 뒤 DC-07로 전환 |
