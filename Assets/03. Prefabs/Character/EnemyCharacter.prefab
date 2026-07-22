@@ -121,6 +121,9 @@ MonoBehaviour:
   winScale: 1.15
   loseScale: 0.9
   useCardScale: 1.08
+  merchantSprite: {fileID: 0}
+  merchantTint: {r: 0.32, g: 0.3, b: 0.36, a: 1}
+  merchantScale: 0.8
 --- !u!1 &5156838660379731366
 GameObject:
   m_ObjectHideFlags: 0
@@ -183,7 +186,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  - {fileID: 2133046647965827312, guid: ac5316b5f317ebb4093122344d153140, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -229,8 +232,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: ac5316b5f317ebb4093122344d153140, type: 2}
+  m_sharedMaterial: {fileID: 2133046647965827312, guid: ac5316b5f317ebb4093122344d153140, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

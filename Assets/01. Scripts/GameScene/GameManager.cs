@@ -33,6 +33,9 @@ namespace DiaBlackJack.GameScene
         [Header("Shop (MVP)")]
         [SerializeField] private ShopController shop;
 
+        [Tooltip("Font for the temporary IMGUI buttons/panels. Leave empty to use Unity's default.")]
+        [SerializeField] private Font uiFont;
+
         [Header("Presentation pacing")]
         [SerializeField] private float stepSeconds = 1.0f;
         [SerializeField] private float resolveHoldSeconds = 1.1f;
@@ -157,9 +160,15 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            _buttonStyle ??= new GUIStyle(GUI.skin.button) { fontSize = 18, fontStyle = FontStyle.Bold };
+            _buttonStyle ??= new GUIStyle(GUI.skin.button)
+            {
+                font = uiFont,
+                fontSize = 18,
+                fontStyle = FontStyle.Bold
+            };
             _labelStyle ??= new GUIStyle(GUI.skin.label)
             {
+                font = uiFont,
                 fontSize = 20,
                 fontStyle = FontStyle.Bold,
                 alignment = TextAnchor.MiddleCenter,
@@ -493,6 +502,7 @@ namespace DiaBlackJack.GameScene
         {
             _panelStyle ??= new GUIStyle(GUI.skin.box)
             {
+                font = uiFont,
                 fontSize = 20,
                 fontStyle = FontStyle.Bold,
                 alignment = TextAnchor.UpperCenter,
