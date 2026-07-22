@@ -31,14 +31,16 @@ namespace DiaBlackJack.CoreLoop
             BlackjackDeck enemyDeck,
             int playerMaximumSoul = 12,
             int enemyMaximumSoul = 3,
-            IEnemyBehaviorPolicy enemyPolicy = null)
+            IEnemyBehaviorPolicy enemyPolicy = null,
+            DemonContractDeck playerDemonDeck = null)
             : this(
                 playerDeck,
                 enemyDeck,
                 playerMaximumSoul,
                 playerMaximumSoul,
                 enemyMaximumSoul,
-                enemyPolicy)
+                enemyPolicy,
+                playerDemonDeck)
         {
         }
 
@@ -48,7 +50,8 @@ namespace DiaBlackJack.CoreLoop
             int playerMaximumSoul,
             int playerCurrentSoul,
             int enemyMaximumSoul,
-            IEnemyBehaviorPolicy enemyPolicy = null)
+            IEnemyBehaviorPolicy enemyPolicy = null,
+            DemonContractDeck playerDemonDeck = null)
             : this(
                 playerDeck,
                 enemyDeck,
@@ -56,7 +59,8 @@ namespace DiaBlackJack.CoreLoop
                 playerCurrentSoul,
                 enemyMaximumSoul,
                 enemyPolicy,
-                CardEffectResolver.CreateDefault())
+                CardEffectResolver.CreateDefault(),
+                playerDemonDeck)
         {
         }
 
@@ -67,10 +71,13 @@ namespace DiaBlackJack.CoreLoop
             int playerCurrentSoul,
             int enemyMaximumSoul,
             IEnemyBehaviorPolicy enemyPolicy,
-            CardEffectResolver cardEffectResolver)
+            CardEffectResolver cardEffectResolver,
+            DemonContractDeck playerDemonDeck = null)
         {
             Player = new BattleParticipant(playerDeck, playerMaximumSoul, playerCurrentSoul);
             Enemy = new BattleParticipant(enemyDeck, enemyMaximumSoul);
+            PlayerDemonDeck = playerDemonDeck ??
+                new DemonContractDeck(Array.Empty<DemonContractCard>(), seed: 0);
             _enemyPolicy = enemyPolicy ?? new SimpleEnemyPolicy();
             _cardEffectResolver = cardEffectResolver ??
                 throw new ArgumentNullException(nameof(cardEffectResolver));
@@ -78,6 +85,8 @@ namespace DiaBlackJack.CoreLoop
         }
 
         public BattleParticipant Player { get; }
+
+        public DemonContractDeck PlayerDemonDeck { get; }
 
         public BattleParticipant Enemy { get; }
 

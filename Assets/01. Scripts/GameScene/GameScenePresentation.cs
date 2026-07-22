@@ -354,15 +354,15 @@ namespace DiaBlackJack.GameScene
                     card.DisplayName,
                     abilityDescription: ResolveAbilityDescription(battle, card.CardId));
 
-                // The camera mirrors local X, so the highest index renders at the screen-LEFT edge.
-                // The player's hidden card belongs on the screen left → append it last (face-ups first).
+                // PlayerHand renders index 0 at the player's screen-left edge. Keep hidden cards
+                // first in the projection while preserving the original hand order within each group.
                 if (card.IsFaceUp)
                 {
-                    cards.Insert(cards.Count - hiddenCardCount, projectedCard);
+                    cards.Add(projectedCard);
                 }
                 else
                 {
-                    cards.Add(projectedCard);
+                    cards.Insert(hiddenCardCount, projectedCard);
                     hiddenCardCount++;
                 }
             }
