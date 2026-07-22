@@ -18,7 +18,8 @@ namespace DiaBlackJack.CoreLoop
 
     public enum DemonContractInteractionKind
     {
-        ChooseContract
+        ChooseContract,
+        BelphegorTopCard
     }
 
     public sealed class DemonContractAvailability
@@ -202,6 +203,26 @@ namespace DiaBlackJack.CoreLoop
                     }
                 }
             }
+            else if (kind == DemonContractInteractionKind.BelphegorTopCard)
+            {
+                if (contractKind != DemonContractKind.Belphegor ||
+                    copiedOptions.Count != 2)
+                {
+                    throw new ArgumentException(
+                        "Belphegor top-card choice requires two options for Belphegor.",
+                        nameof(options));
+                }
+
+                foreach (DemonContractOption option in copiedOptions)
+                {
+                    if (option.ContractCardId.HasValue || option.NumericValue.HasValue)
+                    {
+                        throw new ArgumentException(
+                            "Belphegor public options cannot expose the previewed card.",
+                            nameof(options));
+                    }
+                }
+            }
 
             InteractionId = interactionId;
             Kind = kind;
@@ -234,6 +255,55 @@ namespace DiaBlackJack.CoreLoop
             option = null;
             return false;
         }
+    }
+
+    public sealed class PlayerDemonContractPreview
+    {
+        internal PlayerDemonContractPreview(
+            int interactionId,
+            int sourceContractCardId,
+            DemonContractKind contractKind,
+            BlackjackCard card)
+        {
+            if (interactionId <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(interactionId));
+            }
+
+            if (sourceContractCardId < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceContractCardId));
+            }
+
+            if (!Enum.IsDefined(typeof(DemonContractKind), contractKind))
+            {
+                throw new ArgumentOutOfRangeException(nameof(contractKind));
+            }
+
+            if (card == null)
+            {
+                throw new ArgumentNullException(nameof(card));
+            }
+
+            InteractionId = interactionId;
+            SourceContractCardId = sourceContractCardId;
+            ContractKind = contractKind;
+            CardId = card.Id;
+            DefinitionKey = card.DefinitionKey;
+            Rank = card.Rank;
+        }
+
+        public int CardId { get; }
+
+        public DemonContractKind ContractKind { get; }
+
+        public string DefinitionKey { get; }
+
+        public int InteractionId { get; }
+
+        public int Rank { get; }
+
+        public int SourceContractCardId { get; }
     }
 
     public abstract class DemonContractRuntimeState

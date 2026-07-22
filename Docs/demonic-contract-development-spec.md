@@ -3,8 +3,8 @@
 > 프로젝트: DiaBlackJack  
 > 기획·개발 책임자: 이천서  
 > 작업 식별자: DC-00~DC-07  
-> 버전: v0.4
-> 상태: DC-02 계약 행동·후보 선택·세션 전달 구현·검증 완료, DC-03 착수 가능
+> 버전: v0.5
+> 상태: DC-03 벨페고르 처리기·전용 선택·자동 스탠드 구현·검증 완료, DC-04 착수 가능
 > 최종 갱신: 2026-07-22
 
 ## 1. 기술 목표
@@ -322,6 +322,10 @@ IDemonContractHandler
 
 덱 미리보기 값은 적 AI 관측과 공용 전투 로그에 포함하지 않는다.
 
+DC-03 구현에서는 기본 `DemonContractResolver`에 벨페고르만 등록한다. `IDemonContractPlayerHitPreviewHandler`와 `IDemonContractOwnerTurnHandler`가 히트 전 보류, 정상 차례 시작, 행동 완료와 라운드 종료 훅을 타입으로 연결한다. `BlackjackDeck.TryPeekTop`과 `TryMoveTopToBottom`은 같은 물리 ID를 재검증하며 카드 총수·가용 소유권을 바꾸지 않는다.
+
+`PendingDemonContractInteraction`의 `BelphegorTopCard` 두 공개 옵션에는 카드 ID와 숫자가 없다. 실제 카드 ID·정의 키·숫자는 `PlayerDemonContractPreview`에만 저장하고 `EnemyObservation`·`PublicActionHistory`에는 전달하지 않는다. 그대로 히트는 기존 공개 드로우와 `VisibleHandValue` 버스트 경로를 재사용하며, 덱 아래 이동은 드로우 없이 행동만 종료한다. 상대 스탠드로 예약된 자동 스탠드는 다음 행동 전체가 끝난 뒤 한 번 소비하고 라운드 종료 시 초기화한다.
+
 ### 9.2 마몬
 
 - 주사위는 `IDemonRandom` 또는 동일 목적의 주입 가능한 경계에서 1~6을 생성한다.
@@ -496,3 +500,4 @@ Assets/06.Packages/Tests/EditMode/StageProgression/
 | 2026-07-22 | 이천서 | 동일 악마 인스턴스 분리, 개별 대가 사망, 계약 생성 카드 합계와 사탄·바포메트·파이몬·벨리알의 전투 종료 원상복구 명세 추가 |
 | 2026-07-22 | 이천서 | DC-01 실제 구현에 맞춰 네 정의의 요약·대가, 후보 3장 이동·버림 보충, 빈 독립 전투 덱과 런→전투 변환·독립 시드 계약 기록 |
 | 2026-07-22 | 이천서 | DC-02 실제 구현에 맞춰 비용·횟수 가용성, 증가형 상호작용 ID, 필수 선택·활성/버림 이동, 주입식 활성화 처리와 CoreLoop·StageProgression 세션 전달 기록 |
+| 2026-07-22 | 이천서 | DC-03 실제 구현에 맞춰 벨페고르 선택 훅, 소유자 전용 미리보기, 동일 ID 공개 히트·덱 아래 이동, 행동 종료 자동 스탠드와 정보 은닉 기록 |

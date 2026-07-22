@@ -134,16 +134,39 @@ namespace DiaBlackJack.CoreLoop
 
         public BlackjackCard Draw()
         {
-            if (_drawPile.Count == 0)
-            {
-                RecycleDiscardPile();
-            }
+            EnsureDrawPile();
 
             int lastIndex = _drawPile.Count - 1;
             BlackjackCard card = _drawPile[lastIndex];
             _drawPile.RemoveAt(lastIndex);
             _availableCardIds.Remove(card.Id);
             return card;
+        }
+
+        internal bool TryPeekTop(out BlackjackCard card)
+        {
+            card = null;
+            if (!CanDraw(1))
+            {
+                return false;
+            }
+
+            EnsureDrawPile();
+            card = _drawPile[_drawPile.Count - 1];
+            return true;
+        }
+
+        internal bool TryMoveTopToBottom(int expectedCardId)
+        {
+            if (!TryPeekTop(out BlackjackCard card) || card.Id != expectedCardId)
+            {
+                return false;
+            }
+
+            int topIndex = _drawPile.Count - 1;
+            _drawPile.RemoveAt(topIndex);
+            _drawPile.Insert(0, card);
+            return true;
         }
 
         public IReadOnlyList<BlackjackCard> TakeTop(int count)
@@ -258,6 +281,14 @@ namespace DiaBlackJack.CoreLoop
             _drawPile.AddRange(_discardPile);
             _discardPile.Clear();
             Shuffle(_drawPile);
+        }
+
+        private void EnsureDrawPile()
+        {
+            if (_drawPile.Count == 0)
+            {
+                RecycleDiscardPile();
+            }
         }
 
         private void Shuffle(List<BlackjackCard> cards)
