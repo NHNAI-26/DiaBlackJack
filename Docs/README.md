@@ -31,10 +31,10 @@
 | [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M03 검증 완료 v0.3 |
 | [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M03 작업 순서와 단계별 검증 게이트 | CU-M03 완료 v0.3 |
 | [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M03 완료 |
-| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속·우선 악마 4종의 프로토타입 규칙 | DC-04 마몬·레비아탄 구현 완료 v0.6 |
-| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·테스트 명세 | DC-04 검증 완료 v0.6 |
-| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-07 구현 순서와 단계별 검증 게이트 | DC-04 완료·DC-05 예정 v0.6 |
-| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | DC-04 완료, 대상 11/11·전체 362/362 |
+| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속·우선 악마 4종의 프로토타입 규칙 | DC-05 플레이어 UI·런 연결 완료 v0.7 |
+| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·테스트 명세 | DC-05 검증 완료 v0.7 |
+| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-07 구현 순서와 단계별 검증 게이트 | DC-05 완료·DC-06 결정 대기 v0.7 |
+| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | DC-05 완료, 대상 7/7·전체 369/369 |
 | [battle-reward-design.md](./battle-reward-design.md) | 일반·엘리트·보스 전투 보상 규칙과 프로토타입 카드 풀 | RW-00~RW-05 완료 v0.1 |
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW-05 최종 검증 완료 v0.1 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
@@ -66,6 +66,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-23 | 이천서 | 악마 계약 DC-05 비용 확인·후보 3장·활성 상태·소유자 전용 미리보기·독립/런 UI를 구현하고 대상 7/7·전체 369/369·두 씬·두 해상도 검증 뒤 DC-06 결정 게이트로 전환 |
 | 2026-07-22 | 이천서 | 악마 계약 DC-03 벨페고르 플레이어 전용 미리보기·동일 ID 히트/덱 이동·행동 후 자동 스탠드·정보 은닉과 대상 9/9·전체 351/351을 완료하고 다음 단계를 DC-04로 전환 |
 | 2026-07-22 | 이천서 | 악마 계약 DC-04 마몬 주입식 주사위·최종 합 선택, 레비아탄 리볼버 후속 버스트·영혼 대가·정보 은닉과 대상 11/11·전체 362/362를 완료하고 다음 단계를 DC-05로 전환 |
 | 2026-07-22 | 이천서 | 악마 계약 DC-02 비용·횟수·후보 필수 선택·상호작용 ID·활성 계약·세션 전달과 대상 13/13·전체 342/342를 완료하고 다음 단계를 DC-03으로 전환 |

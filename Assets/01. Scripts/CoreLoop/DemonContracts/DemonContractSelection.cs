@@ -75,7 +75,8 @@ namespace DiaBlackJack.CoreLoop
             int optionId,
             int? contractCardId,
             int? numericValue,
-            string publicLabel)
+            string publicLabel,
+            string contractDefinitionKey = null)
         {
             if (optionId < 0)
             {
@@ -98,9 +99,14 @@ namespace DiaBlackJack.CoreLoop
             ContractCardId = contractCardId;
             NumericValue = numericValue;
             PublicLabel = publicLabel.Trim();
+            ContractDefinitionKey = string.IsNullOrWhiteSpace(contractDefinitionKey)
+                ? null
+                : contractDefinitionKey.Trim();
         }
 
         public int? ContractCardId { get; }
+
+        public string ContractDefinitionKey { get; }
 
         public int? NumericValue { get; }
 

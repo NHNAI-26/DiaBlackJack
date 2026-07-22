@@ -58,6 +58,19 @@ namespace DiaBlackJack.CoreLoop
 
         public int TotalCardCount { get; }
 
+        public static DemonContractDeck CreatePrototype(int seed)
+        {
+            DemonContractCatalog catalog = DemonContractCatalog.Default;
+            IReadOnlyList<DemonContractDefinition> definitions = catalog.Definitions;
+            var cards = new List<DemonContractCard>(definitions.Count);
+            for (int i = 0; i < definitions.Count; i++)
+            {
+                cards.Add(new DemonContractCard(i, definitions[i]));
+            }
+
+            return new DemonContractDeck(cards, seed);
+        }
+
         public void Discard(DemonContractCard card)
         {
             if (card == null)

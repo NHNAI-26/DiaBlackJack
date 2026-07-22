@@ -654,7 +654,8 @@ namespace DiaBlackJack.CoreLoop
                     i,
                     candidate.Id,
                     numericValue: null,
-                    candidate.Definition.DisplayName));
+                    candidate.Definition.DisplayName,
+                    candidate.DefinitionKey));
             }
 
             return new PendingDemonContractInteraction(

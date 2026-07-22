@@ -14,6 +14,7 @@ namespace DiaBlackJack.CoreLoop.UI
         private GUIStyle _buttonStyle;
         private int _styleScreenHeight;
         private bool _inputLocked;
+        private bool _showDemonContractConfirmation;
 
         public event Action HitRequested;
 
@@ -27,11 +28,20 @@ namespace DiaBlackJack.CoreLoop.UI
 
         public event Action<int> CardEffectChoiceRequested;
 
+        public event Action DemonContractBeginRequested;
+
+        public event Action<int, int> DemonContractChoiceRequested;
+
         public event Action RestartRequested;
 
         public void Render(CoreLoopViewModel model)
         {
             _model = model ?? throw new ArgumentNullException(nameof(model));
+            if (_model.DemonContract.IsResolving ||
+                _model.State == CoreLoopState.BattleEnded)
+            {
+                _showDemonContractConfirmation = false;
+            }
         }
 
         public void SetInputLocked(bool inputLocked)
@@ -85,6 +95,7 @@ namespace DiaBlackJack.CoreLoop.UI
             GUILayout.Label(GetBattleMessage(_model), _resultStyle);
             GUILayout.Label(_model.LastRound, _bodyStyle);
             GUILayout.Label(_model.LastCardEffect, _bodyStyle);
+            DrawDemonContractStatus();
             GUILayout.FlexibleSpace();
             DrawActions();
             GUILayout.Space(4f);
@@ -159,6 +170,18 @@ namespace DiaBlackJack.CoreLoop.UI
                 return;
             }
 
+            if (_model.DemonContract.IsResolving)
+            {
+                DrawDemonContractChoices();
+                return;
+            }
+
+            if (_showDemonContractConfirmation)
+            {
+                DrawDemonContractConfirmation();
+                return;
+            }
+
             GUILayout.BeginHorizontal();
             bool wasEnabled = GUI.enabled;
             GUI.enabled = _model.CanHit && !_inputLocked;
@@ -177,11 +200,21 @@ namespace DiaBlackJack.CoreLoop.UI
             GUILayout.EndHorizontal();
 
             GUILayout.Space(4f);
+            GUILayout.Label(
+                _model.ChangeActionText + "  ·  " +
+                _model.DemonContract.ActionText,
+                _bodyStyle);
             GUILayout.BeginHorizontal();
             GUI.enabled = _model.CanChange && !_inputLocked;
-            if (GUILayout.Button(_model.ChangeActionText, _buttonStyle, GUILayout.Height(40f)))
+            if (GUILayout.Button("CHANGE", _buttonStyle, GUILayout.Height(40f)))
             {
                 ChangeRequested?.Invoke();
+            }
+
+            GUI.enabled = _model.DemonContract.CanBegin && !_inputLocked;
+            if (GUILayout.Button("CONTRACT", _buttonStyle, GUILayout.Height(40f)))
+            {
+                _showDemonContractConfirmation = true;
             }
 
             GUI.enabled = wasEnabled;
@@ -279,6 +312,116 @@ namespace DiaBlackJack.CoreLoop.UI
             }
 
             GUI.enabled = wasEnabled;
+        }
+
+        private void DrawDemonContractStatus()
+        {
+            DemonContractPanelViewModel contract = _model.DemonContract;
+            if (contract.ActiveContracts.Count == 0 &&
+                string.IsNullOrEmpty(contract.LastContractResult) &&
+                string.IsNullOrEmpty(contract.LastEffectResult))
+            {
+                return;
+            }
+
+            GUILayout.BeginVertical(GUI.skin.box, GUILayout.ExpandWidth(true));
+            GUILayout.Label("DEMON CONTRACT", _headingStyle);
+            foreach (string active in contract.ActiveContracts)
+            {
+                GUILayout.Label(active, _bodyStyle);
+            }
+
+            if (!string.IsNullOrEmpty(contract.LastContractResult))
+            {
+                GUILayout.Label(contract.LastContractResult, _bodyStyle);
+            }
+
+            if (!string.IsNullOrEmpty(contract.LastEffectResult))
+            {
+                GUILayout.Label(contract.LastEffectResult, _warningStyle);
+            }
+
+            GUILayout.EndVertical();
+        }
+
+        private void DrawDemonContractConfirmation()
+        {
+            DemonContractPanelViewModel contract = _model.DemonContract;
+            GUILayout.Label("CONFIRM DEMON CONTRACT", _headingStyle);
+            GUILayout.Label(
+                $"영혼 {contract.SoulCost} 지불 · 계약 후 {contract.SoulAfterCost}",
+                _bodyStyle);
+            GUILayout.Label("비용 지불 뒤에는 후보 하나를 반드시 선택합니다.", _warningStyle);
+            GUILayout.Space(6f);
+            GUILayout.BeginHorizontal();
+
+            bool wasEnabled = GUI.enabled;
+            GUI.enabled = contract.CanBegin && !_inputLocked;
+            if (GUILayout.Button("CONFIRM", _buttonStyle, GUILayout.Height(48f)))
+            {
+                DemonContractBeginRequested?.Invoke();
+            }
+
+            GUI.enabled = !_inputLocked;
+            if (GUILayout.Button("CANCEL", _buttonStyle, GUILayout.Height(48f)))
+            {
+                _showDemonContractConfirmation = false;
+            }
+
+            GUI.enabled = wasEnabled;
+            GUILayout.EndHorizontal();
+        }
+
+        private void DrawDemonContractChoices()
+        {
+            DemonContractPanelViewModel contract = _model.DemonContract;
+            GUILayout.Label(contract.Prompt, _headingStyle);
+            if (!string.IsNullOrEmpty(contract.OwnerPreview))
+            {
+                GUILayout.Label(contract.OwnerPreview, _warningStyle);
+            }
+
+            GUILayout.Space(6f);
+            GUILayout.BeginHorizontal();
+            bool wasEnabled = GUI.enabled;
+            foreach (DemonContractChoiceViewModel choice in contract.Choices)
+            {
+                GUILayout.BeginVertical(
+                    GUI.skin.box,
+                    GUILayout.ExpandWidth(true),
+                    GUILayout.MinHeight(contract.InteractionKind ==
+                        DemonContractInteractionKind.ChooseContract ? 124f : 56f));
+                GUILayout.Label(choice.Title, _headingStyle);
+                if (!string.IsNullOrEmpty(choice.Ability))
+                {
+                    GUILayout.Label(choice.Ability, _bodyStyle);
+                }
+
+                if (!string.IsNullOrEmpty(choice.Cost))
+                {
+                    GUILayout.Label(choice.Cost, _warningStyle);
+                }
+
+                GUI.enabled = choice.CanSelect && !_inputLocked;
+                if (GUILayout.Button(
+                    choice.CanSelect ? "SELECT" : choice.DisabledReason,
+                    _buttonStyle,
+                    GUILayout.MinHeight(38f),
+                    GUILayout.ExpandWidth(true)))
+                {
+                    if (contract.InteractionId.HasValue)
+                    {
+                        DemonContractChoiceRequested?.Invoke(
+                            contract.InteractionId.Value,
+                            choice.OptionId);
+                    }
+                }
+
+                GUILayout.EndVertical();
+            }
+
+            GUI.enabled = wasEnabled;
+            GUILayout.EndHorizontal();
         }
 
         private void EnsureStyles()

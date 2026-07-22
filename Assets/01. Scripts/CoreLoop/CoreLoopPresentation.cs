@@ -88,6 +88,7 @@ namespace DiaBlackJack.CoreLoop.UI
             IReadOnlyList<CardEffectChoiceViewModel> cardEffectChoices,
             string lastCardEffect,
             bool isResolvingCardEffect,
+            DemonContractPanelViewModel demonContract,
             bool canRestart)
         {
             State = state;
@@ -123,6 +124,8 @@ namespace DiaBlackJack.CoreLoop.UI
                 throw new ArgumentNullException(nameof(cardEffectChoices));
             LastCardEffect = lastCardEffect ?? string.Empty;
             IsResolvingCardEffect = isResolvingCardEffect;
+            DemonContract = demonContract ??
+                throw new ArgumentNullException(nameof(demonContract));
             CanRestart = canRestart;
         }
 
@@ -184,6 +187,8 @@ namespace DiaBlackJack.CoreLoop.UI
 
         public bool IsResolvingCardEffect { get; }
 
+        public DemonContractPanelViewModel DemonContract { get; }
+
         public bool CanRestart { get; }
     }
 
@@ -231,6 +236,7 @@ namespace DiaBlackJack.CoreLoop.UI
                 FormatCardEffectChoices(battle.PendingPlayerCardEffect),
                 FormatLastCardEffect(battle.LastCardEffectResult),
                 battle.State == CoreLoopState.PlayerResolvingCardEffect,
+                DemonContractPresenter.Create(battle),
                 battle.State == CoreLoopState.BattleEnded);
         }
 

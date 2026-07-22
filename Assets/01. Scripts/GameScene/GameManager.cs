@@ -46,7 +46,11 @@ namespace DiaBlackJack.GameScene
         private GUIStyle _buttonStyle;
         private GUIStyle _labelStyle;
         private GUIStyle _panelStyle;
+        private GUIStyle _contractTitleStyle;
+        private GUIStyle _contractBodyStyle;
+        private GUIStyle _contractCostStyle;
         private DeckClickable _hoveredDeck;
+        private bool _showDemonContractConfirmation;
         private readonly List<GameSceneViewModel> _timeline = new List<GameSceneViewModel>();
 
         public CoreLoopBattle Battle => _session?.Battle;
@@ -141,7 +145,9 @@ namespace DiaBlackJack.GameScene
             _battleIndex++;
             return new CoreLoopBattle(
                 BlackjackDeck.CreateStandard(battleSeed),
-                BlackjackDeck.CreateStandard(battleSeed + 1));
+                BlackjackDeck.CreateStandard(battleSeed + 1),
+                playerDemonDeck: DemonContractDeck.CreatePrototype(
+                    battleSeed + 1000));
         }
 
         private void OnGUI()
@@ -164,6 +170,8 @@ namespace DiaBlackJack.GameScene
             {
                 DrawDeckPanel(_hoveredDeck.Kind);
             }
+
+            DrawDemonContractStatusPanel();
 
             if (_core.State == CoreLoopState.BattleEnded)
             {
@@ -198,11 +206,37 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            DrawHeading("CLICK A LIT CARD TO USE ITS EFFECT");
+            if (_core.DemonContract.IsResolving)
+            {
+                DrawDemonContractChoices();
+                return;
+            }
+
+            if (_showDemonContractConfirmation)
+            {
+                DrawDemonContractConfirmation();
+                return;
+            }
+
+            DrawHeading(
+                _core.ChangeActionText + "  ·  " +
+                _core.DemonContract.ActionText);
             DrawButtonRow(
-                new[] { "HIT", "STAND", _core.ChangeActionText },
-                new[] { _core.CanHit, _core.CanStand, _core.CanChange },
-                new Func<bool>[] { _session.TryPlayerHit, _session.TryPlayerStand, _session.TryBeginPlayerChange });
+                new[] { "HIT", "STAND", "CHANGE", "CONTRACT" },
+                new[]
+                {
+                    _core.CanHit,
+                    _core.CanStand,
+                    _core.CanChange,
+                    _core.DemonContract.CanBegin
+                },
+                new Func<bool>[]
+                {
+                    _session.TryPlayerHit,
+                    _session.TryPlayerStand,
+                    _session.TryBeginPlayerChange,
+                    BeginDemonContractConfirmation
+                });
         }
 
         private void DrawChangeCandidates()
@@ -243,8 +277,188 @@ namespace DiaBlackJack.GameScene
             DrawButtonRow(labels, enabled, actions);
         }
 
+        private void DrawDemonContractConfirmation()
+        {
+            DemonContractPanelViewModel contract = _core.DemonContract;
+            DrawHeading(
+                $"영혼 {contract.SoulCost} 지불 · 계약 후 {contract.SoulAfterCost} · " +
+                "지불 뒤 후보 하나 필수 선택");
+            DrawButtonRow(
+                new[] { "CONFIRM CONTRACT", "CANCEL" },
+                new[] { contract.CanBegin, true },
+                new Func<bool>[] { ConfirmDemonContract, CancelDemonContract });
+        }
+
+        private void DrawDemonContractChoices()
+        {
+            DemonContractPanelViewModel contract = _core.DemonContract;
+            int count = contract.Choices.Count;
+            string heading = contract.Prompt;
+            if (!string.IsNullOrEmpty(contract.OwnerPreview))
+            {
+                heading += "  |  " + contract.OwnerPreview;
+            }
+
+            if (contract.InteractionKind != DemonContractInteractionKind.ChooseContract)
+            {
+                var labels = new string[count];
+                var enabled = new bool[count];
+                var actions = new Func<bool>[count];
+                for (int i = 0; i < count; i++)
+                {
+                    DemonContractChoiceViewModel choice = contract.Choices[i];
+                    labels[i] = choice.Title;
+                    enabled[i] = choice.CanSelect;
+                    actions[i] = () => contract.InteractionId.HasValue &&
+                        _session.TryResolvePlayerDemonContract(
+                            contract.InteractionId.Value,
+                            choice.OptionId);
+                }
+
+                const float optionHeight = 64f;
+                DrawHeading(heading, optionHeight);
+                DrawButtonRow(labels, enabled, actions, optionHeight, maxWidth: 300f);
+                return;
+            }
+
+            bool compact = Screen.height <= 720;
+            float rowHeight = compact ? 166f : 204f;
+            DrawHeading(heading, rowHeight);
+            DrawDemonContractCandidateCards(contract, rowHeight, compact);
+        }
+
+        private void DrawDemonContractCandidateCards(
+            DemonContractPanelViewModel contract,
+            float height,
+            bool compact)
+        {
+            EnsureDemonContractStyles(compact);
+            int count = contract.Choices.Count;
+            const float gap = 12f;
+            float width = Mathf.Min(
+                380f,
+                (Screen.width - 40f - (count - 1) * gap) / count);
+            float totalWidth = count * width + (count - 1) * gap;
+            float x = (Screen.width - totalWidth) * 0.5f;
+            float y = Screen.height - height - 24f;
+
+            for (int i = 0; i < count; i++)
+            {
+                DemonContractChoiceViewModel choice = contract.Choices[i];
+                var cardRect = new Rect(x + i * (width + gap), y, width, height);
+                GUI.Box(cardRect, string.Empty);
+                float inset = compact ? 10f : 14f;
+                float titleHeight = compact ? 24f : 30f;
+                float buttonHeight = compact ? 30f : 38f;
+                float contentWidth = width - inset * 2f;
+
+                GUI.Label(
+                    new Rect(cardRect.x + inset, cardRect.y + 6f, contentWidth, titleHeight),
+                    choice.Title,
+                    _contractTitleStyle);
+                GUI.Label(
+                    new Rect(
+                        cardRect.x + inset,
+                        cardRect.y + titleHeight + 8f,
+                        contentWidth,
+                        compact ? 55f : 74f),
+                    choice.Ability,
+                    _contractBodyStyle);
+                GUI.Label(
+                    new Rect(
+                        cardRect.x + inset,
+                        cardRect.y + (compact ? 88f : 116f),
+                        contentWidth,
+                        compact ? 38f : 48f),
+                    choice.Cost,
+                    _contractCostStyle);
+
+                using (new GUIEnabledScope(!_inputLocked && choice.CanSelect))
+                {
+                    string buttonLabel = choice.CanSelect
+                        ? "SELECT"
+                        : choice.DisabledReason;
+                    if (GUI.Button(
+                        new Rect(
+                            cardRect.x + inset,
+                            cardRect.yMax - buttonHeight - 8f,
+                            contentWidth,
+                            buttonHeight),
+                        buttonLabel,
+                        _buttonStyle) &&
+                        contract.InteractionId.HasValue)
+                    {
+                        int interactionId = contract.InteractionId.Value;
+                        int optionId = choice.OptionId;
+                        ProcessInput(() => _session.TryResolvePlayerDemonContract(
+                            interactionId,
+                            optionId));
+                    }
+                }
+            }
+        }
+
+        private void EnsureDemonContractStyles(bool compact)
+        {
+            int titleSize = compact ? 18 : 22;
+            if (_contractTitleStyle != null &&
+                _contractTitleStyle.fontSize == titleSize)
+            {
+                return;
+            }
+
+            _contractTitleStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = titleSize,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter,
+                normal = { textColor = Color.white }
+            };
+            _contractBodyStyle = new GUIStyle(GUI.skin.label)
+            {
+                fontSize = compact ? 13 : 16,
+                alignment = TextAnchor.UpperLeft,
+                wordWrap = true,
+                normal = { textColor = new Color(0.92f, 0.92f, 0.92f) }
+            };
+            _contractCostStyle = new GUIStyle(_contractBodyStyle)
+            {
+                fontSize = compact ? 12 : 15,
+                fontStyle = FontStyle.Bold,
+                normal = { textColor = new Color(1f, 0.72f, 0.3f) }
+            };
+        }
+
+        private bool BeginDemonContractConfirmation()
+        {
+            if (!_core.DemonContract.CanBegin)
+            {
+                return false;
+            }
+
+            _showDemonContractConfirmation = true;
+            return true;
+        }
+
+        private bool ConfirmDemonContract()
+        {
+            _showDemonContractConfirmation = false;
+            return _session.TryBeginPlayerDemonContract();
+        }
+
+        private bool CancelDemonContract()
+        {
+            _showDemonContractConfirmation = false;
+            return true;
+        }
+
         // Bottom-anchored, screen-centered row. Width shrinks to always fit one row on screen.
-        private void DrawButtonRow(string[] labels, bool[] enabled, Func<bool>[] actions)
+        private void DrawButtonRow(
+            string[] labels,
+            bool[] enabled,
+            Func<bool>[] actions,
+            float height = 48f,
+            float maxWidth = 160f)
         {
             int n = labels.Length;
             if (n == 0)
@@ -252,18 +466,22 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            const float h = 48f;
             const float gap = 8f;
-            float w = Mathf.Min(160f, (Screen.width - 40f - (n - 1) * gap) / n);
+            float w = Mathf.Min(
+                maxWidth,
+                (Screen.width - 40f - (n - 1) * gap) / n);
             float totalWidth = n * w + (n - 1) * gap;
             float x0 = (Screen.width - totalWidth) * 0.5f;
-            float y = Screen.height - h - 24f;
+            float y = Screen.height - height - 24f;
 
             for (int i = 0; i < n; i++)
             {
                 using (new GUIEnabledScope(!_inputLocked && enabled[i]))
                 {
-                    if (GUI.Button(new Rect(x0 + i * (w + gap), y, w, h), labels[i], _buttonStyle))
+                    if (GUI.Button(
+                        new Rect(x0 + i * (w + gap), y, w, height),
+                        labels[i],
+                        _buttonStyle))
                     {
                         ProcessInput(actions[i]);
                     }
@@ -294,7 +512,46 @@ namespace DiaBlackJack.GameScene
             GUI.Box(rect, content, _panelStyle);
         }
 
-        private void DrawHeading(string text)
+        private void DrawDemonContractStatusPanel()
+        {
+            DemonContractPanelViewModel contract = _core.DemonContract;
+            if (contract.ActiveContracts.Count == 0 &&
+                string.IsNullOrEmpty(contract.LastContractResult) &&
+                string.IsNullOrEmpty(contract.LastEffectResult))
+            {
+                return;
+            }
+
+            _panelStyle ??= new GUIStyle(GUI.skin.box)
+            {
+                fontSize = 16,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.UpperLeft,
+                padding = new RectOffset(12, 12, 10, 10),
+                normal = { textColor = Color.white }
+            };
+
+            var lines = new List<string> { "DEMON CONTRACT" };
+            lines.AddRange(contract.ActiveContracts);
+            if (!string.IsNullOrEmpty(contract.LastContractResult))
+            {
+                lines.Add(contract.LastContractResult);
+            }
+
+            if (!string.IsNullOrEmpty(contract.LastEffectResult))
+            {
+                lines.Add(contract.LastEffectResult);
+            }
+
+            const float width = 450f;
+            float height = 32f + lines.Count * 24f;
+            GUI.Box(
+                new Rect(Screen.width - width - 20f, 20f, width, height),
+                string.Join("\n", lines),
+                _panelStyle);
+        }
+
+        private void DrawHeading(string text, float rowHeight = 48f)
         {
             if (string.IsNullOrEmpty(text))
             {
@@ -302,7 +559,7 @@ namespace DiaBlackJack.GameScene
             }
 
             const float h = 30f;
-            float y = Screen.height - 48f - 24f - h - 6f;
+            float y = Screen.height - rowHeight - 24f - h - 6f;
             GUI.Label(new Rect(0f, y, Screen.width, h), text, _labelStyle);
         }
 
@@ -437,6 +694,7 @@ namespace DiaBlackJack.GameScene
             bool restarted = _session.TryRestart();
             if (restarted && shop != null)
             {
+                _showDemonContractConfirmation = false;
                 shop.Close();
             }
 
@@ -450,6 +708,7 @@ namespace DiaBlackJack.GameScene
             bool restarted = _session.TryRestart();
             if (restarted && shop != null)
             {
+                _showDemonContractConfirmation = false;
                 shop.Close();
                 shop.ResetGold();
             }

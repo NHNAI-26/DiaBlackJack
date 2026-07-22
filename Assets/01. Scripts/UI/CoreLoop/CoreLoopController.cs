@@ -36,6 +36,8 @@ namespace DiaBlackJack.CoreLoop.UI
             _view.ChangeCandidateRequested += RequestSelectChangedCard;
             _view.CardUseRequested += RequestBeginCardUse;
             _view.CardEffectChoiceRequested += RequestResolveCardChoice;
+            _view.DemonContractBeginRequested += RequestBeginDemonContract;
+            _view.DemonContractChoiceRequested += RequestResolveDemonContract;
             _view.RestartRequested += RequestRestart;
 
             _stageRuntime = StageProgressionRuntime.Instance;
@@ -67,6 +69,8 @@ namespace DiaBlackJack.CoreLoop.UI
             _view.ChangeCandidateRequested -= RequestSelectChangedCard;
             _view.CardUseRequested -= RequestBeginCardUse;
             _view.CardEffectChoiceRequested -= RequestResolveCardChoice;
+            _view.DemonContractBeginRequested -= RequestBeginDemonContract;
+            _view.DemonContractChoiceRequested -= RequestResolveDemonContract;
             _view.RestartRequested -= RequestRestart;
         }
 
@@ -112,6 +116,20 @@ namespace DiaBlackJack.CoreLoop.UI
                 : _session.TryResolvePlayerCardChoice(optionId));
         }
 
+        public void RequestBeginDemonContract()
+        {
+            ProcessInput(() => IsStageBattle
+                ? _stageSession.TryBeginPlayerDemonContract()
+                : _session.TryBeginPlayerDemonContract());
+        }
+
+        public void RequestResolveDemonContract(int interactionId, int optionId)
+        {
+            ProcessInput(() => IsStageBattle
+                ? _stageSession.TryResolvePlayerDemonContract(interactionId, optionId)
+                : _session.TryResolvePlayerDemonContract(interactionId, optionId));
+        }
+
         public void RequestRestart()
         {
             if (IsStageBattle)
@@ -129,7 +147,9 @@ namespace DiaBlackJack.CoreLoop.UI
             _battleIndex++;
             return new CoreLoopBattle(
                 BlackjackDeck.CreateStandard(battleSeed),
-                BlackjackDeck.CreateStandard(battleSeed + 1));
+                BlackjackDeck.CreateStandard(battleSeed + 1),
+                playerDemonDeck: DemonContractDeck.CreatePrototype(
+                    battleSeed + 1000));
         }
 
         private bool IsStageBattle => _stageSession != null;

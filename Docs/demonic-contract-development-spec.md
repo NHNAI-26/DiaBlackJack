@@ -3,9 +3,9 @@
 > 프로젝트: DiaBlackJack  
 > 기획·개발 책임자: 이천서  
 > 작업 식별자: DC-00~DC-07  
-> 버전: v0.6
-> 상태: DC-04 마몬·레비아탄 처리기·선택·후속 훅 구현·검증 완료, DC-05 착수 가능
-> 최종 갱신: 2026-07-22
+> 버전: v0.7
+> 상태: DC-05 계약 표시 모델·독립/런 입력·두 씬 UI 구현·검증 완료, DC-06 결정 대기
+> 최종 갱신: 2026-07-23
 
 ## 1. 기술 목표
 
@@ -393,6 +393,10 @@ DemonContractResultViewModel
 
 GameScene 연결은 우선 스크립트 기반으로 진행하고 `GameScene.unity`의 앵커·직렬화 변경은 별도 시각 작업으로 분리한다. 기존 일반 카드의 좌우 투영 순서와 비공개 정보 은닉을 바꾸지 않는다.
 
+DC-05 구현에서는 `DemonContractPanelViewModel`이 가용성·비용·계약 후 영혼·남은 횟수, 현재 상호작용 ID·종류, 후보·활성 계약·소유자 전용 미리보기와 최근 결과를 한 경계로 묶는다. 후보는 `DemonContractChoiceViewModel`에서 제목·능력·대가·선택 가능 여부를 분리하며 사탄은 DC-06 전까지 선택 불가로 표시한다. `CoreLoopView`와 `GameManager`는 확인 전 로컬 상태만 사용하고 승인 시 기존 `CoreLoopSession` 또는 `StageProgressionSession` 명령을 호출한다. 독립 전투는 `DemonContractDeck.CreatePrototype`으로 네 장을 주입하고, 런 전투는 기존 `PlayerRunState`→`StageBattleFactory` 변환을 유지한다.
+
+두 UI는 후보 설명과 선택 버튼을 분리하고 720p·1080p 높이에 맞는 레이아웃을 사용한다. `GameScene.unity`·`CoreLoopTest.unity` 직렬화는 변경하지 않았고 표시만 스크립트에서 확장했다. 계약 결과의 런 영혼·패배·보상 동기화는 기존 세션 경계를 재사용하며, 신규 표시·Controller 테스트 7/7과 전체 EditMode 369/369로 회귀를 확인했다.
+
 ## 12. 적 AI 연결
 
 DC-07에서 적 행동 후보에 계약을 추가한다.
@@ -506,3 +510,4 @@ Assets/06.Packages/Tests/EditMode/StageProgression/
 | 2026-07-22 | 이천서 | DC-02 실제 구현에 맞춰 비용·횟수 가용성, 증가형 상호작용 ID, 필수 선택·활성/버림 이동, 주입식 활성화 처리와 CoreLoop·StageProgression 세션 전달 기록 |
 | 2026-07-22 | 이천서 | DC-03 실제 구현에 맞춰 벨페고르 선택 훅, 소유자 전용 미리보기, 동일 ID 공개 히트·덱 아래 이동, 행동 종료 자동 스탠드와 정보 은닉 기록 |
 | 2026-07-22 | 이천서 | DC-04 실제 구현에 맞춰 주입식 6면체 난수, 마몬 차례·최종 선택, 에이스 포함 보정 합, 레비아탄 카드 완료 후 훅과 숨은 합 비노출 결과 기록 |
+| 2026-07-23 | 이천서 | DC-05 실제 구현에 맞춰 계약 패널 표시 모델, 비용 확인·취소, 후보 설명·사탄 비활성화, 활성 상태·소유자 전용 정보, 독립/런 Controller와 두 씬 반응형 UI 기록 |
