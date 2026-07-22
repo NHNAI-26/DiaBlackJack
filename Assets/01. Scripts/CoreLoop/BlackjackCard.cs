@@ -22,7 +22,7 @@ namespace DiaBlackJack.CoreLoop
 
         public bool CanUse => UseState == CardUseState.Available;
 
-        public CardDefinition Definition { get; }
+        public CardDefinition Definition { get; private set; }
 
         public string DefinitionKey => Definition.Key;
 
@@ -71,6 +71,11 @@ namespace DiaBlackJack.CoreLoop
 
             UseState = CardUseState.Used;
             return true;
+        }
+
+        internal void TransformTo(CardDefinition definition)
+        {
+            Definition = definition ?? throw new ArgumentNullException(nameof(definition));
         }
 
         private static void ValidateId(int id)

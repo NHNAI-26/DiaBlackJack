@@ -228,7 +228,7 @@ namespace DiaBlackJack.CoreLoop.UI
                 FormatChangeAction(battle),
                 FormatChangeCandidates(battle.PlayerChangeCandidates),
                 canPlayerAct,
-                canPlayerAct,
+                battle.CanPlayerStand,
                 battle.CanBeginPlayerChange,
                 battle.CanSelectChangedCard,
                 FormatPlayerCardActions(battle),

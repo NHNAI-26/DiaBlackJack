@@ -162,6 +162,11 @@ namespace DiaBlackJack.CoreLoop
             return CreateOpponentCardEffectBustResolution();
         }
 
+        public void TransformSourceCard(CardDefinition definition)
+        {
+            Actor.Deck.TransformCardDefinition(SourceCard, definition);
+        }
+
         public RoundResolution CreateActorNumericBustResolution()
         {
             return RoundResolver.ResolveNumericBust(
@@ -263,7 +268,8 @@ namespace DiaBlackJack.CoreLoop
                 new CrystalOrbEffectHandler(),
                 new ThreatHammerEffectHandler(),
                 new AutoPistolEffectHandler(),
-                new MilitaryKnifeEffectHandler());
+                new MilitaryKnifeEffectHandler(),
+                new SatanPowerEffectHandler());
         }
 
         public bool Supports(CardEffectKind effectKind)

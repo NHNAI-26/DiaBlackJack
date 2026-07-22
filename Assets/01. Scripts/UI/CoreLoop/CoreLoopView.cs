@@ -60,7 +60,7 @@ namespace DiaBlackJack.CoreLoop.UI
             DrawBackground();
 
             float panelWidth = Mathf.Min(760f, Screen.width - 32f);
-            float panelHeight = Mathf.Min(780f, Screen.height - 8f);
+            float panelHeight = Mathf.Min(900f, Screen.height - 8f);
             var panel = new Rect(
                 (Screen.width - panelWidth) * 0.5f,
                 (Screen.height - panelHeight) * 0.5f,
@@ -111,6 +111,24 @@ namespace DiaBlackJack.CoreLoop.UI
             GUILayout.Label(_model.EnemySummary, _bodyStyle);
             GUILayout.Space(2f);
 
+            if (_styleScreenHeight <= 720)
+            {
+                string compactInformation = _model.EnemyInformationTitle;
+                foreach (string line in _model.EnemyInformationLines)
+                {
+                    compactInformation += " · " + line;
+                }
+
+                GUILayout.Label(compactInformation, _bodyStyle);
+                if (!string.IsNullOrEmpty(_model.EnemyWarning))
+                {
+                    GUILayout.Label(_model.EnemyWarning, _warningStyle);
+                }
+
+                GUILayout.EndVertical();
+                return;
+            }
+
             GUILayout.BeginHorizontal();
             GUILayout.Label(
                 _model.EnemyInformationTitle,
@@ -135,10 +153,10 @@ namespace DiaBlackJack.CoreLoop.UI
             GUILayout.BeginVertical(GUI.skin.box, GUILayout.ExpandWidth(true));
             GUILayout.Label(name, _headingStyle);
             GUILayout.Label($"SOUL  {soul}", _bodyStyle);
-            GUILayout.Space(4f);
+            GUILayout.Space(_styleScreenHeight <= 720 ? 2f : 4f);
             GUILayout.Label($"CARDS  [ {cards} ]", _bodyStyle);
             GUILayout.Label($"TOTAL  {total}", _bodyStyle);
-            GUILayout.Space(4f);
+            GUILayout.Space(_styleScreenHeight <= 720 ? 2f : 4f);
             GUILayout.Label(deck, _bodyStyle);
             GUILayout.EndVertical();
         }
@@ -185,13 +203,14 @@ namespace DiaBlackJack.CoreLoop.UI
             GUILayout.BeginHorizontal();
             bool wasEnabled = GUI.enabled;
             GUI.enabled = _model.CanHit && !_inputLocked;
-            if (GUILayout.Button("HIT", _buttonStyle, GUILayout.Height(40f)))
+            float primaryActionHeight = _styleScreenHeight <= 720 ? 34f : 40f;
+            if (GUILayout.Button("HIT", _buttonStyle, GUILayout.Height(primaryActionHeight)))
             {
                 HitRequested?.Invoke();
             }
 
             GUI.enabled = _model.CanStand && !_inputLocked;
-            if (GUILayout.Button("STAND", _buttonStyle, GUILayout.Height(40f)))
+            if (GUILayout.Button("STAND", _buttonStyle, GUILayout.Height(primaryActionHeight)))
             {
                 StandRequested?.Invoke();
             }
@@ -206,13 +225,13 @@ namespace DiaBlackJack.CoreLoop.UI
                 _bodyStyle);
             GUILayout.BeginHorizontal();
             GUI.enabled = _model.CanChange && !_inputLocked;
-            if (GUILayout.Button("CHANGE", _buttonStyle, GUILayout.Height(40f)))
+            if (GUILayout.Button("CHANGE", _buttonStyle, GUILayout.Height(primaryActionHeight)))
             {
                 ChangeRequested?.Invoke();
             }
 
             GUI.enabled = _model.DemonContract.CanBegin && !_inputLocked;
-            if (GUILayout.Button("CONTRACT", _buttonStyle, GUILayout.Height(40f)))
+            if (GUILayout.Button("CONTRACT", _buttonStyle, GUILayout.Height(primaryActionHeight)))
             {
                 _showDemonContractConfirmation = true;
             }

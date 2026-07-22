@@ -29,6 +29,7 @@ namespace DiaBlackJack.CoreLoop
         private CardEffectContext _activeCardEffectContext;
         private CombatantSide? _activeCardEffectActorSide;
         private PendingCardEffect _pendingCardEffect;
+        private int _nextTemporaryCardId = int.MaxValue;
         private int _enemyDecisionOrdinal;
         private int _nextDemonContractInteractionId = 1;
         private PendingDemonContractInteraction _pendingPlayerDemonContractInteraction;
@@ -128,6 +129,12 @@ namespace DiaBlackJack.CoreLoop
         public EnemyDecision LastEnemyDecision { get; private set; }
 
         public bool CanPlayerAct => State == CoreLoopState.PlayerTurn && !Player.IsStanding;
+
+        public bool CanPlayerStand =>
+            CanPlayerAct &&
+            _demonContractResolver.CanPlayerStand(
+                this,
+                _activePlayerDemonContracts);
 
         public bool CanBeginPlayerChange =>
             CanPlayerAct &&
@@ -350,7 +357,8 @@ namespace DiaBlackJack.CoreLoop
                 endedBattle: playerDepleted);
 
             if (activeContract.RuntimeState is MammonRuntimeState mammonState &&
-                mammonState.CurrentDieValue == 6)
+                mammonState.CurrentDieValue == 6 &&
+                !PreventsPlayerBust())
             {
                 LastDemonContractEffectResult = new DemonContractEffectResult(
                     triggered: true,
@@ -364,12 +372,7 @@ namespace DiaBlackJack.CoreLoop
 
             if (playerDepleted)
             {
-                ClearPlayerDemonContractInteraction();
-                _demonContractResolver.NotifyRoundEnded(
-                    this,
-                    _activePlayerDemonContracts);
-                State = CoreLoopState.BattleEnded;
-                RaiseStepped();
+                EndBattleWithoutRound();
                 return true;
             }
 
@@ -409,7 +412,7 @@ namespace DiaBlackJack.CoreLoop
             }
 
             RaiseStepped();
-            if (Player.VisibleHandValue.IsBust)
+            if (Player.VisibleHandValue.IsBust && !PreventsPlayerBust())
             {
                 CompleteRound(RoundResolver.ResolveNumericBust(
                     RoundNumber,
@@ -504,7 +507,7 @@ namespace DiaBlackJack.CoreLoop
                     selectedOption.OptionId);
             ClearPlayerDemonContractInteraction();
 
-            if (result.OwnerBusted)
+            if (result.OwnerBusted && !PreventsPlayerBust())
             {
                 LastDemonContractEffectResult = new DemonContractEffectResult(
                     triggered: true,
@@ -544,7 +547,7 @@ namespace DiaBlackJack.CoreLoop
 
         public bool TryPlayerStand()
         {
-            if (!CanAcceptPlayerAction())
+            if (!CanPlayerStand)
             {
                 return false;
             }
@@ -985,6 +988,19 @@ namespace DiaBlackJack.CoreLoop
                     "Card effect result does not match the active source card.");
             }
 
+            RoundResolution? roundResolution = step.RoundResolution;
+            if (roundResolution.HasValue &&
+                roundResolution.Value.Outcome == RoundOutcome.PlayerBust &&
+                PreventsPlayerBust())
+            {
+                result = new CardEffectResult(
+                    result.SourceCardId,
+                    result.EffectKind,
+                    result.Succeeded,
+                    endedRound: false);
+                roundResolution = null;
+            }
+
             if (!sourceCard.TryCompleteUse())
             {
                 throw new InvalidOperationException("Active card effect could not complete its source card.");
@@ -999,9 +1015,9 @@ namespace DiaBlackJack.CoreLoop
             _activeCardEffectActorSide = null;
             RaiseStepped();
 
-            if (step.RoundResolution.HasValue)
+            if (roundResolution.HasValue)
             {
-                CompleteRound(step.RoundResolution.Value);
+                CompleteRound(roundResolution.Value);
                 return CardEffectApplicationResult.RoundEnded;
             }
 
@@ -1023,12 +1039,7 @@ namespace DiaBlackJack.CoreLoop
 
                 if (Player.Soul.IsDepleted)
                 {
-                    ClearPlayerDemonContractInteraction();
-                    _demonContractResolver.NotifyRoundEnded(
-                        this,
-                        _activePlayerDemonContracts);
-                    State = CoreLoopState.BattleEnded;
-                    RaiseStepped();
+                    EndBattleWithoutRound();
                     return CardEffectApplicationResult.RoundEnded;
                 }
             }
@@ -1059,6 +1070,38 @@ namespace DiaBlackJack.CoreLoop
             RaiseStepped();
         }
 
+        internal BlackjackCard AddTemporaryFaceUpCard(
+            CombatantSide ownerSide,
+            CardDefinition definition)
+        {
+            if (!Enum.IsDefined(typeof(CombatantSide), ownerSide))
+            {
+                throw new ArgumentOutOfRangeException(nameof(ownerSide));
+            }
+
+            if (definition == null)
+            {
+                throw new ArgumentNullException(nameof(definition));
+            }
+
+            while (Player.Deck.ContainsKnownCardId(_nextTemporaryCardId) ||
+                Enemy.Deck.ContainsKnownCardId(_nextTemporaryCardId))
+            {
+                if (_nextTemporaryCardId == 0)
+                {
+                    throw new InvalidOperationException(
+                        "No physical card id remains for a temporary contract card.");
+                }
+
+                _nextTemporaryCardId--;
+            }
+
+            int cardId = _nextTemporaryCardId--;
+            return GetParticipant(ownerSide).AddTemporaryFaceUpCard(
+                cardId,
+                definition);
+        }
+
         private void CompletePlayerActionAndRunEnemyTurn()
         {
             if (State != CoreLoopState.PlayerTurn)
@@ -1068,6 +1111,7 @@ namespace DiaBlackJack.CoreLoop
             }
 
             if (!Player.IsStanding &&
+                CanPlayerStand &&
                 _demonContractResolver.TryConsumePlayerAutoStand(
                     this,
                     _activePlayerDemonContracts))
@@ -1083,6 +1127,11 @@ namespace DiaBlackJack.CoreLoop
         private void BeginPlayerTurn()
         {
             State = CoreLoopState.PlayerTurn;
+            if (!HandleNormalTurnStarted(CombatantSide.Player))
+            {
+                return;
+            }
+
             _demonContractResolver.NotifyPlayerTurnStarted(
                 this,
                 _activePlayerDemonContracts);
@@ -1103,6 +1152,13 @@ namespace DiaBlackJack.CoreLoop
         private void RunEnemyTurn()
         {
             State = CoreLoopState.EnemyTurn;
+
+            if (!Enemy.IsStanding &&
+                PendingEnemyCardEffect == null &&
+                !HandleNormalTurnStarted(CombatantSide.Enemy))
+            {
+                return;
+            }
 
             while (State == CoreLoopState.EnemyTurn)
             {
@@ -1289,6 +1345,72 @@ namespace DiaBlackJack.CoreLoop
             ResolveRoundWithPlayerBonus(playerBonus: 0);
         }
 
+        private bool PreventsPlayerBust()
+        {
+            return _demonContractResolver.PreventsPlayerBust(
+                this,
+                _activePlayerDemonContracts);
+        }
+
+        private bool HandleNormalTurnStarted(CombatantSide actorSide)
+        {
+            int soulBefore = Player.Soul.Current;
+            IReadOnlyList<ActiveDemonContract> endedContracts =
+                _demonContractResolver.NotifyNormalTurnStarted(
+                    this,
+                    _activePlayerDemonContracts,
+                    actorSide);
+            foreach (ActiveDemonContract endedContract in endedContracts)
+            {
+                _activePlayerDemonContracts.Remove(endedContract);
+            }
+
+            int paidSoulCost = soulBefore - Player.Soul.Current;
+            if (paidSoulCost > 0)
+            {
+                LastDemonContractEffectResult = new DemonContractEffectResult(
+                    triggered: true,
+                    bustedTarget: null,
+                    paidSoulCost);
+                RaiseStepped();
+            }
+
+            if (Player.Soul.IsDepleted)
+            {
+                EndBattleWithoutRound();
+                return false;
+            }
+
+            if (endedContracts.Count > 0 && Player.VisibleHandValue.IsBust)
+            {
+                CompleteRound(RoundResolver.ResolveNumericBust(
+                    RoundNumber,
+                    playerIsTarget: true));
+                return false;
+            }
+
+            return true;
+        }
+
+        private void EndBattleWithoutRound()
+        {
+            ClearPlayerDemonContractInteraction();
+            _demonContractResolver.NotifyRoundEnded(
+                this,
+                _activePlayerDemonContracts);
+            CleanupBattleContracts();
+            State = CoreLoopState.BattleEnded;
+            RaiseStepped();
+        }
+
+        private void CleanupBattleContracts()
+        {
+            _demonContractResolver.NotifyBattleEnded(
+                this,
+                _activePlayerDemonContracts);
+            _activePlayerDemonContracts.Clear();
+        }
+
         private void ResolveRoundWithPlayerBonus(int playerBonus)
         {
             RoundResolution resolution = RoundResolver.Resolve(
@@ -1310,10 +1432,16 @@ namespace DiaBlackJack.CoreLoop
             LastResolution = resolution;
             RaiseStepped();
 
+            bool battleEnded = Player.Soul.IsDepleted || Enemy.Soul.IsDepleted;
+            if (battleEnded)
+            {
+                CleanupBattleContracts();
+            }
+
             Player.ClearRound();
             Enemy.ClearRound();
 
-            if (Player.Soul.IsDepleted || Enemy.Soul.IsDepleted)
+            if (battleEnded)
             {
                 State = CoreLoopState.BattleEnded;
                 return;

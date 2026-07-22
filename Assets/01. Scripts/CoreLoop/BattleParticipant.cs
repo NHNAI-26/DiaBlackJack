@@ -53,6 +53,22 @@ namespace DiaBlackJack.CoreLoop
             Hand.Add(card);
         }
 
+        internal BlackjackCard AddTemporaryFaceUpCard(
+            int cardId,
+            CardDefinition definition)
+        {
+            var card = new BlackjackCard(cardId, definition, isFaceUp: true);
+            Deck.RegisterTemporaryCardInPlay(card);
+            Hand.Add(card);
+            return card;
+        }
+
+        internal bool TryRemoveTemporaryCard(int cardId)
+        {
+            Hand.TryTakeCard(cardId, out BlackjackCard inPlayCard);
+            return Deck.TryRemoveTemporaryCard(cardId, inPlayCard);
+        }
+
         internal bool TryDiscardCard(int cardId)
         {
             if (!Hand.TryTakeCard(cardId, out BlackjackCard card))

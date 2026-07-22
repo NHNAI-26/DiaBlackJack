@@ -6,6 +6,9 @@ namespace DiaBlackJack.CoreLoop
 {
     public static class CardDefinitionCatalog
     {
+        public const string SatanPowerMightKey = "satan-power-might-8";
+        public const string SatanPowerFlameKey = "satan-power-flame-10";
+
         private static readonly ReadOnlyCollection<CardDefinition> Definitions;
         private static readonly Dictionary<string, CardDefinition> DefinitionsByKey;
         private static readonly CardDefinition[] DefaultDefinitionsByRank;
@@ -73,7 +76,19 @@ namespace DiaBlackJack.CoreLoop
                     "보위 나이프",
                     10,
                     CardActivationKind.Manual,
-                    CardEffectKind.MilitaryKnife)
+                    CardEffectKind.MilitaryKnife),
+                new CardDefinition(
+                    SatanPowerMightKey,
+                    "사탄의 권능: 괴력",
+                    8,
+                    CardActivationKind.Manual,
+                    CardEffectKind.SatanPower),
+                new CardDefinition(
+                    SatanPowerFlameKey,
+                    "사탄의 권능: 화염",
+                    10,
+                    CardActivationKind.Manual,
+                    CardEffectKind.SatanPower)
             };
 
             Definitions = Array.AsReadOnly(definitions);
@@ -85,7 +100,10 @@ namespace DiaBlackJack.CoreLoop
             foreach (CardDefinition definition in definitions)
             {
                 DefinitionsByKey.Add(definition.Key, definition);
-                DefaultDefinitionsByRank[definition.Rank] = definition;
+                if (DefaultDefinitionsByRank[definition.Rank] == null)
+                {
+                    DefaultDefinitionsByRank[definition.Rank] = definition;
+                }
             }
         }
 

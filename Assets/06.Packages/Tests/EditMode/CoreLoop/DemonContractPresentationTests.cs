@@ -32,7 +32,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DC05_U02_ContractCandidatesShowAbilityCostAndUnimplementedSatan()
+        public void DC05_U02_ContractCandidatesShowAbilityCostAndSelectableSatan()
         {
             CoreLoopBattle battle = CreateStartedBattle(
                 DemonContractKind.Satan,
@@ -53,8 +53,8 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             DemonContractChoiceViewModel satan = model.DemonContract.Choices.Single(
                 choice => choice.Title == "사탄");
-            Assert.That(satan.CanSelect, Is.False);
-            Assert.That(satan.DisabledReason, Does.Contain("DC-06"));
+            Assert.That(satan.CanSelect, Is.True);
+            Assert.That(satan.DisabledReason, Is.Empty);
         }
 
         [Test]

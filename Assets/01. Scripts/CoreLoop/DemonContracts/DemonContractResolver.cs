@@ -24,6 +24,28 @@ namespace DiaBlackJack.CoreLoop
         void OnRoundEnded(DemonContractContext context);
     }
 
+    internal interface IDemonContractNormalTurnHandler
+    {
+        bool OnNormalTurnStarted(
+            DemonContractContext context,
+            CombatantSide actorSide);
+    }
+
+    internal interface IDemonContractStandRestrictionHandler
+    {
+        bool PreventsOwnerStand(DemonContractContext context);
+    }
+
+    internal interface IDemonContractBustPreventionHandler
+    {
+        bool PreventsOwnerBust(DemonContractContext context);
+    }
+
+    internal interface IDemonContractBattleEndHandler
+    {
+        void OnBattleEnded(DemonContractContext context);
+    }
+
     internal sealed class DemonContractContext
     {
         private readonly CoreLoopBattle _battle;
@@ -54,9 +76,23 @@ namespace DiaBlackJack.CoreLoop
         public HandValue OpponentHandValue =>
             HandValueCalculator.Calculate(Opponent.Hand.Cards);
 
+        public HandValue OwnerVisibleHandValue => Owner.VisibleHandValue;
+
         public void ApplyOwnerSoulDamage(int amount)
         {
             Owner.Soul.ApplyDamage(amount);
+        }
+
+        public BlackjackCard AddOwnerTemporaryFaceUpCard(CardDefinition definition)
+        {
+            return _battle.AddTemporaryFaceUpCard(
+                ActiveContract.OwnerSide,
+                definition);
+        }
+
+        public bool TryRemoveOwnerTemporaryCard(int cardId)
+        {
+            return Owner.TryRemoveTemporaryCard(cardId);
         }
 
         public RoundResolution CreateOpponentContractEffectBustResolution()
@@ -113,10 +149,99 @@ namespace DiaBlackJack.CoreLoop
         public static DemonContractResolver CreateDefault()
         {
             return new DemonContractResolver(
+                new SatanDemonContractHandler(),
                 new BelphegorDemonContractHandler(),
                 new MammonDemonContractHandler(
                     new DeterministicDemonDieRoller(seed: 20260722)),
                 new LeviathanDemonContractHandler());
+        }
+
+        public bool CanPlayerStand(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts)
+        {
+            return !HasPlayerRestriction<IDemonContractStandRestrictionHandler>(
+                battle,
+                activeContracts,
+                (handler, context) => handler.PreventsOwnerStand(context));
+        }
+
+        public bool PreventsPlayerBust(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts)
+        {
+            return HasPlayerRestriction<IDemonContractBustPreventionHandler>(
+                battle,
+                activeContracts,
+                (handler, context) => handler.PreventsOwnerBust(context));
+        }
+
+        public IReadOnlyList<ActiveDemonContract> NotifyNormalTurnStarted(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            CombatantSide actorSide)
+        {
+            if (battle == null)
+            {
+                throw new ArgumentNullException(nameof(battle));
+            }
+
+            if (activeContracts == null)
+            {
+                throw new ArgumentNullException(nameof(activeContracts));
+            }
+
+            if (!Enum.IsDefined(typeof(CombatantSide), actorSide))
+            {
+                throw new ArgumentOutOfRangeException(nameof(actorSide));
+            }
+
+            var endedContracts = new List<ActiveDemonContract>();
+            foreach (ActiveDemonContract activeContract in activeContracts)
+            {
+                if (activeContract.OwnerSide != CombatantSide.Player ||
+                    !_handlers.TryGetValue(activeContract.Kind, out IDemonContractHandler handler) ||
+                    !(handler is IDemonContractNormalTurnHandler normalTurnHandler))
+                {
+                    continue;
+                }
+
+                if (normalTurnHandler.OnNormalTurnStarted(
+                    new DemonContractContext(battle, activeContract),
+                    actorSide))
+                {
+                    endedContracts.Add(activeContract);
+                }
+            }
+
+            return endedContracts.AsReadOnly();
+        }
+
+        public void NotifyBattleEnded(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts)
+        {
+            if (battle == null)
+            {
+                throw new ArgumentNullException(nameof(battle));
+            }
+
+            if (activeContracts == null)
+            {
+                throw new ArgumentNullException(nameof(activeContracts));
+            }
+
+            foreach (ActiveDemonContract activeContract in activeContracts)
+            {
+                if (_handlers.TryGetValue(
+                        activeContract.Kind,
+                        out IDemonContractHandler handler) &&
+                    handler is IDemonContractBattleEndHandler battleEndHandler)
+                {
+                    battleEndHandler.OnBattleEnded(
+                        new DemonContractContext(battle, activeContract));
+                }
+            }
         }
 
         public DemonContractRuntimeState Activate(
@@ -385,6 +510,43 @@ namespace DiaBlackJack.CoreLoop
             }
 
             choiceContract = null;
+            return false;
+        }
+
+        private bool HasPlayerRestriction<THandler>(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            Func<THandler, DemonContractContext, bool> isRestricted)
+            where THandler : class
+        {
+            if (battle == null)
+            {
+                throw new ArgumentNullException(nameof(battle));
+            }
+
+            if (activeContracts == null)
+            {
+                throw new ArgumentNullException(nameof(activeContracts));
+            }
+
+            if (isRestricted == null)
+            {
+                throw new ArgumentNullException(nameof(isRestricted));
+            }
+
+            foreach (ActiveDemonContract activeContract in activeContracts)
+            {
+                if (activeContract.OwnerSide == CombatantSide.Player &&
+                    _handlers.TryGetValue(activeContract.Kind, out IDemonContractHandler handler) &&
+                    handler is THandler specializedHandler &&
+                    isRestricted(
+                        specializedHandler,
+                        new DemonContractContext(battle, activeContract)))
+                {
+                    return true;
+                }
+            }
+
             return false;
         }
 

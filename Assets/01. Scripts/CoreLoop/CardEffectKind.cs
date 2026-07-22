@@ -6,6 +6,7 @@ namespace DiaBlackJack.CoreLoop
         CrystalOrb,
         ThreatHammer,
         AutoPistol,
-        MilitaryKnife
+        MilitaryKnife,
+        SatanPower
     }
 }

@@ -151,7 +151,7 @@ namespace DiaBlackJack.CoreLoop.UI
                 pending?.Kind,
                 pending?.PublicPrompt,
                 FormatChoices(pending),
-                FormatActiveContracts(battle.ActivePlayerDemonContracts),
+                FormatActiveContracts(battle),
                 FormatOwnerPreview(battle.PlayerDemonContractPreview),
                 FormatLastContractResult(battle.LastDemonContractResult),
                 FormatLastEffectResult(battle.LastDemonContractEffectResult));
@@ -202,14 +202,13 @@ namespace DiaBlackJack.CoreLoop.UI
                     DemonContractInteractionKind.ChooseContract
                         ? FindDefinition(option)
                         : null;
-                bool satanUnavailable = definition?.Kind == DemonContractKind.Satan;
                 choices.Add(new DemonContractChoiceViewModel(
                     option.OptionId,
                     definition?.DisplayName ?? option.PublicLabel,
                     definition?.Summary ?? string.Empty,
                     definition?.CostSummary ?? string.Empty,
-                    !satanUnavailable,
-                    satanUnavailable ? "DC-06 구현 예정" : string.Empty));
+                    canSelect: true,
+                    disabledReason: string.Empty));
             }
 
             return choices.AsReadOnly();
@@ -238,8 +237,10 @@ namespace DiaBlackJack.CoreLoop.UI
         }
 
         private static IReadOnlyList<string> FormatActiveContracts(
-            IReadOnlyList<ActiveDemonContract> contracts)
+            CoreLoopBattle battle)
         {
+            IReadOnlyList<ActiveDemonContract> contracts =
+                battle.ActivePlayerDemonContracts;
             var labels = new List<string>(contracts.Count);
             foreach (ActiveDemonContract contract in contracts)
             {
@@ -247,6 +248,22 @@ namespace DiaBlackJack.CoreLoop.UI
                 if (contract.RuntimeState is MammonRuntimeState mammon)
                 {
                     status = $"주사위 {mammon.CurrentDieValue}";
+                }
+                else if (contract.RuntimeState is SatanRuntimeState satan)
+                {
+                    string powerFace = "권능 위치 이동 중";
+                    if (TryFindPlayerCard(
+                        battle,
+                        satan.PowerCardId,
+                        out BlackjackCard powerCard))
+                    {
+                        powerFace = powerCard.DefinitionKey ==
+                            CardDefinitionCatalog.SatanPowerFlameKey
+                                ? "권능 화염(10)"
+                                : "권능 괴력(8)";
+                    }
+
+                    status = $"남은 정상 차례 {satan.RemainingNormalTurns} · {powerFace}";
                 }
                 else if (contract.RuntimeState is BelphegorRuntimeState belphegor)
                 {
@@ -267,6 +284,19 @@ namespace DiaBlackJack.CoreLoop.UI
             }
 
             return labels.AsReadOnly();
+        }
+
+        private static bool TryFindPlayerCard(
+            CoreLoopBattle battle,
+            int cardId,
+            out BlackjackCard card)
+        {
+            if (battle.Player.Hand.TryGetCard(cardId, out card))
+            {
+                return true;
+            }
+
+            return battle.Player.Deck.TryGetKnownCard(cardId, out card);
         }
 
         private static string FormatOwnerPreview(PlayerDemonContractPreview preview)

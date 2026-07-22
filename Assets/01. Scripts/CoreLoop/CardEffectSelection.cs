@@ -9,7 +9,9 @@ namespace DiaBlackJack.CoreLoop
         None,
         TakePeekedCard,
         DiscardOpponentFaceUpCard,
-        DeclareNumber
+        DeclareNumber,
+        DeclareFirstOfTwoNumbers,
+        DeclareSecondOfTwoNumbers
     }
 
     public sealed class CardEffectChoiceOption
@@ -67,7 +69,8 @@ namespace DiaBlackJack.CoreLoop
                 prompt,
                 choiceKind,
                 options,
-                Array.Empty<BlackjackCard>())
+                Array.Empty<BlackjackCard>(),
+                contextNumericValue: null)
         {
         }
 
@@ -78,6 +81,43 @@ namespace DiaBlackJack.CoreLoop
             CardEffectChoiceKind choiceKind,
             IEnumerable<CardEffectChoiceOption> options,
             IEnumerable<BlackjackCard> temporaryCards)
+            : this(
+                sourceCardId,
+                effectKind,
+                prompt,
+                choiceKind,
+                options,
+                temporaryCards,
+                contextNumericValue: null)
+        {
+        }
+
+        internal PendingCardEffect(
+            int sourceCardId,
+            CardEffectKind effectKind,
+            string prompt,
+            CardEffectChoiceKind choiceKind,
+            IEnumerable<CardEffectChoiceOption> options,
+            int? contextNumericValue)
+            : this(
+                sourceCardId,
+                effectKind,
+                prompt,
+                choiceKind,
+                options,
+                Array.Empty<BlackjackCard>(),
+                contextNumericValue)
+        {
+        }
+
+        private PendingCardEffect(
+            int sourceCardId,
+            CardEffectKind effectKind,
+            string prompt,
+            CardEffectChoiceKind choiceKind,
+            IEnumerable<CardEffectChoiceOption> options,
+            IEnumerable<BlackjackCard> temporaryCards,
+            int? contextNumericValue)
         {
             if (sourceCardId < 0)
             {
@@ -139,6 +179,7 @@ namespace DiaBlackJack.CoreLoop
             EffectKind = effectKind;
             Prompt = prompt;
             ChoiceKind = choiceKind;
+            ContextNumericValue = contextNumericValue;
             _options = copiedOptions.AsReadOnly();
 
             var copiedTemporaryCards = new List<BlackjackCard>();
@@ -168,6 +209,8 @@ namespace DiaBlackJack.CoreLoop
         public CardEffectChoiceKind ChoiceKind { get; }
 
         public CardEffectKind EffectKind { get; }
+
+        public int? ContextNumericValue { get; }
 
         public IReadOnlyList<CardEffectChoiceOption> Options => _options;
 

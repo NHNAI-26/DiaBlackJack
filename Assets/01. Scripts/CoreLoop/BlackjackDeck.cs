@@ -10,6 +10,7 @@ namespace DiaBlackJack.CoreLoop
         private readonly List<BlackjackCard> _discardPile = new List<BlackjackCard>();
         private readonly HashSet<int> _knownCardIds = new HashSet<int>();
         private readonly HashSet<int> _availableCardIds = new HashSet<int>();
+        private readonly HashSet<int> _temporaryCardIds = new HashSet<int>();
         private readonly int[] _knownRankCounts = new int[11];
         private readonly DeterministicRng _random = new DeterministicRng();
 
@@ -64,7 +65,135 @@ namespace DiaBlackJack.CoreLoop
 
         public int CardsInPlayCount => TotalCardCount - _availableCardIds.Count;
 
-        public int TotalCardCount { get; }
+        public int TotalCardCount { get; private set; }
+
+        internal bool ContainsKnownCardId(int cardId)
+        {
+            return _knownCardIds.Contains(cardId);
+        }
+
+        internal bool TryGetKnownCard(int cardId, out BlackjackCard card)
+        {
+            foreach (BlackjackCard candidate in _drawPile)
+            {
+                if (candidate.Id == cardId)
+                {
+                    card = candidate;
+                    return true;
+                }
+            }
+
+            foreach (BlackjackCard candidate in _discardPile)
+            {
+                if (candidate.Id == cardId)
+                {
+                    card = candidate;
+                    return true;
+                }
+            }
+
+            card = null;
+            return false;
+        }
+
+        internal void RegisterTemporaryCardInPlay(BlackjackCard card)
+        {
+            if (card == null)
+            {
+                throw new ArgumentNullException(nameof(card));
+            }
+
+            if (!_knownCardIds.Add(card.Id))
+            {
+                throw new InvalidOperationException(
+                    $"Card id {card.Id} is already registered in this deck.");
+            }
+
+            _temporaryCardIds.Add(card.Id);
+            _knownRankCounts[card.Rank]++;
+            TotalCardCount = checked(TotalCardCount + 1);
+        }
+
+        internal void TransformCardDefinition(
+            BlackjackCard card,
+            CardDefinition definition)
+        {
+            if (card == null)
+            {
+                throw new ArgumentNullException(nameof(card));
+            }
+
+            if (definition == null)
+            {
+                throw new ArgumentNullException(nameof(definition));
+            }
+
+            if (!_knownCardIds.Contains(card.Id))
+            {
+                throw new InvalidOperationException(
+                    $"Card id {card.Id} does not belong to this deck.");
+            }
+
+            _knownRankCounts[card.Rank]--;
+            card.TransformTo(definition);
+            _knownRankCounts[card.Rank]++;
+        }
+
+        internal bool TryRemoveTemporaryCard(
+            int cardId,
+            BlackjackCard inPlayCard = null)
+        {
+            if (!_temporaryCardIds.Contains(cardId))
+            {
+                return false;
+            }
+
+            BlackjackCard card = null;
+            for (int i = 0; i < _drawPile.Count; i++)
+            {
+                if (_drawPile[i].Id != cardId)
+                {
+                    continue;
+                }
+
+                card = _drawPile[i];
+                _drawPile.RemoveAt(i);
+                break;
+            }
+
+            if (card == null)
+            {
+                for (int i = 0; i < _discardPile.Count; i++)
+                {
+                    if (_discardPile[i].Id != cardId)
+                    {
+                        continue;
+                    }
+
+                    card = _discardPile[i];
+                    _discardPile.RemoveAt(i);
+                    break;
+                }
+            }
+
+            if (card == null)
+            {
+                if (inPlayCard == null || inPlayCard.Id != cardId)
+                {
+                    throw new InvalidOperationException(
+                        $"Temporary card id {cardId} is not in a removable location.");
+                }
+
+                card = inPlayCard;
+            }
+
+            _availableCardIds.Remove(cardId);
+            _temporaryCardIds.Remove(cardId);
+            _knownCardIds.Remove(cardId);
+            _knownRankCounts[card.Rank]--;
+            TotalCardCount--;
+            return true;
+        }
 
         internal IReadOnlyList<BlackjackCard> GetDiscardedCards()
         {
