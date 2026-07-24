@@ -43,7 +43,8 @@ namespace DiaBlackJack.CoreLoop
                 actionCandidates,
                 numberInferences,
                 battle.PendingEnemyCardEffect?.EffectKind,
-                decisionSeed);
+                decisionSeed,
+                battle.EnemyHiddenCardComparisonKnowledge);
         }
 
         internal static IReadOnlyList<EnemyNumberInference> CreateNumberInferences(

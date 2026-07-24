@@ -4,7 +4,7 @@
 > 기획·개발 책임자: 이천서  
 > 작업 식별자: AC-00~AC-06  
 > 버전: v0.1  
-> 상태: AC-02 독극물 수직 기능 구현 완료 · 다음 AC-03
+> 상태: AC-03 거짓말 탐지기 수직 기능 구현 완료 · 다음 AC-04
 > 최종 갱신: 2026-07-25
 
 ## 1. 기술 목표
@@ -548,6 +548,13 @@ AC-02 실제 구현은 기존 CoreLoop 파일 배치를 따라 `AutomaticCardBat
 `PoisonEffectHandler.cs`를 `Assets/01. Scripts/CoreLoop` 바로 아래에 두었다.
 독극물 예약은 전투 객체가 소유하고, `SoulPool.Restore`가 최대 영혼 상한을 보장한다.
 
+AC-03 실제 구현도 같은 배치를 따라 `LieDetectorEffectHandler.cs`와
+`LieDetectorResult.cs`를 CoreLoop 바로 아래에 두었다. `LieDetectorPublicResult`에는
+선언 숫자와 판정 가능 여부만 두고, `HiddenCardComparisonKnowledge`의 실제 숨은 카드
+ID는 어셈블리 내부 추적에만 사용한다. 플레이어 전용 접근자는 플레이어 소유 지식만,
+`EnemyObservation.LieDetectorComparisonKnowledge`는 적 소유 지식만 제공하며 두
+경계 모두 실제 카드 숫자를 저장하지 않는다.
+
 ### 14.2 주요 수정 후보
 
 - `CardEffectKind.cs`, `CardDefinitionCatalog.cs`
@@ -669,6 +676,7 @@ AC-02 실제 구현은 기존 CoreLoop 파일 배치를 따라 `AutomaticCardBat
 
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
+| 2026-07-25 | 이천서 | AC-03 거짓말 탐지기 선언·공개/소유자 전용 결과·적 비교 관측·체인지/해머/라운드/전투 종료 지식 폐기와 대상 10/10·CoreLoop 305/305·전체 434/434 검증 반영 |
 | 2026-07-25 | 이천서 | AC-02 독극물 처리기·전투 단위 회복 예약·영혼 회복 API·연속 처리 취소 경계와 대상 12/12·CoreLoop 295/295·전체 424/424 검증 반영 |
 | 2026-07-25 | 이천서 | AC-01 Resolver·선택 모델·공개 유입·열거형 연속 처리 기반과 대상 15/15·CoreLoop 283/283·전체 412/412 검증 반영 |
 | 2026-07-23 | 이천서 | 자동 공개 유입 조정자, 보류 상호작용·연속 처리, 5종 처리기, 정보 은닉·AI·UI·런 연결과 AC-01~AC-06 테스트 명세 수립 |

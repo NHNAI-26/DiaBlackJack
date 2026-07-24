@@ -70,6 +70,58 @@ namespace DiaBlackJack.CoreLoop
                 OwnerSide,
                 healAmount);
         }
+
+        public bool TryCompareSingleOpponentHiddenCard(
+            int declaredNumber,
+            out int subjectHiddenCardId,
+            out bool isAtLeastDeclaredNumber)
+        {
+            if (declaredNumber < 1 || declaredNumber > 10)
+            {
+                throw new ArgumentOutOfRangeException(nameof(declaredNumber));
+            }
+
+            subjectHiddenCardId = default;
+            isAtLeastDeclaredNumber = default;
+            BlackjackCard hiddenCard = null;
+            foreach (BlackjackCard card in
+                Battle.GetParticipant(OpponentSide).Hand.Cards)
+            {
+                if (card.IsFaceUp)
+                {
+                    continue;
+                }
+
+                if (hiddenCard != null)
+                {
+                    return false;
+                }
+
+                hiddenCard = card;
+            }
+
+            if (hiddenCard == null)
+            {
+                return false;
+            }
+
+            subjectHiddenCardId = hiddenCard.Id;
+            isAtLeastDeclaredNumber = hiddenCard.Rank >= declaredNumber;
+            return true;
+        }
+
+        public void RecordLieDetectorResult(
+            int declaredNumber,
+            int? subjectHiddenCardId,
+            bool? isAtLeastDeclaredNumber)
+        {
+            Battle.RecordLieDetectorResult(
+                SourceCard.Id,
+                OwnerSide,
+                declaredNumber,
+                subjectHiddenCardId,
+                isAtLeastDeclaredNumber);
+        }
     }
 
     internal sealed class AutomaticCardChoiceRequest
@@ -228,7 +280,8 @@ namespace DiaBlackJack.CoreLoop
         public static AutomaticCardEffectResolver CreateDefault()
         {
             return new AutomaticCardEffectResolver(
-                new PoisonEffectHandler());
+                new PoisonEffectHandler(),
+                new LieDetectorEffectHandler());
         }
 
         public bool Supports(CardEffectKind effectKind)

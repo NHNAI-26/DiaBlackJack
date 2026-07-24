@@ -34,9 +34,12 @@ namespace DiaBlackJack.CoreLoop
 
             EnsureDistinctCardIds(previousHiddenCard, firstCandidate, secondCandidate);
 
+            PreviousHiddenCardId = previousHiddenCard.Id;
             _candidates = new[] { firstCandidate, secondCandidate };
             _candidateView = Array.AsReadOnly(_candidates);
         }
+
+        internal int PreviousHiddenCardId { get; }
 
         public IReadOnlyList<BlackjackCard> Candidates => _candidateView;
 

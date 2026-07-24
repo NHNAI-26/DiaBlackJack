@@ -50,6 +50,8 @@ namespace DiaBlackJack.CoreLoop
     {
         private readonly List<PoisonWinReward> _poisonWinRewards =
             new List<PoisonWinReward>();
+        private HiddenCardComparisonKnowledge? _playerKnowledge;
+        private HiddenCardComparisonKnowledge? _enemyKnowledge;
 
         public int PendingPoisonWinRewardCount => _poisonWinRewards.Count;
 
@@ -103,9 +105,104 @@ namespace DiaBlackJack.CoreLoop
             _poisonWinRewards.Clear();
         }
 
+        public HiddenCardComparisonKnowledge? GetHiddenCardKnowledge(
+            CombatantSide observerSide)
+        {
+            switch (observerSide)
+            {
+                case CombatantSide.Player:
+                    return _playerKnowledge;
+                case CombatantSide.Enemy:
+                    return _enemyKnowledge;
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(observerSide));
+            }
+        }
+
+        public void SetHiddenCardKnowledge(
+            CombatantSide observerSide,
+            CombatantSide subjectSide,
+            int subjectHiddenCardId,
+            int declaredNumber,
+            bool isAtLeastDeclaredNumber,
+            int roundNumber)
+        {
+            var knowledge = new HiddenCardComparisonKnowledge(
+                observerSide,
+                subjectSide,
+                subjectHiddenCardId,
+                declaredNumber,
+                isAtLeastDeclaredNumber,
+                roundNumber);
+            switch (observerSide)
+            {
+                case CombatantSide.Player:
+                    _playerKnowledge = knowledge;
+                    break;
+                case CombatantSide.Enemy:
+                    _enemyKnowledge = knowledge;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(observerSide));
+            }
+        }
+
+        public void ClearHiddenCardKnowledgeForObserver(
+            CombatantSide observerSide)
+        {
+            switch (observerSide)
+            {
+                case CombatantSide.Player:
+                    _playerKnowledge = null;
+                    break;
+                case CombatantSide.Enemy:
+                    _enemyKnowledge = null;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(observerSide));
+            }
+        }
+
+        public void InvalidateKnowledgeAboutHiddenCard(
+            CombatantSide subjectSide,
+            int subjectHiddenCardId)
+        {
+            if (_playerKnowledge.HasValue &&
+                RefersTo(
+                    _playerKnowledge.Value,
+                    subjectSide,
+                    subjectHiddenCardId))
+            {
+                _playerKnowledge = null;
+            }
+
+            if (_enemyKnowledge.HasValue &&
+                RefersTo(
+                    _enemyKnowledge.Value,
+                    subjectSide,
+                    subjectHiddenCardId))
+            {
+                _enemyKnowledge = null;
+            }
+        }
+
         public void ClearRoundState()
         {
             _poisonWinRewards.Clear();
+            _playerKnowledge = null;
+            _enemyKnowledge = null;
+        }
+
+        private static bool RefersTo(
+            HiddenCardComparisonKnowledge knowledge,
+            CombatantSide subjectSide,
+            int subjectHiddenCardId)
+        {
+            return knowledge.SubjectSide == subjectSide &&
+                knowledge.SubjectHiddenCardId == subjectHiddenCardId;
         }
 
         private static bool DidOwnerWin(

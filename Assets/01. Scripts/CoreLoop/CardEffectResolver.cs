@@ -147,9 +147,19 @@ namespace DiaBlackJack.CoreLoop
             out BlackjackCard previousHiddenCard,
             out BlackjackCard replacementCard)
         {
-            return Opponent.TryReplaceStandingHiddenCard(
+            bool replaced = Opponent.TryReplaceStandingHiddenCard(
                 out previousHiddenCard,
                 out replacementCard);
+            if (replaced)
+            {
+                _battle.InvalidateHiddenCardKnowledge(
+                    ActorSide == CombatantSide.Player
+                        ? CombatantSide.Enemy
+                        : CombatantSide.Player,
+                    previousHiddenCard.Id);
+            }
+
+            return replaced;
         }
 
         public BlackjackCard ForceOpponentDrawFaceUp(

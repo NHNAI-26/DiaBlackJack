@@ -190,7 +190,8 @@ namespace DiaBlackJack.CoreLoop
                 Array.Empty<EnemyActionCandidate>(),
                 Array.Empty<EnemyNumberInference>(),
                 pendingCardEffectKind: null,
-                decisionSeed: 0)
+                decisionSeed: 0,
+                lieDetectorComparisonKnowledge: null)
         {
         }
 
@@ -212,7 +213,9 @@ namespace DiaBlackJack.CoreLoop
             IEnumerable<EnemyActionCandidate> actionCandidates,
             IEnumerable<EnemyNumberInference> numberInferences,
             CardEffectKind? pendingCardEffectKind,
-            int decisionSeed)
+            int decisionSeed,
+            HiddenCardComparisonKnowledge?
+                lieDetectorComparisonKnowledge = null)
         {
             if (playerHiddenCardCount < 0)
             {
@@ -241,6 +244,20 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentOutOfRangeException(nameof(pendingCardEffectKind));
             }
 
+            if (lieDetectorComparisonKnowledge.HasValue)
+            {
+                HiddenCardComparisonKnowledge knowledge =
+                    lieDetectorComparisonKnowledge.Value;
+                if (knowledge.ObserverSide != CombatantSide.Enemy ||
+                    knowledge.SubjectSide != CombatantSide.Player ||
+                    knowledge.RoundNumber != roundNumber)
+                {
+                    throw new ArgumentException(
+                        "Enemy observation received comparison knowledge outside its legal boundary.",
+                        nameof(lieDetectorComparisonKnowledge));
+                }
+            }
+
             OwnHandValue = ownHandValue;
             OwnCards = Copy(ownCards, nameof(ownCards));
             PlayerFaceUpCards = Copy(playerFaceUpCards, nameof(playerFaceUpCards));
@@ -259,6 +276,8 @@ namespace DiaBlackJack.CoreLoop
             NumberInferences = Copy(numberInferences, nameof(numberInferences));
             PendingCardEffectKind = pendingCardEffectKind;
             DecisionSeed = decisionSeed;
+            LieDetectorComparisonKnowledge =
+                lieDetectorComparisonKnowledge;
         }
 
         public IReadOnlyList<EnemyActionCandidate> ActionCandidates { get; }
@@ -288,6 +307,9 @@ namespace DiaBlackJack.CoreLoop
         public IReadOnlyList<PublicCardObservation> PlayerFaceUpCards { get; }
 
         public int PlayerHiddenCardCount { get; }
+
+        public HiddenCardComparisonKnowledge?
+            LieDetectorComparisonKnowledge { get; }
 
         public bool PlayerIsStanding { get; }
 

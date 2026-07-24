@@ -209,6 +209,22 @@ namespace DiaBlackJack.CoreLoop
 
         public AutomaticCardResult? LastAutomaticCardResult { get; private set; }
 
+        public LieDetectorPublicResult? LastLieDetectorPublicResult
+        {
+            get;
+            private set;
+        }
+
+        public HiddenCardComparisonKnowledge?
+            PlayerHiddenCardComparisonKnowledge =>
+                _automaticCardBattleState.GetHiddenCardKnowledge(
+                    CombatantSide.Player);
+
+        internal HiddenCardComparisonKnowledge?
+            EnemyHiddenCardComparisonKnowledge =>
+                _automaticCardBattleState.GetHiddenCardKnowledge(
+                    CombatantSide.Enemy);
+
         public IReadOnlyList<ActiveDemonContract> ActivePlayerDemonContracts =>
             _activePlayerDemonContracts.AsReadOnly();
 
@@ -952,6 +968,9 @@ namespace DiaBlackJack.CoreLoop
             }
 
             _playerChangeSelection = selection;
+            _automaticCardBattleState.InvalidateKnowledgeAboutHiddenCard(
+                CombatantSide.Player,
+                selection.PreviousHiddenCardId);
             State = CoreLoopState.PlayerChoosingChangeCard;
             return true;
         }
@@ -1391,6 +1410,53 @@ namespace DiaBlackJack.CoreLoop
                 ownerSide,
                 RoundNumber,
                 healAmount);
+        }
+
+        internal void RecordLieDetectorResult(
+            int sourceCardId,
+            CombatantSide ownerSide,
+            int declaredNumber,
+            int? subjectHiddenCardId,
+            bool? isAtLeastDeclaredNumber)
+        {
+            bool wasComparable =
+                subjectHiddenCardId.HasValue &&
+                isAtLeastDeclaredNumber.HasValue;
+            if (subjectHiddenCardId.HasValue !=
+                isAtLeastDeclaredNumber.HasValue)
+            {
+                throw new ArgumentException(
+                    "Lie detector private result must be complete or absent.");
+            }
+
+            LastLieDetectorPublicResult = new LieDetectorPublicResult(
+                sourceCardId,
+                ownerSide,
+                declaredNumber,
+                wasComparable);
+            _automaticCardBattleState.ClearHiddenCardKnowledgeForObserver(
+                ownerSide);
+            if (wasComparable)
+            {
+                _automaticCardBattleState.SetHiddenCardKnowledge(
+                    ownerSide,
+                    ownerSide == CombatantSide.Player
+                        ? CombatantSide.Enemy
+                        : CombatantSide.Player,
+                    subjectHiddenCardId.Value,
+                    declaredNumber,
+                    isAtLeastDeclaredNumber.Value,
+                    RoundNumber);
+            }
+        }
+
+        internal void InvalidateHiddenCardKnowledge(
+            CombatantSide subjectSide,
+            int previousHiddenCardId)
+        {
+            _automaticCardBattleState.InvalidateKnowledgeAboutHiddenCard(
+                subjectSide,
+                previousHiddenCardId);
         }
 
         internal bool TryBeginAutomaticCardEffect(
@@ -2481,6 +2547,7 @@ namespace DiaBlackJack.CoreLoop
                 RoundNumber,
                 Player,
                 Enemy);
+            _automaticCardBattleState.ClearRoundState();
             LastResolution = resolution;
             RaiseStepped();
 
