@@ -141,6 +141,8 @@ namespace DiaBlackJack.CoreLoop
 
         public RoundResolution? LastResolution { get; private set; }
 
+        public RoundTransition? LastRoundTransition { get; private set; }
+
         /// <summary>
         /// Raised after each observable sub-step of a turn — player/enemy draw or stand, round
         /// resolution (before the hands are cleared), and a fresh deal. A single player action runs
@@ -206,6 +208,10 @@ namespace DiaBlackJack.CoreLoop
 
         internal int PendingPoisonWinRewardCount =>
             _automaticCardBattleState.PendingPoisonWinRewardCount;
+
+        internal bool CanRestartRoundFromResurrectionHerb =>
+            Player.Soul.Current >= 2 &&
+            Enemy.Soul.Current >= 2;
 
         public AutomaticCardResult? LastAutomaticCardResult { get; private set; }
 
@@ -1580,11 +1586,11 @@ namespace DiaBlackJack.CoreLoop
             }
 
             if (!resumeContinuation &&
-                step.CompletionFlow ==
-                    AutomaticCardCompletionFlow.EndBattle)
+                step.CompletionFlow !=
+                    AutomaticCardCompletionFlow.ResumeContinuation)
             {
                 throw new InvalidOperationException(
-                    "An automatic card cannot end battle before a pending choice resumes.");
+                    "An automatic card cannot change round or battle flow before a pending choice resumes.");
             }
 
             AutomaticCardEffectContext context =
@@ -1672,6 +1678,13 @@ namespace DiaBlackJack.CoreLoop
                 AutomaticCardCompletionFlow.EndBattle)
             {
                 EndBattleWithoutRound();
+                return false;
+            }
+
+            if (step.CompletionFlow ==
+                AutomaticCardCompletionFlow.RestartRound)
+            {
+                RestartRoundFromResurrectionHerb(result);
                 return false;
             }
 
@@ -2462,6 +2475,37 @@ namespace DiaBlackJack.CoreLoop
             RaiseStepped();
         }
 
+        private void RestartRoundFromResurrectionHerb(
+            AutomaticCardResult result)
+        {
+            int previousRoundNumber = RoundNumber;
+
+            Player.Soul.ApplyDamage(1);
+            Enemy.Soul.ApplyDamage(1);
+
+            _automaticCardBattleState.ClearRoundState();
+            ClearPlayerDemonContractInteraction();
+            ClearEnemyDemonContractInteraction();
+            _demonContractResolver.NotifyRoundEnded(
+                this,
+                _activePlayerDemonContracts);
+            _demonContractResolver.NotifyRoundEnded(
+                this,
+                _activeEnemyDemonContracts);
+
+            CancelPendingEffectResolutions();
+            Player.ClearRound();
+            Enemy.ClearRound();
+
+            LastRoundTransition = new RoundTransition(
+                RoundTransitionCause.ResurrectionHerb,
+                previousRoundNumber,
+                previousRoundNumber + 1,
+                result.SourceCardId,
+                result.OwnerSide);
+            StartRound();
+        }
+
         private void CancelPendingEffectResolutions()
         {
             if (_activeCardEffectContext?.SourceCard.UseState ==
@@ -2548,6 +2592,7 @@ namespace DiaBlackJack.CoreLoop
                 Player,
                 Enemy);
             _automaticCardBattleState.ClearRoundState();
+            LastRoundTransition = null;
             LastResolution = resolution;
             RaiseStepped();
 

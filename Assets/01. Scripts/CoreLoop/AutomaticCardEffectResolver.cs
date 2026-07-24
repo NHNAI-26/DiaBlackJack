@@ -53,6 +53,9 @@ namespace DiaBlackJack.CoreLoop
         public bool CanOwnerStand =>
             Battle.CanOwnerStandForAutomaticCard(OwnerSide);
 
+        public bool CanRestartRound =>
+            Battle.CanRestartRoundFromResurrectionHerb;
+
         public bool TryStandOwner()
         {
             return Battle.TryStandOwnerForAutomaticCard(OwnerSide);
@@ -252,7 +255,8 @@ namespace DiaBlackJack.CoreLoop
     internal enum AutomaticCardCompletionFlow
     {
         ResumeContinuation,
-        EndBattle
+        EndBattle,
+        RestartRound
     }
 
     internal sealed class AutomaticCardEffectStep
@@ -359,6 +363,7 @@ namespace DiaBlackJack.CoreLoop
         {
             return new AutomaticCardEffectResolver(
                 new PoisonEffectHandler(),
+                new ResurrectionHerbEffectHandler(),
                 new LieDetectorEffectHandler(),
                 new FlamethrowerEffectHandler(),
                 new PocketWatchEffectHandler());
