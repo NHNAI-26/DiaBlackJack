@@ -73,6 +73,18 @@ namespace DiaBlackJack.CoreLoop
             return true;
         }
 
+        internal bool TryReactivate()
+        {
+            if (Definition.Activation != CardActivationKind.Manual ||
+                UseState != CardUseState.Used)
+            {
+                return false;
+            }
+
+            UseState = CardUseState.Available;
+            return true;
+        }
+
         internal void TransformTo(CardDefinition definition)
         {
             Definition = definition ?? throw new ArgumentNullException(nameof(definition));

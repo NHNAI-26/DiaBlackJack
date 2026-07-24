@@ -122,6 +122,84 @@ namespace DiaBlackJack.CoreLoop
                 subjectHiddenCardId,
                 isAtLeastDeclaredNumber);
         }
+
+        public bool IsStanding(CombatantSide side)
+        {
+            return Battle.GetParticipant(side).IsStanding;
+        }
+
+        public IReadOnlyList<BlackjackCard> GetFaceUpDiscardCandidates(
+            CombatantSide side)
+        {
+            BattleParticipant participant = Battle.GetParticipant(side);
+            var candidates = new List<BlackjackCard>();
+            foreach (BlackjackCard card in participant.Hand.Cards)
+            {
+                if (!card.IsFaceUp ||
+                    (side == OwnerSide &&
+                        ReferenceEquals(card, SourceCard)))
+                {
+                    continue;
+                }
+
+                candidates.Add(card);
+            }
+
+            return candidates.AsReadOnly();
+        }
+
+        public bool TryDiscardFaceUpCard(
+            CombatantSide side,
+            int cardId)
+        {
+            BattleParticipant participant = Battle.GetParticipant(side);
+            if (!participant.Hand.TryGetCard(
+                    cardId,
+                    out BlackjackCard card) ||
+                !card.IsFaceUp ||
+                (side == OwnerSide && ReferenceEquals(card, SourceCard)))
+            {
+                return false;
+            }
+
+            return participant.TryDiscardCard(cardId);
+        }
+
+        public IReadOnlyList<BlackjackCard>
+            GetOwnerReactivatableManualCards()
+        {
+            BattleParticipant owner = Battle.GetParticipant(OwnerSide);
+            var candidates = new List<BlackjackCard>();
+            foreach (BlackjackCard card in owner.Hand.Cards)
+            {
+                if (!card.IsFaceUp ||
+                    ReferenceEquals(card, SourceCard) ||
+                    card.Definition.Activation != CardActivationKind.Manual ||
+                    card.UseState != CardUseState.Used)
+                {
+                    continue;
+                }
+
+                candidates.Add(card);
+            }
+
+            return candidates.AsReadOnly();
+        }
+
+        public bool TryReactivateOwnerManualCard(int cardId)
+        {
+            BattleParticipant owner = Battle.GetParticipant(OwnerSide);
+            if (!owner.Hand.TryGetCard(
+                    cardId,
+                    out BlackjackCard card) ||
+                !card.IsFaceUp ||
+                ReferenceEquals(card, SourceCard))
+            {
+                return false;
+            }
+
+            return card.TryReactivate();
+        }
     }
 
     internal sealed class AutomaticCardChoiceRequest
@@ -281,7 +359,9 @@ namespace DiaBlackJack.CoreLoop
         {
             return new AutomaticCardEffectResolver(
                 new PoisonEffectHandler(),
-                new LieDetectorEffectHandler());
+                new LieDetectorEffectHandler(),
+                new FlamethrowerEffectHandler(),
+                new PocketWatchEffectHandler());
         }
 
         public bool Supports(CardEffectKind effectKind)
