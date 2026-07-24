@@ -79,46 +79,13 @@ MonoBehaviour:
     - model: {fileID: 8926484042661615162}
       id: 0
       isStickyNote: 0
-    - model: {fileID: 8926484042661615177}
-      id: 0
-      isStickyNote: 0
-    - model: {fileID: 8926484042661615181}
-      id: 0
-      isStickyNote: 0
-    - model: {fileID: 8926484042661615200}
-      id: 0
-      isStickyNote: 0
-    - model: {fileID: 8926484042661615210}
-      id: 0
-      isStickyNote: 0
-    - model: {fileID: 8926484042661615216}
-      id: 0
-      isStickyNote: 0
     - model: {fileID: 8926484042661615226}
-      id: 0
-      isStickyNote: 0
-    - model: {fileID: 8926484042661615228}
-      id: 0
-      isStickyNote: 0
-    - model: {fileID: 8926484042661615231}
       id: 0
       isStickyNote: 0
     - model: {fileID: 8926484042661615252}
       id: 0
       isStickyNote: 0
-    - model: {fileID: 8926484042661615255}
-      id: 0
-      isStickyNote: 0
     - model: {fileID: 8926484042661615259}
-      id: 0
-      isStickyNote: 0
-    - model: {fileID: 8926484042661615263}
-      id: 0
-      isStickyNote: 0
-    - model: {fileID: 8926484042661615266}
-      id: 0
-      isStickyNote: 0
-    - model: {fileID: 8926484042661615269}
       id: 0
       isStickyNote: 0
     - model: {fileID: 8926484042661615272}
@@ -3184,7 +3151,7 @@ MonoBehaviour:
       m_Type:
         m_SerializableType: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
           PublicKeyToken=b77a5c561934e089
-      m_SerializableObject: 15
+      m_SerializableObject: 30
     m_Space: -1
   m_Property:
     name: Min
@@ -3218,7 +3185,7 @@ MonoBehaviour:
       m_Type:
         m_SerializableType: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
           PublicKeyToken=b77a5c561934e089
-      m_SerializableObject: 30
+      m_SerializableObject: 50
     m_Space: -1
   m_Property:
     name: Max
@@ -7017,7 +6984,7 @@ MonoBehaviour:
       m_Type:
         m_SerializableType: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
           PublicKeyToken=b77a5c561934e089
-      m_SerializableObject: 10
+      m_SerializableObject: 20
     m_Space: -1
   m_Property:
     name: Min
@@ -7051,7 +7018,7 @@ MonoBehaviour:
       m_Type:
         m_SerializableType: System.Single, mscorlib, Version=4.0.0.0, Culture=neutral,
           PublicKeyToken=b77a5c561934e089
-      m_SerializableObject: 15
+      m_SerializableObject: 30
     m_Space: -1
   m_Property:
     name: Max
@@ -8804,7 +8771,7 @@ MonoBehaviour:
       m_Type:
         m_SerializableType: UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0,
           Culture=neutral, PublicKeyToken=null
-      m_SerializableObject: '{"x":0.20000000298023225,"y":0.20000000298023225,"z":0.5}'
+      m_SerializableObject: '{"x":0.4000000059604645,"y":0.4000000059604645,"z":0.5}'
     m_Space: -1
   m_Property:
     name: _Scale

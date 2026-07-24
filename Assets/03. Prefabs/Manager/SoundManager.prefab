@@ -25,7 +25,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8103227572049668488}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -45,7 +45,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Border::Border.Audio.SoundManager
   bgmEntries: []
-  sfxEntries: []
+  sfxEntries:
+  - id: dissolve
+    clip: {fileID: 8300000, guid: 753e4bea79ae5324f8b86dadf0e6bde9, type: 3}
+    volume: 0.2
+    pitch: 1
+    loop: 0
+  - id: revolverReady
+    clip: {fileID: 8300000, guid: 2edc07d4b6579fe4d8b79ad12b6cf770, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
+  - id: revolverSuccess
+    clip: {fileID: 8300000, guid: ab904a29696f5af4abaab78f96646b1b, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: revolverFail
+    clip: {fileID: 8300000, guid: 774721b97a302c548b335fe939d2c075, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1

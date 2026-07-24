@@ -121,7 +121,7 @@ Material:
     - _DissolveEdgeIntensity: 4.01
     - _DissolveEdgeWidth: 0.148
     - _DissolveEnabled: 1
-    - _DissolveMaxOffset: -0.592
+    - _DissolveMaxOffset: -0.515
     - _DissolveMinOffset: -0.102
     - _DstBlend: 0
     - _DstBlendAlpha: 0
