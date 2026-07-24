@@ -31,10 +31,10 @@
 | [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M03 검증 완료 v0.3 |
 | [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M03 작업 순서와 단계별 검증 게이트 | CU-M03 완료 v0.3 |
 | [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M03 완료 |
-| [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | AC-01 공통 기반 완료 v0.1 |
-| [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | AC-01 구현 완료·다음 AC-02 v0.1 |
-| [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 구현 순서와 단계별 검증 게이트 | AC-01 완료 v0.1 |
-| [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | AC-01 완료·대상 15/15·전체 412/412 v0.1 |
+| [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | AC-02 독극물 구현 완료 v0.1 |
+| [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | AC-02 구현 완료·다음 AC-03 v0.1 |
+| [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 구현 순서와 단계별 검증 게이트 | AC-02 완료 v0.1 |
+| [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | AC-02 완료·대상 12/12·전체 424/424 v0.1 |
 | [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속·우선 악마 4종과 광신도 선택 밸런스 | DC-08 완료 v1.0 |
 | [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | DC-08 검증 완료 v1.0 |
 | [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 구현 순서와 단계별 검증 게이트 | 전체 완료 v1.0 |
@@ -70,6 +70,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-25 | 이천서 | 자동 발동 카드 AC-02 독극물의 계약 제한 스탠드·영혼 0 패배·승리 회복 예약을 양측 대칭으로 구현하고 대상 12/12·CoreLoop 295/295·전체 EditMode 424/424로 검증 |
 | 2026-07-25 | 이천서 | 자동 발동 카드 AC-01 정의·공개 유입·보류 선택·입력 잠금·연속 처리 기반을 구현하고 대상 15/15·CoreLoop 283/283·전체 EditMode 412/412로 검증 |
 | 2026-07-23 | 이천서 | 자동 발동 카드의 최초 배분 예외, 공개 유입·효과·버스트 순서, 5종 카드 프로토타입 결정과 AC-00~AC-06 기획·개발 명세·구현 계획·진행 기록 4종 수립 |
 | 2026-07-23 | 이천서 | 악마 계약 DC-08 광신도 사탄·레비아탄 효용 조건과 벨페고르·마몬 결정적 균형 분산을 구현하고 400시드·100자동전투·대상 8/8·CoreLoop 268/268·전체 397/397로 검증 |

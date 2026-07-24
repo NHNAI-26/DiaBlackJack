@@ -24,6 +24,8 @@ namespace DiaBlackJack.CoreLoop
         private readonly CardEffectResolver _cardEffectResolver;
         private readonly AutomaticCardEffectResolver _automaticCardEffectResolver;
         private readonly DemonContractResolver _demonContractResolver;
+        private readonly AutomaticCardBattleState _automaticCardBattleState =
+            new AutomaticCardBattleState();
         private readonly RoundDamageApplier _damageApplier = new RoundDamageApplier();
         private readonly List<ActiveDemonContract> _activePlayerDemonContracts =
             new List<ActiveDemonContract>();
@@ -198,6 +200,12 @@ namespace DiaBlackJack.CoreLoop
                 CombatantSide.Player
                     ? _pendingAutomaticCardInteraction
                     : null;
+
+        internal PendingAutomaticCardInteraction PendingAutomaticInteraction =>
+            _pendingAutomaticCardInteraction;
+
+        internal int PendingPoisonWinRewardCount =>
+            _automaticCardBattleState.PendingPoisonWinRewardCount;
 
         public AutomaticCardResult? LastAutomaticCardResult { get; private set; }
 
@@ -1336,6 +1344,55 @@ namespace DiaBlackJack.CoreLoop
             }
         }
 
+        internal bool CanOwnerStandForAutomaticCard(CombatantSide ownerSide)
+        {
+            BattleParticipant owner = GetParticipant(ownerSide);
+            if (owner.IsStanding)
+            {
+                return false;
+            }
+
+            IReadOnlyList<ActiveDemonContract> ownerContracts =
+                ownerSide == CombatantSide.Player
+                    ? _activePlayerDemonContracts
+                    : _activeEnemyDemonContracts;
+            return _demonContractResolver.CanOwnerStand(
+                this,
+                ownerContracts,
+                ownerSide);
+        }
+
+        internal bool TryStandOwnerForAutomaticCard(CombatantSide ownerSide)
+        {
+            if (!CanOwnerStandForAutomaticCard(ownerSide))
+            {
+                return false;
+            }
+
+            RecordPublicAction(
+                ownerSide,
+                PublicCombatActionType.Stand);
+            GetParticipant(ownerSide).Stand();
+            return true;
+        }
+
+        internal void ApplySoulDamage(CombatantSide ownerSide, int amount)
+        {
+            GetParticipant(ownerSide).Soul.ApplyDamage(amount);
+        }
+
+        internal void RegisterPoisonWinReward(
+            int sourceCardId,
+            CombatantSide ownerSide,
+            int healAmount)
+        {
+            _automaticCardBattleState.RegisterPoisonWinReward(
+                sourceCardId,
+                ownerSide,
+                RoundNumber,
+                healAmount);
+        }
+
         internal bool TryBeginAutomaticCardEffect(
             CombatantSide ownerSide,
             BlackjackCard sourceCard,
@@ -1456,6 +1513,14 @@ namespace DiaBlackJack.CoreLoop
                     "Automatic card handler returned no step.");
             }
 
+            if (!resumeContinuation &&
+                step.CompletionFlow ==
+                    AutomaticCardCompletionFlow.EndBattle)
+            {
+                throw new InvalidOperationException(
+                    "An automatic card cannot end battle before a pending choice resumes.");
+            }
+
             AutomaticCardEffectContext context =
                 _activeAutomaticCardEffectContext ??
                     throw new InvalidOperationException(
@@ -1536,6 +1601,13 @@ namespace DiaBlackJack.CoreLoop
             _activeAutomaticCardEffectContext = null;
             _automaticCardContinuation = null;
             RaiseStepped();
+
+            if (step.CompletionFlow ==
+                AutomaticCardCompletionFlow.EndBattle)
+            {
+                EndBattleWithoutRound();
+                return false;
+            }
 
             if (resumeContinuation)
             {
@@ -1837,6 +1909,7 @@ namespace DiaBlackJack.CoreLoop
             _activeAutomaticCardEffectContext = null;
             _automaticCardContinuation = null;
             _pendingAutomaticCardInteraction = null;
+            _automaticCardBattleState.ClearRoundState();
             ClearPlayerDemonContractInteraction();
             ClearEnemyDemonContractInteraction();
             _playerFinalBonusForEnemyChoice = 0;
@@ -2308,6 +2381,8 @@ namespace DiaBlackJack.CoreLoop
 
         private void EndBattleWithoutRound()
         {
+            CancelPendingEffectResolutions();
+            _automaticCardBattleState.ClearRoundState();
             ClearPlayerDemonContractInteraction();
             ClearEnemyDemonContractInteraction();
             _demonContractResolver.NotifyRoundEnded(
@@ -2319,6 +2394,22 @@ namespace DiaBlackJack.CoreLoop
             CleanupBattleContracts();
             State = CoreLoopState.BattleEnded;
             RaiseStepped();
+        }
+
+        private void CancelPendingEffectResolutions()
+        {
+            if (_activeCardEffectContext?.SourceCard.UseState ==
+                CardUseState.Resolving)
+            {
+                _activeCardEffectContext.SourceCard.TryCompleteUse();
+            }
+
+            _activeCardEffectContext = null;
+            _activeCardEffectActorSide = null;
+            _pendingCardEffect = null;
+            _activeAutomaticCardEffectContext = null;
+            _automaticCardContinuation = null;
+            _pendingAutomaticCardInteraction = null;
         }
 
         private void CleanupBattleContracts()
@@ -2385,6 +2476,11 @@ namespace DiaBlackJack.CoreLoop
                 _activeEnemyDemonContracts);
             State = CoreLoopState.ResolvingRound;
             _damageApplier.TryApply(resolution, Player.Soul, Enemy.Soul);
+            _automaticCardBattleState.ResolvePoisonWinRewards(
+                resolution,
+                RoundNumber,
+                Player,
+                Enemy);
             LastResolution = resolution;
             RaiseStepped();
 

@@ -42,5 +42,17 @@ namespace DiaBlackJack.CoreLoop
 
             Current = Math.Max(0, Current - amount);
         }
+
+        public void Restore(int amount)
+        {
+            if (amount < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(amount),
+                    "Soul restoration cannot be negative.");
+            }
+
+            Current = Math.Min(Maximum, Current + amount);
+        }
     }
 }

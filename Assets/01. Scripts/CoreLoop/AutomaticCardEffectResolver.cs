@@ -43,6 +43,33 @@ namespace DiaBlackJack.CoreLoop
                 : CombatantSide.Player;
 
         public BlackjackCard SourceCard { get; }
+
+        public int OwnerCurrentSoul =>
+            Battle.GetParticipant(OwnerSide).Soul.Current;
+
+        public bool IsOwnerSoulDepleted =>
+            Battle.GetParticipant(OwnerSide).Soul.IsDepleted;
+
+        public bool CanOwnerStand =>
+            Battle.CanOwnerStandForAutomaticCard(OwnerSide);
+
+        public bool TryStandOwner()
+        {
+            return Battle.TryStandOwnerForAutomaticCard(OwnerSide);
+        }
+
+        public void ApplyOwnerSoulDamage(int amount)
+        {
+            Battle.ApplySoulDamage(OwnerSide, amount);
+        }
+
+        public void RegisterPoisonWinReward(int healAmount)
+        {
+            Battle.RegisterPoisonWinReward(
+                SourceCard.Id,
+                OwnerSide,
+                healAmount);
+        }
     }
 
     internal sealed class AutomaticCardChoiceRequest
@@ -92,19 +119,29 @@ namespace DiaBlackJack.CoreLoop
         public IReadOnlyList<AutomaticCardChoiceOption> Options { get; }
     }
 
+    internal enum AutomaticCardCompletionFlow
+    {
+        ResumeContinuation,
+        EndBattle
+    }
+
     internal sealed class AutomaticCardEffectStep
     {
         private AutomaticCardEffectStep(
             AutomaticCardChoiceRequest choiceRequest,
-            AutomaticCardSourceDisposition? sourceDisposition)
+            AutomaticCardSourceDisposition? sourceDisposition,
+            AutomaticCardCompletionFlow completionFlow)
         {
             ChoiceRequest = choiceRequest;
             SourceDisposition = sourceDisposition;
+            CompletionFlow = completionFlow;
         }
 
         public AutomaticCardChoiceRequest ChoiceRequest { get; }
 
         public AutomaticCardSourceDisposition? SourceDisposition { get; }
+
+        public AutomaticCardCompletionFlow CompletionFlow { get; }
 
         public static AutomaticCardEffectStep AwaitChoice(
             CombatantSide decisionSide,
@@ -118,11 +155,14 @@ namespace DiaBlackJack.CoreLoop
                     choiceKind,
                     prompt,
                     options),
-                sourceDisposition: null);
+                sourceDisposition: null,
+                AutomaticCardCompletionFlow.ResumeContinuation);
         }
 
         public static AutomaticCardEffectStep Complete(
-            AutomaticCardSourceDisposition sourceDisposition)
+            AutomaticCardSourceDisposition sourceDisposition,
+            AutomaticCardCompletionFlow completionFlow =
+                AutomaticCardCompletionFlow.ResumeContinuation)
         {
             if (!Enum.IsDefined(
                 typeof(AutomaticCardSourceDisposition),
@@ -131,9 +171,17 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentOutOfRangeException(nameof(sourceDisposition));
             }
 
+            if (!Enum.IsDefined(
+                typeof(AutomaticCardCompletionFlow),
+                completionFlow))
+            {
+                throw new ArgumentOutOfRangeException(nameof(completionFlow));
+            }
+
             return new AutomaticCardEffectStep(
                 choiceRequest: null,
-                sourceDisposition);
+                sourceDisposition,
+                completionFlow);
         }
     }
 
@@ -179,7 +227,8 @@ namespace DiaBlackJack.CoreLoop
 
         public static AutomaticCardEffectResolver CreateDefault()
         {
-            return new AutomaticCardEffectResolver();
+            return new AutomaticCardEffectResolver(
+                new PoisonEffectHandler());
         }
 
         public bool Supports(CardEffectKind effectKind)
