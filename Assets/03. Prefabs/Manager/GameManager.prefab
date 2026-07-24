@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &6656724238517901587
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1338413536723086704}
+  - component: {fileID: 7870382590175114481}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1338413536723086704
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656724238517901587}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7870382590175114481
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656724238517901587}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3326a4551dba504d859a63138e44f24, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameManager
+  seed: 20260719
+  hud: {fileID: 0}
+  playerHand: {fileID: 0}
+  enemyHand: {fileID: 0}
+  playerCharacter: {fileID: 0}
+  enemyCharacter: {fileID: 0}
+  totals: {fileID: 0}
+  shop: {fileID: 0}
+  uiFont: {fileID: 12800000, guid: 51ac31f4c09df134780e57e309afafcd, type: 3}
+  stepSeconds: 0.8
+  resolveHoldSeconds: 1.1

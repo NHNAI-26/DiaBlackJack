@@ -49,7 +49,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DissolveNoiseMap:
-        m_Texture: {fileID: 2800000, guid: c9b085b410f4f0d40abd1e4f1be0a305, type: 3}
+        m_Texture: {fileID: 2800000, guid: 8f48087173cf90044bc183b05cc3ffff, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
@@ -121,8 +121,8 @@ Material:
     - _DissolveEdgeIntensity: 4.01
     - _DissolveEdgeWidth: 0.148
     - _DissolveEnabled: 1
-    - _DissolveMaxOffset: 0.057
-    - _DissolveMinOffset: -0.155
+    - _DissolveMaxOffset: -0.592
+    - _DissolveMinOffset: -0.102
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EmissionEnabled: 0
@@ -167,7 +167,7 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _DissolveEdgeColor: {r: 1, g: 0.2671497, b: 0, a: 1}
     - _DissolvePanning: {r: 0, g: 0, b: 0, a: 0}
-    - _DissolveTilingOffset: {r: 1, g: 1, b: 0, a: 0}
+    - _DissolveTilingOffset: {r: 0.5, g: 0.5, b: 0, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _GlassGlowColor: {r: 1, g: 1, b: 1, a: 1}
     - _HeightFadeTint: {r: 0.24999997, g: 0.24999997, b: 0.24999997, a: 1}
