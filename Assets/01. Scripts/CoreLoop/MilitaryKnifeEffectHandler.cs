@@ -2,7 +2,9 @@ using System;
 
 namespace DiaBlackJack.CoreLoop
 {
-    internal sealed class MilitaryKnifeEffectHandler : ICardEffectHandler
+    internal sealed class MilitaryKnifeEffectHandler :
+        ICardEffectHandler,
+        ICardEffectContinuationHandler
     {
         public CardEffectKind EffectKind => CardEffectKind.MilitaryKnife;
 
@@ -20,7 +22,50 @@ namespace DiaBlackJack.CoreLoop
                     "Military knife requires enemy visible total at most 16 and one deck card.");
             }
 
-            BlackjackCard drawnCard = context.ForceOpponentDrawFaceUp();
+            BlackjackCard drawnCard = context.ForceOpponentDrawFaceUp(
+                CardEffectContinuationKind.MilitaryKnifeAfterOpponentDraw,
+                out bool isWaitingForAutomaticChoice,
+                out AutomaticCardResult? immediateAutomaticResult);
+            var continuation = new CardEffectContinuation(
+                CardEffectContinuationKind.MilitaryKnifeAfterOpponentDraw,
+                drawnCard.Id);
+            if (isWaitingForAutomaticChoice)
+            {
+                return CardEffectStep.Suspend(continuation);
+            }
+
+            return CompleteAfterForcedDraw(
+                context,
+                drawnCard.Id,
+                immediateAutomaticResult?.SourceDisposition ??
+                    AutomaticCardSourceDisposition.RetainFaceUp);
+        }
+
+        public CardEffectStep ResumeAfterAutomaticCard(
+            CardEffectContext context,
+            CardEffectContinuation continuation,
+            AutomaticCardResult automaticCardResult)
+        {
+            if (continuation.Kind !=
+                    CardEffectContinuationKind.MilitaryKnifeAfterOpponentDraw ||
+                continuation.EnteredCardId !=
+                    automaticCardResult.SourceCardId)
+            {
+                throw new InvalidOperationException(
+                    "Military knife received an invalid automatic card continuation.");
+            }
+
+            return CompleteAfterForcedDraw(
+                context,
+                continuation.EnteredCardId,
+                automaticCardResult.SourceDisposition);
+        }
+
+        private CardEffectStep CompleteAfterForcedDraw(
+            CardEffectContext context,
+            int drawnCardId,
+            AutomaticCardSourceDisposition sourceDisposition)
+        {
             if (context.OpponentVisibleHandValue.IsBust)
             {
                 return CardEffectStep.Complete(
@@ -28,7 +73,8 @@ namespace DiaBlackJack.CoreLoop
                     context.CreateOpponentNumericBustResolution());
             }
 
-            if (!context.TryDiscardOpponentCard(drawnCard.Id))
+            if (sourceDisposition == AutomaticCardSourceDisposition.RetainFaceUp &&
+                !context.TryDiscardOpponentCard(drawnCardId))
             {
                 throw new InvalidOperationException(
                     "Military knife could not discard the forced draw card.");

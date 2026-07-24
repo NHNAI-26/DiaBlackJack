@@ -7,6 +7,7 @@ namespace DiaBlackJack.CoreLoop
         PlayerTurn,
         PlayerChoosingChangeCard,
         PlayerResolvingCardEffect,
+        ResolvingAutomaticCardEffect,
         PlayerResolvingDemonContract,
         EnemyTurn,
         ResolvingRound,

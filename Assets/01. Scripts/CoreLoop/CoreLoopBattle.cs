@@ -22,6 +22,7 @@ namespace DiaBlackJack.CoreLoop
 
         private readonly IEnemyBehaviorPolicy _enemyPolicy;
         private readonly CardEffectResolver _cardEffectResolver;
+        private readonly AutomaticCardEffectResolver _automaticCardEffectResolver;
         private readonly DemonContractResolver _demonContractResolver;
         private readonly RoundDamageApplier _damageApplier = new RoundDamageApplier();
         private readonly List<ActiveDemonContract> _activePlayerDemonContracts =
@@ -33,6 +34,10 @@ namespace DiaBlackJack.CoreLoop
         private CardEffectContext _activeCardEffectContext;
         private CombatantSide? _activeCardEffectActorSide;
         private PendingCardEffect _pendingCardEffect;
+        private AutomaticCardEffectContext _activeAutomaticCardEffectContext;
+        private AutomaticCardContinuation _automaticCardContinuation;
+        private PendingAutomaticCardInteraction _pendingAutomaticCardInteraction;
+        private int _nextAutomaticCardInteractionId = 1;
         private int _nextTemporaryCardId = int.MaxValue;
         private int _enemyDecisionOrdinal;
         private int _nextDemonContractInteractionId = 1;
@@ -99,7 +104,8 @@ namespace DiaBlackJack.CoreLoop
             CardEffectResolver cardEffectResolver,
             DemonContractDeck playerDemonDeck = null,
             DemonContractResolver demonContractResolver = null,
-            DemonContractDeck enemyDemonDeck = null)
+            DemonContractDeck enemyDemonDeck = null,
+            AutomaticCardEffectResolver automaticCardEffectResolver = null)
         {
             Player = new BattleParticipant(playerDeck, playerMaximumSoul, playerCurrentSoul);
             Enemy = new BattleParticipant(enemyDeck, enemyMaximumSoul);
@@ -110,6 +116,8 @@ namespace DiaBlackJack.CoreLoop
             _enemyPolicy = enemyPolicy ?? new SimpleEnemyPolicy();
             _cardEffectResolver = cardEffectResolver ??
                 throw new ArgumentNullException(nameof(cardEffectResolver));
+            _automaticCardEffectResolver = automaticCardEffectResolver ??
+                AutomaticCardEffectResolver.CreateDefault();
             _demonContractResolver = demonContractResolver ??
                 DemonContractResolver.CreateDefault();
             State = CoreLoopState.Initializing;
@@ -184,6 +192,14 @@ namespace DiaBlackJack.CoreLoop
             _activeCardEffectActorSide == CombatantSide.Player
                 ? _pendingCardEffect
                 : null;
+
+        public PendingAutomaticCardInteraction PendingPlayerAutomaticInteraction =>
+            _pendingAutomaticCardInteraction?.DecisionSide ==
+                CombatantSide.Player
+                    ? _pendingAutomaticCardInteraction
+                    : null;
+
+        public AutomaticCardResult? LastAutomaticCardResult { get; private set; }
 
         public IReadOnlyList<ActiveDemonContract> ActivePlayerDemonContracts =>
             _activePlayerDemonContracts.AsReadOnly();
@@ -300,6 +316,16 @@ namespace DiaBlackJack.CoreLoop
         public bool TryResolvePlayerCardChoice(int optionId)
         {
             return TryResolveCardChoice(CombatantSide.Player, optionId);
+        }
+
+        public bool TryResolvePlayerAutomaticCardChoice(
+            int interactionId,
+            int optionId)
+        {
+            return TryResolveAutomaticCardChoice(
+                CombatantSide.Player,
+                interactionId,
+                optionId);
         }
 
         public bool TryBeginPlayerDemonContract()
@@ -741,6 +767,19 @@ namespace DiaBlackJack.CoreLoop
             }
 
             RaiseStepped();
+            if (TryBeginAutomaticCardEffect(
+                CombatantSide.Player,
+                drawnCard,
+                AutomaticCardContinuation.ForPlayerHit()))
+            {
+                return;
+            }
+
+            CompletePlayerHitAfterAutomaticCard();
+        }
+
+        private void CompletePlayerHitAfterAutomaticCard()
+        {
             if (Player.VisibleHandValue.IsBust && !PreventsPlayerBust())
             {
                 CompleteRound(RoundResolver.ResolveNumericBust(
@@ -1297,6 +1336,276 @@ namespace DiaBlackJack.CoreLoop
             }
         }
 
+        internal bool TryBeginAutomaticCardEffect(
+            CombatantSide ownerSide,
+            BlackjackCard sourceCard,
+            AutomaticCardContinuation continuation)
+        {
+            return TryBeginAutomaticCardEffect(
+                ownerSide,
+                sourceCard,
+                continuation,
+                out _);
+        }
+
+        internal bool TryBeginAutomaticCardEffect(
+            CombatantSide ownerSide,
+            BlackjackCard sourceCard,
+            AutomaticCardContinuation continuation,
+            out AutomaticCardResult? immediateResult)
+        {
+            immediateResult = null;
+            if (!Enum.IsDefined(typeof(CombatantSide), ownerSide))
+            {
+                throw new ArgumentOutOfRangeException(nameof(ownerSide));
+            }
+
+            if (sourceCard == null)
+            {
+                throw new ArgumentNullException(nameof(sourceCard));
+            }
+
+            if (continuation == null)
+            {
+                throw new ArgumentNullException(nameof(continuation));
+            }
+
+            if (sourceCard.Definition.Activation != CardActivationKind.Automatic)
+            {
+                return false;
+            }
+
+            if (_activeAutomaticCardEffectContext != null ||
+                _pendingAutomaticCardInteraction != null)
+            {
+                throw new InvalidOperationException(
+                    "Only one automatic card effect can resolve at a time.");
+            }
+
+            if (!sourceCard.IsFaceUp ||
+                !GetParticipant(ownerSide).Hand.TryGetCard(
+                    sourceCard.Id,
+                    out BlackjackCard heldCard) ||
+                !ReferenceEquals(sourceCard, heldCard))
+            {
+                throw new InvalidOperationException(
+                    "Automatic card effects require their face-up physical source card in hand.");
+            }
+
+            if (!_automaticCardEffectResolver.Supports(
+                sourceCard.Definition.Effect))
+            {
+                throw new InvalidOperationException(
+                    $"Automatic card handler for {sourceCard.Definition.Effect} is not registered.");
+            }
+
+            _activeAutomaticCardEffectContext =
+                new AutomaticCardEffectContext(this, ownerSide, sourceCard);
+            _automaticCardContinuation = continuation;
+            AutomaticCardEffectStep step =
+                _automaticCardEffectResolver.Begin(
+                    _activeAutomaticCardEffectContext);
+            bool isWaitingForChoice = ApplyAutomaticCardEffectStep(
+                step,
+                resumeContinuation: false);
+            if (!isWaitingForChoice)
+            {
+                immediateResult = LastAutomaticCardResult;
+            }
+
+            return isWaitingForChoice;
+        }
+
+        internal bool TryResolveAutomaticCardChoice(
+            CombatantSide decisionSide,
+            int interactionId,
+            int optionId)
+        {
+            PendingAutomaticCardInteraction pending =
+                _pendingAutomaticCardInteraction;
+            if (State != CoreLoopState.ResolvingAutomaticCardEffect ||
+                pending == null ||
+                pending.DecisionSide != decisionSide ||
+                pending.InteractionId != interactionId ||
+                _activeAutomaticCardEffectContext == null ||
+                !_pendingAutomaticCardInteraction.TryGetOption(
+                    optionId,
+                    out AutomaticCardChoiceOption selectedOption))
+            {
+                return false;
+            }
+
+            AutomaticCardEffectStep step =
+                _automaticCardEffectResolver.ResolveChoice(
+                    _activeAutomaticCardEffectContext,
+                    pending,
+                    selectedOption);
+            ApplyAutomaticCardEffectStep(
+                step,
+                resumeContinuation: true);
+            return true;
+        }
+
+        private bool ApplyAutomaticCardEffectStep(
+            AutomaticCardEffectStep step,
+            bool resumeContinuation)
+        {
+            if (step == null)
+            {
+                throw new InvalidOperationException(
+                    "Automatic card handler returned no step.");
+            }
+
+            AutomaticCardEffectContext context =
+                _activeAutomaticCardEffectContext ??
+                    throw new InvalidOperationException(
+                        "Automatic card effect has no active context.");
+            BlackjackCard sourceCard = context.SourceCard;
+
+            if (step.ChoiceRequest != null)
+            {
+                if (step.SourceDisposition.HasValue)
+                {
+                    throw new InvalidOperationException(
+                        "Automatic card step cannot be pending and complete.");
+                }
+
+                AutomaticCardChoiceRequest request = step.ChoiceRequest;
+                _pendingAutomaticCardInteraction =
+                    new PendingAutomaticCardInteraction(
+                        TakeNextAutomaticCardInteractionId(),
+                        sourceCard.Id,
+                        sourceCard.Definition.Effect,
+                        context.OwnerSide,
+                        request.DecisionSide,
+                        request.ChoiceKind,
+                        request.Prompt,
+                        request.Options);
+                State = CoreLoopState.ResolvingAutomaticCardEffect;
+                RaiseStepped();
+                return true;
+            }
+
+            if (!step.SourceDisposition.HasValue)
+            {
+                throw new InvalidOperationException(
+                    "Automatic card step is neither pending nor complete.");
+            }
+
+            AutomaticCardSourceDisposition disposition =
+                step.SourceDisposition.Value;
+            BattleParticipant owner = GetParticipant(context.OwnerSide);
+            switch (disposition)
+            {
+                case AutomaticCardSourceDisposition.Discard:
+                    if (!owner.TryDiscardCard(sourceCard.Id))
+                    {
+                        throw new InvalidOperationException(
+                            "Automatic card source could not be discarded.");
+                    }
+
+                    break;
+                case AutomaticCardSourceDisposition.RetainFaceUp:
+                    if (!owner.Hand.TryGetCard(
+                            sourceCard.Id,
+                            out BlackjackCard retainedCard) ||
+                        !ReferenceEquals(sourceCard, retainedCard) ||
+                        !retainedCard.IsFaceUp)
+                    {
+                        throw new InvalidOperationException(
+                            "Retained automatic card source is not face-up in its owner hand.");
+                    }
+
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(disposition));
+            }
+
+            var result = new AutomaticCardResult(
+                sourceCard.Id,
+                sourceCard.Definition.Effect,
+                context.OwnerSide,
+                disposition);
+            AutomaticCardContinuation continuation =
+                _automaticCardContinuation ??
+                    throw new InvalidOperationException(
+                        "Automatic card effect has no continuation.");
+
+            LastAutomaticCardResult = result;
+            _pendingAutomaticCardInteraction = null;
+            _activeAutomaticCardEffectContext = null;
+            _automaticCardContinuation = null;
+            RaiseStepped();
+
+            if (resumeContinuation)
+            {
+                ResumeAfterAutomaticCard(continuation, result);
+            }
+
+            return false;
+        }
+
+        private void ResumeAfterAutomaticCard(
+            AutomaticCardContinuation continuation,
+            AutomaticCardResult result)
+        {
+            switch (continuation.Kind)
+            {
+                case AutomaticCardContinuationKind.PlayerHit:
+                    State = CoreLoopState.PlayerTurn;
+                    CompletePlayerHitAfterAutomaticCard();
+                    return;
+                case AutomaticCardContinuationKind.EnemyHit:
+                    State = CoreLoopState.EnemyTurn;
+                    CompleteEnemyHitAfterAutomaticCard();
+                    return;
+                case AutomaticCardContinuationKind.CardEffect:
+                    if (_activeCardEffectContext == null ||
+                        _activeCardEffectActorSide != continuation.ActorSide)
+                    {
+                        throw new InvalidOperationException(
+                            "Automatic card continuation lost its parent card effect.");
+                    }
+
+                    State = continuation.ActorSide == CombatantSide.Player
+                        ? CoreLoopState.PlayerResolvingCardEffect
+                        : CoreLoopState.EnemyTurn;
+                    CardEffectStep cardEffectStep =
+                        _cardEffectResolver.ResumeAfterAutomaticCard(
+                            _activeCardEffectContext,
+                            continuation.CardEffectContinuation,
+                            result);
+                    CardEffectApplicationResult applicationResult =
+                        ApplyCardEffectStep(cardEffectStep);
+                    if (applicationResult !=
+                        CardEffectApplicationResult.Completed)
+                    {
+                        return;
+                    }
+
+                    if (continuation.ActorSide == CombatantSide.Player)
+                    {
+                        CompletePlayerActionAndRunEnemyTurn();
+                    }
+                    else
+                    {
+                        CompleteEnemyAction();
+                    }
+
+                    return;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(continuation));
+            }
+        }
+
+        private int TakeNextAutomaticCardInteractionId()
+        {
+            int interactionId = _nextAutomaticCardInteractionId;
+            _nextAutomaticCardInteractionId = checked(
+                _nextAutomaticCardInteractionId + 1);
+            return interactionId;
+        }
+
         private bool TryBeginCardUse(CombatantSide actorSide, int cardId)
         {
             if (!EvaluateCardUse(actorSide, cardId).CanUse)
@@ -1388,6 +1697,30 @@ namespace DiaBlackJack.CoreLoop
                 State = _activeCardEffectActorSide == CombatantSide.Player
                     ? CoreLoopState.PlayerResolvingCardEffect
                     : CoreLoopState.EnemyTurn;
+                return CardEffectApplicationResult.Pending;
+            }
+
+            if (step.Continuation != null)
+            {
+                AutomaticCardContinuation automaticContinuation =
+                    _automaticCardContinuation;
+                if (State != CoreLoopState.ResolvingAutomaticCardEffect ||
+                    _activeAutomaticCardEffectContext == null ||
+                    automaticContinuation == null ||
+                    automaticContinuation.Kind !=
+                        AutomaticCardContinuationKind.CardEffect ||
+                    automaticContinuation.ActorSide !=
+                        _activeCardEffectActorSide ||
+                    automaticContinuation.CardEffectContinuation.Kind !=
+                        step.Continuation.Kind ||
+                    automaticContinuation.CardEffectContinuation.EnteredCardId !=
+                        step.Continuation.EnteredCardId)
+                {
+                    throw new InvalidOperationException(
+                        "Card effect suspension does not match the pending automatic card.");
+                }
+
+                _pendingCardEffect = null;
                 return CardEffectApplicationResult.Pending;
             }
 
@@ -1501,6 +1834,9 @@ namespace DiaBlackJack.CoreLoop
             _activeCardEffectContext = null;
             _activeCardEffectActorSide = null;
             _pendingCardEffect = null;
+            _activeAutomaticCardEffectContext = null;
+            _automaticCardContinuation = null;
+            _pendingAutomaticCardInteraction = null;
             ClearPlayerDemonContractInteraction();
             ClearEnemyDemonContractInteraction();
             _playerFinalBonusForEnemyChoice = 0;
@@ -1719,17 +2055,14 @@ namespace DiaBlackJack.CoreLoop
                     }
 
                     RecordPublicAction(CombatantSide.Enemy, PublicCombatActionType.Hit);
-                    Enemy.Draw(faceUp: true);
+                    BlackjackCard drawnCard = Enemy.Draw(faceUp: true);
                     RaiseStepped();
-                    if (Enemy.VisibleHandValue.IsBust && !PreventsEnemyBust())
+                    if (!TryBeginAutomaticCardEffect(
+                        CombatantSide.Enemy,
+                        drawnCard,
+                        AutomaticCardContinuation.ForEnemyHit()))
                     {
-                        CompleteRound(RoundResolver.ResolveNumericBust(
-                            RoundNumber,
-                            playerIsTarget: false));
-                    }
-                    else
-                    {
-                        CompleteEnemyAction();
+                        CompleteEnemyHitAfterAutomaticCard();
                     }
 
                     executed = true;
@@ -1791,6 +2124,19 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return executed;
+        }
+
+        private void CompleteEnemyHitAfterAutomaticCard()
+        {
+            if (Enemy.VisibleHandValue.IsBust && !PreventsEnemyBust())
+            {
+                CompleteRound(RoundResolver.ResolveNumericBust(
+                    RoundNumber,
+                    playerIsTarget: false));
+                return;
+            }
+
+            CompleteEnemyAction();
         }
 
         private void CompleteEnemyAction()

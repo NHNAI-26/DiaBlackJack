@@ -17,6 +17,14 @@ namespace DiaBlackJack.CoreLoop
             CardEffectChoiceOption selectedOption);
     }
 
+    internal interface ICardEffectContinuationHandler
+    {
+        CardEffectStep ResumeAfterAutomaticCard(
+            CardEffectContext context,
+            CardEffectContinuation continuation,
+            AutomaticCardResult automaticCardResult);
+    }
+
     internal sealed class CardEffectContext
     {
         private readonly CoreLoopBattle _battle;
@@ -107,9 +115,17 @@ namespace DiaBlackJack.CoreLoop
             Actor.Deck.ReturnToTop(cardsInNextDrawOrder);
         }
 
-        public void AddActorCardFaceUp(BlackjackCard card)
+        public bool AddActorCardFaceUp(
+            BlackjackCard card,
+            CardEffectContinuation continuation)
         {
             Actor.AddFaceUpCard(card);
+            return _battle.TryBeginAutomaticCardEffect(
+                ActorSide,
+                card,
+                AutomaticCardContinuation.ForCardEffect(
+                    ActorSide,
+                    continuation));
         }
 
         public bool TryDiscardActorCard(int cardId)
@@ -136,9 +152,26 @@ namespace DiaBlackJack.CoreLoop
                 out replacementCard);
         }
 
-        public BlackjackCard ForceOpponentDrawFaceUp()
+        public BlackjackCard ForceOpponentDrawFaceUp(
+            CardEffectContinuationKind continuationKind,
+            out bool isWaitingForAutomaticChoice,
+            out AutomaticCardResult? immediateAutomaticResult)
         {
-            return Opponent.Draw(faceUp: true);
+            BlackjackCard drawnCard = Opponent.Draw(faceUp: true);
+            var continuation = new CardEffectContinuation(
+                continuationKind,
+                drawnCard.Id);
+            isWaitingForAutomaticChoice =
+                _battle.TryBeginAutomaticCardEffect(
+                    ActorSide == CombatantSide.Player
+                        ? CombatantSide.Enemy
+                        : CombatantSide.Player,
+                    drawnCard,
+                    AutomaticCardContinuation.ForCardEffect(
+                        ActorSide,
+                        continuation),
+                    out immediateAutomaticResult);
+            return drawnCard;
         }
 
         public RoundResolution CreateOpponentCardEffectBustResolution()
@@ -187,11 +220,13 @@ namespace DiaBlackJack.CoreLoop
         private CardEffectStep(
             PendingCardEffect pendingEffect,
             CardEffectResult? result,
-            RoundResolution? roundResolution)
+            RoundResolution? roundResolution,
+            CardEffectContinuation continuation)
         {
             PendingEffect = pendingEffect;
             Result = result;
             RoundResolution = roundResolution;
+            Continuation = continuation;
         }
 
         public PendingCardEffect PendingEffect { get; }
@@ -200,12 +235,15 @@ namespace DiaBlackJack.CoreLoop
 
         public RoundResolution? RoundResolution { get; }
 
+        public CardEffectContinuation Continuation { get; }
+
         public static CardEffectStep AwaitChoice(PendingCardEffect pendingEffect)
         {
             return new CardEffectStep(
                 pendingEffect ?? throw new ArgumentNullException(nameof(pendingEffect)),
                 result: null,
-                roundResolution: null);
+                roundResolution: null,
+                continuation: null);
         }
 
         public static CardEffectStep Complete(
@@ -222,7 +260,19 @@ namespace DiaBlackJack.CoreLoop
             return new CardEffectStep(
                 pendingEffect: null,
                 result,
-                roundResolution);
+                roundResolution,
+                continuation: null);
+        }
+
+        public static CardEffectStep Suspend(
+            CardEffectContinuation continuation)
+        {
+            return new CardEffectStep(
+                pendingEffect: null,
+                result: null,
+                roundResolution: null,
+                continuation: continuation ?? throw new ArgumentNullException(
+                    nameof(continuation)));
         }
     }
 
@@ -313,6 +363,35 @@ namespace DiaBlackJack.CoreLoop
                 context,
                 pendingEffect,
                 selectedOption);
+        }
+
+        public CardEffectStep ResumeAfterAutomaticCard(
+            CardEffectContext context,
+            CardEffectContinuation continuation,
+            AutomaticCardResult automaticCardResult)
+        {
+            if (context == null)
+            {
+                throw new ArgumentNullException(nameof(context));
+            }
+
+            if (continuation == null)
+            {
+                throw new ArgumentNullException(nameof(continuation));
+            }
+
+            ICardEffectHandler handler =
+                GetHandler(context.SourceCard.Definition.Effect);
+            if (!(handler is ICardEffectContinuationHandler continuationHandler))
+            {
+                throw new InvalidOperationException(
+                    $"Card effect handler for {handler.EffectKind} cannot resume after an automatic card.");
+            }
+
+            return continuationHandler.ResumeAfterAutomaticCard(
+                context,
+                continuation,
+                automaticCardResult);
         }
 
         private ICardEffectHandler GetHandler(CardEffectKind effectKind)

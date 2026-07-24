@@ -163,7 +163,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void EP03_U03_UnimplementedContractAndLieDetectorRemainAbsent()
+        public void EP03_U03_UnimplementedProfileContentRemainsAbsent()
         {
             EnemyCombatProfile cultist = EnemyCombatProfileCatalog.Default.GetByKey(
                 EnemyCombatProfileCatalog.CultistKey);
@@ -178,8 +178,12 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.False);
             Assert.That(
                 CardDefinitionCatalog.All.Any(definition =>
-                    definition.Key.Contains("contract") || definition.Key.Contains("lie")),
+                    definition.Key.Contains("contract")),
                 Is.False);
+            Assert.That(
+                CardDefinitionCatalog.All.Any(definition =>
+                    definition.Key == CardDefinitionCatalog.LieDetectorKey),
+                Is.True);
         }
 
         [Test]

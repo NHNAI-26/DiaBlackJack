@@ -7,6 +7,11 @@ namespace DiaBlackJack.CoreLoop
         ThreatHammer,
         AutoPistol,
         MilitaryKnife,
-        SatanPower
+        SatanPower,
+        Poison,
+        ResurrectionHerb,
+        LieDetector,
+        Flamethrower,
+        PocketWatch
     }
 }

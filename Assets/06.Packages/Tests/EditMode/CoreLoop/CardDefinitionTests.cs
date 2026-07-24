@@ -31,7 +31,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(definition.Activation, Is.EqualTo(expectedActivation));
             Assert.That(definition.Effect, Is.EqualTo(expectedEffect));
             Assert.That(CardDefinitionCatalog.GetByKey(expectedKey), Is.SameAs(definition));
-            Assert.That(CardDefinitionCatalog.All.Count, Is.EqualTo(12));
+            Assert.That(CardDefinitionCatalog.All.Count, Is.EqualTo(17));
         }
 
         [Test]

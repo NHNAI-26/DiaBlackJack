@@ -8,6 +8,11 @@ namespace DiaBlackJack.CoreLoop
     {
         public const string SatanPowerMightKey = "satan-power-might-8";
         public const string SatanPowerFlameKey = "satan-power-flame-10";
+        public const string PoisonKey = "poison-2";
+        public const string ResurrectionHerbKey = "resurrection-herb-2";
+        public const string LieDetectorKey = "lie-detector-3";
+        public const string FlamethrowerKey = "flamethrower-9";
+        public const string PocketWatchKey = "pocket-watch-9";
 
         private static readonly ReadOnlyCollection<CardDefinition> Definitions;
         private static readonly Dictionary<string, CardDefinition> DefinitionsByKey;
@@ -88,7 +93,37 @@ namespace DiaBlackJack.CoreLoop
                     "사탄의 권능: 화염",
                     10,
                     CardActivationKind.Manual,
-                    CardEffectKind.SatanPower)
+                    CardEffectKind.SatanPower),
+                new CardDefinition(
+                    PoisonKey,
+                    "독극물",
+                    2,
+                    CardActivationKind.Automatic,
+                    CardEffectKind.Poison),
+                new CardDefinition(
+                    ResurrectionHerbKey,
+                    "부활초",
+                    2,
+                    CardActivationKind.Automatic,
+                    CardEffectKind.ResurrectionHerb),
+                new CardDefinition(
+                    LieDetectorKey,
+                    "거짓말 탐지기",
+                    3,
+                    CardActivationKind.Automatic,
+                    CardEffectKind.LieDetector),
+                new CardDefinition(
+                    FlamethrowerKey,
+                    "화염 방사기",
+                    9,
+                    CardActivationKind.Automatic,
+                    CardEffectKind.Flamethrower),
+                new CardDefinition(
+                    PocketWatchKey,
+                    "회중시계",
+                    9,
+                    CardActivationKind.Automatic,
+                    CardEffectKind.PocketWatch)
             };
 
             Definitions = Array.AsReadOnly(definitions);

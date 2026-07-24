@@ -3,7 +3,9 @@ using System.Collections.Generic;
 
 namespace DiaBlackJack.CoreLoop
 {
-    internal sealed class SatanPowerEffectHandler : ICardEffectHandler
+    internal sealed class SatanPowerEffectHandler :
+        ICardEffectHandler,
+        ICardEffectContinuationHandler
     {
         private static readonly IReadOnlyList<CardEffectChoiceOption> NumberOptions =
             CreateNumberOptions(excludedNumber: null);
@@ -103,11 +105,57 @@ namespace DiaBlackJack.CoreLoop
                 : CardEffectStep.Complete(result);
         }
 
+        public CardEffectStep ResumeAfterAutomaticCard(
+            CardEffectContext context,
+            CardEffectContinuation continuation,
+            AutomaticCardResult automaticCardResult)
+        {
+            if (continuation.Kind !=
+                    CardEffectContinuationKind.SatanFlameAfterOpponentDraw ||
+                continuation.EnteredCardId !=
+                    automaticCardResult.SourceCardId)
+            {
+                throw new InvalidOperationException(
+                    "Satan flame received an invalid automatic card continuation.");
+            }
+
+            return CompleteFlameAfterForcedDraw(
+                context,
+                continuation.EnteredCardId,
+                automaticCardResult.SourceDisposition);
+        }
+
         private static CardEffectStep ResolveFlame(CardEffectContext context)
         {
-            BlackjackCard drawnCard = context.ForceOpponentDrawFaceUp();
+            BlackjackCard drawnCard = context.ForceOpponentDrawFaceUp(
+                CardEffectContinuationKind.SatanFlameAfterOpponentDraw,
+                out bool isWaitingForAutomaticChoice,
+                out AutomaticCardResult? immediateAutomaticResult);
+            var continuation = new CardEffectContinuation(
+                CardEffectContinuationKind.SatanFlameAfterOpponentDraw,
+                drawnCard.Id);
+            if (isWaitingForAutomaticChoice)
+            {
+                return CardEffectStep.Suspend(continuation);
+            }
+
+            return CompleteFlameAfterForcedDraw(
+                context,
+                drawnCard.Id,
+                immediateAutomaticResult?.SourceDisposition ??
+                    AutomaticCardSourceDisposition.RetainFaceUp);
+        }
+
+        private static CardEffectStep CompleteFlameAfterForcedDraw(
+            CardEffectContext context,
+            int drawnCardId,
+            AutomaticCardSourceDisposition sourceDisposition)
+        {
             bool busted = context.OpponentVisibleHandValue.IsBust;
-            if (!busted && !context.TryDiscardOpponentCard(drawnCard.Id))
+            if (!busted &&
+                sourceDisposition ==
+                    AutomaticCardSourceDisposition.RetainFaceUp &&
+                !context.TryDiscardOpponentCard(drawnCardId))
             {
                 throw new InvalidOperationException(
                     "Satan flame could not discard the safe forced draw.");

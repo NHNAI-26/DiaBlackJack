@@ -3,7 +3,9 @@ using System.Collections.Generic;
 
 namespace DiaBlackJack.CoreLoop
 {
-    internal sealed class CrystalOrbEffectHandler : ICardEffectHandler
+    internal sealed class CrystalOrbEffectHandler :
+        ICardEffectHandler,
+        ICardEffectContinuationHandler
     {
         private const int TakeNoneOptionId = 0;
 
@@ -64,9 +66,38 @@ namespace DiaBlackJack.CoreLoop
             context.ReturnActorCardsToTop(returningCards);
             if (selectedCard != null)
             {
-                context.AddActorCardFaceUp(selectedCard);
+                var continuation = new CardEffectContinuation(
+                    CardEffectContinuationKind.CrystalOrbAfterActorCardAdded,
+                    selectedCard.Id);
+                if (context.AddActorCardFaceUp(selectedCard, continuation))
+                {
+                    return CardEffectStep.Suspend(continuation);
+                }
             }
 
+            return CompleteAfterSelectedCard(context);
+        }
+
+        public CardEffectStep ResumeAfterAutomaticCard(
+            CardEffectContext context,
+            CardEffectContinuation continuation,
+            AutomaticCardResult automaticCardResult)
+        {
+            if (continuation.Kind !=
+                    CardEffectContinuationKind.CrystalOrbAfterActorCardAdded ||
+                continuation.EnteredCardId !=
+                    automaticCardResult.SourceCardId)
+            {
+                throw new InvalidOperationException(
+                    "Crystal orb received an invalid automatic card continuation.");
+            }
+
+            return CompleteAfterSelectedCard(context);
+        }
+
+        private CardEffectStep CompleteAfterSelectedCard(
+            CardEffectContext context)
+        {
             bool endedRound = context.ActorVisibleHandValue.IsBust;
             var result = new CardEffectResult(
                 context.SourceCard.Id,
