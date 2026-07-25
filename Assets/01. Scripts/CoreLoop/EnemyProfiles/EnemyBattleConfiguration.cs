@@ -71,9 +71,15 @@ namespace DiaBlackJack.CoreLoop
         public BlackjackDeck CreateEnemyDeck()
         {
             var cards = new List<BlackjackCard>(EnemyDeckDefinitions.Count);
+            int[] rankOccurrences = new int[11];
             for (int i = 0; i < EnemyDeckDefinitions.Count; i++)
             {
-                cards.Add(new BlackjackCard(i, EnemyDeckDefinitions[i]));
+                CardDefinition definition = EnemyDeckDefinitions[i];
+                CardSuit suit = rankOccurrences[definition.Rank] % 2 == 0
+                    ? CardSuit.Spade
+                    : CardSuit.Clover;
+                rankOccurrences[definition.Rank]++;
+                cards.Add(new BlackjackCard(i, definition, suit: suit));
             }
 
             return new BlackjackDeck(cards, EnemyDeckSeed);

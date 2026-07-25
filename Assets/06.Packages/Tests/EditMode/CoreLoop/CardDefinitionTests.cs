@@ -42,8 +42,52 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(card.Id, Is.EqualTo(17));
             Assert.That(card.Rank, Is.EqualTo(7));
             Assert.That(card.DefinitionKey, Is.EqualTo("auto-pistol-7"));
+            Assert.That(card.Suit, Is.EqualTo(CardSuit.Spade));
             Assert.That(card.IsFaceUp, Is.True);
             Assert.That(card.UseState, Is.EqualTo(CardUseState.Unavailable));
+        }
+
+        [Test]
+        public void CU_U11_CardConstructorAcceptsExplicitSuit()
+        {
+            var card = new BlackjackCard(18, 7, suit: CardSuit.Clover);
+
+            Assert.That(card.Id, Is.EqualTo(18));
+            Assert.That(card.Rank, Is.EqualTo(7));
+            Assert.That(card.Suit, Is.EqualTo(CardSuit.Clover));
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                new BlackjackCard(19, 7, suit: (CardSuit)99));
+        }
+
+        [Test]
+        public void CU_U12_StandardDeckPairsEachRankWithSpadeAndClover()
+        {
+            BlackjackDeck deck = BlackjackDeck.CreateStandard(seed: 20260726);
+            int[] spadeCounts = new int[11];
+            int[] cloverCounts = new int[11];
+
+            while (deck.CanDraw(1))
+            {
+                BlackjackCard card = deck.Draw();
+                if (card.Suit == CardSuit.Spade)
+                {
+                    spadeCounts[card.Rank]++;
+                }
+                else if (card.Suit == CardSuit.Clover)
+                {
+                    cloverCounts[card.Rank]++;
+                }
+                else
+                {
+                    Assert.Fail("Unsupported card suit.");
+                }
+            }
+
+            for (int rank = 1; rank <= 10; rank++)
+            {
+                Assert.That(spadeCounts[rank], Is.EqualTo(1));
+                Assert.That(cloverCounts[rank], Is.EqualTo(1));
+            }
         }
 
         [Test]

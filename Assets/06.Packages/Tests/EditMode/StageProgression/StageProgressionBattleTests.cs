@@ -355,6 +355,34 @@ namespace DiaBlackJack.StageProgression.Tests
                 Is.EquivalentTo(new[] { "auto-pistol-7", "military-knife-10" }));
         }
 
+        [Test]
+        public void CU_U14_BattleFactoryPreservesRunCardSuits()
+        {
+            var player = new PlayerRunState(
+                12,
+                12,
+                new[]
+                {
+                    new RunCardDefinition(7, "auto-pistol-7", CardSuit.Spade),
+                    new RunCardDefinition(9, "military-knife-10", CardSuit.Clover)
+                });
+            var stage = new StageDefinition(
+                "normal",
+                "Normal",
+                StageKind.NormalCombat,
+                4,
+                10,
+                11);
+
+            CoreLoopBattle battle = StageBattleFactory.Create(stage, player);
+            Assert.That(battle.Start(), Is.True);
+
+            Dictionary<int, CardSuit> suitsByCardId =
+                battle.Player.Hand.Cards.ToDictionary(card => card.Id, card => card.Suit);
+            Assert.That(suitsByCardId[7], Is.EqualTo(CardSuit.Spade));
+            Assert.That(suitsByCardId[9], Is.EqualTo(CardSuit.Clover));
+        }
+
         private static RunProgress CreateProgress(int playerMaximumSoul = 12)
         {
             return new RunProgress(

@@ -734,6 +734,18 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 9c8a0b6d3f7eb7946a06de67e1113a2f, type: 3}
   - {fileID: 21300000, guid: 697006daaa012bd41836b166d8e18a80, type: 3}
   - {fileID: 21300000, guid: a32e5192ab62d6f4eaee59c3bd9c80f7, type: 3}
+  cloverFaceSpritesByRank:
+  - {fileID: 0}
+  - {fileID: 21300000, guid: 65c1c7c53bda10945ac9066cc760c984, type: 3}
+  - {fileID: 21300000, guid: 4e92f7194900be448b278cadae96bc85, type: 3}
+  - {fileID: 21300000, guid: 1aec05e1749d5cb4d933daaf9f15bddd, type: 3}
+  - {fileID: 21300000, guid: ec927da624fcef5438b5f03d0f905aed, type: 3}
+  - {fileID: 21300000, guid: e3f4db53c178f8d43947290c9bbed5b1, type: 3}
+  - {fileID: 21300000, guid: f366e547bf6cc954587172d9d67bd9d4, type: 3}
+  - {fileID: 21300000, guid: 16ab928279d96e2439a4e09b672c516f, type: 3}
+  - {fileID: 21300000, guid: 202ce314675335545b52176e297611ad, type: 3}
+  - {fileID: 21300000, guid: a5bc2529e825df1439fa28a1822f42fe, type: 3}
+  - {fileID: 21300000, guid: eb5492938a7548148a836fe572a49a76, type: 3}
   badge: {fileID: 4093518818443752464}
   badgeText: {fileID: 8697774617235843118}
   hoverScale: 1.15

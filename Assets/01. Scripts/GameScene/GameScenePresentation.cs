@@ -37,10 +37,12 @@ namespace DiaBlackJack.GameScene
             bool revealRank,
             bool canUse,
             string displayName,
-            string abilityDescription = "")
+            string abilityDescription = "",
+            CardSuit suit = CardSuit.Spade)
         {
             CardId = cardId;
             Rank = rank;
+            Suit = suit;
             IsFaceUp = isFaceUp;
             RevealRank = revealRank;
             CanUse = canUse;
@@ -51,6 +53,8 @@ namespace DiaBlackJack.GameScene
         public int CardId { get; }
 
         public int Rank { get; }
+
+        public CardSuit Suit { get; }
 
         public bool IsFaceUp { get; }
 
@@ -346,6 +350,8 @@ namespace DiaBlackJack.GameScene
             int hiddenCardCount = 0;
             foreach (PlayerCardViewModel card in core.PlayerCardActions)
             {
+                BlackjackCard sourceCard = FindCardById(battle.Player.Hand.Cards, card.CardId);
+
                 // The player sees every one of their own cards, including the face-down one.
                 var projectedCard = new GameSceneCardViewModel(
                     card.CardId,
@@ -354,7 +360,8 @@ namespace DiaBlackJack.GameScene
                     revealRank: true,
                     canUse: card.CanUse,
                     card.DisplayName,
-                    abilityDescription: ResolveAbilityDescription(battle, card.CardId));
+                    abilityDescription: ResolveAbilityDescription(battle, card.CardId),
+                    suit: sourceCard == null ? CardSuit.Spade : sourceCard.Suit);
 
                 // PlayerHand renders index 0 at the player's screen-left edge. Keep hidden cards
                 // first in the projection while preserving the original hand order within each group.
@@ -384,6 +391,19 @@ namespace DiaBlackJack.GameScene
             }
 
             return string.Empty;
+        }
+
+        private static BlackjackCard FindCardById(IReadOnlyList<BlackjackCard> cards, int cardId)
+        {
+            foreach (BlackjackCard card in cards)
+            {
+                if (card.Id == cardId)
+                {
+                    return card;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -466,7 +486,8 @@ namespace DiaBlackJack.GameScene
                     faceUp,
                     revealRank: faceUp,
                     canUse: false,
-                    faceUp ? card.Definition.DisplayName : string.Empty);
+                    faceUp ? card.Definition.DisplayName : string.Empty,
+                    suit: card.Suit);
 
                 // Both sides' hidden cards sit on the screen LEFT (each player's own right, mirrored
                 // across the table). The camera mirrors local X, so screen-left = highest index →

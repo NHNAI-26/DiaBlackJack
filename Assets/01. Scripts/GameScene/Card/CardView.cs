@@ -1,4 +1,5 @@
 using TMPro;
+using DiaBlackJack.CoreLoop;
 using UnityEngine;
 
 namespace DiaBlackJack.GameScene
@@ -19,6 +20,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameObject back;
         [SerializeField] private TMP_Text rankText;
         [SerializeField] private Sprite[] faceSpritesByRank = new Sprite[11];
+        [SerializeField] private Sprite[] cloverFaceSpritesByRank = new Sprite[11];
 
         [Header("Usable badge (hover)")]
         [SerializeField] private GameObject badge;
@@ -90,7 +92,7 @@ namespace DiaBlackJack.GameScene
 
             if (_showingFrontFace)
             {
-                ApplyFaceSprite(card.Rank);
+                ApplyFaceSprite(card.Rank, card.Suit);
             }
 
             if (back != null)
@@ -147,24 +149,27 @@ namespace DiaBlackJack.GameScene
             ApplyTint(BackRenderer(), lit && !_showingFrontFace ? glowColor : backTint);
         }
 
-        private void ApplyFaceSprite(int rank)
+        private void ApplyFaceSprite(int rank, CardSuit suit)
         {
             SpriteRenderer renderer = FrontSpriteRenderer();
-            Sprite sprite = SpriteForRank(rank);
+            Sprite sprite = SpriteForCard(rank, suit);
             if (renderer != null && sprite != null)
             {
                 renderer.sprite = sprite;
             }
         }
 
-        private Sprite SpriteForRank(int rank)
+        private Sprite SpriteForCard(int rank, CardSuit suit)
         {
-            if (rank < 1 || faceSpritesByRank == null || rank >= faceSpritesByRank.Length)
+            Sprite[] sprites = suit == CardSuit.Clover
+                ? cloverFaceSpritesByRank
+                : faceSpritesByRank;
+            if (rank < 1 || sprites == null || rank >= sprites.Length)
             {
                 return null;
             }
 
-            return faceSpritesByRank[rank];
+            return sprites[rank];
         }
 
         private void HideRankText()

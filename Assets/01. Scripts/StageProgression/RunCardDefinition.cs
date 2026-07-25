@@ -5,22 +5,32 @@ namespace DiaBlackJack.StageProgression
 {
     public sealed class RunCardDefinition
     {
-        public RunCardDefinition(int id, int rank)
+        public RunCardDefinition(
+            int id,
+            int rank,
+            CardSuit suit = CardSuit.Spade)
         {
             ValidateId(id);
+            CardSuitUtility.Validate(suit, nameof(suit));
             CardDefinition definition = CardDefinitionCatalog.GetDefaultForRank(rank);
             Id = id;
             DefinitionKey = definition.Key;
             Rank = definition.Rank;
+            Suit = suit;
         }
 
-        public RunCardDefinition(int id, string definitionKey)
+        public RunCardDefinition(
+            int id,
+            string definitionKey,
+            CardSuit suit = CardSuit.Spade)
         {
             ValidateId(id);
+            CardSuitUtility.Validate(suit, nameof(suit));
             CardDefinition definition = CardDefinitionCatalog.GetByKey(definitionKey);
             Id = id;
             DefinitionKey = definition.Key;
             Rank = definition.Rank;
+            Suit = suit;
         }
 
         public string DefinitionKey { get; }
@@ -28,6 +38,8 @@ namespace DiaBlackJack.StageProgression
         public int Id { get; }
 
         public int Rank { get; }
+
+        public CardSuit Suit { get; }
 
         private static void ValidateId(int id)
         {

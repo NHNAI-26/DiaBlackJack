@@ -58,8 +58,8 @@ namespace DiaBlackJack.StageProgression.UI
             int cardId = 0;
             for (int rank = 1; rank <= 10; rank++)
             {
-                cards.Add(new RunCardDefinition(cardId++, rank));
-                cards.Add(new RunCardDefinition(cardId++, rank));
+                cards.Add(new RunCardDefinition(cardId++, rank, CardSuit.Spade));
+                cards.Add(new RunCardDefinition(cardId++, rank, CardSuit.Clover));
             }
 
             var player = new PlayerRunState(12, 12, cards);

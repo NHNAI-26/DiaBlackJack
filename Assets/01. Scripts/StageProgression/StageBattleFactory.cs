@@ -22,7 +22,7 @@ namespace DiaBlackJack.StageProgression
             foreach (RunCardDefinition card in player.Deck)
             {
                 CardDefinition definition = CardDefinitionCatalog.GetByKey(card.DefinitionKey);
-                playerCards.Add(new BlackjackCard(card.Id, definition));
+                playerCards.Add(new BlackjackCard(card.Id, definition, suit: card.Suit));
             }
 
             var playerDeck = new BlackjackDeck(playerCards, stage.PlayerDeckSeed);

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DiaBlackJack.CoreLoop;
 using NUnit.Framework;
 
 namespace DiaBlackJack.StageProgression.Tests
@@ -185,8 +186,24 @@ namespace DiaBlackJack.StageProgression.Tests
 
             Assert.That(legacyCard.DefinitionKey, Is.EqualTo("crystal-orb-5"));
             Assert.That(legacyCard.Rank, Is.EqualTo(5));
+            Assert.That(legacyCard.Suit, Is.EqualTo(CardSuit.Spade));
             Assert.That(keyedCard.DefinitionKey, Is.EqualTo("auto-pistol-8"));
             Assert.That(keyedCard.Rank, Is.EqualTo(8));
+            Assert.That(keyedCard.Suit, Is.EqualTo(CardSuit.Spade));
+        }
+
+        [Test]
+        public void CU_U13_RunCardDefinitionPreservesExplicitSuit()
+        {
+            var rankedCard = new RunCardDefinition(5, 5, CardSuit.Clover);
+            var keyedCard = new RunCardDefinition(6, "auto-pistol-8", CardSuit.Clover);
+
+            Assert.That(rankedCard.DefinitionKey, Is.EqualTo("crystal-orb-5"));
+            Assert.That(rankedCard.Suit, Is.EqualTo(CardSuit.Clover));
+            Assert.That(keyedCard.DefinitionKey, Is.EqualTo("auto-pistol-8"));
+            Assert.That(keyedCard.Suit, Is.EqualTo(CardSuit.Clover));
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                new RunCardDefinition(7, 5, (CardSuit)99));
         }
 
         [Test]

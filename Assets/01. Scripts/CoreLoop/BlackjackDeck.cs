@@ -242,8 +242,8 @@ namespace DiaBlackJack.CoreLoop
             int id = 0;
             for (int rank = 1; rank <= 10; rank++)
             {
-                cards.Add(new BlackjackCard(id++, rank));
-                cards.Add(new BlackjackCard(id++, rank));
+                cards.Add(new BlackjackCard(id++, rank, suit: CardSuit.Spade));
+                cards.Add(new BlackjackCard(id++, rank, suit: CardSuit.Clover));
             }
 
             return new BlackjackDeck(cards, seed);

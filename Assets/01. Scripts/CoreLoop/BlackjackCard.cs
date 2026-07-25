@@ -4,19 +4,31 @@ namespace DiaBlackJack.CoreLoop
 {
     public sealed class BlackjackCard
     {
-        public BlackjackCard(int id, int rank, bool isFaceUp = false)
+        public BlackjackCard(
+            int id,
+            int rank,
+            bool isFaceUp = false,
+            CardSuit suit = CardSuit.Spade)
         {
             ValidateId(id);
+            CardSuitUtility.Validate(suit, nameof(suit));
             Id = id;
             Definition = CardDefinitionCatalog.GetDefaultForRank(rank);
+            Suit = suit;
             IsFaceUp = isFaceUp;
         }
 
-        public BlackjackCard(int id, CardDefinition definition, bool isFaceUp = false)
+        public BlackjackCard(
+            int id,
+            CardDefinition definition,
+            bool isFaceUp = false,
+            CardSuit suit = CardSuit.Spade)
         {
             ValidateId(id);
+            CardSuitUtility.Validate(suit, nameof(suit));
             Id = id;
             Definition = definition ?? throw new ArgumentNullException(nameof(definition));
+            Suit = suit;
             IsFaceUp = isFaceUp;
         }
 
@@ -29,6 +41,8 @@ namespace DiaBlackJack.CoreLoop
         public int Id { get; }
 
         public int Rank => Definition.Rank;
+
+        public CardSuit Suit { get; }
 
         public CardUseState UseState { get; private set; }
 
