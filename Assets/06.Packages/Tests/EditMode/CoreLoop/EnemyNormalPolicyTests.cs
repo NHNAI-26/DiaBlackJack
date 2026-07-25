@@ -163,7 +163,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void EP03_U03_UnimplementedProfileContentRemainsAbsent()
+        public void AC06_U01_TricksterOwnsOneLieDetectorWithoutContracts()
         {
             EnemyCombatProfile cultist = EnemyCombatProfileCatalog.Default.GetByKey(
                 EnemyCombatProfileCatalog.CultistKey);
@@ -174,8 +174,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 cultist.DeckDefinitionKeys.Any(key => key.Contains("contract")),
                 Is.False);
             Assert.That(
-                trickster.DeckDefinitionKeys.Any(key => key.Contains("lie")),
-                Is.False);
+                trickster.DeckDefinitionKeys.Count(key =>
+                    key == CardDefinitionCatalog.LieDetectorKey),
+                Is.EqualTo(1));
             Assert.That(
                 CardDefinitionCatalog.All.Any(definition =>
                     definition.Key.Contains("contract")),

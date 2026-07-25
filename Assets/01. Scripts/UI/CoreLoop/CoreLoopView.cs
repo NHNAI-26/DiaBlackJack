@@ -28,6 +28,8 @@ namespace DiaBlackJack.CoreLoop.UI
 
         public event Action<int> CardEffectChoiceRequested;
 
+        public event Action<int, int> AutomaticCardChoiceRequested;
+
         public event Action DemonContractBeginRequested;
 
         public event Action<int, int> DemonContractChoiceRequested;
@@ -95,6 +97,7 @@ namespace DiaBlackJack.CoreLoop.UI
             GUILayout.Label(GetBattleMessage(_model), _resultStyle);
             GUILayout.Label(_model.LastRound, _bodyStyle);
             GUILayout.Label(_model.LastCardEffect, _bodyStyle);
+            DrawAutomaticCardStatus();
             DrawDemonContractStatus();
             GUILayout.FlexibleSpace();
             DrawActions();
@@ -179,6 +182,12 @@ namespace DiaBlackJack.CoreLoop.UI
             if (_model.IsChoosingChangeCard)
             {
                 DrawChangeCandidates();
+                return;
+            }
+
+            if (_model.IsResolvingAutomaticCardEffect)
+            {
+                DrawAutomaticCardChoices();
                 return;
             }
 
@@ -323,6 +332,79 @@ namespace DiaBlackJack.CoreLoop.UI
                         GUILayout.Height(52f)))
                     {
                         CardEffectChoiceRequested?.Invoke(choice.OptionId);
+                    }
+                }
+
+                GUILayout.EndHorizontal();
+                GUILayout.Space(6f);
+            }
+
+            GUI.enabled = wasEnabled;
+        }
+
+        private void DrawAutomaticCardStatus()
+        {
+            AutomaticCardResultViewModel result =
+                _model.AutomaticCardResult;
+            if (result == null)
+            {
+                return;
+            }
+
+            GUILayout.BeginVertical(
+                GUI.skin.box,
+                GUILayout.ExpandWidth(true));
+            GUILayout.Label("AUTOMATIC CARD", _headingStyle);
+            GUILayout.Label(result.PublicSummary, _bodyStyle);
+            if (!string.IsNullOrEmpty(result.PrivateSummary))
+            {
+                GUILayout.Label(result.PrivateSummary, _warningStyle);
+            }
+
+            GUILayout.EndVertical();
+        }
+
+        private void DrawAutomaticCardChoices()
+        {
+            AutomaticCardInteractionViewModel interaction =
+                _model.AutomaticCardInteraction;
+            if (interaction == null)
+            {
+                GUILayout.Label(
+                    "ENEMY AUTOMATIC DECISION",
+                    _headingStyle);
+                return;
+            }
+
+            GUILayout.Label(
+                interaction.SourceDisplayName,
+                _headingStyle);
+            GUILayout.Label(interaction.Prompt, _headingStyle);
+            GUILayout.Space(8f);
+
+            const int choicesPerRow = 5;
+            bool wasEnabled = GUI.enabled;
+            GUI.enabled = !_inputLocked;
+            for (int rowStart = 0;
+                rowStart < interaction.Choices.Count;
+                rowStart += choicesPerRow)
+            {
+                GUILayout.BeginHorizontal();
+                int rowEnd = Mathf.Min(
+                    rowStart + choicesPerRow,
+                    interaction.Choices.Count);
+                for (int i = rowStart; i < rowEnd; i++)
+                {
+                    AutomaticCardChoiceViewModel choice =
+                        interaction.Choices[i];
+                    if (GUILayout.Button(
+                        choice.Label,
+                        _buttonStyle,
+                        GUILayout.Height(52f)))
+                    {
+                        AutomaticCardChoiceRequested?.Invoke(
+                            interaction.InteractionId,
+                            choice.OptionId);
                     }
                 }
 
@@ -506,6 +588,13 @@ namespace DiaBlackJack.CoreLoop.UI
                     if (model.IsResolvingCardEffect)
                     {
                         return "CHOOSE CARD EFFECT";
+                    }
+
+                    if (model.IsResolvingAutomaticCardEffect)
+                    {
+                        return model.AutomaticCardInteraction == null
+                            ? "ENEMY AUTOMATIC DECISION"
+                            : "CHOOSE AUTOMATIC CARD EFFECT";
                     }
 
                     return model.State == CoreLoopState.PlayerTurn

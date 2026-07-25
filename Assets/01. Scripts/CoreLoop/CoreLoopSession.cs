@@ -44,6 +44,15 @@ namespace DiaBlackJack.CoreLoop
             return Battle.TryResolvePlayerCardChoice(optionId);
         }
 
+        public bool TryResolvePlayerAutomaticCardChoice(
+            int interactionId,
+            int optionId)
+        {
+            return Battle.TryResolvePlayerAutomaticCardChoice(
+                interactionId,
+                optionId);
+        }
+
         public bool TryBeginPlayerDemonContract()
         {
             return Battle.TryBeginPlayerDemonContract();

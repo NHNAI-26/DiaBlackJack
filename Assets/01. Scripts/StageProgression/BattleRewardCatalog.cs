@@ -18,7 +18,12 @@ namespace DiaBlackJack.StageProgression
             "auto-pistol-7",
             "auto-pistol-8",
             "military-knife-9",
-            "military-knife-10"
+            "military-knife-10",
+            CardDefinitionCatalog.PoisonKey,
+            CardDefinitionCatalog.ResurrectionHerbKey,
+            CardDefinitionCatalog.LieDetectorKey,
+            CardDefinitionCatalog.FlamethrowerKey,
+            CardDefinitionCatalog.PocketWatchKey
         };
 
         private static readonly string[] DefaultHighGradeDefinitionKeys =

@@ -134,7 +134,7 @@ namespace DiaBlackJack.CoreLoop
                         "standard-ace-1", "standard-plain-2", "standard-plain-3",
                         "standard-plain-4", "crystal-orb-5", "crystal-orb-5",
                         "standard-ace-1", "standard-plain-2", "standard-plain-3",
-                        "standard-plain-4"
+                        CardDefinitionCatalog.LieDetectorKey
                     },
                     "직접 피해보다 덱과 정보 우위를 먼저 만든다.",
                     EnemyInformationMode.Standard),

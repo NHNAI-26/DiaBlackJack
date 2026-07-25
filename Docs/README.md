@@ -31,10 +31,10 @@
 | [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M03 검증 완료 v0.3 |
 | [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M03 작업 순서와 단계별 검증 게이트 | CU-M03 완료 v0.3 |
 | [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M03 완료 |
-| [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | AC-05 부활초 구현 완료 v0.1 |
-| [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | AC-05 구현 완료·다음 AC-06 v0.1 |
-| [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 구현 순서와 단계별 검증 게이트 | AC-05 완료 v0.1 |
-| [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | AC-05 완료·대상 11/11·전체 456/456 v0.1 |
+| [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | AC-06 통합 구현 완료 v0.1 |
+| [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | AC-06 코드 통합 완료·Editor 최종 재검증 대기 v0.1 |
+| [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 구현 순서와 단계별 검증 게이트 | AC-06 구현 완료 v0.1 |
+| [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | AC-06 대상 15/15·Unity 비의존 461/461 v0.1 |
 | [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속·우선 악마 4종과 광신도 선택 밸런스 | DC-08 완료 v1.0 |
 | [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | DC-08 검증 완료 v1.0 |
 | [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 구현 순서와 단계별 검증 게이트 | 전체 완료 v1.0 |
@@ -70,6 +70,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-25 | 이천서 | 자동 발동 카드 AC-06 세션·UI·공개 정보 기반 적 AI·일반 보상 5종·사기꾼 탐지기를 통합하고 대상 15/15·Unity 비의존 461/461·컴파일 성공을 확인, Unity Editor 전용 10건과 화면 검증은 후속으로 기록 |
 | 2026-07-25 | 이천서 | 자동 발동 카드 AC-05 부활초의 양측 영혼 2 이상 재시작, 승패 없는 전용 전이와 부모 효과 취소를 구현하고 대상 11/11·CoreLoop 327/327·전체 EditMode 456/456로 검증 |
 | 2026-07-25 | 이천서 | 자동 발동 카드 AC-04 화염 방사기 소유자→상대 순차 폐기와 회중시계 수동 카드 재활성화·원본 유지/폐기를 구현하고 대상 11/11·CoreLoop 316/316·전체 EditMode 445/445로 검증 |
 | 2026-07-25 | 이천서 | 자동 발동 카드 AC-03 거짓말 탐지기 선언·소유자 전용 비교·지식 폐기를 구현하고 대상 10/10·CoreLoop 305/305·전체 EditMode 434/434로 검증 |

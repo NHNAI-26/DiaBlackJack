@@ -123,6 +123,22 @@ namespace DiaBlackJack.StageProgression
             return true;
         }
 
+        public bool TryResolvePlayerAutomaticCardChoice(
+            int interactionId,
+            int optionId)
+        {
+            if (!CanForwardBattleAction() ||
+                !_battleSession.TryResolvePlayerAutomaticCardChoice(
+                    interactionId,
+                    optionId))
+            {
+                return false;
+            }
+
+            SynchronizeFinishedBattle();
+            return true;
+        }
+
         public bool TryBeginPlayerDemonContract()
         {
             if (!CanForwardBattleAction() ||

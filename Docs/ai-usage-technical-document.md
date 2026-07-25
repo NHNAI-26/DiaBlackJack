@@ -356,6 +356,21 @@ AC-02 범위만 구현한다. 독극물 소유자에게 실제 계약 제한을 
 정리해 기록한다.
 ```
 
+#### 자동 발동 카드 시스템 AC-06 통합 구현
+
+```text
+AC-06 범위만 복구·구현한다. 이미 완료한 자동 카드 5종의 규칙은 바꾸지 않고,
+독립·런 세션 입력, 공개/소유자 전용 표시, 기존 View·Controller·GameManager,
+공개 정보 전용 적 자동 선택 정책, 일반 보상 5종과 사기꾼 거짓말 탐지기를
+연결한다. 적 정책 관측에는 실제 플레이어 비공개 숫자를 넣지 말고 현재 유효
+옵션만 반환하게 하며, 잘못된 반환이나 예외는 안전한 유효 옵션으로 해결한다.
+GameScene.unity 씬 파일, HONG의 골드·상점·정식 런 순서, Shim0Hwan의 아트,
+시작 덱, 높은 등급 보상 풀, Packages와 외부 에셋은 변경하지 않는다. 대상 통합
+테스트, 반복 재시작, 다음 전투 보상 발동과 정보 은닉을 검증하고, Unity MCP나
+Editor 실행 환경이 막힌 검증은 통과로 과장하지 말고 실행 가능한 범위와 보류
+범위를 분리해 기록한다. 기획·구현·최종 승인 책임자는 이천서로 기록한다.
+```
+
 #### 전투 보상 시스템 RW-00 문서화
 
 ```text
@@ -709,6 +724,7 @@ AI 대화 원문을 그대로 싣지 말고 목적, 핵심 지시, 결과, 사�
 | 2026-07-25 | 이천서 | AC-02 독극물 계약 제한 선택·영혼 0 즉시 패배·물리 카드별 승리 회복과 양측 대칭 구현 | `PoisonEffectHandler.cs`, `AutomaticCardBattleState.cs`, 자동 Resolver·전투·영혼 변경, `PoisonAutomaticCardTests.cs`, 관련 문서 | AI 구조 대조·코드·테스트·별도 Unity Headless 검증·기록 보조, 대상 12/12·CoreLoop 295/295·전체 EditMode 424/424·컴파일 오류 0; 열린 Unity MCP ping 단절 때문에 저장 상태 보호용 임시 worktree 사용, UI·세션·보상·적 정책·씬·프리팹·Packages·외부 에셋 변경 없음, 이천서 최종 코드 승인 필요 |
 | 2026-07-25 | 이천서 | AC-03 거짓말 탐지기 선언·소유자 전용 비교 정보·적 관측·숨은 카드 교체 지식 폐기 구현 | `LieDetectorEffectHandler.cs`, `LieDetectorResult.cs`, 자동 상태·전투·적 관측, `LieDetectorAutomaticCardTests.cs`, 관련 문서 | AI 구조 대조·테스트 우선 구현·Unity MCP·기록 보조, 대상 10/10·CoreLoop 305/305·전체 EditMode 434/434·컴파일 오류 0; `GameScene`·UI·세션·보상·적 자동 정책·프리팹·Packages·외부 에셋 변경 없음, 이천서 최종 코드 승인 필요 |
 | 2026-07-25 | 이천서 | AC-04 화염 방사기 소유자→상대 순차 폐기와 회중시계 수동 카드 재활성화·원본 유지/폐기 구현 | `FlamethrowerEffectHandler.cs`, `PocketWatchEffectHandler.cs`, 자동 Resolver·카드 상태, `FlamethrowerAndPocketWatchTests.cs`, 관련 문서 | AI 구조 대조·테스트 우선 구현·Unity MCP·기록 보조, 대상 11/11·CoreLoop 316/316·전체 EditMode 445/445·컴파일 오류 0; `GameScene`·UI·세션·보상·적 자동 정책·프리팹·Packages·외부 에셋·오픈소스 변경 없음, 이천서 최종 코드 승인 필요 |
+| 2026-07-25 | 이천서 | AC-06 독립/런 자동 선택·안전 표시·공개 정보 적 정책·일반 보상 5종·사기꾼 탐지기 통합 | `AutomaticCardDecisionPolicy.cs`, CoreLoop·StageProgression 세션/표시, View·Controller·`GameManager.cs`, 보상·프로필, AC-06 통합 테스트와 관련 문서 | AI 구조 대조·코드·테스트·검증·기록 보조, 대상 15/15·Unity 비의존 461/461·Unity 런타임/CoreLoop 및 StageProgression 컴파일 성공; Unity MCP·Batchmode 라이선스 IPC 제약으로 Editor 전용 10건과 두 씬·두 해상도·Console은 후속 검증, `GameScene.unity`·Packages·외부 에셋·오픈소스 변경 없음, 이천서 최종 승인 필요 |
 
 AI는 코어 루프 1단계 규칙, 2단계 전투 흐름, 3단계 세션·표시 모델·최소 UI와 테스트 초안을 작성하고, 4단계에서 전체 회귀·실제 흐름 검증과 기록 정리를 보조했다. Unity MCP를 통해 스크립트 진단, Unity 컴파일, 씬 배치·검증, Game View 확인과 EditMode 테스트를 수행했으며 최종 실행에서도 전체 27개 테스트가 모두 통과했다. 최종 기획 적합성과 코드·화면 승인 책임은 이천서에게 있다.
 
@@ -929,6 +945,32 @@ Unity MCP에서 `DiaBlackJack@5635a4cdcfecc8dd`와 Unity 6000.3.10f1 준비 상�
 `GameScene`은 열린 상태만 확인했으며 씬·프리팹·Packages·외부
 코드·에셋·오픈소스는 변경하지 않았다. 규칙·구현·검증의 최종 책임자는 이천서이며
 AI는 구조 대조, 테스트 초안, 구현과 검증 보조로 기록한다.
+
+### 3.15 AC-06 세션·UI·보상·적 자동 선택 통합
+
+이천서는 자동 발동 카드 구현 계획의 마감 단계로 5종의 규칙을 실제 독립·런 전투
+입력, 표시, 일반 보상과 적 사용에 연결하도록 지시했다. 주요 제약은 실제 플레이어
+비공개 숫자를 적 정책이나 공용 ViewModel에 추가하지 않는 것, `GameScene.unity`를
+수정하지 않는 것, HONG의 정식 런·상점과 Shim0Hwan의 아트, 시작 덱·높은 등급
+보상 풀·Packages·외부 에셋을 보존하는 것이었다.
+
+AI는 자동 카드 선택 정책을 일반 적 행동 정책과 분리하고 공개 합·현재 영혼·유효
+옵션·공개 카드 서열과 합법적인 탐지기 비교 지식만 가진 관측을 작성했다. 정책이
+유효하지 않은 옵션을 반환하거나 예외가 발생해도 첫 유효 옵션으로 해결해 전투가
+멈추지 않게 했다. 세션은 기존 `CoreLoopBattle` 선택 API를 전달하고 Presenter는
+보류 선택·공개 결과·소유자 전용 결과를 분리했다. 기존 View·Controller와
+`GameManager`에는 씬 직렬화 없이 코드 기반 선택·결과 패널을 연결했다. 일반
+보상 풀은 자동 카드 5종을 더해 15종으로 확장하고 높은 등급 6종은 유지했으며,
+사기꾼 덱 10장 중 일반 카드 한 장만 거짓말 탐지기로 교체했다.
+
+신규 CoreLoop 12건과 StageProgression 3건은 15/15 통과했다. 전체 테스트 메서드
+인벤토리 471건 중 Unity 비의존 461건은 461/461 통과했고, UnityEngine 또는 NUnit
+Editor `TestContext`가 필요한 10건은 독립 실행 환경에서 실행하지 못했다. Unity
+편집기 로그의 런타임·CoreLoop 테스트 어셈블리 빌드와 Unity 응답 파일 기반
+StageProgression Roslyn 컴파일은 성공했다. Unity MCP 연결과 임시 Batchmode
+라이선스 IPC가 사용 불가하여 공식 전체 EditMode·두 씬·두 해상도·Console은
+후속 검증으로 남겼다. 외부 코드·에셋·오픈소스는 추가하지 않았으며 최종
+기획·코드·화면 승인 책임은 이천서에게 있다.
 
 ## 4. 생성형 AI 산출물 관리
 

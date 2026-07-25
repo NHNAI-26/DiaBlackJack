@@ -21,6 +21,8 @@ namespace DiaBlackJack.CoreLoop
             Array.AsReadOnly(Array.Empty<BlackjackCard>());
 
         private readonly IEnemyBehaviorPolicy _enemyPolicy;
+        private readonly IAutomaticCardDecisionPolicy
+            _enemyAutomaticCardDecisionPolicy;
         private readonly CardEffectResolver _cardEffectResolver;
         private readonly AutomaticCardEffectResolver _automaticCardEffectResolver;
         private readonly DemonContractResolver _demonContractResolver;
@@ -39,6 +41,7 @@ namespace DiaBlackJack.CoreLoop
         private AutomaticCardEffectContext _activeAutomaticCardEffectContext;
         private AutomaticCardContinuation _automaticCardContinuation;
         private PendingAutomaticCardInteraction _pendingAutomaticCardInteraction;
+        private bool _isResolvingEnemyAutomaticChoice;
         private int _nextAutomaticCardInteractionId = 1;
         private int _nextTemporaryCardId = int.MaxValue;
         private int _enemyDecisionOrdinal;
@@ -92,7 +95,9 @@ namespace DiaBlackJack.CoreLoop
                 enemyPolicy,
                 CardEffectResolver.CreateDefault(),
                 playerDemonDeck,
-                enemyDemonDeck: enemyDemonDeck)
+                enemyDemonDeck: enemyDemonDeck,
+                enemyAutomaticCardDecisionPolicy:
+                    DefaultAutomaticCardDecisionPolicy.Instance)
         {
         }
 
@@ -107,7 +112,8 @@ namespace DiaBlackJack.CoreLoop
             DemonContractDeck playerDemonDeck = null,
             DemonContractResolver demonContractResolver = null,
             DemonContractDeck enemyDemonDeck = null,
-            AutomaticCardEffectResolver automaticCardEffectResolver = null)
+            AutomaticCardEffectResolver automaticCardEffectResolver = null,
+            IAutomaticCardDecisionPolicy enemyAutomaticCardDecisionPolicy = null)
         {
             Player = new BattleParticipant(playerDeck, playerMaximumSoul, playerCurrentSoul);
             Enemy = new BattleParticipant(enemyDeck, enemyMaximumSoul);
@@ -120,6 +126,8 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentNullException(nameof(cardEffectResolver));
             _automaticCardEffectResolver = automaticCardEffectResolver ??
                 AutomaticCardEffectResolver.CreateDefault();
+            _enemyAutomaticCardDecisionPolicy =
+                enemyAutomaticCardDecisionPolicy;
             _demonContractResolver = demonContractResolver ??
                 DemonContractResolver.CreateDefault();
             State = CoreLoopState.Initializing;
@@ -214,6 +222,12 @@ namespace DiaBlackJack.CoreLoop
             Enemy.Soul.Current >= 2;
 
         public AutomaticCardResult? LastAutomaticCardResult { get; private set; }
+
+        public AutomaticCardDecision? LastEnemyAutomaticCardDecision
+        {
+            get;
+            private set;
+        }
 
         public LieDetectorPublicResult? LastLieDetectorPublicResult
         {
@@ -1620,7 +1634,8 @@ namespace DiaBlackJack.CoreLoop
                         request.Options);
                 State = CoreLoopState.ResolvingAutomaticCardEffect;
                 RaiseStepped();
-                return true;
+                ResolvePendingEnemyAutomaticChoices();
+                return _pendingAutomaticCardInteraction != null;
             }
 
             if (!step.SourceDisposition.HasValue)
@@ -1694,6 +1709,81 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return false;
+        }
+
+        private void ResolvePendingEnemyAutomaticChoices()
+        {
+            if (_enemyAutomaticCardDecisionPolicy == null ||
+                _isResolvingEnemyAutomaticChoice)
+            {
+                return;
+            }
+
+            _isResolvingEnemyAutomaticChoice = true;
+            try
+            {
+                const int maximumChoiceCount = 16;
+                for (int choiceIndex = 0;
+                    choiceIndex < maximumChoiceCount;
+                    choiceIndex++)
+                {
+                    PendingAutomaticCardInteraction pending =
+                        _pendingAutomaticCardInteraction;
+                    if (pending == null ||
+                        pending.DecisionSide != CombatantSide.Enemy)
+                    {
+                        return;
+                    }
+
+                    AutomaticCardDecisionObservation observation =
+                        AutomaticCardDecisionObservationFactory.Create(
+                            this,
+                            pending);
+                    AutomaticCardDecision decision;
+                    try
+                    {
+                        decision =
+                            _enemyAutomaticCardDecisionPolicy.Decide(
+                                observation);
+                    }
+                    catch (Exception)
+                    {
+                        decision = new AutomaticCardDecision(
+                            pending.Options[0].OptionId,
+                            "policy-error-safe-first");
+                    }
+
+                    if (!pending.TryGetOption(
+                            decision.OptionId,
+                            out AutomaticCardChoiceOption _))
+                    {
+                        decision = new AutomaticCardDecision(
+                            pending.Options[0].OptionId,
+                            "invalid-policy-option-safe-first");
+                    }
+
+                    LastEnemyAutomaticCardDecision = decision;
+                    if (!TryResolveAutomaticCardChoice(
+                            CombatantSide.Enemy,
+                            pending.InteractionId,
+                            decision.OptionId))
+                    {
+                        throw new InvalidOperationException(
+                            "Validated enemy automatic card choice could not be resolved.");
+                    }
+                }
+
+                if (_pendingAutomaticCardInteraction?.DecisionSide ==
+                    CombatantSide.Enemy)
+                {
+                    throw new InvalidOperationException(
+                        "Enemy automatic card choices exceeded the resolution limit.");
+                }
+            }
+            finally
+            {
+                _isResolvingEnemyAutomaticChoice = false;
+            }
         }
 
         private void ResumeAfterAutomaticCard(

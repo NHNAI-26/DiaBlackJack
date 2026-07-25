@@ -361,6 +361,16 @@ namespace DiaBlackJack.StageProgression.UI
                     return "GUESS 1 HIDDEN CARD";
                 case CardEffectKind.MilitaryKnife:
                     return "FORCE A DRAW";
+                case CardEffectKind.Poison:
+                    return "PAY SOUL OR STAND; WIN RESTORES SOUL";
+                case CardEffectKind.ResurrectionHerb:
+                    return "RESTART A LOSING ROUND";
+                case CardEffectKind.LieDetector:
+                    return "COMPARE AN ENEMY HIDDEN CARD";
+                case CardEffectKind.Flamethrower:
+                    return "BOTH SIDES MAY DISCARD";
+                case CardEffectKind.PocketWatch:
+                    return "REACTIVATE A USED MANUAL CARD";
                 default:
                     throw new ArgumentOutOfRangeException(
                         nameof(definition),

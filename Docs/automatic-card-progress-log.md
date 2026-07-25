@@ -4,8 +4,8 @@
 > 기획·기록·구현 책임자: 이천서  
 > 작업 식별자: AC-00~AC-06  
 > 버전: v0.1  
-> 현재 단계: AC-05 부활초 완료
-> 다음 단계: AC-06 UI·런·보상·적 AI 통합
+> 현재 단계: AC-06 통합 구현 완료
+> 다음 단계: Unity Editor 전체 회귀·두 씬·두 해상도·Console 최종 재검증
 > 최종 갱신: 2026-07-25
 
 ## 1. 기록 원칙
@@ -28,15 +28,16 @@
 | 자동 카드 분류 | `CardActivationKind.Automatic`과 효과 종류 5종 존재 |
 | 자동 카드 정의·실행 | 5종 정의와 독극물·거짓말 탐지기·화염 방사기·회중시계·부활초 실제 처리기 구현 완료 |
 | 자동 공개 유입 조정 | 플레이어·적 히트, 수정 구슬, 보위 나이프·사탄 권능 강제 드로우 연결 완료 |
-| 플레이어 자동 선택 UI | 미구현 |
-| 적 자동 선택 정책 | 미구현 |
-| 런·보상 자동 카드 | 미등록 |
+| 플레이어 자동 선택 UI | 독립·런 세션 입력과 코드 기반 선택·결과 패널 구현 완료 |
+| 적 자동 선택 정책 | 공개 합·영혼·유효 옵션·합법적 비교 지식 전용 정책 구현 완료 |
+| 런·보상 자동 카드 | 일반 보상 풀 5종 등록, 높은 등급 풀 무변경 |
 | 직전 자동 기준선 | DC-08 전체 EditMode 397/397 통과 기록 |
 | AC-01 검증 | 대상 15/15·CoreLoop 283/283·전체 EditMode 412/412·컴파일 오류 0 |
 | AC-02 검증 | 대상 12/12·CoreLoop 295/295·전체 EditMode 424/424·컴파일 오류 0 |
 | AC-03 검증 | 대상 10/10·CoreLoop 305/305·전체 EditMode 434/434·컴파일 오류 0·Test Framework 결과 저장 안내 3건 |
 | AC-04 검증 | 대상 11/11·CoreLoop 316/316·전체 EditMode 445/445·컴파일 오류 0 |
 | AC-05 검증 | 대상 11/11·CoreLoop 327/327·전체 EditMode 456/456·컴파일 오류 0 |
+| AC-06 검증 | 대상 15/15·Unity 비의존 회귀 461/461·Unity 런타임/CoreLoop 및 StageProgression 컴파일 성공 |
 
 AC-02 착수 시 작업 트리는 깨끗했고 AC-01 커밋 `dd09d89`를 기준으로 삼았다. 열린 Unity의 MCP WebSocket이 ping에 응답하지 않아 저장되지 않은 편집기 상태를 위험에 빠뜨리는 강제 재시작은 하지 않았다. 동일 커밋의 임시 Git worktree에 AC-02 변경만 복제하고 Unity 6000.3.10f1 Headless EditMode로 컴파일과 테스트를 검증했다. 이번 단계는 CoreLoop 순수 C#과 EditMode 테스트·기록만 변경했으며 UI·진행 세션·씬·프리팹·Packages·외부 에셋은 변경하지 않았다.
 
@@ -45,6 +46,8 @@ AC-03 착수 시 작업 트리는 깨끗했고 Unity MCP의 `DiaBlackJack@5635a4
 AC-04 착수 시 작업 트리는 깨끗했고 AC-03 커밋 `a2abc84`를 기준으로 삼았다. Unity MCP의 같은 인스턴스에서 Unity 6000.3.10f1, 비재생·비컴파일·도구 사용 가능 상태와 활성 `GameScene`을 확인했다. `GameScene`은 열려 있는 상태만 확인하고 수정하지 않았다. 로컬 Unity에서 컴파일과 대상·CoreLoop·전체 EditMode를 검증했으며 UI·진행 세션·보상·적 자동 선택 정책·씬·프리팹·Packages·외부 에셋은 변경하지 않았다.
 
 AC-05 착수 시 작업 트리는 깨끗했고 AC-04 커밋 `707e524`를 기준으로 삼았다. Unity MCP의 `DiaBlackJack@5635a4cdcfecc8dd`가 Unity 6000.3.10f1, 비재생·도구 사용 가능 상태임을 확인했다. 활성 `GameScene`은 열려 있는 상태만 확인하고 수정하지 않았다. 같은 편집기에서 강제 에셋 갱신·컴파일과 대상·CoreLoop·전체 EditMode를 검증했으며 UI·진행 세션·보상·적 자동 선택 정책·씬·프리팹·Packages·외부 에셋은 변경하지 않았다.
+
+AC-06 복구 시 Unity MCP HTTP 연결이 응답하지 않았고 임시 ASCII 경로 Batchmode도 Package Manager IPC와 라이선스 IPC에서 진행되지 않았다. 기존 Unity 편집기와 저장되지 않은 씬 상태를 건드리지 않고, 편집기 로그의 런타임·CoreLoop 테스트 어셈블리 빌드 성공, Unity 응답 파일을 사용한 StageProgression 테스트 어셈블리 Roslyn 컴파일, 독립 실행 가능한 대상 15/15와 전체 461/461로 검증했다. 전체 테스트 메서드 인벤토리는 471건이며 UnityEngine 또는 NUnit Editor `TestContext`가 필요한 10건은 환경 복구 뒤 공식 Editor 실행으로 남긴다. `GameScene.unity`, 프리팹, Packages, 외부 에셋은 수정하지 않았다.
 
 ## 3. 단계 현황
 
@@ -56,7 +59,7 @@ AC-05 착수 시 작업 트리는 깨끗했고 AC-04 커밋 `707e524`를 기준�
 | AC-03 | 이천서(AI 구현·검증 보조) | 완료 | 대상 10/10·CoreLoop 305/305·전체 434/434 |
 | AC-04 | 이천서(AI 구현·검증 보조) | 완료 | 대상 11/11·CoreLoop 316/316·전체 445/445 |
 | AC-05 | 이천서(AI 구현·검증 보조) | 완료 | 대상 11/11·CoreLoop 327/327·전체 456/456 |
-| AC-06 | 이천서(AI 구현·화면·검증·기록 보조) | 미착수 | UI·런·보상·적 AI·반복 회귀·문서 마감 |
+| AC-06 | 이천서(AI 구현·화면·검증·기록 보조) | 구현 완료·Editor 최종 검증 대기 | 대상 15/15·Unity 비의존 461/461·컴파일 성공·씬 에셋 무변경 |
 
 ## 4. AC-00 수행 기록
 
@@ -340,7 +343,65 @@ AC-00은 문서 단계로 완료했다. 자동 카드의 실제 정의·실행·
 
 `부활초가 승패와 후속 효과를 중복시키지 않고 라운드만 되돌리게 하다`
 
-## 10. 검증 누적표
+## 10. AC-06 수행 기록
+
+### 10.1 수행 내용
+
+- `CoreLoopSession`과 `StageProgressionSession`에 플레이어 자동 선택 전달 API를 연결하고 진행 전투 상태를 동기화했다.
+- Presenter에 보류 자동 상호작용, 공개 해결 결과와 소유자 전용 요약을 분리한 ViewModel을 추가했다.
+- 기존 CoreLoop View·Controller에 자동 선택 이벤트·상태·결과를 연결하고 `GameManager`에 코드 기반 반응형 선택·결과 패널을 추가했다.
+- 적 자동 선택을 일반 행동 정책과 분리하고 공개 합·영혼·유효 옵션·합법적 거짓말 탐지기 비교 지식만 가진 관측을 사용했다.
+- 정책은 독극물·부활초·거짓말 탐지기·화염 방사기·회중시계의 유효 옵션만 고르며, 잘못된 반환이나 예외는 첫 유효 옵션으로 안전하게 해결한다.
+- 자동 카드 5종을 기본 일반 보상 풀에 추가하고 높은 등급 6종은 유지했다.
+- 사기꾼의 10장 덱에서 일반 카드 한 장을 거짓말 탐지기로 교체하고 시작 덱과 다른 적 프로필은 유지했다.
+- 보상 설명, 자동 결과 설명과 부활초 전이 표시를 현재 Presentation 경계에 추가했다.
+
+### 10.2 변경 파일
+
+- `Assets/01. Scripts/CoreLoop/EnemyAI/AutomaticCardDecisionPolicy.cs`
+- `Assets/01. Scripts/CoreLoop/CoreLoopBattle.cs`
+- `Assets/01. Scripts/CoreLoop/CoreLoopSession.cs`
+- `Assets/01. Scripts/CoreLoop/CoreLoopPresentation.cs`
+- `Assets/01. Scripts/CoreLoop/EnemyProfiles/EnemyCombatProfileCatalog.cs`
+- `Assets/01. Scripts/StageProgression/StageProgressionSession.cs`
+- `Assets/01. Scripts/StageProgression/StageProgressionPresentation.cs`
+- `Assets/01. Scripts/StageProgression/BattleRewardCatalog.cs`
+- `Assets/01. Scripts/UI/CoreLoop/CoreLoopView.cs`
+- `Assets/01. Scripts/UI/CoreLoop/CoreLoopController.cs`
+- `Assets/01. Scripts/GameScene/GameManager.cs`
+- `Assets/06.Packages/Tests/EditMode/CoreLoop/AutomaticCardIntegrationTests.cs`
+- `Assets/06.Packages/Tests/EditMode/StageProgression/AutomaticCardStageIntegrationTests.cs`
+- 자동 카드 관련 기존 회귀 테스트와 문서 4종·공통 기록 문서
+
+### 10.3 검증 결과
+
+| 검증 | 결과 |
+| --- | --- |
+| AC-06 대상 | CoreLoop 12건·StageProgression 3건, 합계 15/15 통과 |
+| 테스트 인벤토리 | CoreLoop 339건·StageProgression 132건·합계 471건 |
+| Unity 비의존 전체 회귀 | 실행 가능한 461/461 통과 |
+| Editor 의존 회귀 | UnityEngine 또는 NUnit Editor `TestContext` 필요 10건, 현재 독립 실행 불가 |
+| 컴파일 | Unity 런타임·CoreLoop 테스트 어셈블리 빌드 성공, StageProgression Unity 응답 파일 기반 Roslyn 컴파일 성공 |
+| 정보 은닉 | 적 관측에 실제 플레이어 비공개 숫자 속성 없음, 적 탐지기 결과가 플레이어 전용 결과에 노출되지 않음 |
+| 보상·프로필 | 일반 풀 15종 중 자동 카드 정확히 5종, 높은 등급 6종 유지, 사기꾼 10장 유지 |
+| 반복 | 부활초 10회 재시작, 적 정책의 다섯 선택 종류와 다음 전투 보상 발동 통과 |
+| 씬·프리팹·Packages·외부 에셋 | `GameScene.unity` 포함 변경 없음 |
+
+독립 회귀에서 실행하지 못한 10건은 실패가 아니라 Unity Editor 타입과 테스트 컨텍스트가 없는 실행 환경의 제한이다. 공식 Unity 전체 471/471, 두 씬, 1280×720·1920×1080과 Console은 완료로 과장하지 않고 후속 검증으로 남긴다.
+
+### 10.4 제외·후속 검증
+
+- Unity MCP 또는 정상 라이선스 IPC가 복구되면 공식 EditMode 전체 471건을 재실행한다.
+- `GameScene`과 `CoreLoopTest`에서 플레이어 차례·적 차례의 자동 선택과 최근 결과를 확인한다.
+- 1280×720·1920×1080에서 선택·결과 패널의 줄바꿈과 버튼 잘림을 확인한다.
+- Console Error/Warning을 최종 확인한다.
+- HONG의 골드·상점·정식 런 순서와 Shim0Hwan의 아트 자산은 계속 제외한다.
+
+### 10.5 권장 커밋 제목
+
+`자동 카드의 선택과 정보가 실제 런에서도 끊김 없이 이어지게 하다`
+
+## 11. 검증 누적표
 
 | 단계 | 대상 테스트 | CoreLoop | StageProgression | 전체 EditMode | 화면·씬·Console | 비고 |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -351,9 +412,9 @@ AC-00은 문서 단계로 완료했다. 자동 카드의 실제 정의·실행·
 | AC-03 | 10/10 | 305/305 | 129/129(전체 포함) | 434/434 | 컴파일 오류 0·Test Framework 저장 안내 3건·씬 무변경 | 탐지기 완료 |
 | AC-04 | 11/11 | 316/316 | 129/129(전체 포함) | 445/445 | 컴파일 오류 0·씬 무변경 | 화염 방사기·회중시계 완료 |
 | AC-05 | 11/11 | 327/327 | 129/129(전체 포함) | 456/456 | 컴파일 오류 0·씬 무변경 | 부활초 완료 |
-| AC-06 | 미착수 | 미착수 | 미착수 | 미착수 | 두 씬·두 해상도·Console 예정 | 통합 마감 |
+| AC-06 | 15/15 | 339개 인벤토리 | 132개 인벤토리 | Unity 비의존 461/461·Editor 의존 10건 보류 | 컴파일 성공·씬 에셋 무변경·화면/Console 재검증 대기 | 통합 구현 완료 |
 
-## 11. 결정 및 문제 대장
+## 12. 결정 및 문제 대장
 
 | ID | 항목 | 상태 | 결정·대응 | 재검토 조건 |
 | --- | --- | --- | --- | --- |
@@ -367,21 +428,20 @@ AC-00은 문서 단계로 완료했다. 자동 카드의 실제 정의·실행·
 | AC-R01 | 공개 유입 직접 호출이 여러 파일에 분산 | 대응 완료 | AC-01 공통 자동 해결 경계와 열거형 재개로 이관 | 새 공개 유입 경로 추가 시 |
 | AC-R02 | 부활초가 바깥 효과를 중단해야 함 | 대응 완료 | `RestartRound` 완료 흐름과 부모 효과·차례 재개 취소 | 새 공개 유입 경로 추가 시 |
 | AC-R03 | 열린 Unity MCP ping 단절 | 우회 완료 | 편집기 강제 종료 없이 임시 worktree의 별도 Headless Unity로 동일 소스 컴파일·테스트 | 본 작업공간 MCP 재연결 시 재확인 |
+| AC-R04 | AC-06 Unity MCP·Batchmode 라이선스 IPC 불가 | 검증 보류 | 기존 편집기·씬을 건드리지 않고 컴파일과 독립 실행 461건으로 검증, Editor 전용 10건과 화면은 후속으로 명시 | MCP 또는 Unity 라이선스 IPC 복구 시 |
 
-## 12. 다음 작업 — AC-06
+## 13. 후속 검증 — AC-06
 
-AC-06에서는 다음을 통합한다.
+AC-06 구현은 완료했고 다음 항목만 Unity Editor에서 재검증한다.
 
-- 독립·런 세션의 자동 카드 상호작용 입력 전달과 종료 동기화
-- 현재 보류 선택·공개 결과·소유자 전용 정보의 안전한 표시
-- 플레이어 차례와 적 차례 양쪽의 선택 대기 UI
-- 공개 정보만 사용하는 적 자동 카드 선택 정책
-- 구현 완료한 5종의 일반 보상 풀 등록과 다음 전투 사용
-- 반복 전투·재시작·두 씬·두 해상도·Console 최종 회귀
+- 전체 EditMode 471건 공식 실행
+- 독립·런 전투의 플레이어 차례와 적 차례 자동 선택
+- 자동 결과와 부활초 재시작 문구
+- 두 씬·두 해상도·Console 최종 확인
 
 정식 런의 골드·상점 순서와 새 아트 에셋은 변경하지 않는다.
 
-## 13. 단계별 완료 기록 양식
+## 14. 단계별 완료 기록 양식
 
 ```text
 ### AC-0N — 작업명
@@ -402,10 +462,11 @@ AC-06에서는 다음을 통합한다.
 - 권장 커밋 제목:
 ```
 
-## 14. 변경 기록
+## 15. 변경 기록
 
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
+| 2026-07-25 | 이천서 | AC-06 세션·표시·코드 기반 UI·공개 정보 적 정책·일반 보상 5종·사기꾼 탐지기를 통합하고 대상 15/15·Unity 비의존 461/461·컴파일 성공으로 구현 완료, Editor 전용 10건과 두 씬·두 해상도·Console은 환경 복구 뒤 재검증으로 분리 |
 | 2026-07-25 | 이천서 | AC-05 부활초의 양측 영혼 2 이상 재시작·전용 라운드 전이·상태/부모 효과 취소를 구현하고 대상 11/11·CoreLoop 327/327·전체 456/456로 검증, 다음 단계를 AC-06으로 전환 |
 | 2026-07-25 | 이천서 | AC-04 화염 방사기 소유자→상대 순차 폐기·회중시계 수동 카드 재활성화와 원본 유지/폐기를 구현하고 대상 11/11·CoreLoop 316/316·전체 445/445로 검증, 다음 단계를 AC-05로 전환 |
 | 2026-07-25 | 이천서 | AC-03 거짓말 탐지기 선언·소유자 전용 비교·지식 폐기를 구현하고 대상 10/10·CoreLoop 305/305·전체 434/434로 검증, 다음 단계를 AC-04로 전환 |

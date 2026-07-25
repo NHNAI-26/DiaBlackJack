@@ -29,14 +29,14 @@ Unity MCP의 프로젝트 정보와 로컬 프로젝트 설정이 다음과 같�
 | `Assets/00. Scenes` | 게임 및 테스트 씬 | 3단계 `CoreLoopTest` 통합 |
 | `Assets/01. Scripts/Runtime` | 런타임 코드와 `Border` 어셈블리 | 사용 |
 | `Assets/01. Scripts/Runtime/Core` | 로그, 스크린샷, 결정적 난수 공용 코드 | `DeterministicRng` 재사용 |
-| `Assets/01. Scripts/CoreLoop` | 전투 규칙·상태·세션, 카드 효과와 적 프로필·공개 관측·정책·안전 표시 스냅샷 | AC-05 부활초 처리기·승패 없는 라운드 전이 추가 |
+| `Assets/01. Scripts/CoreLoop` | 전투 규칙·상태·세션, 카드 효과와 적 프로필·공개 관측·정책·안전 표시 스냅샷 | AC-06 자동 선택 정책·세션·표시·사기꾼 탐지기 통합 |
 | `Assets/01. Scripts/Runtime/Input` | Input System 연결 | 1~2단계 제외 |
 | `Assets/01. Scripts/Runtime/UI` | 공용 UI와 코어 루프 View | EUI-04 적 이름·등급·성향·추론·보스 예고 패널과 720p 반응형 배치 |
 | `Assets/01. Scripts/Runtime/StageProgression` | 런·스테이지 순수 상태, 전투·보상·상대 후보와 선택 프로필 키 변환 | EUI-03 OfferId+ProfileKey 원자적 확정과 실제 프로필 전투·보상 연결 |
 | `Assets/01. Scripts/Runtime/UI/StageProgression` | 진행 표시·입력과 씬 간 Runtime | EUI-03 확정 입력 전달·성공한 전투만 씬 전환, EUI-02 후보 비교·로컬 집중 재사용 |
 | `Assets/02. ScriptableObjects` | 설정 및 데이터 에셋 | 코어 루프 제외 |
-| `Assets/06.Packages/Tests/EditMode/CoreLoop` | 코어 루프·카드 효과·자동 카드 기반·적 프로필·정책·표시 테스트 | AC-05 기준 327개 |
-| `Assets/06.Packages/Tests/EditMode/StageProgression` | 진행·보상·상대 후보·선택 상태·표시·프로필 전투 변환·반복 호환 테스트 | AC-05 회귀 기준 129개 |
+| `Assets/06.Packages/Tests/EditMode/CoreLoop` | 코어 루프·카드 효과·자동 카드 기반·적 프로필·정책·표시 테스트 | AC-06 테스트 메서드 인벤토리 339개 |
+| `Assets/06.Packages/Tests/EditMode/StageProgression` | 진행·보상·상대 후보·선택 상태·표시·프로필 전투 변환·반복 호환 테스트 | AC-06 테스트 메서드 인벤토리 132개 |
 | `Docs` | 기획, 개발, AI·팀 기여 기록 | 진행 결과 갱신 |
 | `Packages` | Unity 및 Git 패키지 참조 | 참조 상태 확인 |
 
@@ -798,10 +798,29 @@ AC-04도 `mcpforunity://custom-tools`, 인스턴스, 편집기 상태와 프로�
 
 AC-05는 같은 Unity MCP 인스턴스에서 강제 에셋 갱신과 컴파일 뒤 세 범위 EditMode 테스트를 수행했다. 활성 `GameScene`은 열린 상태만 확인했고 씬 파일은 저장하거나 직렬화하지 않았다.
 
+### 7.42 자동 발동 카드 AC-06 통합
+
+| 경계 | 현행 구조 |
+| --- | --- |
+| 적 정책 | `EnemyAI/AutomaticCardDecisionPolicy.cs`가 일반 행동 정책과 분리된 자동 선택 인터페이스·안전 관측·기본 정책을 제공 |
+| 정보 은닉 | 관측 Factory는 공개 합·현재 영혼·선택 종류·공개 카드 서열과 합법적인 탐지기 비교 지식만 전달하고 실제 비공개 숫자를 전달하지 않음 |
+| 전투 해결 | `CoreLoopBattle`이 적 선택을 동기 해결하고 잘못된 옵션·정책 예외를 첫 유효 옵션으로 대체하며 재진입 상한을 적용 |
+| 세션 | `CoreLoopSession`과 `StageProgressionSession`이 플레이어 자동 선택 ID·옵션 ID를 기존 전투에 전달하고 런 종료 상태를 동기화 |
+| 표시 | `CoreLoopPresentation`이 보류 선택·공개 결과·소유자 전용 결과를 분리하고 View·Controller·`GameManager`가 코드 기반 패널로 표시 |
+| 보상 | `BattleRewardCatalog` 일반 풀에 자동 카드 5종을 추가해 15종, 높은 등급 풀은 6종 유지 |
+| 적 프로필 | 사기꾼 덱 10장 중 일반 카드 한 장을 거짓말 탐지기로 교체하고 시작 덱·다른 적 프로필은 유지 |
+| 테스트 | CoreLoop 신규 12건·StageProgression 신규 3건, 대상 15/15; 전체 인벤토리 CoreLoop 339·StageProgression 132 |
+| 검증 | Unity 비의존 461/461, Unity 런타임·CoreLoop 테스트 빌드와 StageProgression Unity 응답 파일 기반 Roslyn 컴파일 성공 |
+| 후속 검증 | UnityEngine 또는 NUnit Editor `TestContext` 의존 10건, 두 씬·두 해상도·Console은 MCP/라이선스 IPC 복구 뒤 공식 Editor 실행 |
+| 변경 보호 | `GameScene.unity`·프리팹·HONG RunFlow/Shop·Shim0Hwan 아트·시작 덱·높은 등급 풀·Packages·외부 에셋 무변경 |
+
+AC-06 확인 시 `http://127.0.0.1:8080/mcp` 연결이 실패했고 현재 도구 목록에도 Unity MCP가 노출되지 않았다. 임시 ASCII 경로의 Batchmode는 Package Manager IPC와 라이선스 IPC에서 진행되지 않아 기존 편집기나 씬을 강제 종료하지 않았다. 대신 편집기 로그의 런타임·CoreLoop 테스트 어셈블리 빌드, Unity 응답 파일 기반 StageProgression 컴파일과 독립 실행 가능한 461건을 검증했다. 공식 Editor 전체 471건과 화면 검증은 완료로 기록하지 않고 후속 항목으로 유지한다.
+
 ## 8. 변경 기록
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-25 | 이천서 | 자동 발동 카드 AC-06 적 안전 관측·정책·전투 자동 해결·세션·코드 기반 UI·일반 보상·사기꾼 프로필 구조와 대상 15/15·Unity 비의존 461/461·컴파일 성공 결과 추가, Editor 전용 10건과 화면 검증 보류 및 씬 에셋 무변경 기록 |
 | 2026-07-25 | 이천서 | 자동 발동 카드 AC-05 부활초 처리기·전용 라운드 전이·양측 상태 정리·부모 효과 취소 구조와 대상 11/11·CoreLoop 327/327·전체 456/456·컴파일 오류 0 검증 결과 추가 |
 | 2026-07-25 | 이천서 | 자동 발동 카드 AC-04 화염 방사기 순차 폐기·회중시계 재활성화·원본 위치 선택 구조와 대상 11/11·CoreLoop 316/316·전체 445/445·컴파일 오류 0 검증 결과 추가 |
 | 2026-07-25 | 이천서 | 자동 발동 카드 AC-03 탐지기 선언·공개/전용 결과·적 비교 관측·체인지/해머/라운드/전투 종료 지식 폐기 구조와 대상 10/10·CoreLoop 305/305·전체 434/434·컴파일 오류 0·Test Framework 결과 저장 안내 3건 검증 결과 추가 |

@@ -15,7 +15,7 @@ namespace DiaBlackJack.StageProgression.Tests
 
             Assert.That(
                 catalog.GetDefinitionKeys(BattleRewardTier.Normal).Count,
-                Is.EqualTo(10));
+                Is.EqualTo(15));
             Assert.That(
                 catalog.GetDefinitionKeys(BattleRewardTier.HighGrade).Count,
                 Is.EqualTo(6));

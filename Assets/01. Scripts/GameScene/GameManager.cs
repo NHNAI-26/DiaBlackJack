@@ -49,6 +49,7 @@ namespace DiaBlackJack.GameScene
         private GUIStyle _buttonStyle;
         private GUIStyle _labelStyle;
         private GUIStyle _panelStyle;
+        private GUIStyle _automaticCardPanelStyle;
         private GUIStyle _contractTitleStyle;
         private GUIStyle _contractBodyStyle;
         private GUIStyle _contractCostStyle;
@@ -181,6 +182,7 @@ namespace DiaBlackJack.GameScene
             }
 
             DrawDemonContractStatusPanel();
+            DrawAutomaticCardStatusPanel();
 
             if (_core.State == CoreLoopState.BattleEnded)
             {
@@ -206,6 +208,12 @@ namespace DiaBlackJack.GameScene
             if (_core.IsChoosingChangeCard)
             {
                 DrawChangeCandidates();
+                return;
+            }
+
+            if (_core.IsResolvingAutomaticCardEffect)
+            {
+                DrawAutomaticCardChoices();
                 return;
             }
 
@@ -283,6 +291,39 @@ namespace DiaBlackJack.GameScene
             }
 
             DrawHeading(_core.CardEffectPrompt);
+            DrawButtonRow(labels, enabled, actions);
+        }
+
+        private void DrawAutomaticCardChoices()
+        {
+            AutomaticCardInteractionViewModel interaction =
+                _core.AutomaticCardInteraction;
+            if (interaction == null)
+            {
+                DrawHeading("ENEMY AUTOMATIC DECISION");
+                return;
+            }
+
+            int count = interaction.Choices.Count;
+            var labels = new string[count];
+            var enabled = new bool[count];
+            var actions = new Func<bool>[count];
+            for (int i = 0; i < count; i++)
+            {
+                AutomaticCardChoiceViewModel choice =
+                    interaction.Choices[i];
+                int interactionId = interaction.InteractionId;
+                int optionId = choice.OptionId;
+                labels[i] = choice.Label;
+                enabled[i] = true;
+                actions[i] = () =>
+                    _session.TryResolvePlayerAutomaticCardChoice(
+                        interactionId,
+                        optionId);
+            }
+
+            DrawHeading(
+                $"{interaction.SourceDisplayName}  |  {interaction.Prompt}");
             DrawButtonRow(labels, enabled, actions);
         }
 
@@ -559,6 +600,48 @@ namespace DiaBlackJack.GameScene
                 new Rect(Screen.width - width - 20f, 20f, width, height),
                 string.Join("\n", lines),
                 _panelStyle);
+        }
+
+        private void DrawAutomaticCardStatusPanel()
+        {
+            AutomaticCardResultViewModel result =
+                _core.AutomaticCardResult;
+            if (result == null)
+            {
+                return;
+            }
+
+            _automaticCardPanelStyle ??=
+                new GUIStyle(GUI.skin.box)
+                {
+                    font = uiFont,
+                    fontSize = Screen.height <= 720 ? 14 : 16,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.MiddleCenter,
+                    wordWrap = true,
+                    padding = new RectOffset(12, 12, 10, 10),
+                    normal = { textColor = Color.white }
+                };
+
+            string content = "AUTOMATIC CARD\n" +
+                result.PublicSummary;
+            if (!string.IsNullOrEmpty(result.PrivateSummary))
+            {
+                content += "\n" + result.PrivateSummary;
+            }
+
+            float width = Mathf.Min(720f, Screen.width - 40f);
+            float height = string.IsNullOrEmpty(result.PrivateSummary)
+                ? 104f
+                : 128f;
+            GUI.Box(
+                new Rect(
+                    (Screen.width - width) * 0.5f,
+                    88f,
+                    width,
+                    height),
+                content,
+                _automaticCardPanelStyle);
         }
 
         private void DrawHeading(string text, float rowHeight = 48f)

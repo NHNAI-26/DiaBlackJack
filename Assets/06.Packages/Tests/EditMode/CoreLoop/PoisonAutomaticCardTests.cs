@@ -302,7 +302,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 playerCurrentSoul,
                 enemyMaximumSoul,
                 enemyPolicy,
-                playerDemonDeck);
+                CardEffectResolver.CreateDefault(),
+                playerDemonDeck,
+                enemyAutomaticCardDecisionPolicy: null);
         }
 
         private static IReadOnlyList<BlackjackCard> PlayerCards(

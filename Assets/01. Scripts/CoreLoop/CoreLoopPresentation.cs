@@ -56,6 +56,82 @@ namespace DiaBlackJack.CoreLoop.UI
         public string Label { get; }
     }
 
+    public sealed class AutomaticCardChoiceViewModel
+    {
+        public AutomaticCardChoiceViewModel(int optionId, string label)
+        {
+            OptionId = optionId;
+            Label = label ?? throw new ArgumentNullException(nameof(label));
+        }
+
+        public int OptionId { get; }
+
+        public string Label { get; }
+    }
+
+    public sealed class AutomaticCardInteractionViewModel
+    {
+        public AutomaticCardInteractionViewModel(
+            int interactionId,
+            int sourceCardId,
+            string sourceDisplayName,
+            CardEffectKind effectKind,
+            AutomaticCardChoiceKind choiceKind,
+            string prompt,
+            IReadOnlyList<AutomaticCardChoiceViewModel> choices)
+        {
+            InteractionId = interactionId;
+            SourceCardId = sourceCardId;
+            SourceDisplayName = sourceDisplayName ??
+                throw new ArgumentNullException(nameof(sourceDisplayName));
+            EffectKind = effectKind;
+            ChoiceKind = choiceKind;
+            Prompt = prompt ?? throw new ArgumentNullException(nameof(prompt));
+            Choices = choices ??
+                throw new ArgumentNullException(nameof(choices));
+        }
+
+        public int InteractionId { get; }
+
+        public int SourceCardId { get; }
+
+        public string SourceDisplayName { get; }
+
+        public CardEffectKind EffectKind { get; }
+
+        public AutomaticCardChoiceKind ChoiceKind { get; }
+
+        public string Prompt { get; }
+
+        public IReadOnlyList<AutomaticCardChoiceViewModel> Choices { get; }
+    }
+
+    public sealed class AutomaticCardResultViewModel
+    {
+        public AutomaticCardResultViewModel(
+            string sourceDisplayName,
+            string ownerLabel,
+            string publicSummary,
+            string privateSummary)
+        {
+            SourceDisplayName = sourceDisplayName ??
+                throw new ArgumentNullException(nameof(sourceDisplayName));
+            OwnerLabel = ownerLabel ??
+                throw new ArgumentNullException(nameof(ownerLabel));
+            PublicSummary = publicSummary ??
+                throw new ArgumentNullException(nameof(publicSummary));
+            PrivateSummary = privateSummary ?? string.Empty;
+        }
+
+        public string SourceDisplayName { get; }
+
+        public string OwnerLabel { get; }
+
+        public string PublicSummary { get; }
+
+        public string PrivateSummary { get; }
+    }
+
     public sealed class CoreLoopViewModel
     {
         public CoreLoopViewModel(
@@ -88,6 +164,9 @@ namespace DiaBlackJack.CoreLoop.UI
             IReadOnlyList<CardEffectChoiceViewModel> cardEffectChoices,
             string lastCardEffect,
             bool isResolvingCardEffect,
+            AutomaticCardInteractionViewModel automaticCardInteraction,
+            AutomaticCardResultViewModel automaticCardResult,
+            bool isResolvingAutomaticCardEffect,
             DemonContractPanelViewModel demonContract,
             bool canRestart)
         {
@@ -124,6 +203,10 @@ namespace DiaBlackJack.CoreLoop.UI
                 throw new ArgumentNullException(nameof(cardEffectChoices));
             LastCardEffect = lastCardEffect ?? string.Empty;
             IsResolvingCardEffect = isResolvingCardEffect;
+            AutomaticCardInteraction = automaticCardInteraction;
+            AutomaticCardResult = automaticCardResult;
+            IsResolvingAutomaticCardEffect =
+                isResolvingAutomaticCardEffect;
             DemonContract = demonContract ??
                 throw new ArgumentNullException(nameof(demonContract));
             CanRestart = canRestart;
@@ -187,6 +270,15 @@ namespace DiaBlackJack.CoreLoop.UI
 
         public bool IsResolvingCardEffect { get; }
 
+        public AutomaticCardInteractionViewModel AutomaticCardInteraction
+        {
+            get;
+        }
+
+        public AutomaticCardResultViewModel AutomaticCardResult { get; }
+
+        public bool IsResolvingAutomaticCardEffect { get; }
+
         public DemonContractPanelViewModel DemonContract { get; }
 
         public bool CanRestart { get; }
@@ -224,7 +316,9 @@ namespace DiaBlackJack.CoreLoop.UI
                 FormatEnemyInformationTitle(enemyDisplay),
                 FormatEnemyInformationLines(enemyDisplay),
                 FormatEnemyWarning(enemyDisplay),
-                FormatLastRound(battle.LastResolution),
+                FormatLastRound(
+                    battle.LastResolution,
+                    battle.LastRoundTransition),
                 FormatChangeAction(battle),
                 FormatChangeCandidates(battle.PlayerChangeCandidates),
                 canPlayerAct,
@@ -236,6 +330,11 @@ namespace DiaBlackJack.CoreLoop.UI
                 FormatCardEffectChoices(battle.PendingPlayerCardEffect),
                 FormatLastCardEffect(battle.LastCardEffectResult),
                 battle.State == CoreLoopState.PlayerResolvingCardEffect,
+                FormatAutomaticCardInteraction(
+                    battle.PendingPlayerAutomaticInteraction),
+                FormatAutomaticCardResult(battle),
+                battle.State ==
+                    CoreLoopState.ResolvingAutomaticCardEffect,
                 DemonContractPresenter.Create(battle),
                 battle.State == CoreLoopState.BattleEnded);
         }
@@ -422,6 +521,109 @@ namespace DiaBlackJack.CoreLoop.UI
             return choices.AsReadOnly();
         }
 
+        private static AutomaticCardInteractionViewModel
+            FormatAutomaticCardInteraction(
+                PendingAutomaticCardInteraction interaction)
+        {
+            if (interaction == null)
+            {
+                return null;
+            }
+
+            var choices = new List<AutomaticCardChoiceViewModel>(
+                interaction.Options.Count);
+            foreach (AutomaticCardChoiceOption option in interaction.Options)
+            {
+                choices.Add(new AutomaticCardChoiceViewModel(
+                    option.OptionId,
+                    option.Label));
+            }
+
+            return new AutomaticCardInteractionViewModel(
+                interaction.InteractionId,
+                interaction.SourceCardId,
+                FormatEffectName(interaction.EffectKind),
+                interaction.EffectKind,
+                interaction.ChoiceKind,
+                interaction.Prompt,
+                choices.AsReadOnly());
+        }
+
+        private static AutomaticCardResultViewModel
+            FormatAutomaticCardResult(CoreLoopBattle battle)
+        {
+            if (!battle.LastAutomaticCardResult.HasValue)
+            {
+                return null;
+            }
+
+            AutomaticCardResult result =
+                battle.LastAutomaticCardResult.Value;
+            string sourceDisplayName =
+                FormatEffectName(result.EffectKind);
+            string ownerLabel = result.OwnerSide ==
+                CombatantSide.Player
+                    ? "PLAYER"
+                    : "ENEMY";
+            string disposition = result.SourceDisposition ==
+                AutomaticCardSourceDisposition.Discard
+                    ? "SOURCE DISCARDED"
+                    : "SOURCE RETAINED";
+            string publicSummary =
+                $"{sourceDisplayName}  |  {ownerLabel}  |  {disposition}";
+            string privateSummary = string.Empty;
+
+            switch (result.EffectKind)
+            {
+                case CardEffectKind.Poison:
+                    publicSummary += battle.PendingPoisonWinRewardCount > 0
+                        ? "  |  WIN HEAL RESERVED"
+                        : "  |  RESERVATION RESOLVED";
+                    break;
+                case CardEffectKind.ResurrectionHerb:
+                    publicSummary += battle.LastRoundTransition.HasValue
+                        ? "  |  ROUND RESTARTED"
+                        : "  |  RESTART DECLINED";
+                    break;
+                case CardEffectKind.LieDetector:
+                    if (battle.LastLieDetectorPublicResult.HasValue)
+                    {
+                        LieDetectorPublicResult publicResult =
+                            battle.LastLieDetectorPublicResult.Value;
+                        publicSummary +=
+                            $"  |  DECLARED {publicResult.DeclaredNumber}";
+                    }
+
+                    if (result.OwnerSide == CombatantSide.Player &&
+                        battle.PlayerHiddenCardComparisonKnowledge.HasValue)
+                    {
+                        HiddenCardComparisonKnowledge knowledge =
+                            battle.PlayerHiddenCardComparisonKnowledge.Value;
+                        privateSummary =
+                            knowledge.IsAtLeastDeclaredNumber
+                                ? $"ENEMY HIDDEN CARD IS AT LEAST {knowledge.DeclaredNumber}"
+                                : $"ENEMY HIDDEN CARD IS BELOW {knowledge.DeclaredNumber}";
+                    }
+
+                    break;
+                case CardEffectKind.Flamethrower:
+                    publicSummary += "  |  DISCARD CHOICES RESOLVED";
+                    break;
+                case CardEffectKind.PocketWatch:
+                    publicSummary += result.SourceDisposition ==
+                        AutomaticCardSourceDisposition.Discard
+                            ? "  |  WATCH DISCARDED"
+                            : "  |  WATCH REMAINS FACE UP";
+                    break;
+            }
+
+            return new AutomaticCardResultViewModel(
+                sourceDisplayName,
+                ownerLabel,
+                publicSummary,
+                privateSummary);
+        }
+
         private static string FormatCardDisabledReason(
             BlackjackCard card,
             CardUseAvailability availability)
@@ -474,6 +676,16 @@ namespace DiaBlackJack.CoreLoop.UI
                     return "REVOLVER";
                 case CardEffectKind.MilitaryKnife:
                     return "BOWIE KNIFE";
+                case CardEffectKind.Poison:
+                    return "POISON";
+                case CardEffectKind.ResurrectionHerb:
+                    return "RESURRECTION HERB";
+                case CardEffectKind.LieDetector:
+                    return "LIE DETECTOR";
+                case CardEffectKind.Flamethrower:
+                    return "FLAMETHROWER";
+                case CardEffectKind.PocketWatch:
+                    return "POCKET WATCH";
                 default:
                     throw new ArgumentOutOfRangeException(nameof(effectKind));
             }
@@ -534,8 +746,18 @@ namespace DiaBlackJack.CoreLoop.UI
             return builder.ToString();
         }
 
-        private static string FormatLastRound(RoundResolution? resolution)
+        private static string FormatLastRound(
+            RoundResolution? resolution,
+            RoundTransition? transition)
         {
+            if (transition.HasValue)
+            {
+                RoundTransition value = transition.Value;
+                return value.Cause == RoundTransitionCause.ResurrectionHerb
+                    ? $"Round {value.PreviousRoundNumber} restarted  |  No damage"
+                    : "Round restarted";
+            }
+
             if (!resolution.HasValue)
             {
                 return "No round result yet";

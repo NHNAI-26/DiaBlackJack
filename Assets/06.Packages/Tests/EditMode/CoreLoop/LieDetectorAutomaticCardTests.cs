@@ -335,8 +335,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                 BlackjackDeck.CreateInDrawOrder(playerCards),
                 BlackjackDeck.CreateInDrawOrder(enemyCards),
                 playerMaximumSoul: 12,
+                playerCurrentSoul: 12,
                 enemyMaximumSoul,
-                enemyPolicy);
+                enemyPolicy,
+                CardEffectResolver.CreateDefault(),
+                enemyAutomaticCardDecisionPolicy: null);
         }
 
         private static IReadOnlyList<BlackjackCard> PlayerCards(
