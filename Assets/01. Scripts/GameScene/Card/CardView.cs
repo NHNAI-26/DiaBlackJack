@@ -45,6 +45,7 @@ namespace DiaBlackJack.GameScene
         private Vector3 _baseScale = Vector3.one;
         private Vector3 _targetScale = Vector3.one;
         private bool _showingFrontFace = true;
+        private bool _showBadgeOnHover;
         private bool _hovered;
 
         /// <summary>Run card id of the bound card, for pointer routing. -1 when unbound.</summary>
@@ -84,6 +85,7 @@ namespace DiaBlackJack.GameScene
             CardId = card.CardId;
             CanUse = card.CanUse;
             _showingFrontFace = card.RevealRank;
+            _showBadgeOnHover = CanUse || card.ShowHoverBadgeWhenUnavailable;
 
             if (front != null)
             {
@@ -130,7 +132,7 @@ namespace DiaBlackJack.GameScene
 
             if (badge != null)
             {
-                badge.SetActive(lit);
+                badge.SetActive(_hovered && _showBadgeOnHover);
             }
 
             // Front keeps its own material look (cleared MPB); the hover glow overrides it when it is

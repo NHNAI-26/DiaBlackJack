@@ -38,7 +38,8 @@ namespace DiaBlackJack.GameScene
             bool canUse,
             string displayName,
             string abilityDescription = "",
-            CardSuit suit = CardSuit.Spade)
+            CardSuit suit = CardSuit.Spade,
+            bool showHoverBadgeWhenUnavailable = false)
         {
             CardId = cardId;
             Rank = rank;
@@ -48,6 +49,7 @@ namespace DiaBlackJack.GameScene
             CanUse = canUse;
             DisplayName = displayName ?? string.Empty;
             AbilityDescription = abilityDescription ?? string.Empty;
+            ShowHoverBadgeWhenUnavailable = showHoverBadgeWhenUnavailable;
         }
 
         public int CardId { get; }
@@ -73,6 +75,8 @@ namespace DiaBlackJack.GameScene
         /// cards without a usable effect (ranks 1–4) and for enemy cards.
         /// </summary>
         public string AbilityDescription { get; }
+
+        public bool ShowHoverBadgeWhenUnavailable { get; }
     }
 
     /// <summary>

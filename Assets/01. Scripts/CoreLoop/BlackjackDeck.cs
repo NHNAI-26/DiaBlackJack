@@ -114,6 +114,26 @@ namespace DiaBlackJack.CoreLoop
             TotalCardCount = checked(TotalCardCount + 1);
         }
 
+        public bool TryAddAvailableCard(BlackjackCard card)
+        {
+            if (card == null ||
+                TotalCardCount == int.MaxValue ||
+                _knownCardIds.Contains(card.Id))
+            {
+                return false;
+            }
+
+            card.Conceal();
+            _knownCardIds.Add(card.Id);
+            _availableCardIds.Add(card.Id);
+            _knownRankCounts[card.Rank]++;
+            TotalCardCount++;
+
+            int insertIndex = _random.Next(_drawPile.Count + 1);
+            _drawPile.Insert(insertIndex, card);
+            return true;
+        }
+
         internal void TransformCardDefinition(
             BlackjackCard card,
             CardDefinition definition)

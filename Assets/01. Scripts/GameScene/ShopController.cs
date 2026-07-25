@@ -8,7 +8,7 @@ namespace DiaBlackJack.GameScene
 {
     /// <summary>
     /// GameScene-local shop for the MVP. It grants placeholder gold, hides combat table objects,
-    /// shows merchant goods, and owns the temporary demon-card offers on the table.
+    /// shows merchant goods, and owns the temporary card offers on the table.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class ShopController : MonoBehaviour
@@ -21,6 +21,10 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Transform demonCardHolder;
         [Tooltip("World-space demon-card prefab used for shop offers.")]
         [SerializeField] private DemonCardView demonCardPrefab;
+        [Tooltip("Parent for normal card shop offers.")]
+        [SerializeField] private Transform normalCardHolder;
+        [Tooltip("World-space normal card prefab used for shop offers.")]
+        [SerializeField] private CardView normalCardPrefab;
         [Tooltip("Combat-only table objects hidden while the shop is open and restored on close.")]
         [SerializeField] private GameObject[] combatTableObjects;
         [Tooltip("Gold granted once per battle victory.")]
@@ -28,9 +32,13 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private int demonCardPrice = 3;
         [SerializeField] private int demonCardOfferCount = 3;
         [SerializeField] private float demonCardSpacing = 1.1f;
+        [SerializeField] private int normalCardPrice = 3;
+        [SerializeField] private int normalCardOfferCount = 3;
+        [SerializeField] private float normalCardSpacing = 1.1f;
         [SerializeField] private int shopRandomSeed = 20260726;
 
         private readonly List<DemonCardOffer> _demonOffers = new List<DemonCardOffer>();
+        private readonly List<NormalCardOffer> _normalOffers = new List<NormalCardOffer>();
         private readonly DeterministicRng _random = new DeterministicRng();
         private int _nextOfferId;
         private int _openCount;
@@ -48,7 +56,9 @@ namespace DiaBlackJack.GameScene
 
             IsOpen = true;
             Gold += goldPerWin;
-            GenerateDemonCardOffers();
+            int offerSeed = shopRandomSeed + _openCount++;
+            GenerateDemonCardOffers(offerSeed);
+            GenerateNormalCardOffers(offerSeed + 9973);
 
             if (merchant != null)
             {
@@ -88,7 +98,7 @@ namespace DiaBlackJack.GameScene
         public void ResetGold()
         {
             Gold = 0;
-            RefreshDemonOfferViews();
+            RefreshOfferViews();
         }
 
         public bool TryPurchaseDemonCard(int offerId, out string definitionKey)
@@ -114,7 +124,39 @@ namespace DiaBlackJack.GameScene
                 offer.View.SetHovered(false);
             }
 
-            RefreshDemonOfferViews();
+            RefreshOfferViews();
+            return true;
+        }
+
+        public bool TryPurchaseNormalCard(
+            int offerId,
+            out string definitionKey,
+            out CardSuit suit)
+        {
+            definitionKey = null;
+            suit = CardSuit.Spade;
+            if (!IsOpen)
+            {
+                return false;
+            }
+
+            NormalCardOffer offer = FindNormalOffer(offerId);
+            if (offer == null || offer.SoldOut || Gold < offer.Price)
+            {
+                return false;
+            }
+
+            Gold -= offer.Price;
+            offer.SoldOut = true;
+            definitionKey = offer.DefinitionKey;
+            suit = offer.Suit;
+
+            if (offer.View != null)
+            {
+                offer.View.SetHovered(false);
+            }
+
+            RefreshOfferViews();
             return true;
         }
 
@@ -134,7 +176,7 @@ namespace DiaBlackJack.GameScene
             }
         }
 
-        private void GenerateDemonCardOffers()
+        private void GenerateDemonCardOffers(int seed)
         {
             ClearDemonCardOffers();
             if (demonCardHolder == null || demonCardPrefab == null)
@@ -144,7 +186,7 @@ namespace DiaBlackJack.GameScene
 
             DemonContractCatalog catalog = DemonContractCatalog.Default;
             var definitions = new List<DemonContractDefinition>(catalog.Definitions);
-            Shuffle(definitions);
+            Shuffle(definitions, seed);
 
             int count = Mathf.Min(demonCardOfferCount, definitions.Count);
             for (int i = 0; i < count; i++)
@@ -166,6 +208,37 @@ namespace DiaBlackJack.GameScene
             LayoutDemonOfferViews();
         }
 
+        private void GenerateNormalCardOffers(int seed)
+        {
+            ClearNormalCardOffers();
+            if (normalCardHolder == null || normalCardPrefab == null)
+            {
+                return;
+            }
+
+            List<NormalCardOfferData> candidates = CreateNormalCardOfferPool();
+            Shuffle(candidates, seed);
+
+            int count = Mathf.Min(normalCardOfferCount, candidates.Count);
+            for (int i = 0; i < count; i++)
+            {
+                NormalCardOfferData candidate = candidates[i];
+                CardView view = Instantiate(normalCardPrefab, normalCardHolder);
+                view.transform.localRotation = Quaternion.identity;
+
+                var offer = new NormalCardOffer(
+                    _nextOfferId++,
+                    candidate.Definition,
+                    candidate.Suit,
+                    normalCardPrice,
+                    view);
+                _normalOffers.Add(offer);
+                BindOfferView(offer);
+            }
+
+            LayoutNormalOfferViews();
+        }
+
         private void ClearDemonCardOffers()
         {
             foreach (DemonCardOffer offer in _demonOffers)
@@ -179,7 +252,20 @@ namespace DiaBlackJack.GameScene
             _demonOffers.Clear();
         }
 
-        private void RefreshDemonOfferViews()
+        private void ClearNormalCardOffers()
+        {
+            foreach (NormalCardOffer offer in _normalOffers)
+            {
+                if (offer.View != null)
+                {
+                    Destroy(offer.View.gameObject);
+                }
+            }
+
+            _normalOffers.Clear();
+        }
+
+        private void RefreshOfferViews()
         {
             foreach (DemonCardOffer offer in _demonOffers)
             {
@@ -187,6 +273,13 @@ namespace DiaBlackJack.GameScene
             }
 
             LayoutDemonOfferViews();
+
+            foreach (NormalCardOffer offer in _normalOffers)
+            {
+                BindOfferView(offer);
+            }
+
+            LayoutNormalOfferViews();
         }
 
         private void BindOfferView(DemonCardOffer offer)
@@ -218,6 +311,33 @@ namespace DiaBlackJack.GameScene
                 definition.DisplayName,
                 definition.Summary,
                 costSummary));
+        }
+
+        private void BindOfferView(NormalCardOffer offer)
+        {
+            if (offer == null || offer.View == null)
+            {
+                return;
+            }
+
+            if (offer.SoldOut)
+            {
+                offer.View.gameObject.SetActive(false);
+                return;
+            }
+
+            offer.View.gameObject.SetActive(true);
+            CardDefinition definition = offer.Definition;
+            offer.View.Bind(new GameSceneCardViewModel(
+                offer.OfferId,
+                definition.Rank,
+                isFaceUp: true,
+                revealRank: true,
+                canUse: Gold >= offer.Price,
+                definition.DisplayName,
+                abilityDescription: FormatNormalCardOfferText(definition, offer.Price),
+                suit: offer.Suit,
+                showHoverBadgeWhenUnavailable: true));
         }
 
         private void LayoutDemonOfferViews()
@@ -254,6 +374,40 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        private void LayoutNormalOfferViews()
+        {
+            int visibleCount = 0;
+            foreach (NormalCardOffer offer in _normalOffers)
+            {
+                if (offer != null && !offer.SoldOut && offer.View != null)
+                {
+                    visibleCount++;
+                }
+            }
+
+            if (visibleCount == 0)
+            {
+                return;
+            }
+
+            float offset = -(visibleCount - 1) * 0.5f * normalCardSpacing;
+            int visibleIndex = 0;
+            foreach (NormalCardOffer offer in _normalOffers)
+            {
+                if (offer == null || offer.SoldOut || offer.View == null)
+                {
+                    continue;
+                }
+
+                offer.View.transform.localPosition = new Vector3(
+                    offset + visibleIndex * normalCardSpacing,
+                    0f,
+                    visibleIndex * 0.01f);
+                offer.View.transform.localRotation = Quaternion.identity;
+                visibleIndex++;
+            }
+        }
+
         private DemonCardOffer FindDemonOffer(int offerId)
         {
             foreach (DemonCardOffer offer in _demonOffers)
@@ -267,15 +421,72 @@ namespace DiaBlackJack.GameScene
             return null;
         }
 
-        private void Shuffle(List<DemonContractDefinition> definitions)
+        private NormalCardOffer FindNormalOffer(int offerId)
         {
-            _random.Reseed(shopRandomSeed + _openCount++);
-            for (int i = definitions.Count - 1; i > 0; i--)
+            foreach (NormalCardOffer offer in _normalOffers)
+            {
+                if (offer.OfferId == offerId)
+                {
+                    return offer;
+                }
+            }
+
+            return null;
+        }
+
+        private void Shuffle<T>(List<T> items, int seed)
+        {
+            _random.Reseed(seed);
+            for (int i = items.Count - 1; i > 0; i--)
             {
                 int swapIndex = _random.Next(i + 1);
-                DemonContractDefinition definition = definitions[i];
-                definitions[i] = definitions[swapIndex];
-                definitions[swapIndex] = definition;
+                T item = items[i];
+                items[i] = items[swapIndex];
+                items[swapIndex] = item;
+            }
+        }
+
+        private static List<NormalCardOfferData> CreateNormalCardOfferPool()
+        {
+            var candidates = new List<NormalCardOfferData>(20);
+            for (int rank = 1; rank <= 10; rank++)
+            {
+                CardDefinition definition = CardDefinitionCatalog.GetDefaultForRank(rank);
+                candidates.Add(new NormalCardOfferData(definition, CardSuit.Spade));
+                candidates.Add(new NormalCardOfferData(definition, CardSuit.Clover));
+            }
+
+            return candidates;
+        }
+
+        private static string FormatNormalCardOfferText(
+            CardDefinition definition,
+            int price)
+        {
+            string text = "PRICE " + price + " GOLD";
+            string effect = FormatCardEffect(definition.Effect);
+            if (!string.IsNullOrEmpty(effect))
+            {
+                text += "\n" + effect;
+            }
+
+            return text;
+        }
+
+        private static string FormatCardEffect(CardEffectKind effect)
+        {
+            switch (effect)
+            {
+                case CardEffectKind.CrystalOrb:
+                    return "덱 맨 위 2장 훔쳐보고 1장 가져오기";
+                case CardEffectKind.ThreatHammer:
+                    return "적 공개 카드 1장 제거";
+                case CardEffectKind.AutoPistol:
+                    return "적 비공개 숫자 맞히면 적 즉사";
+                case CardEffectKind.MilitaryKnife:
+                    return "적에게 공개카드 1장 강제로 뽑게 함";
+                default:
+                    return string.Empty;
             }
         }
 
@@ -333,6 +544,50 @@ namespace DiaBlackJack.GameScene
             public bool SoldOut { get; set; }
 
             public DemonCardView View { get; }
+        }
+
+        private readonly struct NormalCardOfferData
+        {
+            public NormalCardOfferData(CardDefinition definition, CardSuit suit)
+            {
+                Definition = definition ?? throw new ArgumentNullException(nameof(definition));
+                Suit = suit;
+            }
+
+            public CardDefinition Definition { get; }
+
+            public CardSuit Suit { get; }
+        }
+
+        private sealed class NormalCardOffer
+        {
+            public NormalCardOffer(
+                int offerId,
+                CardDefinition definition,
+                CardSuit suit,
+                int price,
+                CardView view)
+            {
+                OfferId = offerId;
+                Definition = definition ?? throw new ArgumentNullException(nameof(definition));
+                Suit = suit;
+                Price = price;
+                View = view;
+            }
+
+            public CardDefinition Definition { get; }
+
+            public string DefinitionKey => Definition.Key;
+
+            public int OfferId { get; }
+
+            public int Price { get; }
+
+            public bool SoldOut { get; set; }
+
+            public CardSuit Suit { get; }
+
+            public CardView View { get; }
         }
     }
 }

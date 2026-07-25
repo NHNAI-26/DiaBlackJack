@@ -60,6 +60,31 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CL_U06_TryAddAvailableCardImmediatelyExtendsDrawPool()
+        {
+            var deck = new BlackjackDeck(
+                new[]
+                {
+                    new BlackjackCard(0, 1),
+                    new BlackjackCard(1, 2)
+                },
+                seed: 7);
+            var purchasedCard = new BlackjackCard(
+                2,
+                CardDefinitionCatalog.GetDefaultForRank(7),
+                isFaceUp: true,
+                suit: CardSuit.Clover);
+
+            Assert.That(deck.TryAddAvailableCard(purchasedCard), Is.True);
+            Assert.That(deck.TotalCardCount, Is.EqualTo(3));
+            Assert.That(deck.AvailableCardCount, Is.EqualTo(3));
+            Assert.That(purchasedCard.IsFaceUp, Is.False);
+            Assert.That(deck.GetDrawPileRankCounts()[7], Is.EqualTo(1));
+            Assert.That(deck.TryAddAvailableCard(new BlackjackCard(2, 7)), Is.False);
+            Assert.That(deck.TotalCardCount, Is.EqualTo(3));
+        }
+
+        [Test]
         public void StandardDeckContainsTwoOfEveryRank()
         {
             BlackjackDeck deck = BlackjackDeck.CreateStandard(seed: 17);
