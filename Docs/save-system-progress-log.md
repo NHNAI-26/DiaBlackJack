@@ -3,9 +3,9 @@
 > 프로젝트: DiaBlackJack
 > 기획·기록·구현 책임자: 이천서
 > 작업 식별자: SV-00~SV-06
-> 버전: v0.2
-> 현재 단계: SV-01 순수 스냅샷·검증 완료
-> 다음 단계: SV-02 버전 JSON·원자 파일·백업
+> 버전: v0.3
+> 현재 단계: SV-02 버전 JSON·원자 파일·백업 완료
+> 다음 단계: SV-03 현재 런 캡처·복원
 > 최종 갱신: 2026-07-26
 
 ## 1. 기록 원칙
@@ -42,7 +42,7 @@
 | --- | --- | --- | --- |
 | SV-00 | 이천서(AI 문서·구조 대조 보조) | 완료 | 문서 4종·README·AI 활용·역할·구조 기록 |
 | SV-01 | 이천서(AI 구현·검증 보조) | 완료 | 대상 7/7·StageProgression 141/141·전체 483/483·컴파일 오류 0 |
-| SV-02 | 이천서(AI 구현·검증 보조) | 미착수 | 버전 JSON·원자 파일·백업 |
+| SV-02 | 이천서(AI 구현·검증 보조) | 완료 | 대상 8/8·StageProgression 149/149·전체 491/491·컴파일 오류 0 |
 | SV-03 | 이천서(AI 구현·검증 보조) | 미착수 | 현재 런 캡처·복원 |
 | SV-04 | 이천서(AI 구현·검증 보조) | 미착수 | 체크포인트·결정성 |
 | SV-05 | 이천서(AI UI·검증 보조) | 미착수 | 새 게임·이어하기·실패 UI |
@@ -189,7 +189,80 @@ Tested: SV01 7/7, StageProgression 141/141, 전체 EditMode 483/483, 컴파일 �
 Not-tested: JSON 왕복·실제 파일 실패·백업 복구·프로세스 재실행
 ```
 
-## 6. 결정 및 문제 대장
+## 6. SV-02 수행 기록
+
+### 6.1 수행 내용
+
+- `RunSaveEnvelope` 계층을 Unity `JsonUtility`용 필드 DTO로 만들고 순수 `RunSaveSnapshot`과 분리했다.
+- 체크포인트·런 상태·카드 무늬는 enum 정수 대신 `combat-settlement-completed`, `in-progress`, `spade` 같은 안정 문자열로 저장한다.
+- `RunSaveSerializer`가 v1 전체 필드를 왕복하고 미래 스키마·콘텐츠 리비전 불일치·손상 JSON을 구분하게 했다.
+- `IRunSaveFileStore`로 파일 시스템을 추상화하고 `SystemRunSaveFileStore`만 `Application.persistentDataPath`와 .NET 파일 API를 사용하게 했다.
+- 저장 파일명은 `run-save.json`, `run-save.bak`, `run-save.tmp`로 고정했으며 절대 경로·하위 경로·경로 이동 문자열을 거부한다.
+- 저장 시 임시 파일을 다시 읽어 역직렬화와 도메인 검증까지 통과한 뒤 기존 기본 파일을 백업으로 옮기고 교체한다.
+- 마지막 임시→기본 이동이 실패하면 백업을 기본 파일로 되돌려 직전 정상 저장을 보존한다.
+- 불러오기는 기본 파일을 먼저 검증하고 실패하면 백업을 사용하며 양쪽 손상·미지원 버전·콘텐츠 불일치·터미널 저장을 명시적 결과로 반환한다.
+- 기존 `save.game`가 없거나 비어 있으면 `NoSave`로 처리하고, 레거시 `SaveLoadSystem` 자체는 변경하지 않았다.
+
+### 6.2 구현 파일
+
+- `Assets/01. Scripts/SaveLoad/RunSaveEnvelope.cs`
+- `Assets/01. Scripts/SaveLoad/RunSaveSerializer.cs`
+- `Assets/01. Scripts/SaveLoad/RunSaveResults.cs`
+- `Assets/01. Scripts/SaveLoad/IRunSaveFileStore.cs`
+- `Assets/01. Scripts/SaveLoad/SystemRunSaveFileStore.cs`
+- `Assets/01. Scripts/SaveLoad/RunSaveRepository.cs`
+- `Assets/06.Packages/Tests/EditMode/StageProgression/RunSaveRepositoryTests.cs`
+- 위 신규 스크립트의 Unity `.meta`
+
+### 6.3 검증
+
+| 검증 | 결과 |
+| --- | --- |
+| Unity 컴파일 | 최초 미초기화 지역 변수 1건을 수정한 뒤 재컴파일 오류 0건 |
+| SV02-U01~U08 | 8/8 통과, 최종 MCP 작업 `a77adba995914df8ba88ca9a89f4a137` |
+| StageProgression | 149/149 통과, 최종 MCP 작업 `b76f39b70e80469eae011991e162d887` |
+| 전체 EditMode | 491/491 통과, 최종 MCP 작업 `0bd47501216943e7b2ef4e8880720bd1` |
+| 테스트 후 Console | Test Framework/MCP 사전·사후 처리·결과 저장 안내 10건, 컴파일·게임 코드 오류 0건 |
+| 실패 원자성 | 메모리 파일 저장소에서 임시 쓰기 실패와 최종 교체 실패를 주입하고 이전 기본 파일 보존 확인 |
+| 순수성 | `StageProgression/Save` 변경 없음·Unity 참조 0 유지, 파일 I/O는 `SaveLoad`에 한정 |
+| 씬·프리팹·Packages | 변경 없음 |
+| 외부 에셋·오픈소스 | 추가 없음 |
+
+### 6.4 완료한 테스트 항목
+
+| ID | 결과 |
+| --- | --- |
+| SV02-U01 | v1 JSON 전체 필드 왕복과 안정 문자열 코드 보존 |
+| SV02-U02 | 임시 기록·재검증 뒤 기본→백업→기본 교체 순서 |
+| SV02-U03 | 임시 쓰기 실패 시 이전 기본 파일 보존 |
+| SV02-U04 | 최종 교체 실패 시 백업에서 이전 기본 파일 복원 |
+| SV02-U05 | 손상된 기본 파일 대신 유효한 백업 불러오기 |
+| SV02-U06 | 기본·백업 모두 손상 시 명시적 `Corrupted` |
+| SV02-U07 | 미래 스키마와 콘텐츠 리비전 불일치 구분 |
+| SV02-U08 | 빈 레거시 `save.game`를 `NoSave`로 분류 |
+
+### 6.5 제외·다음 단계
+
+- 실제 런 객체를 스냅샷에서 새 세션으로 복원하는 Factory와 Runtime 연결은 아직 없다.
+- 실제 영구 데이터 경로의 프로세스 종료·재실행 검증은 Runtime과 UI가 연결되는 SV-05~SV-06에서 수행한다.
+- 터미널 저장은 이어하기 불가로 분류하지만 결과 화면·메뉴 표시는 아직 연결하지 않았다.
+- 다음 SV-03에서는 일반/악마 카드 물리 ID와 마지막 발급 ID, 영혼·스테이지 상태를 새 런 객체로 왕복 복원한다.
+
+### 6.6 권장 커밋 메시지
+
+```text
+feat : 저장 실패가 마지막 정상 런을 지우지 않게 파일 교체를 보호하다
+
+Constraint: 현재 스키마 1만 지원하며 Runtime 복원·메뉴 연결은 후속 단계
+Rejected: 기본 파일 직접 덮어쓰기 | 임시 쓰기나 검증 실패가 마지막 정상 저장을 파괴함
+Confidence: high
+Scope-risk: narrow
+Directive: 새 필드는 순수 스냅샷 검증과 안정 문자열 DTO를 함께 갱신할 것
+Tested: SV02 8/8, StageProgression 149/149, 전체 EditMode 491/491, 컴파일 오류 0
+Not-tested: 실제 프로세스 종료·재실행, Runtime 세션 복원, 메뉴 UI
+```
+
+## 7. 결정 및 문제 대장
 
 | ID | 항목 | 상태 | 결정·대응 | 재검토 조건 |
 | --- | --- | --- | --- | --- |
@@ -201,26 +274,27 @@ Not-tested: JSON 왕복·실제 파일 실패·백업 복구·프로세스 재�
 | SV-D06 | 터미널 저장 | 임시 확정 | 결과 유지, 이어하기 비활성 | 메타 통계 도입 |
 | SV-D09 | 스냅샷 생성 경계 | 확정 | 내부 생성자·방어 복사·공개 읽기 전용 프로퍼티 | 스키마 버전 변경 |
 | SV-D10 | 현행 캡처 허용 상태 | 확정 | `StageCleared`·`RunVictory`·`RunDefeat`만 허용 | 시작·RF·사건 상태 구현 |
-| SV-R01 | 기존 `Save`가 비어 있음 | 확인 | 레거시 완료 기능으로 재사용하지 않음 | SV-02 구현 |
-| SV-R02 | 직접 덮어쓰기 | 미해결 | 임시·재검증·백업 교체로 대체 예정 | SV-02 |
+| SV-D11 | 파일 이름 | 확정 | `run-save.json`·`run-save.bak`·`run-save.tmp`, 레거시 `save.game` | 플랫폼 저장 정책 변경 |
+| SV-R01 | 기존 `Save`가 비어 있음 | 대응 완료 | 비어 있거나 없는 `save.game`는 `NoSave`, 비어 있지 않은 레거시는 지원하지 않음 | 레거시 마이그레이션 필요 시 |
+| SV-R02 | 직접 덮어쓰기 | 해결 | 임시 재검증·기본→백업·임시→기본, 실패 시 백업 복원 | 플랫폼 원자 저장 API 도입 |
 | SV-R03 | RF 실제 상태 없음 | 선행 필요 | 읽기 전용 Snapshot 계약만 정의 | HONG RF 구현 완료 |
 | SV-R04 | 사건 시스템 없음 | 선행 필요 | 빈 사건 프레임워크를 만들지 않음 | 사건 작업 착수 |
 | SV-R05 | 현재 생성기 상태 재현 | 조사 필요 | 루트 시드·종류별 순번으로 이관 | SV-03~04 |
 | SV-R06 | 시작 악마 선택 상태 없음 | 선행 필요 | 현재 기본 악마 4장을 선택 결과로 간주하지 않음 | 시작 악마 선택 구현 완료 |
 
-## 7. 계획 검증표
+## 8. 계획 검증표
 
 | 단계 | 대상 검증 | 전체 회귀 | 실제 파일 | 화면·프로세스 |
 | --- | --- | --- | --- | --- |
 | SV-00 | 문서·구조 대조 | 미실행 | 미실행 | 미실행 |
 | SV-01 | 7/7 통과 | StageProgression 141/141·전체 483/483 | 없음 | 컴파일 오류 0·Test Framework 안내 3건 |
-| SV-02 | 직렬화·파일 실패 8개 이상 | StageProgression | 임시 저장소 | 없음 |
+| SV-02 | 8/8 통과 | StageProgression 149/149·전체 491/491 | 메모리 실패 주입 | 컴파일 오류 0·기반 시설 안내 10건 |
 | SV-03 | 캡처·복원 5개 이상 | CoreLoop+StageProgression | 메모리/임시 | 없음 |
 | SV-04 | 체크포인트 4개 이상 | 전체 EditMode | 임시/기본 | 없음 |
 | SV-05 | 예약·메뉴·실패 3개 이상 | 전체 EditMode | 영구 경로 격리 | 두 해상도 |
 | SV-06 | 반복·터미널·재실행 3개 이상 | 전체 EditMode | 실제 기본·백업 | 종료·재실행·Console |
 
-## 8. 단계별 완료 기록 양식
+## 9. 단계별 완료 기록 양식
 
 ```text
 ### SV-0N — 작업명
@@ -243,9 +317,10 @@ Not-tested: JSON 왕복·실제 파일 실패·백업 복구·프로세스 재�
 - 권장 커밋 메시지:
 ```
 
-## 9. 변경 기록
+## 10. 변경 기록
 
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
+| 2026-07-26 | 이천서 | SV-02 v1 JSON·안정 문자열·임시 재검증·원자 교체·백업 불러오기·명시적 실패 결과와 대상 8/8·StageProgression 149/149·전체 491/491·컴파일 오류 0 완료 기록 |
 | 2026-07-26 | 이천서 | SV-01 스키마 1 불변 스냅샷·타입화된 검증·현행 안정 상태 캡처와 대상 7/7·StageProgression 141/141·전체 483/483·컴파일 오류 0 완료 기록, Test Framework 안내 3건 분리 |
 | 2026-07-26 | 이천서 | SV-00 기준 문서·현재 코드 대조, 체크포인트·런 예약·파일 복구·결정성·팀 의존성 결정과 SV-01 착수 범위 기록 |

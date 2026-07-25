@@ -3,7 +3,7 @@
 > 프로젝트: DiaBlackJack  
 > 문서 책임자: 이천서  
 > 버전: v0.1  
-> 최종 갱신: 2026-07-25
+> 최종 갱신: 2026-07-26
 
 ## 1. 문서 목적
 
@@ -677,6 +677,20 @@ SV-01 문서 계약에 따라 UnityEngine·파일 I/O와 분리된 스키마 1 �
 컴파일·Console을 Unity MCP로 검증하고 이천서 담당 기록을 갱신한다.
 ```
 
+#### 게임 저장·이어하기 SV-02 구현
+
+```text
+SV-01의 검증된 RunSaveSnapshot을 필드 기반 스키마 1 JSON DTO로 변환한다.
+체크포인트·런 상태·카드 무늬는 enum 정수 대신 안정 문자열로 저장하고, 미래
+스키마와 콘텐츠 리비전 불일치·손상 JSON을 구분한다. Application.persistentDataPath는
+파일 저장소 구현에만 한정하고 절대/하위 경로를 거부한다. run-save.tmp를 기록한 뒤
+재로드·역직렬화·도메인 검증하고, 기존 기본 파일을 백업한 다음 교체한다. 마지막
+교체 실패 시 이전 기본 파일을 복원하며 기본 손상 시 유효한 백업을 읽는다.
+SV02-U01~U08·StageProgression·전체 EditMode·컴파일·Console을 Unity MCP로 검증한다.
+기존 save.game·씬·프리팹·Packages·외부 에셋·HONG RF 코드는 변경하지 않고 책임자는
+이천서로 기록한다.
+```
+
 #### 기록 및 품질 지시
 
 ```text
@@ -752,6 +766,7 @@ AI 대화 원문을 그대로 싣지 말고 목적, 핵심 지시, 결과, 사�
 | 2026-07-25 | 이천서 | AC-06 독립/런 자동 선택·안전 표시·공개 정보 적 정책·일반 보상 5종·사기꾼 탐지기 통합 | `AutomaticCardDecisionPolicy.cs`, CoreLoop·StageProgression 세션/표시, View·Controller·`GameManager.cs`, 보상·프로필, AC-06 통합 테스트와 관련 문서 | AI 구조 대조·코드·테스트·검증·기록 보조, 대상 15/15·Unity 비의존 461/461·Unity 런타임/CoreLoop 및 StageProgression 컴파일 성공; Unity MCP·Batchmode 라이선스 IPC 제약으로 Editor 전용 10건과 두 씬·두 해상도·Console은 후속 검증, `GameScene.unity`·Packages·외부 에셋·오픈소스 변경 없음, 이천서 최종 승인 필요 |
 | 2026-07-26 | 이천서 | SV-00 안정 체크포인트·런 예약·저장 범위·결정성·버전·원자 파일·백업 복구·복원·RF 의존성 문서화 | `Docs/save-system-*.md` 4종, README·프로젝트 구조·AI 활용·팀 역할 기록 | AI 기준 문서·현재 코드 대조와 문서 초안 보조, 코드·테스트·씬·프리팹·Packages·외부 에셋·오픈소스 변경과 Unity 재검증 없음; 이천서 기획·개발 기준 최종 검토 필요 |
 | 2026-07-26 | 이천서 | SV-01 순수 스키마 1 스냅샷·카탈로그/ID/스테이지/체크포인트 검증·안정 상태 캡처 구현 | `StageProgression/Save` 4개 스크립트, `PlayerRunState`, `RunSaveSnapshotTests`, 저장 문서·공통 기록 | AI 구조 대조·구현·테스트·Unity MCP·기록 보조, 대상 7/7·StageProgression 141/141·전체 EditMode 483/483·컴파일 오류 0, Test Framework 안내 3건 분리; 씬·프리팹·Packages·외부 에셋·오픈소스 변경 없음, 이천서 최종 승인 필요 |
+| 2026-07-26 | 이천서 | SV-02 스키마 1 JSON·안정 문자열·임시 재검증·원자 파일 교체·백업 불러오기 구현 | `SaveLoad` 런 저장 6개 스크립트, `RunSaveRepositoryTests`, 저장 문서·공통 기록 | AI 구조 대조·구현·실패 주입 테스트·Unity MCP·기록 보조, 대상 8/8·StageProgression 149/149·전체 EditMode 491/491·컴파일 오류 0, Test Framework/MCP 안내 10건 분리; 씬·프리팹·Packages·외부 에셋·오픈소스 변경 없음, 이천서 최종 승인 필요 |
 
 AI는 코어 루프 1단계 규칙, 2단계 전투 흐름, 3단계 세션·표시 모델·최소 UI와 테스트 초안을 작성하고, 4단계에서 전체 회귀·실제 흐름 검증과 기록 정리를 보조했다. Unity MCP를 통해 스크립트 진단, Unity 컴파일, 씬 배치·검증, Game View 확인과 EditMode 테스트를 수행했으며 최종 실행에서도 전체 27개 테스트가 모두 통과했다. 최종 기획 적합성과 코드·화면 승인 책임은 이천서에게 있다.
 
@@ -1041,6 +1056,29 @@ AI는 `PlayerRunState`, `RunProgress`, 카드·악마 카탈로그와 SV-01 명�
 3건은 Test Framework 사전·사후 처리와 결과 저장 경로 안내로 분리했다. 씬·프리팹·
 Packages·외부 에셋·오픈소스는 변경하지 않았으며 최종 코드 승인 책임은 이천서에게
 있다.
+
+### 3.18 SV-02 버전 JSON·원자 파일·백업
+
+이천서는 마지막 정상 저장을 훼손하지 않는 파일 경계와 버전 오류의 명시적 분류를
+구현하도록 지시했다. AI는 순수 스냅샷을 직접 Unity 직렬화 대상에 넣지 않고,
+필드 기반 `RunSaveEnvelope`와 Mapper를 `Border.SaveLoad`에 구성했다. enum의 선언
+순서가 바뀌어도 저장 의미가 변하지 않도록 체크포인트·상태·무늬를 안정 문자열로
+변환했다.
+
+파일 쓰기는 `IRunSaveFileStore`로 추상화했다. 실제 구현만 Unity 영구 데이터 경로를
+사용하고 단일 안전 파일명만 받는다. `RunSaveRepository`는 임시 파일을 다시 읽어
+역직렬화와 도메인 검증을 수행한 뒤 기존 기본 파일을 백업하고 교체한다. 최종 교체
+실패에는 백업을 기본 파일로 되돌리며, 불러오기에서는 손상 기본 파일 다음에 백업을
+검증한다. 미래 스키마·콘텐츠 불일치·양쪽 손상·터미널 저장·빈 레거시 파일을 서로
+다른 결과 코드로 반환한다.
+
+메모리 파일 저장소로 실패 단계를 주입한 SV02-U01~U08 8/8, StageProgression
+149/149, 전체 EditMode 491/491가 Unity MCP에서 통과했다. 최초 컴파일의 미초기화
+지역 변수 1건은 수정 후 재컴파일해 오류 0건을 확인했다. 최종 Console에는
+Test Framework/MCP의 사전·사후 처리와 결과 저장 안내 10건만 있었고 게임 코드
+오류는 없었다. 실제 프로세스 재실행·런 객체 복원·메뉴 UI는 후속 SV-03~SV-06
+범위로 남겼다. 씬·프리팹·Packages·외부 에셋·오픈소스는 변경하지 않았으며 최종
+코드 승인 책임은 이천서에게 있다.
 
 ## 4. 생성형 AI 산출물 관리
 
