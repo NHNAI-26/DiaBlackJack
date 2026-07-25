@@ -40,6 +40,16 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float stepSeconds = 1.0f;
         [SerializeField] private float resolveHoldSeconds = 1.1f;
 
+        [Header("Revolver animation")]
+        [SerializeField] private Animator revolverAnimator;
+        [SerializeField] private GameObject revolverRoot;
+        [SerializeField] private float revolverAnimationSeconds = 8.8f;
+        [SerializeField] private string revolverBaseStateName = "Revolver_Base";
+        [SerializeField] private string playerSuccessTrigger = "PlayerSuccess";
+        [SerializeField] private string playerFailTrigger = "PlayerFail";
+        [SerializeField] private string enemySuccessTrigger = "EnemySuccess";
+        [SerializeField] private string enemyFailTrigger = "EnemyFail";
+
         private CoreLoopSession _session;
         private CoreLoopViewModel _core;
         private Camera _camera;
@@ -56,6 +66,12 @@ namespace DiaBlackJack.GameScene
         private GUIStyle _contractCostStyle;
         private DeckClickable _hoveredDeck;
         private bool _showDemonContractConfirmation;
+        private bool _hasLastRevolverAnimationCue;
+        private int _lastRevolverAnimationRoundNumber;
+        private int _lastRevolverAnimationSourceCardId;
+        private CombatantSide _lastRevolverAnimationActorSide;
+        private bool _lastRevolverAnimationSucceeded;
+        private Coroutine _revolverHideRoutine;
         private readonly List<GameSceneViewModel> _timeline = new List<GameSceneViewModel>();
         private readonly List<PurchasedNormalCard> _purchasedNormalCards =
             new List<PurchasedNormalCard>();
@@ -65,6 +81,7 @@ namespace DiaBlackJack.GameScene
 
         private void Awake()
         {
+            HideRevolverAnimation();
             _session = new CoreLoopSession(CreateBattle);
         }
 
@@ -191,6 +208,7 @@ namespace DiaBlackJack.GameScene
 
         private CoreLoopBattle CreateBattle()
         {
+            ResetRevolverAnimationState();
             int battleSeed = seed + (_battleIndex * 2);
             _battleIndex++;
             return new CoreLoopBattle(
@@ -874,10 +892,16 @@ namespace DiaBlackJack.GameScene
         {
             foreach (GameSceneViewModel vm in _timeline)
             {
-                ApplyView(vm);
+                bool playedRevolverAnimation = ApplyView(vm);
 
                 bool resolveBeat = vm.Core.State == CoreLoopState.ResolvingRound;
-                yield return new WaitForSeconds(resolveBeat ? resolveHoldSeconds : stepSeconds);
+                float waitSeconds = resolveBeat ? resolveHoldSeconds : stepSeconds;
+                if (playedRevolverAnimation)
+                {
+                    waitSeconds = Mathf.Max(waitSeconds, revolverAnimationSeconds);
+                }
+
+                yield return new WaitForSeconds(waitSeconds);
             }
 
             // Land on the true current state — e.g. BattleEnded, which is not itself a step.
@@ -892,7 +916,7 @@ namespace DiaBlackJack.GameScene
             ApplyView(vm);
         }
 
-        private void ApplyView(GameSceneViewModel vm)
+        private bool ApplyView(GameSceneViewModel vm)
         {
             _core = vm.Core;
 
@@ -902,11 +926,14 @@ namespace DiaBlackJack.GameScene
                 hud.SetGold(shop != null ? shop.Gold : 0);
             }
 
+            bool playedRevolverAnimation =
+                TryPlayRevolverAnimation(vm.RevolverAnimationCue);
+
             // While the shop is open its presentation (merchant, hidden combat objects, goods) is owned
             // by ShopController; skip the combat re-render so it doesn't repaint the enemy over the merchant.
             if (shop != null && shop.IsOpen)
             {
-                return;
+                return playedRevolverAnimation;
             }
 
             if (playerHand != null)
@@ -933,6 +960,162 @@ namespace DiaBlackJack.GameScene
             {
                 totals.Render(vm.Core.PlayerTotal, vm.Core.EnemyVisibleTotal);
             }
+
+            return playedRevolverAnimation;
+        }
+
+        private bool TryPlayRevolverAnimation(GameSceneRevolverAnimationCue cue)
+        {
+            if (cue == null || revolverAnimator == null)
+            {
+                return false;
+            }
+
+            if (IsLastRevolverAnimationCue(cue))
+            {
+                return false;
+            }
+
+            RememberRevolverAnimationCue(cue);
+
+            GameObject root = ResolveRevolverRoot();
+            if (root != null && !root.activeSelf)
+            {
+                root.SetActive(true);
+            }
+
+            if (!revolverAnimator.gameObject.activeInHierarchy)
+            {
+                return false;
+            }
+
+            StopRevolverHideRoutine();
+            ResetRevolverTriggers();
+            ResetRevolverAnimatorToBase();
+            revolverAnimator.SetTrigger(ResolveRevolverTrigger(cue));
+
+            if (Application.isPlaying && revolverAnimationSeconds > 0f)
+            {
+                _revolverHideRoutine =
+                    StartCoroutine(HideRevolverAnimationAfterDelay());
+            }
+
+            return true;
+        }
+
+        private bool IsLastRevolverAnimationCue(
+            GameSceneRevolverAnimationCue cue)
+        {
+            return _hasLastRevolverAnimationCue &&
+                _lastRevolverAnimationRoundNumber == cue.RoundNumber &&
+                _lastRevolverAnimationSourceCardId == cue.SourceCardId &&
+                _lastRevolverAnimationActorSide == cue.ActorSide &&
+                _lastRevolverAnimationSucceeded == cue.Succeeded;
+        }
+
+        private void RememberRevolverAnimationCue(
+            GameSceneRevolverAnimationCue cue)
+        {
+            _hasLastRevolverAnimationCue = true;
+            _lastRevolverAnimationRoundNumber = cue.RoundNumber;
+            _lastRevolverAnimationSourceCardId = cue.SourceCardId;
+            _lastRevolverAnimationActorSide = cue.ActorSide;
+            _lastRevolverAnimationSucceeded = cue.Succeeded;
+        }
+
+        private string ResolveRevolverTrigger(GameSceneRevolverAnimationCue cue)
+        {
+            if (cue.ActorSide == CombatantSide.Player)
+            {
+                return cue.Succeeded ? playerSuccessTrigger : playerFailTrigger;
+            }
+
+            return cue.Succeeded ? enemySuccessTrigger : enemyFailTrigger;
+        }
+
+        private void ResetRevolverAnimationState()
+        {
+            _hasLastRevolverAnimationCue = false;
+            _lastRevolverAnimationRoundNumber = 0;
+            _lastRevolverAnimationSourceCardId = 0;
+            _lastRevolverAnimationActorSide = CombatantSide.Player;
+            _lastRevolverAnimationSucceeded = false;
+            HideRevolverAnimation();
+        }
+
+        private IEnumerator HideRevolverAnimationAfterDelay()
+        {
+            yield return new WaitForSeconds(revolverAnimationSeconds);
+            _revolverHideRoutine = null;
+            ResetRevolverAnimatorToBase();
+
+            GameObject root = ResolveRevolverRoot();
+            if (root != null)
+            {
+                root.SetActive(false);
+            }
+        }
+
+        private void HideRevolverAnimation()
+        {
+            StopRevolverHideRoutine();
+            ResetRevolverAnimatorToBase();
+
+            GameObject root = ResolveRevolverRoot();
+            if (root != null)
+            {
+                root.SetActive(false);
+            }
+        }
+
+        private void StopRevolverHideRoutine()
+        {
+            if (_revolverHideRoutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(_revolverHideRoutine);
+            _revolverHideRoutine = null;
+        }
+
+        private void ResetRevolverAnimatorToBase()
+        {
+            if (revolverAnimator == null ||
+                string.IsNullOrWhiteSpace(revolverBaseStateName) ||
+                !revolverAnimator.gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
+            revolverAnimator.Play(revolverBaseStateName, 0, 0f);
+            revolverAnimator.Update(0f);
+        }
+
+        private void ResetRevolverTriggers()
+        {
+            ResetRevolverTrigger(playerSuccessTrigger);
+            ResetRevolverTrigger(playerFailTrigger);
+            ResetRevolverTrigger(enemySuccessTrigger);
+            ResetRevolverTrigger(enemyFailTrigger);
+        }
+
+        private void ResetRevolverTrigger(string triggerName)
+        {
+            if (revolverAnimator != null && !string.IsNullOrWhiteSpace(triggerName))
+            {
+                revolverAnimator.ResetTrigger(triggerName);
+            }
+        }
+
+        private GameObject ResolveRevolverRoot()
+        {
+            if (revolverRoot != null)
+            {
+                return revolverRoot;
+            }
+
+            return revolverAnimator != null ? revolverAnimator.gameObject : null;
         }
 
         // Open the shop the moment a battle is won. Called from RefreshView, which lands on the true

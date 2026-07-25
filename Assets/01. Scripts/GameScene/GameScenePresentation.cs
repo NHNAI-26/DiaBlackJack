@@ -79,6 +79,44 @@ namespace DiaBlackJack.GameScene
         public bool ShowHoverBadgeWhenUnavailable { get; }
     }
 
+    public sealed class GameSceneRevolverAnimationCue
+    {
+        public GameSceneRevolverAnimationCue(
+            int roundNumber,
+            int sourceCardId,
+            CombatantSide actorSide,
+            bool succeeded)
+        {
+            if (roundNumber < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(roundNumber));
+            }
+
+            if (sourceCardId < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceCardId));
+            }
+
+            if (!Enum.IsDefined(typeof(CombatantSide), actorSide))
+            {
+                throw new ArgumentOutOfRangeException(nameof(actorSide));
+            }
+
+            RoundNumber = roundNumber;
+            SourceCardId = sourceCardId;
+            ActorSide = actorSide;
+            Succeeded = succeeded;
+        }
+
+        public int RoundNumber { get; }
+
+        public int SourceCardId { get; }
+
+        public CombatantSide ActorSide { get; }
+
+        public bool Succeeded { get; }
+    }
+
     /// <summary>
     /// Read-only projection consumed by <c>GameSceneView</c>. Wraps the shared
     /// <see cref="CoreLoopViewModel"/> (souls, totals, state, player card actions) and adds
@@ -93,7 +131,8 @@ namespace DiaBlackJack.GameScene
             CharacterVisualState playerVisual,
             CharacterVisualState enemyVisual,
             string playerActionLabel,
-            string enemyActionLabel)
+            string enemyActionLabel,
+            GameSceneRevolverAnimationCue revolverAnimationCue = null)
         {
             Core = core ?? throw new ArgumentNullException(nameof(core));
             PlayerCards = playerCards ?? throw new ArgumentNullException(nameof(playerCards));
@@ -102,6 +141,7 @@ namespace DiaBlackJack.GameScene
             EnemyVisual = enemyVisual;
             PlayerActionLabel = playerActionLabel ?? string.Empty;
             EnemyActionLabel = enemyActionLabel ?? string.Empty;
+            RevolverAnimationCue = revolverAnimationCue;
         }
 
         public CoreLoopViewModel Core { get; }
@@ -118,6 +158,8 @@ namespace DiaBlackJack.GameScene
         public string PlayerActionLabel { get; }
 
         public string EnemyActionLabel { get; }
+
+        public GameSceneRevolverAnimationCue RevolverAnimationCue { get; }
     }
 
     public static class GameScenePresenter
@@ -141,7 +183,50 @@ namespace DiaBlackJack.GameScene
                 playerVisual,
                 enemyVisual,
                 playerLabel,
-                enemyLabel);
+                enemyLabel,
+                CreateRevolverAnimationCue(battle));
+        }
+
+        private static GameSceneRevolverAnimationCue CreateRevolverAnimationCue(
+            CoreLoopBattle battle)
+        {
+            if (battle.PendingPlayerCardEffect != null ||
+                battle.PendingEnemyCardEffect != null ||
+                !battle.LastCardEffectResult.HasValue ||
+                !battle.LastCardEffectActorSide.HasValue)
+            {
+                return null;
+            }
+
+            CardEffectResult result = battle.LastCardEffectResult.Value;
+            if (result.EffectKind != CardEffectKind.AutoPistol ||
+                !IsLastUseCardEffect(battle, result.EffectKind))
+            {
+                return null;
+            }
+
+            return new GameSceneRevolverAnimationCue(
+                battle.RoundNumber,
+                result.SourceCardId,
+                battle.LastCardEffectActorSide.Value,
+                result.Succeeded);
+        }
+
+        private static bool IsLastUseCardEffect(
+            CoreLoopBattle battle,
+            CardEffectKind effectKind)
+        {
+            PublicCombatAction last = battle.LastPublicAction;
+            if (last == null ||
+                last.ActionType != PublicCombatActionType.UseCard ||
+                string.IsNullOrWhiteSpace(last.SourceCardDefinitionKey))
+            {
+                return false;
+            }
+
+            return CardDefinitionCatalog
+                .GetByKey(last.SourceCardDefinitionKey)
+                .Effect == effectKind;
         }
 
         // MVP presentation: derive one coarse visual + short action label per side from public

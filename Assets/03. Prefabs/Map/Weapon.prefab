@@ -92,6 +92,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Revolver_Anim
       objectReference: {fileID: 0}
+    - target: {fileID: 4011202175595181261, guid: 9fb52bab2840cc14eae027869f5f247e, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4386918958506159735, guid: 9fb52bab2840cc14eae027869f5f247e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

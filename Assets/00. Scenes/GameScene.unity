@@ -2307,6 +2307,16 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8661409528945944775, guid: 10a5d4b379994904abc041d63d53113d, type: 3}
   m_PrefabInstance: {fileID: 3936651455334222894}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &3936651455334222896 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9101798679506146173, guid: 10a5d4b379994904abc041d63d53113d, type: 3}
+  m_PrefabInstance: {fileID: 3936651455334222894}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &3936651455334222897 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 8147480254358029345, guid: 10a5d4b379994904abc041d63d53113d, type: 3}
+  m_PrefabInstance: {fileID: 3936651455334222894}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &5282593156502976689
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2554,6 +2564,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1914048715}
     - target: {fileID: 7870382590175114481, guid: 65b3779e515064540b9789c76687ef65, type: 3}
+      propertyPath: revolverRoot
+      value:
+      objectReference: {fileID: 3936651455334222896}
+    - target: {fileID: 7870382590175114481, guid: 65b3779e515064540b9789c76687ef65, type: 3}
       propertyPath: enemyCharacter
       value: 
       objectReference: {fileID: 1152182556}
@@ -2561,6 +2575,10 @@ PrefabInstance:
       propertyPath: playerCharacter
       value: 
       objectReference: {fileID: 705838958}
+    - target: {fileID: 7870382590175114481, guid: 65b3779e515064540b9789c76687ef65, type: 3}
+      propertyPath: revolverAnimator
+      value:
+      objectReference: {fileID: 3936651455334222897}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

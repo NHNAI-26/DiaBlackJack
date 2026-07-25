@@ -356,6 +356,38 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CU05_GameSceneCreatesRevolverAnimationCueWhenRevolverResolves()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 2, 7 },
+                enemyRanks: new[] { 5, 7, 5 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            battle.Start();
+            BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+            battle.TryBeginPlayerCardUse(sourceCard.Id);
+
+            GameSceneRevolverAnimationCue cue = null;
+            battle.Stepped += () =>
+            {
+                GameSceneRevolverAnimationCue currentCue =
+                    GameScenePresenter.Create(battle).RevolverAnimationCue;
+                if (currentCue != null)
+                {
+                    cue = currentCue;
+                }
+            };
+
+            Assert.That(battle.TryResolvePlayerCardChoice(6), Is.True);
+
+            Assert.That(cue, Is.Not.Null);
+            Assert.That(cue.RoundNumber, Is.EqualTo(1));
+            Assert.That(cue.SourceCardId, Is.EqualTo(sourceCard.Id));
+            Assert.That(cue.ActorSide, Is.EqualTo(CombatantSide.Player));
+            Assert.That(cue.Succeeded, Is.False);
+        }
+
+        [Test]
         public void CU05_ControllerForwardsStandaloneCardUseAndChoice()
         {
             GameObject gameObject = CreateControllerObject(out CoreLoopController controller);
