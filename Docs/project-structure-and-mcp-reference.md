@@ -29,6 +29,7 @@ Unity MCP의 프로젝트 정보와 로컬 프로젝트 설정이 다음과 같�
 | `Assets/00. Scenes` | 게임 및 테스트 씬 | 3단계 `CoreLoopTest` 통합 |
 | `Assets/01. Scripts/Runtime` | 런타임 코드와 `Border` 어셈블리 | 사용 |
 | `Assets/01. Scripts/Runtime/Core` | 로그, 스크린샷, 결정적 난수 공용 코드 | `DeterministicRng` 재사용 |
+| `Assets/01. Scripts/SaveLoad` | 현재 빈 `Save`·직접 JSON 파일 I/O 지원 코드 | SV-00에서 런 저장 미연결·버전/백업/복원 부재 확인 |
 | `Assets/01. Scripts/CoreLoop` | 전투 규칙·상태·세션, 카드 효과와 적 프로필·공개 관측·정책·안전 표시 스냅샷 | AC-06 자동 선택 정책·세션·표시·사기꾼 탐지기 통합 |
 | `Assets/01. Scripts/Runtime/Input` | Input System 연결 | 1~2단계 제외 |
 | `Assets/01. Scripts/Runtime/UI` | 공용 UI와 코어 루프 View | EUI-04 적 이름·등급·성향·추론·보스 예고 패널과 720p 반응형 배치 |
@@ -816,10 +817,28 @@ AC-05는 같은 Unity MCP 인스턴스에서 강제 에셋 갱신과 컴파일 �
 
 AC-06 확인 시 `http://127.0.0.1:8080/mcp` 연결이 실패했고 현재 도구 목록에도 Unity MCP가 노출되지 않았다. 임시 ASCII 경로의 Batchmode는 Package Manager IPC와 라이선스 IPC에서 진행되지 않아 기존 편집기나 씬을 강제 종료하지 않았다. 대신 편집기 로그의 런타임·CoreLoop 테스트 어셈블리 빌드, Unity 응답 파일 기반 StageProgression 컴파일과 독립 실행 가능한 461건을 검증했다. 공식 Editor 전체 471건과 화면 검증은 완료로 기록하지 않고 후속 항목으로 유지한다.
 
+### 7.43 게임 저장·이어하기 SV-00 구조 대조
+
+| 경계 | 현재 구조·결정 |
+| --- | --- |
+| 기존 저장 | `Save`는 런 필드가 없고 `SaveLoadSystem`은 ScriptableObject의 단일 데이터를 `save.game`에 직접 기록 |
+| 파일 I/O | `FileManager`는 `Application.persistentDataPath`와 `WriteAllText`를 사용하며 임시·백업·버전·손상 복구 없음 |
+| 순수 상태 | `PlayerRunState`가 영혼·일반/악마 덱·마지막 발급 ID를, `RunProgress`가 스테이지·보상·런 결과를 소유 |
+| Runtime | `StageProgressionRuntime`은 `DontDestroyOnLoad` 메모리 세션만 유지하고 앱 재실행 복원 없음 |
+| SV 제안 | `StageProgression/Save`의 순수 스냅샷·검증·복원과 `SaveLoad`의 파일 DTO·저장소를 분리 |
+| 안정성 | `run-save.tmp` 검증 뒤 기본을 백업하고 교체, 기본 손상 시 백업 사용 |
+| 결정성 | 시작 악마·상대·보상·상점·사건을 루트 시드와 종류별 순번 또는 명시 키로 재현 |
+| 체크포인트 | 시작 악마 선택·전투 보상/골드·상점 나가기·사건 해결·런 종료 뒤에만 갱신 |
+| 팀 경계 | 이천서가 저장 코어·통합을 담당하고 HONG의 RF/Shop은 실제 읽기 전용 상태 API가 생긴 뒤 연결 |
+| SV-00 변경 | 문서 4종과 공통 기록만 추가, 코드·테스트·씬·프리팹·Packages·외부 에셋 무변경 |
+
+SV-00에서는 Unity MCP나 테스트를 실행하지 않았다. 코드 변경이 없는 문서 단계이며, 다음 SV-01에서 UnityEngine 참조가 없는 순수 스냅샷과 검증기를 먼저 구현한다.
+
 ## 8. 변경 기록
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-26 | 이천서 | 게임 저장·이어하기 SV-00의 현재 SaveLoad·런 상태 대조와 순수 스냅샷·버전 JSON·원자 파일·백업·복원·체크포인트·RF 팀 경계 추가, 코드·Unity 검증 없음 기록 |
 | 2026-07-25 | 이천서 | 자동 발동 카드 AC-06 적 안전 관측·정책·전투 자동 해결·세션·코드 기반 UI·일반 보상·사기꾼 프로필 구조와 대상 15/15·Unity 비의존 461/461·컴파일 성공 결과 추가, Editor 전용 10건과 화면 검증 보류 및 씬 에셋 무변경 기록 |
 | 2026-07-25 | 이천서 | 자동 발동 카드 AC-05 부활초 처리기·전용 라운드 전이·양측 상태 정리·부모 효과 취소 구조와 대상 11/11·CoreLoop 327/327·전체 456/456·컴파일 오류 0 검증 결과 추가 |
 | 2026-07-25 | 이천서 | 자동 발동 카드 AC-04 화염 방사기 순차 폐기·회중시계 재활성화·원본 위치 선택 구조와 대상 11/11·CoreLoop 316/316·전체 445/445·컴파일 오류 0 검증 결과 추가 |
