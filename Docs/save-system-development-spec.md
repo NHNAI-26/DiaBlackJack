@@ -3,8 +3,8 @@
 > 프로젝트: DiaBlackJack
 > 기획·개발 책임자: 이천서
 > 작업 식별자: SV-00~SV-06
-> 버전: v0.1
-> 상태: SV-00 기술 기준 수립 완료 · 구현 미착수
+> 버전: v0.2
+> 상태: SV-01 순수 스냅샷·검증 완료 · 다음 단계 SV-02
 > 최종 갱신: 2026-07-26
 
 ## 1. 기술 목표
@@ -36,9 +36,10 @@ StageProgressionRuntime.Session
 | `Border.SaveLoad.Save` | 직렬화할 필드가 없는 빈 클래스 | 런 저장 전용 DTO와 분리 또는 교체 |
 | `SaveLoadSystem` | ScriptableObject가 `SaveData`를 직접 보유 | 저장소·직렬화·조정 책임 분리 |
 | `FileManager` | 기본 파일에 `WriteAllText` 직접 수행 | 경로 검증, 임시/백업, 원자 교체, 명시적 결과 |
-| `PlayerRunState` | 영혼·일반/악마 덱·마지막 ID를 내부 보유 | 읽기 전용 스냅샷 생성과 검증된 복원 경로 |
+| `PlayerRunState` | 영혼·일반/악마 덱과 마지막 ID를 보유하고 SV-01 캡처에 내부 읽기 제공 | 검증된 복원 경로 |
 | 시작 악마 선택 | 기본 생성 경로가 악마 4장을 즉시 제공 | 후보 2장·1장 확정 상태 구현 뒤 첫 체크포인트 연결 |
-| `RunProgress` | 스테이지·상태·보상만 메모리에 보유 | 체크포인트 가능한 안정 상태 투영과 복원 Factory |
+| `RunProgress` | 스테이지·상태·보상을 보유하고 SV-01이 `StageCleared`·런 종료만 캡처 | 복원 Factory와 나머지 체크포인트 연결 |
+| `StageProgression/Save` | 스키마 1 불변 스냅샷·검증기·현행 안정 상태 캡처 구현 | SV-02 파일 DTO·직렬화와 SV-03 복원 연결 |
 | `StageProgressionSession` | 현재 전투와 보상을 조정 | 전투 객체를 제외한 체크포인트 캡처 경계 |
 | `StageProgressionRuntime` | `DontDestroyOnLoad` 메모리 세션 | 새 게임 예약·이어하기·세션 원자 교체 |
 | RF 골드·상점·사건 | 기획만 있고 구현 미완료 | 실제 타입이 생긴 뒤 읽기 전용 저장 계약 연결 |
@@ -443,4 +444,5 @@ createdAtUtc
 
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
+| 2026-07-26 | 이천서 | SV-01 실제 구현에 맞춰 불변 스냅샷·카탈로그/ID/스테이지/체크포인트 검증·`StageCleared`/런 종료 캡처·Unity 비의존 기준과 7개 대상 테스트 완료 상태 반영 |
 | 2026-07-26 | 이천서 | 순수 스냅샷·파일 DTO·검증·원자 저장·백업 불러오기·복원 Factory·런 예약·RF 연동·SV 테스트 명세 수립 |

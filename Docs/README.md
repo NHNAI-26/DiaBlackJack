@@ -55,10 +55,10 @@
 | [formal-run-flow-development-spec.md](./formal-run-flow-development-spec.md) | 골드 정산·상점 거래·정식 런 조정 API와 테스트 명세 | RF-01 착수 가능 v0.1 |
 | [formal-run-flow-implementation-plan.md](./formal-run-flow-implementation-plan.md) | RF-00~RF-05 HONG 인수인계 작업 순서와 검증 게이트 | RF-00 완료 v0.1 |
 | [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | RF-00 완료 v0.1 |
-| [save-system-design.md](./save-system-design.md) | 안정 체크포인트·이어하기·재추첨 방지·단일 슬롯·파일 복구 기획 | SV-00 완료 v0.1 |
-| [save-system-development-spec.md](./save-system-development-spec.md) | 순수 스냅샷·버전 JSON·원자 저장·백업·복원·RF 연결 명세 | SV-01 착수 가능 v0.1 |
-| [save-system-implementation-plan.md](./save-system-implementation-plan.md) | SV-00~SV-06 구현 순서와 검증 게이트 | SV-00 완료 v0.1 |
-| [save-system-progress-log.md](./save-system-progress-log.md) | 저장 시스템 결정·구현·파일·재실행 검증 기록 | SV-00 문서 완료 v0.1 |
+| [save-system-design.md](./save-system-design.md) | 안정 체크포인트·이어하기·재추첨 방지·단일 슬롯·파일 복구 기획 | SV-01 완료 v0.2 |
+| [save-system-development-spec.md](./save-system-development-spec.md) | 순수 스냅샷·버전 JSON·원자 저장·백업·복원·RF 연결 명세 | SV-01 완료 v0.2 |
+| [save-system-implementation-plan.md](./save-system-implementation-plan.md) | SV-00~SV-06 구현 순서와 검증 게이트 | SV-01 완료·SV-02 다음 v0.2 |
+| [save-system-progress-log.md](./save-system-progress-log.md) | 저장 시스템 결정·구현·파일·재실행 검증 기록 | SV-01 완료 v0.2 |
 | [scene-presentation-design.md](./scene-presentation-design.md) | 2.5D 술집 테이블의 씬 흐름·월드 오브젝트·UI·상점 전환 기획 | 최대 2장 계약 화면 포함 기준안 v0.5 |
 
 ## 기록 원칙
@@ -74,6 +74,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-26 | 이천서 | 저장 SV-01 순수 스냅샷·검증·안정 상태 캡처와 대상 7/7·StageProgression 141/141·전체 EditMode 483/483 완료 |
 | 2026-07-26 | 이천서 | 게임 저장·이어하기 SV-00 문서 4종과 안정 체크포인트·런 예약·버전 JSON·원자 파일·백업 복구·SV-01~SV-06 구현 기준 수립 |
 | 2026-07-26 | 이천서 | 새 런 시작 시 악마 2장 중 1장 필수 선택·최소 1장 보장, 일반 계약 최대 2장·단일 후보 허용과 루시퍼 5장 예외 확정 |
 | 2026-07-26 | 이천서 | 시작 악마 선택·스테이지 정산·상점 나가기·사건 해결·런 종료 뒤 체크포인트 저장 기준 확정 |

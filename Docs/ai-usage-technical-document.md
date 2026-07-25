@@ -666,6 +666,17 @@ rule.md의 시작 악마 선택·전투 보상과 골드 정산·상점 나가�
 이천서로 기록하며 코드·테스트·씬·프리팹·Packages·외부 에셋은 변경하지 않는다.
 ```
 
+#### 게임 저장·이어하기 SV-01 구현
+
+```text
+SV-01 문서 계약에 따라 UnityEngine·파일 I/O와 분리된 스키마 1 런 스냅샷,
+일반/악마 카드 물리 ID·정의 키·무늬·마지막 발급 ID, 영혼·골드·스테이지와
+체크포인트 조합을 검증하는 타입화된 검증 결과를 구현한다. 컬렉션은 방어 복사하고
+전투·보상 선택 중 캡처를 거부한다. 현재 코드에 없는 시작 악마 선택·골드·상점·
+사건 상태는 추측 구현하지 않는다. SV01-U01~U07과 StageProgression·전체 EditMode,
+컴파일·Console을 Unity MCP로 검증하고 이천서 담당 기록을 갱신한다.
+```
+
 #### 기록 및 품질 지시
 
 ```text
@@ -740,6 +751,7 @@ AI 대화 원문을 그대로 싣지 말고 목적, 핵심 지시, 결과, 사�
 | 2026-07-25 | 이천서 | AC-04 화염 방사기 소유자→상대 순차 폐기와 회중시계 수동 카드 재활성화·원본 유지/폐기 구현 | `FlamethrowerEffectHandler.cs`, `PocketWatchEffectHandler.cs`, 자동 Resolver·카드 상태, `FlamethrowerAndPocketWatchTests.cs`, 관련 문서 | AI 구조 대조·테스트 우선 구현·Unity MCP·기록 보조, 대상 11/11·CoreLoop 316/316·전체 EditMode 445/445·컴파일 오류 0; `GameScene`·UI·세션·보상·적 자동 정책·프리팹·Packages·외부 에셋·오픈소스 변경 없음, 이천서 최종 코드 승인 필요 |
 | 2026-07-25 | 이천서 | AC-06 독립/런 자동 선택·안전 표시·공개 정보 적 정책·일반 보상 5종·사기꾼 탐지기 통합 | `AutomaticCardDecisionPolicy.cs`, CoreLoop·StageProgression 세션/표시, View·Controller·`GameManager.cs`, 보상·프로필, AC-06 통합 테스트와 관련 문서 | AI 구조 대조·코드·테스트·검증·기록 보조, 대상 15/15·Unity 비의존 461/461·Unity 런타임/CoreLoop 및 StageProgression 컴파일 성공; Unity MCP·Batchmode 라이선스 IPC 제약으로 Editor 전용 10건과 두 씬·두 해상도·Console은 후속 검증, `GameScene.unity`·Packages·외부 에셋·오픈소스 변경 없음, 이천서 최종 승인 필요 |
 | 2026-07-26 | 이천서 | SV-00 안정 체크포인트·런 예약·저장 범위·결정성·버전·원자 파일·백업 복구·복원·RF 의존성 문서화 | `Docs/save-system-*.md` 4종, README·프로젝트 구조·AI 활용·팀 역할 기록 | AI 기준 문서·현재 코드 대조와 문서 초안 보조, 코드·테스트·씬·프리팹·Packages·외부 에셋·오픈소스 변경과 Unity 재검증 없음; 이천서 기획·개발 기준 최종 검토 필요 |
+| 2026-07-26 | 이천서 | SV-01 순수 스키마 1 스냅샷·카탈로그/ID/스테이지/체크포인트 검증·안정 상태 캡처 구현 | `StageProgression/Save` 4개 스크립트, `PlayerRunState`, `RunSaveSnapshotTests`, 저장 문서·공통 기록 | AI 구조 대조·구현·테스트·Unity MCP·기록 보조, 대상 7/7·StageProgression 141/141·전체 EditMode 483/483·컴파일 오류 0, Test Framework 안내 3건 분리; 씬·프리팹·Packages·외부 에셋·오픈소스 변경 없음, 이천서 최종 승인 필요 |
 
 AI는 코어 루프 1단계 규칙, 2단계 전투 흐름, 3단계 세션·표시 모델·최소 UI와 테스트 초안을 작성하고, 4단계에서 전체 회귀·실제 흐름 검증과 기록 정리를 보조했다. Unity MCP를 통해 스크립트 진단, Unity 컴파일, 씬 배치·검증, Game View 확인과 EditMode 테스트를 수행했으며 최종 실행에서도 전체 27개 테스트가 모두 통과했다. 최종 기획 적합성과 코드·화면 승인 책임은 이천서에게 있다.
 
@@ -1007,6 +1019,28 @@ AI는 기존 `Border.SaveLoad.Save`가 필드 없는 JSON 대상이고 `FileMana
 수립했다. 구현은 SV-01~SV-06으로 분리했으며 SV-00에서는 코드·테스트·씬·프리팹·
 Packages·외부 에셋·오픈소스를 변경하거나 Unity를 재실행하지 않았다. 최종
 기획·개발 승인 책임은 이천서에게 있다.
+
+### 3.17 SV-01 순수 저장 스냅샷·검증
+
+이천서는 파일 저장보다 먼저 순수 런 상태와 검증 불변식을 구현하도록 지시했다.
+AI는 `PlayerRunState`, `RunProgress`, 카드·악마 카탈로그와 SV-01 명세를 대조해
+`RunSaveSnapshot`, 플레이어·일반/악마 카드·난수 하위 스냅샷, 체크포인트와 다음
+콘텐츠 안정 코드를 구현했다. 모든 목록은 생성 시 방어 복사하며 공개 API는 읽기
+전용으로 유지했다.
+
+`RunSaveValidator`는 스키마·콘텐츠 리비전·저장 메타데이터·영혼·골드·정의 키·
+무늬·중복 카드 ID·마지막 발급 ID·시작 악마 소유·스테이지 위치·생성 순번·완료
+이력과 체크포인트 조합을 검사하고 예외 원문 대신 `RunSaveValidationError`를
+반환한다. `RunSaveCapture`는 현행 도메인에서 실제 안정 상태인 `StageCleared`,
+`RunVictory`, `RunDefeat`만 캡처하고 전투와 보상 선택 중 상태는 거부한다.
+
+현재 코드에 실제 소유자가 없는 골드·시작 악마 선택·상점·사건·콘텐츠 생성 순번은
+0·`null`·빈 목록으로 남겼다. HONG의 RF 타입이나 임시 사건 타입을 저장 계층에
+복제하지 않았다. Unity MCP에서 SV01-U01~U07 7/7, StageProgression 141/141,
+전체 EditMode 483/483을 통과했고 컴파일 오류는 0건이었다. 테스트 뒤 Console의
+3건은 Test Framework 사전·사후 처리와 결과 저장 경로 안내로 분리했다. 씬·프리팹·
+Packages·외부 에셋·오픈소스는 변경하지 않았으며 최종 코드 승인 책임은 이천서에게
+있다.
 
 ## 4. 생성형 AI 산출물 관리
 

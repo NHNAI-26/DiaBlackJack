@@ -30,6 +30,7 @@ Unity MCP의 프로젝트 정보와 로컬 프로젝트 설정이 다음과 같�
 | `Assets/01. Scripts/Runtime` | 런타임 코드와 `Border` 어셈블리 | 사용 |
 | `Assets/01. Scripts/Runtime/Core` | 로그, 스크린샷, 결정적 난수 공용 코드 | `DeterministicRng` 재사용 |
 | `Assets/01. Scripts/SaveLoad` | 현재 빈 `Save`·직접 JSON 파일 I/O 지원 코드 | SV-00에서 런 저장 미연결·버전/백업/복원 부재 확인 |
+| `Assets/01. Scripts/StageProgression/Save` | Unity 비의존 런 스냅샷·검증·안정 상태 캡처 | SV-01 스키마 1·방어 복사·타입화된 오류·불안정 상태 차단 |
 | `Assets/01. Scripts/CoreLoop` | 전투 규칙·상태·세션, 카드 효과와 적 프로필·공개 관측·정책·안전 표시 스냅샷 | AC-06 자동 선택 정책·세션·표시·사기꾼 탐지기 통합 |
 | `Assets/01. Scripts/Runtime/Input` | Input System 연결 | 1~2단계 제외 |
 | `Assets/01. Scripts/Runtime/UI` | 공용 UI와 코어 루프 View | EUI-04 적 이름·등급·성향·추론·보스 예고 패널과 720p 반응형 배치 |
@@ -817,7 +818,7 @@ AC-05는 같은 Unity MCP 인스턴스에서 강제 에셋 갱신과 컴파일 �
 
 AC-06 확인 시 `http://127.0.0.1:8080/mcp` 연결이 실패했고 현재 도구 목록에도 Unity MCP가 노출되지 않았다. 임시 ASCII 경로의 Batchmode는 Package Manager IPC와 라이선스 IPC에서 진행되지 않아 기존 편집기나 씬을 강제 종료하지 않았다. 대신 편집기 로그의 런타임·CoreLoop 테스트 어셈블리 빌드, Unity 응답 파일 기반 StageProgression 컴파일과 독립 실행 가능한 461건을 검증했다. 공식 Editor 전체 471건과 화면 검증은 완료로 기록하지 않고 후속 항목으로 유지한다.
 
-### 7.43 게임 저장·이어하기 SV-00 구조 대조
+### 7.43 게임 저장·이어하기 SV-00~SV-01 구조 대조
 
 | 경계 | 현재 구조·결정 |
 | --- | --- |
@@ -831,13 +832,22 @@ AC-06 확인 시 `http://127.0.0.1:8080/mcp` 연결이 실패했고 현재 도�
 | 체크포인트 | 시작 악마 선택·전투 보상/골드·상점 나가기·사건 해결·런 종료 뒤에만 갱신 |
 | 팀 경계 | 이천서가 저장 코어·통합을 담당하고 HONG의 RF/Shop은 실제 읽기 전용 상태 API가 생긴 뒤 연결 |
 | SV-00 변경 | 문서 4종과 공통 기록만 추가, 코드·테스트·씬·프리팹·Packages·외부 에셋 무변경 |
+| SV-01 순수 모델 | `RunSaveSnapshot`과 플레이어·일반/악마 카드·난수 스냅샷, 체크포인트·런 상태·다음 콘텐츠 안정 코드 구현 |
+| SV-01 검증 | 카탈로그·무늬·영혼·골드·ID·마지막 발급 ID·스테이지·생성 순번·완료 이력·체크포인트 조합을 `RunSaveValidationError`로 판정 |
+| SV-01 캡처 | `StageCleared`·`RunVictory`·`RunDefeat`만 허용하고 전투·보상 선택 상태를 거부 |
+| SV-01 보호 | `StageProgression/Save`의 `UnityEngine`·파일 I/O 참조 0, 씬·프리팹·Packages·HONG RF/Shop·Shim0Hwan 아트 무변경 |
 
-SV-00에서는 Unity MCP나 테스트를 실행하지 않았다. 코드 변경이 없는 문서 단계이며, 다음 SV-01에서 UnityEngine 참조가 없는 순수 스냅샷과 검증기를 먼저 구현한다.
+SV-01은 Unity MCP 대상 `9fc18bc720c743b3b7c45c1480cd206b` 7/7,
+StageProgression `26a321d927394f3c9296b642b5be941b` 141/141, 최종 전체
+`50c0a8eaf78c4e00a49ed20d38f3b73b` 483/483을 통과했다. 컴파일 오류는 0건이며
+테스트 뒤 Console 3건은 Test Framework 사전·사후 처리와 결과 저장 경로 안내다.
+다음 SV-02에서 파일 DTO·직렬화·임시/기본/백업 교체를 구현한다.
 
 ## 8. 변경 기록
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-26 | 이천서 | 저장 SV-01의 `StageProgression/Save` 순수 스냅샷·타입화된 검증·안정 상태 캡처 구조와 대상 7/7·StageProgression 141/141·전체 483/483·컴파일 오류 0 결과와 Test Framework 안내 3건 분리 추가 |
 | 2026-07-26 | 이천서 | 게임 저장·이어하기 SV-00의 현재 SaveLoad·런 상태 대조와 순수 스냅샷·버전 JSON·원자 파일·백업·복원·체크포인트·RF 팀 경계 추가, 코드·Unity 검증 없음 기록 |
 | 2026-07-25 | 이천서 | 자동 발동 카드 AC-06 적 안전 관측·정책·전투 자동 해결·세션·코드 기반 UI·일반 보상·사기꾼 프로필 구조와 대상 15/15·Unity 비의존 461/461·컴파일 성공 결과 추가, Editor 전용 10건과 화면 검증 보류 및 씬 에셋 무변경 기록 |
 | 2026-07-25 | 이천서 | 자동 발동 카드 AC-05 부활초 처리기·전용 라운드 전이·양측 상태 정리·부모 효과 취소 구조와 대상 11/11·CoreLoop 327/327·전체 456/456·컴파일 오류 0 검증 결과 추가 |

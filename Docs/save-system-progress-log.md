@@ -3,9 +3,9 @@
 > 프로젝트: DiaBlackJack
 > 기획·기록·구현 책임자: 이천서
 > 작업 식별자: SV-00~SV-06
-> 버전: v0.1
-> 현재 단계: SV-00 문서 기준 수립 완료
-> 다음 단계: SV-01 순수 스냅샷·검증
+> 버전: v0.2
+> 현재 단계: SV-01 순수 스냅샷·검증 완료
+> 다음 단계: SV-02 버전 JSON·원자 파일·백업
 > 최종 갱신: 2026-07-26
 
 ## 1. 기록 원칙
@@ -26,9 +26,10 @@
 | `Save` | 런 필드가 없는 빈 JSON 대상 |
 | `SaveLoadSystem` | ScriptableObject에서 단일 파일 직접 저장·로드 |
 | `FileManager` | `persistentDataPath` 직접 덮어쓰기, 백업·임시·버전 없음 |
-| `PlayerRunState` | 영혼·일반/악마 덱·마지막 발급 ID 보유, 저장 API 없음 |
+| `PlayerRunState` | 영혼·일반/악마 덱 보유, SV-01 캡처용 마지막 발급 ID 내부 읽기 추가 |
 | 시작 악마 선택 | 기본 악마 4장 즉시 생성, 새 규칙의 후보 2장·1장 확정 상태 미구현 |
-| `RunProgress` | 스테이지·보상·런 승패 보유, 복원 Factory 없음 |
+| `RunProgress` | 스테이지·보상·런 승패 보유, 안정 상태 캡처 연결·복원 Factory 없음 |
+| 순수 저장 경계 | 스키마 1 스냅샷·검증기·현행 안정 상태 캡처 구현 |
 | `StageProgressionRuntime` | 실행 중 메모리 세션만 `DontDestroyOnLoad`로 유지 |
 | 골드·상점·사건 | 기획 확정, 저장에 연결할 실제 전체 상태 API 미완료 |
 | 이어하기 UI | 미구현 |
@@ -40,7 +41,7 @@
 | 단계 | 담당 | 상태 | 완료 증거 |
 | --- | --- | --- | --- |
 | SV-00 | 이천서(AI 문서·구조 대조 보조) | 완료 | 문서 4종·README·AI 활용·역할·구조 기록 |
-| SV-01 | 이천서(AI 구현·검증 보조) | 미착수 | 순수 스냅샷·검증 |
+| SV-01 | 이천서(AI 구현·검증 보조) | 완료 | 대상 7/7·StageProgression 141/141·전체 483/483·컴파일 오류 0 |
 | SV-02 | 이천서(AI 구현·검증 보조) | 미착수 | 버전 JSON·원자 파일·백업 |
 | SV-03 | 이천서(AI 구현·검증 보조) | 미착수 | 현재 런 캡처·복원 |
 | SV-04 | 이천서(AI 구현·검증 보조) | 미착수 | 체크포인트·결정성 |
@@ -120,7 +121,75 @@ Tested: 기준 문서·현재 SaveLoad와 런 상태 정적 대조
 Not-tested: 저장 코드·Unity 실행
 ```
 
-## 5. 결정 및 문제 대장
+## 5. SV-01 수행 기록
+
+### 5.1 수행 내용
+
+- `RunSaveSnapshot`에 스키마·콘텐츠 리비전·저장 순번·런/스테이지·체크포인트·플레이어·난수·완료 이력을 불변 프로퍼티로 정의했다.
+- 플레이어 스냅샷에 영혼·골드·일반/악마 덱·마지막 발급 ID·시작 악마 키를 포함했다.
+- 일반 카드는 물리 ID·정의 키·무늬, 악마 카드는 물리 ID·정의 키만 보존하고 파생 표시 값은 저장하지 않았다.
+- 생성자가 전달받은 카드·악마·상점·사건 목록을 방어 복사하도록 했다.
+- `RunSaveValidator`가 스키마·콘텐츠 리비전·메타데이터·영혼·골드·카탈로그 키·무늬·중복 ID·마지막 발급 ID·시작 악마 소유·스테이지·생성 순번·체크포인트 조합을 타입화된 오류로 검증하게 했다.
+- `RunSaveCapture`는 현행 코드에서 실제로 안정 상태인 `StageCleared`, `RunVictory`, `RunDefeat`만 받아들이고 `InBattle`, `RewardSelection` 등은 `UnstableState`로 거부하게 했다.
+- `PlayerRunState`의 마지막 발급 일반/악마 카드 ID는 같은 런타임 어셈블리에서만 읽을 수 있도록 `internal` 프로퍼티로 노출했다.
+- 아직 실제 상태가 없는 골드·시작 악마 선택·상점·사건·콘텐츠 생성 순번은 캡처에서 0·`null`·빈 목록으로 유지했으며 임시 도메인 타입을 만들지 않았다.
+
+### 5.2 구현 파일
+
+- `Assets/01. Scripts/StageProgression/Save/RunCheckpointKind.cs`
+- `Assets/01. Scripts/StageProgression/Save/RunSaveSnapshot.cs`
+- `Assets/01. Scripts/StageProgression/Save/RunSaveValidator.cs`
+- `Assets/01. Scripts/StageProgression/Save/RunSaveCapture.cs`
+- `Assets/01. Scripts/StageProgression/PlayerRunState.cs`
+- `Assets/06.Packages/Tests/EditMode/StageProgression/RunSaveSnapshotTests.cs`
+- 위 신규 폴더·스크립트의 Unity `.meta`
+
+### 5.3 검증
+
+| 검증 | 결과 |
+| --- | --- |
+| Unity 컴파일 | 성공, 테스트 실행 전 Console 오류 0건 |
+| SV01-U01~U07 | 7/7 통과, 최종 MCP 작업 `9fc18bc720c743b3b7c45c1480cd206b` |
+| StageProgression | 141/141 통과, MCP 작업 `26a321d927394f3c9296b642b5be941b` |
+| 전체 EditMode | 483/483 통과, 최종 MCP 작업 `50c0a8eaf78c4e00a49ed20d38f3b73b` |
+| 테스트 후 Console | Test Framework 사전·사후 처리와 결과 저장 경로 안내 3건, 게임 코드 실패 없음 |
+| 순수성 | `StageProgression/Save`의 `UnityEngine`·파일 I/O 참조 0건 |
+| 코드·씬·프리팹·Packages | 규칙 코드·테스트·문서만 변경, 씬·프리팹·Packages 무변경 |
+| 외부 에셋·오픈소스 | 추가 없음 |
+
+### 5.4 완료한 테스트 항목
+
+| ID | 결과 |
+| --- | --- |
+| SV01-U01 | 영혼·일반/악마 덱·물리/마지막 발급 ID와 무늬 보존 |
+| SV01-U02 | 일반·악마 덱의 중복 ID 거부 |
+| SV01-U03 | 알 수 없는 일반/악마 정의 키와 무효 무늬 거부 |
+| SV01-U04 | 현재 최대보다 작은 마지막 발급 ID 거부 |
+| SV01-U05 | 체크포인트·다음 콘텐츠·런 상태 조합 검증 |
+| SV01-U06 | 전투·보상 선택 중 캡처 거부 |
+| SV01-U07 | 원본 목록 변경과 스냅샷 격리 |
+
+### 5.5 제외·다음 단계
+
+- JSON DTO·직렬화·실제 파일 쓰기·백업·복원은 구현하지 않았다.
+- 시작 악마 선택·골드·상점·사건의 실제 상태가 생기기 전까지 해당 값을 캡처 완료로 간주하지 않는다.
+- 다음 SV-02에서는 이 검증된 스냅샷을 필드 기반 v1 DTO로 변환하고 임시 파일 검증 뒤 기본·백업을 교체하는 저장소를 구현한다.
+
+### 5.6 권장 커밋 메시지
+
+```text
+feat : 런 상태가 파일 형식과 섞이지 않게 저장 스냅샷 경계를 세우다
+
+Constraint: 전투·보상 선택 중 상태와 미구현 RF 데이터를 저장하지 않음
+Rejected: 빈 Save 클래스에 런 필드를 직접 추가 | 순수 상태와 Unity 파일 책임이 결합됨
+Confidence: high
+Scope-risk: narrow
+Directive: 파일 DTO는 RunSaveSnapshot과 분리하고 검증을 통과한 값만 기록할 것
+Tested: SV01 7/7, StageProgression 141/141, 전체 EditMode 483/483, 컴파일 오류 0
+Not-tested: JSON 왕복·실제 파일 실패·백업 복구·프로세스 재실행
+```
+
+## 6. 결정 및 문제 대장
 
 | ID | 항목 | 상태 | 결정·대응 | 재검토 조건 |
 | --- | --- | --- | --- | --- |
@@ -130,6 +199,8 @@ Not-tested: 저장 코드·Unity 실행
 | SV-D04 | 파일 손상 | 임시 확정 | 기본 실패 시 백업 | 플랫폼 저장 API 도입 |
 | SV-D05 | 저장 실패 후 진행 | 임시 확정 | 현재 안전 화면에서 차단·재시도 | UX 테스트 |
 | SV-D06 | 터미널 저장 | 임시 확정 | 결과 유지, 이어하기 비활성 | 메타 통계 도입 |
+| SV-D09 | 스냅샷 생성 경계 | 확정 | 내부 생성자·방어 복사·공개 읽기 전용 프로퍼티 | 스키마 버전 변경 |
+| SV-D10 | 현행 캡처 허용 상태 | 확정 | `StageCleared`·`RunVictory`·`RunDefeat`만 허용 | 시작·RF·사건 상태 구현 |
 | SV-R01 | 기존 `Save`가 비어 있음 | 확인 | 레거시 완료 기능으로 재사용하지 않음 | SV-02 구현 |
 | SV-R02 | 직접 덮어쓰기 | 미해결 | 임시·재검증·백업 교체로 대체 예정 | SV-02 |
 | SV-R03 | RF 실제 상태 없음 | 선행 필요 | 읽기 전용 Snapshot 계약만 정의 | HONG RF 구현 완료 |
@@ -137,19 +208,19 @@ Not-tested: 저장 코드·Unity 실행
 | SV-R05 | 현재 생성기 상태 재현 | 조사 필요 | 루트 시드·종류별 순번으로 이관 | SV-03~04 |
 | SV-R06 | 시작 악마 선택 상태 없음 | 선행 필요 | 현재 기본 악마 4장을 선택 결과로 간주하지 않음 | 시작 악마 선택 구현 완료 |
 
-## 6. 계획 검증표
+## 7. 계획 검증표
 
 | 단계 | 대상 검증 | 전체 회귀 | 실제 파일 | 화면·프로세스 |
 | --- | --- | --- | --- | --- |
 | SV-00 | 문서·구조 대조 | 미실행 | 미실행 | 미실행 |
-| SV-01 | 스냅샷·검증 7개 이상 | StageProgression | 없음 | 없음 |
+| SV-01 | 7/7 통과 | StageProgression 141/141·전체 483/483 | 없음 | 컴파일 오류 0·Test Framework 안내 3건 |
 | SV-02 | 직렬화·파일 실패 8개 이상 | StageProgression | 임시 저장소 | 없음 |
 | SV-03 | 캡처·복원 5개 이상 | CoreLoop+StageProgression | 메모리/임시 | 없음 |
 | SV-04 | 체크포인트 4개 이상 | 전체 EditMode | 임시/기본 | 없음 |
 | SV-05 | 예약·메뉴·실패 3개 이상 | 전체 EditMode | 영구 경로 격리 | 두 해상도 |
 | SV-06 | 반복·터미널·재실행 3개 이상 | 전체 EditMode | 실제 기본·백업 | 종료·재실행·Console |
 
-## 7. 단계별 완료 기록 양식
+## 8. 단계별 완료 기록 양식
 
 ```text
 ### SV-0N — 작업명
@@ -172,8 +243,9 @@ Not-tested: 저장 코드·Unity 실행
 - 권장 커밋 메시지:
 ```
 
-## 8. 변경 기록
+## 9. 변경 기록
 
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
+| 2026-07-26 | 이천서 | SV-01 스키마 1 불변 스냅샷·타입화된 검증·현행 안정 상태 캡처와 대상 7/7·StageProgression 141/141·전체 483/483·컴파일 오류 0 완료 기록, Test Framework 안내 3건 분리 |
 | 2026-07-26 | 이천서 | SV-00 기준 문서·현재 코드 대조, 체크포인트·런 예약·파일 복구·결정성·팀 의존성 결정과 SV-01 착수 범위 기록 |

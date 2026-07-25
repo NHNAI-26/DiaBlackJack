@@ -90,6 +90,10 @@ namespace DiaBlackJack.StageProgression
 
         public IReadOnlyList<RunDemonDefinition> DemonDeck => _demonDeck;
 
+        internal int LastIssuedCardId => _lastIssuedCardId;
+
+        internal int LastIssuedDemonCardId => _lastIssuedDemonCardId;
+
         public void SetCurrentSoul(int currentSoul)
         {
             if (currentSoul < 0 || currentSoul > MaximumSoul)
