@@ -322,7 +322,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &6856149786127793519
 RectTransform:
   m_ObjectHideFlags: 0
@@ -660,7 +660,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -368705857027367275, guid: d32ffc49dc930b1449c290c74e0561a5, type: 3}
+  m_Sprite: {fileID: 21300000, guid: f54c421f5f46de9488f1d0a27ddd149a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -721,7 +721,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CardView
   front: {fileID: 7366520915214099447}
   back: {fileID: 7359149338926229531}
-  rankText: {fileID: 1943276075832970879}
+  rankText: {fileID: 0}
+  faceSpritesByRank:
+  - {fileID: 0}
+  - {fileID: 21300000, guid: f54c421f5f46de9488f1d0a27ddd149a, type: 3}
+  - {fileID: 21300000, guid: 3b56ffd8afc97db42950e053eef4b3e5, type: 3}
+  - {fileID: 21300000, guid: 5cf2c08852229f6418d102a60724fbb8, type: 3}
+  - {fileID: 21300000, guid: 21d2d2707f8a2924c86fba1b34cf729d, type: 3}
+  - {fileID: 21300000, guid: bd9200b8cda5bb349b6f3f396c221207, type: 3}
+  - {fileID: 21300000, guid: d4ddcea94b621aa40962188f24017ce0, type: 3}
+  - {fileID: 21300000, guid: fcb3bd7cb601d0e4daf6f6d212908315, type: 3}
+  - {fileID: 21300000, guid: 9c8a0b6d3f7eb7946a06de67e1113a2f, type: 3}
+  - {fileID: 21300000, guid: 697006daaa012bd41836b166d8e18a80, type: 3}
+  - {fileID: 21300000, guid: a32e5192ab62d6f4eaee59c3bd9c80f7, type: 3}
   badge: {fileID: 4093518818443752464}
   badgeText: {fileID: 8697774617235843118}
   hoverScale: 1.15

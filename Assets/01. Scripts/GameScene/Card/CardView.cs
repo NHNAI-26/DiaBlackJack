@@ -4,9 +4,9 @@ using UnityEngine;
 namespace DiaBlackJack.GameScene
 {
     /// <summary>
-    /// Component on the card prefab root. <see cref="front"/> / <see cref="back"/> toggle by the
-    /// card's physical orientation; <see cref="rankText"/> shows the number whenever the viewer is
-    /// allowed to see it. Hover feedback is driven by <see cref="SetHovered"/> (called from
+    /// Component on the card prefab root. <see cref="front"/> / <see cref="back"/> toggle by whether
+    /// the viewer may see the rank; the face-up sprite is swapped by rank. Hover feedback is driven
+    /// by <see cref="SetHovered"/> (called from
     /// <c>GameManager</c>'s pointer raycast): any hovered card scales up, and a hovered *usable* card
     /// also glows and pops a <see cref="badge"/> above it naming the ability. Usability is
     /// orientation-independent — a face-down card can be usable — so the badge/glow are gated on
@@ -18,6 +18,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameObject front;
         [SerializeField] private GameObject back;
         [SerializeField] private TMP_Text rankText;
+        [SerializeField] private Sprite[] faceSpritesByRank = new Sprite[11];
 
         [Header("Usable badge (hover)")]
         [SerializeField] private GameObject badge;
@@ -36,11 +37,12 @@ namespace DiaBlackJack.GameScene
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
         private MaterialPropertyBlock _propertyBlock;
+        private SpriteRenderer _frontSpriteRenderer;
         private Renderer _frontRenderer;
         private Renderer _backRenderer;
         private Vector3 _baseScale = Vector3.one;
         private Vector3 _targetScale = Vector3.one;
-        private bool _isFaceUp = true;
+        private bool _showingFrontFace = true;
         private bool _hovered;
 
         /// <summary>Run card id of the bound card, for pointer routing. -1 when unbound.</summary>
@@ -57,6 +59,8 @@ namespace DiaBlackJack.GameScene
             {
                 badge.SetActive(false);
             }
+
+            HideRankText();
         }
 
         private void Update()
@@ -77,26 +81,24 @@ namespace DiaBlackJack.GameScene
 
             CardId = card.CardId;
             CanUse = card.CanUse;
-            _isFaceUp = card.IsFaceUp;
+            _showingFrontFace = card.RevealRank;
 
             if (front != null)
             {
-                front.SetActive(card.IsFaceUp);
+                front.SetActive(_showingFrontFace);
+            }
+
+            if (_showingFrontFace)
+            {
+                ApplyFaceSprite(card.Rank);
             }
 
             if (back != null)
             {
-                back.SetActive(!card.IsFaceUp);
+                back.SetActive(!_showingFrontFace);
             }
 
-            if (rankText != null)
-            {
-                rankText.enabled = card.RevealRank;
-                if (card.RevealRank)
-                {
-                    rankText.text = card.Rank.ToString();
-                }
-            }
+            HideRankText();
 
             if (badgeText != null)
             {
@@ -131,7 +133,7 @@ namespace DiaBlackJack.GameScene
 
             // Front keeps its own material look (cleared MPB); the hover glow overrides it when it is
             // the face-up card being hovered.
-            if (lit && _isFaceUp)
+            if (lit && _showingFrontFace)
             {
                 ApplyTint(FrontRenderer(), glowColor);
             }
@@ -142,7 +144,38 @@ namespace DiaBlackJack.GameScene
 
             // Back is tinted so a face-down card is distinguishable even though it shares the front's
             // sprite material; the glow overrides it when the face-down card is the hovered usable one.
-            ApplyTint(BackRenderer(), lit && !_isFaceUp ? glowColor : backTint);
+            ApplyTint(BackRenderer(), lit && !_showingFrontFace ? glowColor : backTint);
+        }
+
+        private void ApplyFaceSprite(int rank)
+        {
+            SpriteRenderer renderer = FrontSpriteRenderer();
+            Sprite sprite = SpriteForRank(rank);
+            if (renderer != null && sprite != null)
+            {
+                renderer.sprite = sprite;
+            }
+        }
+
+        private Sprite SpriteForRank(int rank)
+        {
+            if (rank < 1 || faceSpritesByRank == null || rank >= faceSpritesByRank.Length)
+            {
+                return null;
+            }
+
+            return faceSpritesByRank[rank];
+        }
+
+        private void HideRankText()
+        {
+            if (rankText == null)
+            {
+                return;
+            }
+
+            rankText.enabled = false;
+            rankText.gameObject.SetActive(false);
         }
 
         private void ApplyTint(Renderer renderer, Color color)
@@ -170,10 +203,20 @@ namespace DiaBlackJack.GameScene
         {
             if (_frontRenderer == null && front != null)
             {
-                _frontRenderer = front.GetComponent<Renderer>();
+                _frontRenderer = FrontSpriteRenderer();
             }
 
             return _frontRenderer;
+        }
+
+        private SpriteRenderer FrontSpriteRenderer()
+        {
+            if (_frontSpriteRenderer == null && front != null)
+            {
+                _frontSpriteRenderer = front.GetComponent<SpriteRenderer>();
+            }
+
+            return _frontSpriteRenderer;
         }
 
         private Renderer BackRenderer()
