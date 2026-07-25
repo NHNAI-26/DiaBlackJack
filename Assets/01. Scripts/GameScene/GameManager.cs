@@ -44,6 +44,7 @@ namespace DiaBlackJack.GameScene
         private CoreLoopViewModel _core;
         private Camera _camera;
         private CardView _hoveredCard;
+        private DemonCardView _hoveredDemonCard;
         private bool _inputLocked;
         private int _battleIndex;
         private GUIStyle _buttonStyle;
@@ -56,6 +57,7 @@ namespace DiaBlackJack.GameScene
         private DeckClickable _hoveredDeck;
         private bool _showDemonContractConfirmation;
         private readonly List<GameSceneViewModel> _timeline = new List<GameSceneViewModel>();
+        private readonly List<string> _purchasedDemonContractKeys = new List<string>();
 
         public CoreLoopBattle Battle => _session?.Battle;
 
@@ -80,13 +82,22 @@ namespace DiaBlackJack.GameScene
             }
 
             bool hasHit = RaycastPointer(out RaycastHit hit);
-            CardView pointed = hasHit ? hit.collider.GetComponentInParent<CardView>() : null;
+            bool shopOpen = shop != null && shop.IsOpen;
+            CardView pointed = !shopOpen && hasHit
+                ? hit.collider.GetComponentInParent<CardView>()
+                : null;
+            DemonCardView pointedDemonCard = shopOpen && hasHit
+                ? hit.collider.GetComponentInParent<DemonCardView>()
+                : null;
 
             // Hover is visual-only, so it runs even while input is locked (during timeline playback).
             UpdateHover(pointed);
+            UpdateDemonCardHover(pointedDemonCard);
 
             // A deck's card-list panel shows while the pointer hovers it (draw or discard).
-            _hoveredDeck = hasHit ? hit.collider.GetComponentInParent<DeckClickable>() : null;
+            _hoveredDeck = !shopOpen && hasHit
+                ? hit.collider.GetComponentInParent<DeckClickable>()
+                : null;
 
             if (_inputLocked)
             {
@@ -103,6 +114,12 @@ namespace DiaBlackJack.GameScene
             {
                 int cardId = pointed.CardId;
                 ProcessInput(() => _session.TryBeginPlayerCardUse(cardId));
+                return;
+            }
+
+            if (pointedDemonCard != null && pointedDemonCard.CanUse)
+            {
+                PurchaseShopDemonCard(pointedDemonCard);
             }
         }
 
@@ -143,6 +160,25 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        private void UpdateDemonCardHover(DemonCardView pointed)
+        {
+            if (pointed == _hoveredDemonCard)
+            {
+                return;
+            }
+
+            if (_hoveredDemonCard != null)
+            {
+                _hoveredDemonCard.SetHovered(false);
+            }
+
+            _hoveredDemonCard = pointed;
+            if (_hoveredDemonCard != null)
+            {
+                _hoveredDemonCard.SetHovered(true);
+            }
+        }
+
         private CoreLoopBattle CreateBattle()
         {
             int battleSeed = seed + (_battleIndex * 2);
@@ -150,8 +186,60 @@ namespace DiaBlackJack.GameScene
             return new CoreLoopBattle(
                 BlackjackDeck.CreateStandard(battleSeed),
                 BlackjackDeck.CreateStandard(battleSeed + 1),
-                playerDemonDeck: DemonContractDeck.CreatePrototype(
-                    battleSeed + 1000));
+                playerDemonDeck: CreatePlayerDemonDeck(battleSeed + 1000));
+        }
+
+        private DemonContractDeck CreatePlayerDemonDeck(int deckSeed)
+        {
+            DemonContractCatalog catalog = DemonContractCatalog.Default;
+            IReadOnlyList<DemonContractDefinition> definitions = catalog.Definitions;
+            var cards = new List<DemonContractCard>(
+                definitions.Count + _purchasedDemonContractKeys.Count);
+            int id = 0;
+            foreach (DemonContractDefinition definition in definitions)
+            {
+                cards.Add(new DemonContractCard(id++, definition));
+            }
+
+            foreach (string definitionKey in _purchasedDemonContractKeys)
+            {
+                cards.Add(new DemonContractCard(id++, catalog.GetByKey(definitionKey)));
+            }
+
+            return new DemonContractDeck(cards, deckSeed);
+        }
+
+        private void PurchaseShopDemonCard(DemonCardView card)
+        {
+            if (shop == null || card == null ||
+                !shop.TryPurchaseDemonCard(card.CardId, out string definitionKey))
+            {
+                return;
+            }
+
+            _purchasedDemonContractKeys.Add(definitionKey);
+            AddPurchasedDemonContractToCurrentBattle(definitionKey);
+            RefreshView();
+            UpdateDemonCardHover(null);
+        }
+
+        private void AddPurchasedDemonContractToCurrentBattle(string definitionKey)
+        {
+            CoreLoopBattle battle = Battle;
+            if (battle == null)
+            {
+                return;
+            }
+
+            DemonContractDefinition definition =
+                DemonContractCatalog.Default.GetByKey(definitionKey);
+            int cardId = battle.PlayerDemonDeck.TotalCardCount;
+            var card = new DemonContractCard(cardId, definition);
+            if (!battle.PlayerDemonDeck.TryAddAvailableCard(card))
+            {
+                throw new InvalidOperationException(
+                    "Purchased demon contract could not be added to the battle deck.");
+            }
         }
 
         private void OnGUI()
@@ -788,6 +876,7 @@ namespace DiaBlackJack.GameScene
             if (restarted && shop != null)
             {
                 _showDemonContractConfirmation = false;
+                UpdateDemonCardHover(null);
                 shop.Close();
             }
 
@@ -802,6 +891,8 @@ namespace DiaBlackJack.GameScene
             if (restarted && shop != null)
             {
                 _showDemonContractConfirmation = false;
+                _purchasedDemonContractKeys.Clear();
+                UpdateDemonCardHover(null);
                 shop.Close();
                 shop.ResetGold();
             }

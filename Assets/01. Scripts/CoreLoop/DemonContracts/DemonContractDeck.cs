@@ -56,7 +56,7 @@ namespace DiaBlackJack.CoreLoop
 
         public int DrawCount => _drawPile.Count;
 
-        public int TotalCardCount { get; }
+        public int TotalCardCount { get; private set; }
 
         public static DemonContractDeck CreatePrototype(int seed)
         {
@@ -69,6 +69,24 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return new DemonContractDeck(cards, seed);
+        }
+
+        public bool TryAddAvailableCard(DemonContractCard card)
+        {
+            if (card == null ||
+                TotalCardCount == int.MaxValue ||
+                _knownCardIds.Contains(card.Id))
+            {
+                return false;
+            }
+
+            _knownCardIds.Add(card.Id);
+            _availableCardIds.Add(card.Id);
+            TotalCardCount++;
+
+            int insertIndex = _random.Next(_drawPile.Count + 1);
+            _drawPile.Insert(insertIndex, card);
+            return true;
         }
 
         public void Discard(DemonContractCard card)

@@ -208,7 +208,36 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DC_U10_IndependentBattleUsesAnEmptyNonSharedDemonDeck()
+        public void DC_U10_TryAddAvailableCardImmediatelyExtendsCandidatePool()
+        {
+            DemonContractDefinition satan =
+                DemonContractCatalog.Default.GetByKey(DemonContractCatalog.SatanKey);
+            var deck = new DemonContractDeck(
+                new[]
+                {
+                    new DemonContractCard(0, satan),
+                    new DemonContractCard(1, satan)
+                },
+                seed: 17);
+            var purchased = new DemonContractCard(2, satan);
+
+            Assert.That(deck.CanTakeCandidates, Is.False);
+            Assert.That(deck.TryAddAvailableCard(purchased), Is.True);
+            Assert.That(deck.TotalCardCount, Is.EqualTo(3));
+            Assert.That(deck.AvailableCardCount, Is.EqualTo(3));
+            Assert.That(deck.CanTakeCandidates, Is.True);
+            Assert.That(deck.TryAddAvailableCard(new DemonContractCard(2, satan)), Is.False);
+            Assert.That(deck.TotalCardCount, Is.EqualTo(3));
+
+            IReadOnlyList<DemonContractCard> candidates = deck.TakeCandidates();
+
+            Assert.That(candidates.Select(card => card.Id), Does.Contain(purchased.Id));
+            Assert.That(deck.AvailableCardCount, Is.Zero);
+            Assert.That(deck.CardsInPlayCount, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void DC_U11_IndependentBattleUsesAnEmptyNonSharedDemonDeck()
         {
             CoreLoopBattle first = CreateIndependentBattle();
             CoreLoopBattle second = CreateIndependentBattle();
