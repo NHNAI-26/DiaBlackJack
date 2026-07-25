@@ -10,8 +10,8 @@
 
 | 문서 | 용도 | 상태 |
 | --- | --- | --- |
-| [rule.md](./rule.md) | 게임 원본 규칙 | 계약 덱·발견형 월드 UI 확정 v0.5 |
-| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | 계약 덱·발견형 월드 UI 기준 반영 v0.4 |
+| [rule.md](./rule.md) | 게임 원본 규칙 | 시작 악마·계약 후보·체크포인트 확정 v0.6 |
+| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | 시작 악마·계약 후보·체크포인트 반영 v0.5 |
 | [core-loop-design.md](./core-loop-design.md) | 최소 코어 루프 기획 범위 | 4단계 완료 기준안 v0.1 |
 | [core-loop-development-spec.md](./core-loop-development-spec.md) | 코어 루프 구조·상태·검증 명세 | 4단계 검증 완료 v0.1 |
 | [core-loop-implementation-plan.md](./core-loop-implementation-plan.md) | 코어 루프 작업 순서·담당·일정·완료 증거 | 전체 완료 v0.1 |
@@ -19,11 +19,11 @@
 | [project-structure-and-mcp-reference.md](./project-structure-and-mcp-reference.md) | Unity 구조·어셈블리·MCP 참조 및 연결 확인 | 확인 완료 v0.1 |
 | [ai-usage-technical-document.md](./ai-usage-technical-document.md) | 개발 AI와 게임 내 AI 활용 기술 기록 | 지속 갱신 |
 | [team-role-technical-document.md](./team-role-technical-document.md) | 팀원별 담당 및 실제 구현 기록 | 지속 갱신 |
-| [stage-progression-design.md](./stage-progression-design.md) | 코어 루프와 분리된 런·스테이지 진행 기획 범위 | SP-04 검증 완료 v0.1 |
+| [stage-progression-design.md](./stage-progression-design.md) | 코어 루프와 분리된 런·스테이지 진행 기획 범위 | 체크포인트 기획 이관 대기 v0.2 |
 | [stage-progression-development-spec.md](./stage-progression-development-spec.md) | 런 상태·스테이지 전이·전투·씬 연결·검증 명세 | SP-04 검증 완료 v0.1 |
 | [stage-progression-implementation-plan.md](./stage-progression-implementation-plan.md) | 독립 진행 시스템 작업 순서·일정·완료 증거 | 전체 완료 v0.1 |
 | [stage-progression-progress-log.md](./stage-progression-progress-log.md) | 독립 진행 시스템 착수·구현·검증 누적 기록 | SP-04 완료 v0.1 |
-| [combat-action-design.md](./combat-action-design.md) | 폴드 삭제, 체인지 누적 비용과 패배 피해의 현행 전투 행동 규칙 | 계약 월드 UI 이관 대기 v0.3 |
+| [combat-action-design.md](./combat-action-design.md) | 폴드 삭제, 체인지 누적 비용과 패배 피해의 현행 전투 행동 규칙 | 계약 후보 최대 2장 이관 대기 v0.4 |
 | [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | 현행 규칙 이관 완료 v0.2 |
 | [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 이력과 현행 규칙 이관 결과 | 현행 규칙 이관 완료 v0.2 |
 | [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | 현행 규칙 이관 완료 v0.2 |
@@ -35,7 +35,7 @@
 | [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | AC-06 코드 통합 완료·Editor 최종 재검증 대기 v0.1 |
 | [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 구현 순서와 단계별 검증 게이트 | AC-06 구현 완료 v0.1 |
 | [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | AC-06 대상 15/15·Unity 비의존 461/461 v0.1 |
-| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속·우선 악마 4종과 광신도 선택 밸런스 | 월드 덱·발견형 계약 UI 이관 대기 v1.1 |
+| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속·우선 악마 4종과 광신도 선택 밸런스 | 시작 선택·최대 2장 후보 이관 대기 v1.2 |
 | [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | DC-08 검증 완료 v1.0 |
 | [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 구현 순서와 단계별 검증 게이트 | 전체 완료 v1.0 |
 | [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | DC-08 완료, 대상 8/8·400시드·100자동전투·전체 397/397 |
@@ -51,11 +51,11 @@
 | [enemy-selection-combat-ui-development-spec.md](./enemy-selection-combat-ui-development-spec.md) | 후보 생성·선택 상태·전투 변환·안전 표시 스냅샷과 테스트 명세 | EUI-05 최종 검증 완료 v0.1 |
 | [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI-00~EUI-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
 | [enemy-selection-combat-ui-progress-log.md](./enemy-selection-combat-ui-progress-log.md) | 상대 선택·적 전투 정보 UI 결정·구현·검증 누적 기록 | EUI-05 완료 v0.1 |
-| [formal-run-flow-design.md](./formal-run-flow-design.md) | 골드·상점과 `전투→이벤트→전투→이벤트→보스` 정식 진행 규칙 | 현행 상점 기획 v0.3·기술 이관 필요 |
+| [formal-run-flow-design.md](./formal-run-flow-design.md) | 골드·상점과 `전투→이벤트→전투→이벤트→보스` 정식 진행 규칙 | 상점·체크포인트 기획 v0.4·기술 이관 필요 |
 | [formal-run-flow-development-spec.md](./formal-run-flow-development-spec.md) | 골드 정산·상점 거래·정식 런 조정 API와 테스트 명세 | RF-01 착수 가능 v0.1 |
 | [formal-run-flow-implementation-plan.md](./formal-run-flow-implementation-plan.md) | RF-00~RF-05 HONG 인수인계 작업 순서와 검증 게이트 | RF-00 완료 v0.1 |
 | [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | RF-00 완료 v0.1 |
-| [scene-presentation-design.md](./scene-presentation-design.md) | 2.5D 술집 테이블의 씬 흐름·월드 오브젝트·UI·상점 전환 기획 | 계약 화면 포함 현행 기준안 v0.4 |
+| [scene-presentation-design.md](./scene-presentation-design.md) | 2.5D 술집 테이블의 씬 흐름·월드 오브젝트·UI·상점 전환 기획 | 최대 2장 계약 화면 포함 기준안 v0.5 |
 
 ## 기록 원칙
 
@@ -70,6 +70,8 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-26 | 이천서 | 새 런 시작 시 악마 2장 중 1장 필수 선택·최소 1장 보장, 일반 계약 최대 2장·단일 후보 허용과 루시퍼 5장 예외 확정 |
+| 2026-07-26 | 이천서 | 시작 악마 선택·스테이지 정산·상점 나가기·사건 해결·런 종료 뒤 체크포인트 저장 기준 확정 |
 | 2026-07-26 | 이천서 | 일반·악마 덱의 전용 뒷면·호버 목록, 발견형 계약 후보 3장과 플레이어 앞 활성 악마 카드 UI 기준 확정 |
 | 2026-07-25 | 이천서 | 자동 발동 카드 AC-06 세션·UI·공개 정보 기반 적 AI·일반 보상 5종·사기꾼 탐지기를 통합하고 대상 15/15·Unity 비의존 461/461·컴파일 성공을 확인, Unity Editor 전용 10건과 화면 검증은 후속으로 기록 |
 | 2026-07-25 | 이천서 | 자동 발동 카드 AC-05 부활초의 양측 영혼 2 이상 재시작, 승패 없는 전용 전이와 부모 효과 취소를 구현하고 대상 11/11·CoreLoop 327/327·전체 EditMode 456/456로 검증 |
