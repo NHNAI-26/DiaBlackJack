@@ -452,15 +452,15 @@ namespace DiaBlackJack.GameScene
                     abilityDescription: ResolveAbilityDescription(battle, card.CardId),
                     suit: sourceCard == null ? CardSuit.Spade : sourceCard.Suit);
 
-                // PlayerHand renders index 0 at the player's screen-left edge. Keep hidden cards
-                // first in the projection while preserving the original hand order within each group.
+                // PlayerHand's world orientation makes the highest index land at screen-left.
+                // Keep hidden cards last in the projection while preserving group order.
                 if (card.IsFaceUp)
                 {
-                    cards.Add(projectedCard);
+                    cards.Insert(cards.Count - hiddenCardCount, projectedCard);
                 }
                 else
                 {
-                    cards.Insert(hiddenCardCount, projectedCard);
+                    cards.Add(projectedCard);
                     hiddenCardCount++;
                 }
             }

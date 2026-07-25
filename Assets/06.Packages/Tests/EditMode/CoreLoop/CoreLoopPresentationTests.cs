@@ -75,7 +75,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void GameSceneProjectsHiddenCardsAtPlayerPerspectiveLeftEdgesWithoutChangingHandOrder()
+        public void GameSceneProjectsHiddenCardsAtScreenLeftEdgesWithoutMutatingHandOrder()
         {
             CoreLoopBattle battle = CreateBattle(
                 playerRanks: new[] { 10, 2, 4 },
@@ -112,9 +112,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 model.PlayerCards.Select(card => card.CardId),
                 Is.EqualTo(new[]
                 {
-                    playerHiddenCardId,
                     playerFaceUpCardId,
                     playerDrawnFaceUpCardId,
+                    playerHiddenCardId,
                 }));
             Assert.That(
                 model.EnemyCards.Select(card => card.CardId),
@@ -124,8 +124,10 @@ namespace DiaBlackJack.CoreLoop.Tests
                     enemyDrawnFaceUpCardId,
                     enemyHiddenCardId,
                 }));
-            Assert.That(model.PlayerCards[0].IsFaceUp, Is.False);
-            Assert.That(model.PlayerCards.Skip(1).All(card => card.IsFaceUp), Is.True);
+            Assert.That(
+                model.PlayerCards.Take(model.PlayerCards.Count - 1).All(card => card.IsFaceUp),
+                Is.True);
+            Assert.That(model.PlayerCards.Last().IsFaceUp, Is.False);
             Assert.That(
                 model.EnemyCards.Take(model.EnemyCards.Count - 1).All(card => card.IsFaceUp),
                 Is.True);
