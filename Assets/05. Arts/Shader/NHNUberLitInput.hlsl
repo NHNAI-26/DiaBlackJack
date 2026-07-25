@@ -10,6 +10,9 @@
 CBUFFER_START(UnityPerMaterial)
     float4 _BaseMap_ST;
     float4 _DissolveTilingOffset;
+#if defined(NHN_SPRITE_UBER)
+    float4 _BaseSpriteUVRect;
+#endif
     half4 _BaseColor;
     half _HueShift;
     half _Saturation;
@@ -21,6 +24,10 @@ CBUFFER_START(UnityPerMaterial)
     half4 _GlassGlowColor;
     half4 _DissolveEdgeColor;
     half4 _DissolvePanning;
+#if defined(NHN_SPRITE_UBER)
+    half _AlphaMultiplier;
+    half _CardBlendAmount;
+#endif
     half _Cutoff;
     half _Metallic;
     half _Smoothness;
@@ -52,6 +59,8 @@ SAMPLER(sampler_DissolveNoiseMap);
 #if defined(NHN_SPRITE_UBER)
 TEXTURE2D(_MainTex);
 SAMPLER(sampler_MainTex);
+TEXTURE2D(_CardBlendTex);
+SAMPLER(sampler_CardBlendTex);
 #endif
 
 // Public entry points accept raw mesh UV. Surface textures share _BaseMap_ST;
@@ -60,7 +69,11 @@ inline half4 NHNSampleBase(float2 rawUV, out float2 surfaceUV)
 {
 #if defined(NHN_SPRITE_UBER)
     surfaceUV = rawUV;
-    return SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, rawUV);
+    half4 baseSample = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, rawUV);
+    float2 baseSpriteUV = saturate((rawUV - _BaseSpriteUVRect.xy)
+        / max(_BaseSpriteUVRect.zw, float2(0.00001, 0.00001)));
+    half4 blendSample = SAMPLE_TEXTURE2D(_CardBlendTex, sampler_CardBlendTex, baseSpriteUV);
+    return lerp(baseSample, blendSample, saturate(_CardBlendAmount));
 #else
     surfaceUV = TRANSFORM_TEX(rawUV, _BaseMap);
     return SampleAlbedoAlpha(surfaceUV, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap));
@@ -199,6 +212,9 @@ inline void InitializeNHNUberLitSurfaceData(float2 rawUV, half4 vertexColor,
     half2 metallicSmoothness = NHNSampleMetallicSmoothness(surfaceUV);
 
     surfaceData.alpha = NHNApplySurfaceClipping(rawUV, baseSample.a, vertexColor.a, dissolveEdge);
+#if defined(NHN_SPRITE_UBER)
+    surfaceData.alpha *= _AlphaMultiplier;
+#endif
     surfaceData.albedo = NHNAdjustBaseColor(baseSample.rgb * _BaseColor.rgb * vertexColor.rgb);
     surfaceData.albedo = AlphaModulate(surfaceData.albedo, surfaceData.alpha);
     surfaceData.metallic = metallicSmoothness.x;

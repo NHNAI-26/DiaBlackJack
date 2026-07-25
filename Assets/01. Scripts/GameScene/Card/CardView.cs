@@ -37,11 +37,15 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Color backTint = new Color(0.72f, 0.28f, 0.28f, 1f);
 
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int BaseSpriteUvRectId = Shader.PropertyToID("_BaseSpriteUVRect");
 
         private MaterialPropertyBlock _propertyBlock;
         private SpriteRenderer _frontSpriteRenderer;
+        private SpriteRenderer _backSpriteRenderer;
         private Renderer _frontRenderer;
         private Renderer _backRenderer;
+        private Sprite _frontUvSprite;
+        private Sprite _backUvSprite;
         private Vector3 _baseScale = Vector3.one;
         private Vector3 _targetScale = Vector3.one;
         private bool _showingFrontFace = true;
@@ -64,10 +68,13 @@ namespace DiaBlackJack.GameScene
             }
 
             HideRankText();
+            RefreshSpriteUvRects();
         }
 
         private void Update()
         {
+            RefreshSpriteUvRects();
+
             Vector3 current = transform.localScale;
             if ((current - _targetScale).sqrMagnitude > 0.0000001f)
             {
@@ -158,6 +165,7 @@ namespace DiaBlackJack.GameScene
             if (renderer != null && sprite != null)
             {
                 renderer.sprite = sprite;
+                RefreshSpriteUvRect(renderer, ref _frontUvSprite);
             }
         }
 
@@ -172,6 +180,57 @@ namespace DiaBlackJack.GameScene
             }
 
             return sprites[rank];
+        }
+
+        private void RefreshSpriteUvRects()
+        {
+            RefreshSpriteUvRect(FrontSpriteRenderer(), ref _frontUvSprite);
+            RefreshSpriteUvRect(BackSpriteRenderer(), ref _backUvSprite);
+        }
+
+        private void RefreshSpriteUvRect(SpriteRenderer renderer, ref Sprite trackedSprite)
+        {
+            if (renderer == null || renderer.sprite == trackedSprite)
+            {
+                return;
+            }
+
+            trackedSprite = renderer.sprite;
+            Vector4 uvRect = GetSpriteUvRect(trackedSprite);
+
+            _propertyBlock ??= new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(_propertyBlock);
+            _propertyBlock.SetVector(BaseSpriteUvRectId, uvRect);
+            renderer.SetPropertyBlock(_propertyBlock);
+        }
+
+        private static Vector4 GetSpriteUvRect(Sprite sprite)
+        {
+            if (sprite == null)
+            {
+                return new Vector4(0f, 0f, 1f, 1f);
+            }
+
+            Vector2[] uvs = sprite.uv;
+            if (uvs == null || uvs.Length == 0)
+            {
+                return new Vector4(0f, 0f, 1f, 1f);
+            }
+
+            Vector2 minimum = uvs[0];
+            Vector2 maximum = uvs[0];
+            for (int i = 1; i < uvs.Length; i++)
+            {
+                minimum = Vector2.Min(minimum, uvs[i]);
+                maximum = Vector2.Max(maximum, uvs[i]);
+            }
+
+            Vector2 size = maximum - minimum;
+            return new Vector4(
+                minimum.x,
+                minimum.y,
+                Mathf.Max(size.x, 0.00001f),
+                Mathf.Max(size.y, 0.00001f));
         }
 
         private void HideRankText()
@@ -198,12 +257,18 @@ namespace DiaBlackJack.GameScene
             renderer.SetPropertyBlock(_propertyBlock);
         }
 
-        private static void ClearTint(Renderer renderer)
+        private void ClearTint(Renderer renderer)
         {
-            if (renderer != null)
+            if (renderer == null)
             {
-                renderer.SetPropertyBlock(null);
+                return;
             }
+
+            Material material = renderer.sharedMaterial;
+            Color materialColor = material != null && material.HasProperty(BaseColorId)
+                ? material.GetColor(BaseColorId)
+                : Color.white;
+            ApplyTint(renderer, materialColor);
         }
 
         private Renderer FrontRenderer()
@@ -230,10 +295,20 @@ namespace DiaBlackJack.GameScene
         {
             if (_backRenderer == null && back != null)
             {
-                _backRenderer = back.GetComponent<Renderer>();
+                _backRenderer = BackSpriteRenderer();
             }
 
             return _backRenderer;
+        }
+
+        private SpriteRenderer BackSpriteRenderer()
+        {
+            if (_backSpriteRenderer == null && back != null)
+            {
+                _backSpriteRenderer = back.GetComponent<SpriteRenderer>();
+            }
+
+            return _backSpriteRenderer;
         }
     }
 }

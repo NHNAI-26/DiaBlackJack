@@ -6,6 +6,7 @@ Shader "Shader/Sprite Uber Lit"
         [Main(Surface, _, on, off)] _SurfaceOptions("Surface", Float) = 1
         [KWEnum(Surface, Opaque, _, Transparent, _SURFACE_TYPE_TRANSPARENT)] _Surface("Surface Type", Float) = 0
         [KWEnum(Surface_SURFACE_TYPE_TRANSPARENT, Alpha, _, Premultiply, _ALPHAPREMULTIPLY_ON, Additive, _, Multiply, _ALPHAMODULATE_ON)] _Blend("Blend Mode", Float) = 0
+        [Sub(Surface_SURFACE_TYPE_TRANSPARENT)] _AlphaMultiplier("Alpha Multiplier", Range(0,1)) = 1
         [SubToggle(Surface, _ALPHATEST_ON)] _AlphaClip("Alpha Clipping", Float) = 1
         [Sub(Surface_ALPHATEST_ON)] _Cutoff("Threshold", Range(0,1)) = 0.5
         [SubToggle(Surface, _)] _ReceiveShadows("Receive Shadows", Float) = 1
@@ -20,6 +21,9 @@ Shader "Shader/Sprite Uber Lit"
         [Main(SurfaceInputs, _, on, off)] _SurfaceInputs("Surface Inputs", Float) = 1
         [PerRendererData] [MainTexture] _MainTex("Sprite Texture", 2D) = "white" {}
         [Sub(SurfaceInputs)] [MainColor] _BaseColor("Base Color", Color) = (1,1,1,1)
+        [Tex(SurfaceInputs)] [NoScaleOffset] _CardBlendTex("Blend Card Sprite", 2D) = "white" {}
+        [Sub(SurfaceInputs)] _CardBlendAmount("Card Blend", Range(0,1)) = 0
+        [HideInInspector] [PerRendererData] _BaseSpriteUVRect("Base Sprite UV Rect", Vector) = (0,0,1,1)
         [Sub(SurfaceInputs)] _HueShift("Hue Shift", Range(-180,180)) = 0
         [Sub(SurfaceInputs)] _Saturation("Saturation", Range(0,2)) = 1
         [Sub(SurfaceInputs)] _Brightness("Brightness", Range(0,2)) = 1
