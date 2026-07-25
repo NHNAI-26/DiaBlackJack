@@ -1,0 +1,114 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &332306386787099267
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 3795005150099411801, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: c9ede7ee939ff914f8ed87a8edc4b1ed, type: 2}
+    - target: {fileID: 3879847998483440863, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_text
+      value: LIGHTER
+      objectReference: {fileID: 0}
+    - target: {fileID: 3879847998483440863, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_fontSize
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3879847998483440863, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3879847998483440863, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
+    - target: {fileID: 4293402406934222925, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 4293402406934222925, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6158096078959212752, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_Name
+      value: ShopItem_Lighter
+      objectReference: {fileID: 0}
+    - target: {fileID: 7553110662055141979, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.17090693
+      objectReference: {fileID: 0}
+    - target: {fileID: 7553110662055141979, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_LocalScale.y
+      value: -0.285956
+      objectReference: {fileID: 0}
+    - target: {fileID: 7553110662055141979, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_LocalScale.z
+      value: -0.0443884
+      objectReference: {fileID: 0}
+    - target: {fileID: 8358169800489736741, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8358169800489736741, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8358169800489736741, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8358169800489736741, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8358169800489736741, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8358169800489736741, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8358169800489736741, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8358169800489736741, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8358169800489736741, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8358169800489736741, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856677999567629907, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_text
+      value: 'Remove 1 card from your deck.
+
+        PRICE 2 GOLD'
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856677999567629907, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_fontSize
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8856677999567629907, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 5
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects:
+    - {fileID: 1217176478196107997, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
