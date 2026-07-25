@@ -25,6 +25,10 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Transform normalCardHolder;
         [Tooltip("World-space normal card prefab used for shop offers.")]
         [SerializeField] private CardView normalCardPrefab;
+        [Tooltip("Temporary table item that removes one card from the player's deck.")]
+        [SerializeField] private ShopUtilityItemView lighterItem;
+        [Tooltip("Temporary table item that restores player soul for gold.")]
+        [SerializeField] private ShopUtilityItemView whiskeyItem;
         [Tooltip("Combat-only table objects hidden while the shop is open and restored on close.")]
         [SerializeField] private GameObject[] combatTableObjects;
         [Tooltip("Gold granted once per battle victory.")]
@@ -35,6 +39,9 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private int normalCardPrice = 3;
         [SerializeField] private int normalCardOfferCount = 3;
         [SerializeField] private float normalCardSpacing = 1.1f;
+        [SerializeField] private int lighterPrice = 2;
+        [SerializeField] private int whiskeyPrice = 2;
+        [SerializeField] private int whiskeySoulRestore = 2;
         [SerializeField] private int shopRandomSeed = 20260726;
 
         private readonly List<DemonCardOffer> _demonOffers = new List<DemonCardOffer>();
@@ -156,6 +163,73 @@ namespace DiaBlackJack.GameScene
                 offer.View.SetHovered(false);
             }
 
+            RefreshOfferViews();
+            return true;
+        }
+
+        public void RefreshUtilityItems(
+            int removableCardCount,
+            int playerCurrentSoul,
+            int playerMaximumSoul)
+        {
+            BindUtilityItem(
+                lighterItem,
+                ShopUtilityItemKind.Lighter,
+                "LIGHTER",
+                "Remove 1 card from your deck.\nPRICE " + lighterPrice + " GOLD",
+                IsOpen && Gold >= lighterPrice && removableCardCount > 1);
+
+            string whiskeyDescription =
+                "Restore " + whiskeySoulRestore + " soul.\nPRICE " + whiskeyPrice + " GOLD";
+            if (playerCurrentSoul >= playerMaximumSoul)
+            {
+                whiskeyDescription += "\nSOUL IS FULL";
+            }
+
+            BindUtilityItem(
+                whiskeyItem,
+                ShopUtilityItemKind.Whiskey,
+                "WHISKEY",
+                whiskeyDescription,
+                IsOpen && Gold >= whiskeyPrice && playerCurrentSoul < playerMaximumSoul);
+        }
+
+        public bool TryPurchaseLighterRemoval(int removableCardCount)
+        {
+            if (!IsOpen || removableCardCount <= 1 || Gold < lighterPrice)
+            {
+                return false;
+            }
+
+            Gold -= lighterPrice;
+            RefreshOfferViews();
+            return true;
+        }
+
+        public bool TryPurchaseWhiskey(
+            int playerCurrentSoul,
+            int playerMaximumSoul,
+            out int restoreAmount)
+        {
+            restoreAmount = 0;
+            if (!IsOpen ||
+                Gold < whiskeyPrice ||
+                playerCurrentSoul < 0 ||
+                playerMaximumSoul <= 0 ||
+                playerCurrentSoul >= playerMaximumSoul)
+            {
+                return false;
+            }
+
+            restoreAmount = Mathf.Min(
+                whiskeySoulRestore,
+                playerMaximumSoul - playerCurrentSoul);
+            if (restoreAmount <= 0)
+            {
+                return false;
+            }
+
+            Gold -= whiskeyPrice;
             RefreshOfferViews();
             return true;
         }
@@ -338,6 +412,22 @@ namespace DiaBlackJack.GameScene
                 abilityDescription: FormatNormalCardOfferText(definition, offer.Price),
                 suit: offer.Suit,
                 showHoverBadgeWhenUnavailable: true));
+        }
+
+        private static void BindUtilityItem(
+            ShopUtilityItemView item,
+            ShopUtilityItemKind kind,
+            string displayName,
+            string description,
+            bool canUse)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            item.gameObject.SetActive(true);
+            item.Bind(kind, displayName, description, canUse);
         }
 
         private void LayoutDemonOfferViews()

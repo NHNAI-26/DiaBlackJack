@@ -55,7 +55,9 @@ namespace DiaBlackJack.GameScene
         private Camera _camera;
         private CardView _hoveredCard;
         private DemonCardView _hoveredDemonCard;
+        private ShopUtilityItemView _hoveredShopUtilityItem;
         private bool _inputLocked;
+        private bool _choosingLighterRemoval;
         private int _battleIndex;
         private GUIStyle _buttonStyle;
         private GUIStyle _labelStyle;
@@ -64,6 +66,9 @@ namespace DiaBlackJack.GameScene
         private GUIStyle _contractTitleStyle;
         private GUIStyle _contractBodyStyle;
         private GUIStyle _contractCostStyle;
+        private GUIStyle _shopPanelStyle;
+        private GUIStyle _shopCardButtonStyle;
+        private Vector2 _lighterRemovalScroll;
         private DeckClickable _hoveredDeck;
         private bool _showDemonContractConfirmation;
         private bool _hasLastRevolverAnimationCue;
@@ -76,6 +81,8 @@ namespace DiaBlackJack.GameScene
         private readonly List<PurchasedNormalCard> _purchasedNormalCards =
             new List<PurchasedNormalCard>();
         private readonly List<string> _purchasedDemonContractKeys = new List<string>();
+        private readonly List<RemovedNormalCard> _removedNormalCards =
+            new List<RemovedNormalCard>();
 
         public CoreLoopBattle Battle => _session?.Battle;
 
@@ -110,17 +117,21 @@ namespace DiaBlackJack.GameScene
             DemonCardView pointedDemonCard = shopOpen && hasHit
                 ? hit.collider.GetComponentInParent<DemonCardView>()
                 : null;
+            ShopUtilityItemView pointedShopUtilityItem = shopOpen && hasHit
+                ? hit.collider.GetComponentInParent<ShopUtilityItemView>()
+                : null;
 
             // Hover is visual-only, so it runs even while input is locked (during timeline playback).
             UpdateHover(shopOpen ? pointedShopCard : pointedBattleCard);
             UpdateDemonCardHover(pointedDemonCard);
+            UpdateShopUtilityItemHover(pointedShopUtilityItem);
 
             // A deck's card-list panel shows while the pointer hovers it (draw or discard).
             _hoveredDeck = !shopOpen && hasHit
                 ? hit.collider.GetComponentInParent<DeckClickable>()
                 : null;
 
-            if (_inputLocked)
+            if (_inputLocked || _choosingLighterRemoval)
             {
                 return;
             }
@@ -147,6 +158,12 @@ namespace DiaBlackJack.GameScene
             if (pointedDemonCard != null && pointedDemonCard.CanUse)
             {
                 PurchaseShopDemonCard(pointedDemonCard);
+                return;
+            }
+
+            if (pointedShopUtilityItem != null && pointedShopUtilityItem.CanUse)
+            {
+                UseShopUtilityItem(pointedShopUtilityItem);
             }
         }
 
@@ -206,6 +223,25 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        private void UpdateShopUtilityItemHover(ShopUtilityItemView pointed)
+        {
+            if (pointed == _hoveredShopUtilityItem)
+            {
+                return;
+            }
+
+            if (_hoveredShopUtilityItem != null)
+            {
+                _hoveredShopUtilityItem.SetHovered(false);
+            }
+
+            _hoveredShopUtilityItem = pointed;
+            if (_hoveredShopUtilityItem != null)
+            {
+                _hoveredShopUtilityItem.SetHovered(true);
+            }
+        }
+
         private CoreLoopBattle CreateBattle()
         {
             ResetRevolverAnimationState();
@@ -223,8 +259,16 @@ namespace DiaBlackJack.GameScene
             int id = 0;
             for (int rank = 1; rank <= 10; rank++)
             {
-                cards.Add(new BlackjackCard(id++, rank, suit: CardSuit.Spade));
-                cards.Add(new BlackjackCard(id++, rank, suit: CardSuit.Clover));
+                CardDefinition definition = CardDefinitionCatalog.GetDefaultForRank(rank);
+                if (!IsBaseNormalCardRemoved(definition.Key, CardSuit.Spade))
+                {
+                    cards.Add(new BlackjackCard(id++, definition, suit: CardSuit.Spade));
+                }
+
+                if (!IsBaseNormalCardRemoved(definition.Key, CardSuit.Clover))
+                {
+                    cards.Add(new BlackjackCard(id++, definition, suit: CardSuit.Clover));
+                }
             }
 
             foreach (PurchasedNormalCard purchasedCard in _purchasedNormalCards)
@@ -288,6 +332,91 @@ namespace DiaBlackJack.GameScene
             UpdateHover(null);
         }
 
+        private void UseShopUtilityItem(ShopUtilityItemView item)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            switch (item.Kind)
+            {
+                case ShopUtilityItemKind.Lighter:
+                    BeginLighterRemoval();
+                    break;
+                case ShopUtilityItemKind.Whiskey:
+                    PurchaseWhiskey();
+                    break;
+            }
+        }
+
+        private void BeginLighterRemoval()
+        {
+            if (shop == null || !shop.IsOpen || BuildRunDeckCardOptions().Count <= 1)
+            {
+                return;
+            }
+
+            _choosingLighterRemoval = true;
+            UpdateShopUtilityItemHover(null);
+            RefreshShopUtilityItems();
+        }
+
+        private bool RemoveCardWithLighter(int optionIndex)
+        {
+            if (shop == null || !shop.IsOpen)
+            {
+                return false;
+            }
+
+            List<RunDeckCardOption> options = BuildRunDeckCardOptions();
+            if (optionIndex < 0 ||
+                optionIndex >= options.Count ||
+                options.Count <= 1)
+            {
+                return false;
+            }
+
+            RunDeckCardOption option = options[optionIndex];
+            if (!CanRemoveRunDeckCard(option) ||
+                !shop.TryPurchaseLighterRemoval(options.Count))
+            {
+                RefreshShopUtilityItems();
+                return false;
+            }
+
+            RemoveRunDeckCard(option);
+            _choosingLighterRemoval = false;
+            RefreshView();
+            return true;
+        }
+
+        private bool CancelLighterRemoval()
+        {
+            _choosingLighterRemoval = false;
+            RefreshShopUtilityItems();
+            return true;
+        }
+
+        private void PurchaseWhiskey()
+        {
+            CoreLoopBattle battle = Battle;
+            if (shop == null ||
+                battle == null ||
+                !shop.TryPurchaseWhiskey(
+                    battle.Player.Soul.Current,
+                    battle.Player.Soul.Maximum,
+                    out int restoreAmount))
+            {
+                RefreshShopUtilityItems();
+                return;
+            }
+
+            battle.Player.Soul.Restore(restoreAmount);
+            RefreshView();
+            UpdateShopUtilityItemHover(null);
+        }
+
         private void AddPurchasedNormalCardToCurrentBattle(
             string definitionKey,
             CardSuit suit)
@@ -343,6 +472,98 @@ namespace DiaBlackJack.GameScene
             return cardId;
         }
 
+        private List<RunDeckCardOption> BuildRunDeckCardOptions()
+        {
+            var options = new List<RunDeckCardOption>(20 + _purchasedNormalCards.Count);
+            for (int rank = 1; rank <= 10; rank++)
+            {
+                CardDefinition definition = CardDefinitionCatalog.GetDefaultForRank(rank);
+                AddBaseRunDeckCardOption(options, definition, CardSuit.Spade);
+                AddBaseRunDeckCardOption(options, definition, CardSuit.Clover);
+            }
+
+            for (int i = 0; i < _purchasedNormalCards.Count; i++)
+            {
+                PurchasedNormalCard card = _purchasedNormalCards[i];
+                options.Add(new RunDeckCardOption(
+                    card.DefinitionKey,
+                    card.Suit,
+                    isPurchased: true,
+                    purchasedIndex: i));
+            }
+
+            return options;
+        }
+
+        private void AddBaseRunDeckCardOption(
+            List<RunDeckCardOption> options,
+            CardDefinition definition,
+            CardSuit suit)
+        {
+            if (definition != null && !IsBaseNormalCardRemoved(definition.Key, suit))
+            {
+                options.Add(new RunDeckCardOption(
+                    definition.Key,
+                    suit,
+                    isPurchased: false,
+                    purchasedIndex: -1));
+            }
+        }
+
+        private bool CanRemoveRunDeckCard(RunDeckCardOption option)
+        {
+            if (option.IsPurchased)
+            {
+                return option.PurchasedIndex >= 0 &&
+                    option.PurchasedIndex < _purchasedNormalCards.Count &&
+                    _purchasedNormalCards[option.PurchasedIndex].Matches(
+                        option.DefinitionKey,
+                        option.Suit);
+            }
+
+            return !IsBaseNormalCardRemoved(option.DefinitionKey, option.Suit);
+        }
+
+        private void RemoveRunDeckCard(RunDeckCardOption option)
+        {
+            if (option.IsPurchased)
+            {
+                _purchasedNormalCards.RemoveAt(option.PurchasedIndex);
+                return;
+            }
+
+            _removedNormalCards.Add(new RemovedNormalCard(
+                option.DefinitionKey,
+                option.Suit));
+        }
+
+        private bool IsBaseNormalCardRemoved(string definitionKey, CardSuit suit)
+        {
+            foreach (RemovedNormalCard card in _removedNormalCards)
+            {
+                if (card.Matches(definitionKey, suit))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private string BuildRunDeckCardLabel(RunDeckCardOption option)
+        {
+            CardDefinition definition = CardDefinitionCatalog.GetByKey(option.DefinitionKey);
+            string source = option.IsPurchased ? "BOUGHT" : "BASE";
+            return definition.Rank + " " + FormatSuit(option.Suit) +
+                "\n" + definition.DisplayName +
+                "\n" + source;
+        }
+
+        private static string FormatSuit(CardSuit suit)
+        {
+            return suit == CardSuit.Clover ? "CLOVER" : "SPADE";
+        }
+
         private void OnGUI()
         {
             if (_core == null)
@@ -377,11 +598,7 @@ namespace DiaBlackJack.GameScene
             {
                 if (shop != null && shop.IsOpen)
                 {
-                    DrawHeading("SHOP — 상품을 둘러보고 나가세요");
-                    DrawButtonRow(
-                        new[] { "상점 나가기" },
-                        new[] { true },
-                        new Func<bool>[] { LeaveShop });
+                    DrawShopControls();
                 }
                 else
                 {
@@ -443,6 +660,121 @@ namespace DiaBlackJack.GameScene
                     _session.TryBeginPlayerChange,
                     BeginDemonContractConfirmation
                 });
+        }
+
+        private void DrawShopControls()
+        {
+            if (_choosingLighterRemoval)
+            {
+                DrawLighterRemovalPanel();
+                return;
+            }
+
+            DrawHeading("SHOP - hover goods and click to buy");
+            DrawButtonRow(
+                new[] { "LEAVE SHOP" },
+                new[] { true },
+                new Func<bool>[] { LeaveShop });
+        }
+
+        private void DrawLighterRemovalPanel()
+        {
+            List<RunDeckCardOption> options = BuildRunDeckCardOptions();
+            EnsureShopStyles();
+
+            float width = Mathf.Min(760f, Screen.width - 40f);
+            float height = Mathf.Min(520f, Screen.height - 120f);
+            var panelRect = new Rect(
+                (Screen.width - width) * 0.5f,
+                70f,
+                width,
+                height);
+            GUI.Box(panelRect, string.Empty, _shopPanelStyle);
+
+            GUI.Label(
+                new Rect(panelRect.x + 18f, panelRect.y + 14f, width - 36f, 30f),
+                "LIGHTER - CHOOSE 1 CARD TO REMOVE",
+                _labelStyle);
+
+            int columns = Mathf.Clamp(Mathf.FloorToInt((width - 36f) / 132f), 3, 5);
+            const float gap = 8f;
+            float cardWidth = (width - 36f - (columns - 1) * gap) / columns;
+            const float cardHeight = 74f;
+            int rows = Mathf.CeilToInt(options.Count / (float)columns);
+            var scrollRect = new Rect(
+                panelRect.x + 18f,
+                panelRect.y + 58f,
+                width - 36f,
+                height - 122f);
+            var contentRect = new Rect(
+                0f,
+                0f,
+                scrollRect.width - 18f,
+                Mathf.Max(scrollRect.height, rows * (cardHeight + gap)));
+
+            _lighterRemovalScroll = GUI.BeginScrollView(
+                scrollRect,
+                _lighterRemovalScroll,
+                contentRect);
+            for (int i = 0; i < options.Count; i++)
+            {
+                int index = i;
+                int row = i / columns;
+                int column = i % columns;
+                var cardRect = new Rect(
+                    column * (cardWidth + gap),
+                    row * (cardHeight + gap),
+                    cardWidth,
+                    cardHeight);
+
+                using (new GUIEnabledScope(!_inputLocked && options.Count > 1))
+                {
+                    if (GUI.Button(
+                        cardRect,
+                        BuildRunDeckCardLabel(options[i]),
+                        _shopCardButtonStyle))
+                    {
+                        RemoveCardWithLighter(index);
+                    }
+                }
+            }
+
+            GUI.EndScrollView();
+
+            using (new GUIEnabledScope(!_inputLocked))
+            {
+                if (GUI.Button(
+                    new Rect(
+                        panelRect.x + (width - 160f) * 0.5f,
+                        panelRect.yMax - 52f,
+                        160f,
+                        38f),
+                    "CANCEL",
+                    _buttonStyle))
+                {
+                    CancelLighterRemoval();
+                }
+            }
+        }
+
+        private void EnsureShopStyles()
+        {
+            _shopPanelStyle ??= new GUIStyle(GUI.skin.box)
+            {
+                font = uiFont,
+                fontSize = 16,
+                alignment = TextAnchor.UpperCenter,
+                padding = new RectOffset(14, 14, 14, 14),
+                normal = { textColor = Color.white }
+            };
+            _shopCardButtonStyle ??= new GUIStyle(GUI.skin.button)
+            {
+                font = uiFont,
+                fontSize = 13,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter,
+                wordWrap = true
+            };
         }
 
         private void DrawChangeCandidates()
@@ -926,6 +1258,8 @@ namespace DiaBlackJack.GameScene
                 hud.SetGold(shop != null ? shop.Gold : 0);
             }
 
+            RefreshShopUtilityItems();
+
             bool playedRevolverAnimation =
                 TryPlayRevolverAnimation(vm.RevolverAnimationCue);
 
@@ -962,6 +1296,20 @@ namespace DiaBlackJack.GameScene
             }
 
             return playedRevolverAnimation;
+        }
+
+        private void RefreshShopUtilityItems()
+        {
+            CoreLoopBattle battle = Battle;
+            if (shop == null || !shop.IsOpen || battle == null)
+            {
+                return;
+            }
+
+            shop.RefreshUtilityItems(
+                BuildRunDeckCardOptions().Count,
+                battle.Player.Soul.Current,
+                battle.Player.Soul.Maximum);
         }
 
         private bool TryPlayRevolverAnimation(GameSceneRevolverAnimationCue cue)
@@ -1142,8 +1490,10 @@ namespace DiaBlackJack.GameScene
             if (restarted && shop != null)
             {
                 _showDemonContractConfirmation = false;
+                _choosingLighterRemoval = false;
                 UpdateHover(null);
                 UpdateDemonCardHover(null);
+                UpdateShopUtilityItemHover(null);
                 shop.Close();
             }
 
@@ -1160,8 +1510,11 @@ namespace DiaBlackJack.GameScene
                 _showDemonContractConfirmation = false;
                 _purchasedNormalCards.Clear();
                 _purchasedDemonContractKeys.Clear();
+                _removedNormalCards.Clear();
+                _choosingLighterRemoval = false;
                 UpdateHover(null);
                 UpdateDemonCardHover(null);
+                UpdateShopUtilityItemHover(null);
                 shop.Close();
                 shop.ResetGold();
             }
@@ -1185,6 +1538,54 @@ namespace DiaBlackJack.GameScene
             public string DefinitionKey { get; }
 
             public CardSuit Suit { get; }
+
+            public bool Matches(string definitionKey, CardSuit suit)
+            {
+                return StringComparer.Ordinal.Equals(DefinitionKey, definitionKey) &&
+                    Suit == suit;
+            }
+        }
+
+        private readonly struct RemovedNormalCard
+        {
+            public RemovedNormalCard(string definitionKey, CardSuit suit)
+            {
+                DefinitionKey = definitionKey ?? string.Empty;
+                Suit = suit;
+            }
+
+            public string DefinitionKey { get; }
+
+            public CardSuit Suit { get; }
+
+            public bool Matches(string definitionKey, CardSuit suit)
+            {
+                return StringComparer.Ordinal.Equals(DefinitionKey, definitionKey) &&
+                    Suit == suit;
+            }
+        }
+
+        private readonly struct RunDeckCardOption
+        {
+            public RunDeckCardOption(
+                string definitionKey,
+                CardSuit suit,
+                bool isPurchased,
+                int purchasedIndex)
+            {
+                DefinitionKey = definitionKey ?? string.Empty;
+                Suit = suit;
+                IsPurchased = isPurchased;
+                PurchasedIndex = purchasedIndex;
+            }
+
+            public string DefinitionKey { get; }
+
+            public CardSuit Suit { get; }
+
+            public bool IsPurchased { get; }
+
+            public int PurchasedIndex { get; }
         }
 
         private readonly struct GUIEnabledScope : IDisposable
