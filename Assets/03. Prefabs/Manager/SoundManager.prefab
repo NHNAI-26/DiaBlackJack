@@ -66,6 +66,11 @@ MonoBehaviour:
     volume: 0.5
     pitch: 1
     loop: 0
+  - id: tensionUp
+    clip: {fileID: 8300000, guid: c444dc1f0fe431f42817d441cc5d8094, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1

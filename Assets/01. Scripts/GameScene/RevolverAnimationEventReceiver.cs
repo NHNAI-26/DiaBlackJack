@@ -80,6 +80,23 @@ namespace DiaBlackJack.GameScene
             }
             SoundManager.Current.PlaySfx(id);
         }
+
+        public void ShakeCamera(float duration) =>
+            Presentation?.ShakeCameraForDuration(duration);
+        public void StartChromaticAberration(float riseSpeed) =>
+            Presentation?.StartChromaticAberration(riseSpeed);
+        public void StopChromaticAberration() =>
+            Presentation?.StopChromaticAberration();
+        private PresentationManager Presentation
+        {
+            get
+            {
+                if (PresentationManager.Current == null)
+                    Log.W("[RevolverAnimationEventReceiver] PresentationManager is unavailable.", this);
+                return PresentationManager.Current;
+            }
+        }
+
         private static string Key(string value) => value?.Trim() ?? string.Empty;
     }
 }
