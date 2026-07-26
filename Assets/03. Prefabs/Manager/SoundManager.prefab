@@ -71,6 +71,16 @@ MonoBehaviour:
     volume: 0.5
     pitch: 1
     loop: 0
+  - id: revolverPlayerReady
+    clip: {fileID: 8300000, guid: b9998bbd1b3236e45b72c25e9bb288a8, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: revolverPlayerShoot
+    clip: {fileID: 8300000, guid: 00315393b856ebd44a2aca4d46ad591b, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1
