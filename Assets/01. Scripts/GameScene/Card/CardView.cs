@@ -9,7 +9,7 @@ namespace DiaBlackJack.GameScene
     /// the viewer may see the rank; the face-up sprite is swapped by rank. Hover feedback is driven
     /// by <see cref="SetHovered"/> (called from
     /// <c>GameManager</c>'s pointer raycast): any hovered card scales up, and a hovered *usable* card
-    /// also glows and pops a <see cref="badge"/> above it naming the ability. Usability is
+    /// also glows and exposes its ability label and screen position to the shared HUD badge. Usability is
     /// orientation-independent — a face-down card can be usable — so the badge/glow are gated on
     /// <see cref="CanUse"/> only, and the glow tints whichever face (front or back) is showing.
     /// </summary>
@@ -22,9 +22,9 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Sprite[] faceSpritesByRank = new Sprite[11];
         [SerializeField] private Sprite[] cloverFaceSpritesByRank = new Sprite[11];
 
-        [Header("Usable badge (hover)")]
-        [SerializeField] private GameObject badge;
-        [SerializeField] private TMP_Text badgeText;
+        [Header("Hover badge anchor")]
+        [Tooltip("World-space anchor projected to the HUD while this card is hovered.")]
+        [SerializeField] private Transform topPosition;
 
         [Header("Hover feel")]
         [SerializeField] private float hoverScale = 1.15f;
@@ -58,14 +58,17 @@ namespace DiaBlackJack.GameScene
         /// <summary>Whether this card's manual effect can be activated right now (player, usable only).</summary>
         public bool CanUse { get; private set; }
 
+        /// <summary>Text displayed by the shared HUD badge while this card is hovered.</summary>
+        public string HoverBadgeText { get; private set; } = string.Empty;
+
+        /// <summary>Whether the shared HUD badge should currently be visible for this card.</summary>
+        public bool ShouldShowHoverBadge =>
+            _hovered && _showBadgeOnHover && !string.IsNullOrEmpty(HoverBadgeText);
+
         private void Awake()
         {
             _baseScale = transform.localScale;
             _targetScale = _baseScale;
-            if (badge != null)
-            {
-                badge.SetActive(false);
-            }
 
             HideRankText();
             RefreshSpriteUvRects();
@@ -111,12 +114,9 @@ namespace DiaBlackJack.GameScene
 
             HideRankText();
 
-            if (badgeText != null)
-            {
-                badgeText.text = string.IsNullOrEmpty(card.AbilityDescription)
-                    ? $"{card.Rank} {card.DisplayName}"
-                    : $"{card.Rank} {card.DisplayName}\n{card.AbilityDescription}";
-            }
+            HoverBadgeText = string.IsNullOrEmpty(card.AbilityDescription)
+                ? $"{card.Rank} {card.DisplayName}"
+                : $"{card.Rank} {card.DisplayName}\n{card.AbilityDescription}";
 
             // Pooled cards are reused; clear any prior hover state and snap to base size.
             _hovered = false;
@@ -133,14 +133,30 @@ namespace DiaBlackJack.GameScene
             ApplyHoverVisuals();
         }
 
+        /// <summary>
+        /// Projects the authored top-position anchor into screen space.
+        /// </summary>
+        public bool TryGetHoverBadgeScreenPosition(Camera camera, out Vector2 screenPosition)
+        {
+            screenPosition = default;
+            if (camera == null || topPosition == null)
+            {
+                return false;
+            }
+
+            Vector3 projected = camera.WorldToScreenPoint(topPosition.position);
+            if (projected.z <= 0f)
+            {
+                return false;
+            }
+
+            screenPosition = new Vector2(projected.x, projected.y);
+            return true;
+        }
+
         private void ApplyHoverVisuals()
         {
             bool lit = _hovered && CanUse;
-
-            if (badge != null)
-            {
-                badge.SetActive(_hovered && _showBadgeOnHover);
-            }
 
             // Front keeps its own material look (cleared MPB); the hover glow overrides it when it is
             // the face-up card being hovered.

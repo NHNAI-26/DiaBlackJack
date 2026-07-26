@@ -5,6 +5,8 @@ public class NHNUberLitShaderGUI : LWGUI.LWGUI
 {
     public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
     {
+        SeedKeyword(properties, "_Surface", "_SURFACE_TYPE_TRANSPARENT");
+        SeedKeyword(properties, "_LightingMode", "_UNLIT_ON");
         SeedKeyword(properties, "_EmissionEnabled", "_EMISSION");
         SeedKeyword(properties, "_RimEnabled", "_RIM_ON");
         SeedKeyword(properties, "_HeightFadeEnabled", "_HEIGHT_FADE_ON");
@@ -18,7 +20,21 @@ public class NHNUberLitShaderGUI : LWGUI.LWGUI
             if (!(target is Material material))
                 continue;
 
+            bool usesDirectRenderQueue = material.HasProperty("_BaseSpriteUVRect");
+            int renderQueue = material.rawRenderQueue;
+
+            // Sprite/UI transparency must fade the complete source color. URP's preserve-specular
+            // mode switches Alpha blending to Src=One and relies on the lit BRDF to premultiply only
+            // its diffuse term, which leaves custom sprite output visible even when alpha reaches 0.
+            if (usesDirectRenderQueue && material.HasProperty("_BlendModePreserveSpecular"))
+                material.SetFloat("_BlendModePreserveSpecular", 0.0f);
+
             UnityEditor.BaseShaderGUI.SetMaterialKeywords(material);
+
+            if (usesDirectRenderQueue)
+                material.renderQueue = renderQueue;
+
+            RestoreKeyword(material, "_LightingMode", "_UNLIT_ON");
             RestoreKeyword(material, "_NormalMapEnabled", "_NORMALMAP");
             RestoreKeyword(material, "_EmissionEnabled", "_EMISSION");
         }

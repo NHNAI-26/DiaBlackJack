@@ -2,6 +2,7 @@
 #define NHN_UBER_LIT_FORWARD_PASS_INCLUDED
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Unlit.hlsl"
 #include "NHNUberLitInput.hlsl"
 
 struct NHNForwardAttributes
@@ -130,7 +131,11 @@ half4 NHNUberLitFragment(NHNForwardVaryings input) : SV_Target
 #endif
     InputData inputData;
     NHNInitializeInputData(input, surfaceData.normalTS, inputData);
+#if defined(NHN_SPRITE_UBER) && defined(_UNLIT_ON)
+    half4 color = UniversalFragmentUnlit(inputData, surfaceData);
+#else
     half4 color = UniversalFragmentPBR(inputData, surfaceData);
+#endif
     color.rgb += NHNEvaluateRim(inputData.normalWS, inputData.viewDirectionWS);
 #if defined(NHN_SPRITE_UBER)
     color.rgb *= NHNEvaluateUVHeightFade(input.rawUV);

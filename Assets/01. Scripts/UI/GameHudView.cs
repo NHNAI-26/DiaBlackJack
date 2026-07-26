@@ -19,6 +19,20 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private TMP_Text roundText;
         [SerializeField] private TMP_Text goldText;
 
+        [Header("Card hover badge")]
+        [SerializeField] private RectTransform cardHoverBadge;
+        [SerializeField] private TMP_Text cardHoverBadgeText;
+        [Tooltip("Pixel offset from the hovered card's upper screen-space edge.")]
+        [SerializeField] private Vector2 cardHoverBadgeScreenOffset = new Vector2(0f, 24f);
+
+        private Canvas _canvas;
+
+        private void Awake()
+        {
+            _canvas = GetComponentInParent<Canvas>();
+            HideCardHoverBadge();
+        }
+
         public void Render(CoreLoopViewModel core)
         {
             if (core == null)
@@ -51,6 +65,61 @@ namespace DiaBlackJack.GameScene
             if (goldText != null)
             {
                 goldText.text = $"GOLD\n{gold}";
+            }
+        }
+
+        /// <summary>Shows the shared badge at a screen-space point supplied by a hovered card.</summary>
+        public void ShowCardHoverBadge(
+            string text,
+            Vector2 cardTopScreenPosition,
+            Camera worldCamera)
+        {
+            if (cardHoverBadge == null ||
+                cardHoverBadgeText == null ||
+                string.IsNullOrEmpty(text))
+            {
+                HideCardHoverBadge();
+                return;
+            }
+
+            RectTransform parent = cardHoverBadge.parent as RectTransform;
+            if (parent == null)
+            {
+                HideCardHoverBadge();
+                return;
+            }
+
+            if (_canvas == null)
+            {
+                _canvas = GetComponentInParent<Canvas>();
+            }
+
+            Camera uiCamera = _canvas != null &&
+                _canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                ? _canvas.worldCamera != null ? _canvas.worldCamera : worldCamera
+                : null;
+            Vector2 adjustedScreenPosition =
+                cardTopScreenPosition + cardHoverBadgeScreenOffset;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    parent,
+                    adjustedScreenPosition,
+                    uiCamera,
+                    out Vector2 localPoint))
+            {
+                HideCardHoverBadge();
+                return;
+            }
+
+            cardHoverBadgeText.text = text;
+            cardHoverBadge.localPosition = new Vector3(localPoint.x, localPoint.y, 0f);
+            cardHoverBadge.gameObject.SetActive(true);
+        }
+
+        public void HideCardHoverBadge()
+        {
+            if (cardHoverBadge != null)
+            {
+                cardHoverBadge.gameObject.SetActive(false);
             }
         }
 

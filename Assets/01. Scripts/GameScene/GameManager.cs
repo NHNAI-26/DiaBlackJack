@@ -97,7 +97,7 @@ namespace DiaBlackJack.GameScene
             RefreshView();
         }
 
-        // Diegetic input: hover any card to enlarge it (usable cards also glow + show a badge), and
+        // Diegetic input: hover any card to enlarge it (usable cards also glow + show a HUD badge), and
         // click a usable card to activate its effect. New Input System — legacy OnMouseDown does not
         // fire, so we raycast the pointer ourselves. Hit/Stand/Change and the choices stay as OnGUI.
         private void Update()
@@ -123,6 +123,7 @@ namespace DiaBlackJack.GameScene
 
             // Hover is visual-only, so it runs even while input is locked (during timeline playback).
             UpdateHover(shopOpen ? pointedShopCard : pointedBattleCard);
+            UpdateCardHoverBadge();
             UpdateDemonCardHover(pointedDemonCard);
             UpdateShopUtilityItemHover(pointedShopUtilityItem);
 
@@ -202,6 +203,34 @@ namespace DiaBlackJack.GameScene
             {
                 _hoveredCard.SetHovered(true);
             }
+        }
+
+        private void UpdateCardHoverBadge()
+        {
+            if (hud == null)
+            {
+                return;
+            }
+
+            if (_camera == null)
+            {
+                _camera = Camera.main;
+            }
+
+            if (_hoveredCard == null ||
+                !_hoveredCard.ShouldShowHoverBadge ||
+                !_hoveredCard.TryGetHoverBadgeScreenPosition(
+                    _camera,
+                    out Vector2 screenPosition))
+            {
+                hud.HideCardHoverBadge();
+                return;
+            }
+
+            hud.ShowCardHoverBadge(
+                _hoveredCard.HoverBadgeText,
+                screenPosition,
+                _camera);
         }
 
         private void UpdateDemonCardHover(DemonCardView pointed)

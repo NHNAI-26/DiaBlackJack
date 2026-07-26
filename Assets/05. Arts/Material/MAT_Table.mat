@@ -27,11 +27,11 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BaseMap:
-        m_Texture: {fileID: 2800000, guid: 4dd8b7a4cf0e14a46a22da713667db61, type: 3}
+        m_Texture: {fileID: 2800000, guid: c4cc56ea422c9da47a957f43d8be6efd, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
-        m_Texture: {fileID: 2800000, guid: 5f5f0e6b3a4875849a9d517f3cc46d40, type: 3}
+        m_Texture: {fileID: 2800000, guid: 1f482102b00e1874db23d3f4915d8163, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
@@ -79,7 +79,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SmoothnessMap:
-        m_Texture: {fileID: 2800000, guid: 5b7daa546a6b8a64a91d8b222f590640, type: 3}
+        m_Texture: {fileID: 2800000, guid: 8731faead77745b478f6729af7a53f20, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SpecGlossMap:
@@ -119,14 +119,21 @@ Material:
     - _DissolveEdgeIntensity: 16
     - _DissolveEdgeWidth: 0
     - _DissolveEnabled: 0
+    - _DissolveMaxOffset: 0
+    - _DissolveMinOffset: 0
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EmissionEnabled: 0
     - _EmissionIntensity: 12.77
     - _EnvironmentReflections: 1
+    - _GlassGlowEnabled: 0
+    - _GlassGlowOffset: 0
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
+    - _HeightFadeEnabled: 0
+    - _HeightFadeLower: 0
+    - _HeightFadeUpper: 1
     - _HueShift: 0
     - _MaskMapEnabled: 0
     - _Metallic: 0
@@ -141,7 +148,7 @@ Material:
     - _RimIntensity: 12.09
     - _RimPower: 6.45
     - _Saturation: 1
-    - _Smoothness: 0.422
+    - _Smoothness: 0.165
     - _SmoothnessMapEnabled: 1
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -160,6 +167,8 @@ Material:
     - _DissolvePanning: {r: 0, g: 0, b: 0, a: 0}
     - _DissolveTilingOffset: {r: 0.1, g: 0.1, b: 0, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
+    - _GlassGlowColor: {r: 1, g: 1, b: 1, a: 1}
+    - _HeightFadeTint: {r: 0.24999997, g: 0.24999997, b: 0.24999997, a: 1}
     - _RimColor: {r: 1, g: 1, b: 1, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []

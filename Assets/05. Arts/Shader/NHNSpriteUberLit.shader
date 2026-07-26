@@ -5,6 +5,7 @@ Shader "Shader/Sprite Uber Lit"
         [Title(Sprite Uber Lit)]
         [Main(Surface, _, on, off)] _SurfaceOptions("Surface", Float) = 1
         [KWEnum(Surface, Opaque, _, Transparent, _SURFACE_TYPE_TRANSPARENT)] _Surface("Surface Type", Float) = 0
+        [KWEnum(Surface, Lit, _, Unlit, _UNLIT_ON)] _LightingMode("Lighting Mode", Float) = 0
         [KWEnum(Surface_SURFACE_TYPE_TRANSPARENT, Alpha, _, Premultiply, _ALPHAPREMULTIPLY_ON, Additive, _, Multiply, _ALPHAMODULATE_ON)] _Blend("Blend Mode", Float) = 0
         [Sub(Surface_SURFACE_TYPE_TRANSPARENT)] _AlphaMultiplier("Alpha Multiplier", Range(0,1)) = 1
         [SubToggle(Surface, _ALPHATEST_ON)] _AlphaClip("Alpha Clipping", Float) = 1
@@ -16,7 +17,6 @@ Shader "Shader/Sprite Uber Lit"
         // with what is actually rendered.
         [KWEnum(Surface, Both, _, Back, _, Front, _)] _Cull("Render Face", Float) = 0
         [Enum(UnityEngine.Rendering.CullMode)] _ShadowCull("Shadow Face", Float) = 2
-        [Sub(Surface)] _QueueOffset("Sorting Priority", Range(-50,50)) = 0
 
         [Main(SurfaceInputs, _, on, off)] _SurfaceInputs("Surface Inputs", Float) = 1
         [PerRendererData] [MainTexture] _MainTex("Sprite Texture", 2D) = "white" {}
@@ -95,6 +95,7 @@ Shader "Shader/Sprite Uber Lit"
             #pragma vertex NHNUberLitVertex
             #pragma fragment NHNUberLitFragment
             #pragma shader_feature_local _NORMALMAP
+            #pragma shader_feature_local_fragment _UNLIT_ON
             #pragma shader_feature_local_fragment _METALLICMAP
             #pragma shader_feature_local_fragment _SMOOTHNESSMAP
             #pragma shader_feature_local_fragment _OCCLUSIONMAP
