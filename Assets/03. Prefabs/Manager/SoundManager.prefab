@@ -44,7 +44,52 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a220d65666435fe4eaa5b470b35d932a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Border::Border.Audio.SoundManager
-  bgmEntries: []
+  bgmEntries:
+  - id: normalStage01
+    clip: {fileID: 8300000, guid: f454783b70bb95e469a5bdc21ada4efa, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 1
+  - id: normalStage02
+    clip: {fileID: 8300000, guid: aff3ee42ac8f99245ac783948f8ba7d9, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 1
+  - id: shopStage01
+    clip: {fileID: 8300000, guid: a5fe386c099412d48aa46e20ef1240be, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 1
+  - id: cowardlyGambler
+    clip: {fileID: 8300000, guid: a5d666cf5554bab46a980834940aac6d, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 1
+  - id: gunslinger
+    clip: {fileID: 8300000, guid: 3f1e327adb1c5834bad6b450aa20a9e3, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 1
+  - id: fanatic
+    clip: {fileID: 8300000, guid: 5ad2f22fbc4c5534e88eaa6e33d6a622, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 1
+  - id: fraud
+    clip: {fileID: 8300000, guid: 0885fc1b48d5fd24d909eec14b79631f, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 1
+  - id: ' executor'
+    clip: {fileID: 8300000, guid: d871ca23bb6bc7f44b01a34af1080c49, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 1
+  - id: bossStage
+    clip: {fileID: 8300000, guid: 062a23d9ca92e0e41887b604b87d6ce2, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 1
   sfxEntries:
   - id: dissolve
     clip: {fileID: 8300000, guid: 753e4bea79ae5324f8b86dadf0e6bde9, type: 3}
