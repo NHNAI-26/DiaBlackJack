@@ -63,6 +63,14 @@ TEXTURE2D(_CardBlendTex);
 SAMPLER(sampler_CardBlendTex);
 #endif
 
+#if defined(NHN_SPRITE_UBER)
+inline float2 NHNGetBaseSpriteUV(float2 rawUV)
+{
+    return saturate((rawUV - _BaseSpriteUVRect.xy)
+        / max(_BaseSpriteUVRect.zw, float2(0.00001, 0.00001)));
+}
+#endif
+
 // Public entry points accept raw mesh UV. Surface textures share _BaseMap_ST;
 // dissolve clipping transforms the raw UV independently with its own ST.
 inline half4 NHNSampleBase(float2 rawUV, out float2 surfaceUV)
@@ -70,8 +78,7 @@ inline half4 NHNSampleBase(float2 rawUV, out float2 surfaceUV)
 #if defined(NHN_SPRITE_UBER)
     surfaceUV = rawUV;
     half4 baseSample = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, rawUV);
-    float2 baseSpriteUV = saturate((rawUV - _BaseSpriteUVRect.xy)
-        / max(_BaseSpriteUVRect.zw, float2(0.00001, 0.00001)));
+    float2 baseSpriteUV = NHNGetBaseSpriteUV(rawUV);
     half4 blendSample = SAMPLE_TEXTURE2D(_CardBlendTex, sampler_CardBlendTex, baseSpriteUV);
     return lerp(baseSample, blendSample, saturate(_CardBlendAmount));
 #else
@@ -191,6 +198,13 @@ inline half3 NHNEvaluateHeightFade(float worldY)
     return half3(1.0h, 1.0h, 1.0h);
 #endif
 }
+
+#if defined(NHN_SPRITE_UBER)
+inline half3 NHNEvaluateUVHeightFade(float2 rawUV)
+{
+    return NHNEvaluateHeightFade(NHNGetBaseSpriteUV(rawUV).y);
+}
+#endif
 
 inline half3 NHNEvaluateGlassGlow(half3 baseColor)
 {
