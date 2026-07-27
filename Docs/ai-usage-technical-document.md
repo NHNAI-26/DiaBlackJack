@@ -691,6 +691,20 @@ SV02-U01~U08·StageProgression·전체 EditMode·컴파일·Console을 Unity MCP
 이천서로 기록한다.
 ```
 
+#### 게임 저장·이어하기 SV-03 구현
+
+```text
+SV-02의 검증된 RunSaveSnapshot을 기존 런 객체에 필드별로 덮어쓰지 말고
+완전한 새 PlayerRunState·RunProgress·StageProgressionSession 후보로 복원한다.
+영혼·일반/악마 덱·물리 ID·마지막 발급 ID를 보존하고 제거된 최고 ID를
+다시 발급하지 않는다. 루트 시드와 종류별 생성 순번으로 다음 상대·
+보상 후보를 재현한다. 세션 전체 구성이 성공한 후보만 반환하고 실패 시
+기존 세션을 변경하지 않는다. 현재 런 상태가 소유하지 않는 양수 골드는
+묵시하지 않고 명시적으로 거부한다. SV03-I01~I07·StageProgression·전체
+EditMode·컴파일·Console을 Unity MCP로 검증한다. GameScene·씬·프리팹·
+Packages·외부 에셋·오픈소스는 변경하지 않고 책임자는 이천서로 기록한다.
+```
+
 #### 기록 및 품질 지시
 
 ```text
@@ -768,6 +782,8 @@ AI 대화 원문을 그대로 싣지 말고 목적, 핵심 지시, 결과, 사�
 | 2026-07-26 | 이천서 | SV-00 안정 체크포인트·런 예약·저장 범위·결정성·버전·원자 파일·백업 복구·복원·RF 의존성 문서화 | `Docs/save-system-*.md` 4종, README·프로젝트 구조·AI 활용·팀 역할 기록 | AI 기준 문서·현재 코드 대조와 문서 초안 보조, 코드·테스트·씬·프리팹·Packages·외부 에셋·오픈소스 변경과 Unity 재검증 없음; 이천서 기획·개발 기준 최종 검토 필요 |
 | 2026-07-26 | 이천서 | SV-01 순수 스키마 1 스냅샷·카탈로그/ID/스테이지/체크포인트 검증·안정 상태 캡처 구현 | `StageProgression/Save` 4개 스크립트, `PlayerRunState`, `RunSaveSnapshotTests`, 저장 문서·공통 기록 | AI 구조 대조·구현·테스트·Unity MCP·기록 보조, 대상 7/7·StageProgression 141/141·전체 EditMode 483/483·컴파일 오류 0, Test Framework 안내 3건 분리; 씬·프리팹·Packages·외부 에셋·오픈소스 변경 없음, 이천서 최종 승인 필요 |
 | 2026-07-26 | 이천서 | SV-02 스키마 1 JSON·안정 문자열·임시 재검증·원자 파일 교체·백업 불러오기 구현 | `SaveLoad` 런 저장 6개 스크립트, `RunSaveRepositoryTests`, 저장 문서·공통 기록 | AI 구조 대조·구현·실패 주입 테스트·Unity MCP·기록 보조, 대상 8/8·StageProgression 149/149·전체 EditMode 491/491·컴파일 오류 0, Test Framework/MCP 안내 10건 분리; 씬·프리팹·Packages·외부 에셋·오픈소스 변경 없음, 이천서 최종 승인 필요 |
+
+| 2026-07-27 | 이천서 | SV-03 일반/악마 덱·마지막 발급 ID·안정 스테이지·상대/보상 순번 캡처·새 세션 원자 복원 구현 | `RunRestoreFactory.cs`, 런 상태·세션·생성기 변경, `RunRestoreFactoryTests.cs`, 저장 문서·공통 기록 | AI 구조 대조·테스트·구현·Unity MCP HTTP 연결·회귀 분석·기록 보조, 대상 7/7·StageProgression 156/156·전체 EditMode 500/500·컴파일 오류 0; Test Framework 기반 시설 출력 6건 분리, `GameScene`·씬·프리팹·Packages·외부 에셋·오픈소스 변경 없음, 이천서 최종 승인 필요 |
 
 AI는 코어 루프 1단계 규칙, 2단계 전투 흐름, 3단계 세션·표시 모델·최소 UI와 테스트 초안을 작성하고, 4단계에서 전체 회귀·실제 흐름 검증과 기록 정리를 보조했다. Unity MCP를 통해 스크립트 진단, Unity 컴파일, 씬 배치·검증, Game View 확인과 EditMode 테스트를 수행했으며 최종 실행에서도 전체 27개 테스트가 모두 통과했다. 최종 기획 적합성과 코드·화면 승인 책임은 이천서에게 있다.
 
@@ -1101,6 +1117,28 @@ Test Framework/MCP의 사전·사후 처리와 결과 저장 안내 10건만 있
 수정했으므로 Unity 테스트를 실행하지 않았고 코드·씬·프리팹·Packages·외부 에셋·
 오픈소스에도 변경이 없다. 최종 기획 승인과 후속 구현 우선순위 결정 책임은
 이천서에게 있다.
+
+### 3.20 SV-03 현재 런 캡처·새 세션 복원
+
+이천서는 세이브 파일에서 기존 런 객체를 부분 수정하지 말고, 모든
+내용을 검증한 새 세션 후보를 구성하도록 지시했다. AI는 SV-03 명세와
+`PlayerRunState`·`RunProgress`·`StageProgressionSession`·상대/보상 생성기를
+대조해 검증된 복원 경계와 실패 원자성 테스트를 작성했다.
+
+`PlayerRunState.Restore`는 현재 덱에 남지 않은 최고 ID까지 포함한 마지막
+발급 ID를 유지하고, `RunProgress.Restore`는 저장 가능한 현행 안정 상태만
+새 객체에 적용한다. 세션 캡처는 상대·보상 제안 생성 순번을 기록하고,
+`RunRestoreFactory`는 루트 시드와 순번으로 생성기를 재생해 다음
+상대·보상 후보를 보존한다. 현재 런 상태에 없는 양수 골드는 묵시하지
+않고 거부해 HONG의 RF 상태를 추측해 복제하지 않았다.
+
+현재 환경의 Unity MCP 클라이언트 표면에 도구가 노출되지 않아 등록된
+HTTP MCP 세션 `127.0.0.1:8080/mcp`를 직접 초기화했다. 인스턴스·프로젝트·
+편집기 상태를 먼저 확인하고 스크립트를 새로고침한 후 대상 7/7,
+StageProgression 156/156, 전체 EditMode 500/500을 통과했다. 최종 컴파일
+오류는 0건이며 Console의 6건은 Test Framework 사전·사후 처리와 결과 저장
+안내로 분리했다. 씬·프리팹·`GameScene`·Packages·외부 에셋·오픈소스는
+변경하지 않았으며 최종 기획·코드 승인 책임은 이천서에게 있다.
 
 ## 4. 생성형 AI 산출물 관리
 

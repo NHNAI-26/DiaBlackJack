@@ -121,6 +121,8 @@ namespace DiaBlackJack.StageProgression
             return offer;
         }
 
+        internal int NextOfferOrdinal => _nextOfferId;
+
         internal OpponentSelectionGenerator CreateFresh()
         {
             return new OpponentSelectionGenerator(

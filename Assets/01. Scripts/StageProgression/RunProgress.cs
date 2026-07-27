@@ -35,6 +35,34 @@ namespace DiaBlackJack.StageProgression
 
         public BattleRewardResolution LastRewardResolution { get; private set; }
 
+        internal static RunProgress Restore(
+            IEnumerable<StageDefinition> stages,
+            PlayerRunState player,
+            int currentStageIndex,
+            StageProgressionState state)
+        {
+            RunProgress progress = new RunProgress(stages, player);
+            if (currentStageIndex < 0 || currentStageIndex >= progress._stages.Count)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(currentStageIndex),
+                    "Restored stage index must identify a stage in the current path.");
+            }
+
+            if (state != StageProgressionState.StageCleared &&
+                state != StageProgressionState.RunVictory &&
+                state != StageProgressionState.RunDefeat)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(state),
+                    "Only stable run states can be restored.");
+            }
+
+            progress.CurrentStageIndex = currentStageIndex;
+            progress.State = state;
+            return progress;
+        }
+
         public bool StartRun()
         {
             if (State != StageProgressionState.NotStarted)

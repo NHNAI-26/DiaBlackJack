@@ -3,9 +3,9 @@
 > 프로젝트: DiaBlackJack
 > 기획·개발 책임자: 이천서
 > 작업 식별자: SV-00~SV-06
-> 버전: v0.3
-> 상태: SV-02 버전 JSON·원자 파일·백업 완료 · 다음 단계 SV-03
-> 최종 갱신: 2026-07-26
+> 버전: v0.4
+> 상태: SV-03 현재 런 캡처·새 세션 복원 완료 · 다음 단계 SV-04
+> 최종 갱신: 2026-07-27
 
 ## 1. 기술 목표
 
@@ -36,12 +36,12 @@ StageProgressionRuntime.Session
 | `Border.SaveLoad.Save` | 직렬화할 필드가 없는 빈 클래스 | 런 저장 전용 DTO와 분리 또는 교체 |
 | `SaveLoadSystem` | ScriptableObject가 `SaveData`를 직접 보유 | 저장소·직렬화·조정 책임 분리 |
 | `FileManager` | 기본 파일에 `WriteAllText` 직접 수행 | 경로 검증, 임시/백업, 원자 교체, 명시적 결과 |
-| `PlayerRunState` | 영혼·일반/악마 덱과 마지막 ID를 보유하고 SV-01 캡처에 내부 읽기 제공 | 검증된 복원 경로 |
+| `PlayerRunState` | 영혼·일반/악마 덱·마지막 발급 ID를 보유하고 SV-03 내부 복원 Factory로 검증된 새 객체 생성 | 골드·시작 악마 실제 상태 연결 |
 | 시작 악마 선택 | 기본 생성 경로가 악마 4장을 즉시 제공 | 후보 2장·1장 확정 상태 구현 뒤 첫 체크포인트 연결 |
-| `RunProgress` | 스테이지·상태·보상을 보유하고 SV-01이 `StageCleared`·런 종료만 캡처 | 복원 Factory와 나머지 체크포인트 연결 |
-| `StageProgression/Save` | 스키마 1 불변 스냅샷·검증기·현행 안정 상태 캡처 구현 | SV-03 복원 연결 |
-| `SaveLoad/RunSave*` | 필드 DTO·안정 문자열 enum·`JsonUtility` 왕복·임시/기본/백업 저장소·기본 손상 시 백업 불러오기 구현 | SV-03 복원 Factory와 SV-05 Runtime 연결 |
-| `StageProgressionSession` | 현재 전투와 보상을 조정 | 전투 객체를 제외한 체크포인트 캡처 경계 |
+| `RunProgress` | `StageCleared`·`RunVictory`·`RunDefeat`의 스테이지 위치와 안정 상태를 새 객체로 복원 | 시작 악마·상점·사건 체크포인트 연결 |
+| `StageProgression/Save` | 스키마 1 스냅샷·검증·세션 순번 캡처·검증된 `RunRestoreFactory` 구현 | SV-04 체크포인트 정책과 SV-05 Runtime 교체 연결 |
+| `SaveLoad/RunSave*` | 필드 DTO·안정 문자열 enum·`JsonUtility` 왕복·임시/기본/백업 저장소·기본 손상 시 백업 불러오기 구현 | SV-05 Runtime·메뉴 연결 |
+| `StageProgressionSession` | 상대·보상 제안 생성 순번을 저장 캡처에 제공 | 안정 전이 후 자동 저장 조정 |
 | `StageProgressionRuntime` | `DontDestroyOnLoad` 메모리 세션 | 새 게임 예약·이어하기·세션 원자 교체 |
 | RF 골드·상점·사건 | 기획만 있고 구현 미완료 | 실제 타입이 생긴 뒤 읽기 전용 저장 계약 연결 |
 
@@ -315,6 +315,17 @@ public enum RunSaveLoadStatus
 
 어느 단계든 실패하면 기존 Runtime 세션과 파일을 변경하지 않는다.
 
+SV-03 구현에서는 현재 도메인이 표현할 수 있는 `CombatSettlementCompleted`와
+`RunEnded`만 `StageCleared`·`RunVictory`·`RunDefeat`로 복원한다. 시작 악마·상점·
+사건 체크포인트는 실제 소유 상태가 준비되는 SV-04·SV-06까지 거부한다.
+`CurrentGold`도 `PlayerRunState`가 골드를 소유하기 전에는 0만 복원하고, 양수를
+묵시하지 않고 `InvalidGold`로 거부한다.
+
+상대 제안 생성기는 `rootSeed`, 보상 제안 생성기는 `rootSeed + 1`을 사용한다.
+각 생성기는 저장된 순번만큼 현재 경로의 스테이지·보상 등급을 재생해
+다음 제안 ID와 후보 순서를 보존한다. `RunRestoreResult`는 완성된 새 세션과
+루트 시드·다음 콘텐츠·시작 악마 키를 Runtime 교체 후보로 반환한다.
+
 ## 10. 런 예약
 
 `RunReservation`은 다음 정보만 저장한다.
@@ -416,6 +427,8 @@ createdAtUtc
 | SV03-I03 | 스테이지 인덱스·다음 콘텐츠가 복원된다 |
 | SV03-I04 | 복원 실패가 기존 세션을 바꾸지 않는다 |
 | SV03-I05 | 같은 시드·순번에 같은 상대·보상 후보를 만든다 |
+| SV03-I06 | 세션 캡처가 현재 상대·보상 생성 순번을 보존한다 |
+| SV03-I07 | 런 상태가 아직 소유하지 않는 양수 골드를 묵시하지 않고 거부한다 |
 
 ### 13.4 SV-04~SV-06 체크포인트·UI·반복
 
@@ -445,6 +458,7 @@ createdAtUtc
 
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
+| 2026-07-27 | 이천서 | SV-03 실제 구현에 맞춰 마지막 발급 ID·안정 `RunProgress`·세션 생성 순번 캡처·루트 시드 재생·새 세션 후보 복원·미구현 골드 거부와 7개 대상 테스트 완료 상태 반영 |
 | 2026-07-26 | 이천서 | SV-02 실제 구현에 맞춰 v1 필드 DTO·안정 문자열 enum·임시 재검증·기본/백업 교체·실패 복원·손상/버전/콘텐츠 분류와 8개 대상 테스트 완료 상태 반영 |
 | 2026-07-26 | 이천서 | SV-01 실제 구현에 맞춰 불변 스냅샷·카탈로그/ID/스테이지/체크포인트 검증·`StageCleared`/런 종료 캡처·Unity 비의존 기준과 7개 대상 테스트 완료 상태 반영 |
 | 2026-07-26 | 이천서 | 순수 스냅샷·파일 DTO·검증·원자 저장·백업 불러오기·복원 Factory·런 예약·RF 연동·SV 테스트 명세 수립 |

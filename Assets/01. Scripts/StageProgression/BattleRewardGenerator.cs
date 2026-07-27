@@ -15,6 +15,8 @@ namespace DiaBlackJack.StageProgression
             _random = new Random(seed);
         }
 
+        internal int NextOfferOrdinal => _nextOfferId;
+
         public BattleRewardOffer Generate(BattleRewardTier tier)
         {
             if (_nextOfferId == int.MaxValue)

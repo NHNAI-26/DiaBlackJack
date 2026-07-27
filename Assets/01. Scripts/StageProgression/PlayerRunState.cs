@@ -23,6 +23,23 @@ namespace DiaBlackJack.StageProgression
             int currentSoul,
             IEnumerable<RunCardDefinition> deck,
             IEnumerable<RunDemonDefinition> demonDeck = null)
+            : this(
+                maximumSoul,
+                currentSoul,
+                deck,
+                demonDeck,
+                null,
+                null)
+        {
+        }
+
+        private PlayerRunState(
+            int maximumSoul,
+            int currentSoul,
+            IEnumerable<RunCardDefinition> deck,
+            IEnumerable<RunDemonDefinition> demonDeck,
+            int? lastIssuedCardId,
+            int? lastIssuedDemonCardId)
         {
             if (maximumSoul <= 0)
             {
@@ -68,7 +85,11 @@ namespace DiaBlackJack.StageProgression
             _initialDeck = new List<RunCardDefinition>(cards).AsReadOnly();
             _currentDeck = new List<RunCardDefinition>(cards);
             _deck = _currentDeck.AsReadOnly();
-            _initialLastCardId = FindMaximumCardId(cards);
+            int maximumCardId = FindMaximumCardId(cards);
+            _initialLastCardId = ValidateLastIssuedId(
+                lastIssuedCardId,
+                maximumCardId,
+                nameof(lastIssuedCardId));
             _lastIssuedCardId = _initialLastCardId;
 
             List<RunDemonDefinition> demonCards = ValidateAndCopyDemonDeck(
@@ -76,7 +97,11 @@ namespace DiaBlackJack.StageProgression
             _initialDemonDeck = new List<RunDemonDefinition>(demonCards).AsReadOnly();
             _currentDemonDeck = new List<RunDemonDefinition>(demonCards);
             _demonDeck = _currentDemonDeck.AsReadOnly();
-            _initialLastDemonCardId = FindMaximumDemonCardId(demonCards);
+            int maximumDemonCardId = FindMaximumDemonCardId(demonCards);
+            _initialLastDemonCardId = ValidateLastIssuedId(
+                lastIssuedDemonCardId,
+                maximumDemonCardId,
+                nameof(lastIssuedDemonCardId));
             _lastIssuedDemonCardId = _initialLastDemonCardId;
         }
 
@@ -93,6 +118,23 @@ namespace DiaBlackJack.StageProgression
         internal int LastIssuedCardId => _lastIssuedCardId;
 
         internal int LastIssuedDemonCardId => _lastIssuedDemonCardId;
+
+        internal static PlayerRunState Restore(
+            int maximumSoul,
+            int currentSoul,
+            IEnumerable<RunCardDefinition> deck,
+            IEnumerable<RunDemonDefinition> demonDeck,
+            int lastIssuedCardId,
+            int lastIssuedDemonCardId)
+        {
+            return new PlayerRunState(
+                maximumSoul,
+                currentSoul,
+                deck,
+                demonDeck,
+                lastIssuedCardId,
+                lastIssuedDemonCardId);
+        }
 
         public void SetCurrentSoul(int currentSoul)
         {
@@ -212,6 +254,22 @@ namespace DiaBlackJack.StageProgression
             }
 
             return maximumId;
+        }
+
+        private static int ValidateLastIssuedId(
+            int? requestedId,
+            int currentMaximumId,
+            string parameterName)
+        {
+            int resolvedId = requestedId ?? currentMaximumId;
+            if (resolvedId < currentMaximumId || resolvedId < -1)
+            {
+                throw new ArgumentOutOfRangeException(
+                    parameterName,
+                    "Last issued id cannot be lower than the current maximum id.");
+            }
+
+            return resolvedId;
         }
     }
 }

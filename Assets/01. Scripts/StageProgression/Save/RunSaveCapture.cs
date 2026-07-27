@@ -42,6 +42,48 @@ namespace DiaBlackJack.StageProgression
             out RunSaveSnapshot snapshot,
             out RunSaveValidationResult validation)
         {
+            return TryCapture(
+                progress,
+                context,
+                new RunRandomSaveSnapshot(0, 0, 0, 0, null),
+                out snapshot,
+                out validation);
+        }
+
+        internal static bool TryCapture(
+            StageProgressionSession session,
+            RunSaveCaptureContext context,
+            out RunSaveSnapshot snapshot,
+            out RunSaveValidationResult validation)
+        {
+            if (session == null)
+            {
+                snapshot = null;
+                validation = RunSaveValidationResult.Invalid(
+                    RunSaveValidationError.InvalidSaveMetadata);
+                return false;
+            }
+
+            return TryCapture(
+                session.Progress,
+                context,
+                new RunRandomSaveSnapshot(
+                    session.OpponentOfferOrdinal,
+                    session.BattleRewardOrdinal,
+                    0,
+                    0,
+                    null),
+                out snapshot,
+                out validation);
+        }
+
+        private static bool TryCapture(
+            RunProgress progress,
+            RunSaveCaptureContext context,
+            RunRandomSaveSnapshot random,
+            out RunSaveSnapshot snapshot,
+            out RunSaveValidationResult validation)
+        {
             snapshot = null;
             if (progress == null || context == null)
             {
@@ -75,7 +117,7 @@ namespace DiaBlackJack.StageProgression
                 progress.CurrentStage.Id,
                 context.NextContentKind,
                 player,
-                new RunRandomSaveSnapshot(0, 0, 0, 0, null),
+                random,
                 Array.Empty<string>(),
                 Array.Empty<string>());
 

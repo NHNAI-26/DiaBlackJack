@@ -43,6 +43,11 @@ namespace DiaBlackJack.StageProgression
 
         public RunProgress Progress { get; }
 
+        internal int BattleRewardOrdinal => _rewardGenerator.NextOfferOrdinal;
+
+        internal int OpponentOfferOrdinal =>
+            _opponentSelectionGenerator?.NextOfferOrdinal ?? 0;
+
         public bool TryStartRun()
         {
             if (!Progress.StartRun())
