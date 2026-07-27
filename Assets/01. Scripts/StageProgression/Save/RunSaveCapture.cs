@@ -92,6 +92,14 @@ namespace DiaBlackJack.StageProgression
                 return false;
             }
 
+            if (context.CheckpointKind == RunCheckpointKind.StartingDemonSelected &&
+                progress.Player.StartingDemonDefinitionKey == null)
+            {
+                validation = RunSaveValidationResult.Invalid(
+                    RunSaveValidationError.StartingDemonMissing);
+                return false;
+            }
+
             RunSaveStatus status;
             if (!TryGetStableStatus(
                     progress.State,
@@ -160,7 +168,7 @@ namespace DiaBlackJack.StageProgression
                 0,
                 player.LastIssuedCardId,
                 player.LastIssuedDemonCardId,
-                null,
+                player.StartingDemonDefinitionKey,
                 cards,
                 demonCards);
         }
@@ -170,6 +178,13 @@ namespace DiaBlackJack.StageProgression
             RunCheckpointKind checkpointKind,
             out RunSaveStatus status)
         {
+            if (state == StageProgressionState.NotStarted &&
+                checkpointKind == RunCheckpointKind.StartingDemonSelected)
+            {
+                status = RunSaveStatus.InProgress;
+                return true;
+            }
+
             if (state == StageProgressionState.StageCleared &&
                 checkpointKind == RunCheckpointKind.CombatSettlementCompleted)
             {

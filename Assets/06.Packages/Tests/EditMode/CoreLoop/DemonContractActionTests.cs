@@ -30,7 +30,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DC02_U02_BeginPaysOnceAndCreatesExactlyThreeOptions()
+        public void DCR01_U05_BeginPaysOnceAndCreatesAtMostTwoOptions()
         {
             CoreLoopBattle battle = CreateStartedBattle(playerCurrentSoul: 2);
 
@@ -48,13 +48,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(DemonContractInteractionKind.ChooseContract));
             Assert.That(pending.ContractKind, Is.Null);
             Assert.That(pending.Options.Count,
-                Is.EqualTo(DemonContractDeck.CandidateCount));
+                Is.EqualTo(DemonContractDeck.MaximumCandidateCount));
             Assert.That(pending.Options.Select(option => option.OptionId).Distinct().Count(),
-                Is.EqualTo(3));
+                Is.EqualTo(2));
             Assert.That(pending.Options.Select(option => option.ContractCardId).Distinct().Count(),
-                Is.EqualTo(3));
-            Assert.That(battle.PlayerDemonDeck.AvailableCardCount, Is.EqualTo(1));
-            Assert.That(battle.PlayerDemonDeck.CardsInPlayCount, Is.EqualTo(3));
+                Is.EqualTo(2));
+            Assert.That(battle.PlayerDemonDeck.AvailableCardCount, Is.EqualTo(2));
+            Assert.That(battle.PlayerDemonDeck.CardsInPlayCount, Is.EqualTo(2));
             Assert.That(battle.PlayerDemonContractAvailability.FailureReason,
                 Is.EqualTo(DemonContractFailureReason.PendingInteraction));
             Assert.That(battle.PlayerDemonContractAvailability.RemainingBaseUses, Is.Zero);
@@ -103,15 +103,15 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.PendingPlayerDemonContractInteraction, Is.SameAs(pending));
             Assert.That(battle.ActivePlayerDemonContracts, Is.Empty);
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(1));
-            Assert.That(battle.PlayerDemonDeck.DrawCount, Is.EqualTo(1));
+            Assert.That(battle.PlayerDemonDeck.DrawCount, Is.EqualTo(2));
             Assert.That(battle.PlayerDemonDeck.DiscardCount, Is.Zero);
-            Assert.That(battle.PlayerDemonDeck.CardsInPlayCount, Is.EqualTo(3));
+            Assert.That(battle.PlayerDemonDeck.CardsInPlayCount, Is.EqualTo(2));
             Assert.That(battle.State,
                 Is.EqualTo(CoreLoopState.PlayerResolvingDemonContract));
         }
 
         [Test]
-        public void DC02_U05_ResolveActivatesOneDiscardsTwoAndRunsEnemyOnce()
+        public void DCR01_U06_ResolveActivatesOneDiscardsOneAndRunsEnemyOnce()
         {
             var enemyPolicy = new CountingStandPolicy();
             var handler = new TrackingDemonContractHandler(
@@ -141,8 +141,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(active.SourceCardId, Is.EqualTo(selected.ContractCardId));
             Assert.That(active.Kind, Is.EqualTo(DemonContractKind.Satan));
             Assert.That(active.RuntimeState, Is.SameAs(handler.LastRuntimeState));
-            Assert.That(battle.PlayerDemonDeck.DrawCount, Is.EqualTo(1));
-            Assert.That(battle.PlayerDemonDeck.DiscardCount, Is.EqualTo(2));
+            Assert.That(battle.PlayerDemonDeck.DrawCount, Is.EqualTo(2));
+            Assert.That(battle.PlayerDemonDeck.DiscardCount, Is.EqualTo(1));
             Assert.That(battle.PlayerDemonDeck.AvailableCardCount, Is.EqualTo(3));
             Assert.That(battle.PlayerDemonDeck.CardsInPlayCount, Is.EqualTo(1));
             Assert.That(battle.LastDemonContractResult.ActiveContract, Is.SameAs(active));
@@ -232,18 +232,18 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DC02_U09_InsufficientCandidatesRejectWithoutPaying()
+        public void DCR01_U07_ZeroCandidatesRejectWithoutPaying()
         {
             CoreLoopBattle battle = CreateStartedBattle(
                 playerCurrentSoul: 12,
-                demonDeck: CreateDemonDeck(DemonContractKind.Satan, count: 2));
+                demonDeck: CreateDemonDeck(DemonContractKind.Satan, count: 0));
 
             Assert.That(battle.PlayerDemonContractAvailability.CanBegin, Is.False);
             Assert.That(battle.PlayerDemonContractAvailability.FailureReason,
                 Is.EqualTo(DemonContractFailureReason.InsufficientCandidates));
             Assert.That(battle.TryBeginPlayerDemonContract(), Is.False);
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(12));
-            Assert.That(battle.PlayerDemonDeck.DrawCount, Is.EqualTo(2));
+            Assert.That(battle.PlayerDemonDeck.DrawCount, Is.Zero);
             Assert.That(battle.UsedPlayerBaseDemonContractCount, Is.Zero);
         }
 
@@ -253,21 +253,20 @@ namespace DiaBlackJack.CoreLoop.Tests
             var first = new DemonContractOption(0, 10, null, "첫째");
             var duplicateOption = new DemonContractOption(0, 11, null, "둘째");
             var duplicateCard = new DemonContractOption(1, 10, null, "셋째");
-            var third = new DemonContractOption(2, 12, null, "넷째");
 
             Assert.Throws<ArgumentException>(() =>
                 new PendingDemonContractInteraction(
                     1,
                     DemonContractInteractionKind.ChooseContract,
                     null,
-                    new[] { first, duplicateOption, third },
+                    new[] { first, duplicateOption },
                     "선택"));
             Assert.Throws<ArgumentException>(() =>
                 new PendingDemonContractInteraction(
                     1,
                     DemonContractInteractionKind.ChooseContract,
                     null,
-                    new[] { first, duplicateCard, third },
+                    new[] { first, duplicateCard },
                     "선택"));
         }
 

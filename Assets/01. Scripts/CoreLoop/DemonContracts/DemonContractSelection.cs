@@ -200,10 +200,10 @@ namespace DiaBlackJack.CoreLoop
             if (kind == DemonContractInteractionKind.ChooseContract)
             {
                 if (contractKind.HasValue || sourceContractCardId.HasValue ||
-                    copiedOptions.Count != DemonContractDeck.CandidateCount)
+                    copiedOptions.Count > DemonContractDeck.MaximumCandidateCount)
                 {
                     throw new ArgumentException(
-                        "Contract choice requires exactly three options without an active contract kind.",
+                        "Contract choice requires one or two options without an active contract kind.",
                         nameof(options));
                 }
 

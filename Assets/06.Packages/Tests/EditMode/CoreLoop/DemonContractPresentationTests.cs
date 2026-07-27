@@ -36,8 +36,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             CoreLoopBattle battle = CreateStartedBattle(
                 DemonContractKind.Satan,
-                DemonContractKind.Belphegor,
-                DemonContractKind.Mammon);
+                DemonContractKind.Belphegor);
 
             Assert.That(battle.TryBeginPlayerDemonContract(), Is.True);
             CoreLoopViewModel model = CoreLoopPresenter.Create(battle);
@@ -45,7 +44,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(model.DemonContract.IsResolving, Is.True);
             Assert.That(model.DemonContract.InteractionKind,
                 Is.EqualTo(DemonContractInteractionKind.ChooseContract));
-            Assert.That(model.DemonContract.Choices.Count, Is.EqualTo(3));
+            Assert.That(model.DemonContract.Choices.Count, Is.EqualTo(2));
             Assert.That(model.DemonContract.Choices.All(
                 choice => !string.IsNullOrEmpty(choice.Ability)), Is.True);
             Assert.That(model.DemonContract.Choices.All(
@@ -60,10 +59,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         [Test]
         public void DC05_U03_BelphegorPreviewIsMarkedPlayerOnly()
         {
-            CoreLoopBattle battle = CreateStartedBattle(
-                DemonContractKind.Belphegor,
-                DemonContractKind.Mammon,
-                DemonContractKind.Leviathan);
+            CoreLoopBattle battle = CreateStartedBattle(DemonContractKind.Belphegor);
             SelectContract(battle, DemonContractKind.Belphegor);
 
             Assert.That(battle.TryPlayerHit(), Is.True);
@@ -80,10 +76,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         [Test]
         public void DC05_U04_ActiveAndRecentContractResultsRemainVisible()
         {
-            CoreLoopBattle battle = CreateStartedBattle(
-                DemonContractKind.Belphegor,
-                DemonContractKind.Mammon,
-                DemonContractKind.Leviathan);
+            CoreLoopBattle battle = CreateStartedBattle(DemonContractKind.Belphegor);
             SelectContract(battle, DemonContractKind.Belphegor);
 
             CoreLoopViewModel model = CoreLoopPresenter.Create(battle);
@@ -101,10 +94,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         [Test]
         public void DC05_U05_GameSceneUsesTheSameSafeContractProjection()
         {
-            CoreLoopBattle battle = CreateStartedBattle(
-                DemonContractKind.Belphegor,
-                DemonContractKind.Mammon,
-                DemonContractKind.Leviathan);
+            CoreLoopBattle battle = CreateStartedBattle(DemonContractKind.Leviathan);
             SelectContract(battle, DemonContractKind.Leviathan);
 
             GameSceneViewModel model = GameScenePresenter.Create(battle);
@@ -134,9 +124,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 }
 
                 var session = new CoreLoopSession(() => CreateUnstartedBattle(
-                    DemonContractKind.Belphegor,
-                    DemonContractKind.Mammon,
-                    DemonContractKind.Leviathan));
+                    DemonContractKind.Belphegor));
                 ReplaceControllerSession(controller, session);
 
                 controller.RequestBeginDemonContract();

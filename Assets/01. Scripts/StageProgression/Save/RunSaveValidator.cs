@@ -334,6 +334,15 @@ namespace DiaBlackJack.StageProgression
             {
                 case RunCheckpointKind.StartingDemonSelected:
                     valid = snapshot.Status == RunSaveStatus.InProgress &&
+                        snapshot.CurrentStageIndex == 0 &&
+                        !string.IsNullOrEmpty(
+                            snapshot.Player.StartingDemonDefinitionKey) &&
+                        snapshot.Random.OpponentOfferOrdinal == 0 &&
+                        snapshot.Random.BattleRewardOrdinal == 0 &&
+                        snapshot.Random.ShopOfferOrdinal == 0 &&
+                        snapshot.Random.EventOrdinal == 0 &&
+                        snapshot.CompletedShopIds.Count == 0 &&
+                        snapshot.CompletedEventIds.Count == 0 &&
                         IsNext(
                             snapshot.NextContentKind,
                             RunNextContentKind.OpponentSelection,

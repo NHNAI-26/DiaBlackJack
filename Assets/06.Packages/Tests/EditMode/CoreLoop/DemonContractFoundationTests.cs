@@ -141,13 +141,15 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             IReadOnlyList<DemonContractCard> candidates = deck.TakeCandidates();
 
-            Assert.That(candidates.Count, Is.EqualTo(DemonContractDeck.CandidateCount));
-            Assert.That(candidates.Select(card => card.Id).Distinct().Count(), Is.EqualTo(3));
+            Assert.That(
+                candidates.Count,
+                Is.EqualTo(DemonContractDeck.MaximumCandidateCount));
+            Assert.That(candidates.Select(card => card.Id).Distinct().Count(), Is.EqualTo(2));
             Assert.That(deck.TotalCardCount, Is.EqualTo(4));
-            Assert.That(deck.DrawCount, Is.EqualTo(1));
+            Assert.That(deck.DrawCount, Is.EqualTo(2));
             Assert.That(deck.DiscardCount, Is.Zero);
-            Assert.That(deck.AvailableCardCount, Is.EqualTo(1));
-            Assert.That(deck.CardsInPlayCount, Is.EqualTo(3));
+            Assert.That(deck.AvailableCardCount, Is.EqualTo(2));
+            Assert.That(deck.CardsInPlayCount, Is.EqualTo(2));
         }
 
         [Test]
@@ -163,10 +165,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 secondCandidates.Any(card => card.Id == activeContract.Id),
                 Is.False);
-            Assert.That(secondCandidates.Select(card => card.Id).Distinct().Count(), Is.EqualTo(3));
+            Assert.That(secondCandidates.Select(card => card.Id).Distinct().Count(), Is.EqualTo(2));
             Assert.That(deck.TotalCardCount, Is.EqualTo(4));
-            Assert.That(deck.AvailableCardCount, Is.Zero);
-            Assert.That(deck.CardsInPlayCount, Is.EqualTo(4));
+            Assert.That(deck.AvailableCardCount, Is.EqualTo(1));
+            Assert.That(deck.CardsInPlayCount, Is.EqualTo(3));
 
             deck.Discard(secondCandidates);
             Assert.That(deck.AvailableCardCount, Is.EqualTo(3));
@@ -176,21 +178,15 @@ namespace DiaBlackJack.CoreLoop.Tests
         [Test]
         public void DC_U08_InsufficientCandidateRequestIsAtomic()
         {
-            DemonContractDefinition satan =
-                DemonContractCatalog.Default.GetByKey(DemonContractCatalog.SatanKey);
             var deck = new DemonContractDeck(
-                new[]
-                {
-                    new DemonContractCard(0, satan),
-                    new DemonContractCard(1, satan)
-                },
+                new DemonContractCard[0],
                 seed: 1);
 
             Assert.That(deck.CanTakeCandidates, Is.False);
             Assert.Throws<InvalidOperationException>(() => deck.TakeCandidates());
-            Assert.That(deck.DrawCount, Is.EqualTo(2));
+            Assert.That(deck.DrawCount, Is.Zero);
             Assert.That(deck.DiscardCount, Is.Zero);
-            Assert.That(deck.AvailableCardCount, Is.EqualTo(2));
+            Assert.That(deck.AvailableCardCount, Is.Zero);
             Assert.That(deck.CardsInPlayCount, Is.Zero);
         }
 
@@ -221,7 +217,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 seed: 17);
             var purchased = new DemonContractCard(2, satan);
 
-            Assert.That(deck.CanTakeCandidates, Is.False);
+            Assert.That(deck.CanTakeCandidates, Is.True);
             Assert.That(deck.TryAddAvailableCard(purchased), Is.True);
             Assert.That(deck.TotalCardCount, Is.EqualTo(3));
             Assert.That(deck.AvailableCardCount, Is.EqualTo(3));
@@ -231,9 +227,10 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             IReadOnlyList<DemonContractCard> candidates = deck.TakeCandidates();
 
-            Assert.That(candidates.Select(card => card.Id), Does.Contain(purchased.Id));
-            Assert.That(deck.AvailableCardCount, Is.Zero);
-            Assert.That(deck.CardsInPlayCount, Is.EqualTo(3));
+            Assert.That(candidates.Count, Is.EqualTo(2));
+            Assert.That(candidates.Select(card => card.Id).Distinct().Count(), Is.EqualTo(2));
+            Assert.That(deck.AvailableCardCount, Is.EqualTo(1));
+            Assert.That(deck.CardsInPlayCount, Is.EqualTo(2));
         }
 
         [Test]

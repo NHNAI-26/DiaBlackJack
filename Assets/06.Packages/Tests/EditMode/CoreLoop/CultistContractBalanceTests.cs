@@ -37,6 +37,26 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void DCR01_U08_FatalSatanLosesToUnusableLeviathanWhenForced()
+        {
+            EnemyActionCandidate satan = CreateContractChoice(
+                0,
+                DemonContractKind.Satan);
+            EnemyActionCandidate leviathan = CreateContractChoice(
+                1,
+                DemonContractKind.Leviathan);
+
+            EnemyDecision decision = new CultistEnemyPolicy().Decide(
+                CreateObservation(
+                    enemySoul: SatanDemonContractHandler.ExpirationSoulCost,
+                    candidates: new[] { satan, leviathan }));
+
+            Assert.That(
+                GetSelectedContractKind(decision),
+                Is.EqualTo(DemonContractKind.Leviathan));
+        }
+
+        [Test]
         public void DC08_U02_LeviathanRequiresAnUnusedRevolverInOwnHand()
         {
             EnemyActionCandidate leviathan = CreateContractChoice(
@@ -183,11 +203,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                 $"DC-08 {SimulationCount}회 선택: " +
                 string.Join(", ", counts.Select(pair => $"{pair.Key}={pair.Value}")));
             Assert.That(counts[DemonContractKind.Belphegor],
-                Is.InRange(160, 240));
+                Is.InRange(140, 210));
             Assert.That(counts[DemonContractKind.Mammon],
-                Is.InRange(160, 240));
+                Is.InRange(140, 210));
             Assert.That(counts[DemonContractKind.Satan], Is.Zero);
-            Assert.That(counts[DemonContractKind.Leviathan], Is.Zero);
+            Assert.That(counts[DemonContractKind.Leviathan], Is.InRange(50, 90));
         }
 
         [Test]

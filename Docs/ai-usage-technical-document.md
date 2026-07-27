@@ -1140,6 +1140,16 @@ StageProgression 156/156, 전체 EditMode 500/500을 통과했다. 최종 컴파
 안내로 분리했다. 씬·프리팹·`GameScene`·Packages·외부 에셋·오픈소스는
 변경하지 않았으며 최종 기획·코드 승인 책임은 이천서에게 있다.
 
+### 3.21 DC-R01 시작 악마 선택·가변 계약 후보
+
+이천서는 최신 기획에 따라 일반 계약 후보를 최대 2장으로 줄이고, 새 런에서 서로 다른 악마 2장 중 1장을 선택하는 DC-R01 구현을 지시했다. AI에는 `GameScene`·씬·프리팹을 변경하지 말고, CoreLoop·StageProgression의 순수 C# 경계와 `Try*` 실패 원자성, 결정적 난수, 물리 ID, 기존 저장 복원 구조를 유지하라는 제약을 주었다.
+
+AI는 `DemonContractDeck`·계약 보류 상호작용·광신도 정책과 `PlayerRunState`·`StageProgressionSession`·SV-03 캡처/복원 경계를 대조해 코드와 테스트 초안을 보조했다. 일반 계약은 가용 0장 무변경 거절, 1장 단일 선택, 2장 선택·미선택 1장 버림으로 바꾸고 `MaximumCandidateCount = 2`의 일반 요청과 향후 루시퍼용 `LuciferCandidateCount = 5`의 내부 요청을 분리했다. 시작 선택은 제안 ID와 옵션 ID가 있는 결정적 순수 모델로 만들고, 선택한 한 장의 정의 키·물리 ID·다음 발급 ID가 재시작과 `StartingDemonSelected` 체크포인트 복원 뒤에도 유지되게 했다.
+
+첫 CoreLoop 전체 회귀에서는 2장 후보가 치명적인 사탄과 사용할 수 없는 레비아탄으로 구성될 때 광신도가 사탄을 택해 즉시 사망하는 문제가 드러났다. AI는 보장된 사망 선택을 생존 가능한 무효용 선택보다 낮게 평가하도록 수정하고 전용 테스트로 고정했다. 특정 악마가 무작위 두 후보에 항상 포함된다고 가정하던 표시 테스트도 필요한 단일/이중 덱을 명시하도록 교정했다.
+
+로컬 Unity 6000.3.10f1의 표준 HTTP MCP 세션에서 DC-R01 전용 14/14(job `f05a6e239eaf4f2298bdd0daaec26297`), CoreLoop 349/349, StageProgression 162/162, 전체 EditMode 511/511(job `bda9411f58634525a413f290996df6ba`)을 확인했다. Console 오류 조회 4건은 모두 Test Framework 결과 저장 안내였고, Warning 조회 7건은 MCP WebSocket 미초기화 1건과 Test Framework 사전·사후 처리 6건으로 컴파일·게임 코드 오류와 분리했다. 실제 시작 선택 UI·`StageProgressionRuntime` 연결과 자동 파일 저장 호출은 후속 범위로 남겼다. 외부 코드·에셋·오픈소스·패키지는 추가하지 않았고 `GameScene`·씬·프리팹도 변경하지 않았다. 최종 기획·코드 승인 책임은 이천서에게 있다.
+
 ## 4. 생성형 AI 산출물 관리
 
 ### 4.1 코드

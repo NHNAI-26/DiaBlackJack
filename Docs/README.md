@@ -35,10 +35,10 @@
 | [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | AC-RV00 문서 완료·AC-RV01 코드 이관 대기 v0.2 |
 | [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 이력과 AC-RV00~RV01 개정 계획 | AC-RV00 완료·AC-RV01 다음 v0.2 |
 | [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | 최신 숫자 문서화 완료·코드 미변경 v0.2 |
-| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | DC-R00 문서 완료·코드 이관 대기 v1.3 |
-| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | 최신 규칙 기술 이관 기준 v1.2 |
-| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 이력과 DC-R00~R05 개정 계획 | DC-R00 완료·DC-R01 다음 v1.2 |
-| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | 최신 노션 규칙 문서화 완료·코드 미변경 v1.2 |
+| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | DC-R01 도메인·저장 경계 완료 v1.4 |
+| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | DC-R01 구현 반영·DC-R02 대기 v1.3 |
+| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 이력과 DC-R00~R05 개정 계획 | DC-R01 완료·DC-R02 다음 v1.3 |
+| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | DC-R01 전용 14/14·전체 511/511 v1.3 |
 | [battle-reward-design.md](./battle-reward-design.md) | 일반·엘리트·보스 전투 보상 규칙과 프로토타입 카드 풀 | RW-00~RW-05 완료 v0.1 |
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW-05 최종 검증 완료 v0.1 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
@@ -74,6 +74,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-27 | 이천서 | DC-R01 시작 악마 2장 제안·1장 선택, 일반 계약 후보 0·1·2장, 루시퍼 5장 상수와 시작 체크포인트 복원을 구현하고 전용 14/14·전체 EditMode 511/511로 검증; GameScene·씬·프리팹은 변경하지 않음 |
 | 2026-07-27 | 이천서 | 최신 노션 기획을 기준으로 악마 12종, 자동 카드 숫자 1~5, 겁쟁이 도박사 규칙을 원본·전체 기획·기능별 4종 문서에 이관하고 DC-R00·AC-RV00·EP-R00을 문서 완료로 기록; 구현·테스트·씬·외부 에셋은 변경하지 않음 |
 | 2026-07-26 | 이천서 | 저장 SV-02 v1 JSON·안정 문자열·원자 파일 교체·백업 불러오기와 대상 8/8·StageProgression 149/149·전체 EditMode 491/491 완료 |
 | 2026-07-26 | 이천서 | 저장 SV-01 순수 스냅샷·검증·안정 상태 캡처와 대상 7/7·StageProgression 141/141·전체 EditMode 483/483 완료 |

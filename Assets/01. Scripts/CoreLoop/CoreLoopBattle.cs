@@ -387,7 +387,8 @@ namespace DiaBlackJack.CoreLoop
 
             IReadOnlyList<DemonContractCard> candidates =
                 PlayerDemonDeck.TakeCandidates();
-            if (candidates.Count != DemonContractDeck.CandidateCount)
+            if (candidates.Count == 0 ||
+                candidates.Count > DemonContractDeck.MaximumCandidateCount)
             {
                 throw new InvalidOperationException(
                     "Validated demon contract deck returned an invalid candidate count.");
@@ -443,7 +444,9 @@ namespace DiaBlackJack.CoreLoop
                 UsedEnemyBaseDemonContractCount + 1);
             _enemyDemonContractSoulAfterCost = Enemy.Soul.Current;
             _enemyDemonContractCandidates = EnemyDemonDeck.TakeCandidates();
-            if (_enemyDemonContractCandidates.Count != DemonContractDeck.CandidateCount)
+            if (_enemyDemonContractCandidates.Count == 0 ||
+                _enemyDemonContractCandidates.Count >
+                    DemonContractDeck.MaximumCandidateCount)
             {
                 throw new InvalidOperationException(
                     "Validated enemy demon contract deck returned an invalid candidate count.");
@@ -500,7 +503,7 @@ namespace DiaBlackJack.CoreLoop
 
             DemonContractCard selectedCard = null;
             var discardedCards = new List<DemonContractCard>(
-                DemonContractDeck.CandidateCount - 1);
+                Math.Max(0, _enemyDemonContractCandidates.Count - 1));
             foreach (DemonContractCard candidate in _enemyDemonContractCandidates)
             {
                 if (candidate.Id == selectedOption.ContractCardId.Value)
@@ -514,7 +517,7 @@ namespace DiaBlackJack.CoreLoop
             }
 
             if (selectedCard == null ||
-                discardedCards.Count != DemonContractDeck.CandidateCount - 1)
+                discardedCards.Count != _enemyDemonContractCandidates.Count - 1)
             {
                 return false;
             }
@@ -716,7 +719,7 @@ namespace DiaBlackJack.CoreLoop
 
             DemonContractCard selectedCard = null;
             var discardedCards = new List<DemonContractCard>(
-                DemonContractDeck.CandidateCount - 1);
+                Math.Max(0, _playerDemonContractCandidates.Count - 1));
             foreach (DemonContractCard candidate in _playerDemonContractCandidates)
             {
                 if (candidate.Id == selectedOption.ContractCardId.Value)
@@ -730,7 +733,7 @@ namespace DiaBlackJack.CoreLoop
             }
 
             if (selectedCard == null ||
-                discardedCards.Count != DemonContractDeck.CandidateCount - 1)
+                discardedCards.Count != _playerDemonContractCandidates.Count - 1)
             {
                 return false;
             }

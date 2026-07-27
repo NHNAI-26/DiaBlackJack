@@ -11,6 +11,7 @@ namespace DiaBlackJack.CoreLoop
         private const int SafeSatanScore = 970;
         private const int UsefulLeviathanScore = 960;
         private const int AvoidContractScore = -1000;
+        private const int FatalContractScore = -1100;
 
         public EnemyDecision Decide(EnemyObservation observation)
         {
@@ -82,7 +83,7 @@ namespace DiaBlackJack.CoreLoop
                         SatanDemonContractHandler.ExpirationSoulCost;
                     return Score(
                         candidate,
-                        guaranteedDeath ? AvoidContractScore : SafeSatanScore,
+                        guaranteedDeath ? FatalContractScore : SafeSatanScore,
                         guaranteedDeath
                             ? "cultist-avoid-fatal-satan"
                             : "cultist-select-satan");

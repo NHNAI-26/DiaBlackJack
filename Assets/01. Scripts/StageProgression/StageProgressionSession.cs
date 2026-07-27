@@ -10,6 +10,7 @@ namespace DiaBlackJack.StageProgression
         private readonly Func<StageDefinition, PlayerRunState, CoreLoopBattle> _battleFactory;
         private readonly BattleRewardGenerator _rewardGenerator;
         private readonly Func<StageDefinition, BattleRewardTier> _rewardTierSelector;
+        private readonly StartingDemonSelectionGenerator _startingDemonSelectionGenerator;
         private OpponentSelectionGenerator _opponentSelectionGenerator;
         private CoreLoopSession _battleSession;
         private CoreLoopBattle _processedBattle;
@@ -19,7 +20,8 @@ namespace DiaBlackJack.StageProgression
             Func<StageDefinition, PlayerRunState, CoreLoopBattle> battleFactory = null,
             BattleRewardGenerator rewardGenerator = null,
             Func<StageDefinition, BattleRewardTier> rewardTierSelector = null,
-            OpponentSelectionGenerator opponentSelectionGenerator = null)
+            OpponentSelectionGenerator opponentSelectionGenerator = null,
+            StartingDemonSelectionGenerator startingDemonSelectionGenerator = null)
         {
             Progress = progress ?? throw new ArgumentNullException(nameof(progress));
             _battleFactory = battleFactory ?? StageBattleFactory.Create;
@@ -28,6 +30,7 @@ namespace DiaBlackJack.StageProgression
                 DefaultRewardSeed);
             _rewardTierSelector = rewardTierSelector ?? SelectDefaultRewardTier;
             _opponentSelectionGenerator = opponentSelectionGenerator;
+            _startingDemonSelectionGenerator = startingDemonSelectionGenerator;
             ActiveStage = opponentSelectionGenerator == null
                 ? progress.CurrentStage
                 : null;
@@ -41,6 +44,8 @@ namespace DiaBlackJack.StageProgression
 
         public OpponentSelectionOffer PendingOpponentSelection { get; private set; }
 
+        public StartingDemonSelectionOffer PendingStartingDemonSelection { get; private set; }
+
         public RunProgress Progress { get; }
 
         internal int BattleRewardOrdinal => _rewardGenerator.NextOfferOrdinal;
@@ -50,6 +55,21 @@ namespace DiaBlackJack.StageProgression
 
         public bool TryStartRun()
         {
+            if (_startingDemonSelectionGenerator != null &&
+                Progress.Player.StartingDemonDefinitionKey == null)
+            {
+                if (Progress.State != StageProgressionState.NotStarted ||
+                    PendingStartingDemonSelection != null ||
+                    !Progress.Player.CanSelectStartingDemon)
+                {
+                    return false;
+                }
+
+                PendingStartingDemonSelection =
+                    _startingDemonSelectionGenerator.Generate();
+                return true;
+            }
+
             if (!Progress.StartRun())
             {
                 return false;
@@ -125,6 +145,24 @@ namespace DiaBlackJack.StageProgression
             }
 
             SynchronizeFinishedBattle();
+            return true;
+        }
+
+        public bool TrySelectStartingDemon(int offerId, int optionId)
+        {
+            StartingDemonSelectionOffer pending = PendingStartingDemonSelection;
+            if (Progress.State != StageProgressionState.NotStarted ||
+                pending == null ||
+                pending.OfferId != offerId ||
+                !pending.TryGetOption(
+                    optionId,
+                    out StartingDemonSelectionOption selected) ||
+                !Progress.Player.TrySelectStartingDemon(selected.DefinitionKey))
+            {
+                return false;
+            }
+
+            PendingStartingDemonSelection = null;
             return true;
         }
 

@@ -49,13 +49,21 @@ namespace DiaBlackJack.StageProgression
                     "Restored stage index must identify a stage in the current path.");
             }
 
-            if (state != StageProgressionState.StageCleared &&
+            if (state != StageProgressionState.NotStarted &&
+                state != StageProgressionState.StageCleared &&
                 state != StageProgressionState.RunVictory &&
                 state != StageProgressionState.RunDefeat)
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(state),
                     "Only stable run states can be restored.");
+            }
+
+            if (state == StageProgressionState.NotStarted && currentStageIndex != 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(currentStageIndex),
+                    "A restored run setup must remain on the first stage.");
             }
 
             progress.CurrentStageIndex = currentStageIndex;

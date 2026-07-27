@@ -8,13 +8,14 @@ namespace DiaBlackJack.StageProgression
     public sealed class PlayerRunState
     {
         private readonly ReadOnlyCollection<RunCardDefinition> _initialDeck;
+        private readonly List<RunDemonDefinition> _initialDemonCards;
         private readonly ReadOnlyCollection<RunDemonDefinition> _initialDemonDeck;
         private readonly List<RunCardDefinition> _currentDeck;
         private readonly List<RunDemonDefinition> _currentDemonDeck;
         private readonly ReadOnlyCollection<RunCardDefinition> _deck;
         private readonly ReadOnlyCollection<RunDemonDefinition> _demonDeck;
         private readonly int _initialLastCardId;
-        private readonly int _initialLastDemonCardId;
+        private int _initialLastDemonCardId;
         private int _lastIssuedCardId;
         private int _lastIssuedDemonCardId;
 
@@ -29,6 +30,7 @@ namespace DiaBlackJack.StageProgression
                 deck,
                 demonDeck,
                 null,
+                null,
                 null)
         {
         }
@@ -39,7 +41,8 @@ namespace DiaBlackJack.StageProgression
             IEnumerable<RunCardDefinition> deck,
             IEnumerable<RunDemonDefinition> demonDeck,
             int? lastIssuedCardId,
-            int? lastIssuedDemonCardId)
+            int? lastIssuedDemonCardId,
+            string startingDemonDefinitionKey)
         {
             if (maximumSoul <= 0)
             {
@@ -94,7 +97,11 @@ namespace DiaBlackJack.StageProgression
 
             List<RunDemonDefinition> demonCards = ValidateAndCopyDemonDeck(
                 demonDeck ?? CreatePrototypeDemonDeck());
-            _initialDemonDeck = new List<RunDemonDefinition>(demonCards).AsReadOnly();
+            StartingDemonDefinitionKey = ValidateStartingDemonDefinitionKey(
+                startingDemonDefinitionKey,
+                demonCards);
+            _initialDemonCards = new List<RunDemonDefinition>(demonCards);
+            _initialDemonDeck = _initialDemonCards.AsReadOnly();
             _currentDemonDeck = new List<RunDemonDefinition>(demonCards);
             _demonDeck = _currentDemonDeck.AsReadOnly();
             int maximumDemonCardId = FindMaximumDemonCardId(demonCards);
@@ -115,6 +122,11 @@ namespace DiaBlackJack.StageProgression
 
         public IReadOnlyList<RunDemonDefinition> DemonDeck => _demonDeck;
 
+        public string StartingDemonDefinitionKey { get; private set; }
+
+        internal bool CanSelectStartingDemon =>
+            StartingDemonDefinitionKey == null && _currentDemonDeck.Count == 0;
+
         internal int LastIssuedCardId => _lastIssuedCardId;
 
         internal int LastIssuedDemonCardId => _lastIssuedDemonCardId;
@@ -125,7 +137,8 @@ namespace DiaBlackJack.StageProgression
             IEnumerable<RunCardDefinition> deck,
             IEnumerable<RunDemonDefinition> demonDeck,
             int lastIssuedCardId,
-            int lastIssuedDemonCardId)
+            int lastIssuedDemonCardId,
+            string startingDemonDefinitionKey = null)
         {
             return new PlayerRunState(
                 maximumSoul,
@@ -133,7 +146,8 @@ namespace DiaBlackJack.StageProgression
                 deck,
                 demonDeck,
                 lastIssuedCardId,
-                lastIssuedDemonCardId);
+                lastIssuedDemonCardId,
+                startingDemonDefinitionKey);
         }
 
         public void SetCurrentSoul(int currentSoul)
@@ -174,6 +188,25 @@ namespace DiaBlackJack.StageProgression
             _currentDemonDeck.Add(demonCard);
             _lastIssuedDemonCardId = nextCardId;
             return demonCard;
+        }
+
+        internal bool TrySelectStartingDemon(string definitionKey)
+        {
+            if (!CanSelectStartingDemon ||
+                _lastIssuedDemonCardId == int.MaxValue ||
+                !ContainsDemonDefinition(definitionKey))
+            {
+                return false;
+            }
+
+            int nextCardId = _lastIssuedDemonCardId + 1;
+            var selected = new RunDemonDefinition(nextCardId, definitionKey);
+            _initialDemonCards.Add(selected);
+            _currentDemonDeck.Add(selected);
+            _initialLastDemonCardId = nextCardId;
+            _lastIssuedDemonCardId = nextCardId;
+            StartingDemonDefinitionKey = selected.DefinitionKey;
+            return true;
         }
 
         internal void ResetForNewRun()
@@ -270,6 +303,61 @@ namespace DiaBlackJack.StageProgression
             }
 
             return resolvedId;
+        }
+
+        private static string ValidateStartingDemonDefinitionKey(
+            string definitionKey,
+            IReadOnlyList<RunDemonDefinition> demonCards)
+        {
+            if (definitionKey == null)
+            {
+                return null;
+            }
+
+            if (string.IsNullOrWhiteSpace(definitionKey))
+            {
+                throw new ArgumentException(
+                    "Starting demon definition key cannot be empty.",
+                    nameof(definitionKey));
+            }
+
+            for (int i = 0; i < demonCards.Count; i++)
+            {
+                if (string.Equals(
+                    demonCards[i].DefinitionKey,
+                    definitionKey,
+                    StringComparison.Ordinal))
+                {
+                    return demonCards[i].DefinitionKey;
+                }
+            }
+
+            throw new ArgumentException(
+                "Starting demon must exist in the current run demon deck.",
+                nameof(definitionKey));
+        }
+
+        private static bool ContainsDemonDefinition(string definitionKey)
+        {
+            if (string.IsNullOrWhiteSpace(definitionKey))
+            {
+                return false;
+            }
+
+            IReadOnlyList<DemonContractDefinition> definitions =
+                DemonContractCatalog.Default.Definitions;
+            for (int i = 0; i < definitions.Count; i++)
+            {
+                if (string.Equals(
+                    definitions[i].Key,
+                    definitionKey,
+                    StringComparison.Ordinal))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

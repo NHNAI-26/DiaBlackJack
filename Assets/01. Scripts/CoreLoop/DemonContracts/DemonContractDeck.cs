@@ -6,7 +6,8 @@ namespace DiaBlackJack.CoreLoop
 {
     public sealed class DemonContractDeck
     {
-        public const int CandidateCount = 3;
+        public const int MaximumCandidateCount = 2;
+        public const int LuciferCandidateCount = 5;
 
         private readonly HashSet<int> _availableCardIds = new HashSet<int>();
         private readonly List<DemonContractCard> _discardPile = new List<DemonContractCard>();
@@ -48,7 +49,7 @@ namespace DiaBlackJack.CoreLoop
 
         public int AvailableCardCount => DrawCount + DiscardCount;
 
-        public bool CanTakeCandidates => AvailableCardCount >= CandidateCount;
+        public bool CanTakeCandidates => AvailableCardCount > 0;
 
         public int CardsInPlayCount => TotalCardCount - _availableCardIds.Count;
 
@@ -126,14 +127,28 @@ namespace DiaBlackJack.CoreLoop
 
         public IReadOnlyList<DemonContractCard> TakeCandidates()
         {
+            return TakeCandidates(MaximumCandidateCount);
+        }
+
+        internal IReadOnlyList<DemonContractCard> TakeLuciferCandidates()
+        {
+            return TakeCandidates(LuciferCandidateCount);
+        }
+
+        private IReadOnlyList<DemonContractCard> TakeCandidates(
+            int maximumCandidateCount)
+        {
             if (!CanTakeCandidates)
             {
                 throw new InvalidOperationException(
-                    $"At least {CandidateCount} available demon contract cards are required.");
+                    "At least one available demon contract card is required.");
             }
 
-            var candidates = new List<DemonContractCard>(CandidateCount);
-            for (int i = 0; i < CandidateCount; i++)
+            int candidateCount = Math.Min(
+                maximumCandidateCount,
+                AvailableCardCount);
+            var candidates = new List<DemonContractCard>(candidateCount);
+            for (int i = 0; i < candidateCount; i++)
             {
                 if (_drawPile.Count == 0)
                 {

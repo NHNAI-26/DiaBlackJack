@@ -212,7 +212,8 @@ namespace DiaBlackJack.StageProgression
                 cards,
                 demonCards,
                 snapshot.LastIssuedCardId,
-                snapshot.LastIssuedDemonCardId);
+                snapshot.LastIssuedDemonCardId,
+                snapshot.StartingDemonDefinitionKey);
         }
 
         private OpponentSelectionGenerator RestoreOpponentGenerator(
@@ -277,6 +278,13 @@ namespace DiaBlackJack.StageProgression
             RunSaveSnapshot snapshot,
             out StageProgressionState state)
         {
+            if (snapshot.CheckpointKind == RunCheckpointKind.StartingDemonSelected &&
+                snapshot.Status == RunSaveStatus.InProgress)
+            {
+                state = StageProgressionState.NotStarted;
+                return true;
+            }
+
             if (snapshot.CheckpointKind ==
                     RunCheckpointKind.CombatSettlementCompleted &&
                 snapshot.Status == RunSaveStatus.InProgress)
