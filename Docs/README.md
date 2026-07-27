@@ -2,7 +2,7 @@
 
 > 프로젝트: DiaBlackJack  
 > 문서 책임자: 이천서  
-> 최종 갱신: 2026-07-26
+> 최종 갱신: 2026-07-27
 
 이 디렉터리는 게임 규칙, 기획, 개발 명세, AI 활용, 외부 출처 및 팀 기여 기록을 관리한다.
 
@@ -10,8 +10,8 @@
 
 | 문서 | 용도 | 상태 |
 | --- | --- | --- |
-| [rule.md](./rule.md) | 게임 원본 규칙 | 시작 악마·계약 후보·체크포인트 확정 v0.6 |
-| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | 시작 악마·계약 후보·체크포인트 반영 v0.5 |
+| [rule.md](./rule.md) | 게임 원본 규칙 | 최신 노션 악마·자동 카드·적 규칙 반영 v0.7 |
+| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | 최신 노션 전투 콘텐츠 반영 v0.6 |
 | [core-loop-design.md](./core-loop-design.md) | 최소 코어 루프 기획 범위 | 4단계 완료 기준안 v0.1 |
 | [core-loop-development-spec.md](./core-loop-development-spec.md) | 코어 루프 구조·상태·검증 명세 | 4단계 검증 완료 v0.1 |
 | [core-loop-implementation-plan.md](./core-loop-implementation-plan.md) | 코어 루프 작업 순서·담당·일정·완료 증거 | 전체 완료 v0.1 |
@@ -27,26 +27,26 @@
 | [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | 현행 규칙 이관 완료 v0.2 |
 | [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 이력과 현행 규칙 이관 결과 | 현행 규칙 이관 완료 v0.2 |
 | [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | 현행 규칙 이관 완료 v0.2 |
-| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | 계약 카드 UI 경계 반영 v0.6 |
+| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | 최신 악마 연계·자동 카드 숫자 반영 v0.7 |
 | [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M03 검증 완료 v0.3 |
 | [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M03 작업 순서와 단계별 검증 게이트 | CU-M03 완료 v0.3 |
 | [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M03 완료 |
-| [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | AC-06 통합 구현 완료 v0.1 |
-| [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | AC-06 코드 통합 완료·Editor 최종 재검증 대기 v0.1 |
-| [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 구현 순서와 단계별 검증 게이트 | AC-06 구현 완료 v0.1 |
-| [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | AC-06 대상 15/15·Unity 비의존 461/461 v0.1 |
-| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속·우선 악마 4종과 광신도 선택 밸런스 | 시작 선택·최대 2장 후보 이관 대기 v1.2 |
-| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | DC-08 검증 완료 v1.0 |
-| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 구현 순서와 단계별 검증 게이트 | 전체 완료 v1.0 |
-| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | DC-08 완료, 대상 8/8·400시드·100자동전투·전체 397/397 |
+| [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | 새 숫자 1~5 반영·AC-RV01 구현 대기 v0.2 |
+| [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | AC-RV00 문서 완료·AC-RV01 코드 이관 대기 v0.2 |
+| [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 이력과 AC-RV00~RV01 개정 계획 | AC-RV00 완료·AC-RV01 다음 v0.2 |
+| [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | 최신 숫자 문서화 완료·코드 미변경 v0.2 |
+| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | DC-R00 문서 완료·코드 이관 대기 v1.3 |
+| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | 최신 규칙 기술 이관 기준 v1.2 |
+| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 이력과 DC-R00~R05 개정 계획 | DC-R00 완료·DC-R01 다음 v1.2 |
+| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | 최신 노션 규칙 문서화 완료·코드 미변경 v1.2 |
 | [battle-reward-design.md](./battle-reward-design.md) | 일반·엘리트·보스 전투 보상 규칙과 프로토타입 카드 풀 | RW-00~RW-05 완료 v0.1 |
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW-05 최종 검증 완료 v0.1 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
 | [battle-reward-progress-log.md](./battle-reward-progress-log.md) | 전투 보상 결정·구현·검증 누적 기록 | RW-05 완료 v0.1 |
-| [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 일반 적 3종·엘리트·보스의 전투 성향과 책임 경계 | 현행 폴드 삭제·코드 이관 완료 v0.7 |
-| [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | EP-06 검증 완료 v0.6 |
-| [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP-00~EP-06 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.6 |
-| [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | EP-06 완료 v0.6 |
+| [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 기존 적 5종과 겁쟁이 도박사의 전투 성향·책임 경계 | EP-R00 문서 완료·편입 결정 대기 v1.1 |
+| [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | 겁쟁이 도박사 기술 이관 대기 v1.1 |
+| [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP-00~EP-06 이력과 EP-R00~R01 개정 계획 | EP-R00 완료·EP-R01 다음 v1.1 |
+| [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | 겁쟁이 도박사 문서화 완료·코드 미변경 v1.1 |
 | [enemy-selection-combat-ui-design.md](./enemy-selection-combat-ui-design.md) | 상대 후보 2명 비교·확정과 등급별 전투 정보 표시 규칙 | EUI-05 1차 범위 완료 v0.1 |
 | [enemy-selection-combat-ui-development-spec.md](./enemy-selection-combat-ui-development-spec.md) | 후보 생성·선택 상태·전투 변환·안전 표시 스냅샷과 테스트 명세 | EUI-05 최종 검증 완료 v0.1 |
 | [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI-00~EUI-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
@@ -74,12 +74,13 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-27 | 이천서 | 최신 노션 기획을 기준으로 악마 12종, 자동 카드 숫자 1~5, 겁쟁이 도박사 규칙을 원본·전체 기획·기능별 4종 문서에 이관하고 DC-R00·AC-RV00·EP-R00을 문서 완료로 기록; 구현·테스트·씬·외부 에셋은 변경하지 않음 |
 | 2026-07-26 | 이천서 | 저장 SV-02 v1 JSON·안정 문자열·원자 파일 교체·백업 불러오기와 대상 8/8·StageProgression 149/149·전체 EditMode 491/491 완료 |
 | 2026-07-26 | 이천서 | 저장 SV-01 순수 스냅샷·검증·안정 상태 캡처와 대상 7/7·StageProgression 141/141·전체 EditMode 483/483 완료 |
 | 2026-07-26 | 이천서 | 게임 저장·이어하기 SV-00 문서 4종과 안정 체크포인트·런 예약·버전 JSON·원자 파일·백업 복구·SV-01~SV-06 구현 기준 수립 |
 | 2026-07-26 | 이천서 | 새 런 시작 시 악마 2장 중 1장 필수 선택·최소 1장 보장, 일반 계약 최대 2장·단일 후보 허용과 루시퍼 5장 예외 확정 |
 | 2026-07-26 | 이천서 | 시작 악마 선택·스테이지 정산·상점 나가기·사건 해결·런 종료 뒤 체크포인트 저장 기준 확정 |
-| 2026-07-26 | 이천서 | 일반·악마 덱의 전용 뒷면·호버 목록, 발견형 계약 후보 3장과 플레이어 앞 활성 악마 카드 UI 기준 확정 |
+| 2026-07-26 | 이천서 | 일반·악마 덱의 전용 뒷면·호버 목록과 플레이어 앞 활성 악마 카드 UI 기준 확정; 당시 발견형 계약 후보 3장 기준은 2026-07-27 최신 최대 2장 규칙으로 대체 |
 | 2026-07-25 | 이천서 | 자동 발동 카드 AC-06 세션·UI·공개 정보 기반 적 AI·일반 보상 5종·사기꾼 탐지기를 통합하고 대상 15/15·Unity 비의존 461/461·컴파일 성공을 확인, Unity Editor 전용 10건과 화면 검증은 후속으로 기록 |
 | 2026-07-25 | 이천서 | 자동 발동 카드 AC-05 부활초의 양측 영혼 2 이상 재시작, 승패 없는 전용 전이와 부모 효과 취소를 구현하고 대상 11/11·CoreLoop 327/327·전체 EditMode 456/456로 검증 |
 | 2026-07-25 | 이천서 | 자동 발동 카드 AC-04 화염 방사기 소유자→상대 순차 폐기와 회중시계 수동 카드 재활성화·원본 유지/폐기를 구현하고 대상 11/11·CoreLoop 316/316·전체 EditMode 445/445로 검증 |
