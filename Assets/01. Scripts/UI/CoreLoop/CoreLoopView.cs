@@ -98,7 +98,6 @@ namespace DiaBlackJack.CoreLoop.UI
             GUILayout.Label(_model.LastRound, _bodyStyle);
             GUILayout.Label(_model.LastCardEffect, _bodyStyle);
             DrawAutomaticCardStatus();
-            DrawDemonContractStatus();
             GUILayout.FlexibleSpace();
             DrawActions();
             GUILayout.Space(4f);
@@ -413,36 +412,6 @@ namespace DiaBlackJack.CoreLoop.UI
             }
 
             GUI.enabled = wasEnabled;
-        }
-
-        private void DrawDemonContractStatus()
-        {
-            DemonContractPanelViewModel contract = _model.DemonContract;
-            if (contract.ActiveContracts.Count == 0 &&
-                string.IsNullOrEmpty(contract.LastContractResult) &&
-                string.IsNullOrEmpty(contract.LastEffectResult))
-            {
-                return;
-            }
-
-            GUILayout.BeginVertical(GUI.skin.box, GUILayout.ExpandWidth(true));
-            GUILayout.Label("DEMON CONTRACT", _headingStyle);
-            foreach (string active in contract.ActiveContracts)
-            {
-                GUILayout.Label(active, _bodyStyle);
-            }
-
-            if (!string.IsNullOrEmpty(contract.LastContractResult))
-            {
-                GUILayout.Label(contract.LastContractResult, _bodyStyle);
-            }
-
-            if (!string.IsNullOrEmpty(contract.LastEffectResult))
-            {
-                GUILayout.Label(contract.LastEffectResult, _warningStyle);
-            }
-
-            GUILayout.EndVertical();
         }
 
         private void DrawDemonContractConfirmation()

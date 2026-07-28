@@ -620,7 +620,6 @@ namespace DiaBlackJack.GameScene
                 DrawDeckPanel(_hoveredDeck.Kind);
             }
 
-            DrawDemonContractStatusPanel();
             DrawAutomaticCardStatusPanel();
 
             if (_core.State == CoreLoopState.BattleEnded)
@@ -1111,45 +1110,6 @@ namespace DiaBlackJack.GameScene
             float x = draw ? 28f : Screen.width - w - 28f;
             var rect = new Rect(x, (Screen.height - h) * 0.5f, w, h);
             GUI.Box(rect, content, _panelStyle);
-        }
-
-        private void DrawDemonContractStatusPanel()
-        {
-            DemonContractPanelViewModel contract = _core.DemonContract;
-            if (contract.ActiveContracts.Count == 0 &&
-                string.IsNullOrEmpty(contract.LastContractResult) &&
-                string.IsNullOrEmpty(contract.LastEffectResult))
-            {
-                return;
-            }
-
-            _panelStyle ??= new GUIStyle(GUI.skin.box)
-            {
-                fontSize = 16,
-                fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.UpperLeft,
-                padding = new RectOffset(12, 12, 10, 10),
-                normal = { textColor = Color.white }
-            };
-
-            var lines = new List<string> { "DEMON CONTRACT" };
-            lines.AddRange(contract.ActiveContracts);
-            if (!string.IsNullOrEmpty(contract.LastContractResult))
-            {
-                lines.Add(contract.LastContractResult);
-            }
-
-            if (!string.IsNullOrEmpty(contract.LastEffectResult))
-            {
-                lines.Add(contract.LastEffectResult);
-            }
-
-            const float width = 450f;
-            float height = 32f + lines.Count * 24f;
-            GUI.Box(
-                new Rect(Screen.width - width - 20f, 20f, width, height),
-                string.Join("\n", lines),
-                _panelStyle);
         }
 
         private void DrawAutomaticCardStatusPanel()

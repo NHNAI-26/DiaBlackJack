@@ -27,6 +27,7 @@
 
 | 날짜 | 영역 | 실제 수행 내용 | 관련 파일/산출물 | 검증/비고 |
 | --- | --- | --- | --- | --- |
+| 2026-07-28 | 악마 계약 UI DC-M01 | 계약 완료 뒤 계속 남던 `DEMON CONTRACT` 상시 상태 상자를 GameScene과 CoreLoopTest에서 제거하고 확인·후보 선택 기능은 유지 | `GameManager.cs`, `CoreLoopView.cs`, 악마 계약 설계·진행 기록, AI 활용 기록 | 이천서 기획·구현·검증 책임, AI 렌더링 경로 탐색·삭제·MCP 보조; CoreLoop 362/362·전체 EditMode 551/551·활성 계약 GameScene 화면·Console 0, 씬·프리팹·Packages·외부 에셋 무변경 |
 | 2026-07-28 | 적 전투 프로필 EP-R01 | 겁쟁이 도박사의 덱 합계를 18장으로 정정하고 기존 3종을 유지한 네 번째 일반 적, 최대 영혼 2·합계 14 스탠드·수동 카드 비사용·빈 악마 덱·일반 보상으로 구현 | `EnemyCombatProfileCatalog.cs`, `EnemyBehaviorPolicyCatalog.cs`, `CowardlyGamblerEnemyPolicy.cs`, EPR01 테스트 2개와 기존 회귀, 적 프로필 문서 4종·공통 기록 | 이천서 기획·구현·검증 책임, AI 합산 오류 발견·구조 대조·테스트·코드·MCP 보조; 전용 9/9·CoreLoop 362/362·StageProgression 172/172·전체 534/534·게임 코드 오류 0, 최종 결과 저장 안내 3건 분리; UI·GameScene·씬·프리팹·Packages·외부 에셋 무변경 |
 | 2026-07-28 | 자동 발동 카드 AC-RV01 | 독극물·화염 방사기·회중시계의 숫자와 정의 키를 최신 기획에 맞추고 보상·런/전투 변환·저장 호환 정책을 원자적으로 이관 | `CardDefinitionCatalog.cs`, `RunSaveSnapshot.cs`, AC-RV01 테스트 2개와 기존 회귀, 자동 카드 문서 4종·공통 기록 | 이천서 기획·구현·검증 책임, AI 구조 대조·테스트·코드·MCP 보조; 전용 11/11·전체 522/522·GameScene/CoreLoopTest·Console 0, 씬·프리팹·외부 에셋 무변경 |
 | 2026-07-27 | 악마 계약 DC-R01 | 시작 악마 결정적 2장 제안·1장 선택, 일반 계약 후보 0·1·2장, 루시퍼 5장 상수 분리, 재시작·시작 체크포인트 복원을 구현하고 광신도 강제 후보 회귀를 교정 | `CoreLoop/DemonContracts`, `CultistEnemyPolicy.cs`, `StageProgression/StartingDemonSelection.cs`, `PlayerRunState.cs`, 세션·Save 경계, DCR01 테스트·계약 문서 4종 | 이천서 기획·구현·검증 책임, AI 구조 대조·코드·테스트·MCP 보조; 전용 14/14·CoreLoop 349/349·StageProgression 162/162·전체 511/511, GameScene·씬·프리팹 무변경 |

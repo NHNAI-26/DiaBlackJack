@@ -717,6 +717,7 @@ AI 대화 원문을 그대로 싣지 말고 목적, 핵심 지시, 결과, 사�
 
 | 날짜 | 담당자 | AI 활용 작업 | 산출물 | 사람의 검토 상태 |
 | --- | --- | --- | --- | --- |
+| 2026-07-28 | 이천서 | DC-M01 계약 완료 후 상시 `DEMON CONTRACT` 상태 패널 제거와 회귀·화면 검증 | `GameManager.cs`, `CoreLoopView.cs`, 악마 계약 설계·진행 기록과 팀 역할 기록 | AI는 렌더링 경로 탐색, 상시 패널과 확인·선택 UI 경계 분리, 코드 삭제와 Unity MCP 검증을 보조함. CoreLoop 362/362·전체 EditMode 551/551·활성 계약 1개 GameScene 화면·Console 0; 씬·프리팹·Packages·외부 에셋·오픈소스는 변경하지 않았으며 최종 승인 책임은 이천서에게 있음 |
 | 2026-07-28 | 이천서 | SV-05 런 예약·새 게임 보호·이어하기 세션 교체·시작 악마/손상·버전/저장 실패 UI의 테스트 우선 구현과 Play Mode 검증 | `RunReservation*`, `RunSaveFlow.cs`, `RunSavePresentation.cs`, Runtime·StageProgression UI, `RunSaveFlowTests.cs`, 저장 문서 4종과 공통 기록 | AI는 구조 대조, 테스트 초안, 구현, 기존 주입 테스트 호환 실패 분석, Unity MCP 자동·화면 검증과 기록을 보조함. 전용 9/9·StageProgression 189/189·CoreLoop 362/362·전체 551/551·720p/1080p·Console 0; 실제 프로세스 재실행과 RF 체크포인트는 SV-06으로 남겼고 GameScene·씬·프리팹·Packages·외부 에셋·오픈소스는 변경하지 않았으며 최종 승인 책임은 이천서에게 있음 |
 | 2026-07-28 | 이천서 | SV-04 시작 악마·카드 보상·런 종료 안정 체크포인트, 저장 실패 보류·동일 스냅샷 재시도·진행 게이트의 테스트 우선 구현 | `RunSaveCoordinator.cs`, `RunSaveSerializer.cs`, `RunSaveCoordinatorTests.cs`, 저장 문서 4종과 공통 기록 | AI는 기존 저장·런 구조 대조, 테스트 초안, 실패 원인 분석, 코드·Unity MCP 검증·기록을 보조함. 전용 8/8·StageProgression 180/180·CoreLoop 362/362·전체 542/542; 실제 RF 상점·사건 API가 없는 SV04-I03은 보류했고 Runtime·UI·GameScene·씬·프리팹·Packages·외부 에셋·오픈소스는 변경하지 않았으며 최종 기획·코드 승인 책임은 이천서에게 있음 |
 | 2026-07-28 | 이천서 | EP-R01 겁쟁이 도박사 프로필·18장 덱·저위험 정책·전투/상대 선택 연결의 테스트 우선 구현 | CoreLoop 적 프로필·정책, EPR01 테스트, 적 프로필 문서 4종과 공통 기록 | AI는 규칙 합산 오류 발견·구조 대조·테스트·코드·Unity MCP 검증·기록을 보조함. 전용 9/9·CoreLoop 362/362·StageProgression 172/172·전체 534/534·게임 코드 오류 0, 최종 결과 저장 안내 3건 분리; 최종 기획·코드 승인 책임은 이천서에게 있음 |
@@ -1255,6 +1256,12 @@ Unity MCP에서 손상·미지원 예약 안내까지 포함한 전용 9/9(job
 종료·재실행과 상점·사건 완료 체크포인트는 SV-06으로 남겼다. `GameScene`·씬·프리팹·
 Packages·외부 코드·에셋·오픈소스는 변경하지 않았고 최종 규칙·코드·화면 승인 책임자는
 이천서다.
+
+### 3.26 DC-M01 계약 완료 후 상시 패널 제거
+
+AI는 `DEMON CONTRACT` 문자열과 호출 경로를 검색해 계약 확인·후보 선택 화면과 계약 완료 뒤 계속 남는 상태 패널이 별도 메서드임을 대조했다. `GameManager`와 `CoreLoopView`에서 상시 상태 패널 호출과 전용 렌더링 메서드만 삭제하고, `DemonContractPanelViewModel`과 계약 처리·후속 선택 경계는 유지했다.
+
+Unity MCP에서 재컴파일 오류 0건, CoreLoop 362/362와 전체 EditMode 551/551을 확인했다. 실제 `GameScene`에서 계약을 성공시켜 활성 계약 1개 상태를 만든 뒤 `DEMON CONTRACT` 상자가 표시되지 않고 일반 행동 UI가 유지되는 것을 화면으로 검증했으며, Console 오류는 0건이었다. 외부 에셋·오픈소스·씬·프리팹·Packages 변경은 없다. 최종 화면 승인 책임자는 이천서다.
 
 ## 4. 생성형 AI 산출물 관리
 
