@@ -717,6 +717,7 @@ AI 대화 원문을 그대로 싣지 말고 목적, 핵심 지시, 결과, 사�
 
 | 날짜 | 담당자 | AI 활용 작업 | 산출물 | 사람의 검토 상태 |
 | --- | --- | --- | --- | --- |
+| 2026-07-28 | 이천서 | SV-05 런 예약·새 게임 보호·이어하기 세션 교체·시작 악마/손상·버전/저장 실패 UI의 테스트 우선 구현과 Play Mode 검증 | `RunReservation*`, `RunSaveFlow.cs`, `RunSavePresentation.cs`, Runtime·StageProgression UI, `RunSaveFlowTests.cs`, 저장 문서 4종과 공통 기록 | AI는 구조 대조, 테스트 초안, 구현, 기존 주입 테스트 호환 실패 분석, Unity MCP 자동·화면 검증과 기록을 보조함. 전용 9/9·StageProgression 189/189·CoreLoop 362/362·전체 551/551·720p/1080p·Console 0; 실제 프로세스 재실행과 RF 체크포인트는 SV-06으로 남겼고 GameScene·씬·프리팹·Packages·외부 에셋·오픈소스는 변경하지 않았으며 최종 승인 책임은 이천서에게 있음 |
 | 2026-07-28 | 이천서 | SV-04 시작 악마·카드 보상·런 종료 안정 체크포인트, 저장 실패 보류·동일 스냅샷 재시도·진행 게이트의 테스트 우선 구현 | `RunSaveCoordinator.cs`, `RunSaveSerializer.cs`, `RunSaveCoordinatorTests.cs`, 저장 문서 4종과 공통 기록 | AI는 기존 저장·런 구조 대조, 테스트 초안, 실패 원인 분석, 코드·Unity MCP 검증·기록을 보조함. 전용 8/8·StageProgression 180/180·CoreLoop 362/362·전체 542/542; 실제 RF 상점·사건 API가 없는 SV04-I03은 보류했고 Runtime·UI·GameScene·씬·프리팹·Packages·외부 에셋·오픈소스는 변경하지 않았으며 최종 기획·코드 승인 책임은 이천서에게 있음 |
 | 2026-07-28 | 이천서 | EP-R01 겁쟁이 도박사 프로필·18장 덱·저위험 정책·전투/상대 선택 연결의 테스트 우선 구현 | CoreLoop 적 프로필·정책, EPR01 테스트, 적 프로필 문서 4종과 공통 기록 | AI는 규칙 합산 오류 발견·구조 대조·테스트·코드·Unity MCP 검증·기록을 보조함. 전용 9/9·CoreLoop 362/362·StageProgression 172/172·전체 534/534·게임 코드 오류 0, 최종 결과 저장 안내 3건 분리; 최종 기획·코드 승인 책임은 이천서에게 있음 |
 | 2026-07-28 | 이천서 | AC-RV01 자동 카드 숫자·정의 키·보상/런 전투 변환과 저장 콘텐츠 리비전 이관, 테스트 우선 회귀·Unity 화면 검증 | CoreLoop·StageProgression Save 코드, AC-RV01 테스트, 자동 카드 문서 4종과 공통 기록 | AI는 구조 대조·테스트·코드·MCP 검증·기록을 보조함. 전용 11/11·전체 522/522·두 전투 화면·Console 0을 확인했으며 최종 기획·코드 승인 책임은 이천서에게 있음 |
@@ -1224,6 +1225,36 @@ Unity MCP에서 전용 8/8(job `91351fcd5029493fbb9f49476c8d4da7`), 저장 관�
 게임 코드 오류는 없었다. Runtime·Controller 연결은 SV-05로 남겼고 `GameScene`·씬·
 프리팹·Packages·외부 코드·에셋·오픈소스는 변경하지 않았다. 규칙·구현·검증의 최종
 책임자는 이천서다.
+
+### 3.25 SV-05 런 예약·이어하기·실패 UI
+
+이천서는 저장 문서 4종의 SV-05 계획에 따라 실제 Runtime과 StageTest 화면에서 새 게임,
+이어하기, 시작 악마 선택 예약, 저장 실패 복구를 사용할 수 있게 구현하도록 지시했다.
+AI는 `RunSaveCoordinator`·`RunRestoreFactory`·`StartingDemonSelectionGenerator`와 기존
+StageProgression UI 구조를 대조하고, `GameScene`과 HONG의 RF/Shop 소유 파일을 변경하지
+않는 경계에서 작업했다.
+
+테스트를 먼저 추가해 런 예약과 응용 흐름 타입이 없다는 컴파일 실패를 확인했다.
+`RunReservationRepository`는 임시 파일을 다시 읽어 검증한 뒤 예약 기본 파일로 교체하고,
+`RunSaveFlow`는 새 런 확인·취소, 예약 재개, 저장 복원·세션 교체, 체크포인트 보류·재시도를
+조정한다. 새 런 요청만으로 기존 진행 저장을 삭제하지 않으며, 시작 체크포인트가 성공한
+뒤에만 예약을 제거한다. 진행 View는 시작 악마 후보 2장과 정제된 저장 상태를 표시하고,
+저장 실패 중에는 같은 스냅샷 재시도 외 입력을 잠근다.
+
+첫 전체 StageProgression 실행에서 저장 기능 이전 Controller 테스트 5건이 직접 세션을
+주입하던 호환 경계 변경으로 실패했다. Runtime이 저장 흐름을 우선하되 저장 흐름이 없는
+독립 세션 테스트는 기존 행동을 유지하도록 수정해 실패 5/5와 전체 회귀를 복구했다.
+Unity MCP에서 손상·미지원 예약 안내까지 포함한 전용 9/9(job
+`ff6eba2778bc492da8beab20a70d09f7`), StageProgression 189/189(job
+`8ada54ae408f4490a34e518d685ee5aa`), CoreLoop 362/362(job
+`b2b79779112845118ff3de750378f7ca`), 전체 EditMode 551/551(job
+`d6ad875f5ed5423197e8d77710570f30`)를 확인했다. StageTest Play Mode에서 1280×720
+런 메뉴와 1920×1080 시작 악마·상대 선택, 저장 성공 표시, Console 오류 0을 확인했다.
+
+화면 검증 중 만든 영구 경로 예약·저장 파일은 검증 뒤 제거했다. 실제 운영체제 프로세스
+종료·재실행과 상점·사건 완료 체크포인트는 SV-06으로 남겼다. `GameScene`·씬·프리팹·
+Packages·외부 코드·에셋·오픈소스는 변경하지 않았고 최종 규칙·코드·화면 승인 책임자는
+이천서다.
 
 ## 4. 생성형 AI 산출물 관리
 

@@ -1,4 +1,5 @@
 using System;
+using Border.SaveLoad.UI;
 using UnityEngine;
 
 namespace DiaBlackJack.StageProgression.UI
@@ -7,6 +8,7 @@ namespace DiaBlackJack.StageProgression.UI
     public sealed class StageProgressionView : MonoBehaviour
     {
         private StageProgressionViewModel _model;
+        private RunSaveViewModel _saveModel;
         private GUIStyle _titleStyle;
         private GUIStyle _headingStyle;
         private GUIStyle _bodyStyle;
@@ -30,9 +32,27 @@ namespace DiaBlackJack.StageProgression.UI
 
         public event Action OpponentConfirmed;
 
-        public void Render(StageProgressionViewModel model)
+        public event Action NewRunRequested;
+
+        public event Action NewRunConfirmed;
+
+        public event Action NewRunCancelled;
+
+        public event Action ContinueRunRequested;
+
+        public event Action ResumeReservationRequested;
+
+        public event Action<int, int> StartingDemonSelected;
+
+        public event Action SaveRetryRequested;
+
+        public void Render(
+            StageProgressionViewModel model,
+            RunSaveViewModel saveModel)
         {
             _model = model ?? throw new ArgumentNullException(nameof(model));
+            _saveModel = saveModel ??
+                throw new ArgumentNullException(nameof(saveModel));
         }
 
         public void SetInputLocked(bool inputLocked)
@@ -42,7 +62,7 @@ namespace DiaBlackJack.StageProgression.UI
 
         private void OnGUI()
         {
-            if (_model == null)
+            if (_model == null || _saveModel == null)
             {
                 return;
             }
@@ -52,7 +72,7 @@ namespace DiaBlackJack.StageProgression.UI
 
             float panelWidth = Mathf.Min(860f, Screen.width - 32f);
             float panelHeight = Mathf.Min(760f, Screen.height - 32f);
-            var panel = new Rect(
+            Rect panel = new Rect(
                 (Screen.width - panelWidth) * 0.5f,
                 (Screen.height - panelHeight) * 0.5f,
                 panelWidth,
@@ -62,29 +82,138 @@ namespace DiaBlackJack.StageProgression.UI
             GUILayout.Space(18f);
             GUILayout.Label("DEVIL BLACKJACK RUN", _titleStyle);
             GUILayout.Space(18f);
+
+            if (_saveModel.IsMenuVisible)
+            {
+                DrawRunMenu();
+            }
+            else
+            {
+                DrawProgression();
+            }
+
+            GUILayout.Space(18f);
+            GUILayout.EndArea();
+        }
+
+        private void DrawRunMenu()
+        {
+            GUILayout.Label("RUN MENU", _headingStyle);
+            GUILayout.Space(18f);
+            GUILayout.Label(_saveModel.StatusMessage, _messageStyle);
+            GUILayout.FlexibleSpace();
+
+            bool previousEnabled = GUI.enabled;
+            GUI.enabled = !_inputLocked;
+            if (_saveModel.RequiresNewRunConfirmation)
+            {
+                GUILayout.Label(
+                    "CURRENT PROGRESS WILL REMAIN UNTIL THE NEW RUN IS RESERVED.",
+                    _bodyStyle);
+                GUILayout.Space(12f);
+                if (GUILayout.Button(
+                        "CONFIRM NEW RUN",
+                        _buttonStyle,
+                        GUILayout.Height(56f)))
+                {
+                    NewRunConfirmed?.Invoke();
+                }
+
+                if (GUILayout.Button(
+                        "CANCEL",
+                        _buttonStyle,
+                        GUILayout.Height(48f)))
+                {
+                    NewRunCancelled?.Invoke();
+                }
+
+                GUI.enabled = previousEnabled;
+                return;
+            }
+
+            GUI.enabled = !_inputLocked && _saveModel.CanContinueRun;
+            if (GUILayout.Button(
+                    "CONTINUE RUN",
+                    _buttonStyle,
+                    GUILayout.Height(56f)))
+            {
+                ContinueRunRequested?.Invoke();
+            }
+
+            GUI.enabled = !_inputLocked && _saveModel.CanResumeReservation;
+            if (GUILayout.Button(
+                    "RESUME STARTING DEMON SELECTION",
+                    _buttonStyle,
+                    GUILayout.Height(56f)))
+            {
+                ResumeReservationRequested?.Invoke();
+            }
+
+            GUI.enabled = !_inputLocked && _saveModel.CanStartNewRun;
+            if (GUILayout.Button(
+                    "NEW RUN",
+                    _buttonStyle,
+                    GUILayout.Height(56f)))
+            {
+                NewRunRequested?.Invoke();
+            }
+
+            GUI.enabled = previousEnabled;
+        }
+
+        private void DrawProgression()
+        {
             GUILayout.Label(_model.StageProgress, _headingStyle);
             GUILayout.Label(_model.StageName, _messageStyle);
             GUILayout.Label(_model.StageKind, _bodyStyle);
-            GUILayout.Space(24f);
+            GUILayout.Space(Screen.height <= 720 ? 12f : 24f);
             GUILayout.Label($"PLAYER SOUL  {_model.PlayerSoul}", _headingStyle);
             GUILayout.Label($"RUN DECK  {_model.DeckCount}", _bodyStyle);
-            GUILayout.Space(18f);
+            GUILayout.Space(12f);
             GUILayout.Label(_model.Message, _messageStyle);
             if (!string.IsNullOrEmpty(_model.RewardResult))
             {
-                GUILayout.Space(8f);
+                GUILayout.Space(6f);
                 GUILayout.Label(_model.RewardResult, _headingStyle);
+            }
+
+            if (!string.IsNullOrEmpty(_saveModel.SaveIndicator))
+            {
+                GUILayout.Space(6f);
+                GUILayout.Label(_saveModel.SaveIndicator, _selectedStyle);
             }
 
             GUILayout.FlexibleSpace();
             DrawAction();
-            GUILayout.Space(18f);
-            GUILayout.EndArea();
         }
 
         private void DrawAction()
         {
             bool previousEnabled = GUI.enabled;
+            if (_saveModel.BlocksProgressionInput)
+            {
+                GUILayout.Label(_saveModel.StatusMessage, _messageStyle);
+                GUILayout.Space(10f);
+                GUI.enabled = !_inputLocked && _saveModel.CanRetrySave;
+                if (GUILayout.Button(
+                        "RETRY SAVE",
+                        _buttonStyle,
+                        GUILayout.Height(56f)))
+                {
+                    SaveRetryRequested?.Invoke();
+                }
+
+                GUI.enabled = previousEnabled;
+                return;
+            }
+
+            if (_model.CanSelectStartingDemon)
+            {
+                DrawStartingDemonSelection();
+                GUI.enabled = previousEnabled;
+                return;
+            }
+
             if (_model.CanFocusOpponent)
             {
                 DrawOpponentSelection();
@@ -101,15 +230,24 @@ namespace DiaBlackJack.StageProgression.UI
 
             GUI.enabled = !_inputLocked;
 
-            if (_model.CanStartRun && GUILayout.Button("START RUN", _buttonStyle, GUILayout.Height(56f)))
+            if (_model.CanStartRun && GUILayout.Button(
+                    "START RUN",
+                    _buttonStyle,
+                    GUILayout.Height(56f)))
             {
                 StartRunRequested?.Invoke();
             }
-            else if (_model.CanAdvanceStage && GUILayout.Button("NEXT STAGE", _buttonStyle, GUILayout.Height(56f)))
+            else if (_model.CanAdvanceStage && GUILayout.Button(
+                         "NEXT STAGE",
+                         _buttonStyle,
+                         GUILayout.Height(56f)))
             {
                 NextStageRequested?.Invoke();
             }
-            else if (_model.CanRestartRun && GUILayout.Button("RESTART RUN", _buttonStyle, GUILayout.Height(56f)))
+            else if (_model.CanRestartRun && GUILayout.Button(
+                         "RUN MENU",
+                         _buttonStyle,
+                         GUILayout.Height(56f)))
             {
                 RestartRunRequested?.Invoke();
             }
@@ -117,10 +255,50 @@ namespace DiaBlackJack.StageProgression.UI
             GUI.enabled = previousEnabled;
         }
 
+        private void DrawStartingDemonSelection()
+        {
+            if (!_model.StartingDemonOfferId.HasValue)
+            {
+                return;
+            }
+
+            int offerId = _model.StartingDemonOfferId.Value;
+            GUILayout.BeginHorizontal();
+            foreach (StartingDemonOptionViewModel option in
+                     _model.StartingDemonOptions)
+            {
+                GUILayout.BeginVertical(
+                    GUI.skin.box,
+                    GUILayout.MinHeight(Screen.height <= 720 ? 180f : 220f),
+                    GUILayout.ExpandWidth(true));
+                GUILayout.Label(option.DisplayName, _messageStyle);
+                GUILayout.Space(6f);
+                GUILayout.Label(option.Summary, _candidateBodyStyle);
+                GUILayout.FlexibleSpace();
+                GUILayout.Label(option.CostSummary, _bodyStyle);
+                GUILayout.Space(8f);
+
+                GUI.enabled = !_inputLocked &&
+                    _model.CanSelectStartingDemon;
+                if (GUILayout.Button(
+                        "SELECT DEMON",
+                        _buttonStyle,
+                        GUILayout.Height(46f)))
+                {
+                    StartingDemonSelected?.Invoke(offerId, option.OptionId);
+                }
+
+                GUILayout.EndVertical();
+            }
+
+            GUILayout.EndHorizontal();
+        }
+
         private void DrawOpponentSelection()
         {
             GUILayout.BeginHorizontal();
-            foreach (OpponentCandidateViewModel candidate in _model.OpponentCandidates)
+            foreach (OpponentCandidateViewModel candidate in
+                     _model.OpponentCandidates)
             {
                 Color previousBackgroundColor = GUI.backgroundColor;
                 if (candidate.IsFocused)
@@ -130,11 +308,11 @@ namespace DiaBlackJack.StageProgression.UI
 
                 GUILayout.BeginVertical(
                     GUI.skin.box,
-                    GUILayout.MinHeight(250f),
+                    GUILayout.MinHeight(Screen.height <= 720 ? 210f : 250f),
                     GUILayout.ExpandWidth(true));
                 GUILayout.Label(candidate.DisplayName, _messageStyle);
                 GUILayout.Label(
-                    $"{candidate.Grade}  ·  {candidate.MaximumSoul}",
+                    $"{candidate.Grade}  |  {candidate.MaximumSoul}",
                     _headingStyle);
                 GUILayout.Space(8f);
                 GUILayout.Label(candidate.Summary, _candidateBodyStyle);
@@ -144,9 +322,9 @@ namespace DiaBlackJack.StageProgression.UI
 
                 GUI.enabled = !_inputLocked && _model.CanFocusOpponent;
                 if (GUILayout.Button(
-                    candidate.IsFocused ? "SELECTED" : "SELECT",
-                    _buttonStyle,
-                    GUILayout.Height(46f)))
+                        candidate.IsFocused ? "SELECTED" : "SELECT",
+                        _buttonStyle,
+                        GUILayout.Height(46f)))
                 {
                     OpponentFocused?.Invoke(candidate.ProfileKey);
                 }
@@ -168,9 +346,9 @@ namespace DiaBlackJack.StageProgression.UI
 
             GUI.enabled = !_inputLocked && _model.CanConfirmOpponent;
             if (GUILayout.Button(
-                "CONFIRM OPPONENT",
-                _buttonStyle,
-                GUILayout.Height(52f)))
+                    "CONFIRM OPPONENT",
+                    _buttonStyle,
+                    GUILayout.Height(52f)))
             {
                 OpponentConfirmed?.Invoke();
             }
@@ -178,7 +356,8 @@ namespace DiaBlackJack.StageProgression.UI
 
         private string GetFocusedOpponentDisplayName()
         {
-            foreach (OpponentCandidateViewModel candidate in _model.OpponentCandidates)
+            foreach (OpponentCandidateViewModel candidate in
+                     _model.OpponentCandidates)
             {
                 if (candidate.IsFocused)
                 {
@@ -206,7 +385,10 @@ namespace DiaBlackJack.StageProgression.UI
                 GUILayout.FlexibleSpace();
 
                 GUI.enabled = !_inputLocked && _model.CanSelectReward;
-                if (GUILayout.Button("SELECT", _buttonStyle, GUILayout.Height(46f)))
+                if (GUILayout.Button(
+                        "SELECT",
+                        _buttonStyle,
+                        GUILayout.Height(46f)))
                 {
                     BattleRewardSelected?.Invoke(option.OptionId);
                 }
@@ -218,7 +400,10 @@ namespace DiaBlackJack.StageProgression.UI
             GUILayout.Space(12f);
 
             GUI.enabled = !_inputLocked && _model.CanSkipReward;
-            if (GUILayout.Button("SKIP REWARD", _buttonStyle, GUILayout.Height(48f)))
+            if (GUILayout.Button(
+                    "SKIP REWARD",
+                    _buttonStyle,
+                    GUILayout.Height(48f)))
             {
                 BattleRewardSkipped?.Invoke();
             }
@@ -249,11 +434,13 @@ namespace DiaBlackJack.StageProgression.UI
             {
                 alignment = TextAnchor.MiddleCenter,
                 fontSize = 17,
+                wordWrap = true,
                 normal = { textColor = new Color(0.8f, 0.8f, 0.85f) }
             };
             _messageStyle = new GUIStyle(_headingStyle)
             {
                 fontSize = 24,
+                wordWrap = true,
                 normal = { textColor = new Color(0.9f, 0.3f, 0.25f) }
             };
             _buttonStyle = new GUIStyle(GUI.skin.button)
@@ -276,7 +463,9 @@ namespace DiaBlackJack.StageProgression.UI
         {
             Color previousColor = GUI.color;
             GUI.color = new Color(0.025f, 0.018f, 0.035f, 1f);
-            GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), Texture2D.whiteTexture);
+            GUI.DrawTexture(
+                new Rect(0f, 0f, Screen.width, Screen.height),
+                Texture2D.whiteTexture);
             GUI.color = previousColor;
         }
     }

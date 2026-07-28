@@ -67,10 +67,39 @@ namespace DiaBlackJack.StageProgression.UI
         public string EffectSummary { get; }
     }
 
+    public sealed class StartingDemonOptionViewModel
+    {
+        public StartingDemonOptionViewModel(
+            int optionId,
+            string definitionKey,
+            string displayName,
+            string summary,
+            string costSummary)
+        {
+            OptionId = optionId;
+            DefinitionKey = definitionKey;
+            DisplayName = displayName;
+            Summary = summary;
+            CostSummary = costSummary;
+        }
+
+        public string CostSummary { get; }
+
+        public string DefinitionKey { get; }
+
+        public string DisplayName { get; }
+
+        public int OptionId { get; }
+
+        public string Summary { get; }
+    }
+
     public sealed class StageProgressionViewModel
     {
         private readonly ReadOnlyCollection<BattleRewardOptionViewModel> _rewardOptions;
         private readonly ReadOnlyCollection<OpponentCandidateViewModel> _opponentCandidates;
+        private readonly ReadOnlyCollection<StartingDemonOptionViewModel>
+            _startingDemonOptions;
 
         public StageProgressionViewModel(
             string stageProgress,
@@ -93,7 +122,10 @@ namespace DiaBlackJack.StageProgression.UI
             IEnumerable<OpponentCandidateViewModel> opponentCandidates,
             string focusedOpponentProfileKey,
             bool canFocusOpponent,
-            bool canConfirmOpponent)
+            bool canConfirmOpponent,
+            int? startingDemonOfferId,
+            IEnumerable<StartingDemonOptionViewModel> startingDemonOptions,
+            bool canSelectStartingDemon)
         {
             StageProgress = stageProgress;
             StageName = stageName;
@@ -121,6 +153,12 @@ namespace DiaBlackJack.StageProgression.UI
             FocusedOpponentProfileKey = focusedOpponentProfileKey;
             CanFocusOpponent = canFocusOpponent;
             CanConfirmOpponent = canConfirmOpponent;
+            StartingDemonOfferId = startingDemonOfferId;
+            _startingDemonOptions = new List<StartingDemonOptionViewModel>(
+                startingDemonOptions ?? throw new ArgumentNullException(
+                    nameof(startingDemonOptions)))
+                .AsReadOnly();
+            CanSelectStartingDemon = canSelectStartingDemon;
         }
 
         public string StageProgress { get; }
@@ -165,6 +203,13 @@ namespace DiaBlackJack.StageProgression.UI
         public bool CanFocusOpponent { get; }
 
         public bool CanConfirmOpponent { get; }
+
+        public int? StartingDemonOfferId { get; }
+
+        public IReadOnlyList<StartingDemonOptionViewModel>
+            StartingDemonOptions => _startingDemonOptions;
+
+        public bool CanSelectStartingDemon { get; }
     }
 
     public static class StageProgressionPresenter
@@ -176,7 +221,7 @@ namespace DiaBlackJack.StageProgression.UI
                 throw new ArgumentNullException(nameof(progress));
             }
 
-            return Create(progress, null, null);
+            return Create(progress, null, null, null);
         }
 
         public static StageProgressionViewModel Create(
@@ -188,14 +233,22 @@ namespace DiaBlackJack.StageProgression.UI
                 throw new ArgumentNullException(nameof(session));
             }
 
-            return Create(session.Progress, session.PendingOpponentSelection, focusedProfileKey);
+            return Create(
+                session.Progress,
+                session.PendingOpponentSelection,
+                session.PendingStartingDemonSelection,
+                focusedProfileKey);
         }
 
         private static StageProgressionViewModel Create(
             RunProgress progress,
             OpponentSelectionOffer opponentOffer,
+            StartingDemonSelectionOffer startingDemonOffer,
             string focusedProfileKey)
         {
+            bool isStartingDemonSelection =
+                progress.State == StageProgressionState.NotStarted &&
+                startingDemonOffer != null;
             bool isOpponentSelection =
                 progress.State == StageProgressionState.OpponentSelection;
             if (isOpponentSelection && opponentOffer == null)
@@ -230,8 +283,11 @@ namespace DiaBlackJack.StageProgression.UI
                 stage.Kind == StageKind.FinalBossCombat ? "FINAL BOSS" : "NORMAL COMBAT",
                 $"{progress.Player.CurrentSoul} / {progress.Player.MaximumSoul}",
                 progress.State,
-                GetMessage(progress.State),
-                progress.State == StageProgressionState.NotStarted,
+                isStartingDemonSelection
+                    ? "CHOOSE STARTING DEMON"
+                    : GetMessage(progress.State),
+                progress.State == StageProgressionState.NotStarted &&
+                    !isStartingDemonSelection,
                 progress.State == StageProgressionState.StageCleared,
                 progress.State == StageProgressionState.RunVictory ||
                     progress.State == StageProgressionState.RunDefeat,
@@ -250,7 +306,32 @@ namespace DiaBlackJack.StageProgression.UI
                 opponentCandidates,
                 validatedFocusedProfileKey,
                 isOpponentSelection,
-                isOpponentSelection && validatedFocusedProfileKey != null);
+                isOpponentSelection && validatedFocusedProfileKey != null,
+                isStartingDemonSelection
+                    ? startingDemonOffer.OfferId
+                    : (int?)null,
+                isStartingDemonSelection
+                    ? CreateStartingDemonOptions(startingDemonOffer)
+                    : Array.Empty<StartingDemonOptionViewModel>(),
+                isStartingDemonSelection);
+        }
+
+        private static IReadOnlyList<StartingDemonOptionViewModel>
+            CreateStartingDemonOptions(StartingDemonSelectionOffer offer)
+        {
+            var options = new List<StartingDemonOptionViewModel>(
+                offer.Options.Count);
+            foreach (StartingDemonSelectionOption option in offer.Options)
+            {
+                options.Add(new StartingDemonOptionViewModel(
+                    option.OptionId,
+                    option.DefinitionKey,
+                    option.DisplayName,
+                    option.Summary,
+                    option.CostSummary));
+            }
+
+            return options;
         }
 
         private static IReadOnlyList<OpponentCandidateViewModel> CreateOpponentCandidates(

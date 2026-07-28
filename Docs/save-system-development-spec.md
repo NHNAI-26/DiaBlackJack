@@ -3,8 +3,8 @@
 > 프로젝트: DiaBlackJack
 > 기획·개발 책임자: 이천서
 > 작업 식별자: SV-00~SV-06
-> 버전: v0.5
-> 상태: SV-04 현행 체크포인트 조정 완료 · SV04-I03 RF API 대기
+> 버전: v0.6
+> 상태: SV-05 Runtime·런 예약·이어하기·실패 UI 완료 · SV04-I03은 SV-06 연계
 > 최종 갱신: 2026-07-28
 
 ## 1. 기술 목표
@@ -36,13 +36,13 @@ StageProgressionRuntime.Session
 | `Border.SaveLoad.Save` | 직렬화할 필드가 없는 빈 클래스 | 런 저장 전용 DTO와 분리 또는 교체 |
 | `SaveLoadSystem` | ScriptableObject가 `SaveData`를 직접 보유 | 저장소·직렬화·조정 책임 분리 |
 | `FileManager` | 기본 파일에 `WriteAllText` 직접 수행 | 경로 검증, 임시/백업, 원자 교체, 명시적 결과 |
-| `PlayerRunState` | 영혼·일반/악마 덱·마지막 발급 ID를 보유하고 SV-03 내부 복원 Factory로 검증된 새 객체 생성 | 골드·시작 악마 실제 상태 연결 |
-| 시작 악마 선택 | 기본 생성 경로가 악마 4장을 즉시 제공 | 후보 2장·1장 확정 상태 구현 뒤 첫 체크포인트 연결 |
+| `PlayerRunState` | 영혼·일반/악마 덱·마지막 발급 ID·시작 악마 키를 보유하고 SV-03 내부 복원 Factory로 검증된 새 객체 생성 | 골드 실제 상태 연결 |
+| 시작 악마 선택 | Runtime 새 런 경로가 빈 악마 덱에서 후보 2장·1장 확정과 첫 체크포인트를 수행 | RF 시작 흐름과 최종 통합 검토 |
 | `RunProgress` | `StageCleared`·`RunVictory`·`RunDefeat`의 스테이지 위치와 안정 상태를 새 객체로 복원 | 시작 악마·상점·사건 체크포인트 연결 |
-| `StageProgression/Save` | 스키마 1 스냅샷·검증·세션 순번 캡처·검증된 `RunRestoreFactory` 구현 | SV-04 체크포인트 정책과 SV-05 Runtime 교체 연결 |
-| `SaveLoad/RunSave*` | 필드 DTO·안정 문자열 enum·`JsonUtility` 왕복·임시/기본/백업 저장소·기본 손상 시 백업 불러오기 구현 | SV-05 Runtime·메뉴 연결 |
+| `StageProgression/Save` | 스키마 1 스냅샷·검증·세션 순번 캡처·검증된 `RunRestoreFactory` 구현 | SV-06 RF 안정 상태 확장 |
+| `SaveLoad/RunSave*` | 파일 저장소·복원·체크포인트 조정·런 예약·응용 흐름·표시 모델 구현 | SV-06 RF 완료 전이 연결 |
 | `StageProgressionSession` | 상대·보상 제안 생성 순번을 저장 캡처에 제공 | 안정 전이 후 자동 저장 조정 |
-| `StageProgressionRuntime` | `DontDestroyOnLoad` 메모리 세션 | 새 게임 예약·이어하기·세션 원자 교체 |
+| `StageProgressionRuntime` | `RunSaveFlow`를 소유하고 저장·예약·이어하기 세션을 `DontDestroyOnLoad`로 유지 | RF 화면 라우팅 연동 |
 | RF 골드·상점·사건 | 기획만 있고 구현 미완료 | 실제 타입이 생긴 뒤 읽기 전용 저장 계약 연결 |
 
 기존 `SaveLoad` 코드는 Unity-facing 지원 계층이며 CoreLoop·StageProgression 순수성의 기준이 아니다. 순수 상태 타입에는 `UnityEngine`, `Application.persistentDataPath`, `JsonUtility`를 참조하지 않는다.
@@ -66,11 +66,16 @@ Assets/01. Scripts/
 │  ├─ RunSaveLoadResult.cs
 │  ├─ RunSaveWriteResult.cs
 │  ├─ IRunSaveFileStore.cs
-│  └─ SystemRunSaveFileStore.cs
+│  ├─ SystemRunSaveFileStore.cs
+│  ├─ RunSaveCoordinator.cs
+│  ├─ RunReservation.cs
+│  ├─ RunReservationRepository.cs
+│  ├─ RunSaveFlow.cs
+│  └─ RunSavePresentation.cs
 ├─ Bootstrap/
-│  └─ RunSaveCoordinator.cs
+│  └─ StageProgressionRuntime.cs
 └─ UI/
-   └─ MainMenu 또는 진행 UI의 이어하기·저장 실패 연결
+   └─ StageProgression 진행 화면의 메뉴·이어하기·저장 실패 연결
 ```
 
 실제 구현에서는 책임이 작으면 타입을 합치며, 파일 수를 채우기 위해 빈 래퍼를 만들지 않는다.
@@ -369,7 +374,7 @@ SV-04의 구현 API는 다음과 같다.
 - `TryRetryPendingCheckpoint()`는 실패 당시의 저장 순번·UTC 시각·스냅샷을 그대로 다시 쓴다.
 - 도메인 행동이 적용됐지만 파일 쓰기가 실패한 호출은 `true`를 반환하고 `HasPendingCheckpoint`·`LastWriteResult`로 저장 실패를 노출한다. 이는 선택 결과를 메모리에 유지하고 다음 진행만 막는 기획 정책이다.
 
-조정자는 현재 `SaveLoad` 경계에 있으며 Runtime·Controller가 직접 사용하도록 연결하지 않았다. 해당 연결과 화면 입력 잠금은 SV-05에서 수행한다.
+SV-05에서 `RunSaveFlow`가 조정자·저장소·예약 저장소와 교체 가능한 세션을 묶고, `StageProgressionRuntime`·`StageProgressionController`가 이를 실제 입력 경로로 사용한다. 저장 실패 보류 중에는 Controller와 View 모두 일반 진행을 차단하고 `TryRetryPendingCheckpoint()`만 노출한다. 저장 기능 이전 테스트가 직접 세션을 주입하는 경로는 Runtime의 독립 세션 호환 경계로 유지한다.
 
 ### 11.2 메인 메뉴
 
@@ -464,6 +469,16 @@ SV-04의 구현 API는 다음과 같다.
 
 SV04-I01·I02·I04~I08은 구현·검증했다. SV04-I03은 실제 상점 나가기·사건 완료 API가 없어 미검증 상태로 유지하며, 저장 계층에 임시 RF·사건 타입을 추가하지 않는다. Unity `JsonUtility`가 선택적 `reservedNextOfferId = null`을 빈 문자열로 복원하는 동작은 역직렬화 경계에서 다시 `null`로 정규화한다.
 
+### 13.6 SV-05 구현 결과
+
+- `RunReservation`·`RunReservationRepository`가 `run-reservation.json`과 임시 파일을 사용해 새 런 ID, 루트 시드, 시작 악마 제안 ID와 후보 키 2장을 검증·원자 기록한다.
+- `RunSaveFlow`가 메뉴 상태, 새 런 확인·취소, 예약 재개, 체크포인트 이어하기, 터미널 저장, 저장 실패 보류·재시도를 조정한다.
+- 예약 파일이 진행 저장과 다른 런이면 예약 재개를 우선하고, 같은 런이면 첫 체크포인트가 이미 성공한 것으로 보고 오래된 예약을 무시한다.
+- `StageProgressionPresenter`는 시작 악마 후보 2장을 순수 ViewModel로 만들고, View는 런 메뉴·안내·재시도와 선택 입력만 렌더링한다.
+- SV05-I01~I03과 추가 회귀 5건이 9/9, StageProgression 189/189, CoreLoop 362/362, 전체 EditMode 551/551로 통과했다.
+- 실제 `StageTest` Play Mode에서 1280×720 런 메뉴, 1920×1080 시작 악마·상대 선택, 선택 후 `SAVED`와 Console 오류 0을 확인했다. 테스트 중 만든 영구 경로 예약·저장 파일은 검증 뒤 제거했다.
+- `GameScene`·씬·프리팹·Packages·외부 에셋·오픈소스는 변경하지 않았다.
+
 ## 14. 외부 의존성과 보안
 
 - 새 패키지와 오픈소스 의존성을 추가하지 않는다.
@@ -477,6 +492,7 @@ SV04-I01·I02·I04~I08은 구현·검증했다. SV04-I03은 실제 상점 나가
 
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
+| 2026-07-28 | 이천서 | SV-05 `RunReservation`·`RunSaveFlow`·표시 모델·Runtime·StageTest Controller/View 연결, 시작 후보 2장 재개·새 런 보호·손상/버전 안내·저장 실패 재시도와 전용 9/9·StageProgression 189/189·CoreLoop 362/362·전체 551/551·두 해상도·Console 0 반영 |
 | 2026-07-28 | 이천서 | SV-04 `RunSaveCoordinator`의 시작 악마·카드 보상·런 종료 저장, 실패 보류·동일 스냅샷 재시도·진행 게이트와 선택적 예약 ID 정규화 및 전용 8/8·StageProgression 180/180·전체 542/542 반영; SV04-I03은 RF API 대기 |
 | 2026-07-27 | 이천서 | SV-03 실제 구현에 맞춰 마지막 발급 ID·안정 `RunProgress`·세션 생성 순번 캡처·루트 시드 재생·새 세션 후보 복원·미구현 골드 거부와 7개 대상 테스트 완료 상태 반영 |
 | 2026-07-26 | 이천서 | SV-02 실제 구현에 맞춰 v1 필드 DTO·안정 문자열 enum·임시 재검증·기본/백업 교체·실패 복원·손상/버전/콘텐츠 분류와 8개 대상 테스트 완료 상태 반영 |

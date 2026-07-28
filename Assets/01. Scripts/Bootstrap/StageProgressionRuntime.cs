@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Border.SaveLoad;
 using DiaBlackJack.CoreLoop;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -15,7 +16,15 @@ namespace DiaBlackJack.StageProgression.UI
 
         public static StageProgressionRuntime Instance { get; private set; }
 
-        public StageProgressionSession Session { get; private set; }
+        public RunSaveFlow SaveFlow { get; private set; }
+
+        public StageProgressionSession Session
+        {
+            get => SaveFlow?.Session ?? _injectedSession;
+            private set => _injectedSession = value;
+        }
+
+        private StageProgressionSession _injectedSession;
 
         private void Awake()
         {
@@ -27,11 +36,15 @@ namespace DiaBlackJack.StageProgression.UI
 
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            Session = new StageProgressionSession(
-                CreatePrototypeProgress(),
-                opponentSelectionGenerator: new OpponentSelectionGenerator(
-                    EnemyCombatProfileCatalog.Default,
-                    seed));
+            IRunSaveFileStore fileStore = new SystemRunSaveFileStore();
+            SaveFlow = new RunSaveFlow(
+                new RunSaveRepository(fileStore, CreatePrototypeStages(seed)),
+                new RunReservationRepository(
+                    fileStore,
+                    DemonContractCatalog.Default),
+                CreatePrototypeStages,
+                CreatePrototypeSession,
+                seed);
         }
 
         private void OnDestroy()
@@ -52,9 +65,27 @@ namespace DiaBlackJack.StageProgression.UI
             SceneManager.LoadScene(progressionSceneName);
         }
 
-        private RunProgress CreatePrototypeProgress()
+        private StageProgressionSession CreatePrototypeSession(int rootSeed)
         {
-            var cards = new List<RunCardDefinition>(20);
+            return new StageProgressionSession(
+                new RunProgress(
+                    CreatePrototypeStages(rootSeed),
+                    CreatePrototypePlayer()),
+                rewardGenerator: new BattleRewardGenerator(
+                    BattleRewardCatalog.CreateDefault(),
+                    unchecked(rootSeed + 1)),
+                opponentSelectionGenerator: new OpponentSelectionGenerator(
+                    EnemyCombatProfileCatalog.Default,
+                    rootSeed),
+                startingDemonSelectionGenerator:
+                    new StartingDemonSelectionGenerator(
+                        DemonContractCatalog.Default,
+                        unchecked(rootSeed + 2)));
+        }
+
+        private static PlayerRunState CreatePrototypePlayer()
+        {
+            List<RunCardDefinition> cards = new List<RunCardDefinition>(20);
             int cardId = 0;
             for (int rank = 1; rank <= 10; rank++)
             {
@@ -62,33 +93,40 @@ namespace DiaBlackJack.StageProgression.UI
                 cards.Add(new RunCardDefinition(cardId++, rank, CardSuit.Clover));
             }
 
-            var player = new PlayerRunState(12, 12, cards);
-            var stages = new[]
+            return new PlayerRunState(
+                12,
+                12,
+                cards,
+                new RunDemonDefinition[0]);
+        }
+
+        private IReadOnlyList<StageDefinition> CreatePrototypeStages(
+            int rootSeed)
+        {
+            return new[]
             {
                 StageDefinition.CreateForEnemyProfile(
                     "normal-1",
                     "Ash Gate",
                     StageKind.NormalCombat,
                     EnemyCombatProfileCatalog.GunslingerKey,
-                    seed,
-                    seed + 1),
+                    rootSeed,
+                    unchecked(rootSeed + 1)),
                 StageDefinition.CreateForEnemyProfile(
                     "normal-2",
                     "Blood Hall",
                     StageKind.NormalCombat,
                     EnemyCombatProfileCatalog.EnforcerKey,
-                    seed + 2,
-                    seed + 3),
+                    unchecked(rootSeed + 2),
+                    unchecked(rootSeed + 3)),
                 StageDefinition.CreateForEnemyProfile(
                     "final-boss",
                     "Black Throne",
                     StageKind.FinalBossCombat,
                     EnemyCombatProfileCatalog.FinalBossKey,
-                    seed + 4,
-                    seed + 5)
+                    unchecked(rootSeed + 4),
+                    unchecked(rootSeed + 5))
             };
-
-            return new RunProgress(stages, player);
         }
     }
 }
