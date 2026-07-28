@@ -151,12 +151,12 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DC05_U07_PrototypeDeckContainsOneOfEachInitialContract()
+        public void DCR04_U08_PrototypeDeckContainsOneOfEachImplementedContract()
         {
             DemonContractDeck deck = DemonContractDeck.CreatePrototype(seed: 20260723);
 
-            Assert.That(deck.TotalCardCount, Is.EqualTo(4));
-            Assert.That(deck.AvailableCardCount, Is.EqualTo(4));
+            Assert.That(deck.TotalCardCount, Is.EqualTo(6));
+            Assert.That(deck.AvailableCardCount, Is.EqualTo(6));
             Assert.That(deck.CanTakeCandidates, Is.True);
         }
 

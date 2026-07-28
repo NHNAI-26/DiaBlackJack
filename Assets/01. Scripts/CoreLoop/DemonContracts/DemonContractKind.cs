@@ -5,6 +5,8 @@ namespace DiaBlackJack.CoreLoop
         Satan,
         Belphegor,
         Mammon,
-        Leviathan
+        Leviathan,
+        Beelzebub,
+        Mephistopheles
     }
 }

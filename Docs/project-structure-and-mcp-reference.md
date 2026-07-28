@@ -961,10 +961,25 @@ Unity MCP에서 최종 전용 job `a7bd42c80d65412cac84a55472d06a3f` 14/14, Core
 `25822e798ef4400d8b241de3cdac1f43` 556/556을 확인했다. 최종 Console 조회 3건은
 Test Framework 준비·결과 저장·정리 안내였으며 컴파일·게임 코드 오류와 분리했다.
 
+### 7.49 악마 계약 DC-R04 1차 버스트·보위 나이프 경계 검증
+
+| 경계 | 확인 결과 |
+| --- | --- |
+| 카탈로그·Resolver | `DemonContractKind`·`DemonContractCatalog`·기본 Resolver에 바알제붑·메피스토펠레스를 추가해 현재 구현 여섯 종 제공 |
+| 버스트 순서 | 사탄의 무비용 절대 방지를 먼저 확인하고, 없을 때 `IDemonContractBustReplacementHandler`가 바알제붑 비용·카드 이동 처리 |
+| 영혼 0 원자성 | 영혼 1을 먼저 차감해 0이면 `LastResolution` 없이 전투 종료, 카드 이동·남은 효과·다음 차례 중단 |
+| 카드 이동 | 양쪽 손의 가장 최근 공개 카드 ID를 기존 `BattleParticipant.TryDiscardCard`로 각 원소유자 버린 더미에 이동 |
+| 보위 나이프 연계 | 기본 `MilitaryKnifeEffectHandler`의 공개 합 버스트를 유지하고 비버스트 `CardEffectResult`에서만 소유자 비공개 카드 공개 |
+| 적 AI·정보 | 광신도는 공개 영혼으로 바알제붑 생존 가능 여부, 자기 손의 미사용 보위 나이프로 메피스토펠레스 효용만 판단; 숨은 숫자·덱 순서 비노출 |
+| 검증 | 전용 8/8·여섯 종 400시드·CoreLoop 377/377·전체 EditMode 566/566, 실패·건너뜀·컴파일 오류·최종 Console Error/Warning 0 |
+| 변경 보호 | `GameScene`·씬·프리팹·Packages·HONG RF/Shop·Shim0Hwan 아트·외부 에셋·오픈소스 무변경 |
+| 후속 경계 | DC-R04 2/5 아스모데우스·아자젤, 월드 계약 입력·두 해상도는 DC-R05 |
+
 ## 8. 변경 기록
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-28 | 이천서 | 악마 계약 DC-R04 1차 바알제붑 버스트 대체·영혼 0 연속 중단·최종 승부 재계산, 메피스토펠레스 기존 보위 나이프 결과 후처리와 광신도 여섯 종 선택 구조 및 전용 8/8·400시드·CoreLoop 377/377·전체 566/566 결과 추가; GameScene·씬·프리팹·Packages·외부 에셋 무변경 |
 | 2026-07-28 | 이천서 | 악마 계약 DC-R03 마몬 정상 행동·적 공개 주사위 후보, 레비아탄 기존 리볼버 연속 처리·안전 결과·종료/대가 구조와 전용 14/14·CoreLoop 367/367·전체 556/556 결과 추가; GameScene·씬·프리팹·Packages·외부 에셋 무변경 |
 | 2026-07-28 | 이천서 | 악마 계약 DC-R02 활성 사탄 카운트·양면·자동 연속 처리·공개 추론·세션/표시 구조와 별도 권능 제거, 전용 12/12·CoreLoop 363/363·전체 553/553 결과 추가; GameScene·씬·프리팹·Packages·외부 에셋 무변경 |
 | 2026-07-28 | 이천서 | 저장 SV-05 런 예약·`RunSaveFlow`·Runtime 세션 교체·StageTest 메뉴/시작 악마/손상·버전/실패 재시도 구조와 전용 9/9·StageProgression 189/189·CoreLoop 362/362·전체 551/551·두 해상도·Console 0 결과 추가; GameScene·씬·프리팹·Packages·외부 에셋 무변경 |

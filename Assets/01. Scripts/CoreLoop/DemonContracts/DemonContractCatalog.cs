@@ -10,6 +10,8 @@ namespace DiaBlackJack.CoreLoop
         public const string BelphegorKey = "belphegor";
         public const string MammonKey = "mammon";
         public const string LeviathanKey = "leviathan";
+        public const string BeelzebubKey = "beelzebub";
+        public const string MephistophelesKey = "mephistopheles";
 
         private static readonly DemonContractCatalog DefaultCatalog =
             new DemonContractCatalog(CreateDefaultDefinitions());
@@ -111,6 +113,20 @@ namespace DiaBlackJack.CoreLoop
                     baseSoulCost,
                     "리볼버가 높은 상대 합계를 직접 버스트시킬 수 있다.",
                     "계약 시 영혼 1, 효과 실패 시 영혼 1"),
+                new DemonContractDefinition(
+                    BeelzebubKey,
+                    "바알제붑",
+                    DemonContractKind.Beelzebub,
+                    baseSoulCost,
+                    "버스트를 영혼과 양측의 최근 공개 카드로 대신한다.",
+                    "계약 시 영혼 1, 공개 카드 3장 이하일 때 스탠드 불가"),
+                new DemonContractDefinition(
+                    MephistophelesKey,
+                    "메피스토펠레스",
+                    DemonContractKind.Mephistopheles,
+                    baseSoulCost,
+                    "보위 나이프의 공개 합 버스트 판정을 강화한다.",
+                    "계약 시 영혼 1, 비버스트 시 자신의 비공개 카드 공개"),
             };
         }
     }

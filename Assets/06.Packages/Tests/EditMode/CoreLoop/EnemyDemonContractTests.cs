@@ -255,8 +255,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                     iteration + 100);
                 CoreLoopBattle battle = StageBattleFactory.Create(stage, player);
 
-                Assert.That(battle.EnemyDemonDeck.TotalCardCount, Is.EqualTo(4));
-                Assert.That(battle.EnemyDemonDeck.AvailableCardCount, Is.EqualTo(4));
+                Assert.That(battle.EnemyDemonDeck.TotalCardCount, Is.EqualTo(6));
+                Assert.That(battle.EnemyDemonDeck.AvailableCardCount, Is.EqualTo(6));
                 Assert.That(battle.ActiveEnemyDemonContracts, Is.Empty);
                 Assert.That(battle.EnemyDemonDeck, Is.Not.SameAs(previous));
                 previous = battle.EnemyDemonDeck;

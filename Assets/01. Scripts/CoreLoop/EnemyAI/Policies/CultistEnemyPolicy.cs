@@ -124,6 +124,24 @@ namespace DiaBlackJack.CoreLoop
                         hasRevolver
                             ? "cultist-select-leviathan-with-revolver"
                             : "cultist-avoid-leviathan-without-revolver");
+                case DemonContractKind.Beelzebub:
+                    bool canSurviveBustCost = observation.EnemySoul.Current > 1;
+                    return Score(
+                        candidate,
+                        canSurviveBustCost
+                            ? PreferredContractScore
+                            : FatalContractScore,
+                        canSurviveBustCost
+                            ? "cultist-select-survivable-beelzebub"
+                            : "cultist-avoid-fatal-beelzebub");
+                case DemonContractKind.Mephistopheles:
+                    bool hasKnife = HasUnusedMilitaryKnife(observation);
+                    return Score(
+                        candidate,
+                        hasKnife ? UsefulLeviathanScore : AvoidContractScore,
+                        hasKnife
+                            ? "cultist-select-mephistopheles-with-knife"
+                            : "cultist-avoid-mephistopheles-without-knife");
                 default:
                     throw new InvalidOperationException(
                         "Cultist received an unknown demon contract choice.");
@@ -229,6 +247,21 @@ namespace DiaBlackJack.CoreLoop
                 if (card.UseState == CardUseState.Available &&
                     CardDefinitionCatalog.GetByKey(card.DefinitionKey).Effect ==
                         CardEffectKind.AutoPistol)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool HasUnusedMilitaryKnife(EnemyObservation observation)
+        {
+            foreach (EnemyOwnedCardObservation card in observation.OwnCards)
+            {
+                if (card.UseState == CardUseState.Available &&
+                    CardDefinitionCatalog.GetByKey(card.DefinitionKey).Effect ==
+                        CardEffectKind.MilitaryKnife)
                 {
                     return true;
                 }

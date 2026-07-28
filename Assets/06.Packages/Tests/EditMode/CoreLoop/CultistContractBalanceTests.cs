@@ -183,7 +183,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DC08_I01_PrototypeSeedsBalanceUsefulContractSelection()
+        public void DCR04_I01_ImplementedContractSeedsRemainDistributed()
         {
             var counts = new Dictionary<DemonContractKind, int>();
             foreach (DemonContractKind kind in Enum.GetValues(typeof(DemonContractKind)))
@@ -203,11 +203,16 @@ namespace DiaBlackJack.CoreLoop.Tests
                 $"DC-08 {SimulationCount}회 선택: " +
                 string.Join(", ", counts.Select(pair => $"{pair.Key}={pair.Value}")));
             Assert.That(counts[DemonContractKind.Belphegor],
-                Is.InRange(140, 210));
+                Is.InRange(60, 110));
             Assert.That(counts[DemonContractKind.Mammon],
-                Is.InRange(140, 210));
+                Is.InRange(60, 110));
+            Assert.That(counts[DemonContractKind.Beelzebub],
+                Is.InRange(60, 110));
             Assert.That(counts[DemonContractKind.Satan], Is.Zero);
-            Assert.That(counts[DemonContractKind.Leviathan], Is.InRange(50, 90));
+            Assert.That(counts[DemonContractKind.Leviathan], Is.InRange(35, 90));
+            Assert.That(counts[DemonContractKind.Mephistopheles],
+                Is.InRange(35, 90));
+            Assert.That(counts.Values.Sum(), Is.EqualTo(SimulationCount));
         }
 
         [Test]
