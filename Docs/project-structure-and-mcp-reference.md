@@ -2,7 +2,7 @@
 
 > 프로젝트: DiaBlackJack  
 > 확인 책임자: 이천서  
-> 버전: v0.3
+> 버전: v0.4
 > 확인일: 2026-07-28
 
 ## 1. 확인 목적
@@ -29,7 +29,7 @@ Unity MCP의 프로젝트 정보와 로컬 프로젝트 설정이 다음과 같�
 | `Assets/00. Scenes` | 게임 및 테스트 씬 | 3단계 `CoreLoopTest` 통합 |
 | `Assets/01. Scripts/Runtime` | 런타임 코드와 `Border` 어셈블리 | 사용 |
 | `Assets/01. Scripts/Runtime/Core` | 로그, 스크린샷, 결정적 난수 공용 코드 | `DeterministicRng` 재사용 |
-| `Assets/01. Scripts/SaveLoad` | 레거시 `SaveLoadSystem`과 런 저장 DTO·직렬화·원자 파일 저장소 | SV-02 v1 JSON·임시 재검증·기본/백업 교체·백업 불러오기 |
+| `Assets/01. Scripts/SaveLoad` | 레거시 `SaveLoadSystem`과 런 저장 DTO·직렬화·원자 파일 저장소·`RunSaveCoordinator` | SV-04 안정 체크포인트·실패 보류·동일 스냅샷 재시도·진행 게이트 |
 | `Assets/01. Scripts/StageProgression/Save` | Unity 비의존 런 스냅샷·검증·안정 상태 캡처 | SV-01 스키마 1·방어 복사·타입화된 오류·불안정 상태 차단 |
 | `Assets/01. Scripts/CoreLoop` | 전투 규칙·상태·세션, 카드 효과와 적 프로필·공개 관측·정책·안전 표시 스냅샷 | AC-06 자동 선택 정책·세션·표시·사기꾼 탐지기 통합 |
 | `Assets/01. Scripts/Runtime/Input` | Input System 연결 | 1~2단계 제외 |
@@ -873,10 +873,34 @@ Unity MCP 활성 인스턴스 `DiaBlackJack@5635a4cdcfecc8dd`, Unity 6000.3.10f1
 `2cdf3aca0b9a453d92698d45f80afb8c`이다. 코드·데이터 경계만 확장했으므로
 씬 파일과 화면은 수정하지 않았다.
 
+### 7.45 게임 저장·이어하기 SV-04 검증
+
+| 경계 | 확인 결과 |
+| --- | --- |
+| 저장 조정자 | `RunSaveCoordinator`가 시작 악마 선택, 카드 보상 선택·건너뛰기, 패배·보스 승리 런 종료 뒤에만 스냅샷을 기록 |
+| 실패 처리 | 파일 쓰기 실패 시 적용된 도메인 상태와 동일 저장 순번·UTC·스냅샷을 보류하고, 재시도 성공 전 새 런 시작·다음 스테이지 진행을 거부 |
+| 실패 원자성 | 거절·중복·오래된 입력·잘못된 다음 콘텐츠에는 저장 호출과 도메인 변경이 없음 |
+| 결정성 | 복원 뒤 같은 생성 순번으로 같은 다음 상대 제안을 재현 |
+| 직렬화 경계 | `JsonUtility`가 선택적 예약 ID의 `null`을 빈 문자열로 복원하는 동작을 역직렬화 시 `null`로 정규화 |
+| 검증 | SV-04 8/8·저장 관련 29/29·StageProgression 180/180·CoreLoop 362/362·전체 EditMode 542/542·스크립트 진단 오류/경고 0 |
+| 후속 경계 | 실제 RF 상점 나가기·사건 완료 API가 없는 SV04-I03은 보류하고, Runtime·Controller 연결은 SV-05로 유지 |
+| 변경 보호 | `GameScene`·씬·프리팹·Packages·HONG RF/Shop·Shim0Hwan 아트·외부 에셋·오픈소스 무변경 |
+
+Unity MCP 활성 인스턴스는 `DiaBlackJack@5635a4cdcfecc8dd`, Unity는
+6000.3.10f1, 활성 씬은 `Assets/00. Scenes/GameScene.unity`였다. 전용 job
+`91351fcd5029493fbb9f49476c8d4da7` 8/8, 저장 관련 job
+`cf0493d4b6c845c69f4429702b769898` 29/29, StageProgression job
+`67bde394e95746c08e6d1d716ca8b924` 180/180, CoreLoop job
+`82a2f7ef576f485390a0bd952cf2d809` 362/362, 전체 job
+`6fc5719a5a014191b7cbbecc917f9e30` 542/542를 확인했다. 최종 Console의
+12건은 네 차례 실행에 따른 Test Framework 사전·사후 처리 및 결과 저장 안내이며
+게임 코드 오류가 아니다. UI·씬 변경이 없어 화면 검증은 수행하지 않았다.
+
 ## 8. 변경 기록
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-28 | 이천서 | 저장 SV-04 시작 악마·카드 보상·런 종료 체크포인트, 실패 보류·동일 스냅샷 재시도·진행 게이트·선택적 예약 ID 정규화 구조와 전용 8/8·저장 관련 29/29·StageProgression 180/180·CoreLoop 362/362·전체 542/542·게임 코드 오류 0 결과 추가; SV04-I03 RF API 대기 및 Runtime·UI·씬 무변경 기록 |
 | 2026-07-28 | 이천서 | EP-R01 겁쟁이 도박사 6번째 프로필·18장 덱·저위험 정책·기존 전투/상대 선택 변환 구조와 전용 9/9·CoreLoop 362/362·StageProgression 172/172·전체 534/534·게임 코드 오류 0 및 최종 Test Framework 결과 저장 안내 3건 분리 결과 추가 |
 | 2026-07-26 | 이천서 | 저장 SV-02 `SaveLoad` v1 DTO·안정 문자열·파일 저장소·임시 재검증·원자 교체·백업 불러오기 구조와 대상 8/8·StageProgression 149/149·전체 491/491·컴파일 오류 0 결과 추가 |
 | 2026-07-26 | 이천서 | 저장 SV-01의 `StageProgression/Save` 순수 스냅샷·타입화된 검증·안정 상태 캡처 구조와 대상 7/7·StageProgression 141/141·전체 483/483·컴파일 오류 0 결과와 Test Framework 안내 3건 분리 추가 |

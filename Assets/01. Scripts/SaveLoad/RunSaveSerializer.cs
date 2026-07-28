@@ -103,7 +103,9 @@ namespace Border.SaveLoad
                     envelope.random.battleRewardOrdinal,
                     envelope.random.shopOfferOrdinal,
                     envelope.random.eventOrdinal,
-                    envelope.random.reservedNextOfferId);
+                    string.IsNullOrEmpty(envelope.random.reservedNextOfferId)
+                        ? null
+                        : envelope.random.reservedNextOfferId);
 
             snapshot = new RunSaveSnapshot(
                 envelope.schemaVersion,

@@ -55,10 +55,10 @@
 | [formal-run-flow-development-spec.md](./formal-run-flow-development-spec.md) | 골드 정산·상점 거래·정식 런 조정 API와 테스트 명세 | RF-01 착수 가능 v0.1 |
 | [formal-run-flow-implementation-plan.md](./formal-run-flow-implementation-plan.md) | RF-00~RF-05 HONG 인수인계 작업 순서와 검증 게이트 | RF-00 완료 v0.1 |
 | [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | RF-00 완료 v0.1 |
-| [save-system-design.md](./save-system-design.md) | 안정 체크포인트·이어하기·재추첨 방지·단일 슬롯·파일 복구 기획 | SV-02 완료 v0.3 |
-| [save-system-development-spec.md](./save-system-development-spec.md) | 순수 스냅샷·버전 JSON·원자 저장·백업·복원·RF 연결 명세 | SV-02 완료 v0.3 |
-| [save-system-implementation-plan.md](./save-system-implementation-plan.md) | SV-00~SV-06 구현 순서와 검증 게이트 | SV-02 완료·SV-03 다음 v0.3 |
-| [save-system-progress-log.md](./save-system-progress-log.md) | 저장 시스템 결정·구현·파일·재실행 검증 기록 | SV-02 완료 v0.3 |
+| [save-system-design.md](./save-system-design.md) | 안정 체크포인트·이어하기·재추첨 방지·단일 슬롯·파일 복구 기획 | SV-04 현행 범위 완료·SV04-I03 RF API 대기 v0.5 |
+| [save-system-development-spec.md](./save-system-development-spec.md) | 순수 스냅샷·버전 JSON·원자 저장·백업·복원·RF 연결 명세 | SV-04 현행 범위 완료·SV04-I03 RF API 대기 v0.5 |
+| [save-system-implementation-plan.md](./save-system-implementation-plan.md) | SV-00~SV-06 구현 순서와 검증 게이트 | SV-04 현행 범위 완료·SV05 다음 v0.5 |
+| [save-system-progress-log.md](./save-system-progress-log.md) | 저장 시스템 결정·구현·파일·재실행 검증 기록 | SV-04 현행 범위 완료·SV04-I03 RF API 대기 v0.5 |
 | [scene-presentation-design.md](./scene-presentation-design.md) | 2.5D 술집 테이블의 씬 흐름·월드 오브젝트·UI·상점 전환 기획 | 최대 2장 계약 화면 포함 기준안 v0.5 |
 
 ## 기록 원칙
@@ -74,6 +74,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-28 | 이천서 | 저장 SV-04의 시작 악마·카드 보상·런 종료 체크포인트, 저장 실패 보류·동일 스냅샷 재시도·다음 진행 차단과 선택적 예약 ID 정규화를 구현하고 전용 8/8·StageProgression 180/180·CoreLoop 362/362·전체 EditMode 542/542로 검증; 실제 상점·사건 API가 없는 SV04-I03은 RF 구현 뒤로 보류하고 Runtime·UI·GameScene·씬·프리팹·Packages·외부 에셋은 변경하지 않음 |
 | 2026-07-28 | 이천서 | EP-R01 겁쟁이 도박사를 18장 덱·영혼 2·합계 14 스탠드·수동 카드 비사용의 네 번째 일반 적으로 편입하고 전용 9/9·전체 EditMode 534/534·게임 코드 오류 0으로 검증, 최종 Test Framework 결과 저장 안내 3건 분리; UI·GameScene·씬·프리팹·Packages·외부 에셋 무변경 |
 | 2026-07-28 | 이천서 | AC-RV01 자동 카드 숫자·정의 키·보상/런 전투 변환과 저장 콘텐츠 리비전 `prototype-v2`를 이관하고 전용 11/11·전체 522/522·GameScene/CoreLoopTest·Console 0으로 검증; 씬·프리팹·외부 에셋은 변경하지 않음 |
 | 2026-07-27 | 이천서 | DC-R01 시작 악마 2장 제안·1장 선택, 일반 계약 후보 0·1·2장, 루시퍼 5장 상수와 시작 체크포인트 복원을 구현하고 전용 14/14·전체 EditMode 511/511로 검증; GameScene·씬·프리팹은 변경하지 않음 |
