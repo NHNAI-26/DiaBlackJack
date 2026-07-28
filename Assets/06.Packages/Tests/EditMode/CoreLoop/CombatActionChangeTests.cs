@@ -198,13 +198,25 @@ namespace DiaBlackJack.CoreLoop.Tests
                 playerRanks: new[] { 10, 2, 4, 9 },
                 enemyRanks: new[] { 10, 7 });
             noHiddenBattle.Start();
-            noHiddenBattle.Player.Hand.Cards[1].Reveal();
+            Assert.That(
+                noHiddenBattle.Player.Hand.TryTakeSingleHiddenCard(
+                    out BlackjackCard formerHiddenCard),
+                Is.True);
+            formerHiddenCard.Reveal();
+            noHiddenBattle.Player.Hand.Add(formerHiddenCard);
 
             CoreLoopBattle twoHiddenBattle = CreateBattle(
                 playerRanks: new[] { 10, 2, 4, 9 },
                 enemyRanks: new[] { 10, 7 });
             twoHiddenBattle.Start();
-            twoHiddenBattle.Player.Hand.Cards[0].Conceal();
+            BlackjackCard formerPublicCard = twoHiddenBattle.Player.Hand.Cards[0];
+            Assert.That(
+                twoHiddenBattle.Player.Hand.TryTakeCard(
+                    formerPublicCard.Id,
+                    out formerPublicCard),
+                Is.True);
+            formerPublicCard.Conceal();
+            twoHiddenBattle.Player.Hand.Add(formerPublicCard);
 
             Assert.That(noHiddenBattle.TryBeginPlayerChange(), Is.False);
             Assert.That(twoHiddenBattle.TryBeginPlayerChange(), Is.False);

@@ -9,13 +9,13 @@ namespace DiaBlackJack.CoreLoop
 
         public bool CanStart(CardEffectContext context)
         {
-            return context.GetOpponentFaceUpCards().Count > 0 &&
+            return context.GetOpponentPublicCards().Count > 0 &&
                 (!context.IsOpponentStanding || context.CanReplaceStandingOpponentHiddenCard());
         }
 
         public CardEffectStep Begin(CardEffectContext context)
         {
-            IReadOnlyList<BlackjackCard> faceUpCards = context.GetOpponentFaceUpCards();
+            IReadOnlyList<BlackjackCard> faceUpCards = context.GetOpponentPublicCards();
             if (faceUpCards.Count == 0)
             {
                 throw new InvalidOperationException(

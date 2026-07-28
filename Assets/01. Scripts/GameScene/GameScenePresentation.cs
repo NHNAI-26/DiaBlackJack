@@ -440,6 +440,7 @@ namespace DiaBlackJack.GameScene
             foreach (PlayerCardViewModel card in core.PlayerCardActions)
             {
                 BlackjackCard sourceCard = FindCardById(battle.Player.Hand.Cards, card.CardId);
+                bool isHiddenCard = battle.Player.Hand.IsHiddenCard(card.CardId);
 
                 // The player sees every one of their own cards, including the face-down one.
                 var projectedCard = new GameSceneCardViewModel(
@@ -454,7 +455,7 @@ namespace DiaBlackJack.GameScene
 
                 // PlayerHand's world orientation makes the highest index land at screen-left.
                 // Keep hidden cards last in the projection while preserving group order.
-                if (card.IsFaceUp)
+                if (!isHiddenCard)
                 {
                     cards.Insert(cards.Count - hiddenCardCount, projectedCard);
                 }
@@ -569,6 +570,7 @@ namespace DiaBlackJack.GameScene
             {
                 // Face-down enemy card: emit no rank. This is the information-hiding boundary.
                 bool faceUp = card.IsFaceUp;
+                bool isHiddenCard = battle.Enemy.Hand.IsHiddenCard(card.Id);
                 var projectedCard = new GameSceneCardViewModel(
                     card.Id,
                     faceUp ? card.Rank : 0,
@@ -581,7 +583,7 @@ namespace DiaBlackJack.GameScene
                 // Both sides' hidden cards sit on the screen LEFT (each player's own right, mirrored
                 // across the table). The camera mirrors local X, so screen-left = highest index →
                 // append the enemy's hidden card last too (face-ups first).
-                if (faceUp)
+                if (!isHiddenCard)
                 {
                     cards.Insert(cards.Count - hiddenCardCount, projectedCard);
                 }

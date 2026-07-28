@@ -87,15 +87,17 @@ Every state-mutating public method is `bool TryXxx(...)`. Invalid input returns 
 The core pitch of the game is that the AI infers rather than cheats. This is enforced structurally — **do not weaken it**:
 
 - `IEnemyBehaviorPolicy.Decide(EnemyObservation)` is the entire AI surface. **A policy never receives a `CoreLoopBattle` reference**, so it cannot reach hidden state.
-- `EnemyObservationFactory` is the enforcing type. `EnemyObservation` has `PlayerFaceUpCards` and `PlayerHiddenCardCount` — there is **no field carrying a hidden rank**. Collections are deep-copied into `ReadOnlyCollection<T>`.
-- Policies substitute `EnemyNumberInferenceCalculator`, which computes rank probabilities from public info only.
+- `EnemyObservationFactory` is the enforcing type. `EnemyObservation` has `PlayerFaceUpCards`, `PlayerHiddenCardCount`, and nullable `KnownPlayerHiddenCardRank`. The known rank is populated **only when the hidden-role card has already been flipped face-up**; an unrevealed rank and its physical ID never cross the boundary. Collections are deep-copied into `ReadOnlyCollection<T>`.
+- Policies substitute `EnemyNumberInferenceCalculator`, which computes rank probabilities from public info only. A face-up hidden-role card is certain public information and produces a 100% rank; otherwise the AI continues to infer without reading the hidden object.
 - Decisions are validated **twice**: `EnemyObservation.ActionCandidates` is the legal-move whitelist, and `TryExecuteEnemyDecision` rebuilds a fresh observation and re-validates before executing. An invalid decision retries twice then falls back to a `Stand`-preferring candidate.
 
-The UI mirrors this: `CoreLoopPresenter` calls `FormatCards(..., revealAll: true)` for the player and `revealAll: false` for the enemy, emitting `"?"` — the hidden rank never enters the UI layer. `EnemyCombatDisplaySnapshot` has an `internal` constructor so only its factory can build one, and it exposes grade-gated projections (Normal: top-3 with probabilities; Elite: top numbers, no probabilities, coarse confidence; Boss: telegraph state) — never the policy object.
+The UI mirrors this: an unrevealed enemy hidden-role card emits `"?"`; once that same card is flipped face-up its rank is shown but its hidden role and screen-left placement remain. `EnemyCombatDisplaySnapshot` has an `internal` constructor so only its factory can build one, and it exposes grade-gated projections (Normal: top-3 with probabilities; Elite: top numbers, no probabilities, coarse confidence; Boss: telegraph state) — never the policy object.
 
 ### Card effects
 
 `CardDefinition` (key, rank, display name, `CardActivationKind`, `CardEffectKind`) lives in the static `CardDefinitionCatalog` — 10 hardcoded definitions, one default per rank 1–10.
+
+`BlackjackHand` tracks the single hidden-role card independently from `BlackjackCard.IsFaceUp`. Using or otherwise revealing that card flips its face without turning it into a public-role card: it remains excluded from public totals, mid-round bust checks, and public-card targets until final showdown. If the player's hidden-role rank becomes visible and the enemy has a usable revolver, the common enemy selector must choose the revolver and declare that exact rank before personality scoring.
 
 Handlers never touch `CoreLoopBattle`; they receive `CardEffectContext`, an **actor-relative** facade (`Actor`/`Opponent` resolved from `ActorSide`), so one handler serves both player and enemy. A handler returns a `CardEffectStep` — either `AwaitChoice(...)` or `Complete(...)`.
 

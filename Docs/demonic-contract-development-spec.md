@@ -401,7 +401,7 @@ DC-R02에서는 다음 구조로 구현했다.
 - `IDemonContractNormalTurnStartHandler`와 `IDemonContractNormalTurnEndHandler`가 소유자 방향의 시작 감소·종료 뒤집기를 담당한다. 계약을 선택한 최초 차례는 뒤집지 않고 다음 소유자 정상 차례부터 종료 훅을 적용한다.
 - `TryBeginPlayerSatanContractAction(sourceContractCardId)`와 같은 소유자 방향 내부 실행 경계가 활성 계약 물리 ID와 현재 면을 재검증한다. 윗면은 서로 다른 두 숫자 선택, 아랫면은 상대 강제 공개 드로우를 시작한다.
 - 아랫면 드로우가 자동 카드 선택을 열면 `AutomaticCardContinuationKind.DemonContract`가 상호작용 완료 뒤 계약 처리를 정확히 한 번 재개한다. 전투가 이미 끝났거나 후속 처리가 완료된 경우 중복 차례 완료를 하지 않는다.
-- 적 후보는 활성 사탄 계약 물리 ID와 현재 면만 공개 관측에 넣는다. 광신도의 윗면 선언은 `EnemyNumberInference` 확률을 사용하며 실제 비공개 숫자는 관측·결정·표시 모델에 넣지 않는다.
+- 적 후보는 활성 사탄 계약 물리 ID와 현재 면만 계약 후보 정보에 넣는다. 광신도의 윗면 선언은 `EnemyNumberInference`를 사용하며 아직 앞면 공개되지 않은 비공개 숫자는 관측·결정·표시 모델에 넣지 않는다. 앞면 공개된 비공개 숫자는 공통 적 관측에서 100% 확정 정보가 된다.
 - `CardDefinitionCatalog`의 별도 사탄 권능 정의와 `SatanPowerEffectHandler`를 제거했다. 이후 카드 효과 enum 번호의 저장 호환을 위해 과거 슬롯 이름만 `LegacySatanPower`로 남기며 실행 처리기는 등록하지 않는다.
 - `DemonContractPresentation`은 종말 카운트·현재 면·대가 적용 여부와 현재 실행 가능한 활성 계약 행동만 안전한 모델로 만든다. `sourceContractCardId` 입력은 공통 세션 API를 거쳐 마몬 재굴림 또는 사탄 현재 면 행동으로 변환한다. 실제 앞면 월드 카드 오브젝트·호버·뒤집기 연출은 씬·아트 후속 범위다.
 

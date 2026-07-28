@@ -94,6 +94,71 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CUM04_U02_RevealedHiddenRankBecomesCertainPublicKnowledge()
+        {
+            var battle = new CoreLoopBattle(
+                CreateRankDeck(2, 7, 4),
+                CreateRankDeck(8, 6, 5));
+            Assert.That(battle.Start(), Is.True);
+            BlackjackCard hiddenPlayerCard = battle.Player.Hand.Cards[1];
+            hiddenPlayerCard.Reveal();
+
+            EnemyObservation observation = EnemyObservationFactory.Create(
+                battle,
+                decisionSeed: 397);
+
+            Assert.That(observation.PlayerHiddenCardCount, Is.EqualTo(1));
+            Assert.That(observation.KnownPlayerHiddenCardRank, Is.EqualTo(7));
+            Assert.That(
+                observation.PlayerFaceUpCards.Select(card => card.Rank),
+                Is.EqualTo(new[] { 2 }));
+            Assert.That(observation.NumberInferences, Has.Count.EqualTo(1));
+            Assert.That(observation.NumberInferences[0].Number, Is.EqualTo(7));
+            Assert.That(
+                observation.NumberInferences[0].ProbabilityPercent,
+                Is.EqualTo(100));
+        }
+
+        [Test]
+        public void CUM04_U03_AnyEnemyUsesRevolverAgainstKnownHiddenRank()
+        {
+            var battle = new CoreLoopBattle(
+                CreateDefinitionDeck(
+                    "crystal-orb-5",
+                    "auto-pistol-7",
+                    "standard-plain-2",
+                    "standard-plain-3"),
+                CreateDefinitionDeck(
+                    "auto-pistol-8",
+                    "threat-hammer-6",
+                    "standard-plain-2",
+                    "standard-plain-3"),
+                playerMaximumSoul: 12,
+                playerCurrentSoul: 12,
+                enemyMaximumSoul: 3,
+                enemyPolicy: new CowardlyGamblerEnemyPolicy());
+            Assert.That(battle.Start(), Is.True);
+            BlackjackCard playerHiddenRevolver = battle.Player.Hand.Cards[1];
+
+            Assert.That(
+                battle.TryBeginPlayerCardUse(playerHiddenRevolver.Id),
+                Is.True);
+            Assert.That(battle.TryResolvePlayerCardChoice(10), Is.True);
+
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(10));
+            Assert.That(battle.LastResolution.Value.Outcome,
+                Is.EqualTo(RoundOutcome.PlayerBust));
+            Assert.That(battle.LastResolution.Value.Cause,
+                Is.EqualTo(RoundEndCause.CardEffectBust));
+            Assert.That(battle.LastEnemyDecision.ActionType,
+                Is.EqualTo(EnemyActionType.UseCard));
+            Assert.That(battle.LastEnemyDecision.CardEffectOptionId, Is.EqualTo(7));
+            Assert.That(
+                battle.LastEnemyDecision.ReasonCode,
+                Is.EqualTo("certain-revealed-hidden-auto-pistol"));
+        }
+
+        [Test]
         public void EP03_U02_GunslingerUsesPistolAtHighConfidenceAndDeclaresTopRank()
         {
             var battle = new CoreLoopBattle(

@@ -5,6 +5,43 @@ namespace DiaBlackJack.CoreLoop
 {
     internal static class EnemyPolicyDecisionSelector
     {
+        public static bool TrySelectCertainAutoPistol(
+            EnemyObservation observation,
+            out EnemyDecision decision)
+        {
+            decision = null;
+            if (observation == null ||
+                !observation.KnownPlayerHiddenCardRank.HasValue)
+            {
+                return false;
+            }
+
+            int knownRank = observation.KnownPlayerHiddenCardRank.Value;
+            foreach (EnemyActionCandidate candidate in observation.ActionCandidates)
+            {
+                if (candidate.ActionType != EnemyActionType.UseCard ||
+                    string.IsNullOrWhiteSpace(candidate.CardDefinitionKey) ||
+                    CardDefinitionCatalog.GetByKey(candidate.CardDefinitionKey).Effect !=
+                        CardEffectKind.AutoPistol)
+                {
+                    continue;
+                }
+
+                if (observation.PendingCardEffectKind == CardEffectKind.AutoPistol &&
+                    candidate.CardEffectOptionNumericValue != knownRank)
+                {
+                    continue;
+                }
+
+                decision = EnemyDecision.FromCandidate(
+                    candidate,
+                    "certain-revealed-hidden-auto-pistol");
+                return true;
+            }
+
+            return false;
+        }
+
         public static EnemyDecision Select(
             EnemyObservation observation,
             Func<EnemyObservation, EnemyActionCandidate, EnemyActionScore> evaluate)

@@ -283,9 +283,12 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.Start(), Is.True);
             if (hiddenCardCount == 0)
             {
-                battle.Enemy.Hand.Cards
-                    .Single(card => !card.IsFaceUp)
-                    .Reveal();
+                Assert.That(
+                    battle.Enemy.Hand.TryTakeSingleHiddenCard(
+                        out BlackjackCard formerHiddenCard),
+                    Is.True);
+                formerHiddenCard.Reveal();
+                battle.Enemy.Hand.Add(formerHiddenCard);
             }
             else
             {

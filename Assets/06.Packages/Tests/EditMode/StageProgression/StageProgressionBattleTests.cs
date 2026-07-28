@@ -154,11 +154,12 @@ namespace DiaBlackJack.StageProgression.Tests
                 (stage, player) => CreateBattle(
                     player,
                     stage.EnemyMaximumSoul,
-                    new[] { 10, 5, 10, 2 },
+                    new[] { 10, 3, 5, 10, 2 },
                     new[] { 2, 3, 4, 5 }));
 
             Assert.That(session.TryStartRun(), Is.True);
-            BlackjackCard sourceCard = session.Battle.Player.Hand.Cards[1];
+            BlackjackCard sourceCard = session.Battle.Player.Draw(faceUp: true);
+            Assert.That(sourceCard.Rank, Is.EqualTo(5));
             Assert.That(session.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
 
             Assert.That(session.TryResolvePlayerCardChoice(1), Is.True);

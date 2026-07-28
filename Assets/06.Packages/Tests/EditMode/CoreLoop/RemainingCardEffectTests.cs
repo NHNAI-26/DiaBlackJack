@@ -60,13 +60,14 @@ namespace DiaBlackJack.CoreLoop.Tests
         public void CU04_U03_CrystalOrbTakingNoneRestoresExactNextDrawOrder()
         {
             CoreLoopBattle battle = CreateStartedBattle(
-                playerRanks: new[] { 2, 5, 7, 8, 9 },
+                playerRanks: new[] { 2, 3, 5, 7, 8, 9 },
                 enemyRanks: new[] { 10, 7, 5 });
+            BlackjackCard sourceCard = battle.Player.Draw(faceUp: true);
 
-            Assert.That(battle.TryBeginPlayerCardUse(battle.Player.Hand.Cards[1].Id), Is.True);
+            Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
             Assert.That(battle.TryResolvePlayerCardChoice(0), Is.True);
 
-            Assert.That(battle.Player.Hand.Count, Is.EqualTo(2));
+            Assert.That(battle.Player.Hand.Count, Is.EqualTo(3));
             Assert.That(battle.Player.Deck.Draw().Rank, Is.EqualTo(7));
             Assert.That(battle.Player.Deck.Draw().Rank, Is.EqualTo(8));
             Assert.That(battle.LastCardEffectResult.Value.Succeeded, Is.True);
@@ -80,10 +81,11 @@ namespace DiaBlackJack.CoreLoop.Tests
             int nextDrawRank)
         {
             CoreLoopBattle battle = CreateStartedBattle(
-                playerRanks: new[] { 2, 5, 7, 8, 9 },
+                playerRanks: new[] { 2, 3, 5, 7, 8, 9 },
                 enemyRanks: new[] { 10, 7, 5 });
+            BlackjackCard sourceCard = battle.Player.Draw(faceUp: true);
 
-            Assert.That(battle.TryBeginPlayerCardUse(battle.Player.Hand.Cards[1].Id), Is.True);
+            Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
             Assert.That(battle.TryResolvePlayerCardChoice(optionId), Is.True);
 
             BlackjackCard selectedCard = battle.Player.Hand.Cards.Single(
@@ -98,10 +100,10 @@ namespace DiaBlackJack.CoreLoop.Tests
         public void CU04_U05_CrystalOrbNumericBustResolvesImmediatelyWithoutEnemyTurn()
         {
             CoreLoopBattle battle = CreateStartedBattle(
-                playerRanks: new[] { 10, 5, 10, 2 },
+                playerRanks: new[] { 10, 3, 5, 10, 2 },
                 enemyRanks: new[] { 2, 3, 4, 5 },
                 playerCurrentSoul: 2);
-            BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+            BlackjackCard sourceCard = battle.Player.Draw(faceUp: true);
             int enemyDrawCountBefore = battle.Enemy.Deck.DrawCount;
 
             Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
@@ -121,9 +123,9 @@ namespace DiaBlackJack.CoreLoop.Tests
         public void CU04_U06_ThreatHammerOffersOnlyOpponentFaceUpCards()
         {
             CoreLoopBattle battle = CreateStartedBattle(
-                playerRanks: new[] { 2, 6, 3 },
+                playerRanks: new[] { 2, 3, 6, 4 },
                 enemyRanks: new[] { 10, 7, 5, 4 });
-            BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+            BlackjackCard sourceCard = battle.Player.Draw(faceUp: true);
             battle.Enemy.Draw(faceUp: true);
 
             bool accepted = battle.TryBeginPlayerCardUse(sourceCard.Id);
@@ -142,6 +144,28 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo("버릴 상대 공개 카드를 선택하세요."));
         }
 
+        [Test]
+        public void CUM04_U04_HammerExcludesRevealedHiddenCardFromPublicTargets()
+        {
+            CoreLoopBattle battle = CreateStartedBattle(
+                playerRanks: new[] { 2, 6, 3 },
+                enemyRanks: new[] { 10, 7, 5 });
+            BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+            BlackjackCard enemyPublicCard = battle.Enemy.Hand.Cards[0];
+            BlackjackCard enemyRevealedHiddenCard = battle.Enemy.Hand.Cards[1];
+            enemyRevealedHiddenCard.Reveal();
+
+            Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
+
+            Assert.That(
+                battle.PendingPlayerCardEffect.Options.Select(option => option.CardId),
+                Is.EqualTo(new int?[] { enemyPublicCard.Id }));
+            Assert.That(
+                battle.PendingPlayerCardEffect.Options.Any(option =>
+                    option.CardId == enemyRevealedHiddenCard.Id),
+                Is.False);
+        }
+
         [TestCase(0, 10)]
         [TestCase(2, 5)]
         public void CU04_U07_ThreatHammerDiscardsChosenOpponentCardWithoutOwnCost(
@@ -149,9 +173,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             int discardedRank)
         {
             CoreLoopBattle battle = CreateStartedBattle(
-                playerRanks: new[] { 2, 6, 3 },
+                playerRanks: new[] { 2, 3, 6, 4 },
                 enemyRanks: new[] { 10, 7, 5, 4 });
-            BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+            BlackjackCard sourceCard = battle.Player.Draw(faceUp: true);
             battle.Enemy.Draw(faceUp: true);
 
             Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
@@ -243,10 +267,10 @@ namespace DiaBlackJack.CoreLoop.Tests
         public void CU04_U11_ThreatHammerHiddenReplacementWaitsForFinalShowdown()
         {
             CoreLoopBattle battle = CreateStartedBattle(
-                playerRanks: new[] { 2, 6 },
+                playerRanks: new[] { 2, 3, 6 },
                 enemyRanks: new[] { 10, 2, 8, 7, 9 },
                 enemyMaximumSoul: 1);
-            BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+            BlackjackCard sourceCard = battle.Player.Draw(faceUp: true);
             BlackjackCard previousHiddenCard = battle.Enemy.Hand.Cards[1];
             battle.Enemy.Draw(faceUp: true);
             battle.Enemy.Draw(faceUp: true);
@@ -298,9 +322,9 @@ namespace DiaBlackJack.CoreLoop.Tests
         public void CU04_U13_MilitaryKnifeAlwaysDiscardsSafeForcedCard(int sourceRank)
         {
             CoreLoopBattle battle = CreateStartedBattle(
-                playerRanks: new[] { 2, sourceRank },
+                playerRanks: new[] { 2, 3, sourceRank },
                 enemyRanks: new[] { 5, 7, 2, 3 });
-            BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+            BlackjackCard sourceCard = battle.Player.Draw(faceUp: true);
 
             bool accepted = battle.TryBeginPlayerCardUse(sourceCard.Id);
 
@@ -367,9 +391,9 @@ namespace DiaBlackJack.CoreLoop.Tests
         public void CU04_U16_CoreLoopSessionUsesProductionCrystalOrbHandler()
         {
             var session = new CoreLoopSession(() => CreateBattle(
-                playerRanks: new[] { 2, 5, 7, 8 },
+                playerRanks: new[] { 2, 3, 5, 7, 8 },
                 enemyRanks: new[] { 10, 7, 5 }));
-            BlackjackCard sourceCard = session.Battle.Player.Hand.Cards[1];
+            BlackjackCard sourceCard = session.Battle.Player.Draw(faceUp: true);
 
             bool began = session.TryBeginPlayerCardUse(sourceCard.Id);
             bool resolved = session.TryResolvePlayerCardChoice(0);

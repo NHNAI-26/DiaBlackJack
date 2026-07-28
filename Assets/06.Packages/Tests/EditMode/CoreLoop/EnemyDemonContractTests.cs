@@ -141,9 +141,20 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.Enemy.VisibleHandValue.Total, Is.EqualTo(20));
             Assert.That(policy.LastPreviewRank, Is.EqualTo(5));
             Assert.That(policy.LastPlayerHiddenCount, Is.EqualTo(1));
-            Assert.That(typeof(EnemyObservation).GetProperties().Any(property =>
-                property.Name.Contains("PlayerHidden") &&
-                property.Name != nameof(EnemyObservation.PlayerHiddenCardCount)), Is.False);
+            Assert.That(
+                typeof(EnemyObservation).GetProperties()
+                    .Where(property => property.Name.Contains("PlayerHidden") ||
+                        property.Name == nameof(EnemyObservation.KnownPlayerHiddenCardRank))
+                    .Select(property => property.Name),
+                Is.EquivalentTo(new[]
+                {
+                    nameof(EnemyObservation.PlayerHiddenCardCount),
+                    nameof(EnemyObservation.KnownPlayerHiddenCardRank)
+                }));
+            Assert.That(
+                EnemyObservationFactory.Create(battle, decisionSeed: 0)
+                    .KnownPlayerHiddenCardRank,
+                Is.Null);
         }
 
         [Test]

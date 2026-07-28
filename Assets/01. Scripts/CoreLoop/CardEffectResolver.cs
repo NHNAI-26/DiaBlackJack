@@ -63,36 +63,19 @@ namespace DiaBlackJack.CoreLoop
 
         private BattleParticipant Opponent => _battle.GetOpponent(ActorSide);
 
-        public IReadOnlyList<BlackjackCard> GetActorFaceUpCards()
+        public IReadOnlyList<BlackjackCard> GetActorPublicCards()
         {
-            return Actor.Hand.GetFaceUpCards();
+            return Actor.Hand.GetPublicCards();
         }
 
-        public IReadOnlyList<BlackjackCard> GetOpponentFaceUpCards()
+        public IReadOnlyList<BlackjackCard> GetOpponentPublicCards()
         {
-            return Opponent.Hand.GetFaceUpCards();
+            return Opponent.Hand.GetPublicCards();
         }
 
         public bool TryGetSingleOpponentHiddenCard(out BlackjackCard hiddenCard)
         {
-            hiddenCard = null;
-            foreach (BlackjackCard card in Opponent.Hand.Cards)
-            {
-                if (card.IsFaceUp)
-                {
-                    continue;
-                }
-
-                if (hiddenCard != null)
-                {
-                    hiddenCard = null;
-                    return false;
-                }
-
-                hiddenCard = card;
-            }
-
-            return hiddenCard != null;
+            return Opponent.Hand.TryGetSingleHiddenCard(out hiddenCard);
         }
 
         public bool CanDrawActorCards(int count)

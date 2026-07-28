@@ -132,7 +132,8 @@ namespace DiaBlackJack.CoreLoop
             }
 
             if (!source.Hand.TryGetCard(cardId, out BlackjackCard sourceCard) ||
-                !sourceCard.IsFaceUp)
+                !sourceCard.IsFaceUp ||
+                source.Hand.IsHiddenCard(cardId))
             {
                 return false;
             }

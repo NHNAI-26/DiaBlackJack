@@ -2,7 +2,7 @@
 
 > 프로젝트: DiaBlackJack  
 > 문서 책임자: 이천서  
-> 최종 갱신: 2026-07-28
+> 최종 갱신: 2026-07-29
 
 이 디렉터리는 게임 규칙, 기획, 개발 명세, AI 활용, 외부 출처 및 팀 기여 기록을 관리한다.
 
@@ -10,8 +10,8 @@
 
 | 문서 | 용도 | 상태 |
 | --- | --- | --- |
-| [rule.md](./rule.md) | 게임 원본 규칙 | 루시퍼 후보 수명·건너뛰기·중첩 기준 반영 v1.1 |
-| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | DC-R04 5/5 루시퍼 추가 계약 반영 v0.12 |
+| [rule.md](./rule.md) | 게임 원본 규칙 | 비공개 역할·앞뒷면 분리와 적 확정 리볼버 대응 v1.2 |
+| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | CU-M04·EP-R02 전투 정보 경계 반영 v0.13 |
 | [core-loop-design.md](./core-loop-design.md) | 최소 코어 루프 기획 범위 | 4단계 완료 기준안 v0.1 |
 | [core-loop-development-spec.md](./core-loop-development-spec.md) | 코어 루프 구조·상태·검증 명세 | 4단계 검증 완료 v0.1 |
 | [core-loop-implementation-plan.md](./core-loop-implementation-plan.md) | 코어 루프 작업 순서·담당·일정·완료 증거 | 전체 완료 v0.1 |
@@ -27,12 +27,12 @@
 | [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | 현행 규칙 이관 완료 v0.2 |
 | [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 이력과 현행 규칙 이관 결과 | 현행 규칙 이관 완료 v0.2 |
 | [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | 현행 규칙 이관 완료 v0.2 |
-| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | 최신 악마 연계·자동 카드 숫자 반영 v0.7 |
-| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M03 검증 완료 v0.3 |
-| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M03 작업 순서와 단계별 검증 게이트 | CU-M03 완료 v0.3 |
-| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M03 완료 |
-| [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | AC-RV01 숫자·키·저장 호환 이관 완료 v0.3 |
-| [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | 새 키·런 변환·`prototype-v2` 반영 v0.3 |
+| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | CU-M04 비공개 역할 개정 v0.9 |
+| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M04 검증 완료 v0.4 |
+| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M04 작업 순서와 단계별 검증 게이트 | CU-M04 완료 v0.4 |
+| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M04 완료·전체 619/619 |
+| [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | 공개된 비공개 카드 정보 경계 반영 v0.4 |
+| [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | 비공개 역할·앞뒷면 경계 반영 v0.4 |
 | [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 이력과 AC-RV00~RV01 개정 계획 | AC-RV01 전용 11/11·전체 522/522 완료 v0.3 |
 | [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | 두 전투 화면·Console 0까지 완료 v0.3 |
 | [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | DC-R04 5/5 완료·DC-R05 대기 v1.12 |
@@ -43,10 +43,10 @@
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW-05 최종 검증 완료 v0.1 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
 | [battle-reward-progress-log.md](./battle-reward-progress-log.md) | 전투 보상 결정·구현·검증 누적 기록 | RW-05 완료 v0.1 |
-| [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 적 6종의 전투 성향·책임 경계 | EP-R01 겁쟁이 도박사 편입 완료 v1.2 |
-| [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | 겁쟁이 도박사 기술 이관 완료 v1.2 |
-| [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP-00~EP-06 이력과 EP-R00~R01 개정 계획 | EP-R01 완료·플레이 테스트 다음 v1.2 |
-| [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | 전용 9/9·전체 534/534 완료 v1.2 |
+| [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 적 6종의 전투 성향·책임 경계 | EP-R02 공개된 비공개 카드 대응 완료 v1.3 |
+| [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | 확정 리볼버 대응 완료 v1.3 |
+| [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP-00~EP-06 이력과 EP-R00~R02 개정 계획 | EP-R02 완료 v1.3 |
+| [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | 전용 5/5·전체 619/619 완료 v1.3 |
 | [enemy-selection-combat-ui-design.md](./enemy-selection-combat-ui-design.md) | 상대 후보 2명 비교·확정과 등급별 전투 정보 표시 규칙 | EP-R01 일반 적 표시 반영 v0.2 |
 | [enemy-selection-combat-ui-development-spec.md](./enemy-selection-combat-ui-development-spec.md) | 후보 생성·선택 상태·전투 변환·안전 표시 스냅샷과 테스트 명세 | EUI-05 최종 검증 완료 v0.1 |
 | [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI-00~EUI-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
@@ -74,6 +74,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-29 | 이천서 | CU-M04·EP-R02 비공개 역할/앞뒷면 분리, 공개 합·대상·최종 승부 정합화, 공개된 비공개 숫자에 대한 모든 적의 리볼버 확정 대응과 GameScene 역할 정렬을 구현해 전용 5/5·CoreLoop 430/430·StageProgression 189/189·전체 EditMode 619/619으로 검증; 씬·프리팹·Packages·외부 에셋·오픈소스 무변경 |
 | 2026-07-28 | 이천서 | DC-R04 5/5 루시퍼의 현재 악마 덱 최대 5장·건너뛰기·미선택 폐기·별도 계약 인스턴스·복합 대가·재귀 연쇄·광신도 공개 선택을 구현해 전용 10/10·CoreLoop 421/421·전체 EditMode 610/610으로 검증; GameScene·씬·프리팹·Packages·HONG RunFlow/Shop·Shim0Hwan 아트·외부 에셋 무변경 |
 | 2026-07-28 | 이천서 | DC-R04 4/5 바포메트 상대 1~5·소유자 1~3 오망성, 드로우 더미 소진·전투 위치 회수·가용 덱 초기화·재삽입·기존 버스트 경계와 파이몬/벨리알 중첩을 구현해 전용 7/7·광신도 9/9·CoreLoop 410/410·전체 EditMode 599/599로 검증; GameScene·씬·프리팹·Packages·HONG RunFlow/Shop·Shim0Hwan 아트·외부 에셋 무변경 |
 | 2026-07-28 | 이천서 | DC-R04 3/5 파이몬의 선택 추방·단일 임시 승자 대가와 벨리알의 공개 카드 탈취·즉시 재사용·스탠드 취소·라운드 영혼 대가·전투 종료 소유권 복구를 구현해 전용 10/10·광신도 9/9·CoreLoop 402/402·전체 EditMode 591/591로 검증; GameScene·씬·프리팹·Packages·HONG RunFlow/Shop·Shim0Hwan 아트·외부 에셋 무변경 |

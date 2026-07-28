@@ -9,7 +9,8 @@ namespace DiaBlackJack.CoreLoop
             IReadOnlyList<int> knownRankCounts,
             IReadOnlyList<PublicCardObservation> playerFaceUpCards,
             IReadOnlyList<PublicCardObservation> playerDiscardedCards,
-            int playerHiddenCardCount)
+            int playerHiddenCardCount,
+            int? knownPlayerHiddenCardRank = null)
         {
             if (knownRankCounts == null)
             {
@@ -36,6 +37,25 @@ namespace DiaBlackJack.CoreLoop
             if (playerHiddenCardCount < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(playerHiddenCardCount));
+            }
+
+            if (knownPlayerHiddenCardRank.HasValue)
+            {
+                if (playerHiddenCardCount != 1 ||
+                    knownPlayerHiddenCardRank.Value < 1 ||
+                    knownPlayerHiddenCardRank.Value > 10)
+                {
+                    throw new ArgumentException(
+                        "Known hidden rank requires exactly one valid hidden-role card.",
+                        nameof(knownPlayerHiddenCardRank));
+                }
+
+                return Array.AsReadOnly(new[]
+                {
+                    new EnemyNumberInference(
+                        knownPlayerHiddenCardRank.Value,
+                        probabilityPercent: 100)
+                });
             }
 
             if (playerHiddenCardCount == 0)

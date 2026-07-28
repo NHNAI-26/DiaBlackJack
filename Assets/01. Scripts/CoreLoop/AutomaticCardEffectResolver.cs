@@ -86,24 +86,9 @@ namespace DiaBlackJack.CoreLoop
 
             subjectHiddenCardId = default;
             isAtLeastDeclaredNumber = default;
-            BlackjackCard hiddenCard = null;
-            foreach (BlackjackCard card in
-                Battle.GetParticipant(OpponentSide).Hand.Cards)
-            {
-                if (card.IsFaceUp)
-                {
-                    continue;
-                }
-
-                if (hiddenCard != null)
-                {
-                    return false;
-                }
-
-                hiddenCard = card;
-            }
-
-            if (hiddenCard == null)
+            BlackjackHand opponentHand =
+                Battle.GetParticipant(OpponentSide).Hand;
+            if (!opponentHand.TryGetSingleHiddenCard(out BlackjackCard hiddenCard))
             {
                 return false;
             }
@@ -139,6 +124,7 @@ namespace DiaBlackJack.CoreLoop
             foreach (BlackjackCard card in participant.Hand.Cards)
             {
                 if (!card.IsFaceUp ||
+                    participant.Hand.IsHiddenCard(card.Id) ||
                     (side == OwnerSide &&
                         ReferenceEquals(card, SourceCard)))
                 {
@@ -160,6 +146,7 @@ namespace DiaBlackJack.CoreLoop
                     cardId,
                     out BlackjackCard card) ||
                 !card.IsFaceUp ||
+                participant.Hand.IsHiddenCard(card.Id) ||
                 (side == OwnerSide && ReferenceEquals(card, SourceCard)))
             {
                 return false;
@@ -176,6 +163,7 @@ namespace DiaBlackJack.CoreLoop
             foreach (BlackjackCard card in owner.Hand.Cards)
             {
                 if (!card.IsFaceUp ||
+                    owner.Hand.IsHiddenCard(card.Id) ||
                     ReferenceEquals(card, SourceCard) ||
                     card.Definition.Activation != CardActivationKind.Manual ||
                     card.UseState != CardUseState.Used)
@@ -196,6 +184,7 @@ namespace DiaBlackJack.CoreLoop
                     cardId,
                     out BlackjackCard card) ||
                 !card.IsFaceUp ||
+                owner.Hand.IsHiddenCard(card.Id) ||
                 ReferenceEquals(card, SourceCard))
             {
                 return false;

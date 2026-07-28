@@ -212,7 +212,8 @@ namespace DiaBlackJack.CoreLoop
                     if (!optionOwner.Hand.TryGetCard(
                             option.CardId.Value,
                             out BlackjackCard card) ||
-                        !card.IsFaceUp)
+                        !card.IsFaceUp ||
+                        optionOwner.Hand.IsHiddenCard(option.CardId.Value))
                     {
                         throw new InvalidOperationException(
                             "Automatic card option lost its public target card.");

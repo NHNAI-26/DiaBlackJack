@@ -141,7 +141,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             var enemyPolicy = new SequenceEnemyPolicy(EnemyActionType.Hit);
             CoreLoopBattle battle = CreateLeviathanBattle(
                 playerCurrentSoul: 12,
-                enemyRanks: new[] { 10, 7, 5, 2, 3 },
+                enemyRanks: new[] { 10, 5, 5, 2, 3 },
                 enemyPolicy);
             ActivateFirstContract(battle);
             BlackjackCard hiddenEnemyCard = battle.Enemy.Hand.Cards[1];

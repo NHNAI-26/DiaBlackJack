@@ -161,12 +161,12 @@ namespace DiaBlackJack.CoreLoop.Tests
         public void AC04_U05_PocketWatchReactivatesOnlyTheSelectedUsedManualCard()
         {
             CoreLoopBattle battle = CreateBattle(
-                PlayerCards(2, ThreatHammer, PocketWatch),
+                PlayerCards(ThreatHammer, 2, PocketWatch),
                 EnemyCards(4, 7, 3),
                 new StandPolicy());
             Assert.That(battle.Start(), Is.True);
             BlackjackCard usedHammer =
-                MarkInitialHiddenManualCardUsed(battle.Player);
+                MarkInitialPublicManualCardUsed(battle.Player);
             Assert.That(battle.TryPlayerHit(), Is.True);
 
             PendingAutomaticCardInteraction targetChoice =
@@ -207,8 +207,8 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             CoreLoopBattle battle = CreateBattle(
                 PlayerCards(
-                    2,
                     ThreatHammer,
+                    2,
                     CrystalOrb,
                     Poison,
                     PocketWatch),
@@ -216,7 +216,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 new StandPolicy());
             Assert.That(battle.Start(), Is.True);
             BlackjackCard usedHammer =
-                MarkInitialHiddenManualCardUsed(battle.Player);
+                MarkInitialPublicManualCardUsed(battle.Player);
             BlackjackCard availableManual = battle.Player.Draw(faceUp: true);
             BlackjackCard otherAutomatic = battle.Player.Draw(faceUp: true);
             Assert.That(battle.TryPlayerHit(), Is.True);
@@ -317,11 +317,11 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             CoreLoopBattle battle = CreateBattle(
                 PlayerCards(2, 3, 2),
-                EnemyCards(4, ThreatHammer, PocketWatch),
+                EnemyCards(ThreatHammer, 4, PocketWatch),
                 new SequencePolicy(EnemyActionType.Hit));
             Assert.That(battle.Start(), Is.True);
             BlackjackCard usedHammer =
-                MarkInitialHiddenManualCardUsed(battle.Enemy);
+                MarkInitialPublicManualCardUsed(battle.Enemy);
 
             Assert.That(battle.TryPlayerHit(), Is.True);
 
@@ -356,15 +356,15 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Does.Contain(sourceCardId));
         }
 
-        private static BlackjackCard MarkInitialHiddenManualCardUsed(
+        private static BlackjackCard MarkInitialPublicManualCardUsed(
             BattleParticipant participant)
         {
             BlackjackCard card = participant.Hand.Cards
                 .Single(candidate =>
-                    !candidate.IsFaceUp &&
+                    candidate.IsFaceUp &&
+                    !participant.Hand.IsHiddenCard(candidate.Id) &&
                     candidate.Definition.Activation ==
                         CardActivationKind.Manual);
-            card.Reveal();
             Assert.That(card.TryBeginUse(), Is.True);
             Assert.That(card.TryCompleteUse(), Is.True);
             return card;

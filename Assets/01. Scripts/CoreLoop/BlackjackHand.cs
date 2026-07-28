@@ -6,27 +6,13 @@ namespace DiaBlackJack.CoreLoop
     public sealed class BlackjackHand
     {
         private readonly List<BlackjackCard> _cards = new List<BlackjackCard>();
+        private readonly HashSet<int> _hiddenCardIds = new HashSet<int>();
 
         public IReadOnlyList<BlackjackCard> Cards => _cards;
 
         public int Count => _cards.Count;
 
-        public int HiddenCardCount
-        {
-            get
-            {
-                int count = 0;
-                foreach (BlackjackCard card in _cards)
-                {
-                    if (!card.IsFaceUp)
-                    {
-                        count++;
-                    }
-                }
-
-                return count;
-            }
-        }
+        public int HiddenCardCount => _hiddenCardIds.Count;
 
         public void Add(BlackjackCard card)
         {
@@ -37,6 +23,10 @@ namespace DiaBlackJack.CoreLoop
 
             card.PrepareForHand();
             _cards.Add(card);
+            if (!card.IsFaceUp)
+            {
+                _hiddenCardIds.Add(card.Id);
+            }
         }
 
         public bool Contains(int cardId)
@@ -56,6 +46,48 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return faceUpCards.AsReadOnly();
+        }
+
+        public IReadOnlyList<BlackjackCard> GetPublicCards()
+        {
+            var publicCards = new List<BlackjackCard>();
+            foreach (BlackjackCard card in _cards)
+            {
+                if (card.IsFaceUp && !IsHiddenCard(card.Id))
+                {
+                    publicCards.Add(card);
+                }
+            }
+
+            return publicCards.AsReadOnly();
+        }
+
+        public bool IsHiddenCard(int cardId)
+        {
+            return _hiddenCardIds.Contains(cardId);
+        }
+
+        public bool TryGetSingleHiddenCard(out BlackjackCard hiddenCard)
+        {
+            hiddenCard = null;
+            if (_hiddenCardIds.Count != 1)
+            {
+                return false;
+            }
+
+            int hiddenCardId = default;
+            foreach (int candidateId in _hiddenCardIds)
+            {
+                hiddenCardId = candidateId;
+            }
+
+            if (!TryGetCard(hiddenCardId, out hiddenCard))
+            {
+                throw new InvalidOperationException(
+                    "The hidden-role card is missing from its hand.");
+            }
+
+            return true;
         }
 
         public bool TryGetCard(int cardId, out BlackjackCard card)
@@ -84,6 +116,8 @@ namespace DiaBlackJack.CoreLoop
 
                 card = _cards[i];
                 _cards.RemoveAt(i);
+                _hiddenCardIds.Remove(card.Id);
+
                 return true;
             }
 
@@ -95,37 +129,19 @@ namespace DiaBlackJack.CoreLoop
         {
             BlackjackCard[] cards = _cards.ToArray();
             _cards.Clear();
+            _hiddenCardIds.Clear();
             return cards;
         }
 
         public bool TryTakeSingleHiddenCard(out BlackjackCard hiddenCard)
         {
             hiddenCard = null;
-            int hiddenCardIndex = -1;
-
-            for (int i = 0; i < _cards.Count; i++)
-            {
-                if (_cards[i].IsFaceUp)
-                {
-                    continue;
-                }
-
-                if (hiddenCardIndex >= 0)
-                {
-                    return false;
-                }
-
-                hiddenCardIndex = i;
-            }
-
-            if (hiddenCardIndex < 0)
+            if (!TryGetSingleHiddenCard(out BlackjackCard currentHiddenCard))
             {
                 return false;
             }
 
-            hiddenCard = _cards[hiddenCardIndex];
-            _cards.RemoveAt(hiddenCardIndex);
-            return true;
+            return TryTakeCard(currentHiddenCard.Id, out hiddenCard);
         }
     }
 }

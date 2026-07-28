@@ -180,12 +180,9 @@ namespace DiaBlackJack.CoreLoop
 
         private IEnumerable<BlackjackCard> GetVisibleCards()
         {
-            foreach (BlackjackCard card in Hand.Cards)
+            foreach (BlackjackCard card in Hand.GetPublicCards())
             {
-                if (card.IsFaceUp)
-                {
-                    yield return card;
-                }
+                yield return card;
             }
         }
     }

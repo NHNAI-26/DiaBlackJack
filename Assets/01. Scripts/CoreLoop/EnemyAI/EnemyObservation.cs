@@ -58,7 +58,8 @@ namespace DiaBlackJack.CoreLoop
             int rank,
             bool isFaceUp,
             CardUseState useState,
-            bool canUse)
+            bool canUse,
+            bool isHiddenCard = false)
         {
             if (cardId < 0)
             {
@@ -84,6 +85,7 @@ namespace DiaBlackJack.CoreLoop
             DefinitionKey = definitionKey;
             Rank = rank;
             IsFaceUp = isFaceUp;
+            IsHiddenCard = isHiddenCard;
             UseState = useState;
             CanUse = canUse;
         }
@@ -95,6 +97,8 @@ namespace DiaBlackJack.CoreLoop
         public string DefinitionKey { get; }
 
         public bool IsFaceUp { get; }
+
+        public bool IsHiddenCard { get; }
 
         public int Rank { get; }
 
@@ -215,7 +219,8 @@ namespace DiaBlackJack.CoreLoop
             CardEffectKind? pendingCardEffectKind,
             int decisionSeed,
             HiddenCardComparisonKnowledge?
-                lieDetectorComparisonKnowledge = null)
+                lieDetectorComparisonKnowledge = null,
+            int? knownPlayerHiddenCardRank = null)
         {
             if (playerHiddenCardCount < 0)
             {
@@ -242,6 +247,16 @@ namespace DiaBlackJack.CoreLoop
                     !Enum.IsDefined(typeof(CardEffectKind), pendingCardEffectKind.Value)))
             {
                 throw new ArgumentOutOfRangeException(nameof(pendingCardEffectKind));
+            }
+
+            if (knownPlayerHiddenCardRank.HasValue &&
+                (playerHiddenCardCount != 1 ||
+                    knownPlayerHiddenCardRank.Value < 1 ||
+                    knownPlayerHiddenCardRank.Value > 10))
+            {
+                throw new ArgumentException(
+                    "Known hidden rank requires exactly one valid hidden-role card.",
+                    nameof(knownPlayerHiddenCardRank));
             }
 
             if (lieDetectorComparisonKnowledge.HasValue)
@@ -278,6 +293,7 @@ namespace DiaBlackJack.CoreLoop
             DecisionSeed = decisionSeed;
             LieDetectorComparisonKnowledge =
                 lieDetectorComparisonKnowledge;
+            KnownPlayerHiddenCardRank = knownPlayerHiddenCardRank;
         }
 
         public IReadOnlyList<EnemyActionCandidate> ActionCandidates { get; }
@@ -310,6 +326,8 @@ namespace DiaBlackJack.CoreLoop
 
         public HiddenCardComparisonKnowledge?
             LieDetectorComparisonKnowledge { get; }
+
+        public int? KnownPlayerHiddenCardRank { get; }
 
         public bool PlayerIsStanding { get; }
 

@@ -132,7 +132,7 @@ namespace DiaBlackJack.CoreLoop
 
         public HandValue OwnerVisibleHandValue => Owner.VisibleHandValue;
 
-        public int OwnerFaceUpCardCount => Owner.Hand.GetFaceUpCards().Count;
+        public int OwnerFaceUpCardCount => Owner.Hand.GetPublicCards().Count;
 
         public bool OpponentCanDraw => Opponent.Deck.CanDraw(1);
 
@@ -147,15 +147,15 @@ namespace DiaBlackJack.CoreLoop
         }
 
         public IReadOnlyList<BlackjackCard> OwnerFaceUpCards =>
-            Owner.Hand.GetFaceUpCards();
+            Owner.Hand.GetPublicCards();
 
         public IReadOnlyList<BlackjackCard> OpponentFaceUpCards =>
-            Opponent.Hand.GetFaceUpCards();
+            Opponent.Hand.GetPublicCards();
 
         public bool CanChooseBeelzebubDiscardCards =>
             !Owner.Soul.IsDepleted &&
-            Owner.Hand.GetFaceUpCards().Count > 0 &&
-            Opponent.Hand.GetFaceUpCards().Count > 0;
+            Owner.Hand.GetPublicCards().Count > 0 &&
+            Opponent.Hand.GetPublicCards().Count > 0;
 
         public void ApplyOwnerSoulDamage(int amount)
         {
@@ -165,7 +165,7 @@ namespace DiaBlackJack.CoreLoop
         public void DiscardAllOwnerFaceUpCards()
         {
             IReadOnlyList<BlackjackCard> faceUpCards =
-                Owner.Hand.GetFaceUpCards();
+                Owner.Hand.GetPublicCards();
             foreach (BlackjackCard card in faceUpCards)
             {
                 if (!Owner.TryDiscardCard(card.Id))
@@ -191,10 +191,12 @@ namespace DiaBlackJack.CoreLoop
                     ownerCardId,
                     out BlackjackCard ownerCard) ||
                 !ownerCard.IsFaceUp ||
+                Owner.Hand.IsHiddenCard(ownerCardId) ||
                 !Opponent.Hand.TryGetCard(
                     opponentCardId,
                     out BlackjackCard opponentCard) ||
-                !opponentCard.IsFaceUp)
+                !opponentCard.IsFaceUp ||
+                Opponent.Hand.IsHiddenCard(opponentCardId))
             {
                 return false;
             }
@@ -225,23 +227,7 @@ namespace DiaBlackJack.CoreLoop
 
         public bool TryRevealOwnerHiddenCard()
         {
-            BlackjackCard hiddenCard = null;
-            foreach (BlackjackCard card in Owner.Hand.Cards)
-            {
-                if (card.IsFaceUp)
-                {
-                    continue;
-                }
-
-                if (hiddenCard != null)
-                {
-                    return false;
-                }
-
-                hiddenCard = card;
-            }
-
-            if (hiddenCard == null)
+            if (!Owner.Hand.TryGetSingleHiddenCard(out BlackjackCard hiddenCard))
             {
                 return false;
             }
@@ -253,10 +239,9 @@ namespace DiaBlackJack.CoreLoop
         public int ReactivateOwnerUsedFaceUpManualCards()
         {
             int reactivatedCount = 0;
-            foreach (BlackjackCard card in Owner.Hand.Cards)
+            foreach (BlackjackCard card in Owner.Hand.GetPublicCards())
             {
-                if (!card.IsFaceUp ||
-                    card.Definition.Activation != CardActivationKind.Manual ||
+                if (card.Definition.Activation != CardActivationKind.Manual ||
                     !card.TryReactivate())
                 {
                     continue;
@@ -275,7 +260,9 @@ namespace DiaBlackJack.CoreLoop
 
         public bool OwnerHasAnotherFaceUpCardWithRank(BlackjackCard addedCard)
         {
-            if (addedCard == null || !addedCard.IsFaceUp)
+            if (addedCard == null ||
+                !addedCard.IsFaceUp ||
+                Owner.Hand.IsHiddenCard(addedCard.Id))
             {
                 return false;
             }
@@ -284,6 +271,7 @@ namespace DiaBlackJack.CoreLoop
             {
                 if (!ReferenceEquals(card, addedCard) &&
                     card.IsFaceUp &&
+                    !Owner.Hand.IsHiddenCard(card.Id) &&
                     card.Rank == addedCard.Rank)
                 {
                     return true;
@@ -304,7 +292,9 @@ namespace DiaBlackJack.CoreLoop
             int cardId,
             out BlackjackCard card)
         {
-            if (participant.Hand.TryGetCard(cardId, out card) && card.IsFaceUp)
+            if (participant.Hand.TryGetCard(cardId, out card) &&
+                card.IsFaceUp &&
+                !participant.Hand.IsHiddenCard(cardId))
             {
                 return true;
             }

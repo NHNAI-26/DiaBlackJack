@@ -16,7 +16,8 @@ namespace DiaBlackJack.CoreLoop
             IReadOnlyList<EnemyActionCandidate> actionCandidates =
                 CreateActionCandidates(battle, ownCards);
             IReadOnlyList<PublicCardObservation> playerFaceUpCards =
-                CreatePublicCards(battle.Player.Hand.GetFaceUpCards());
+                CreatePublicCards(battle.Player.Hand.GetPublicCards());
+            int? knownPlayerHiddenCardRank = GetKnownPlayerHiddenCardRank(battle);
             IReadOnlyList<PublicCardObservation> playerDiscardedCards =
                 CreatePublicCards(battle.Player.Deck.GetDiscardedCards());
             IReadOnlyList<EnemyNumberInference> numberInferences =
@@ -44,7 +45,8 @@ namespace DiaBlackJack.CoreLoop
                 numberInferences,
                 battle.PendingEnemyCardEffect?.EffectKind,
                 decisionSeed,
-                battle.EnemyHiddenCardComparisonKnowledge);
+                battle.EnemyHiddenCardComparisonKnowledge,
+                knownPlayerHiddenCardRank);
         }
 
         internal static IReadOnlyList<EnemyNumberInference> CreateNumberInferences(
@@ -57,7 +59,7 @@ namespace DiaBlackJack.CoreLoop
 
             return CreateNumberInferences(
                 battle,
-                CreatePublicCards(battle.Player.Hand.GetFaceUpCards()),
+                CreatePublicCards(battle.Player.Hand.GetPublicCards()),
                 CreatePublicCards(battle.Player.Deck.GetDiscardedCards()));
         }
 
@@ -70,7 +72,8 @@ namespace DiaBlackJack.CoreLoop
                 battle.Player.Deck.GetKnownRankCounts(),
                 playerFaceUpCards,
                 playerDiscardedCards,
-                battle.Player.Hand.HiddenCardCount);
+                battle.Player.Hand.HiddenCardCount,
+                GetKnownPlayerHiddenCardRank(battle));
         }
 
         private static IReadOnlyList<EnemyOwnedCardObservation> CreateOwnCards(
@@ -86,10 +89,20 @@ namespace DiaBlackJack.CoreLoop
                     card.Rank,
                     card.IsFaceUp,
                     card.UseState,
-                    canUse));
+                    canUse,
+                    battle.Enemy.Hand.IsHiddenCard(card.Id)));
             }
 
             return cards.AsReadOnly();
+        }
+
+        private static int? GetKnownPlayerHiddenCardRank(CoreLoopBattle battle)
+        {
+            return battle.Player.Hand.TryGetSingleHiddenCard(
+                    out BlackjackCard hiddenCard) &&
+                hiddenCard.IsFaceUp
+                    ? hiddenCard.Rank
+                    : (int?)null;
         }
 
         private static IReadOnlyList<EnemyActionCandidate> CreateActionCandidates(
@@ -383,7 +396,8 @@ namespace DiaBlackJack.CoreLoop
             if (!participant.Hand.TryGetCard(
                     option.ContractCardId.Value,
                     out BlackjackCard card) ||
-                !card.IsFaceUp)
+                !card.IsFaceUp ||
+                participant.Hand.IsHiddenCard(option.ContractCardId.Value))
             {
                 throw new InvalidOperationException(
                     "Beelzebub discard option no longer identifies a face-up card.");
@@ -439,7 +453,8 @@ namespace DiaBlackJack.CoreLoop
 
             if (pendingEffect.ChoiceKind == CardEffectChoiceKind.DiscardOpponentFaceUpCard &&
                 battle.Player.Hand.TryGetCard(cardId.Value, out BlackjackCard opponentCard) &&
-                opponentCard.IsFaceUp)
+                opponentCard.IsFaceUp &&
+                !battle.Player.Hand.IsHiddenCard(cardId.Value))
             {
                 return opponentCard;
             }

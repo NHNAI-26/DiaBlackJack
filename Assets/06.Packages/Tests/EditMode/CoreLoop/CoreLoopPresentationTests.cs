@@ -136,6 +136,34 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CUM04_U05_RevealedHiddenCardsStayAtScreenLeftEdges()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 10, 2, 4 },
+                enemyRanks: new[] { 9, 7, 5 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            Assert.That(battle.Start(), Is.True);
+            BlackjackCard playerHiddenCard = battle.Player.Hand.Cards[1];
+            BlackjackCard enemyHiddenCard = battle.Enemy.Hand.Cards[1];
+            playerHiddenCard.Reveal();
+            enemyHiddenCard.Reveal();
+
+            GameSceneViewModel model = GameScenePresenter.Create(battle);
+
+            Assert.That(battle.Player.Hand.HiddenCardCount, Is.EqualTo(1));
+            Assert.That(battle.Enemy.Hand.HiddenCardCount, Is.EqualTo(1));
+            Assert.That(model.PlayerCards.Last().CardId, Is.EqualTo(playerHiddenCard.Id));
+            Assert.That(model.EnemyCards.Last().CardId, Is.EqualTo(enemyHiddenCard.Id));
+            Assert.That(model.PlayerCards.Last().IsFaceUp, Is.True);
+            Assert.That(model.EnemyCards.Last().IsFaceUp, Is.True);
+            Assert.That(model.EnemyCards.Last().RevealRank, Is.True);
+            Assert.That(model.EnemyCards.Last().Rank, Is.EqualTo(7));
+            Assert.That(battle.Player.VisibleHandValue.Total, Is.EqualTo(10));
+            Assert.That(battle.Enemy.VisibleHandValue.Total, Is.EqualTo(9));
+        }
+
+        [Test]
         public void BA04_PlayerTurnShowsFreeChangeAction()
         {
             CoreLoopBattle battle = CreateBattle(
@@ -280,12 +308,12 @@ namespace DiaBlackJack.CoreLoop.Tests
         public void CU05_PresenterShowsOnlyEffectChoicesWhileSelectionIsPending()
         {
             CoreLoopBattle battle = CreateBattle(
-                playerRanks: new[] { 2, 7 },
+                playerRanks: new[] { 7, 2 },
                 enemyRanks: new[] { 5, 7, 5 },
                 playerMaximumSoul: 12,
                 enemyMaximumSoul: 3);
             battle.Start();
-            battle.TryBeginPlayerCardUse(battle.Player.Hand.Cards[1].Id);
+            battle.TryBeginPlayerCardUse(battle.Player.Hand.Cards[0].Id);
 
             CoreLoopViewModel model = CoreLoopPresenter.Create(battle);
 
@@ -335,12 +363,12 @@ namespace DiaBlackJack.CoreLoop.Tests
         public void CU05_PresenterShowsUsedCardAndSafeRecentEffectResult()
         {
             CoreLoopBattle battle = CreateBattle(
-                playerRanks: new[] { 2, 7 },
+                playerRanks: new[] { 7, 2 },
                 enemyRanks: new[] { 5, 7, 5 },
                 playerMaximumSoul: 12,
                 enemyMaximumSoul: 3);
             battle.Start();
-            BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+            BlackjackCard sourceCard = battle.Player.Hand.Cards[0];
             battle.TryBeginPlayerCardUse(sourceCard.Id);
             battle.TryResolvePlayerCardChoice(6);
 
@@ -361,12 +389,12 @@ namespace DiaBlackJack.CoreLoop.Tests
         public void CU05_GameSceneCreatesRevolverAnimationCueWhenRevolverResolves()
         {
             CoreLoopBattle battle = CreateBattle(
-                playerRanks: new[] { 2, 7 },
+                playerRanks: new[] { 7, 2 },
                 enemyRanks: new[] { 5, 7, 5 },
                 playerMaximumSoul: 12,
                 enemyMaximumSoul: 3);
             battle.Start();
-            BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+            BlackjackCard sourceCard = battle.Player.Hand.Cards[0];
             battle.TryBeginPlayerCardUse(sourceCard.Id);
 
             GameSceneRevolverAnimationCue cue = null;

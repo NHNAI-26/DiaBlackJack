@@ -41,13 +41,13 @@ namespace DiaBlackJack.CoreLoop.Tests
             for (int hiddenRank = 1; hiddenRank <= 10; hiddenRank++)
             {
                 CoreLoopBattle battle = CreateBattle(
-                    new[] { 2, 7 },
+                    new[] { 7, 2 },
                     new[] { 5, hiddenRank, 5 },
                     playerMaximumSoul: 12,
                     enemyMaximumSoul: 3);
                 Assert.That(battle.Start(), Is.True);
 
-                BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+                BlackjackCard sourceCard = battle.Player.Hand.Cards[0];
                 Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
 
                 CoreLoopViewModel pendingModel = CoreLoopPresenter.Create(battle);
@@ -80,13 +80,13 @@ namespace DiaBlackJack.CoreLoop.Tests
             for (int iteration = 0; iteration < 10; iteration++)
             {
                 CoreLoopBattle battle = CreateBattle(
-                    new[] { 2, 5, 7, 8, 3, 4 },
+                    new[] { 5, 2, 7, 8, 3, 4 },
                     new[] { 10, 7, 5 },
                     playerMaximumSoul: 12,
                     enemyMaximumSoul: 3);
                 Assert.That(battle.Start(), Is.True);
 
-                BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+                BlackjackCard sourceCard = battle.Player.Hand.Cards[0];
                 Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
                 Assert.That(battle.PendingPlayerCardEffect.Options.Count, Is.EqualTo(3));
                 AssertDeckTotalIsConserved(battle.Player.Deck, iteration);
@@ -153,15 +153,15 @@ namespace DiaBlackJack.CoreLoop.Tests
             StageProgressionSession session = CreateRepeatingStageSession(
                 playerMaximumSoul: 2,
                 enemyMaximumSoul: 3,
-                playerRanks: new[] { 10, 5, 10, 2 },
+                playerRanks: new[] { 10, 3, 5, 10, 2 },
                 enemyRanks: new[] { 2, 3, 4, 5 });
             Assert.That(session.TryStartRun(), Is.True);
 
             for (int iteration = 0; iteration < 10; iteration++)
             {
                 CoreLoopBattle battle = session.Battle;
-                BlackjackCard sourceCard = battle.Player.Hand.Cards.Single(
-                    card => card.Rank == 5);
+                BlackjackCard sourceCard = battle.Player.Draw(faceUp: true);
+                Assert.That(sourceCard.Rank, Is.EqualTo(5));
                 Assert.That(sourceCard.UseState, Is.EqualTo(CardUseState.Available));
                 Assert.That(battle.Player.Soul.Current, Is.EqualTo(2));
 
@@ -232,8 +232,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(session.Battle, Is.Not.SameAs(previousBattle));
             Assert.That(session.Battle.Player.Soul.Current, Is.EqualTo(expectedSoul));
             Assert.That(
-                session.Battle.Player.Hand.Cards[1].UseState,
-                Is.EqualTo(CardUseState.Available));
+                session.Battle.Player.Hand.Cards.All(card =>
+                    card.UseState != CardUseState.Used &&
+                    card.UseState != CardUseState.Resolving),
+                Is.True);
         }
 
         private static void AssertPlayerDeckOwnership(

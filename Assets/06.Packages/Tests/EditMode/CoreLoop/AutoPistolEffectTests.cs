@@ -40,13 +40,36 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CUM04_U01_UsingHiddenCardRevealsItWithoutChangingItsRole()
+        {
+            CoreLoopBattle battle = CreateStartedBattle(
+                playerRanks: new[] { 5, 7 },
+                enemyRanks: new[] { 10, 6, 5 });
+            BlackjackCard hiddenSourceCard = battle.Player.Hand.Cards[1];
+
+            Assert.That(battle.TryBeginPlayerCardUse(hiddenSourceCard.Id), Is.True);
+
+            Assert.That(hiddenSourceCard.IsFaceUp, Is.True);
+            Assert.That(battle.Player.Hand.HiddenCardCount, Is.EqualTo(1));
+            Assert.That(battle.Player.Hand.IsHiddenCard(hiddenSourceCard.Id), Is.True);
+            Assert.That(battle.Player.VisibleHandValue.Total, Is.EqualTo(5));
+            Assert.That(battle.Player.HandValue.Total, Is.EqualTo(12));
+            Assert.That(
+                battle.Player.Hand.GetPublicCards().Select(card => card.Id),
+                Is.EqualTo(new[] { battle.Player.Hand.Cards[0].Id }));
+        }
+
+        [Test]
         public void CU03_U02_UseIsRejectedWhenEnemyHiddenCardIsMissing()
         {
             CoreLoopBattle battle = CreateStartedBattle(
                 playerRanks: new[] { 5, 7 },
                 enemyRanks: new[] { 10, 7, 5 });
             BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
-            battle.Enemy.Hand.Cards[1].Reveal();
+            Assert.That(
+                battle.Enemy.Hand.TryTakeSingleHiddenCard(out BlackjackCard removedHiddenCard),
+                Is.True);
+            Assert.That(removedHiddenCard, Is.Not.Null);
 
             bool accepted = battle.TryBeginPlayerCardUse(sourceCard.Id);
 
@@ -65,9 +88,9 @@ namespace DiaBlackJack.CoreLoop.Tests
         public void CU03_U03_IncorrectGuessConsumesCardAndRunsOneEnemyTurn()
         {
             CoreLoopBattle battle = CreateStartedBattle(
-                playerRanks: new[] { 5, 7 },
+                playerRanks: new[] { 7, 5 },
                 enemyRanks: new[] { 5, 7, 5 });
-            BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+            BlackjackCard sourceCard = battle.Player.Hand.Cards[0];
             BlackjackCard hiddenEnemyCard = battle.Enemy.Hand.Cards[1];
             int enemySoulBefore = battle.Enemy.Soul.Current;
 
@@ -141,9 +164,9 @@ namespace DiaBlackJack.CoreLoop.Tests
         public void CU03_U06_CoreLoopSessionUsesProductionAutoPistolHandler()
         {
             var session = new CoreLoopSession(() => CreateBattle(
-                playerRanks: new[] { 5, 7 },
+                playerRanks: new[] { 7, 5 },
                 enemyRanks: new[] { 5, 7, 5 }));
-            BlackjackCard sourceCard = session.Battle.Player.Hand.Cards[1];
+            BlackjackCard sourceCard = session.Battle.Player.Hand.Cards[0];
 
             bool began = session.TryBeginPlayerCardUse(sourceCard.Id);
             bool resolved = session.TryResolvePlayerCardChoice(6);

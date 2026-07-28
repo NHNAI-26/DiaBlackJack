@@ -2858,7 +2858,7 @@ namespace DiaBlackJack.CoreLoop
                     pending = CreateBelialTurnStartInteraction(
                         TakeNextDemonContractInteractionId(),
                         activeContract,
-                        GetOpponent(ownerSide).Hand.GetFaceUpCards());
+                        GetOpponent(ownerSide).Hand.GetPublicCards());
                     break;
                 default:
                     throw new InvalidOperationException(
@@ -3456,14 +3456,15 @@ namespace DiaBlackJack.CoreLoop
                 if (!owner.Hand.TryGetCard(
                         selectedCardId,
                         out BlackjackCard ownerCard) ||
-                    !ownerCard.IsFaceUp)
+                    !ownerCard.IsFaceUp ||
+                    owner.Hand.IsHiddenCard(selectedCardId))
                 {
                     return false;
                 }
 
                 resolution.OwnerCardId = selectedCardId;
                 IReadOnlyList<BlackjackCard> opponentCards =
-                    GetOpponent(ownerSide).Hand.GetFaceUpCards();
+                    GetOpponent(ownerSide).Hand.GetPublicCards();
                 PendingDemonContractInteraction next =
                     CreateBeelzebubDiscardInteraction(
                         TakeNextDemonContractInteractionId(),
@@ -3856,24 +3857,7 @@ namespace DiaBlackJack.CoreLoop
             BattleParticipant participant,
             out BlackjackCard hiddenCard)
         {
-            hiddenCard = null;
-            foreach (BlackjackCard card in participant.Hand.Cards)
-            {
-                if (card.IsFaceUp)
-                {
-                    continue;
-                }
-
-                if (hiddenCard != null)
-                {
-                    hiddenCard = null;
-                    return false;
-                }
-
-                hiddenCard = card;
-            }
-
-            return hiddenCard != null;
+            return participant.Hand.TryGetSingleHiddenCard(out hiddenCard);
         }
 
         private void SetPendingDemonContractInteraction(
@@ -4783,7 +4767,14 @@ namespace DiaBlackJack.CoreLoop
             for (int attempt = 0; attempt < 2; attempt++)
             {
                 observation = EnemyObservationFactory.Create(this, decisionSeed);
-                EnemyDecision decision = _enemyPolicy.Decide(observation);
+                EnemyDecision decision;
+                if (!EnemyPolicyDecisionSelector.TrySelectCertainAutoPistol(
+                        observation,
+                        out decision))
+                {
+                    decision = _enemyPolicy.Decide(observation);
+                }
+
                 if (EnemyDecisionValidator.CanExecute(observation, decision))
                 {
                     LastEnemyDecision = decision;
@@ -5205,7 +5196,7 @@ namespace DiaBlackJack.CoreLoop
                     resumeState,
                     resume);
             IReadOnlyList<BlackjackCard> ownerCards =
-                GetParticipant(ownerSide).Hand.GetFaceUpCards();
+                GetParticipant(ownerSide).Hand.GetPublicCards();
             PendingDemonContractInteraction pending =
                 CreateBeelzebubDiscardInteraction(
                     TakeNextDemonContractInteractionId(),

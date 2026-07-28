@@ -42,7 +42,7 @@ namespace DiaBlackJack.CoreLoop
             int total = 0;
             foreach (EnemyOwnedCardObservation card in observation.OwnCards)
             {
-                if (card.IsFaceUp)
+                if (card.IsFaceUp && !card.IsHiddenCard)
                 {
                     total += card.Rank;
                 }

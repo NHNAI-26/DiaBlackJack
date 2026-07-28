@@ -313,10 +313,10 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             var handler = new TestChoiceEffectHandler();
             var session = new CoreLoopSession(() => CreateBattle(
-                playerRanks: new[] { 5, 7 },
+                playerRanks: new[] { 7, 5 },
                 enemyRanks: new[] { 10, 7 },
                 handler: handler));
-            BlackjackCard sourceCard = session.Battle.Player.Hand.Cards[1];
+            BlackjackCard sourceCard = session.Battle.Player.Hand.Cards[0];
 
             bool began = session.TryBeginPlayerCardUse(sourceCard.Id);
             bool resolved = session.TryResolvePlayerCardChoice(ChoiceOptionId);
