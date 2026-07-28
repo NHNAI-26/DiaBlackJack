@@ -536,6 +536,10 @@ namespace DiaBlackJack.CoreLoop
             {
                 case DemonContractInteractionKind.ChooseContract:
                     return TryResolveContractChoice(pending, selectedOption);
+                case DemonContractInteractionKind.LuciferChooseAdditionalContract:
+                    return TryResolvePlayerLuciferContractChoice(
+                        pending,
+                        selectedOption);
                 case DemonContractInteractionKind.BelphegorTopCard:
                     return TryResolveBelphegorTopCard(pending, selectedOption);
                 case DemonContractInteractionKind.MammonApplyDie:
@@ -622,6 +626,13 @@ namespace DiaBlackJack.CoreLoop
                 case DemonContractInteractionKind.ChooseContract:
                     completedOwnerAction = true;
                     return TryResolveEnemyContractChoice(pending, selectedOption);
+                case DemonContractInteractionKind.LuciferChooseAdditionalContract:
+                    bool resolvedLucifer = TryResolveEnemyLuciferContractChoice(
+                        pending,
+                        selectedOption);
+                    completedOwnerAction = resolvedLucifer &&
+                        _pendingEnemyDemonContractInteraction == null;
+                    return resolvedLucifer;
                 case DemonContractInteractionKind.BelphegorTopCard:
                     completedOwnerAction = true;
                     return TryResolveEnemyBelphegorTopCard(pending, selectedOption);
@@ -701,8 +712,12 @@ namespace DiaBlackJack.CoreLoop
                 new EmptyDemonContractRuntimeState());
             _activeEnemyDemonContracts.Add(activeContract);
             ClearEnemyDemonContractInteraction();
+            int enemySoulBeforeActivation = Enemy.Soul.Current;
             activeContract.SetRuntimeState(
                 _demonContractResolver.Activate(this, activeContract));
+            RecordDemonContractActivationSoulCost(
+                enemySoulBeforeActivation,
+                Enemy.Soul.Current);
             RecordPublicAction(
                 CombatantSide.Enemy,
                 PublicCombatActionType.DemonContract,
@@ -752,6 +767,11 @@ namespace DiaBlackJack.CoreLoop
             if (enemyDepleted)
             {
                 EndBattleWithoutRound();
+                return true;
+            }
+
+            if (TryBeginLuciferAdditionalContractChoice(activeContract))
+            {
                 return true;
             }
 
@@ -962,8 +982,12 @@ namespace DiaBlackJack.CoreLoop
             _pendingPlayerDemonContractInteraction = null;
             _playerDemonContractCandidates = null;
 
+            int playerSoulBeforeActivation = Player.Soul.Current;
             activeContract.SetRuntimeState(
                 _demonContractResolver.Activate(this, activeContract));
+            RecordDemonContractActivationSoulCost(
+                playerSoulBeforeActivation,
+                Player.Soul.Current);
             bool playerDepleted = Player.Soul.IsDepleted;
             LastDemonContractResult = new DemonContractResult(
                 pending.InteractionId,
@@ -1012,10 +1036,326 @@ namespace DiaBlackJack.CoreLoop
                 return true;
             }
 
+            if (TryBeginLuciferAdditionalContractChoice(activeContract))
+            {
+                return true;
+            }
+
             State = CoreLoopState.PlayerTurn;
             RaiseStepped();
             CompletePlayerActionAndRunEnemyTurn();
             return true;
+        }
+
+        private bool TryBeginLuciferAdditionalContractChoice(
+            ActiveDemonContract luciferContract)
+        {
+            if (luciferContract == null ||
+                luciferContract.Kind != DemonContractKind.Lucifer ||
+                !(luciferContract.RuntimeState is LuciferRuntimeState) ||
+                GetParticipant(luciferContract.OwnerSide).Soul.IsDepleted)
+            {
+                return false;
+            }
+
+            DemonContractDeck deck = luciferContract.OwnerSide ==
+                CombatantSide.Player
+                    ? PlayerDemonDeck
+                    : EnemyDemonDeck;
+            if (!deck.CanTakeCandidates)
+            {
+                return false;
+            }
+
+            IReadOnlyList<DemonContractCard> candidates =
+                deck.TakeLuciferCandidates();
+            if (candidates.Count == 0 ||
+                candidates.Count > DemonContractDeck.LuciferCandidateCount)
+            {
+                throw new InvalidOperationException(
+                    "Validated Lucifer deck returned an invalid candidate count.");
+            }
+
+            PendingDemonContractInteraction interaction =
+                CreateLuciferContractChoiceInteraction(
+                    TakeNextDemonContractInteractionId(),
+                    luciferContract,
+                    candidates);
+            if (luciferContract.OwnerSide == CombatantSide.Player)
+            {
+                _playerDemonContractCandidates = candidates;
+                _pendingPlayerDemonContractInteraction = interaction;
+                State = CoreLoopState.PlayerResolvingDemonContract;
+            }
+            else
+            {
+                _enemyDemonContractCandidates = candidates;
+                _pendingEnemyDemonContractInteraction = interaction;
+            }
+
+            RaiseStepped();
+            return true;
+        }
+
+        private bool TryResolvePlayerLuciferContractChoice(
+            PendingDemonContractInteraction pending,
+            DemonContractOption selectedOption)
+        {
+            if (!IsValidLuciferChoice(
+                    CombatantSide.Player,
+                    pending,
+                    _playerDemonContractCandidates))
+            {
+                return false;
+            }
+
+            if (selectedOption.OptionId ==
+                LuciferDemonContractHandler.SkipAdditionalContractOptionId)
+            {
+                PlayerDemonDeck.Discard(_playerDemonContractCandidates);
+                ClearPlayerDemonContractInteraction();
+                State = CoreLoopState.PlayerTurn;
+                RaiseStepped();
+                CompletePlayerActionAndRunEnemyTurn();
+                return true;
+            }
+
+            if (!TryPartitionDemonContractCandidates(
+                    _playerDemonContractCandidates,
+                    selectedOption,
+                    out DemonContractCard selectedCard,
+                    out IReadOnlyList<DemonContractCard> discardedCards))
+            {
+                return false;
+            }
+
+            PlayerDemonDeck.Discard(discardedCards);
+            var activeContract = new ActiveDemonContract(
+                selectedCard,
+                CombatantSide.Player,
+                new EmptyDemonContractRuntimeState());
+            _activePlayerDemonContracts.Add(activeContract);
+            ClearPlayerDemonContractInteraction();
+
+            int playerSoulBeforeActivation = Player.Soul.Current;
+            activeContract.SetRuntimeState(
+                _demonContractResolver.Activate(this, activeContract));
+            RecordDemonContractActivationSoulCost(
+                playerSoulBeforeActivation,
+                Player.Soul.Current);
+
+            if (activeContract.RuntimeState is MammonRuntimeState mammonState &&
+                mammonState.CurrentDieValue == 6)
+            {
+                OwnerBustHandlingResult handling = HandlePlayerBust(() =>
+                {
+                    State = CoreLoopState.PlayerTurn;
+                    RaiseStepped();
+                    CompletePlayerActionAndRunEnemyTurn();
+                });
+                if (handling == OwnerBustHandlingResult.NotHandled)
+                {
+                    LastDemonContractEffectResult = new DemonContractEffectResult(
+                        triggered: true,
+                        bustedTarget: CombatantSide.Player,
+                        paidSoulCost: 0);
+                    NotifyNormalTurnEnded(CombatantSide.Player);
+                    CompleteRound(RoundResolver.ResolveContractEffectBust(
+                        RoundNumber,
+                        playerIsTarget: true));
+                    return true;
+                }
+
+                if (handling != OwnerBustHandlingResult.Prevented)
+                {
+                    return true;
+                }
+            }
+
+            if (State == CoreLoopState.BattleEnded)
+            {
+                return true;
+            }
+
+            if (Player.Soul.IsDepleted)
+            {
+                EndBattleWithoutRound();
+                return true;
+            }
+
+            if (TryBeginLuciferAdditionalContractChoice(activeContract))
+            {
+                return true;
+            }
+
+            State = CoreLoopState.PlayerTurn;
+            RaiseStepped();
+            CompletePlayerActionAndRunEnemyTurn();
+            return true;
+        }
+
+        private bool TryResolveEnemyLuciferContractChoice(
+            PendingDemonContractInteraction pending,
+            DemonContractOption selectedOption)
+        {
+            if (!IsValidLuciferChoice(
+                    CombatantSide.Enemy,
+                    pending,
+                    _enemyDemonContractCandidates))
+            {
+                return false;
+            }
+
+            if (selectedOption.OptionId ==
+                LuciferDemonContractHandler.SkipAdditionalContractOptionId)
+            {
+                EnemyDemonDeck.Discard(_enemyDemonContractCandidates);
+                ClearEnemyDemonContractInteraction();
+                RaiseStepped();
+                return true;
+            }
+
+            if (!TryPartitionDemonContractCandidates(
+                    _enemyDemonContractCandidates,
+                    selectedOption,
+                    out DemonContractCard selectedCard,
+                    out IReadOnlyList<DemonContractCard> discardedCards))
+            {
+                return false;
+            }
+
+            EnemyDemonDeck.Discard(discardedCards);
+            var activeContract = new ActiveDemonContract(
+                selectedCard,
+                CombatantSide.Enemy,
+                new EmptyDemonContractRuntimeState());
+            _activeEnemyDemonContracts.Add(activeContract);
+            ClearEnemyDemonContractInteraction();
+
+            int enemySoulBeforeActivation = Enemy.Soul.Current;
+            activeContract.SetRuntimeState(
+                _demonContractResolver.Activate(this, activeContract));
+            RecordDemonContractActivationSoulCost(
+                enemySoulBeforeActivation,
+                Enemy.Soul.Current);
+            RecordPublicAction(
+                CombatantSide.Enemy,
+                PublicCombatActionType.DemonContract,
+                activeContract.Definition.Key);
+
+            if (activeContract.RuntimeState is MammonRuntimeState mammonState &&
+                mammonState.CurrentDieValue == 6)
+            {
+                OwnerBustHandlingResult handling = HandleEnemyBust(() =>
+                {
+                    State = CoreLoopState.EnemyTurn;
+                    RaiseStepped();
+                });
+                if (handling == OwnerBustHandlingResult.NotHandled)
+                {
+                    LastDemonContractEffectResult = new DemonContractEffectResult(
+                        triggered: true,
+                        bustedTarget: CombatantSide.Enemy,
+                        paidSoulCost: 0);
+                    NotifyNormalTurnEnded(CombatantSide.Enemy);
+                    CompleteRound(RoundResolver.ResolveContractEffectBust(
+                        RoundNumber,
+                        playerIsTarget: false));
+                    return true;
+                }
+
+                if (handling != OwnerBustHandlingResult.Prevented)
+                {
+                    return true;
+                }
+            }
+
+            if (State == CoreLoopState.BattleEnded)
+            {
+                return true;
+            }
+
+            if (Enemy.Soul.IsDepleted)
+            {
+                EndBattleWithoutRound();
+                return true;
+            }
+
+            if (TryBeginLuciferAdditionalContractChoice(activeContract))
+            {
+                return true;
+            }
+
+            State = CoreLoopState.EnemyTurn;
+            RaiseStepped();
+            return true;
+        }
+
+        private bool IsValidLuciferChoice(
+            CombatantSide ownerSide,
+            PendingDemonContractInteraction pending,
+            IReadOnlyList<DemonContractCard> candidates)
+        {
+            return pending.Kind ==
+                    DemonContractInteractionKind.LuciferChooseAdditionalContract &&
+                pending.ContractKind == DemonContractKind.Lucifer &&
+                pending.SourceContractCardId.HasValue &&
+                candidates != null &&
+                TryGetActiveDemonContract(
+                    ownerSide,
+                    pending.SourceContractCardId.Value,
+                    DemonContractKind.Lucifer,
+                    out ActiveDemonContract sourceContract) &&
+                sourceContract.RuntimeState is LuciferRuntimeState;
+        }
+
+        private static bool TryPartitionDemonContractCandidates(
+            IReadOnlyList<DemonContractCard> candidates,
+            DemonContractOption selectedOption,
+            out DemonContractCard selectedCard,
+            out IReadOnlyList<DemonContractCard> discardedCards)
+        {
+            selectedCard = null;
+            var discarded = new List<DemonContractCard>(
+                Math.Max(0, candidates.Count - 1));
+            if (!selectedOption.ContractCardId.HasValue)
+            {
+                discardedCards = discarded.AsReadOnly();
+                return false;
+            }
+
+            foreach (DemonContractCard candidate in candidates)
+            {
+                if (candidate.Id == selectedOption.ContractCardId.Value)
+                {
+                    selectedCard = candidate;
+                }
+                else
+                {
+                    discarded.Add(candidate);
+                }
+            }
+
+            discardedCards = discarded.AsReadOnly();
+            return selectedCard != null && discarded.Count == candidates.Count - 1;
+        }
+
+        private void RecordDemonContractActivationSoulCost(
+            int ownerSoulBeforeActivation,
+            int ownerSoulAfterActivation)
+        {
+            int paidSoulCost = ownerSoulBeforeActivation -
+                ownerSoulAfterActivation;
+            if (paidSoulCost <= 0)
+            {
+                return;
+            }
+
+            LastDemonContractEffectResult = new DemonContractEffectResult(
+                triggered: true,
+                bustedTarget: null,
+                paidSoulCost);
+            RaiseStepped();
         }
 
         public bool TryPlayerHit()
@@ -1397,6 +1737,39 @@ namespace DiaBlackJack.CoreLoop
                 contractKind: null,
                 options,
                 "계약할 악마를 선택하십시오.");
+        }
+
+        private static PendingDemonContractInteraction
+            CreateLuciferContractChoiceInteraction(
+                int interactionId,
+                ActiveDemonContract luciferContract,
+                IReadOnlyList<DemonContractCard> candidates)
+        {
+            var options = new List<DemonContractOption>(candidates.Count + 1);
+            for (int i = 0; i < candidates.Count; i++)
+            {
+                DemonContractCard candidate = candidates[i];
+                options.Add(new DemonContractOption(
+                    i,
+                    candidate.Id,
+                    numericValue: null,
+                    candidate.Definition.DisplayName,
+                    candidate.DefinitionKey));
+            }
+
+            options.Add(new DemonContractOption(
+                LuciferDemonContractHandler.SkipAdditionalContractOptionId,
+                contractCardId: null,
+                numericValue: null,
+                "추가 계약하지 않음"));
+
+            return new PendingDemonContractInteraction(
+                interactionId,
+                DemonContractInteractionKind.LuciferChooseAdditionalContract,
+                DemonContractKind.Lucifer,
+                options,
+                "루시퍼로 추가 계약할 악마를 선택하거나 건너뛰십시오.",
+                luciferContract.SourceCardId);
         }
 
         private static PendingDemonContractInteraction CreateBelphegorTopCardInteraction(

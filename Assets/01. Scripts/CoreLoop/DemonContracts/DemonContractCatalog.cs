@@ -17,6 +17,7 @@ namespace DiaBlackJack.CoreLoop
         public const string PaimonKey = "paimon";
         public const string BelialKey = "belial";
         public const string BaphometKey = "baphomet";
+        public const string LuciferKey = "lucifer";
 
         private static readonly DemonContractCatalog DefaultCatalog =
             new DemonContractCatalog(CreateDefaultDefinitions());
@@ -167,6 +168,13 @@ namespace DiaBlackJack.CoreLoop
                     baseSoulCost,
                     "양쪽 덱에 전투 한정 오망성을 섞고 소진된 쪽을 버스트시킨다.",
                     "계약 시 영혼 1, 자신의 오망성 3장 소진 시 자신 버스트"),
+                new DemonContractDefinition(
+                    LuciferKey,
+                    "루시퍼",
+                    DemonContractKind.Lucifer,
+                    baseSoulCost,
+                    "현재 악마 덱의 후보 중 하나와 추가로 계약할 수 있다.",
+                    "계약 시 영혼 1, 개별 대가 영혼 1과 선택한 악마의 대가"),
             };
         }
     }

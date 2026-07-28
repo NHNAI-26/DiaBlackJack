@@ -288,17 +288,31 @@ namespace DiaBlackJack.CoreLoop
             {
                 definitionKey = DemonContractCatalog.BelialKey;
             }
+            else if (pending.Kind == DemonContractInteractionKind
+                .LuciferChooseAdditionalContract)
+            {
+                definitionKey = DemonContractCatalog.LuciferKey;
+            }
 
             foreach (DemonContractOption option in pending.Options)
             {
                 DemonContractKind? contractKind = pending.ContractKind;
                 string optionDefinitionKey = definitionKey;
-                if (pending.Kind == DemonContractInteractionKind.ChooseContract)
+                if (pending.Kind == DemonContractInteractionKind.ChooseContract ||
+                    (pending.Kind == DemonContractInteractionKind
+                            .LuciferChooseAdditionalContract &&
+                        option.ContractDefinitionKey != null))
                 {
                     DemonContractDefinition definition = DemonContractCatalog.Default
                         .GetByKey(option.ContractDefinitionKey);
                     contractKind = definition.Kind;
                     optionDefinitionKey = definition.Key;
+                }
+                else if (pending.Kind == DemonContractInteractionKind
+                    .LuciferChooseAdditionalContract)
+                {
+                    contractKind = null;
+                    optionDefinitionKey = null;
                 }
 
                 int? optionNumericValue = privateNumericValue;

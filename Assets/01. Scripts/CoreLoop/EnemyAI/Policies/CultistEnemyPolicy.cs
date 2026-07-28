@@ -78,6 +78,13 @@ namespace DiaBlackJack.CoreLoop
             {
                 case DemonContractInteractionKind.ChooseContract:
                     return EvaluateContractChoice(observation, candidate);
+                case DemonContractInteractionKind.LuciferChooseAdditionalContract:
+                    return candidate.DemonContractKind.HasValue
+                        ? EvaluateContractChoice(observation, candidate)
+                        : Score(
+                            candidate,
+                            0,
+                            "cultist-skip-unhelpful-lucifer-contract");
                 case DemonContractInteractionKind.BelphegorTopCard:
                     return EvaluateBelphegorChoice(observation, candidate);
                 case DemonContractInteractionKind.MammonApplyDie:
@@ -204,6 +211,15 @@ namespace DiaBlackJack.CoreLoop
                         candidate,
                         PreferredContractScore,
                         "cultist-select-baphomet");
+                case DemonContractKind.Lucifer:
+                    bool survivesLuciferCost = observation.EnemySoul.Current >
+                        LuciferDemonContractHandler.IndividualSoulCost;
+                    return Score(
+                        candidate,
+                        survivesLuciferCost ? 980 : FatalContractScore,
+                        survivesLuciferCost
+                            ? "cultist-select-survivable-lucifer"
+                            : "cultist-avoid-fatal-lucifer");
                 default:
                     throw new InvalidOperationException(
                         "Cultist received an unknown demon contract choice.");

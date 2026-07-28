@@ -12,6 +12,7 @@ namespace DiaBlackJack.CoreLoop
         Azazel,
         Paimon,
         Belial,
-        Baphomet
+        Baphomet,
+        Lucifer
     }
 }

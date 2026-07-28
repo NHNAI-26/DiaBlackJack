@@ -176,9 +176,11 @@ namespace DiaBlackJack.CoreLoop.Tests
             for (int seed = 0; seed < 50; seed++)
             {
                 Assert.That(
-                    StartCultistContract(seed).ActiveEnemyDemonContracts.Single().Kind,
+                    StartCultistContract(seed).LastDemonContractResult
+                        .ActiveContract.Kind,
                     Is.EqualTo(
-                        StartCultistContract(seed).ActiveEnemyDemonContracts.Single().Kind));
+                        StartCultistContract(seed).LastDemonContractResult
+                            .ActiveContract.Kind));
             }
         }
 
@@ -195,8 +197,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             {
                 CoreLoopBattle battle = StartCultistContract(seed);
                 Assert.That(battle.UsedEnemyBaseDemonContractCount, Is.EqualTo(1));
-                Assert.That(battle.ActiveEnemyDemonContracts.Count, Is.EqualTo(1));
-                counts[battle.ActiveEnemyDemonContracts[0].Kind]++;
+                Assert.That(battle.ActiveEnemyDemonContracts.Count,
+                    Is.InRange(1, 2));
+                counts[battle.LastDemonContractResult.ActiveContract.Kind]++;
             }
 
             TestContext.WriteLine(
@@ -221,6 +224,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(counts[DemonContractKind.Belial],
                 Is.InRange(1, 100));
             Assert.That(counts[DemonContractKind.Baphomet],
+                Is.InRange(1, 100));
+            Assert.That(counts[DemonContractKind.Lucifer],
                 Is.InRange(1, 100));
             Assert.That(counts.Values.Sum(), Is.EqualTo(SimulationCount));
         }

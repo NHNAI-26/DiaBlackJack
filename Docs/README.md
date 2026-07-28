@@ -10,8 +10,8 @@
 
 | 문서 | 용도 | 상태 |
 | --- | --- | --- |
-| [rule.md](./rule.md) | 게임 원본 규칙 | 바알제붑 양측 공개 카드 직접 선택 정정 v1.0 |
-| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | DC-R04 4/5 바포메트 소진 판정 반영 v0.11 |
+| [rule.md](./rule.md) | 게임 원본 규칙 | 루시퍼 후보 수명·건너뛰기·중첩 기준 반영 v1.1 |
+| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | DC-R04 5/5 루시퍼 추가 계약 반영 v0.12 |
 | [core-loop-design.md](./core-loop-design.md) | 최소 코어 루프 기획 범위 | 4단계 완료 기준안 v0.1 |
 | [core-loop-development-spec.md](./core-loop-development-spec.md) | 코어 루프 구조·상태·검증 명세 | 4단계 검증 완료 v0.1 |
 | [core-loop-implementation-plan.md](./core-loop-implementation-plan.md) | 코어 루프 작업 순서·담당·일정·완료 증거 | 전체 완료 v0.1 |
@@ -35,10 +35,10 @@
 | [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | 새 키·런 변환·`prototype-v2` 반영 v0.3 |
 | [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 이력과 AC-RV00~RV01 개정 계획 | AC-RV01 전용 11/11·전체 522/522 완료 v0.3 |
 | [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | 두 전투 화면·Console 0까지 완료 v0.3 |
-| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | DC-R04 4/5 완료 v1.11 |
-| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | 바포메트 카드 수명·소진 경계 반영 v1.10 |
-| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 이력과 DC-R00~R05 개정 계획 | DC-R04 4/5 완료·루시퍼 다음 v1.10 |
-| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | 바포메트 7/7·CoreLoop 410/410·전체 599/599 v1.10 |
+| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | DC-R04 5/5 완료·DC-R05 대기 v1.12 |
+| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | 루시퍼 추가 계약·연쇄 경계 반영 v1.11 |
+| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 이력과 DC-R00~R05 개정 계획 | DC-R04 완료·DC-R05 다음 v1.11 |
+| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | 루시퍼 10/10·CoreLoop 421/421·전체 610/610 v1.11 |
 | [battle-reward-design.md](./battle-reward-design.md) | 일반·엘리트·보스 전투 보상 규칙과 프로토타입 카드 풀 | RW-00~RW-05 완료 v0.1 |
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW-05 최종 검증 완료 v0.1 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
@@ -74,6 +74,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-28 | 이천서 | DC-R04 5/5 루시퍼의 현재 악마 덱 최대 5장·건너뛰기·미선택 폐기·별도 계약 인스턴스·복합 대가·재귀 연쇄·광신도 공개 선택을 구현해 전용 10/10·CoreLoop 421/421·전체 EditMode 610/610으로 검증; GameScene·씬·프리팹·Packages·HONG RunFlow/Shop·Shim0Hwan 아트·외부 에셋 무변경 |
 | 2026-07-28 | 이천서 | DC-R04 4/5 바포메트 상대 1~5·소유자 1~3 오망성, 드로우 더미 소진·전투 위치 회수·가용 덱 초기화·재삽입·기존 버스트 경계와 파이몬/벨리알 중첩을 구현해 전용 7/7·광신도 9/9·CoreLoop 410/410·전체 EditMode 599/599로 검증; GameScene·씬·프리팹·Packages·HONG RunFlow/Shop·Shim0Hwan 아트·외부 에셋 무변경 |
 | 2026-07-28 | 이천서 | DC-R04 3/5 파이몬의 선택 추방·단일 임시 승자 대가와 벨리알의 공개 카드 탈취·즉시 재사용·스탠드 취소·라운드 영혼 대가·전투 종료 소유권 복구를 구현해 전용 10/10·광신도 9/9·CoreLoop 402/402·전체 EditMode 591/591로 검증; GameScene·씬·프리팹·Packages·HONG RunFlow/Shop·Shim0Hwan 아트·외부 에셋 무변경 |
 | 2026-07-28 | 이천서 | 바알제붑을 양측 공개 카드 직접 선택으로 정정하고 DC-R04 2/5 아스모데우스 차례 시작 강제 히트 선택·6 이하 카드 제한, 아자젤 공개 수동 카드 재활성화·동일 숫자 선행 버스트를 플레이어·적 대칭으로 구현해 바알제붑 8/8·신규 11/11·400시드·100자동전투·CoreLoop 390/390·전체 EditMode 579/579로 검증; GameScene·씬·프리팹·Packages·외부 에셋 무변경 |

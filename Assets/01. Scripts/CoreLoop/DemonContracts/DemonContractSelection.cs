@@ -28,7 +28,8 @@ namespace DiaBlackJack.CoreLoop
         AsmodeusForceOpponentHit,
         PaimonChooseDeck,
         PaimonChooseExileCard,
-        BelialChooseOpponentCard
+        BelialChooseOpponentCard,
+        LuciferChooseAdditionalContract
     }
 
     public sealed class DemonContractAvailability
@@ -229,6 +230,64 @@ namespace DiaBlackJack.CoreLoop
                             "Contract choice options require only a physical card id.",
                             nameof(options));
                     }
+                }
+            }
+            else if (kind ==
+                DemonContractInteractionKind.LuciferChooseAdditionalContract)
+            {
+                if (contractKind != DemonContractKind.Lucifer ||
+                    !sourceContractCardId.HasValue ||
+                    copiedOptions.Count < 2 ||
+                    copiedOptions.Count >
+                        DemonContractDeck.LuciferCandidateCount + 1)
+                {
+                    throw new ArgumentException(
+                        "Lucifer choice requires its source, one to five candidates, and skip.",
+                        nameof(options));
+                }
+
+                bool hasSkip = false;
+                int candidateCount = 0;
+                foreach (DemonContractOption option in copiedOptions)
+                {
+                    bool isSkip = option.OptionId ==
+                        LuciferDemonContractHandler
+                            .SkipAdditionalContractOptionId;
+                    if (isSkip)
+                    {
+                        if (hasSkip || option.ContractCardId.HasValue ||
+                            option.NumericValue.HasValue ||
+                            option.ContractDefinitionKey != null)
+                        {
+                            throw new ArgumentException(
+                                "Lucifer choice requires exactly one data-free skip option.",
+                                nameof(options));
+                        }
+
+                        hasSkip = true;
+                        continue;
+                    }
+
+                    if (option.OptionId >=
+                            DemonContractDeck.LuciferCandidateCount ||
+                        !option.ContractCardId.HasValue ||
+                        option.NumericValue.HasValue ||
+                        string.IsNullOrEmpty(option.ContractDefinitionKey))
+                    {
+                        throw new ArgumentException(
+                            "Lucifer contract candidates require a physical card and definition.",
+                            nameof(options));
+                    }
+
+                    candidateCount++;
+                }
+
+                if (!hasSkip || candidateCount < 1 ||
+                    candidateCount > DemonContractDeck.LuciferCandidateCount)
+                {
+                    throw new ArgumentException(
+                        "Lucifer choice has an invalid candidate or skip count.",
+                        nameof(options));
                 }
             }
             else if (kind == DemonContractInteractionKind.BelphegorTopCard)

@@ -198,8 +198,12 @@ namespace DiaBlackJack.CoreLoop.UI
             var choices = new List<DemonContractChoiceViewModel>(pending.Options.Count);
             foreach (DemonContractOption option in pending.Options)
             {
-                DemonContractDefinition definition = pending.Kind ==
-                    DemonContractInteractionKind.ChooseContract
+                bool isContractChoice = pending.Kind ==
+                        DemonContractInteractionKind.ChooseContract ||
+                    pending.Kind == DemonContractInteractionKind
+                        .LuciferChooseAdditionalContract;
+                DemonContractDefinition definition = isContractChoice &&
+                    option.ContractDefinitionKey != null
                         ? FindDefinition(option)
                         : null;
                 choices.Add(new DemonContractChoiceViewModel(

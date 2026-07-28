@@ -365,7 +365,8 @@ namespace DiaBlackJack.CoreLoop
                 new AzazelDemonContractHandler(),
                 new PaimonDemonContractHandler(),
                 new BelialDemonContractHandler(),
-                new BaphometDemonContractHandler());
+                new BaphometDemonContractHandler(),
+                new LuciferDemonContractHandler());
         }
 
         public bool CanPlayerStand(
