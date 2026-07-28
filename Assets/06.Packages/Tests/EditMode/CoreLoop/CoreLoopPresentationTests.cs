@@ -164,6 +164,117 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CUM05_U01_EnemyHoverInfoIsAvailableOnlyAfterCardIsRevealed()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 10, 2 },
+                enemyRanks: new[] { 7, 6 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            Assert.That(battle.Start(), Is.True);
+            BlackjackCard faceUpCard = battle.Enemy.Hand.Cards[0];
+            BlackjackCard hiddenCard = battle.Enemy.Hand.Cards[1];
+
+            GameSceneViewModel initialModel = GameScenePresenter.Create(battle);
+            GameSceneCardViewModel visibleCardModel = initialModel.EnemyCards.Single(
+                card => card.CardId == faceUpCard.Id);
+            GameSceneCardViewModel hiddenCardModel = initialModel.EnemyCards.Single(
+                card => card.CardId == hiddenCard.Id);
+
+            Assert.That(visibleCardModel.RevealRank, Is.True);
+            Assert.That(visibleCardModel.DisplayName, Is.EqualTo("리볼버"));
+            Assert.That(
+                visibleCardModel.AbilityDescription,
+                Is.EqualTo("적 비공개 숫자 맞히면 적 즉사"));
+            Assert.That(visibleCardModel.ShowHoverBadgeWhenUnavailable, Is.True);
+            Assert.That(hiddenCardModel.RevealRank, Is.False);
+            Assert.That(hiddenCardModel.Rank, Is.Zero);
+            Assert.That(hiddenCardModel.DisplayName, Is.Empty);
+            Assert.That(hiddenCardModel.AbilityDescription, Is.Empty);
+            Assert.That(hiddenCardModel.ShowHoverBadgeWhenUnavailable, Is.False);
+
+            hiddenCard.Reveal();
+            GameSceneCardViewModel revealedHiddenCardModel =
+                GameScenePresenter.Create(battle).EnemyCards.Single(
+                    card => card.CardId == hiddenCard.Id);
+
+            Assert.That(revealedHiddenCardModel.RevealRank, Is.True);
+            Assert.That(revealedHiddenCardModel.DisplayName, Is.EqualTo("위협용 해머"));
+            Assert.That(
+                revealedHiddenCardModel.AbilityDescription,
+                Is.EqualTo("적 공개 카드 1장 제거; 스탠드면 비공개 교체"));
+            Assert.That(revealedHiddenCardModel.ShowHoverBadgeWhenUnavailable, Is.True);
+        }
+
+        [Test]
+        public void CUM05_U02_CardViewShowsPublicEnemyInfoWithoutHiddenCardLeak()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 10, 2 },
+                enemyRanks: new[] { 7, 6 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            Assert.That(battle.Start(), Is.True);
+            GameSceneViewModel model = GameScenePresenter.Create(battle);
+            GameSceneCardViewModel visibleCardModel = model.EnemyCards.Single(
+                card => card.RevealRank);
+            GameSceneCardViewModel hiddenCardModel = model.EnemyCards.Single(
+                card => !card.RevealRank);
+            GameObject gameObject = new GameObject("Enemy Hover Card Test");
+            CardView cardView = gameObject.AddComponent<CardView>();
+
+            try
+            {
+                cardView.Bind(visibleCardModel);
+                cardView.SetHovered(true);
+
+                Assert.That(cardView.ShouldShowHoverBadge, Is.True);
+                Assert.That(
+                    cardView.HoverBadgeText,
+                    Is.EqualTo("7 리볼버\n적 비공개 숫자 맞히면 적 즉사"));
+
+                cardView.Bind(hiddenCardModel);
+                cardView.SetHovered(true);
+
+                Assert.That(cardView.ShouldShowHoverBadge, Is.False);
+                Assert.That(cardView.HoverBadgeText, Is.Empty);
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+            }
+        }
+
+        [Test]
+        public void CUM05_U03_PublicEnemyAutomaticCardIncludesEffectDescription()
+        {
+            var enemyCards = new List<BlackjackCard>
+            {
+                new BlackjackCard(0, 7),
+                new BlackjackCard(1, 6),
+                new BlackjackCard(
+                    2,
+                    CardDefinitionCatalog.GetByKey(CardDefinitionCatalog.PoisonKey)),
+            };
+            CoreLoopBattle battle = new CoreLoopBattle(
+                CreateDeck(new[] { 10, 2 }),
+                BlackjackDeck.CreateInDrawOrder(enemyCards),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            Assert.That(battle.Start(), Is.True);
+            BlackjackCard poison = battle.Enemy.Draw(faceUp: true);
+
+            GameSceneCardViewModel poisonModel = GameScenePresenter.Create(battle)
+                .EnemyCards.Single(card => card.CardId == poison.Id);
+
+            Assert.That(poisonModel.DisplayName, Is.EqualTo("독극물"));
+            Assert.That(
+                poisonModel.AbilityDescription,
+                Is.EqualTo("즉시 스탠드 또는 영혼 3 지불; 지불 후 승리 시 영혼 5 회복"));
+            Assert.That(poisonModel.ShowHoverBadgeWhenUnavailable, Is.True);
+        }
+
+        [Test]
         public void BA04_PlayerTurnShowsFreeChangeAction()
         {
             CoreLoopBattle battle = CreateBattle(

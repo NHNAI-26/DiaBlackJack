@@ -717,6 +717,7 @@ AI 대화 원문을 그대로 싣지 말고 목적, 핵심 지시, 결과, 사�
 
 | 날짜 | 담당자 | AI 활용 작업 | 산출물 | 사람의 검토 상태 |
 | --- | --- | --- | --- | --- |
+| 2026-07-29 | 이천서 | CU-M05 적 공개 카드 호버 정보 결손 진단·정보 은닉 회귀·구현·전체 검증 | `GameScenePresentation.cs`, `CardView.cs`, CUM05 테스트 3건과 카드 사용 문서 4종·공통 기록 | AI는 포인터 레이캐스트·표시 모델·HUD 배지 경로 추적, 실패 회귀 작성, 공개 수동·자동 효과 정보만 투영하는 코드와 Unity MCP 검증을 보조함. 신규 3/3·전체 EditMode 622/622·GameScene 런타임 HUD 배지 화면, 게임 코드 오류 0; 운영체제 물리 마우스 이동 자동 주입은 미검증이고 씬·프리팹·Packages·외부 에셋·오픈소스는 변경하지 않았으며 최종 승인 책임은 이천서에게 있음 |
 | 2026-07-28 | 이천서 | DC-R04 4/5 바포메트 오망성 수명·소진·덱 초기화·재삽입·버스트 연속 처리와 전체 회귀 검증 | 바포메트 처리기·임시 카드 상태·덱 API·CoreLoop·광신도 정책, `BaphometDemonContractTests.cs`, 계약 문서 4종과 공통 기록 | AI는 원문 `제거·소진·초기화` 모호성 분석, DC-D15 프로토타입 결정, 파이몬/벨리알 중첩·테스트·코드 초안, Unity MCP 검증과 기록을 보조함. 전용 7/7·광신도 9/9·CoreLoop 410/410·전체 599/599를 확인함. 외부 에셋·외부 코드·오픈소스·새 패키지와 GameScene·씬·프리팹·Packages·HONG RunFlow/Shop·Shim0Hwan 아트는 변경하지 않았고 최종 승인 책임은 이천서에게 있음 |
 | 2026-07-29 | 이천서 | CU-M04·EP-R02 비공개 역할/앞뒷면 분리와 공개된 비공개 카드 리볼버 확정 대응 | `BlackjackHand`, 전투·카드 효과·적 관측/정책·GameScene 표시 모델, CUM04 테스트와 규칙/카드/적 프로필 문서·노션 | AI는 충돌 탐색, 역할 모델·공정성 경계 설계, 코드·테스트·문서/노션 개정과 Unity MCP 검증을 보조함. 전용 5/5·CoreLoop 430/430·StageProgression 189/189·전체 EditMode 619/619; 씬·프리팹·Packages·외부 에셋·오픈소스는 변경하지 않았고 최종 기획·코드 승인 책임은 이천서에게 있음 |
 | 2026-07-28 | 이천서 | DC-R04 3/5 파이몬·벨리알 카드 수명·소유권·적 대칭 구현과 전체 회귀 검증 | 두 계약 처리기, `DemonContractCardState`, CoreLoop·Resolver·적 AI, `PaimonAndBelialDemonContractTests.cs`, 계약 문서 4종과 공통 기록 | AI는 파이몬 연쇄 승패의 프로토타입 결정, 양측 카드 ID 충돌과 원소유권 복구 분석, 코드·테스트 초안, Unity MCP 검증과 기록을 보조함. 전용 10/10·광신도 9/9·CoreLoop 402/402·전체 EditMode 591/591을 확인함. 외부 에셋·외부 코드·오픈소스·새 패키지와 GameScene·씬·프리팹·Packages·HONG RunFlow/Shop·Shim0Hwan 아트는 변경하지 않았고 최종 승인 책임은 이천서에게 있음 |
@@ -1341,6 +1342,14 @@ AI는 `StageProgressionRuntime`이 이미 빈 악마 덱·시작 선택 생성�
 구현은 `BlackjackHand`의 비공개 역할 ID 집합을 `BlackjackCard.IsFaceUp`과 분리하고, `BattleParticipant.VisibleHandValue`와 카드 효과 대상이 역할 기반 API를 사용하게 했다. `EnemyObservationFactory`는 앞면 공개된 비공개 숫자만 nullable `KnownPlayerHiddenCardRank`로 복사하고 `EnemyNumberInferenceCalculator`가 이를 100% 분포로 만든다. `EnemyPolicyDecisionSelector.TrySelectCertainAutoPistol`은 모든 적 프로필의 성향·점수·확률 임계값보다 먼저 합법적인 리볼버 시작 또는 정확한 숫자 선택을 고른다. 아직 뒷면인 숫자·카드 ID·덱 순서는 계속 관측 경계를 넘지 않는다.
 
 Unity MCP에서 CUM04 전용 5/5(job `8e96f70ca24747068bdf1988e9556387`), CoreLoop 430/430(job `4604a8f2b4e24685bed8785c8c900c73`), StageProgression 189/189(job `a163bd6627764b1bbe0127b20d5a39b0`)과 전체 EditMode 619/619을 확인했다. 씬·프리팹·Packages·외부 코드·에셋·오픈소스는 변경하지 않았다. 규칙·AI 행동·표시의 최종 승인 책임자는 이천서다.
+
+### 3.36 CU-M05 적 공개 카드 호버 정보
+
+이천서는 GameScene에서 적 카드를 호버해도 카드 정보가 나타나지 않는 문제를 수정하도록 지시했다. AI는 기존 포인터 레이캐스트가 적 `CardView`까지 정상 도달하고 확대도 적용하지만, `GameScenePresenter.CreateEnemyCards`가 적 카드의 효과 설명을 비우고 `ShowHoverBadgeWhenUnavailable`을 허용하지 않아 `CardView.ShouldShowHoverBadge`가 거짓이 되는 경로를 확인했다.
+
+먼저 공개 리볼버의 빈 효과 설명과 비활성 배지, 뒷면 적 카드의 정보 차단, 공개된 비공개 역할 카드의 호버 허용을 회귀로 고정했다. 구현은 앞면 공개된 적 카드에만 공용 수동·자동 효과 설명과 배지 허용값을 투영하고, `CardView`가 `RevealRank == false`인 모델의 배지 문자열을 만들지 않게 했다. 규칙·AI·카드 소유권·씬 직렬화는 변경하지 않았다.
+
+Unity MCP에서 신규 3/3(job `a4eb4c8cfde74a4d906bc24917f23e8d`)과 전체 EditMode 622/622(job `736e916c34794e2eb9fe9f3799c87354`)을 확인했다. `GameScene` Play Mode에서는 공개 적 카드 ID 5를 기존 런타임 호버 라우팅으로 전달해 `3 기본 카드` HUD 배지의 활성·화면 표시를 확인했다. 운영체제 물리 마우스 이동 자동 주입은 미검증이다. Console 1건은 Test Framework 결과 파일 저장 안내이며 컴파일·게임 코드 오류는 0이고 외부 에셋·오픈소스·새 패키지·씬·프리팹은 변경하지 않았다. 최종 기획·코드 승인 책임자는 이천서다.
 
 ## 4. 생성형 AI 산출물 관리
 

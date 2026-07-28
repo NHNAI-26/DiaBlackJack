@@ -8,10 +8,10 @@ namespace DiaBlackJack.GameScene
     /// Component on the card prefab root. <see cref="front"/> / <see cref="back"/> toggle by whether
     /// the viewer may see the rank; the face-up sprite is swapped by rank. Hover feedback is driven
     /// by <see cref="SetHovered"/> (called from
-    /// <c>GameManager</c>'s pointer raycast): any hovered card scales up, and a hovered *usable* card
-    /// also glows and exposes its ability label and screen position to the shared HUD badge. Usability is
-    /// orientation-independent — a face-down card can be usable — so the badge/glow are gated on
-    /// <see cref="CanUse"/> only, and the glow tints whichever face (front or back) is showing.
+    /// <c>GameManager</c>'s pointer raycast): any hovered card scales up, a hovered usable card glows,
+    /// and a card whose public model enables hover information exposes its label and screen position
+    /// to the shared HUD badge. Usability is orientation-independent — a face-down player card can be
+    /// usable — so the glow is gated on <see cref="CanUse"/> and tints whichever face is showing.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class CardView : MonoBehaviour
@@ -114,9 +114,11 @@ namespace DiaBlackJack.GameScene
 
             HideRankText();
 
-            HoverBadgeText = string.IsNullOrEmpty(card.AbilityDescription)
-                ? $"{card.Rank} {card.DisplayName}"
-                : $"{card.Rank} {card.DisplayName}\n{card.AbilityDescription}";
+            HoverBadgeText = !card.RevealRank
+                ? string.Empty
+                : string.IsNullOrEmpty(card.AbilityDescription)
+                    ? $"{card.Rank} {card.DisplayName}"
+                    : $"{card.Rank} {card.DisplayName}\n{card.AbilityDescription}";
 
             // Pooled cards are reused; clear any prior hover state and snap to base size.
             _hovered = false;

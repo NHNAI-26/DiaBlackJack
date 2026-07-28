@@ -71,8 +71,8 @@ namespace DiaBlackJack.GameScene
         public string DisplayName { get; }
 
         /// <summary>
-        /// One-line Korean description of the card's manual ability, for the hover badge. Empty for
-        /// cards without a usable effect (ranks 1–4) and for enemy cards.
+        /// One-line Korean description of the card's effect, for the hover badge. Empty for cards
+        /// without an effect and for enemy cards whose rank is not public.
         /// </summary>
         public string AbilityDescription { get; }
 
@@ -420,15 +420,20 @@ namespace DiaBlackJack.GameScene
             return EffectActionLabel(kind);
         }
 
-        // One-line Korean ability text per manual effect, for the hover badge. There is no such text
-        // anywhere in the model, so it is authored here in the view layer.
-        private static readonly Dictionary<CardEffectKind, string> AbilityDescriptions =
+        // One-line Korean effect text for the hover badge. There is no such text anywhere in the
+        // model, so it is authored here in the view layer.
+        private static readonly Dictionary<CardEffectKind, string> EffectDescriptions =
             new Dictionary<CardEffectKind, string>
             {
                 { CardEffectKind.CrystalOrb, "덱 맨 위 2장 훔쳐보고 1장 가져오기" },
                 { CardEffectKind.ThreatHammer, "적 공개 카드 1장 제거; 스탠드면 비공개 교체" },
                 { CardEffectKind.AutoPistol, "적 비공개 숫자 맞히면 적 즉사" },
                 { CardEffectKind.MilitaryKnife, "적에게 공개카드 1장 강제로 뽑게 함" },
+                { CardEffectKind.Poison, "즉시 스탠드 또는 영혼 3 지불; 지불 후 승리 시 영혼 5 회복" },
+                { CardEffectKind.ResurrectionHerb, "양측 영혼 1 지불 후 승패 없이 라운드 재시작" },
+                { CardEffectKind.LieDetector, "숫자를 선언해 상대 비공개 카드의 이상·미만 확인" },
+                { CardEffectKind.Flamethrower, "양측이 공개 카드 1장씩 선택해 버림" },
+                { CardEffectKind.PocketWatch, "사용 완료 수동 카드 1장을 재활성화" },
             };
 
         private static IReadOnlyList<GameSceneCardViewModel> CreatePlayerCards(
@@ -450,7 +455,7 @@ namespace DiaBlackJack.GameScene
                     revealRank: true,
                     canUse: card.CanUse,
                     card.DisplayName,
-                    abilityDescription: ResolveAbilityDescription(battle, card.CardId),
+                    abilityDescription: ResolveAbilityDescription(sourceCard),
                     suit: sourceCard == null ? CardSuit.Spade : sourceCard.Suit);
 
                 // PlayerHand's world orientation makes the highest index land at screen-left.
@@ -469,15 +474,12 @@ namespace DiaBlackJack.GameScene
             return cards.AsReadOnly();
         }
 
-        private static string ResolveAbilityDescription(CoreLoopBattle battle, int cardId)
+        private static string ResolveAbilityDescription(BlackjackCard card)
         {
-            foreach (BlackjackCard card in battle.Player.Hand.Cards)
+            if (card != null &&
+                EffectDescriptions.TryGetValue(card.Definition.Effect, out string description))
             {
-                if (card.Id == cardId &&
-                    AbilityDescriptions.TryGetValue(card.Definition.Effect, out string description))
-                {
-                    return description;
-                }
+                return description;
             }
 
             return string.Empty;
@@ -578,7 +580,11 @@ namespace DiaBlackJack.GameScene
                     revealRank: faceUp,
                     canUse: false,
                     faceUp ? card.Definition.DisplayName : string.Empty,
-                    suit: card.Suit);
+                    abilityDescription: faceUp
+                        ? ResolveAbilityDescription(card)
+                        : string.Empty,
+                    suit: card.Suit,
+                    showHoverBadgeWhenUnavailable: faceUp);
 
                 // Both sides' hidden cards sit on the screen LEFT (each player's own right, mirrored
                 // across the table). The camera mirrors local X, so screen-left = highest index →

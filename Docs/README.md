@@ -27,18 +27,18 @@
 | [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | 현행 규칙 이관 완료 v0.2 |
 | [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 이력과 현행 규칙 이관 결과 | 현행 규칙 이관 완료 v0.2 |
 | [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | 현행 규칙 이관 완료 v0.2 |
-| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | CU-M04 비공개 역할 개정 v0.9 |
-| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M04 검증 완료 v0.4 |
-| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M04 작업 순서와 단계별 검증 게이트 | CU-M04 완료 v0.4 |
-| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M04 완료·전체 619/619 |
+| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | CU-M05 적 공개 카드 호버 정보 v0.10 |
+| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M05 검증 완료 v0.5 |
+| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M05 작업 순서와 단계별 검증 게이트 | CU-M05 완료 v0.5 |
+| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M05 완료·전체 622/622 |
 | [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | 공개된 비공개 카드 정보 경계 반영 v0.4 |
 | [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | 비공개 역할·앞뒷면 경계 반영 v0.4 |
 | [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 이력과 AC-RV00~RV01 개정 계획 | AC-RV01 전용 11/11·전체 522/522 완료 v0.3 |
 | [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | 두 전투 화면·Console 0까지 완료 v0.3 |
-| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | DC-R04 5/5 완료·DC-R05 대기 v1.12 |
-| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | 루시퍼 추가 계약·연쇄 경계 반영 v1.11 |
-| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 이력과 DC-R00~R05 개정 계획 | DC-R04 완료·DC-R05 다음 v1.11 |
-| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | 루시퍼 10/10·CoreLoop 421/421·전체 610/610 v1.11 |
+| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | DC-R05 기능·저장 재진입·두 전투 화면 검증 완료 v1.14 |
+| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | DC-R05 활성 입력·후보 화면·저장 재진입 완료 v1.13 |
+| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 이력과 DC-R00~R05 개정 계획 | DC-R05 완료·물리 월드 연출 별도 계획 v1.13 |
+| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | DC-R05 완료·전체 614/614·시각 검증 92점 v1.13 |
 | [battle-reward-design.md](./battle-reward-design.md) | 일반·엘리트·보스 전투 보상 규칙과 프로토타입 카드 풀 | RW-00~RW-05 완료 v0.1 |
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW-05 최종 검증 완료 v0.1 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
@@ -74,6 +74,8 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-29 | 이천서 | CU-M05에서 공개된 적 카드와 앞면 공개된 비공개 역할 카드의 숫자·이름·수동·자동 효과 호버 배지를 연결하고 미공개 적 카드의 문자열을 차단해 신규 3/3·전체 EditMode 622/622·GameScene HUD 화면으로 검증; 씬·프리팹·Packages·외부 에셋·오픈소스 무변경 |
+| 2026-07-29 | 이천서 | 악마 계약 문서 4종의 DC-R05 완료 상태·버전·검증 수치를 문서 색인에 동기화하고 물리 월드 계약 카드 연출을 별도 씬·아트 후속 작업으로 구분 |
 | 2026-07-29 | 이천서 | CU-M04·EP-R02 비공개 역할/앞뒷면 분리, 공개 합·대상·최종 승부 정합화, 공개된 비공개 숫자에 대한 모든 적의 리볼버 확정 대응과 GameScene 역할 정렬을 구현해 전용 5/5·CoreLoop 430/430·StageProgression 189/189·전체 EditMode 619/619으로 검증; 씬·프리팹·Packages·외부 에셋·오픈소스 무변경 |
 | 2026-07-28 | 이천서 | DC-R04 5/5 루시퍼의 현재 악마 덱 최대 5장·건너뛰기·미선택 폐기·별도 계약 인스턴스·복합 대가·재귀 연쇄·광신도 공개 선택을 구현해 전용 10/10·CoreLoop 421/421·전체 EditMode 610/610으로 검증; GameScene·씬·프리팹·Packages·HONG RunFlow/Shop·Shim0Hwan 아트·외부 에셋 무변경 |
 | 2026-07-28 | 이천서 | DC-R04 4/5 바포메트 상대 1~5·소유자 1~3 오망성, 드로우 더미 소진·전투 위치 회수·가용 덱 초기화·재삽입·기존 버스트 경계와 파이몬/벨리알 중첩을 구현해 전용 7/7·광신도 9/9·CoreLoop 410/410·전체 EditMode 599/599로 검증; GameScene·씬·프리팹·Packages·HONG RunFlow/Shop·Shim0Hwan 아트·외부 에셋 무변경 |
