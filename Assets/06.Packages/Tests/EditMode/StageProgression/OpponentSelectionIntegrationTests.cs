@@ -17,24 +17,34 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [TestCase(
+            EnemyCombatProfileCatalog.CowardlyGamblerKey,
+            2,
+            18,
+            "CowardlyGamblerEnemyPolicy")]
+        [TestCase(
             EnemyCombatProfileCatalog.GunslingerKey,
             3,
+            10,
             "GunslingerEnemyPolicy")]
         [TestCase(
             EnemyCombatProfileCatalog.CultistKey,
             3,
+            10,
             "CultistEnemyPolicy")]
         [TestCase(
             EnemyCombatProfileCatalog.TricksterKey,
             4,
+            10,
             "TricksterEnemyPolicy")]
         [TestCase(
             EnemyCombatProfileCatalog.EnforcerKey,
             5,
+            10,
             "EnforcerEnemyPolicy")]
         public void EUI03_I01_SelectedCandidateCreatesItsProfileBattle(
             string profileKey,
             int expectedMaximumSoul,
+            int expectedDeckCount,
             string expectedPolicyName)
         {
             StageProgressionSession session = CreateSelectionSession(profileKey);
@@ -61,7 +71,9 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(session.Battle, Is.Not.Null);
             Assert.That(session.Battle.Enemy.Soul.Maximum,
                 Is.EqualTo(expectedMaximumSoul));
-            Assert.That(session.Battle.Enemy.Deck.TotalCardCount, Is.EqualTo(10));
+            Assert.That(
+                session.Battle.Enemy.Deck.TotalCardCount,
+                Is.EqualTo(expectedDeckCount));
             Assert.That(session.Battle.EnemyBehaviorPolicy.GetType().Name,
                 Is.EqualTo(expectedPolicyName));
         }

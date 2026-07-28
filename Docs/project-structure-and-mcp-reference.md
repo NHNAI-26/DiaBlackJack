@@ -3,7 +3,7 @@
 > 프로젝트: DiaBlackJack  
 > 확인 책임자: 이천서  
 > 버전: v0.3
-> 확인일: 2026-07-26
+> 확인일: 2026-07-28
 
 ## 1. 확인 목적
 
@@ -854,10 +854,30 @@ StageProgression `b76f39b70e80469eae011991e162d887` 149/149, 최종 전체
 Test Framework/MCP 사전·사후 처리와 결과 저장 안내 10건만 남았으며 게임 코드
 오류는 없었다. 다음 SV-03에서 스냅샷을 새 런 객체와 세션으로 복원한다.
 
+### 7.44 적 전투 프로필 EP-R01 검증
+
+| 경계 | 확인 결과 |
+| --- | --- |
+| 프로필 | `EnemyCombatProfileCatalog`가 기존 5종을 보존하면서 `cowardly-gambler`를 네 번째 일반 적으로 추가해 총 6종 |
+| 덱 | 세부 명시 수량을 합산한 18장, 최대 영혼 2, 일반 보상 |
+| 정책 | `CowardlyGamblerEnemyPolicy`가 자기 공개 합 13 이하 히트·14 이상 스탠드, 수동 카드·계약 비선호 |
+| 공정성 | 정책 입력은 기존 `EnemyObservation`만 사용하고 플레이어 비공개 카드 값·덱 순서 접근 없음 |
+| 전투 변환 | 기존 `EnemyBattleConfigurationFactory`·`StageBattleFactory` 재사용, 적 악마 덱 0장 |
+| 상대 선택 | 기존 카탈로그 미리보기 풀 재사용, 기존 일반 적 3종과 함께 제시 가능 |
+| 검증 | 전용 9/9·CoreLoop 362/362·StageProgression 172/172·전체 EditMode 534/534·컴파일/게임 코드 오류 0, 최종 Test Framework 결과 저장 안내 3건 분리 |
+| 변경 보호 | UI·`GameScene`·씬·프리팹·Packages·외부 에셋·오픈소스 무변경 |
+
+Unity MCP 활성 인스턴스 `DiaBlackJack@5635a4cdcfecc8dd`, Unity 6000.3.10f1과
+`Assets/00. Scenes/GameScene.unity`를 확인한 뒤 스크립트 전체 갱신·컴파일을 수행했다.
+전용 job은 `3b9c83e73fe246ce9c84cf91d40d8cda`, 전체 job은
+`2cdf3aca0b9a453d92698d45f80afb8c`이다. 코드·데이터 경계만 확장했으므로
+씬 파일과 화면은 수정하지 않았다.
+
 ## 8. 변경 기록
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-28 | 이천서 | EP-R01 겁쟁이 도박사 6번째 프로필·18장 덱·저위험 정책·기존 전투/상대 선택 변환 구조와 전용 9/9·CoreLoop 362/362·StageProgression 172/172·전체 534/534·게임 코드 오류 0 및 최종 Test Framework 결과 저장 안내 3건 분리 결과 추가 |
 | 2026-07-26 | 이천서 | 저장 SV-02 `SaveLoad` v1 DTO·안정 문자열·파일 저장소·임시 재검증·원자 교체·백업 불러오기 구조와 대상 8/8·StageProgression 149/149·전체 491/491·컴파일 오류 0 결과 추가 |
 | 2026-07-26 | 이천서 | 저장 SV-01의 `StageProgression/Save` 순수 스냅샷·타입화된 검증·안정 상태 캡처 구조와 대상 7/7·StageProgression 141/141·전체 483/483·컴파일 오류 0 결과와 Test Framework 안내 3건 분리 추가 |
 | 2026-07-26 | 이천서 | 게임 저장·이어하기 SV-00의 현재 SaveLoad·런 상태 대조와 순수 스냅샷·버전 JSON·원자 파일·백업·복원·체크포인트·RF 팀 경계 추가, 코드·Unity 검증 없음 기록 |

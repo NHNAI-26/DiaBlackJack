@@ -12,6 +12,11 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             Assert.That(
                 EnemyBattleConfigurationFactory.Create(
+                    EnemyCombatProfileCatalog.CowardlyGamblerKey,
+                    1).BehaviorPolicy,
+                Is.TypeOf<CowardlyGamblerEnemyPolicy>());
+            Assert.That(
+                EnemyBattleConfigurationFactory.Create(
                     EnemyCombatProfileCatalog.GunslingerKey,
                     1).BehaviorPolicy,
                 Is.TypeOf<GunslingerEnemyPolicy>());

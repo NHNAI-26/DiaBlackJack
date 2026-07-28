@@ -6,6 +6,7 @@ namespace DiaBlackJack.CoreLoop
 {
     public sealed class EnemyCombatProfileCatalog
     {
+        public const string CowardlyGamblerKey = "cowardly-gambler";
         public const string GunslingerKey = "gunslinger";
         public const string CultistKey = "cultist";
         public const string TricksterKey = "trickster";
@@ -137,6 +138,24 @@ namespace DiaBlackJack.CoreLoop
                         CardDefinitionCatalog.LieDetectorKey
                     },
                     "직접 피해보다 덱과 정보 우위를 먼저 만든다.",
+                    EnemyInformationMode.Standard),
+                new EnemyCombatProfile(
+                    CowardlyGamblerKey,
+                    "겁쟁이 도박사",
+                    EnemyGrade.Normal,
+                    2,
+                    EnemyBehaviorPolicyCatalog.CowardlyGambler,
+                    new[]
+                    {
+                        "standard-ace-1",
+                        "standard-plain-2", "standard-plain-2", "standard-plain-2",
+                        "standard-plain-3", "standard-plain-3", "standard-plain-3",
+                        "standard-plain-4", "standard-plain-4", "standard-plain-4",
+                        "crystal-orb-5", "crystal-orb-5", "crystal-orb-5",
+                        "threat-hammer-6", "auto-pistol-7", "auto-pistol-8",
+                        "military-knife-9", "military-knife-10"
+                    },
+                    "낮은 숫자 중심의 덱으로 공개 합 14부터 빠르게 스탠드한다.",
                     EnemyInformationMode.Standard),
                 new EnemyCombatProfile(
                     EnforcerKey,

@@ -7,6 +7,7 @@ namespace DiaBlackJack.StageProgression.Tests
 {
     public sealed class EnemyProfileStageIntegrationTests
     {
+        [TestCase(EnemyCombatProfileCatalog.CowardlyGamblerKey, StageKind.NormalCombat)]
         [TestCase(EnemyCombatProfileCatalog.GunslingerKey, StageKind.NormalCombat)]
         [TestCase(EnemyCombatProfileCatalog.CultistKey, StageKind.NormalCombat)]
         [TestCase(EnemyCombatProfileCatalog.TricksterKey, StageKind.NormalCombat)]
@@ -72,6 +73,7 @@ namespace DiaBlackJack.StageProgression.Tests
                 11));
         }
 
+        [TestCase(EnemyCombatProfileCatalog.CowardlyGamblerKey, "CowardlyGamblerEnemyPolicy")]
         [TestCase(EnemyCombatProfileCatalog.GunslingerKey, "GunslingerEnemyPolicy")]
         [TestCase(EnemyCombatProfileCatalog.CultistKey, "CultistEnemyPolicy")]
         [TestCase(EnemyCombatProfileCatalog.TricksterKey, "TricksterEnemyPolicy")]
@@ -94,7 +96,10 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(battle.Player.Deck.TotalCardCount, Is.EqualTo(player.Deck.Count));
             Assert.That(battle.Enemy.Soul.Maximum, Is.EqualTo(preview.MaximumSoul));
             Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(preview.MaximumSoul));
-            Assert.That(battle.Enemy.Deck.TotalCardCount, Is.EqualTo(10));
+            EnemyCombatProfile profile = EnemyCombatProfileCatalog.Default.GetByKey(profileKey);
+            Assert.That(
+                battle.Enemy.Deck.TotalCardCount,
+                Is.EqualTo(profile.DeckDefinitionKeys.Count));
             Assert.That(battle.EnemyBehaviorPolicy.GetType().Name, Is.EqualTo(expectedPolicyName));
         }
 
@@ -119,7 +124,9 @@ namespace DiaBlackJack.StageProgression.Tests
                     Assert.That(battle.Player.Hand.Cards, Is.Empty);
                     Assert.That(battle.Enemy.Hand.Cards, Is.Empty);
                     Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(profile.MaximumSoul));
-                    Assert.That(battle.Enemy.Deck.TotalCardCount, Is.EqualTo(10));
+                    Assert.That(
+                        battle.Enemy.Deck.TotalCardCount,
+                        Is.EqualTo(profile.DeckDefinitionKeys.Count));
                     Assert.That(battle.EnemyBehaviorPolicy, Is.Not.SameAs(previousPolicy));
 
                     previousPolicy = battle.EnemyBehaviorPolicy;

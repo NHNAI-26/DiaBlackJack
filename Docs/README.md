@@ -10,8 +10,8 @@
 
 | 문서 | 용도 | 상태 |
 | --- | --- | --- |
-| [rule.md](./rule.md) | 게임 원본 규칙 | 최신 노션 악마·자동 카드·적 규칙 반영 v0.7 |
-| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | 최신 노션 전투 콘텐츠 반영 v0.6 |
+| [rule.md](./rule.md) | 게임 원본 규칙 | 겁쟁이 도박사 18장 합계·행동 경계 정정 v0.8 |
+| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | 겁쟁이 도박사 EP-R01 편입 반영 v0.7 |
 | [core-loop-design.md](./core-loop-design.md) | 최소 코어 루프 기획 범위 | 4단계 완료 기준안 v0.1 |
 | [core-loop-development-spec.md](./core-loop-development-spec.md) | 코어 루프 구조·상태·검증 명세 | 4단계 검증 완료 v0.1 |
 | [core-loop-implementation-plan.md](./core-loop-implementation-plan.md) | 코어 루프 작업 순서·담당·일정·완료 증거 | 전체 완료 v0.1 |
@@ -43,11 +43,11 @@
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW-05 최종 검증 완료 v0.1 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
 | [battle-reward-progress-log.md](./battle-reward-progress-log.md) | 전투 보상 결정·구현·검증 누적 기록 | RW-05 완료 v0.1 |
-| [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 기존 적 5종과 겁쟁이 도박사의 전투 성향·책임 경계 | EP-R00 문서 완료·편입 결정 대기 v1.1 |
-| [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | 겁쟁이 도박사 기술 이관 대기 v1.1 |
-| [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP-00~EP-06 이력과 EP-R00~R01 개정 계획 | EP-R00 완료·EP-R01 다음 v1.1 |
-| [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | 겁쟁이 도박사 문서화 완료·코드 미변경 v1.1 |
-| [enemy-selection-combat-ui-design.md](./enemy-selection-combat-ui-design.md) | 상대 후보 2명 비교·확정과 등급별 전투 정보 표시 규칙 | EUI-05 1차 범위 완료 v0.1 |
+| [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 적 6종의 전투 성향·책임 경계 | EP-R01 겁쟁이 도박사 편입 완료 v1.2 |
+| [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | 겁쟁이 도박사 기술 이관 완료 v1.2 |
+| [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP-00~EP-06 이력과 EP-R00~R01 개정 계획 | EP-R01 완료·플레이 테스트 다음 v1.2 |
+| [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | 전용 9/9·전체 534/534 완료 v1.2 |
+| [enemy-selection-combat-ui-design.md](./enemy-selection-combat-ui-design.md) | 상대 후보 2명 비교·확정과 등급별 전투 정보 표시 규칙 | EP-R01 일반 적 표시 반영 v0.2 |
 | [enemy-selection-combat-ui-development-spec.md](./enemy-selection-combat-ui-development-spec.md) | 후보 생성·선택 상태·전투 변환·안전 표시 스냅샷과 테스트 명세 | EUI-05 최종 검증 완료 v0.1 |
 | [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI-00~EUI-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
 | [enemy-selection-combat-ui-progress-log.md](./enemy-selection-combat-ui-progress-log.md) | 상대 선택·적 전투 정보 UI 결정·구현·검증 누적 기록 | EUI-05 완료 v0.1 |
@@ -74,6 +74,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-28 | 이천서 | EP-R01 겁쟁이 도박사를 18장 덱·영혼 2·합계 14 스탠드·수동 카드 비사용의 네 번째 일반 적으로 편입하고 전용 9/9·전체 EditMode 534/534·게임 코드 오류 0으로 검증, 최종 Test Framework 결과 저장 안내 3건 분리; UI·GameScene·씬·프리팹·Packages·외부 에셋 무변경 |
 | 2026-07-28 | 이천서 | AC-RV01 자동 카드 숫자·정의 키·보상/런 전투 변환과 저장 콘텐츠 리비전 `prototype-v2`를 이관하고 전용 11/11·전체 522/522·GameScene/CoreLoopTest·Console 0으로 검증; 씬·프리팹·외부 에셋은 변경하지 않음 |
 | 2026-07-27 | 이천서 | DC-R01 시작 악마 2장 제안·1장 선택, 일반 계약 후보 0·1·2장, 루시퍼 5장 상수와 시작 체크포인트 복원을 구현하고 전용 14/14·전체 EditMode 511/511로 검증; GameScene·씬·프리팹은 변경하지 않음 |
 | 2026-07-27 | 이천서 | 최신 노션 기획을 기준으로 악마 12종, 자동 카드 숫자 1~5, 겁쟁이 도박사 규칙을 원본·전체 기획·기능별 4종 문서에 이관하고 DC-R00·AC-RV00·EP-R00을 문서 완료로 기록; 구현·테스트·씬·외부 에셋은 변경하지 않음 |

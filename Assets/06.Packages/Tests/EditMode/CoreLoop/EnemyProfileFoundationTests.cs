@@ -9,11 +9,17 @@ namespace DiaBlackJack.CoreLoop.Tests
     public sealed class EnemyProfileFoundationTests
     {
         [Test]
-        public void EP01_U01_DefaultCatalogContainsFivePlannedProfiles()
+        public void EP01_U01_DefaultCatalogContainsSixPlannedProfiles()
         {
             EnemyCombatProfileCatalog catalog = EnemyCombatProfileCatalog.Default;
 
-            Assert.That(catalog.Profiles.Count, Is.EqualTo(5));
+            Assert.That(catalog.Profiles.Count, Is.EqualTo(6));
+            AssertProfile(
+                catalog,
+                EnemyCombatProfileCatalog.CowardlyGamblerKey,
+                EnemyGrade.Normal,
+                2,
+                EnemyBehaviorPolicyCatalog.CowardlyGambler);
             AssertProfile(
                 catalog,
                 EnemyCombatProfileCatalog.GunslingerKey,

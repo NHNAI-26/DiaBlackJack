@@ -6,6 +6,7 @@ namespace DiaBlackJack.CoreLoop
     public static class EnemyBehaviorPolicyCatalog
     {
         public const string Simple = "simple-16-stand-17";
+        public const string CowardlyGambler = "cowardly-gambler-low-risk";
         public const string Gunslinger = "gunslinger-public-inference";
         public const string Cultist = "cultist-aggressive-risk";
         public const string Trickster = "trickster-information-control";
@@ -18,6 +19,11 @@ namespace DiaBlackJack.CoreLoop
             if (StringComparer.Ordinal.Equals(key, Simple))
             {
                 return new SimpleEnemyPolicy();
+            }
+
+            if (StringComparer.Ordinal.Equals(key, CowardlyGambler))
+            {
+                return new CowardlyGamblerEnemyPolicy();
             }
 
             if (StringComparer.Ordinal.Equals(key, Gunslinger))
@@ -52,6 +58,7 @@ namespace DiaBlackJack.CoreLoop
         {
             return key != null &&
                 (StringComparer.Ordinal.Equals(key, Simple) ||
+                    StringComparer.Ordinal.Equals(key, CowardlyGambler) ||
                     StringComparer.Ordinal.Equals(key, Gunslinger) ||
                     StringComparer.Ordinal.Equals(key, Cultist) ||
                     StringComparer.Ordinal.Equals(key, Trickster) ||
