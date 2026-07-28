@@ -4,15 +4,15 @@
 > 기획·통합 책임자: 이천서  
 > 구현 예정 담당자: HONG  
 > 작업 식별자: RF-00~RF-05  
-> 버전: v0.1  
-> 상태: RF-01 착수 가능, 구현 미착수  
-> 최종 갱신: 2026-07-20
+> 버전: v0.2
+> 상태: RF-01 착수 가능, GameScene 상점 규칙 RFM01 선반영
+> 최종 갱신: 2026-07-29
 
-> **현행 상점 규칙 변경 안내 (2026-07-21)**
-> 현행 기획은 일반 카드 3장·악마 카드 2장, 상품별 재고 1개와 구매 후 `SOLD OUT`, 새로고침·재입고 없음, 라이터 카드 제거 1회와 위스키 영혼 회복 1회로 변경되었다. 판매 카드와 서비스 가격 및 회복량은 미정이다. 아래의 후보 3장·고정 가격·영혼 3 회복 수치는 과거 RF-00 기술 기준이므로 새 구현에는 `Docs/formal-run-flow-design.md` v0.4를 우선 적용한다.
+> **현행 상점 규칙 변경 안내 (2026-07-29)**
+> 현행 기획은 일반 카드 3장·악마 카드 2장, 슬롯별 재고 1개와 구매 후 `SOLD OUT`, 방문 전체 카드 구매 상한 없음, 새로고침·재입고 없음이다. 라이터와 위스키는 방문당 각각 1회이며 둘 다 이용할 수 있고, 하나 이상 이용한 방문마다 다음 상점의 두 서비스 가격이 함께 1단계 오른다. 이용 개수는 상승폭에 영향을 주지 않는다. GameScene MVP의 기본 2골드·상승 +1은 임시값이며 정식 구현은 `Docs/formal-run-flow-design.md` v0.5를 우선 적용한다.
 
 > **현행 저장 규칙 변경 안내 (2026-07-26)**
-> 시작 악마 선택, 전투 보상·골드 정산, 상점 나가기, 사건 해결과 런 종료 뒤에만 체크포인트를 갱신한다. 실제 저장 파일·버전 마이그레이션은 기존 RF-00~RF-05 범위에 구현되지 않았으며 `Docs/formal-run-flow-design.md` v0.4를 기준으로 별도 이관한다.
+> 시작 악마 선택, 전투 보상·골드 정산, 상점 나가기, 사건 해결과 런 종료 뒤에만 체크포인트를 갱신한다. 실제 저장 파일·버전 마이그레이션은 기존 RF-00~RF-05 범위에 구현되지 않았으며 `Docs/formal-run-flow-design.md` v0.5와 저장 시스템 v0.7을 기준으로 별도 이관한다.
 
 ## 1. 기술 목표
 
@@ -103,8 +103,9 @@ public sealed class GoldRewardCatalog
 | 속성 | 규칙 |
 | --- | --- |
 | `OptionId` | 제안 안에서 고유, 0 이상 |
-| `DefinitionKey` | 기존 일반 보상 카탈로그의 유효한 카드 |
-| `Price` | RF 프로토타입 4 |
+| `DeckKind` | 일반 카드 또는 악마 카드 |
+| `DefinitionKey` | `DeckKind`에 대응하는 카탈로그의 유효한 정의 키 |
+| `Price` | 옵션 생성 시 확정되는 조정 가능한 값 |
 
 ### 6.2 `ShopOffer`
 
@@ -112,11 +113,13 @@ public sealed class GoldRewardCatalog
 | --- | --- |
 | `OfferId` | 생성기 인스턴스에서 0부터 증가 |
 | `VisitIndex` | 0 또는 1 |
-| `CardOptions` | 서로 다른 정의 3개 |
-| `RestPrice/Recovery` | 3 / 3 |
-| `RemovalPrice` | 3 |
+| `CardOptions` | 일반 3개와 악마 2개, 슬롯별 재고 1개 |
+| `UtilityPriceLevel` | 앞선 이용 방문 수, 새 런은 0 |
+| `WhiskeyPrice` | `기본 가격 + UtilityPriceLevel × 공통 상승폭` |
+| `WhiskeyRecovery` | 조정 가능한 영혼 회복량 |
+| `LighterPrice` | `기본 가격 + UtilityPriceLevel × 공통 상승폭` |
 
-제안은 불변이다. 화면 재진입과 거래 뒤에도 카드 후보·가격은 바뀌지 않는다.
+제안은 불변이다. 화면 재진입과 같은 방문의 거래 뒤에도 카드 후보·현재 가격은 바뀌지 않는다. 서비스 이용 결과는 상점을 정상적으로 나갈 때 다음 방문의 `UtilityPriceLevel`에 한 번만 반영한다.
 
 ### 6.3 `ShopVisit`
 
@@ -124,9 +127,10 @@ public sealed class GoldRewardCatalog
 public sealed class ShopVisit
 {
     public ShopOffer Offer { get; }
-    public bool HasPurchasedCard { get; }
+    public IReadOnlyCollection<int> PurchasedOptionIds { get; }
     public bool HasRemovedCard { get; }
     public bool HasRested { get; }
+    public bool HasUsedAnyUtility { get; }
     public bool IsClosed { get; }
     public ShopTransaction LastTransaction { get; }
 
@@ -139,14 +143,16 @@ public sealed class ShopVisit
 
 거래 순서는 `제안·ID·방문 상태 검증 → 대상·골드 검증 → 결과 계산 → 비용과 효과 적용 → 사용 플래그·결과 기록`이다.
 
+카드 구매에는 방문 전체 횟수 플래그를 두지 않고 구매한 `OptionId`만 재구매를 거부한다. 라이터와 위스키는 서로 독립된 1회 플래그를 사용하므로 같은 방문에서 둘 다 성공할 수 있다. `TryClose`는 둘 중 하나 이상 성공한 방문에 대해 바깥 세션의 가격 단계를 정확히 1만 올린다.
+
 RF 범위는 같은 런타임 어셈블리 안에서 골드 소비와 카드 변경을 처리한다. 비용 소비 뒤 효과 적용이 실패할 수 없도록 모든 조건을 먼저 확인한다. 실패 시 골드·영혼·덱·사용 플래그가 모두 유지된다.
 
 ### 6.4 `ShopOfferGenerator`
 
-- 기존 `BattleRewardCatalog.CreateDefault()`의 일반 풀을 소비한다.
-- `System.Random`과 생성자 시드를 사용한다.
-- 같은 시드·방문 순서는 같은 후보를 만든다.
-- 후보 3개는 서로 다른 정의 키다.
+- 일반 카드는 `BattleRewardCatalog.CreateDefault()`의 일반 풀, 악마 카드는 계약 카드 카탈로그를 소비한다.
+- 프로젝트 공용 `DeterministicRng`와 생성자 시드를 사용한다.
+- 같은 시드·방문 순서는 같은 일반 3장·악마 2장을 만든다.
+- 같은 덱 종류 안의 후보는 서로 다른 정의 키다.
 - 방문당 제안은 한 번만 생성한다.
 - 재시작은 같은 설정의 새 생성기로 OfferId와 난수 상태를 초기화한다.
 
@@ -169,6 +175,7 @@ public sealed class FormalRunSession
     public ShopVisit ActiveShop { get; }
     public int CompletedShopCount { get; }
     public int LastGoldReward { get; }
+    public int UtilityPriceLevel { get; }
 
     public bool TryStartRun();
     public bool TrySelectOpponent(int offerId, string profileKey);
@@ -201,7 +208,7 @@ NotStarted
 - 상점 거래는 스테이지 인덱스를 바꾸지 않는다.
 - 첫 상점 나가기 뒤 인덱스 1의 상대 선택, 둘째 상점 뒤 인덱스 2의 고정 보스를 준비한다.
 - 보스 카드 보상 완료는 골드 정산 뒤 `RunVictory`이며 상점을 만들지 않는다.
-- 재시작은 골드·상점·OfferId·거래 결과와 내부 전투 세션을 새 런 기준으로 복구한다.
+- 재시작은 골드·상점·OfferId·거래 결과·서비스 가격 단계를 0으로 되돌리고 내부 전투 세션을 새 런 기준으로 복구한다.
 
 ### 7.2 다음 전투 생성 순서
 
@@ -226,13 +233,14 @@ NotStarted
 | RF-U01 | 프로필별 골드 | 3·3·4·6·10 |
 | RF-U02 | 카드 선택/건너뛰기 정산 | 양쪽 모두 1회 지급 |
 | RF-U03 | 패배·잘못된·중복 입력 | 골드 변화 없음 |
-| RF-U04 | 카드 구매 | 4 차감, 선택 카드 1장 추가 |
-| RF-U05 | 카드 제거 | 3 차감, 대상 1장 제거, ID 미재사용 |
-| RF-U06 | 휴식 | 3 차감, 영혼 3 회복·최대값 제한 |
+| RF-U04 | 복수 카드 구매 | 골드가 허용하는 모든 미판매 슬롯 구매 가능, 같은 슬롯 재구매 거부 |
+| RF-U05 | 라이터 | 현재 단계 가격 차감, 대상 1장 제거, ID 미재사용, 두 번째 이용 거부 |
+| RF-U06 | 위스키 | 현재 단계 가격 차감, 영혼 회복·최대값 제한, 두 번째 이용 거부 |
 | RF-U07 | 부족한 골드·잘못된 ID | 모든 상태 무변경 |
-| RF-U08 | 방문당 서비스 제한 | 같은 서비스 두 번째 사용 거부 |
+| RF-U08 | 방문당 서비스 제한 | 라이터·위스키 각각 두 번째 사용 거부, 서로 다른 두 서비스는 모두 허용 |
 | RF-U09 | 상점 생성 결정성 | 같은 시드·방문 순서에 같은 후보 |
-| RF-U10 | 재시작 | 골드 0, 최초 덱·영혼·제안 상태 |
+| RF-U10 | 서비스 가격 단계 | 하나 또는 둘 이용 시 다음 방문 +1단계, 미이용 시 유지 |
+| RF-U11 | 재시작 | 골드·가격 단계 0, 최초 덱·영혼·제안 상태 |
 
 ### 9.2 정식 순서 통합 테스트
 
@@ -252,7 +260,8 @@ NotStarted
 ### 9.3 화면·실제 흐름
 
 - 카드 선택과 건너뛰기 양쪽의 골드 표시
-- 구매·제거·휴식 가능/불가와 최근 거래 표시
+- 복수 카드 구매, 라이터·위스키 독립 이용, 현재 가격 단계와 최근 거래 표시
+- 일반 상점과 라이터 선택 상태의 `나가기` 표시
 - 두 상점 뒤 각각 상대 선택·보스 이동
 - 1280×720·1920×1080 레이아웃
 - 전체 EditMode, 실제 두 씬 왕복, Console Error·Exception 0
@@ -265,5 +274,6 @@ NotStarted
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-29 | 이천서 | 카드 슬롯별 재고와 방문 전체 구매 상한 없음, 라이터·위스키 독립 1회, 이용 방문당 다음 상점 공통 가격 +1단계, 무료 나가기·재시작 초기화 계약과 RF-U04~U11 검증 기준으로 개정 |
 | 2026-07-20 | 이천서 | 골드 상태·적별 정산·상점 거래·정식 런 조정 API와 테스트 기준 확정 |
 

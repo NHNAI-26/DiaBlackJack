@@ -10,8 +10,8 @@
 
 | 문서 | 용도 | 상태 |
 | --- | --- | --- |
-| [rule.md](./rule.md) | 게임 원본 규칙 | 비공개 역할·앞뒷면 분리와 적 확정 리볼버 대응 v1.2 |
-| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | CU-M04·EP-R02 전투 정보 경계 반영 v0.13 |
+| [rule.md](./rule.md) | 게임 원본 규칙 | 상점 복수 카드 구매·서비스 공통 가격 상승·나가기 v1.3 |
+| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | RFM01 상점 경제 규칙 반영 v0.14 |
 | [core-loop-design.md](./core-loop-design.md) | 최소 코어 루프 기획 범위 | CL-M01 합계 표시 개정 v0.2 |
 | [core-loop-development-spec.md](./core-loop-development-spec.md) | 코어 루프 구조·상태·검증 명세 | CL-M01 검증 완료 v0.2 |
 | [core-loop-implementation-plan.md](./core-loop-implementation-plan.md) | 코어 루프 작업 순서·담당·일정·완료 증거 | CL-M01 완료 v0.2 |
@@ -51,15 +51,15 @@
 | [enemy-selection-combat-ui-development-spec.md](./enemy-selection-combat-ui-development-spec.md) | 후보 생성·선택 상태·전투 변환·안전 표시 스냅샷과 테스트 명세 | EUI-05 최종 검증 완료 v0.1 |
 | [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI-00~EUI-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
 | [enemy-selection-combat-ui-progress-log.md](./enemy-selection-combat-ui-progress-log.md) | 상대 선택·적 전투 정보 UI 결정·구현·검증 누적 기록 | EUI-05 완료 v0.1 |
-| [formal-run-flow-design.md](./formal-run-flow-design.md) | 골드·상점과 `전투→이벤트→전투→이벤트→보스` 정식 진행 규칙 | 상점·체크포인트 기획 v0.4·기술 이관 필요 |
-| [formal-run-flow-development-spec.md](./formal-run-flow-development-spec.md) | 골드 정산·상점 거래·정식 런 조정 API와 테스트 명세 | RF-01 착수 가능 v0.1 |
-| [formal-run-flow-implementation-plan.md](./formal-run-flow-implementation-plan.md) | RF-00~RF-05 HONG 인수인계 작업 순서와 검증 게이트 | RF-00 완료 v0.1 |
-| [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | RF-00 완료 v0.1 |
-| [save-system-design.md](./save-system-design.md) | 안정 체크포인트·이어하기·재추첨 방지·단일 슬롯·파일 복구 기획 | SV-05 Runtime·메뉴 완료·SV-06 RF 연계 v0.6 |
-| [save-system-development-spec.md](./save-system-development-spec.md) | 순수 스냅샷·버전 JSON·원자 저장·백업·복원·RF 연결 명세 | SV-05 Runtime·예약·실패 UI 완료 v0.6 |
-| [save-system-implementation-plan.md](./save-system-implementation-plan.md) | SV-00~SV-06 구현 순서와 검증 게이트 | SV-05 완료·SV-06 다음 v0.6 |
-| [save-system-progress-log.md](./save-system-progress-log.md) | 저장 시스템 결정·구현·파일·재실행 검증 기록 | SV-05 완료·실제 프로세스 재실행은 SV-06 v0.6 |
-| [scene-presentation-design.md](./scene-presentation-design.md) | 2.5D 술집 테이블의 씬 흐름·월드 오브젝트·UI·상점 전환 기획 | 최대 2장 계약 화면 포함 기준안 v0.5 |
+| [formal-run-flow-design.md](./formal-run-flow-design.md) | 골드·상점과 `전투→이벤트→전투→이벤트→보스` 정식 진행 규칙 | RFM01 상점 규칙·GameScene MVP 반영 v0.5 |
+| [formal-run-flow-development-spec.md](./formal-run-flow-development-spec.md) | 골드 정산·상점 거래·정식 런 조정 API와 테스트 명세 | RFM01 이관 완료·RF-01 착수 가능 v0.2 |
+| [formal-run-flow-implementation-plan.md](./formal-run-flow-implementation-plan.md) | RF-00~RF-05 HONG 인수인계 작업 순서와 검증 게이트 | RF-00·RFM01 완료 v0.2 |
+| [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | RFM01 전용 3/3·전체 626/626 v0.2 |
+| [save-system-design.md](./save-system-design.md) | 안정 체크포인트·이어하기·재추첨 방지·단일 슬롯·파일 복구 기획 | 상점 서비스 가격 단계 SV-06 이관 v0.7 |
+| [save-system-development-spec.md](./save-system-development-spec.md) | 순수 스냅샷·버전 JSON·원자 저장·백업·복원·RF 연결 명세 | 가격 단계 복원 I04 추가 v0.7 |
+| [save-system-implementation-plan.md](./save-system-implementation-plan.md) | SV-00~SV-06 구현 순서와 검증 게이트 | SV-05 완료·가격 단계 포함 SV-06 다음 v0.7 |
+| [save-system-progress-log.md](./save-system-progress-log.md) | 저장 시스템 결정·구현·파일·재실행 검증 기록 | SV-05 완료·RF 가격 단계 API 대기 v0.7 |
+| [scene-presentation-design.md](./scene-presentation-design.md) | 2.5D 술집 테이블의 씬 흐름·월드 오브젝트·UI·상점 전환 기획 | 상점 가격 단계·나가기 화면 기준 v0.7 |
 
 ## 기록 원칙
 
@@ -74,6 +74,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-29 | 이천서 | RFM01에서 상점 카드의 방문 전체 구매 상한을 제거하고 라이터·위스키 독립 1회, 이용 방문당 다음 상점 공통 가격 +1단계, 일반/라이터 선택 화면 `나가기`를 구현·문서화해 전용 3/3·전체 EditMode 626/626·GameScene 화면으로 검증; 정식 RF-01~RF-05는 HONG 담당 미완료로 유지 |
 | 2026-07-29 | 이천서 | CL-M01에서 플레이어 합계를 비공개 역할 포함 `총합`과 제외한 `공개 카드 합`으로 분리하고 적은 공개 합만 유지해 전용 2/2·전체 EditMode 623/623·GameScene 두 줄 표시·게임 코드 오류 0으로 검증; 씬·프리팹·Packages·외부 에셋·오픈소스 무변경 |
 | 2026-07-29 | 이천서 | CU-M05에서 공개된 적 카드와 앞면 공개된 비공개 역할 카드의 숫자·이름·수동·자동 효과 호버 배지를 연결하고 미공개 적 카드의 문자열을 차단해 신규 3/3·전체 EditMode 622/622·GameScene HUD 화면으로 검증; 씬·프리팹·Packages·외부 에셋·오픈소스 무변경 |
 | 2026-07-29 | 이천서 | 악마 계약 문서 4종의 DC-R05 완료 상태·버전·검증 수치를 문서 색인에 동기화하고 물리 월드 계약 카드 연출을 별도 씬·아트 후속 작업으로 구분 |

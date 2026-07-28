@@ -717,7 +717,7 @@ namespace DiaBlackJack.GameScene
 
             DrawHeading("SHOP - hover goods and click to buy");
             DrawButtonRow(
-                new[] { "LEAVE SHOP" },
+                new[] { "나가기" },
                 new[] { true },
                 new Func<bool>[] { LeaveShop });
         }
@@ -788,16 +788,32 @@ namespace DiaBlackJack.GameScene
 
             using (new GUIEnabledScope(!_inputLocked))
             {
+                const float footerButtonWidth = 160f;
+                const float footerGap = 12f;
+                float footerX = panelRect.x +
+                    (width - footerButtonWidth * 2f - footerGap) * 0.5f;
                 if (GUI.Button(
                     new Rect(
-                        panelRect.x + (width - 160f) * 0.5f,
+                        footerX,
                         panelRect.yMax - 52f,
-                        160f,
+                        footerButtonWidth,
                         38f),
                     "CANCEL",
                     _buttonStyle))
                 {
                     CancelLighterRemoval();
+                }
+
+                if (GUI.Button(
+                    new Rect(
+                        footerX + footerButtonWidth + footerGap,
+                        panelRect.yMax - 52f,
+                        footerButtonWidth,
+                        38f),
+                    "나가기",
+                    _buttonStyle))
+                {
+                    ProcessInput(LeaveShop);
                 }
             }
         }
@@ -1524,7 +1540,7 @@ namespace DiaBlackJack.GameScene
                 UpdateDemonCardHover(null);
                 UpdateShopUtilityItemHover(null);
                 shop.Close();
-                shop.ResetGold();
+                shop.ResetRunEconomy();
             }
 
             return restarted;

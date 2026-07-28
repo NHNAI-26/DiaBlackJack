@@ -41,6 +41,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float normalCardSpacing = 1.1f;
         [SerializeField] private int lighterPrice = 2;
         [SerializeField] private int whiskeyPrice = 2;
+        [Tooltip("Added to both utility prices for every earlier shop where either utility was purchased.")]
+        [SerializeField] private int utilityPriceIncreasePerUsedVisit = 1;
         [SerializeField] private int whiskeySoulRestore = 2;
         [SerializeField] private int shopRandomSeed = 20260726;
 
@@ -49,10 +51,18 @@ namespace DiaBlackJack.GameScene
         private readonly DeterministicRng _random = new DeterministicRng();
         private int _nextOfferId;
         private int _openCount;
+        private int _utilityPriceLevel;
+        private bool _lighterPurchasedThisVisit;
+        private bool _whiskeyPurchasedThisVisit;
+        private bool _utilityPurchasedThisVisit;
 
         public bool IsOpen { get; private set; }
 
         public int Gold { get; private set; }
+
+        public int CurrentLighterPrice => CalculateUtilityPrice(lighterPrice);
+
+        public int CurrentWhiskeyPrice => CalculateUtilityPrice(whiskeyPrice);
 
         public void Open()
         {
@@ -61,6 +71,9 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            _lighterPurchasedThisVisit = false;
+            _whiskeyPurchasedThisVisit = false;
+            _utilityPurchasedThisVisit = false;
             IsOpen = true;
             Gold += goldPerWin;
             int offerSeed = shopRandomSeed + _openCount++;
@@ -87,6 +100,11 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            if (_utilityPurchasedThisVisit)
+            {
+                _utilityPriceLevel++;
+            }
+
             IsOpen = false;
 
             if (merchant != null)
@@ -105,6 +123,18 @@ namespace DiaBlackJack.GameScene
         public void ResetGold()
         {
             Gold = 0;
+            RefreshOfferViews();
+        }
+
+        public void ResetRunEconomy()
+        {
+            Gold = 0;
+            _nextOfferId = 0;
+            _openCount = 0;
+            _utilityPriceLevel = 0;
+            _lighterPurchasedThisVisit = false;
+            _whiskeyPurchasedThisVisit = false;
+            _utilityPurchasedThisVisit = false;
             RefreshOfferViews();
         }
 
@@ -172,15 +202,38 @@ namespace DiaBlackJack.GameScene
             int playerCurrentSoul,
             int playerMaximumSoul)
         {
+            int currentLighterPrice = CurrentLighterPrice;
+            string lighterDescription =
+                "Remove 1 card from your deck.\nPRICE " +
+                currentLighterPrice +
+                " GOLD";
+            if (_lighterPurchasedThisVisit)
+            {
+                lighterDescription += "\nPURCHASED THIS SHOP";
+            }
+
             BindUtilityItem(
                 lighterItem,
                 ShopUtilityItemKind.Lighter,
                 "LIGHTER",
-                "Remove 1 card from your deck.\nPRICE " + lighterPrice + " GOLD",
-                IsOpen && Gold >= lighterPrice && removableCardCount > 1);
+                lighterDescription,
+                IsOpen &&
+                    !_lighterPurchasedThisVisit &&
+                    Gold >= currentLighterPrice &&
+                    removableCardCount > 1);
 
+            int currentWhiskeyPrice = CurrentWhiskeyPrice;
             string whiskeyDescription =
-                "Restore " + whiskeySoulRestore + " soul.\nPRICE " + whiskeyPrice + " GOLD";
+                "Restore " +
+                whiskeySoulRestore +
+                " soul.\nPRICE " +
+                currentWhiskeyPrice +
+                " GOLD";
+            if (_whiskeyPurchasedThisVisit)
+            {
+                whiskeyDescription += "\nPURCHASED THIS SHOP";
+            }
+
             if (playerCurrentSoul >= playerMaximumSoul)
             {
                 whiskeyDescription += "\nSOUL IS FULL";
@@ -191,17 +244,26 @@ namespace DiaBlackJack.GameScene
                 ShopUtilityItemKind.Whiskey,
                 "WHISKEY",
                 whiskeyDescription,
-                IsOpen && Gold >= whiskeyPrice && playerCurrentSoul < playerMaximumSoul);
+                IsOpen &&
+                    !_whiskeyPurchasedThisVisit &&
+                    Gold >= currentWhiskeyPrice &&
+                    playerCurrentSoul < playerMaximumSoul);
         }
 
         public bool TryPurchaseLighterRemoval(int removableCardCount)
         {
-            if (!IsOpen || removableCardCount <= 1 || Gold < lighterPrice)
+            int price = CurrentLighterPrice;
+            if (!IsOpen ||
+                _lighterPurchasedThisVisit ||
+                removableCardCount <= 1 ||
+                Gold < price)
             {
                 return false;
             }
 
-            Gold -= lighterPrice;
+            Gold -= price;
+            _lighterPurchasedThisVisit = true;
+            _utilityPurchasedThisVisit = true;
             RefreshOfferViews();
             return true;
         }
@@ -212,8 +274,10 @@ namespace DiaBlackJack.GameScene
             out int restoreAmount)
         {
             restoreAmount = 0;
+            int price = CurrentWhiskeyPrice;
             if (!IsOpen ||
-                Gold < whiskeyPrice ||
+                _whiskeyPurchasedThisVisit ||
+                Gold < price ||
                 playerCurrentSoul < 0 ||
                 playerMaximumSoul <= 0 ||
                 playerCurrentSoul >= playerMaximumSoul)
@@ -229,9 +293,17 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
-            Gold -= whiskeyPrice;
+            Gold -= price;
+            _whiskeyPurchasedThisVisit = true;
+            _utilityPurchasedThisVisit = true;
             RefreshOfferViews();
             return true;
+        }
+
+        private int CalculateUtilityPrice(int basePrice)
+        {
+            return Mathf.Max(0, basePrice) +
+                _utilityPriceLevel * Mathf.Max(0, utilityPriceIncreasePerUsedVisit);
         }
 
         private void SetCombatTableActive(bool active)
