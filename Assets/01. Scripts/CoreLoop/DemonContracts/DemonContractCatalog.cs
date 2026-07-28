@@ -117,8 +117,8 @@ namespace DiaBlackJack.CoreLoop
                     "레비아탄",
                     DemonContractKind.Leviathan,
                     baseSoulCost,
-                    "리볼버가 높은 상대 합계를 직접 버스트시킬 수 있다.",
-                    "계약 시 영혼 1, 효과 실패 시 영혼 1"),
+                    "리볼버 첫 예측 실패 시 한 번 더 예측한다.",
+                    "계약 시 영혼 1, 두 예측 모두 실패 시 영혼 1"),
                 new DemonContractDefinition(
                     BeelzebubKey,
                     "바알제붑",

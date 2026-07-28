@@ -69,11 +69,13 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentOutOfRangeException(nameof(bustedTarget));
             }
 
-            if (paidSoulCost < 0 || paidSoulCost > 1 ||
-                (bustedTarget.HasValue && paidSoulCost != 0) ||
-                (!bustedTarget.HasValue &&
-                    copiedSuccesses.Count == 2 &&
-                    paidSoulCost != 1))
+            bool twoFailures = copiedSuccesses.Count == 2 &&
+                !copiedSuccesses[0] &&
+                !copiedSuccesses[1];
+            int expectedSoulCost = !bustedTarget.HasValue && twoFailures
+                ? 1
+                : 0;
+            if (paidSoulCost != expectedSoulCost)
             {
                 throw new ArgumentOutOfRangeException(nameof(paidSoulCost));
             }
@@ -157,6 +159,7 @@ namespace DiaBlackJack.CoreLoop
             CardEffectResult cardEffectResult)
         {
             return SupportsOwnerCardEffect(context, cardEffectResult.EffectKind) &&
+                !cardEffectResult.Succeeded &&
                 !cardEffectResult.EndedRound;
         }
 
@@ -165,6 +168,7 @@ namespace DiaBlackJack.CoreLoop
             CardEffectResult cardEffectResult)
         {
             return cardEffectResult.EffectKind == CardEffectKind.AutoPistol &&
+                !cardEffectResult.Succeeded &&
                 !cardEffectResult.EndedRound;
         }
 
@@ -175,7 +179,7 @@ namespace DiaBlackJack.CoreLoop
             if (!CanResolveAfterOwnerCardEffect(context, cardEffectResult))
             {
                 throw new InvalidOperationException(
-                    "Leviathan can only finish an auto-pistol effect that did not end combat.");
+                    "Leviathan can only charge for two failed auto-pistol activations.");
             }
 
             context.ApplyOwnerSoulDamage(1);

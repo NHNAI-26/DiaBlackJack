@@ -82,6 +82,7 @@ namespace DiaBlackJack.GameScene
     public enum GameSceneRevolverAnimationPhase
     {
         Ready,
+        ResolvedWithRetry,
         Resolved,
     }
 
@@ -219,6 +220,19 @@ namespace DiaBlackJack.GameScene
         private static GameSceneRevolverAnimationCue CreateRevolverAnimationCue(
             CoreLoopBattle battle)
         {
+            if (battle.HasPendingLeviathanAutoPistolRetry &&
+                battle.LastCardEffectResult.HasValue &&
+                battle.LastCardEffectActorSide.HasValue)
+            {
+                CardEffectResult retryResult = battle.LastCardEffectResult.Value;
+                return new GameSceneRevolverAnimationCue(
+                    battle.RoundNumber,
+                    retryResult.SourceCardId,
+                    battle.LastCardEffectActorSide.Value,
+                    GameSceneRevolverAnimationPhase.ResolvedWithRetry,
+                    retryResult.Succeeded);
+            }
+
             PendingCardEffect pendingPlayerEffect = battle.PendingPlayerCardEffect;
             if (pendingPlayerEffect != null &&
                 pendingPlayerEffect.EffectKind == CardEffectKind.AutoPistol)

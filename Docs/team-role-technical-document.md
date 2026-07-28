@@ -27,6 +27,7 @@
 
 | 날짜 | 영역 | 실제 수행 내용 | 관련 파일/산출물 | 검증/비고 |
 | --- | --- | --- | --- | --- |
+| 2026-07-29 | 카드·계약·GameScene CU-M07 | 레비아탄 리볼버를 첫 실패 조건부 재예측으로 개정하고 첫 성공 종료·첫 실패 연출 뒤 재준비·두 번째 성공 무비용·두 번 실패 영혼 1과 계약 표시 문구를 구현·문서화 | `LeviathanDemonContractHandler.cs`, `DemonContractCatalog.cs`, `DemonContractPresentation.cs`, `CoreLoopBattle.cs`, `GameScenePresentation.cs`, `GameManager.cs`, `MammonAndLeviathanDemonContractTests.cs`, 규칙·카드 사용·계약·씬 연출·공통 기록 | 이천서 기획·구현·검증 책임, AI 규칙 충돌 분석·코드·테스트·문서·Unity MCP 보조; 신규 4/4·CoreLoop 442/442·전체 631/631·GameScene 재예측 상태 확인, 씬·프리팹·Animator Controller·Packages·외부 에셋·오픈소스 무변경 |
 | 2026-07-29 | GameScene 리볼버 CU-M06 | 리볼버 카드 사용 직후 준비 오브젝트를 표시하고 숫자 예측 뒤 성공·실패 사격 Animator 상태로 이어지는 흐름을 구현·문서화 | `GameScenePresentation.cs`, `GameManager.cs`, `CoreLoopPresentationTests.cs`, 카드 사용 문서 4종·씬 연출·공통 기록 | 이천서 기획·구현·검증 책임, AI Animator 전이 원인 분석·코드·테스트·문서·Unity MCP 보조; 대상 2/2·CoreLoop 438/438·전체 627/627·실제 준비/성공/실패 상태 확인, 씬·프리팹·Controller·Packages·외부 에셋·오픈소스 무변경 |
 | 2026-07-29 | GameScene 상점 RFM01 | 카드 슬롯별 재고를 유지하며 방문 전체 구매 상한을 제거하고, 라이터·위스키 독립 1회·이용 방문당 다음 상점 공통 가격 +1단계·새 런 초기화·일반/라이터 선택 화면 `나가기`를 구현하고 관련 기획 문서를 개정 | `ShopController.cs`, `GameManager.cs`, `ShopControllerTests.cs`, `rule.md`, 전체 기획·씬 연출·정식 런 4종·공통 기록 | 이천서 기획·구현·검증 책임, AI 구조 대조·코드·테스트·문서·Unity MCP 보조; 전용 3/3·전체 EditMode 626/626·GameScene 두 상점 가격 2→3·두 나가기 화면, 씬·프리팹·Packages·외부 에셋·오픈소스 무변경; HONG 정식 RF는 미완료 유지 |
 | 2026-07-29 | 코어 루프 표시 CL-M01 | 플레이어 합계를 비공개 역할 포함 `총합`과 제외한 `공개 카드 합`으로 분리해 CoreLoopTest·GameScene에 연결하고 적은 공개 합만 유지 | `CoreLoopPresentation.cs`, `CoreLoopView.cs`, `TableTotalsView.cs`, `GameManager.cs`, `CoreLoopPresentationTests.cs`, 코어 루프 문서 4종·씬 연출·공통 기록 | 이천서 기획·구현·검증 책임, AI 구조 대조·코드·테스트·문서·Unity MCP 보조; 전용 2/2·전체 EditMode 623/623·GameScene 두 줄 화면·게임 코드 오류 0, 씬·프리팹·Packages·외부 에셋·오픈소스 무변경 |
@@ -316,6 +317,7 @@ DC-00 공통 규칙 개정으로 동일 악마 추가 계약과 계약 임시 �
 
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
+| 2026-07-29 | 이천서 | CU-M07 레비아탄 첫 실패 조건부 재예측·두 번 실패 영혼 대가·GameScene 재준비 연출을 대상 4/4·CoreLoop 442/442·전체 631/631로 완료; 씬·프리팹·외부 에셋 무변경 |
 | 2026-07-29 | 이천서 | CU-M06 리볼버 준비 등장·숫자 예측·성공/실패 Animator 연결을 대상 2/2·CoreLoop 438/438·전체 627/627·GameScene 실제 상태로 완료; 씬·프리팹·외부 에셋 무변경 |
 | 2026-07-29 | 이천서 | RFM01 GameScene 상점의 복수 카드 구매·라이터/위스키 독립 1회·이용 방문당 공통 가격 +1·두 나가기 화면과 전용 3/3·전체 626/626·실제 화면 검증 기여 추가; HONG의 RF-01~RF-05는 미완료 유지 |
 | 2026-07-29 | 이천서 | CL-M01 플레이어 전체 합·공개 카드 합 분리 표시를 전용 2/2·전체 EditMode 623/623·GameScene 두 줄 화면·게임 코드 오류 0으로 완료; 적 정보 은닉 유지, 씬·프리팹·외부 에셋 무변경 |

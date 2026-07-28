@@ -10,8 +10,8 @@
 
 | 문서 | 용도 | 상태 |
 | --- | --- | --- |
-| [rule.md](./rule.md) | 게임 원본 규칙 | 상점 복수 카드 구매·서비스 공통 가격 상승·나가기 v1.3 |
-| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | RFM01 상점 경제 규칙 반영 v0.14 |
+| [rule.md](./rule.md) | 게임 원본 규칙 | CU-M07 레비아탄 조건부 재예측 반영 v1.4 |
+| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | CU-M07 레비아탄 규칙 반영 v0.16 |
 | [core-loop-design.md](./core-loop-design.md) | 최소 코어 루프 기획 범위 | CL-M01 합계 표시 개정 v0.2 |
 | [core-loop-development-spec.md](./core-loop-development-spec.md) | 코어 루프 구조·상태·검증 명세 | CL-M01 검증 완료 v0.2 |
 | [core-loop-implementation-plan.md](./core-loop-implementation-plan.md) | 코어 루프 작업 순서·담당·일정·완료 증거 | CL-M01 완료 v0.2 |
@@ -27,18 +27,18 @@
 | [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | 현행 규칙 이관 완료 v0.2 |
 | [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 이력과 현행 규칙 이관 결과 | 현행 규칙 이관 완료 v0.2 |
 | [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | 현행 규칙 이관 완료 v0.2 |
-| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | CU-M06 리볼버 연출 흐름 v0.11 |
-| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M06 검증 완료 v0.6 |
-| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M06 작업 순서와 단계별 검증 게이트 | CU-M06 완료 v0.6 |
-| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M06 완료·전체 627/627 |
+| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | CU-M07 레비아탄 조건부 재예측 v0.12 |
+| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M07 검증 완료 v0.7 |
+| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M07 작업 순서와 단계별 검증 게이트 | CU-M07 완료 v0.7 |
+| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M07 완료·전체 631/631 |
 | [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | 공개된 비공개 카드 정보 경계 반영 v0.4 |
 | [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | 비공개 역할·앞뒷면 경계 반영 v0.4 |
 | [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 이력과 AC-RV00~RV01 개정 계획 | AC-RV01 전용 11/11·전체 522/522 완료 v0.3 |
 | [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | 두 전투 화면·Console 0까지 완료 v0.3 |
-| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | DC-R05 기능·저장 재진입·두 전투 화면 검증 완료 v1.14 |
-| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | DC-R05 활성 입력·후보 화면·저장 재진입 완료 v1.13 |
-| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 이력과 DC-R00~R05 개정 계획 | DC-R05 완료·물리 월드 연출 별도 계획 v1.13 |
-| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | DC-R05 완료·전체 614/614·시각 검증 92점 v1.13 |
+| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | CU-M07 레비아탄 정정 완료 v1.15 |
+| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | CU-M07 레비아탄 검증 완료 v1.14 |
+| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 이력과 DC-R00~R05·CU-M07 개정 계획 | CU-M07 완료·물리 월드 연출 별도 계획 v1.14 |
+| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | CU-M07 완료·전체 631/631 v1.14 |
 | [battle-reward-design.md](./battle-reward-design.md) | 일반·엘리트·보스 전투 보상 규칙과 프로토타입 카드 풀 | RW-00~RW-05 완료 v0.1 |
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW-05 최종 검증 완료 v0.1 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
@@ -74,6 +74,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-29 | 이천서 | CU-M07에서 레비아탄을 첫 예측 실패 때만 재예측하고 두 번 모두 실패할 때만 영혼 1을 잃도록 규칙·코드·GameScene 연출·카드/계약 문서를 동기화; 신규 4/4·CoreLoop 442/442·전체 631/631, 씬·프리팹·Animator Controller·Packages·외부 에셋·오픈소스 무변경 |
 | 2026-07-29 | 이천서 | CU-M06에서 GameScene 리볼버의 `PlayerTurnStart` 준비 등장과 숫자 예측 뒤 `PlayerSuccess/PlayerFail` 결과 사격을 연결하고 대상 2/2·CoreLoop 438/438·전체 EditMode 627/627·실제 Animator 세 상태로 검증; 씬·프리팹·Animator Controller·Packages·외부 에셋·오픈소스 무변경 |
 | 2026-07-29 | 이천서 | RFM01에서 상점 카드의 방문 전체 구매 상한을 제거하고 라이터·위스키 독립 1회, 이용 방문당 다음 상점 공통 가격 +1단계, 일반/라이터 선택 화면 `나가기`를 구현·문서화해 전용 3/3·전체 EditMode 626/626·GameScene 화면으로 검증; 정식 RF-01~RF-05는 HONG 담당 미완료로 유지 |
 | 2026-07-29 | 이천서 | CL-M01에서 플레이어 합계를 비공개 역할 포함 `총합`과 제외한 `공개 카드 합`으로 분리하고 적은 공개 합만 유지해 전용 2/2·전체 EditMode 623/623·GameScene 두 줄 표시·게임 코드 오류 0으로 검증; 씬·프리팹·Packages·외부 에셋·오픈소스 무변경 |

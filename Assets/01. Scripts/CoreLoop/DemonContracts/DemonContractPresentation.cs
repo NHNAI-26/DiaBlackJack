@@ -312,7 +312,7 @@ namespace DiaBlackJack.CoreLoop.UI
                 }
                 else if (contract.Kind == DemonContractKind.Leviathan)
                 {
-                    status = "리볼버 최대 2회 발동";
+                    status = "리볼버 첫 실패 시 재예측";
                 }
                 else
                 {

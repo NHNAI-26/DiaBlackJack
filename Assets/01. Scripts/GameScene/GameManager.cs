@@ -1252,7 +1252,9 @@ namespace DiaBlackJack.GameScene
         {
             foreach (GameSceneViewModel vm in _timeline)
             {
-                bool playedRevolverAnimation = ApplyView(vm);
+                bool playedRevolverAnimation = ApplyView(
+                    vm,
+                    scheduleRevolverRetry: false);
 
                 bool resolveBeat = vm.Core.State == CoreLoopState.ResolvingRound;
                 float waitSeconds = resolveBeat ? resolveHoldSeconds : stepSeconds;
@@ -1262,6 +1264,21 @@ namespace DiaBlackJack.GameScene
                 }
 
                 yield return new WaitForSeconds(waitSeconds);
+
+                GameSceneRevolverAnimationCue revolverCue =
+                    vm.RevolverAnimationCue;
+                if (playedRevolverAnimation &&
+                    revolverCue != null &&
+                    revolverCue.Phase ==
+                        GameSceneRevolverAnimationPhase.ResolvedWithRetry)
+                {
+                    PrepareRevolverRetry(revolverCue);
+                    if (revolverCue.ActorSide == CombatantSide.Enemy &&
+                        stepSeconds > 0f)
+                    {
+                        yield return new WaitForSeconds(stepSeconds);
+                    }
+                }
             }
 
             // Land on the true current state — e.g. BattleEnded, which is not itself a step.
@@ -1276,7 +1293,9 @@ namespace DiaBlackJack.GameScene
             ApplyView(vm);
         }
 
-        private bool ApplyView(GameSceneViewModel vm)
+        private bool ApplyView(
+            GameSceneViewModel vm,
+            bool scheduleRevolverRetry = true)
         {
             _core = vm.Core;
 
@@ -1289,7 +1308,9 @@ namespace DiaBlackJack.GameScene
             RefreshShopUtilityItems();
 
             bool playedRevolverAnimation =
-                TryPlayRevolverAnimation(vm.RevolverAnimationCue);
+                TryPlayRevolverAnimation(
+                    vm.RevolverAnimationCue,
+                    scheduleRevolverRetry);
 
             // While the shop is open its presentation (merchant, hidden combat objects, goods) is owned
             // by ShopController; skip the combat re-render so it doesn't repaint the enemy over the merchant.
@@ -1342,7 +1363,9 @@ namespace DiaBlackJack.GameScene
                 battle.Player.Soul.Maximum);
         }
 
-        private bool TryPlayRevolverAnimation(GameSceneRevolverAnimationCue cue)
+        private bool TryPlayRevolverAnimation(
+            GameSceneRevolverAnimationCue cue,
+            bool scheduleRevolverRetry)
         {
             if (cue == null || revolverAnimator == null)
             {
@@ -1388,7 +1411,23 @@ namespace DiaBlackJack.GameScene
             revolverAnimator.SetTrigger(ResolveRevolverTrigger(cue));
             _revolverReadyActive = false;
 
-            if (Application.isPlaying && revolverAnimationSeconds > 0f)
+            if (Application.isPlaying &&
+                cue.Phase == GameSceneRevolverAnimationPhase.ResolvedWithRetry &&
+                scheduleRevolverRetry)
+            {
+                if (revolverAnimationSeconds > 0f)
+                {
+                    _revolverHideRoutine =
+                        StartCoroutine(PrepareRevolverRetryAfterDelay(cue));
+                }
+                else
+                {
+                    PrepareRevolverRetry(cue);
+                }
+            }
+            else if (Application.isPlaying &&
+                cue.Phase == GameSceneRevolverAnimationPhase.Resolved &&
+                revolverAnimationSeconds > 0f)
             {
                 _revolverHideRoutine =
                     StartCoroutine(HideRevolverAnimationAfterDelay());
@@ -1472,6 +1511,39 @@ namespace DiaBlackJack.GameScene
             }
 
             ClearActiveRevolverReady();
+        }
+
+        private IEnumerator PrepareRevolverRetryAfterDelay(
+            GameSceneRevolverAnimationCue cue)
+        {
+            yield return new WaitForSeconds(revolverAnimationSeconds);
+            _revolverHideRoutine = null;
+            PrepareRevolverRetry(cue);
+        }
+
+        private void PrepareRevolverRetry(GameSceneRevolverAnimationCue cue)
+        {
+            GameObject root = ResolveRevolverRoot();
+            if (root != null && !root.activeSelf)
+            {
+                root.SetActive(true);
+            }
+
+            if (revolverAnimator == null ||
+                !revolverAnimator.gameObject.activeInHierarchy)
+            {
+                ClearActiveRevolverReady();
+                return;
+            }
+
+            ResetRevolverAnimatorToBase();
+            ResetRevolverTriggers();
+            if (cue.ActorSide == CombatantSide.Player)
+            {
+                revolverAnimator.SetTrigger(playerReadyTrigger);
+            }
+
+            RememberActiveRevolverReady(cue);
         }
 
         private void HideRevolverAnimation()

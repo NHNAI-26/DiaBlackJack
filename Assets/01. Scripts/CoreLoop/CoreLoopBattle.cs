@@ -357,6 +357,13 @@ namespace DiaBlackJack.CoreLoop
 
         public LeviathanCardEffectResult LastLeviathanCardEffectResult { get; private set; }
 
+        internal bool HasPendingLeviathanAutoPistolRetry =>
+            _activeLeviathanCardEffectSequence != null &&
+            _pendingCardEffect != null &&
+            _pendingCardEffect.EffectKind == CardEffectKind.AutoPistol &&
+            _pendingCardEffect.SourceCardId ==
+                _activeLeviathanCardEffectSequence.SourceCardId;
+
         public PendingDemonContractInteraction PendingPlayerDemonContractInteraction =>
             _pendingPlayerDemonContractInteraction;
 
@@ -4374,6 +4381,18 @@ namespace DiaBlackJack.CoreLoop
                     paidSoulCost: 0);
                 _activeLeviathanCardEffectSequence = null;
             }
+            else if (completedLeviathanSequence != null && result.Succeeded)
+            {
+                LastLeviathanCardEffectResult = new LeviathanCardEffectResult(
+                    new[]
+                    {
+                        completedLeviathanSequence.FirstActivationSucceeded,
+                        true
+                    },
+                    bustedTarget: null,
+                    paidSoulCost: 0);
+                _activeLeviathanCardEffectSequence = null;
+            }
 
             if (!sourceCard.TryCompleteUse())
             {
@@ -4467,7 +4486,7 @@ namespace DiaBlackJack.CoreLoop
                     return CardEffectApplicationResult.RoundEnded;
                 }
             }
-            else if (completedLeviathanSequence != null)
+            else if (completedLeviathanSequence != null && !result.Succeeded)
             {
                 throw new InvalidOperationException(
                     "Leviathan continuation completed without its contract result.");

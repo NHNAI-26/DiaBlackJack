@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using DiaBlackJack.CoreLoop.UI;
+using DiaBlackJack.GameScene;
 using NUnit.Framework;
 
 namespace DiaBlackJack.CoreLoop.Tests
@@ -174,6 +175,99 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CUM07_U01_LeviathanFirstSuccessStopsWithoutAnotherDeclaration()
+        {
+            CoreLoopBattle battle = CreateLeviathanBattle(
+                playerCurrentSoul: 12,
+                enemyRanks: new[] { 10, 7, 2, 3 },
+                new SequenceEnemyPolicy(EnemyActionType.Stand));
+            ActivateFirstContract(battle);
+            int soulBeforePistol = battle.Player.Soul.Current;
+
+            UseAutoPistolWithGuess(battle, guess: 7);
+
+            Assert.That(battle.PendingPlayerCardEffect, Is.Null);
+            Assert.That(battle.LastCardEffectResult.Value.Succeeded, Is.True);
+            Assert.That(
+                battle.LastLeviathanCardEffectResult.ActivationSuccesses,
+                Is.EqualTo(new[] { true }));
+            Assert.That(battle.LastLeviathanCardEffectResult.PaidSoulCost, Is.Zero);
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(soulBeforePistol));
+        }
+
+        [Test]
+        public void CUM07_U02_LeviathanFirstFailurePresentsResultBeforeRetryReady()
+        {
+            CoreLoopBattle battle = CreateLeviathanBattle(
+                playerCurrentSoul: 12,
+                enemyRanks: new[] { 10, 7, 2, 3 },
+                new SequenceEnemyPolicy(EnemyActionType.Stand));
+            ActivateFirstContract(battle);
+            int soulBeforePistol = battle.Player.Soul.Current;
+
+            UseAutoPistolWithGuess(battle, guess: 6);
+
+            GameSceneRevolverAnimationCue cue =
+                GameScenePresenter.Create(battle).RevolverAnimationCue;
+            Assert.That(battle.PendingPlayerCardEffect, Is.Not.Null);
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(soulBeforePistol));
+            Assert.That(cue, Is.Not.Null);
+            Assert.That(cue.ActorSide, Is.EqualTo(CombatantSide.Player));
+            Assert.That(cue.Phase,
+                Is.EqualTo(GameSceneRevolverAnimationPhase.ResolvedWithRetry));
+            Assert.That(cue.Succeeded, Is.False);
+        }
+
+        [Test]
+        public void CUM07_U03_LeviathanSecondFailurePaysSoulAndPresentsFinalResult()
+        {
+            CoreLoopBattle battle = CreateLeviathanBattle(
+                playerCurrentSoul: 12,
+                enemyRanks: new[] { 10, 7, 2, 3 },
+                new SequenceEnemyPolicy(EnemyActionType.Stand));
+            ActivateFirstContract(battle);
+            int soulBeforePistol = battle.Player.Soul.Current;
+            UseAutoPistolWithGuess(battle, guess: 6);
+            GameSceneRevolverAnimationCue finalCue = null;
+            battle.Stepped += () =>
+            {
+                GameSceneRevolverAnimationCue currentCue =
+                    GameScenePresenter.Create(battle).RevolverAnimationCue;
+                if (currentCue != null &&
+                    currentCue.Phase == GameSceneRevolverAnimationPhase.Resolved)
+                {
+                    finalCue = currentCue;
+                }
+            };
+
+            Assert.That(battle.TryResolvePlayerCardChoice(8), Is.True);
+
+            Assert.That(battle.PendingPlayerCardEffect, Is.Null);
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(soulBeforePistol - 1));
+            Assert.That(
+                battle.LastLeviathanCardEffectResult.ActivationSuccesses,
+                Is.EqualTo(new[] { false, false }));
+            Assert.That(battle.LastLeviathanCardEffectResult.PaidSoulCost,
+                Is.EqualTo(1));
+            Assert.That(finalCue, Is.Not.Null);
+            Assert.That(finalCue.Succeeded, Is.False);
+        }
+
+        [Test]
+        public void CUM07_U04_LeviathanSecondSuccessNeverRequiresSoulCost()
+        {
+            Assert.DoesNotThrow(() => new LeviathanCardEffectResult(
+                new[] { false, true },
+                bustedTarget: null,
+                paidSoulCost: 0));
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                new LeviathanCardEffectResult(
+                    new[] { false, false },
+                    bustedTarget: null,
+                    paidSoulCost: 0));
+        }
+
+        [Test]
         public void DCR03_U07_LeviathanStopsAfterFirstActivationBustsOpponent()
         {
             CoreLoopBattle battle = CreateLeviathanBattle(
@@ -280,7 +374,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR03_U12_PresentationShowsRerollActionAndTwoPistolRule()
+        public void DCR03_U12_PresentationShowsRerollActionAndConditionalPistolRetry()
         {
             CoreLoopBattle mammonBattle = CreateMammonBattle(
                 playerRanks: new[] { 5, 5, 2, 3 },
@@ -302,7 +396,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(mammonModel.ActiveContracts.Single(),
                 Does.Contain("재굴림 행동 가능"));
             Assert.That(leviathanModel.ActiveContracts.Single(),
-                Does.Contain("리볼버 최대 2회 발동"));
+                Does.Contain("리볼버 첫 실패 시 재예측"));
         }
 
         [Test]
