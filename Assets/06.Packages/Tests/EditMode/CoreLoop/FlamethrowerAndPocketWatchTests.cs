@@ -240,7 +240,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [TestCase(false, 2)]
-        [TestCase(true, 11)]
+        [TestCase(true, 7)]
         public void AC04_U07_PocketWatchDispositionControlsSourceLocationAndVisibleTotal(
             bool retainSource,
             int expectedVisibleTotal)

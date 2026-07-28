@@ -109,7 +109,7 @@ namespace DiaBlackJack.StageProgression
     public sealed class RunSaveSnapshot
     {
         public const int CurrentSchemaVersion = 1;
-        public const string CurrentContentRevision = "prototype-v1";
+        public const string CurrentContentRevision = "prototype-v2";
 
         internal RunSaveSnapshot(
             int schemaVersion,

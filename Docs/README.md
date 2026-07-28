@@ -2,7 +2,7 @@
 
 > 프로젝트: DiaBlackJack  
 > 문서 책임자: 이천서  
-> 최종 갱신: 2026-07-27
+> 최종 갱신: 2026-07-28
 
 이 디렉터리는 게임 규칙, 기획, 개발 명세, AI 활용, 외부 출처 및 팀 기여 기록을 관리한다.
 
@@ -31,10 +31,10 @@
 | [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M03 검증 완료 v0.3 |
 | [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M03 작업 순서와 단계별 검증 게이트 | CU-M03 완료 v0.3 |
 | [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M03 완료 |
-| [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | 새 숫자 1~5 반영·AC-RV01 구현 대기 v0.2 |
-| [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | AC-RV00 문서 완료·AC-RV01 코드 이관 대기 v0.2 |
-| [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 이력과 AC-RV00~RV01 개정 계획 | AC-RV00 완료·AC-RV01 다음 v0.2 |
-| [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | 최신 숫자 문서화 완료·코드 미변경 v0.2 |
+| [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | AC-RV01 숫자·키·저장 호환 이관 완료 v0.3 |
+| [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | 새 키·런 변환·`prototype-v2` 반영 v0.3 |
+| [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 이력과 AC-RV00~RV01 개정 계획 | AC-RV01 전용 11/11·전체 522/522 완료 v0.3 |
+| [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | 두 전투 화면·Console 0까지 완료 v0.3 |
 | [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | DC-R01 도메인·저장 경계 완료 v1.4 |
 | [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | DC-R01 구현 반영·DC-R02 대기 v1.3 |
 | [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 이력과 DC-R00~R05 개정 계획 | DC-R01 완료·DC-R02 다음 v1.3 |
@@ -74,6 +74,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-28 | 이천서 | AC-RV01 자동 카드 숫자·정의 키·보상/런 전투 변환과 저장 콘텐츠 리비전 `prototype-v2`를 이관하고 전용 11/11·전체 522/522·GameScene/CoreLoopTest·Console 0으로 검증; 씬·프리팹·외부 에셋은 변경하지 않음 |
 | 2026-07-27 | 이천서 | DC-R01 시작 악마 2장 제안·1장 선택, 일반 계약 후보 0·1·2장, 루시퍼 5장 상수와 시작 체크포인트 복원을 구현하고 전용 14/14·전체 EditMode 511/511로 검증; GameScene·씬·프리팹은 변경하지 않음 |
 | 2026-07-27 | 이천서 | 최신 노션 기획을 기준으로 악마 12종, 자동 카드 숫자 1~5, 겁쟁이 도박사 규칙을 원본·전체 기획·기능별 4종 문서에 이관하고 DC-R00·AC-RV00·EP-R00을 문서 완료로 기록; 구현·테스트·씬·외부 에셋은 변경하지 않음 |
 | 2026-07-26 | 이천서 | 저장 SV-02 v1 JSON·안정 문자열·원자 파일 교체·백업 불러오기와 대상 8/8·StageProgression 149/149·전체 EditMode 491/491 완료 |

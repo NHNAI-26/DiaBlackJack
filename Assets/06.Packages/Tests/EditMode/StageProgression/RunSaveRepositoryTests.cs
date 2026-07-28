@@ -147,7 +147,7 @@ namespace DiaBlackJack.StageProgression.Tests
                 RunSaveRepository.PrimaryFileName,
                 validJson.Replace(
                     RunSaveSnapshot.CurrentContentRevision,
-                    "prototype-v2"));
+                    "prototype-v1"));
 
             RunSaveLoadResult futureResult =
                 new RunSaveRepository(futureFiles, CreateStages()).Load();
@@ -224,7 +224,7 @@ namespace DiaBlackJack.StageProgression.Tests
         private static void AssertSnapshot(RunSaveSnapshot snapshot)
         {
             Assert.That(snapshot.SchemaVersion, Is.EqualTo(1));
-            Assert.That(snapshot.ContentRevision, Is.EqualTo("prototype-v1"));
+            Assert.That(snapshot.ContentRevision, Is.EqualTo("prototype-v2"));
             Assert.That(snapshot.SaveSequence, Is.EqualTo(9));
             Assert.That(snapshot.RunId, Is.EqualTo("run-001"));
             Assert.That(snapshot.SavedAtUtc, Is.EqualTo(SavedAtUtc));

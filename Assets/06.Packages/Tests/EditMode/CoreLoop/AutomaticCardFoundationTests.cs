@@ -24,11 +24,11 @@ namespace DiaBlackJack.CoreLoop.Tests
         private static readonly CardDefinition Poison =
             CardDefinitionCatalog.GetByKey(CardDefinitionCatalog.PoisonKey);
 
-        [TestCase(CardDefinitionCatalog.PoisonKey, 2, CardEffectKind.Poison)]
+        [TestCase(CardDefinitionCatalog.PoisonKey, 1, CardEffectKind.Poison)]
         [TestCase(CardDefinitionCatalog.ResurrectionHerbKey, 2, CardEffectKind.ResurrectionHerb)]
         [TestCase(CardDefinitionCatalog.LieDetectorKey, 3, CardEffectKind.LieDetector)]
-        [TestCase(CardDefinitionCatalog.FlamethrowerKey, 9, CardEffectKind.Flamethrower)]
-        [TestCase(CardDefinitionCatalog.PocketWatchKey, 9, CardEffectKind.PocketWatch)]
+        [TestCase(CardDefinitionCatalog.FlamethrowerKey, 4, CardEffectKind.Flamethrower)]
+        [TestCase(CardDefinitionCatalog.PocketWatchKey, 5, CardEffectKind.PocketWatch)]
         public void AC01_U01_CatalogDefinesAutomaticCards(
             string key,
             int rank,

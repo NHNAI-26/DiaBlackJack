@@ -8,11 +8,11 @@ namespace DiaBlackJack.CoreLoop
     {
         public const string SatanPowerMightKey = "satan-power-might-8";
         public const string SatanPowerFlameKey = "satan-power-flame-10";
-        public const string PoisonKey = "poison-2";
+        public const string PoisonKey = "poison-1";
         public const string ResurrectionHerbKey = "resurrection-herb-2";
         public const string LieDetectorKey = "lie-detector-3";
-        public const string FlamethrowerKey = "flamethrower-9";
-        public const string PocketWatchKey = "pocket-watch-9";
+        public const string FlamethrowerKey = "flamethrower-4";
+        public const string PocketWatchKey = "pocket-watch-5";
 
         private static readonly ReadOnlyCollection<CardDefinition> Definitions;
         private static readonly Dictionary<string, CardDefinition> DefinitionsByKey;
@@ -97,7 +97,7 @@ namespace DiaBlackJack.CoreLoop
                 new CardDefinition(
                     PoisonKey,
                     "독극물",
-                    2,
+                    1,
                     CardActivationKind.Automatic,
                     CardEffectKind.Poison),
                 new CardDefinition(
@@ -115,13 +115,13 @@ namespace DiaBlackJack.CoreLoop
                 new CardDefinition(
                     FlamethrowerKey,
                     "화염 방사기",
-                    9,
+                    4,
                     CardActivationKind.Automatic,
                     CardEffectKind.Flamethrower),
                 new CardDefinition(
                     PocketWatchKey,
                     "회중시계",
-                    9,
+                    5,
                     CardActivationKind.Automatic,
                     CardEffectKind.PocketWatch)
             };
