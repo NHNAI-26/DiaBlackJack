@@ -381,6 +381,12 @@ namespace DiaBlackJack.CoreLoop
         internal int BelialTransferCount =>
             _demonContractCardState.BelialTransferCount;
 
+        internal int BaphometPentagramCount =>
+            _demonContractCardState.BaphometPentagramCount;
+
+        internal int BaphometWaveCount =>
+            _demonContractCardState.BaphometWaveCount;
+
         public DemonContractAvailability PlayerDemonContractAvailability
         {
             get
@@ -1110,6 +1116,13 @@ namespace DiaBlackJack.CoreLoop
             }
 
             if (State == CoreLoopState.BattleEnded)
+            {
+                return;
+            }
+
+            if (TryResolveBaphometExhaustion(
+                    CompletePlayerHitAfterAutomaticCard,
+                    CombatantSide.Player))
             {
                 return;
             }
@@ -2275,6 +2288,24 @@ namespace DiaBlackJack.CoreLoop
             }
         }
 
+        internal void CreateBaphometPentagrams(
+            ActiveDemonContract activeContract)
+        {
+            if (activeContract == null ||
+                activeContract.Kind != DemonContractKind.Baphomet)
+            {
+                throw new ArgumentException(
+                    "Baphomet pentagrams require an active Baphomet contract.",
+                    nameof(activeContract));
+            }
+
+            _demonContractCardState.CreateBaphometWaves(
+                GetParticipant(activeContract.OwnerSide),
+                activeContract.OwnerSide,
+                GetOpponent(activeContract.OwnerSide),
+                activeContract.SourceCardId);
+        }
+
         private IReadOnlyList<ActiveDemonContract> GetActiveDemonContracts(
             CombatantSide side)
         {
@@ -2521,6 +2552,12 @@ namespace DiaBlackJack.CoreLoop
                 }
             }
 
+            if (TryResolveBaphometExhaustion(
+                    () => ResumeOwnerTurnAfterAsmodeusPendingBust(ownerSide)))
+            {
+                return;
+            }
+
             ResumeOwnerTurnAfterTurnStartChoice(ownerSide);
         }
 
@@ -2664,6 +2701,12 @@ namespace DiaBlackJack.CoreLoop
                 bustedTarget: null,
                 paidSoulCost: 0);
             RaiseStepped();
+            if (TryResolveBaphometExhaustion(
+                    () => CompleteRound(roundResolution)))
+            {
+                return true;
+            }
+
             CompleteRound(roundResolution);
             return true;
         }
@@ -2918,6 +2961,12 @@ namespace DiaBlackJack.CoreLoop
                 {
                     return;
                 }
+            }
+
+            if (TryResolveBaphometExhaustion(
+                    () => ResumeOwnerTurnAfterBelialPendingBust(ownerSide)))
+            {
+                return;
             }
 
             ResumeOwnerTurnAfterTurnStartChoice(ownerSide);
@@ -3306,6 +3355,13 @@ namespace DiaBlackJack.CoreLoop
                     : RoundResolver.ResolveNumericBust(
                         RoundNumber,
                         playerIsTarget: opponentSide == CombatantSide.Player));
+                return;
+            }
+
+            if (TryResolveBaphometExhaustion(
+                    () => CompleteSatanAfterPreventedTargetBust(ownerSide),
+                    ownerSide))
+            {
                 return;
             }
 
@@ -4144,6 +4200,16 @@ namespace DiaBlackJack.CoreLoop
             Player.Draw(faceUp: false);
             Enemy.Draw(faceUp: false);
 
+            if (TryResolveBaphometExhaustion(CompleteStartingRoundAfterDeal))
+            {
+                return;
+            }
+
+            CompleteStartingRoundAfterDeal();
+        }
+
+        private void CompleteStartingRoundAfterDeal()
+        {
             BeginPlayerTurn();
             RaiseStepped();
         }
@@ -4154,6 +4220,13 @@ namespace DiaBlackJack.CoreLoop
             {
                 throw new InvalidOperationException(
                     "A player action can only complete from the player turn state.");
+            }
+
+            if (TryResolveBaphometExhaustion(
+                    CompletePlayerActionAndRunEnemyTurn,
+                    CombatantSide.Player))
+            {
+                return;
             }
 
             if (!Player.IsStanding &&
@@ -4462,6 +4535,13 @@ namespace DiaBlackJack.CoreLoop
                 return;
             }
 
+            if (TryResolveBaphometExhaustion(
+                    CompleteEnemyHitAfterAutomaticCard,
+                    CombatantSide.Enemy))
+            {
+                return;
+            }
+
             CompleteEnemyHitAction();
         }
 
@@ -4479,6 +4559,13 @@ namespace DiaBlackJack.CoreLoop
             if (State != CoreLoopState.EnemyTurn ||
                 PendingEnemyCardEffect != null ||
                 _pendingEnemyDemonContractInteraction != null)
+            {
+                return;
+            }
+
+            if (TryResolveBaphometExhaustion(
+                    CompleteEnemyAction,
+                    CombatantSide.Enemy))
             {
                 return;
             }
@@ -4573,6 +4660,65 @@ namespace DiaBlackJack.CoreLoop
                 CombatantSide.Enemy,
                 _activeEnemyDemonContracts,
                 resume);
+        }
+
+        private bool TryResolveBaphometExhaustion(
+            Action resume,
+            CombatantSide? normalTurnActorSide = null)
+        {
+            if (!_demonContractCardState.TryResetNextExhaustedBaphometWave(
+                    out BaphometExhaustion exhaustion))
+            {
+                return false;
+            }
+
+            IReadOnlyList<ActiveDemonContract> targetContracts =
+                exhaustion.TargetSide == CombatantSide.Player
+                    ? _activePlayerDemonContracts
+                    : _activeEnemyDemonContracts;
+            Action resumeAfterPrevention = () =>
+            {
+                if (!TryResolveBaphometExhaustion(
+                        resume,
+                        normalTurnActorSide))
+                {
+                    resume();
+                }
+            };
+            OwnerBustHandlingResult handling = HandleOwnerBust(
+                exhaustion.TargetSide,
+                targetContracts,
+                resumeAfterPrevention);
+            if (handling == OwnerBustHandlingResult.NotHandled)
+            {
+                LastDemonContractEffectResult =
+                    new DemonContractEffectResult(
+                        triggered: true,
+                        bustedTarget: exhaustion.TargetSide,
+                        paidSoulCost: 0);
+                RaiseStepped();
+                if (normalTurnActorSide.HasValue)
+                {
+                    NotifyNormalTurnEnded(normalTurnActorSide.Value);
+                }
+
+                CompleteRound(RoundResolver.ResolveContractEffectBust(
+                    RoundNumber,
+                    playerIsTarget:
+                        exhaustion.TargetSide == CombatantSide.Player));
+            }
+            else if (handling == OwnerBustHandlingResult.Prevented)
+            {
+                LastDemonContractEffectResult =
+                    new DemonContractEffectResult(
+                        triggered: true,
+                        bustedTarget: null,
+                        paidSoulCost: 0);
+                RaiseStepped();
+                resumeAfterPrevention();
+            }
+
+            return true;
         }
 
         private OwnerBustHandlingResult HandleOwnerBust(

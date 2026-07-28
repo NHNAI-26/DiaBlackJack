@@ -114,6 +114,17 @@ namespace DiaBlackJack.CoreLoop
             TotalCardCount = checked(TotalCardCount + 1);
         }
 
+        internal bool TryAddTemporaryAvailableCard(BlackjackCard card)
+        {
+            if (!TryAddAvailableCard(card))
+            {
+                return false;
+            }
+
+            _temporaryCardIds.Add(card.Id);
+            return true;
+        }
+
         public bool TryAddAvailableCard(BlackjackCard card)
         {
             if (card == null ||
@@ -213,6 +224,36 @@ namespace DiaBlackJack.CoreLoop
             _knownRankCounts[card.Rank]--;
             TotalCardCount--;
             return true;
+        }
+
+        internal bool IsInDrawPile(int cardId)
+        {
+            foreach (BlackjackCard card in _drawPile)
+            {
+                if (card.Id == cardId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal void ResetAvailableCards()
+        {
+            foreach (BlackjackCard card in _drawPile)
+            {
+                card.Conceal();
+            }
+
+            foreach (BlackjackCard card in _discardPile)
+            {
+                card.Conceal();
+            }
+
+            _drawPile.AddRange(_discardPile);
+            _discardPile.Clear();
+            Shuffle(_drawPile);
         }
 
         internal IReadOnlyList<BlackjackCard> GetDiscardedCards()

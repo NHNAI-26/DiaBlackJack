@@ -11,6 +11,7 @@ namespace DiaBlackJack.CoreLoop
         Asmodeus,
         Azazel,
         Paimon,
-        Belial
+        Belial,
+        Baphomet
     }
 }

@@ -199,6 +199,11 @@ namespace DiaBlackJack.CoreLoop
                         survivesNextRoundCost
                             ? "cultist-select-survivable-belial"
                             : "cultist-avoid-fatal-belial");
+                case DemonContractKind.Baphomet:
+                    return Score(
+                        candidate,
+                        PreferredContractScore,
+                        "cultist-select-baphomet");
                 default:
                     throw new InvalidOperationException(
                         "Cultist received an unknown demon contract choice.");

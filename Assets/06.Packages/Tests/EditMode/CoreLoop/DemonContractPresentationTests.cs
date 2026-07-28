@@ -155,8 +155,8 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             DemonContractDeck deck = DemonContractDeck.CreatePrototype(seed: 20260723);
 
-            Assert.That(deck.TotalCardCount, Is.EqualTo(10));
-            Assert.That(deck.AvailableCardCount, Is.EqualTo(10));
+            Assert.That(deck.TotalCardCount, Is.EqualTo(11));
+            Assert.That(deck.AvailableCardCount, Is.EqualTo(11));
             Assert.That(deck.CanTakeCandidates, Is.True);
         }
 

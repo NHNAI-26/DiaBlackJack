@@ -220,6 +220,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.InRange(1, 100));
             Assert.That(counts[DemonContractKind.Belial],
                 Is.InRange(1, 100));
+            Assert.That(counts[DemonContractKind.Baphomet],
+                Is.InRange(1, 100));
             Assert.That(counts.Values.Sum(), Is.EqualTo(SimulationCount));
         }
 

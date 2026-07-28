@@ -17,6 +17,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         [TestCase(DemonContractCatalog.AzazelKey, "아자젤", DemonContractKind.Azazel)]
         [TestCase(DemonContractCatalog.PaimonKey, "파이몬", DemonContractKind.Paimon)]
         [TestCase(DemonContractCatalog.BelialKey, "벨리알", DemonContractKind.Belial)]
+        [TestCase(DemonContractCatalog.BaphometKey, "바포메트", DemonContractKind.Baphomet)]
         public void DC_U01_DefaultCatalogProvidesStablePrototypeDefinitions(
             string key,
             string displayName,
@@ -30,7 +31,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(definition.BaseSoulCost, Is.EqualTo(1));
             Assert.That(definition.Summary, Is.Not.Empty);
             Assert.That(definition.CostSummary, Is.Not.Empty);
-            Assert.That(DemonContractCatalog.Default.Definitions.Count, Is.EqualTo(10));
+            Assert.That(DemonContractCatalog.Default.Definitions.Count, Is.EqualTo(11));
         }
 
         [Test]

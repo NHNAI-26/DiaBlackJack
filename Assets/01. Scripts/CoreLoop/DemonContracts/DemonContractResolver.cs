@@ -268,6 +268,11 @@ namespace DiaBlackJack.CoreLoop
             return reactivatedCount;
         }
 
+        public void CreateBaphometPentagrams()
+        {
+            _battle.CreateBaphometPentagrams(ActiveContract);
+        }
+
         public bool OwnerHasAnotherFaceUpCardWithRank(BlackjackCard addedCard)
         {
             if (addedCard == null || !addedCard.IsFaceUp)
@@ -359,7 +364,8 @@ namespace DiaBlackJack.CoreLoop
                 new AsmodeusDemonContractHandler(),
                 new AzazelDemonContractHandler(),
                 new PaimonDemonContractHandler(),
-                new BelialDemonContractHandler());
+                new BelialDemonContractHandler(),
+                new BaphometDemonContractHandler());
         }
 
         public bool CanPlayerStand(

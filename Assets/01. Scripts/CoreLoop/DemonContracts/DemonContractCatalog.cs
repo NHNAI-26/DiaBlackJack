@@ -16,6 +16,7 @@ namespace DiaBlackJack.CoreLoop
         public const string AzazelKey = "azazel";
         public const string PaimonKey = "paimon";
         public const string BelialKey = "belial";
+        public const string BaphometKey = "baphomet";
 
         private static readonly DemonContractCatalog DefaultCatalog =
             new DemonContractCatalog(CreateDefaultDefinitions());
@@ -159,6 +160,13 @@ namespace DiaBlackJack.CoreLoop
                     baseSoulCost,
                     "차례 시작에 상대 공개 카드를 가져와 즉시 사용한다.",
                     "계약 시 영혼 1, 라운드 시작 영혼 1"),
+                new DemonContractDefinition(
+                    BaphometKey,
+                    "바포메트",
+                    DemonContractKind.Baphomet,
+                    baseSoulCost,
+                    "양쪽 덱에 전투 한정 오망성을 섞고 소진된 쪽을 버스트시킨다.",
+                    "계약 시 영혼 1, 자신의 오망성 3장 소진 시 자신 버스트"),
             };
         }
     }
