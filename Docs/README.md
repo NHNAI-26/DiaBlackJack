@@ -12,10 +12,10 @@
 | --- | --- | --- |
 | [rule.md](./rule.md) | 게임 원본 규칙 | 비공개 역할·앞뒷면 분리와 적 확정 리볼버 대응 v1.2 |
 | [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | CU-M04·EP-R02 전투 정보 경계 반영 v0.13 |
-| [core-loop-design.md](./core-loop-design.md) | 최소 코어 루프 기획 범위 | 4단계 완료 기준안 v0.1 |
-| [core-loop-development-spec.md](./core-loop-development-spec.md) | 코어 루프 구조·상태·검증 명세 | 4단계 검증 완료 v0.1 |
-| [core-loop-implementation-plan.md](./core-loop-implementation-plan.md) | 코어 루프 작업 순서·담당·일정·완료 증거 | 전체 완료 v0.1 |
-| [core-loop-progress-log.md](./core-loop-progress-log.md) | 단계별 착수·구현·검증·변경 누적 기록 | 4단계 완료 v0.1 |
+| [core-loop-design.md](./core-loop-design.md) | 최소 코어 루프 기획 범위 | CL-M01 합계 표시 개정 v0.2 |
+| [core-loop-development-spec.md](./core-loop-development-spec.md) | 코어 루프 구조·상태·검증 명세 | CL-M01 검증 완료 v0.2 |
+| [core-loop-implementation-plan.md](./core-loop-implementation-plan.md) | 코어 루프 작업 순서·담당·일정·완료 증거 | CL-M01 완료 v0.2 |
+| [core-loop-progress-log.md](./core-loop-progress-log.md) | 단계별 착수·구현·검증·변경 누적 기록 | CL-M01 완료·전체 623/623 v0.2 |
 | [project-structure-and-mcp-reference.md](./project-structure-and-mcp-reference.md) | Unity 구조·어셈블리·MCP 참조 및 연결 확인 | 확인 완료 v0.1 |
 | [ai-usage-technical-document.md](./ai-usage-technical-document.md) | 개발 AI와 게임 내 AI 활용 기술 기록 | 지속 갱신 |
 | [team-role-technical-document.md](./team-role-technical-document.md) | 팀원별 담당 및 실제 구현 기록 | 지속 갱신 |
@@ -74,6 +74,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-29 | 이천서 | CL-M01에서 플레이어 합계를 비공개 역할 포함 `총합`과 제외한 `공개 카드 합`으로 분리하고 적은 공개 합만 유지해 전용 2/2·전체 EditMode 623/623·GameScene 두 줄 표시·게임 코드 오류 0으로 검증; 씬·프리팹·Packages·외부 에셋·오픈소스 무변경 |
 | 2026-07-29 | 이천서 | CU-M05에서 공개된 적 카드와 앞면 공개된 비공개 역할 카드의 숫자·이름·수동·자동 효과 호버 배지를 연결하고 미공개 적 카드의 문자열을 차단해 신규 3/3·전체 EditMode 622/622·GameScene HUD 화면으로 검증; 씬·프리팹·Packages·외부 에셋·오픈소스 무변경 |
 | 2026-07-29 | 이천서 | 악마 계약 문서 4종의 DC-R05 완료 상태·버전·검증 수치를 문서 색인에 동기화하고 물리 월드 계약 카드 연출을 별도 씬·아트 후속 작업으로 구분 |
 | 2026-07-29 | 이천서 | CU-M04·EP-R02 비공개 역할/앞뒷면 분리, 공개 합·대상·최종 승부 정합화, 공개된 비공개 숫자에 대한 모든 적의 리볼버 확정 대응과 GameScene 역할 정렬을 구현해 전용 5/5·CoreLoop 430/430·StageProgression 189/189·전체 EditMode 619/619으로 검증; 씬·프리팹·Packages·외부 에셋·오픈소스 무변경 |

@@ -1298,7 +1298,9 @@ namespace DiaBlackJack.GameScene
 
             if (totals != null)
             {
-                totals.Render(vm.Core.PlayerTotal, vm.Core.EnemyVisibleTotal);
+                totals.Render(
+                    vm.Core.PlayerTotalsText,
+                    vm.Core.EnemyVisibleTotalText);
             }
 
             return playedRevolverAnimation;

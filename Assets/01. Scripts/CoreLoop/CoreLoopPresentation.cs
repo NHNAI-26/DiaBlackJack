@@ -143,6 +143,7 @@ namespace DiaBlackJack.CoreLoop.UI
             string playerCards,
             string enemyCards,
             int playerTotal,
+            int playerVisibleTotal,
             int enemyVisibleTotal,
             string playerDeck,
             string enemyDeck,
@@ -178,7 +179,10 @@ namespace DiaBlackJack.CoreLoop.UI
             PlayerCards = playerCards;
             EnemyCards = enemyCards;
             PlayerTotal = playerTotal;
+            PlayerVisibleTotal = playerVisibleTotal;
             EnemyVisibleTotal = enemyVisibleTotal;
+            PlayerTotalsText = $"총합 : {playerTotal}\n공개 카드 합 : {playerVisibleTotal}";
+            EnemyVisibleTotalText = $"공개 카드 합 : {enemyVisibleTotal}";
             PlayerDeck = playerDeck;
             EnemyDeck = enemyDeck;
             EnemyDisplayName = enemyDisplayName ?? string.Empty;
@@ -228,7 +232,13 @@ namespace DiaBlackJack.CoreLoop.UI
 
         public int PlayerTotal { get; }
 
+        public int PlayerVisibleTotal { get; }
+
         public int EnemyVisibleTotal { get; }
+
+        public string PlayerTotalsText { get; }
+
+        public string EnemyVisibleTotalText { get; }
 
         public string PlayerDeck { get; }
 
@@ -307,6 +317,7 @@ namespace DiaBlackJack.CoreLoop.UI
                 FormatCards(battle.Player.Hand.Cards, revealAll: true),
                 FormatCards(battle.Enemy.Hand.Cards, revealAll: false),
                 battle.Player.HandValue.Total,
+                battle.Player.VisibleHandValue.Total,
                 battle.Enemy.VisibleHandValue.Total,
                 FormatDeck(battle.Player.Deck),
                 FormatDeck(battle.Enemy.Deck),

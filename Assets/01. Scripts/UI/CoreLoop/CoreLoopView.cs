@@ -95,14 +95,14 @@ namespace DiaBlackJack.CoreLoop.UI
                 "PLAYER",
                 _model.PlayerSoul,
                 _model.PlayerCards,
-                _model.PlayerTotal.ToString(),
+                _model.PlayerTotalsText,
                 _model.PlayerDeck);
             GUILayout.Space(12f);
             DrawParticipant(
                 "ENEMY",
                 _model.EnemySoul,
                 _model.EnemyCards,
-                _model.EnemyVisibleTotal.ToString(),
+                _model.EnemyVisibleTotalText,
                 _model.EnemyDeck);
             GUILayout.EndHorizontal();
 
@@ -180,7 +180,7 @@ namespace DiaBlackJack.CoreLoop.UI
             GUILayout.Label($"SOUL  {soul}", _bodyStyle);
             GUILayout.Space(_styleScreenHeight <= 720 ? 2f : 4f);
             GUILayout.Label($"CARDS  [ {cards} ]", _bodyStyle);
-            GUILayout.Label($"TOTAL  {total}", _bodyStyle);
+            GUILayout.Label(total, _bodyStyle);
             GUILayout.Space(_styleScreenHeight <= 720 ? 2f : 4f);
             GUILayout.Label(deck, _bodyStyle);
             GUILayout.EndVertical();

@@ -71,7 +71,35 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(model.PlayerCards, Is.EqualTo("10  1"));
             Assert.That(model.EnemyCards, Is.EqualTo("10  ?"));
             Assert.That(model.PlayerTotal, Is.EqualTo(21));
+            Assert.That(model.PlayerVisibleTotal, Is.EqualTo(10));
             Assert.That(model.EnemyVisibleTotal, Is.EqualTo(10));
+            Assert.That(
+                model.PlayerTotalsText,
+                Is.EqualTo("총합 : 21\n공개 카드 합 : 10"));
+            Assert.That(
+                model.EnemyVisibleTotalText,
+                Is.EqualTo("공개 카드 합 : 10"));
+        }
+
+        [Test]
+        public void CLM01_U01_RevealedHiddenRoleStaysExcludedFromPlayerPublicTotal()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 10, 2 },
+                enemyRanks: new[] { 9, 7 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            Assert.That(battle.Start(), Is.True);
+            BlackjackCard playerHiddenCard = battle.Player.Hand.Cards[1];
+            playerHiddenCard.Reveal();
+
+            CoreLoopViewModel model = CoreLoopPresenter.Create(battle);
+
+            Assert.That(model.PlayerTotal, Is.EqualTo(12));
+            Assert.That(model.PlayerVisibleTotal, Is.EqualTo(10));
+            Assert.That(
+                model.PlayerTotalsText,
+                Is.EqualTo("총합 : 12\n공개 카드 합 : 10"));
         }
 
         [Test]
