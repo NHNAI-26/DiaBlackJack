@@ -37,6 +37,8 @@ namespace DiaBlackJack.CoreLoop
         private readonly DemonContractResolver _demonContractResolver;
         private readonly AutomaticCardBattleState _automaticCardBattleState =
             new AutomaticCardBattleState();
+        private readonly DemonContractCardState _demonContractCardState =
+            new DemonContractCardState();
         private readonly RoundDamageApplier _damageApplier = new RoundDamageApplier();
         private readonly List<ActiveDemonContract> _activePlayerDemonContracts =
             new List<ActiveDemonContract>();
@@ -57,6 +59,16 @@ namespace DiaBlackJack.CoreLoop
         private int _nextDemonContractInteractionId = 1;
         private PendingBeelzebubBustResolution _pendingBeelzebubBustResolution;
         private bool _isResolvingEnemyBeelzebubChoice;
+        private PendingPaimonExileResolution _pendingPaimonExileResolution;
+        private bool _isResolvingEnemyPaimonChoice;
+        private BelialForcedCardEffectContinuation
+            _belialForcedCardEffectContinuation;
+        private readonly HashSet<int> _resolvedPlayerTurnStartContractIds =
+            new HashSet<int>();
+        private readonly HashSet<int> _resolvedEnemyTurnStartContractIds =
+            new HashSet<int>();
+        private readonly HashSet<int> _resolvedPaimonOpponentBustContractIds =
+            new HashSet<int>();
         private bool _playerAzazelBustPending;
         private bool _enemyAzazelBustPending;
         private PendingDemonContractInteraction _pendingPlayerDemonContractInteraction;
@@ -92,6 +104,47 @@ namespace DiaBlackJack.CoreLoop
             public Action Resume { get; }
 
             public CoreLoopState ResumeState { get; }
+        }
+
+        private sealed class PendingPaimonExileResolution
+        {
+            public PendingPaimonExileResolution(
+                ActiveDemonContract activeContract,
+                RoundResolution roundResolution)
+            {
+                ActiveContract = activeContract ??
+                    throw new ArgumentNullException(nameof(activeContract));
+                RoundResolution = roundResolution;
+            }
+
+            public ActiveDemonContract ActiveContract { get; }
+
+            public BattleParticipant ChosenDeckOwner { get; set; }
+
+            public CombatantSide? ChosenDeckSide { get; set; }
+
+            public IReadOnlyList<BlackjackCard> PeekedCards { get; set; }
+
+            public RoundResolution RoundResolution { get; }
+        }
+
+        private sealed class BelialForcedCardEffectContinuation
+        {
+            public BelialForcedCardEffectContinuation(
+                CombatantSide ownerSide,
+                int sourceContractCardId,
+                int transferredCardId)
+            {
+                OwnerSide = ownerSide;
+                SourceContractCardId = sourceContractCardId;
+                TransferredCardId = transferredCardId;
+            }
+
+            public CombatantSide OwnerSide { get; }
+
+            public int SourceContractCardId { get; }
+
+            public int TransferredCardId { get; }
         }
 
         public CoreLoopBattle(
@@ -316,6 +369,18 @@ namespace DiaBlackJack.CoreLoop
         internal PlayerDemonContractPreview EnemyDemonContractPreview =>
             _enemyDemonContractPreview;
 
+        internal bool PendingEnemyPaimonSelectedOwnerDeck =>
+            _pendingPaimonExileResolution?.ActiveContract.OwnerSide ==
+                CombatantSide.Enemy &&
+            _pendingPaimonExileResolution.ChosenDeckSide ==
+                CombatantSide.Enemy;
+
+        internal int PaimonExileCount =>
+            _demonContractCardState.PaimonExileCount;
+
+        internal int BelialTransferCount =>
+            _demonContractCardState.BelialTransferCount;
+
         public DemonContractAvailability PlayerDemonContractAvailability
         {
             get
@@ -487,6 +552,17 @@ namespace DiaBlackJack.CoreLoop
                         CombatantSide.Player,
                         pending,
                         selectedOption);
+                case DemonContractInteractionKind.PaimonChooseDeck:
+                case DemonContractInteractionKind.PaimonChooseExileCard:
+                    return TryResolvePaimonExileChoice(
+                        CombatantSide.Player,
+                        pending,
+                        selectedOption);
+                case DemonContractInteractionKind.BelialChooseOpponentCard:
+                    return TryResolveBelialTurnStartChoice(
+                        CombatantSide.Player,
+                        pending,
+                        selectedOption);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(pending));
             }
@@ -562,6 +638,17 @@ namespace DiaBlackJack.CoreLoop
                         selectedOption);
                 case DemonContractInteractionKind.AsmodeusForceOpponentHit:
                     return TryResolveAsmodeusTurnStartChoice(
+                        CombatantSide.Enemy,
+                        pending,
+                        selectedOption);
+                case DemonContractInteractionKind.PaimonChooseDeck:
+                case DemonContractInteractionKind.PaimonChooseExileCard:
+                    return TryResolvePaimonExileChoice(
+                        CombatantSide.Enemy,
+                        pending,
+                        selectedOption);
+                case DemonContractInteractionKind.BelialChooseOpponentCard:
+                    return TryResolveBelialTurnStartChoice(
                         CombatantSide.Enemy,
                         pending,
                         selectedOption);
@@ -1463,6 +1550,115 @@ namespace DiaBlackJack.CoreLoop
                 activeContract.SourceCardId);
         }
 
+        private static PendingDemonContractInteraction
+            CreatePaimonDeckChoiceInteraction(
+                int interactionId,
+                ActiveDemonContract activeContract,
+                BattleParticipant owner,
+                BattleParticipant opponent)
+        {
+            var options = new List<DemonContractOption>(2);
+            if (owner.Deck.CanDraw(PaimonDemonContractHandler.PeekCardCount))
+            {
+                options.Add(new DemonContractOption(
+                    PaimonDemonContractHandler.OwnerDeckOptionId,
+                    contractCardId: null,
+                    numericValue: null,
+                    "내 덱 확인"));
+            }
+
+            if (opponent.Deck.CanDraw(PaimonDemonContractHandler.PeekCardCount))
+            {
+                options.Add(new DemonContractOption(
+                    PaimonDemonContractHandler.OpponentDeckOptionId,
+                    contractCardId: null,
+                    numericValue: null,
+                    "상대 덱 확인"));
+            }
+
+            return new PendingDemonContractInteraction(
+                interactionId,
+                DemonContractInteractionKind.PaimonChooseDeck,
+                DemonContractKind.Paimon,
+                options,
+                "전투 동안 카드를 추방할 덱을 선택하십시오.",
+                activeContract.SourceCardId);
+        }
+
+        private static PendingDemonContractInteraction
+            CreatePaimonCardChoiceInteraction(
+                int interactionId,
+                ActiveDemonContract activeContract,
+                IReadOnlyList<BlackjackCard> peekedCards)
+        {
+            if (peekedCards == null ||
+                peekedCards.Count != PaimonDemonContractHandler.PeekCardCount)
+            {
+                throw new ArgumentException(
+                    "Paimon requires exactly two peeked cards.",
+                    nameof(peekedCards));
+            }
+
+            var options = new List<DemonContractOption>(3)
+            {
+                new DemonContractOption(
+                    PaimonDemonContractHandler.SkipExileOptionId,
+                    contractCardId: null,
+                    numericValue: null,
+                    "추방하지 않음")
+            };
+            for (int i = 0; i < peekedCards.Count; i++)
+            {
+                BlackjackCard card = peekedCards[i];
+                options.Add(new DemonContractOption(
+                    PaimonDemonContractHandler.FirstCardOptionId + i,
+                    card.Id,
+                    card.Rank,
+                    $"{card.Definition.DisplayName} ({card.Rank})"));
+            }
+
+            return new PendingDemonContractInteraction(
+                interactionId,
+                DemonContractInteractionKind.PaimonChooseExileCard,
+                DemonContractKind.Paimon,
+                options,
+                "전투 종료까지 추방할 카드를 선택하십시오.",
+                activeContract.SourceCardId);
+        }
+
+        private static PendingDemonContractInteraction
+            CreateBelialTurnStartInteraction(
+                int interactionId,
+                ActiveDemonContract activeContract,
+                IReadOnlyList<BlackjackCard> opponentCards)
+        {
+            var options = new List<DemonContractOption>(opponentCards.Count + 1)
+            {
+                new DemonContractOption(
+                    BelialDemonContractHandler.SkipTransferOptionId,
+                    contractCardId: null,
+                    numericValue: null,
+                    "가져오지 않음")
+            };
+            for (int i = 0; i < opponentCards.Count; i++)
+            {
+                BlackjackCard card = opponentCards[i];
+                options.Add(new DemonContractOption(
+                    BelialDemonContractHandler.FirstTransferOptionId + i,
+                    card.Id,
+                    card.Rank,
+                    $"{card.Definition.DisplayName} ({card.Rank})"));
+            }
+
+            return new PendingDemonContractInteraction(
+                interactionId,
+                DemonContractInteractionKind.BelialChooseOpponentCard,
+                DemonContractKind.Belial,
+                options,
+                "가져와 즉시 사용할 상대 공개 카드를 선택하십시오.",
+                activeContract.SourceCardId);
+        }
+
         private int TakeNextDemonContractInteractionId()
         {
             int interactionId = _nextDemonContractInteractionId;
@@ -2157,23 +2353,43 @@ namespace DiaBlackJack.CoreLoop
                 card);
         }
 
-        private bool TryBeginAsmodeusTurnStartChoice(CombatantSide ownerSide)
+        private bool TryBeginNextTurnStartChoice(CombatantSide ownerSide)
         {
             IReadOnlyList<ActiveDemonContract> activeContracts =
                 GetActiveDemonContracts(ownerSide);
+            ISet<int> resolvedContractIds = ownerSide == CombatantSide.Player
+                ? _resolvedPlayerTurnStartContractIds
+                : _resolvedEnemyTurnStartContractIds;
             if (!_demonContractResolver.TryGetOwnerTurnStartChoiceContract(
                     this,
                     activeContracts,
                     ownerSide,
+                    resolvedContractIds,
                     out ActiveDemonContract activeContract))
             {
                 return false;
             }
 
-            PendingDemonContractInteraction pending =
-                CreateAsmodeusTurnStartInteraction(
-                    TakeNextDemonContractInteractionId(),
-                    activeContract);
+            resolvedContractIds.Add(activeContract.SourceCardId);
+            PendingDemonContractInteraction pending;
+            switch (activeContract.Kind)
+            {
+                case DemonContractKind.Asmodeus:
+                    pending = CreateAsmodeusTurnStartInteraction(
+                        TakeNextDemonContractInteractionId(),
+                        activeContract);
+                    break;
+                case DemonContractKind.Belial:
+                    pending = CreateBelialTurnStartInteraction(
+                        TakeNextDemonContractInteractionId(),
+                        activeContract,
+                        GetOpponent(ownerSide).Hand.GetFaceUpCards());
+                    break;
+                default:
+                    throw new InvalidOperationException(
+                        "Unsupported owner turn-start contract choice.");
+            }
+
             SetPendingDemonContractInteraction(ownerSide, pending);
             State = ownerSide == CombatantSide.Player
                 ? CoreLoopState.PlayerResolvingDemonContract
@@ -2204,10 +2420,7 @@ namespace DiaBlackJack.CoreLoop
                 AsmodeusDemonContractHandler.SkipForcedHitOptionId)
             {
                 SetPendingDemonContractInteraction(ownerSide, pending: null);
-                State = ownerSide == CombatantSide.Player
-                    ? CoreLoopState.PlayerTurn
-                    : CoreLoopState.EnemyTurn;
-                RaiseStepped();
+                ResumeOwnerTurnAfterTurnStartChoice(ownerSide);
                 return true;
             }
 
@@ -2308,11 +2521,16 @@ namespace DiaBlackJack.CoreLoop
                 }
             }
 
-            ResumeOwnerTurnAfterAsmodeus(ownerSide);
+            ResumeOwnerTurnAfterTurnStartChoice(ownerSide);
         }
 
-        private void ResumeOwnerTurnAfterAsmodeus(CombatantSide ownerSide)
+        private void ResumeOwnerTurnAfterTurnStartChoice(CombatantSide ownerSide)
         {
+            if (TryBeginNextTurnStartChoice(ownerSide))
+            {
+                return;
+            }
+
             State = ownerSide == CombatantSide.Player
                 ? CoreLoopState.PlayerTurn
                 : CoreLoopState.EnemyTurn;
@@ -2322,7 +2540,397 @@ namespace DiaBlackJack.CoreLoop
         private void ResumeOwnerTurnAfterAsmodeusPendingBust(
             CombatantSide ownerSide)
         {
-            ResumeOwnerTurnAfterAsmodeus(ownerSide);
+            ResumeOwnerTurnAfterTurnStartChoice(ownerSide);
+            if (ownerSide == CombatantSide.Enemy)
+            {
+                ContinueEnemyTurnLoop();
+            }
+        }
+
+        private bool TryResolvePaimonExileChoice(
+            CombatantSide ownerSide,
+            PendingDemonContractInteraction pending,
+            DemonContractOption selectedOption)
+        {
+            PendingPaimonExileResolution resolution =
+                _pendingPaimonExileResolution;
+            if (resolution == null ||
+                resolution.ActiveContract.OwnerSide != ownerSide ||
+                pending.ContractKind != DemonContractKind.Paimon ||
+                pending.SourceContractCardId !=
+                    resolution.ActiveContract.SourceCardId)
+            {
+                return false;
+            }
+
+            if (pending.Kind == DemonContractInteractionKind.PaimonChooseDeck)
+            {
+                BattleParticipant chosenDeckOwner;
+                CombatantSide chosenDeckSide;
+                if (selectedOption.OptionId ==
+                    PaimonDemonContractHandler.OwnerDeckOptionId)
+                {
+                    chosenDeckOwner = GetParticipant(ownerSide);
+                    chosenDeckSide = ownerSide;
+                }
+                else if (selectedOption.OptionId ==
+                    PaimonDemonContractHandler.OpponentDeckOptionId)
+                {
+                    chosenDeckOwner = GetOpponent(ownerSide);
+                    chosenDeckSide = GetOppositeSide(ownerSide);
+                }
+                else
+                {
+                    return false;
+                }
+
+                if (!chosenDeckOwner.Deck.CanDraw(
+                    PaimonDemonContractHandler.PeekCardCount))
+                {
+                    return false;
+                }
+
+                IReadOnlyList<BlackjackCard> peekedCards =
+                    chosenDeckOwner.Deck.TakeTop(
+                        PaimonDemonContractHandler.PeekCardCount);
+                resolution.ChosenDeckOwner = chosenDeckOwner;
+                resolution.ChosenDeckSide = chosenDeckSide;
+                resolution.PeekedCards = peekedCards;
+                SetPendingDemonContractInteraction(
+                    ownerSide,
+                    CreatePaimonCardChoiceInteraction(
+                        TakeNextDemonContractInteractionId(),
+                        resolution.ActiveContract,
+                        peekedCards));
+                RaiseStepped();
+                return true;
+            }
+
+            if (pending.Kind !=
+                    DemonContractInteractionKind.PaimonChooseExileCard ||
+                resolution.ChosenDeckOwner == null ||
+                resolution.PeekedCards == null)
+            {
+                return false;
+            }
+
+            BlackjackCard exiledCard = null;
+            if (selectedOption.OptionId !=
+                PaimonDemonContractHandler.SkipExileOptionId)
+            {
+                if (!selectedOption.ContractCardId.HasValue)
+                {
+                    return false;
+                }
+
+                foreach (BlackjackCard card in resolution.PeekedCards)
+                {
+                    if (card.Id == selectedOption.ContractCardId.Value)
+                    {
+                        exiledCard = card;
+                        break;
+                    }
+                }
+
+                if (exiledCard == null)
+                {
+                    return false;
+                }
+            }
+
+            var returningCards = new List<BlackjackCard>(
+                resolution.PeekedCards.Count);
+            foreach (BlackjackCard card in resolution.PeekedCards)
+            {
+                if (!ReferenceEquals(card, exiledCard))
+                {
+                    returningCards.Add(card);
+                }
+            }
+
+            resolution.ChosenDeckOwner.Deck.ReturnToTop(returningCards);
+            if (exiledCard != null)
+            {
+                _demonContractCardState.TrackPaimonExile(
+                    resolution.ChosenDeckOwner,
+                    exiledCard);
+            }
+
+            RoundResolution roundResolution = resolution.RoundResolution;
+            SetPendingDemonContractInteraction(ownerSide, pending: null);
+            _pendingPaimonExileResolution = null;
+            LastDemonContractEffectResult = new DemonContractEffectResult(
+                triggered: true,
+                bustedTarget: null,
+                paidSoulCost: 0);
+            RaiseStepped();
+            CompleteRound(roundResolution);
+            return true;
+        }
+
+        private bool TryResolveBelialTurnStartChoice(
+            CombatantSide ownerSide,
+            PendingDemonContractInteraction pending,
+            DemonContractOption selectedOption)
+        {
+            if (pending.Kind !=
+                    DemonContractInteractionKind.BelialChooseOpponentCard ||
+                pending.ContractKind != DemonContractKind.Belial ||
+                !pending.SourceContractCardId.HasValue ||
+                !TryGetActiveDemonContract(
+                    ownerSide,
+                    pending.SourceContractCardId.Value,
+                    DemonContractKind.Belial,
+                    out ActiveDemonContract activeContract))
+            {
+                return false;
+            }
+
+            if (selectedOption.OptionId ==
+                BelialDemonContractHandler.SkipTransferOptionId)
+            {
+                SetPendingDemonContractInteraction(ownerSide, pending: null);
+                ResumeOwnerTurnAfterTurnStartChoice(ownerSide);
+                return true;
+            }
+
+            if (!selectedOption.ContractCardId.HasValue ||
+                !_demonContractCardState.TryTransferFaceUpCard(
+                    GetOpponent(ownerSide),
+                    GetParticipant(ownerSide),
+                    selectedOption.ContractCardId.Value,
+                    activeContract.SourceCardId,
+                    out BlackjackCard transferredCard))
+            {
+                return false;
+            }
+
+            SetPendingDemonContractInteraction(ownerSide, pending: null);
+            RecordPublicAction(
+                ownerSide,
+                PublicCombatActionType.DemonContract,
+                activeContract.Definition.Key);
+            RaiseStepped();
+            ResolveBelialTransferredCardArrival(
+                ownerSide,
+                activeContract.SourceCardId,
+                transferredCard.Id);
+            return true;
+        }
+
+        private void ResolveBelialTransferredCardArrival(
+            CombatantSide ownerSide,
+            int sourceContractCardId,
+            int transferredCardId)
+        {
+            if (ConsumePendingAzazelBust(ownerSide))
+            {
+                OwnerBustHandlingResult handling = ownerSide ==
+                        CombatantSide.Player
+                    ? HandlePlayerBust(() =>
+                        BeginBelialTransferredCardUse(
+                            ownerSide,
+                            sourceContractCardId,
+                            transferredCardId))
+                    : HandleEnemyBust(() =>
+                        BeginBelialTransferredCardUse(
+                            ownerSide,
+                            sourceContractCardId,
+                            transferredCardId));
+                if (handling == OwnerBustHandlingResult.NotHandled)
+                {
+                    LastDemonContractEffectResult =
+                        new DemonContractEffectResult(
+                            triggered: true,
+                            bustedTarget: ownerSide,
+                            paidSoulCost: 0);
+                    NotifyNormalTurnEnded(ownerSide);
+                    CompleteRound(RoundResolver.ResolveContractEffectBust(
+                        RoundNumber,
+                        playerIsTarget:
+                            ownerSide == CombatantSide.Player));
+                    return;
+                }
+
+                if (handling != OwnerBustHandlingResult.Prevented)
+                {
+                    return;
+                }
+
+                LastDemonContractEffectResult =
+                    new DemonContractEffectResult(
+                        triggered: true,
+                        bustedTarget: null,
+                        paidSoulCost: 0);
+                RaiseStepped();
+            }
+
+            BeginBelialTransferredCardUse(
+                ownerSide,
+                sourceContractCardId,
+                transferredCardId);
+        }
+
+        private void BeginBelialTransferredCardUse(
+            CombatantSide ownerSide,
+            int sourceContractCardId,
+            int transferredCardId)
+        {
+            if (State == CoreLoopState.BattleEnded)
+            {
+                return;
+            }
+
+            if (!TryGetActiveDemonContract(
+                    ownerSide,
+                    sourceContractCardId,
+                    DemonContractKind.Belial,
+                    out ActiveDemonContract activeContract))
+            {
+                throw new InvalidOperationException(
+                    "Belial forced card use lost its active contract.");
+            }
+
+            BattleParticipant owner = GetParticipant(ownerSide);
+            if (!owner.Hand.TryGetCard(
+                    transferredCardId,
+                    out BlackjackCard transferredCard))
+            {
+                ResumeOwnerTurnAfterTurnStartChoice(ownerSide);
+                return;
+            }
+
+            if (transferredCard.Definition.Activation ==
+                CardActivationKind.Automatic)
+            {
+                bool waiting = TryBeginAutomaticCardEffect(
+                    ownerSide,
+                    transferredCard,
+                    AutomaticCardContinuation.ForDemonContract(
+                        ownerSide,
+                        DemonContractKind.Belial,
+                        activeContract.SourceCardId,
+                        transferredCard.Id),
+                    out AutomaticCardResult? immediateResult);
+                if (waiting)
+                {
+                    return;
+                }
+
+                CompleteBelialTransferredCardUse(
+                    ownerSide,
+                    sourceContractCardId,
+                    transferredCardId,
+                    immediateResult?.SourceDisposition ??
+                        AutomaticCardSourceDisposition.RetainFaceUp);
+                return;
+            }
+
+            if (transferredCard.Definition.Activation !=
+                    CardActivationKind.Manual ||
+                transferredCard.Definition.Effect == CardEffectKind.None)
+            {
+                CompleteBelialTransferredCardUse(
+                    ownerSide,
+                    sourceContractCardId,
+                    transferredCardId,
+                    AutomaticCardSourceDisposition.RetainFaceUp);
+                return;
+            }
+
+            if (!transferredCard.TryBeginUse())
+            {
+                throw new InvalidOperationException(
+                    "Belial transferred card could not begin immediate use.");
+            }
+
+            _belialForcedCardEffectContinuation =
+                new BelialForcedCardEffectContinuation(
+                    ownerSide,
+                    sourceContractCardId,
+                    transferredCardId);
+            var context = new CardEffectContext(
+                this,
+                ownerSide,
+                transferredCard);
+            _activeCardEffectContext = context;
+            _activeCardEffectActorSide = ownerSide;
+            RecordPublicAction(
+                ownerSide,
+                PublicCombatActionType.UseCard,
+                transferredCard.DefinitionKey);
+            CardEffectApplicationResult applicationResult =
+                ApplyCardEffectStep(_cardEffectResolver.Begin(context));
+            if (applicationResult == CardEffectApplicationResult.Completed)
+            {
+                CompleteCardEffectOwnerAction(ownerSide);
+            }
+        }
+
+        private void CompleteBelialTransferredCardUse(
+            CombatantSide ownerSide,
+            int sourceContractCardId,
+            int transferredCardId,
+            AutomaticCardSourceDisposition sourceDisposition)
+        {
+            if (State == CoreLoopState.BattleEnded)
+            {
+                return;
+            }
+
+            if (!TryGetActiveDemonContract(
+                    ownerSide,
+                    sourceContractCardId,
+                    DemonContractKind.Belial,
+                    out _))
+            {
+                throw new InvalidOperationException(
+                    "Belial transferred card completion lost its active contract.");
+            }
+
+            _ = transferredCardId;
+            _ = sourceDisposition;
+            BattleParticipant owner = GetParticipant(ownerSide);
+            if (owner.VisibleHandValue.IsBust)
+            {
+                OwnerBustHandlingResult handling = ownerSide ==
+                        CombatantSide.Player
+                    ? HandlePlayerBust(() =>
+                        ResumeOwnerTurnAfterTurnStartChoice(ownerSide))
+                    : HandleEnemyBust(() =>
+                        ResumeOwnerTurnAfterBelialPendingBust(ownerSide));
+                if (handling == OwnerBustHandlingResult.NotHandled)
+                {
+                    LastDemonContractEffectResult =
+                        new DemonContractEffectResult(
+                            triggered: true,
+                            bustedTarget: ownerSide,
+                            paidSoulCost: 0);
+                    NotifyNormalTurnEnded(ownerSide);
+                    CompleteRound(RoundResolver.ResolveNumericBust(
+                        RoundNumber,
+                        playerIsTarget:
+                            ownerSide == CombatantSide.Player));
+                    return;
+                }
+
+                if (handling != OwnerBustHandlingResult.Prevented)
+                {
+                    return;
+                }
+            }
+
+            ResumeOwnerTurnAfterTurnStartChoice(ownerSide);
+            if (ownerSide == CombatantSide.Enemy)
+            {
+                ContinueEnemyTurnLoop();
+            }
+        }
+
+        private void ResumeOwnerTurnAfterBelialPendingBust(
+            CombatantSide ownerSide)
+        {
+            ResumeOwnerTurnAfterTurnStartChoice(ownerSide);
             if (ownerSide == CombatantSide.Enemy)
             {
                 ContinueEnemyTurnLoop();
@@ -2904,11 +3512,11 @@ namespace DiaBlackJack.CoreLoop
 
                     if (continuation.ActorSide == CombatantSide.Player)
                     {
-                        CompletePlayerActionAndRunEnemyTurn();
+                        CompleteCardEffectOwnerAction(CombatantSide.Player);
                     }
                     else
                     {
-                        CompleteEnemyAction();
+                        CompleteCardEffectOwnerAction(CombatantSide.Enemy);
                     }
 
                     return;
@@ -2933,6 +3541,13 @@ namespace DiaBlackJack.CoreLoop
                             break;
                         case DemonContractKind.Asmodeus:
                             CompleteAsmodeusForcedHit(
+                                continuation.ActorSide,
+                                continuation.SourceContractCardId.Value,
+                                continuation.EnteredCardId.Value,
+                                result.SourceDisposition);
+                            break;
+                        case DemonContractKind.Belial:
+                            CompleteBelialTransferredCardUse(
                                 continuation.ActorSide,
                                 continuation.SourceContractCardId.Value,
                                 continuation.EnteredCardId.Value,
@@ -2985,7 +3600,12 @@ namespace DiaBlackJack.CoreLoop
                 card.DefinitionKey);
 
             CardEffectApplicationResult applicationResult = ApplyCardEffectStep(step);
-            if (actorSide == CombatantSide.Player &&
+            if (applicationResult == CardEffectApplicationResult.Completed &&
+                _belialForcedCardEffectContinuation != null)
+            {
+                CompleteCardEffectOwnerAction(actorSide);
+            }
+            else if (actorSide == CombatantSide.Player &&
                 applicationResult == CardEffectApplicationResult.Completed)
             {
                 CompletePlayerActionAndRunEnemyTurn();
@@ -3285,6 +3905,7 @@ namespace DiaBlackJack.CoreLoop
 
             if (roundResolution.HasValue)
             {
+                _belialForcedCardEffectContinuation = null;
                 NotifyNormalTurnEnded(actorSide);
                 CompleteRound(roundResolution.Value);
                 return CardEffectApplicationResult.RoundEnded;
@@ -3350,6 +3971,7 @@ namespace DiaBlackJack.CoreLoop
 
                 if (contractResolution.HasValue)
                 {
+                    _belialForcedCardEffectContinuation = null;
                     NotifyNormalTurnEnded(actorSide);
                     CompleteRound(contractResolution.Value);
                     return CardEffectApplicationResult.RoundEnded;
@@ -3405,6 +4027,25 @@ namespace DiaBlackJack.CoreLoop
 
         private void CompleteCardEffectOwnerAction(CombatantSide actorSide)
         {
+            BelialForcedCardEffectContinuation belialContinuation =
+                _belialForcedCardEffectContinuation;
+            if (belialContinuation != null)
+            {
+                if (belialContinuation.OwnerSide != actorSide)
+                {
+                    throw new InvalidOperationException(
+                        "Belial forced card continuation lost its owner.");
+                }
+
+                _belialForcedCardEffectContinuation = null;
+                CompleteBelialTransferredCardUse(
+                    actorSide,
+                    belialContinuation.SourceContractCardId,
+                    belialContinuation.TransferredCardId,
+                    AutomaticCardSourceDisposition.RetainFaceUp);
+                return;
+            }
+
             State = actorSide == CombatantSide.Player
                 ? CoreLoopState.PlayerTurn
                 : CoreLoopState.EnemyTurn;
@@ -3433,6 +4074,36 @@ namespace DiaBlackJack.CoreLoop
             }
         }
 
+        private bool ApplyRoundStartContracts(
+            CombatantSide ownerSide,
+            IReadOnlyList<ActiveDemonContract> activeContracts)
+        {
+            BattleParticipant owner = GetParticipant(ownerSide);
+            int soulBefore = owner.Soul.Current;
+            _demonContractResolver.NotifyRoundStarted(
+                this,
+                activeContracts,
+                ownerSide);
+            int paidSoulCost = soulBefore - owner.Soul.Current;
+            if (paidSoulCost > 0)
+            {
+                LastDemonContractEffectResult =
+                    new DemonContractEffectResult(
+                        triggered: true,
+                        bustedTarget: null,
+                        paidSoulCost);
+                RaiseStepped();
+            }
+
+            if (!owner.Soul.IsDepleted)
+            {
+                return true;
+            }
+
+            EndBattleWithoutRound();
+            return false;
+        }
+
         private void StartRound()
         {
             State = CoreLoopState.StartingRound;
@@ -3448,12 +4119,25 @@ namespace DiaBlackJack.CoreLoop
             ClearPlayerDemonContractInteraction();
             ClearEnemyDemonContractInteraction();
             _pendingBeelzebubBustResolution = null;
+            _pendingPaimonExileResolution = null;
+            _belialForcedCardEffectContinuation = null;
+            _resolvedPaimonOpponentBustContractIds.Clear();
             _playerAzazelBustPending = false;
             _enemyAzazelBustPending = false;
             _playerFinalBonusForEnemyChoice = 0;
             _playerChangeSelection = null;
             _publicActionHistory.Clear();
             _enemyDecisionOrdinal = 0;
+
+            if (!ApplyRoundStartContracts(
+                    CombatantSide.Player,
+                    _activePlayerDemonContracts) ||
+                !ApplyRoundStartContracts(
+                    CombatantSide.Enemy,
+                    _activeEnemyDemonContracts))
+            {
+                return;
+            }
 
             Player.Draw(faceUp: true);
             Enemy.Draw(faceUp: true);
@@ -3489,6 +4173,7 @@ namespace DiaBlackJack.CoreLoop
 
         private void BeginPlayerTurn()
         {
+            _resolvedPlayerTurnStartContractIds.Clear();
             State = CoreLoopState.PlayerTurn;
             if (!HandleNormalTurnStarted(
                 CombatantSide.Player,
@@ -3505,11 +4190,12 @@ namespace DiaBlackJack.CoreLoop
             _demonContractResolver.NotifyPlayerTurnStarted(
                 this,
                 _activePlayerDemonContracts);
-            TryBeginAsmodeusTurnStartChoice(CombatantSide.Player);
+            TryBeginNextTurnStartChoice(CombatantSide.Player);
         }
 
         private void RunEnemyTurn()
         {
+            _resolvedEnemyTurnStartContractIds.Clear();
             State = CoreLoopState.EnemyTurn;
 
             if (!Enemy.IsStanding &&
@@ -3535,7 +4221,7 @@ namespace DiaBlackJack.CoreLoop
                 this,
                 _activeEnemyDemonContracts,
                 CombatantSide.Enemy);
-            TryBeginAsmodeusTurnStartChoice(CombatantSide.Enemy);
+            TryBeginNextTurnStartChoice(CombatantSide.Enemy);
         }
 
         private void ResumeEnemyTurnAfterNormalStart()
@@ -3662,6 +4348,8 @@ namespace DiaBlackJack.CoreLoop
 
                 case EnemyActionType.UseCard:
                     bool wasPending = PendingEnemyCardEffect != null;
+                    bool wasBelialForced =
+                        _belialForcedCardEffectContinuation != null;
                     executed = wasPending
                         ? decision.CardEffectOptionId.HasValue &&
                             TryResolveCardChoice(
@@ -3671,6 +4359,7 @@ namespace DiaBlackJack.CoreLoop
                             TryBeginCardUse(CombatantSide.Enemy, decision.CardId.Value);
 
                     if (executed &&
+                        !wasBelialForced &&
                         PendingEnemyCardEffect == null &&
                         State == CoreLoopState.EnemyTurn)
                     {
@@ -4255,10 +4944,13 @@ namespace DiaBlackJack.CoreLoop
             _activeAutomaticCardEffectContext = null;
             _automaticCardContinuation = null;
             _pendingAutomaticCardInteraction = null;
+            _belialForcedCardEffectContinuation = null;
         }
 
         private void CleanupBattleContracts()
         {
+            RestorePendingPaimonPeek();
+            _demonContractCardState.RestoreAll();
             _demonContractResolver.NotifyBattleEnded(
                 this,
                 _activePlayerDemonContracts);
@@ -4267,6 +4959,7 @@ namespace DiaBlackJack.CoreLoop
                 _activeEnemyDemonContracts);
             _activePlayerDemonContracts.Clear();
             _activeEnemyDemonContracts.Clear();
+            _resolvedPaimonOpponentBustContractIds.Clear();
         }
 
         private void ResolveRoundWithEnemyFinalChoice(int playerBonus)
@@ -4341,6 +5034,303 @@ namespace DiaBlackJack.CoreLoop
         }
 
         private void CompleteRound(RoundResolution resolution)
+        {
+            if (TryBeginPaimonOpponentBustChoice(resolution))
+            {
+                return;
+            }
+
+            ResolvePaimonRoundEndCost(resolution);
+        }
+
+        private bool TryBeginPaimonOpponentBustChoice(
+            RoundResolution resolution)
+        {
+            if (_pendingPaimonExileResolution != null)
+            {
+                throw new InvalidOperationException(
+                    "A Paimon exile choice is already pending.");
+            }
+
+            if (TryGetPaimonOpponentBustChoice(
+                    CombatantSide.Player,
+                    resolution,
+                    out ActiveDemonContract playerContract))
+            {
+                BeginPaimonOpponentBustChoice(playerContract, resolution);
+                return true;
+            }
+
+            if (TryGetPaimonOpponentBustChoice(
+                    CombatantSide.Enemy,
+                    resolution,
+                    out ActiveDemonContract enemyContract))
+            {
+                BeginPaimonOpponentBustChoice(enemyContract, resolution);
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool TryGetPaimonOpponentBustChoice(
+            CombatantSide ownerSide,
+            RoundResolution resolution,
+            out ActiveDemonContract activeContract)
+        {
+            activeContract = null;
+            if (!DidOpponentBust(ownerSide, resolution))
+            {
+                return false;
+            }
+
+            IReadOnlyList<ActiveDemonContract> activeContracts =
+                ownerSide == CombatantSide.Player
+                    ? _activePlayerDemonContracts
+                    : _activeEnemyDemonContracts;
+            return _demonContractResolver
+                .TryGetOwnerOpponentBustChoiceContract(
+                    this,
+                    activeContracts,
+                    ownerSide,
+                    _resolvedPaimonOpponentBustContractIds,
+                    out activeContract);
+        }
+
+        private bool DidOpponentBust(
+            CombatantSide ownerSide,
+            RoundResolution resolution)
+        {
+            if (ownerSide == CombatantSide.Player &&
+                resolution.Outcome == RoundOutcome.EnemyBust)
+            {
+                return true;
+            }
+
+            if (ownerSide == CombatantSide.Enemy &&
+                resolution.Outcome == RoundOutcome.PlayerBust)
+            {
+                return true;
+            }
+
+            if (resolution.Cause != RoundEndCause.TotalComparison)
+            {
+                return false;
+            }
+
+            return GetOpponent(ownerSide).HandValue.IsBust;
+        }
+
+        private void BeginPaimonOpponentBustChoice(
+            ActiveDemonContract activeContract,
+            RoundResolution resolution)
+        {
+            CombatantSide ownerSide = activeContract.OwnerSide;
+            _resolvedPaimonOpponentBustContractIds.Add(
+                activeContract.SourceCardId);
+            _pendingPaimonExileResolution =
+                new PendingPaimonExileResolution(
+                    activeContract,
+                    resolution);
+            SetPendingDemonContractInteraction(
+                ownerSide,
+                CreatePaimonDeckChoiceInteraction(
+                    TakeNextDemonContractInteractionId(),
+                    activeContract,
+                    GetParticipant(ownerSide),
+                    GetOpponent(ownerSide)));
+            State = ownerSide == CombatantSide.Player
+                ? CoreLoopState.PlayerResolvingDemonContract
+                : CoreLoopState.EnemyTurn;
+            RaiseStepped();
+
+            if (ownerSide == CombatantSide.Enemy)
+            {
+                ResolvePendingEnemyPaimonChoices();
+            }
+        }
+
+        private void ResolvePendingEnemyPaimonChoices()
+        {
+            if (_isResolvingEnemyPaimonChoice)
+            {
+                return;
+            }
+
+            _isResolvingEnemyPaimonChoice = true;
+            try
+            {
+                const int maximumChoiceCount = 2;
+                for (int choiceIndex = 0;
+                    choiceIndex < maximumChoiceCount;
+                    choiceIndex++)
+                {
+                    PendingDemonContractInteraction pending =
+                        _pendingEnemyDemonContractInteraction;
+                    if (_pendingPaimonExileResolution == null ||
+                        pending == null ||
+                        (pending.Kind !=
+                            DemonContractInteractionKind.PaimonChooseDeck &&
+                         pending.Kind !=
+                            DemonContractInteractionKind.PaimonChooseExileCard))
+                    {
+                        return;
+                    }
+
+                    EnemyActionCandidate selected =
+                        SelectEnemyPaimonCandidate(pending);
+                    int decisionSeed = CreateEnemyDecisionSeed();
+                    EnemyDecision decision = EnemyDecision.FromCandidate(
+                        selected,
+                        pending.Kind ==
+                            DemonContractInteractionKind.PaimonChooseDeck
+                            ? "paimon-inspect-opponent-deck"
+                            : selected.DemonContractOptionNumericValue.HasValue
+                                ? "paimon-exile-highest-opponent-card"
+                                : "paimon-preserve-own-deck");
+                    LastEnemyDecision = decision;
+                    if (!TryExecuteEnemyDecision(decision, decisionSeed))
+                    {
+                        throw new InvalidOperationException(
+                            "Validated enemy Paimon choice could not be resolved.");
+                    }
+                }
+
+                if (_pendingPaimonExileResolution?.ActiveContract.OwnerSide ==
+                    CombatantSide.Enemy)
+                {
+                    throw new InvalidOperationException(
+                        "Enemy Paimon choices exceeded the resolution limit.");
+                }
+            }
+            finally
+            {
+                _isResolvingEnemyPaimonChoice = false;
+            }
+        }
+
+        private EnemyActionCandidate SelectEnemyPaimonCandidate(
+            PendingDemonContractInteraction pending)
+        {
+            EnemyObservation observation = EnemyObservationFactory.Create(
+                this,
+                CreateEnemyDecisionSeed());
+            EnemyActionCandidate selected = null;
+            foreach (EnemyActionCandidate candidate in
+                observation.ActionCandidates)
+            {
+                if (candidate.DemonContractInteractionKind != pending.Kind)
+                {
+                    continue;
+                }
+
+                if (pending.Kind ==
+                    DemonContractInteractionKind.PaimonChooseDeck)
+                {
+                    if (selected == null ||
+                        candidate.DemonContractOptionId ==
+                            PaimonDemonContractHandler.OpponentDeckOptionId)
+                    {
+                        selected = candidate;
+                    }
+
+                    continue;
+                }
+
+                if (_pendingPaimonExileResolution.ChosenDeckSide ==
+                    CombatantSide.Enemy)
+                {
+                    if (!candidate.DemonContractOptionNumericValue.HasValue)
+                    {
+                        selected = candidate;
+                    }
+
+                    continue;
+                }
+
+                if (candidate.DemonContractOptionNumericValue.HasValue &&
+                    (selected == null ||
+                     !selected.DemonContractOptionNumericValue.HasValue ||
+                     candidate.DemonContractOptionNumericValue.Value >
+                        selected.DemonContractOptionNumericValue.Value))
+                {
+                    selected = candidate;
+                }
+            }
+
+            return selected ?? throw new InvalidOperationException(
+                "Enemy Paimon choice has no valid candidate.");
+        }
+
+        private void ResolvePaimonRoundEndCost(RoundResolution resolution)
+        {
+            CombatantSide winnerSide = GetRoundWinner(resolution.Outcome);
+            IReadOnlyList<ActiveDemonContract> winnerContracts =
+                winnerSide == CombatantSide.Player
+                    ? _activePlayerDemonContracts
+                    : _activeEnemyDemonContracts;
+            if (!_demonContractResolver.BustsOwnerAtRoundEnd(
+                    this,
+                    winnerContracts,
+                    winnerSide))
+            {
+                FinalizeRound(resolution);
+                return;
+            }
+
+            OwnerBustHandlingResult handling = HandleOwnerBust(
+                winnerSide,
+                winnerContracts,
+                () => FinalizeRound(resolution));
+            if (handling == OwnerBustHandlingResult.NotHandled)
+            {
+                LastDemonContractEffectResult =
+                    new DemonContractEffectResult(
+                        triggered: true,
+                        bustedTarget: winnerSide,
+                        paidSoulCost: 0);
+                RaiseStepped();
+                FinalizeRound(RoundResolver.ResolveContractEffectBust(
+                    RoundNumber,
+                    playerIsTarget: winnerSide == CombatantSide.Player));
+            }
+            else if (handling == OwnerBustHandlingResult.Prevented)
+            {
+                FinalizeRound(resolution);
+            }
+        }
+
+        private static CombatantSide GetRoundWinner(RoundOutcome outcome)
+        {
+            switch (outcome)
+            {
+                case RoundOutcome.EnemyBust:
+                case RoundOutcome.PlayerWin:
+                case RoundOutcome.PlayerTwentyOneWin:
+                    return CombatantSide.Player;
+                case RoundOutcome.PlayerBust:
+                case RoundOutcome.EnemyWin:
+                    return CombatantSide.Enemy;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(outcome));
+            }
+        }
+
+        private void RestorePendingPaimonPeek()
+        {
+            PendingPaimonExileResolution resolution =
+                _pendingPaimonExileResolution;
+            if (resolution?.ChosenDeckOwner != null &&
+                resolution.PeekedCards != null)
+            {
+                resolution.ChosenDeckOwner.Deck.ReturnToTop(
+                    resolution.PeekedCards);
+            }
+
+            _pendingPaimonExileResolution = null;
+        }
+
+        private void FinalizeRound(RoundResolution resolution)
         {
             ClearPlayerDemonContractInteraction();
             ClearEnemyDemonContractInteraction();

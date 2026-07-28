@@ -276,6 +276,18 @@ namespace DiaBlackJack.CoreLoop
             {
                 definitionKey = DemonContractCatalog.AsmodeusKey;
             }
+            else if (pending.Kind ==
+                    DemonContractInteractionKind.PaimonChooseDeck ||
+                pending.Kind ==
+                    DemonContractInteractionKind.PaimonChooseExileCard)
+            {
+                definitionKey = DemonContractCatalog.PaimonKey;
+            }
+            else if (pending.Kind ==
+                DemonContractInteractionKind.BelialChooseOpponentCard)
+            {
+                definitionKey = DemonContractCatalog.BelialKey;
+            }
 
             foreach (DemonContractOption option in pending.Options)
             {
@@ -299,6 +311,21 @@ namespace DiaBlackJack.CoreLoop
                         battle,
                         pending,
                         option);
+                }
+                else if (pending.Kind ==
+                    DemonContractInteractionKind.PaimonChooseExileCard)
+                {
+                    optionNumericValue = option.NumericValue;
+                    if (optionNumericValue.HasValue &&
+                        battle.PendingEnemyPaimonSelectedOwnerDeck)
+                    {
+                        optionNumericValue = -optionNumericValue.Value;
+                    }
+                }
+                else if (pending.Kind ==
+                    DemonContractInteractionKind.BelialChooseOpponentCard)
+                {
+                    optionNumericValue = option.NumericValue;
                 }
 
                 candidates.Add(new EnemyActionCandidate(

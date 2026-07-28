@@ -14,6 +14,8 @@ namespace DiaBlackJack.CoreLoop
         public const string MephistophelesKey = "mephistopheles";
         public const string AsmodeusKey = "asmodeus";
         public const string AzazelKey = "azazel";
+        public const string PaimonKey = "paimon";
+        public const string BelialKey = "belial";
 
         private static readonly DemonContractCatalog DefaultCatalog =
             new DemonContractCatalog(CreateDefaultDefinitions());
@@ -120,7 +122,7 @@ namespace DiaBlackJack.CoreLoop
                     "바알제붑",
                     DemonContractKind.Beelzebub,
                     baseSoulCost,
-                    "버스트를 영혼과 양측의 최근 공개 카드로 대신한다.",
+                    "버스트를 영혼과 소유자가 고른 양측 공개 카드로 대신한다.",
                     "계약 시 영혼 1, 공개 카드 3장 이하일 때 스탠드 불가"),
                 new DemonContractDefinition(
                     MephistophelesKey,
@@ -143,6 +145,20 @@ namespace DiaBlackJack.CoreLoop
                     baseSoulCost,
                     "사용 완료 공개 카드를 계약 시와 히트 뒤 재사용 가능하게 한다.",
                     "계약 시 영혼 1, 같은 숫자 공개 카드 유입 시 버스트"),
+                new DemonContractDefinition(
+                    PaimonKey,
+                    "파이몬",
+                    DemonContractKind.Paimon,
+                    baseSoulCost,
+                    "상대 버스트 뒤 선택한 덱 위 카드 한 장을 전투 동안 추방한다.",
+                    "계약 시 영혼 1, 라운드 승리 합계 18 이하면 버스트"),
+                new DemonContractDefinition(
+                    BelialKey,
+                    "벨리알",
+                    DemonContractKind.Belial,
+                    baseSoulCost,
+                    "차례 시작에 상대 공개 카드를 가져와 즉시 사용한다.",
+                    "계약 시 영혼 1, 라운드 시작 영혼 1"),
             };
         }
     }

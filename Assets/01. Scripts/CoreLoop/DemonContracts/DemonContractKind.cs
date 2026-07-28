@@ -9,6 +9,8 @@ namespace DiaBlackJack.CoreLoop
         Beelzebub,
         Mephistopheles,
         Asmodeus,
-        Azazel
+        Azazel,
+        Paimon,
+        Belial
     }
 }

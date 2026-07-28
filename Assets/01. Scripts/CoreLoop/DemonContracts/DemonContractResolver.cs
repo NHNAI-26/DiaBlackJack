@@ -55,6 +55,21 @@ namespace DiaBlackJack.CoreLoop
         bool CanOfferOwnerTurnStartChoice(DemonContractContext context);
     }
 
+    internal interface IDemonContractOpponentBustChoiceHandler
+    {
+        bool CanChooseExileAfterOpponentBust(DemonContractContext context);
+    }
+
+    internal interface IDemonContractRoundEndBustHandler
+    {
+        bool BustsOwnerAtRoundEnd(DemonContractContext context);
+    }
+
+    internal interface IDemonContractRoundStartHandler
+    {
+        void OnRoundStarted(DemonContractContext context);
+    }
+
     internal interface IDemonContractOwnerHitHandler
     {
         void OnOwnerHit(DemonContractContext context);
@@ -113,11 +128,23 @@ namespace DiaBlackJack.CoreLoop
 
         public HandValue OpponentHandValue => Opponent.VisibleHandValue;
 
+        public HandValue OwnerHandValue => Owner.HandValue;
+
         public HandValue OwnerVisibleHandValue => Owner.VisibleHandValue;
 
         public int OwnerFaceUpCardCount => Owner.Hand.GetFaceUpCards().Count;
 
         public bool OpponentCanDraw => Opponent.Deck.CanDraw(1);
+
+        public bool OwnerDeckCanDraw(int count)
+        {
+            return Owner.Deck.CanDraw(count);
+        }
+
+        public bool OpponentDeckCanDraw(int count)
+        {
+            return Opponent.Deck.CanDraw(count);
+        }
 
         public IReadOnlyList<BlackjackCard> OwnerFaceUpCards =>
             Owner.Hand.GetFaceUpCards();
@@ -133,6 +160,20 @@ namespace DiaBlackJack.CoreLoop
         public void ApplyOwnerSoulDamage(int amount)
         {
             Owner.Soul.ApplyDamage(amount);
+        }
+
+        public void DiscardAllOwnerFaceUpCards()
+        {
+            IReadOnlyList<BlackjackCard> faceUpCards =
+                Owner.Hand.GetFaceUpCards();
+            foreach (BlackjackCard card in faceUpCards)
+            {
+                if (!Owner.TryDiscardCard(card.Id))
+                {
+                    throw new InvalidOperationException(
+                        "Validated Belial activation could not discard an owner card.");
+                }
+            }
         }
 
         public RoundResolution CreateOpponentContractEffectBustResolution()
@@ -316,7 +357,9 @@ namespace DiaBlackJack.CoreLoop
                 new BeelzebubDemonContractHandler(),
                 new MephistophelesDemonContractHandler(),
                 new AsmodeusDemonContractHandler(),
-                new AzazelDemonContractHandler());
+                new AzazelDemonContractHandler(),
+                new PaimonDemonContractHandler(),
+                new BelialDemonContractHandler());
         }
 
         public bool CanPlayerStand(
@@ -374,6 +417,81 @@ namespace DiaBlackJack.CoreLoop
                 (handler, context) =>
                     handler.CanOfferOwnerTurnStartChoice(context),
                 out choiceContract);
+        }
+
+        public bool TryGetOwnerTurnStartChoiceContract(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            CombatantSide ownerSide,
+            ISet<int> excludedSourceCardIds,
+            out ActiveDemonContract choiceContract)
+        {
+            return TryGetOwnerChoiceContract<
+                IDemonContractOwnerTurnStartChoiceHandler>(
+                battle,
+                activeContracts,
+                ownerSide,
+                (handler, context) =>
+                    handler.CanOfferOwnerTurnStartChoice(context),
+                out choiceContract,
+                excludedSourceCardIds);
+        }
+
+        public bool TryGetOwnerOpponentBustChoiceContract(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            CombatantSide ownerSide,
+            out ActiveDemonContract choiceContract)
+        {
+            return TryGetOwnerOpponentBustChoiceContract(
+                battle,
+                activeContracts,
+                ownerSide,
+                excludedSourceCardIds: null,
+                out choiceContract);
+        }
+
+        public bool TryGetOwnerOpponentBustChoiceContract(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            CombatantSide ownerSide,
+            ISet<int> excludedSourceCardIds,
+            out ActiveDemonContract choiceContract)
+        {
+            return TryGetOwnerChoiceContract<
+                IDemonContractOpponentBustChoiceHandler>(
+                battle,
+                activeContracts,
+                ownerSide,
+                (handler, context) =>
+                    handler.CanChooseExileAfterOpponentBust(context),
+                out choiceContract,
+                excludedSourceCardIds);
+        }
+
+        public bool BustsOwnerAtRoundEnd(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            CombatantSide ownerSide)
+        {
+            return HasOwnerRestriction<IDemonContractRoundEndBustHandler>(
+                battle,
+                activeContracts,
+                ownerSide,
+                (handler, context) =>
+                    handler.BustsOwnerAtRoundEnd(context));
+        }
+
+        public void NotifyRoundStarted(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            CombatantSide ownerSide)
+        {
+            VisitOwnerHandlers<IDemonContractRoundStartHandler>(
+                battle,
+                activeContracts,
+                ownerSide,
+                (handler, context) => handler.OnRoundStarted(context));
         }
 
         public void NotifyOwnerHit(
@@ -1004,7 +1122,8 @@ namespace DiaBlackJack.CoreLoop
             IReadOnlyList<ActiveDemonContract> activeContracts,
             CombatantSide ownerSide,
             Func<THandler, DemonContractContext, bool> requiresChoice,
-            out ActiveDemonContract choiceContract)
+            out ActiveDemonContract choiceContract,
+            ISet<int> excludedSourceCardIds = null)
             where THandler : class
         {
             if (battle == null)
@@ -1024,7 +1143,10 @@ namespace DiaBlackJack.CoreLoop
 
             foreach (ActiveDemonContract activeContract in activeContracts)
             {
-                if (activeContract.OwnerSide != ownerSide ||
+                if ((excludedSourceCardIds != null &&
+                        excludedSourceCardIds.Contains(
+                            activeContract.SourceCardId)) ||
+                    activeContract.OwnerSide != ownerSide ||
                     !_handlers.TryGetValue(activeContract.Kind, out IDemonContractHandler handler) ||
                     !(handler is THandler choiceHandler))
                 {

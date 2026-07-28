@@ -25,7 +25,10 @@ namespace DiaBlackJack.CoreLoop
         SatanDeclareSecondNumber,
         BeelzebubChooseOwnerCard,
         BeelzebubChooseOpponentCard,
-        AsmodeusForceOpponentHit
+        AsmodeusForceOpponentHit,
+        PaimonChooseDeck,
+        PaimonChooseExileCard,
+        BelialChooseOpponentCard
     }
 
     public sealed class DemonContractAvailability
@@ -347,6 +350,79 @@ namespace DiaBlackJack.CoreLoop
                     {
                         throw new ArgumentException(
                             "Asmodeus public options cannot contain card or hidden data.",
+                            nameof(options));
+                    }
+                }
+            }
+            else if (kind == DemonContractInteractionKind.PaimonChooseDeck)
+            {
+                if (contractKind != DemonContractKind.Paimon ||
+                    !sourceContractCardId.HasValue ||
+                    copiedOptions.Count < 1 ||
+                    copiedOptions.Count > 2)
+                {
+                    throw new ArgumentException(
+                        "Paimon deck choice requires one or two eligible decks.",
+                        nameof(options));
+                }
+
+                foreach (DemonContractOption option in copiedOptions)
+                {
+                    if (option.ContractCardId.HasValue ||
+                        option.NumericValue.HasValue)
+                    {
+                        throw new ArgumentException(
+                            "Paimon deck options cannot expose card data.",
+                            nameof(options));
+                    }
+                }
+            }
+            else if (kind ==
+                DemonContractInteractionKind.PaimonChooseExileCard)
+            {
+                if (contractKind != DemonContractKind.Paimon ||
+                    !sourceContractCardId.HasValue ||
+                    copiedOptions.Count != 3)
+                {
+                    throw new ArgumentException(
+                        "Paimon exile choice requires skip and two card options.",
+                        nameof(options));
+                }
+
+                foreach (DemonContractOption option in copiedOptions)
+                {
+                    bool isSkip = option.OptionId ==
+                        PaimonDemonContractHandler.SkipExileOptionId;
+                    if (isSkip != !option.ContractCardId.HasValue ||
+                        isSkip != !option.NumericValue.HasValue)
+                    {
+                        throw new ArgumentException(
+                            "Paimon exile options must contain one skip and two ranked cards.",
+                            nameof(options));
+                    }
+                }
+            }
+            else if (kind ==
+                DemonContractInteractionKind.BelialChooseOpponentCard)
+            {
+                if (contractKind != DemonContractKind.Belial ||
+                    !sourceContractCardId.HasValue ||
+                    copiedOptions.Count < 2)
+                {
+                    throw new ArgumentException(
+                        "Belial transfer choice requires skip and a public card.",
+                        nameof(options));
+                }
+
+                foreach (DemonContractOption option in copiedOptions)
+                {
+                    bool isSkip = option.OptionId ==
+                        BelialDemonContractHandler.SkipTransferOptionId;
+                    if (isSkip != !option.ContractCardId.HasValue ||
+                        isSkip != !option.NumericValue.HasValue)
+                    {
+                        throw new ArgumentException(
+                            "Belial options must contain one skip and ranked public cards.",
                             nameof(options));
                     }
                 }

@@ -102,6 +102,20 @@ namespace DiaBlackJack.CoreLoop
                         forcesHit
                             ? "cultist-force-opponent-hit-with-asmodeus"
                             : "cultist-skip-asmodeus-forced-hit");
+                case DemonContractInteractionKind.PaimonChooseDeck:
+                    bool choosesOpponentDeck =
+                        candidate.DemonContractOptionId ==
+                            PaimonDemonContractHandler.OpponentDeckOptionId;
+                    return Score(
+                        candidate,
+                        choosesOpponentDeck ? 1500 : 100,
+                        choosesOpponentDeck
+                            ? "cultist-inspect-opponent-deck-with-paimon"
+                            : "cultist-avoid-own-deck-paimon-exile");
+                case DemonContractInteractionKind.PaimonChooseExileCard:
+                    return EvaluatePaimonExile(candidate);
+                case DemonContractInteractionKind.BelialChooseOpponentCard:
+                    return EvaluateBelialTransfer(candidate);
                 default:
                     throw new InvalidOperationException(
                         "Cultist contract option has no interaction kind.");
@@ -169,6 +183,22 @@ namespace DiaBlackJack.CoreLoop
                         candidate,
                         PreferredContractScore,
                         "cultist-select-azazel");
+                case DemonContractKind.Paimon:
+                    return Score(
+                        candidate,
+                        PreferredContractScore,
+                        "cultist-select-paimon");
+                case DemonContractKind.Belial:
+                    bool survivesNextRoundCost = observation.EnemySoul.Current >
+                        BelialDemonContractHandler.RoundStartSoulCost;
+                    return Score(
+                        candidate,
+                        survivesNextRoundCost
+                            ? PreferredContractScore
+                            : FatalContractScore,
+                        survivesNextRoundCost
+                            ? "cultist-select-survivable-belial"
+                            : "cultist-avoid-fatal-belial");
                 default:
                     throw new InvalidOperationException(
                         "Cultist received an unknown demon contract choice.");
@@ -212,6 +242,38 @@ namespace DiaBlackJack.CoreLoop
                 preferHigherRank
                     ? "cultist-beelzebub-discard-highest-own-card"
                     : "cultist-beelzebub-discard-lowest-opponent-card");
+        }
+
+        private static EnemyActionScore EvaluatePaimonExile(
+            EnemyActionCandidate candidate)
+        {
+            int? rank = candidate.DemonContractOptionNumericValue;
+            if (!rank.HasValue)
+            {
+                return Score(
+                    candidate,
+                    500,
+                    "cultist-skip-paimon-exile");
+            }
+
+            return Score(
+                candidate,
+                rank.Value > 0 ? 1200 + rank.Value : 0,
+                rank.Value > 0
+                    ? "cultist-exile-highest-opponent-card-with-paimon"
+                    : "cultist-preserve-own-card-with-paimon");
+        }
+
+        private static EnemyActionScore EvaluateBelialTransfer(
+            EnemyActionCandidate candidate)
+        {
+            int? rank = candidate.DemonContractOptionNumericValue;
+            return Score(
+                candidate,
+                rank.HasValue ? 1200 + rank.Value : 0,
+                rank.HasValue
+                    ? "cultist-transfer-highest-opponent-card-with-belial"
+                    : "cultist-skip-belial-transfer");
         }
 
         private static EnemyActionScore EvaluateBelphegorChoice(

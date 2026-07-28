@@ -124,6 +124,11 @@ namespace DiaBlackJack.CoreLoop
             IsStanding = true;
         }
 
+        internal void CancelStand()
+        {
+            IsStanding = false;
+        }
+
         internal bool TryBeginChange(out PlayerChangeSelection selection)
         {
             selection = null;
