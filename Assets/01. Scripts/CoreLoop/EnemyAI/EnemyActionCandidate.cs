@@ -16,7 +16,8 @@ namespace DiaBlackJack.CoreLoop
             DemonContractInteractionKind? demonContractInteractionKind = null,
             DemonContractKind? demonContractKind = null,
             string demonContractDefinitionKey = null,
-            int? demonContractOptionNumericValue = null)
+            int? demonContractOptionNumericValue = null,
+            int? demonContractSourceCardId = null)
         {
             if (!Enum.IsDefined(typeof(EnemyActionType), actionType))
             {
@@ -75,7 +76,8 @@ namespace DiaBlackJack.CoreLoop
                     demonContractInteractionKind.HasValue ||
                     demonContractKind.HasValue ||
                     demonContractDefinitionKey != null ||
-                    demonContractOptionNumericValue.HasValue)
+                    demonContractOptionNumericValue.HasValue ||
+                    demonContractSourceCardId.HasValue)
                 {
                     throw new ArgumentException(
                         "Card candidates cannot contain demon contract values.");
@@ -97,6 +99,12 @@ namespace DiaBlackJack.CoreLoop
                 if (demonContractOptionId < 0)
                 {
                     throw new ArgumentOutOfRangeException(nameof(demonContractOptionId));
+                }
+
+                if (demonContractSourceCardId < 0)
+                {
+                    throw new ArgumentOutOfRangeException(
+                        nameof(demonContractSourceCardId));
                 }
 
                 if (demonContractInteractionKind.HasValue &&
@@ -122,12 +130,21 @@ namespace DiaBlackJack.CoreLoop
                 }
 
                 if (!demonContractOptionId.HasValue &&
+                    !demonContractSourceCardId.HasValue &&
                     (demonContractKind.HasValue ||
                         demonContractDefinitionKey != null ||
                         demonContractOptionNumericValue.HasValue))
                 {
                     throw new ArgumentException(
                         "Starting a demon contract cannot expose unresolved option values.");
+                }
+
+                if (demonContractSourceCardId.HasValue &&
+                    (!demonContractKind.HasValue ||
+                        string.IsNullOrWhiteSpace(demonContractDefinitionKey)))
+                {
+                    throw new ArgumentException(
+                        "An active demon contract action requires its public contract identity.");
                 }
 
                 if (demonContractInteractionKind ==
@@ -150,7 +167,8 @@ namespace DiaBlackJack.CoreLoop
                 demonContractInteractionKind.HasValue ||
                 demonContractKind.HasValue ||
                 demonContractDefinitionKey != null ||
-                demonContractOptionNumericValue.HasValue)
+                demonContractOptionNumericValue.HasValue ||
+                demonContractSourceCardId.HasValue)
             {
                 throw new ArgumentException(
                     "Only card use candidates can contain card selection values.");
@@ -171,6 +189,7 @@ namespace DiaBlackJack.CoreLoop
                     ? null
                     : demonContractDefinitionKey.Trim();
             DemonContractOptionNumericValue = demonContractOptionNumericValue;
+            DemonContractSourceCardId = demonContractSourceCardId;
         }
 
         public EnemyActionType ActionType { get; }
@@ -197,13 +216,16 @@ namespace DiaBlackJack.CoreLoop
 
         public int? DemonContractOptionNumericValue { get; }
 
+        public int? DemonContractSourceCardId { get; }
+
         internal bool Matches(EnemyDecision decision)
         {
             return decision != null &&
                 ActionType == decision.ActionType &&
                 CardId == decision.CardId &&
                 CardEffectOptionId == decision.CardEffectOptionId &&
-                DemonContractOptionId == decision.DemonContractOptionId;
+                DemonContractOptionId == decision.DemonContractOptionId &&
+                DemonContractSourceCardId == decision.DemonContractSourceCardId;
         }
     }
 

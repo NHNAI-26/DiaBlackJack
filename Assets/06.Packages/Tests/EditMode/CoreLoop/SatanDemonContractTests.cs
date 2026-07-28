@@ -9,214 +9,317 @@ namespace DiaBlackJack.CoreLoop.Tests
     public sealed class SatanDemonContractTests
     {
         [Test]
-        public void DC06_U01_SatanCandidateIsSelectableAndActivationCreatesFirePower()
+        public void DCR02_U01_ActivationStartsAtFourUpperWithoutCreatingPowerCard()
         {
             CoreLoopBattle battle = CreateSatanBattle(
-                playerRanks: new[] { 2, 2, 2, 2, 2, 2, 2, 2 },
+                playerRanks: LowRanks(10),
                 enemyRanks: new[] { 10, 7, 2, 2, 2, 2 },
                 new StandPolicy());
+            int totalCardCount = battle.Player.Deck.TotalCardCount;
+            int handCount = battle.Player.Hand.Count;
+            int? activationCount = null;
+            SatanContractFace? activationFace = null;
+            battle.Stepped += () =>
+            {
+                if (battle.ActivePlayerDemonContracts.Count != 1 ||
+                    activationCount.HasValue)
+                {
+                    return;
+                }
 
-            Assert.That(battle.TryBeginPlayerDemonContract(), Is.True);
-            DemonContractPanelViewModel choosing = DemonContractPresenter.Create(battle);
-            DemonContractChoiceViewModel satan = choosing.Choices.First(choice =>
-                choice.Title == "사탄");
-            Assert.That(satan.CanSelect, Is.True);
-            Assert.That(satan.DisabledReason, Is.Empty);
+                SatanRuntimeState state = GetSatanState(battle);
+                activationCount = state.RemainingDoomCount;
+                activationFace = state.CurrentFace;
+            };
 
-            Assert.That(battle.TryResolvePlayerDemonContract(
-                choosing.InteractionId.Value,
-                satan.OptionId), Is.True);
+            ActivateSatan(battle);
 
-            SatanRuntimeState state = GetSatanState(battle);
-            BlackjackCard power = GetPowerCard(battle, state.PowerCardId);
-            Assert.That(state.RemainingNormalTurns, Is.EqualTo(4));
-            Assert.That(power.DefinitionKey,
-                Is.EqualTo(CardDefinitionCatalog.SatanPowerFlameKey));
-            Assert.That(power.Rank, Is.EqualTo(10));
-            Assert.That(power.IsFaceUp, Is.True);
-            Assert.That(power.CanUse, Is.True);
-            Assert.That(battle.Player.Deck.TotalCardCount, Is.EqualTo(9));
+            Assert.That(activationCount, Is.EqualTo(4));
+            Assert.That(activationFace, Is.EqualTo(SatanContractFace.Upper));
+            Assert.That(battle.Player.Deck.TotalCardCount, Is.EqualTo(totalCardCount));
+            Assert.That(battle.Player.Hand.Count, Is.EqualTo(handCount));
+            Assert.That(CardDefinitionCatalog.All.Count, Is.EqualTo(15));
         }
 
         [Test]
-        public void DC06_U02_ActiveSatanRejectsStandAndPreventsVisibleNumericBust()
+        public void DCR02_U02_OnlyOwnerTurnStartDecrementsAndDoomCostIsPaidOnce()
         {
             CoreLoopBattle battle = CreateSatanBattle(
-                playerRanks: new[] { 10, 2, 5, 2, 2, 2, 2, 2 },
-                enemyRanks: new[] { 10, 7, 2, 2, 2, 2 },
+                LowRanks(14),
+                new[] { 10, 7, 2, 2, 2, 2 },
                 new StandPolicy());
             ActivateSatan(battle);
+            SatanRuntimeState state = GetSatanState(battle);
 
-            Assert.That(battle.CanPlayerStand, Is.False);
-            Assert.That(CoreLoopPresenter.Create(battle).CanStand, Is.False);
-            Assert.That(battle.TryPlayerStand(), Is.False);
+            Assert.That(state.RemainingDoomCount, Is.EqualTo(3));
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(11));
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
             Assert.That(battle.TryPlayerHit(), Is.True);
 
-            Assert.That(battle.Player.VisibleHandValue.IsBust, Is.True);
-            Assert.That(battle.LastResolution, Is.Null);
-            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
-            Assert.That(battle.ActivePlayerDemonContracts.Single().Kind,
-                Is.EqualTo(DemonContractKind.Satan));
-        }
-
-        [Test]
-        public void DC06_U03_CountdownExpiresOncePaysTwoAndRemovesPower()
-        {
-            CoreLoopBattle battle = CreateSatanBattle(
-                playerRanks: new[] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
-                enemyRanks: new[] { 10, 7, 2, 2, 2, 2 },
-                new StandPolicy());
-            ActivateSatan(battle);
-            int powerCardId = GetSatanState(battle).PowerCardId;
-
-            for (int i = 0; i < 4; i++)
-            {
-                Assert.That(battle.TryPlayerHit(), Is.True, $"hit {i + 1}");
-            }
-
+            Assert.That(state.RemainingDoomCount, Is.Zero);
+            Assert.That(state.PenaltyApplied, Is.True);
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(9));
-            Assert.That(battle.ActivePlayerDemonContracts, Is.Empty);
-            Assert.That(battle.CanPlayerStand, Is.True);
-            Assert.That(battle.Player.Hand.Contains(powerCardId), Is.False);
-            Assert.That(battle.Player.Deck.ContainsKnownCardId(powerCardId), Is.False);
-            Assert.That(battle.Player.Deck.TotalCardCount, Is.EqualTo(10));
-            Assert.That(battle.LastDemonContractEffectResult.PaidSoulCost, Is.EqualTo(2));
+            Assert.That(battle.ActivePlayerDemonContracts.Single().RuntimeState,
+                Is.SameAs(state));
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(state.RemainingDoomCount, Is.Zero);
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(9));
         }
 
         [Test]
-        public void DC06_U04_CountdownSoulCostAtZeroEndsBattleBeforeAnotherAction()
+        public void DCR02_U03_DoomCostAtZeroSoulEndsBattleImmediately()
         {
-            var enemyPolicy = new StandPolicy();
             CoreLoopBattle battle = CreateSatanBattle(
-                playerRanks: new[] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 },
-                enemyRanks: new[] { 10, 7, 2, 2, 2, 2 },
-                enemyPolicy,
+                LowRanks(12),
+                new[] { 10, 7, 2, 2, 2, 2 },
+                new StandPolicy(),
                 playerCurrentSoul: 3);
             ActivateSatan(battle);
 
-            for (int i = 0; i < 4; i++)
-            {
-                Assert.That(battle.TryPlayerHit(), Is.True, $"hit {i + 1}");
-            }
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
 
             Assert.That(battle.Player.Soul.Current, Is.Zero);
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.BattleEnded));
             Assert.That(battle.Outcome, Is.EqualTo(BattleOutcome.PlayerDefeat));
             Assert.That(battle.LastResolution, Is.Null);
-            Assert.That(battle.ActivePlayerDemonContracts, Is.Empty);
-            Assert.That(enemyPolicy.DecisionCount, Is.EqualTo(1));
         }
 
         [Test]
-        public void DC06_U05_FireForcesAndDiscardsSafeDrawThenFlipsSameUsedCard()
+        public void DCR02_U04_StandAndAllBustPreventionRemainAfterDoomCost()
         {
             CoreLoopBattle battle = CreateSatanBattle(
-                playerRanks: new[] { 2, 2, 2, 2, 2, 2, 2, 2 },
-                enemyRanks: new[] { 10, 7, 2, 2, 2, 2 },
+                new[] { 10, 2, 10, 10, 2, 2, 2, 2, 2, 2, 2, 2 },
+                new[] { 10, 7, 2, 2, 2, 2 },
+                new StandPolicy());
+            ActivateSatan(battle);
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+
+            SatanRuntimeState state = GetSatanState(battle);
+            Assert.That(state.RemainingDoomCount, Is.Zero);
+            Assert.That(battle.CanPlayerStand, Is.False);
+            Assert.That(battle.TryPlayerStand(), Is.False);
+            Assert.That(battle.Player.VisibleHandValue.IsBust, Is.True);
+            Assert.That(battle.LastResolution, Is.Null);
+            Assert.That(battle.ActivePlayerDemonContracts, Has.Count.EqualTo(1));
+        }
+
+        [Test]
+        public void DCR02_U05_OwnerTurnEndFlipsFaceAndOpponentTurnDoesNot()
+        {
+            CoreLoopBattle battle = CreateSatanBattle(
+                LowRanks(10),
+                new[] { 10, 7, 2, 2, 2, 2 },
                 new StandPolicy());
             ActivateSatan(battle);
             SatanRuntimeState state = GetSatanState(battle);
-            BlackjackCard power = GetPowerCard(battle, state.PowerCardId);
-            int opponentHandCount = battle.Enemy.Hand.Count;
 
-            Assert.That(battle.TryBeginPlayerCardUse(power.Id), Is.True);
-
-            Assert.That(power.Id, Is.EqualTo(state.PowerCardId));
-            Assert.That(power.DefinitionKey,
-                Is.EqualTo(CardDefinitionCatalog.SatanPowerMightKey));
-            Assert.That(power.Rank, Is.EqualTo(8));
-            Assert.That(power.UseState, Is.EqualTo(CardUseState.Used));
-            Assert.That(battle.Enemy.Hand.Count, Is.EqualTo(opponentHandCount));
-            Assert.That(battle.Enemy.Deck.GetDiscardedCards().Select(card => card.Rank),
-                Does.Contain(2));
-            Assert.That(battle.LastCardEffectResult.Value.EffectKind,
-                Is.EqualTo(CardEffectKind.SatanPower));
-            Assert.That(battle.LastCardEffectResult.Value.EndedRound, Is.False);
+            Assert.That(state.CurrentFace, Is.EqualTo(SatanContractFace.Upper));
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(state.CurrentFace, Is.EqualTo(SatanContractFace.Lower));
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(state.CurrentFace, Is.EqualTo(SatanContractFace.Upper));
         }
 
         [Test]
-        public void DC06_U06_MightDeclaresTwoDistinctNumbersAndFlipsToFire()
+        public void DCR02_U06_UpperFaceDeclaresDistinctNumbersAndBustsOnMatch()
         {
-            CardDefinition might =
-                CardDefinitionCatalog.GetByKey(CardDefinitionCatalog.SatanPowerMightKey);
-            BlackjackCard power = new BlackjackCard(0, might);
-            CoreLoopBattle battle = CreateStartedBattleWithoutContract(
-                BlackjackDeck.CreateInDrawOrder(new[]
-                {
-                    power,
-                    new BlackjackCard(1, rank: 2),
-                    new BlackjackCard(2, rank: 2),
-                    new BlackjackCard(3, rank: 2)
-                }),
-                CreatePlainDeck(new[] { 10, 7, 2, 2, 2, 2 }),
-                new StandPolicy());
-            IReadOnlyList<int> beforeCounts = battle.Player.Deck.GetKnownRankCounts();
+            CoreLoopBattle battle = CreateSatanBattle(
+                LowRanks(10),
+                new[] { 10, 7, 2, 2, 2, 2 },
+                new StandPolicy(),
+                enemyMaximumSoul: 3);
+            ActivateSatan(battle);
+            ActiveDemonContract satan = battle.ActivePlayerDemonContracts.Single();
 
-            Assert.That(battle.TryBeginPlayerCardUse(power.Id), Is.True);
-            PendingCardEffect first = battle.PendingPlayerCardEffect;
-            Assert.That(first.ChoiceKind,
-                Is.EqualTo(CardEffectChoiceKind.DeclareFirstOfTwoNumbers));
-            int firstOption = first.Options.Single(option =>
-                option.NumericValue == 3).Id;
-            Assert.That(battle.TryResolvePlayerCardChoice(firstOption), Is.True);
+            Assert.That(battle.TryBeginPlayerSatanContractAction(satan.SourceCardId), Is.True);
+            PendingDemonContractInteraction first =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(first.Kind,
+                Is.EqualTo(DemonContractInteractionKind.SatanDeclareFirstNumber));
+            Assert.That(first.Options, Has.Count.EqualTo(10));
+            Assert.That(ResolveNumber(battle, first, 3), Is.True);
 
-            PendingCardEffect second = battle.PendingPlayerCardEffect;
-            Assert.That(second.ChoiceKind,
-                Is.EqualTo(CardEffectChoiceKind.DeclareSecondOfTwoNumbers));
+            PendingDemonContractInteraction second =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(second.Kind,
+                Is.EqualTo(DemonContractInteractionKind.SatanDeclareSecondNumber));
             Assert.That(second.ContextNumericValue, Is.EqualTo(3));
             Assert.That(second.Options.Any(option => option.NumericValue == 3), Is.False);
-            int secondOption = second.Options.Single(option =>
-                option.NumericValue == 7).Id;
-            Assert.That(battle.TryResolvePlayerCardChoice(secondOption), Is.True);
+            Assert.That(ResolveNumber(battle, second, 7), Is.True);
 
             Assert.That(battle.LastResolution.Value.Cause,
-                Is.EqualTo(RoundEndCause.CardEffectBust));
+                Is.EqualTo(RoundEndCause.ContractEffectBust));
             Assert.That(battle.LastResolution.Value.Outcome,
                 Is.EqualTo(RoundOutcome.EnemyBust));
-            Assert.That(power.DefinitionKey,
-                Is.EqualTo(CardDefinitionCatalog.SatanPowerFlameKey));
-            Assert.That(power.Id, Is.Zero);
-            Assert.That(power.UseState, Is.EqualTo(CardUseState.Used));
-            IReadOnlyList<int> afterCounts = battle.Player.Deck.GetKnownRankCounts();
-            Assert.That(afterCounts[8], Is.EqualTo(beforeCounts[8] - 1));
-            Assert.That(afterCounts[10], Is.EqualTo(beforeCounts[10] + 1));
+            Assert.That(((SatanRuntimeState)battle.ActivePlayerDemonContracts
+                .Single().RuntimeState).CurrentFace,
+                Is.EqualTo(SatanContractFace.Lower));
         }
 
         [Test]
-        public void DC06_U07_BattleEndRemovesPowerFromAllPlayerLocations()
+        public void DCR02_U07_UpperFaceFailureConsumesActionWithoutHiddenRankLeak()
         {
             CoreLoopBattle battle = CreateSatanBattle(
-                playerRanks: new[] { 2, 2, 2, 2, 2, 2, 2, 2 },
-                enemyRanks: new[] { 10, 7, 2, 10, 2, 2 },
-                new SequencePolicy(EnemyActionType.Hit),
-                enemyMaximumSoul: 1);
+                LowRanks(10),
+                new[] { 10, 7, 2, 2, 2, 2 },
+                new StandPolicy());
             ActivateSatan(battle);
-            SatanRuntimeState state = GetSatanState(battle);
-            BlackjackCard power = GetPowerCard(battle, state.PowerCardId);
+            ActiveDemonContract satan = battle.ActivePlayerDemonContracts.Single();
 
-            Assert.That(battle.TryBeginPlayerCardUse(power.Id), Is.True);
+            Assert.That(battle.TryBeginPlayerSatanContractAction(satan.SourceCardId), Is.True);
+            PendingDemonContractInteraction first =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(ResolveNumber(battle, first, 3), Is.True);
+            PendingDemonContractInteraction second =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(ResolveNumber(battle, second, 4), Is.True);
 
-            Assert.That(battle.State, Is.EqualTo(CoreLoopState.BattleEnded));
-            Assert.That(battle.Outcome, Is.EqualTo(BattleOutcome.PlayerVictory));
-            Assert.That(battle.ActivePlayerDemonContracts, Is.Empty);
-            Assert.That(battle.Player.Hand.Contains(power.Id), Is.False);
-            Assert.That(battle.Player.Deck.ContainsKnownCardId(power.Id), Is.False);
-            Assert.That(battle.Player.Deck.TotalCardCount, Is.EqualTo(8));
+            Assert.That(battle.LastDemonContractEffectResult.Triggered, Is.True);
+            Assert.That(battle.LastDemonContractEffectResult.BustedTarget, Is.Null);
+            Assert.That(battle.LastResolution, Is.Null);
+            Assert.That(GetSatanState(battle).CurrentFace,
+                Is.EqualTo(SatanContractFace.Lower));
+            Assert.That(first.Options.Select(option => option.NumericValue),
+                Is.EquivalentTo(Enumerable.Range(1, 10).Select(number => (int?)number)));
         }
 
         [Test]
-        public void DC06_U08_PresentationShowsCountdownAndCurrentPowerFace()
+        public void DCR02_U08_LowerFaceForcesSafeHitThenDiscardsNewCard()
         {
             CoreLoopBattle battle = CreateSatanBattle(
-                playerRanks: new[] { 2, 2, 2, 2, 2, 2, 2, 2 },
-                enemyRanks: new[] { 10, 7, 2, 2, 2, 2 },
+                LowRanks(12),
+                new[] { 10, 7, 2, 3, 4, 5 },
+                new StandPolicy());
+            ActivateSatan(battle);
+            ActiveDemonContract satan = battle.ActivePlayerDemonContracts.Single();
+            FailUpperPower(battle, satan.SourceCardId);
+            int enemyHandCount = battle.Enemy.Hand.Count;
+
+            Assert.That(battle.TryBeginPlayerSatanContractAction(satan.SourceCardId), Is.True);
+
+            Assert.That(battle.Enemy.Hand.Count, Is.EqualTo(enemyHandCount));
+            Assert.That(battle.Enemy.Deck.GetDiscardedCards().Select(card => card.Rank),
+                Does.Contain(2));
+            Assert.That(GetSatanState(battle).CurrentFace,
+                Is.EqualTo(SatanContractFace.Upper));
+        }
+
+        [Test]
+        public void DCR02_U09_LowerFaceResumesAfterAutomaticCardChoiceOnce()
+        {
+            var automaticHandler = new WaitingAutomaticHandler();
+            CoreLoopBattle battle = CreateSatanBattle(
+                LowRanks(12),
+                new BlackjackCard[]
+                {
+                    new BlackjackCard(100, 10),
+                    new BlackjackCard(101, 7),
+                    new BlackjackCard(102,
+                        CardDefinitionCatalog.GetByKey(CardDefinitionCatalog.PoisonKey)),
+                    new BlackjackCard(103, 3)
+                },
+                new StandPolicy(),
+                automaticCardEffectResolver:
+                    new AutomaticCardEffectResolver(automaticHandler));
+            ActivateSatan(battle);
+            ActiveDemonContract satan = battle.ActivePlayerDemonContracts.Single();
+            FailUpperPower(battle, satan.SourceCardId);
+
+            Assert.That(battle.TryBeginPlayerSatanContractAction(satan.SourceCardId), Is.True);
+            PendingAutomaticCardInteraction pending =
+                battle.PendingPlayerAutomaticInteraction;
+            Assert.That(pending, Is.Not.Null);
+            Assert.That(GetSatanState(battle).CurrentFace,
+                Is.EqualTo(SatanContractFace.Lower));
+
+            Assert.That(battle.TryResolvePlayerAutomaticCardChoice(
+                pending.InteractionId,
+                WaitingAutomaticHandler.ResolveOptionId), Is.True);
+
+            Assert.That(automaticHandler.ResolveCount, Is.EqualTo(1));
+            Assert.That(battle.Enemy.Hand.Contains(102), Is.False);
+            Assert.That(GetSatanState(battle).CurrentFace,
+                Is.EqualTo(SatanContractFace.Upper));
+        }
+
+        [Test]
+        public void DCR02_U10_LowerFaceDoesNotCompleteTwiceAfterEnemyAutomaticChoice()
+        {
+            var automaticHandler = new WaitingAutomaticHandler(
+                CombatantSide.Enemy);
+            CoreLoopBattle battle = CreateSatanBattle(
+                LowRanks(12),
+                new BlackjackCard[]
+                {
+                    new BlackjackCard(100, 10),
+                    new BlackjackCard(101, 7),
+                    new BlackjackCard(102,
+                        CardDefinitionCatalog.GetByKey(CardDefinitionCatalog.PoisonKey)),
+                    new BlackjackCard(103, 3)
+                },
+                new StandPolicy(),
+                automaticCardEffectResolver:
+                    new AutomaticCardEffectResolver(automaticHandler),
+                enemyAutomaticCardDecisionPolicy:
+                    DefaultAutomaticCardDecisionPolicy.Instance);
+            ActivateSatan(battle);
+            ActiveDemonContract satan = battle.ActivePlayerDemonContracts.Single();
+            FailUpperPower(battle, satan.SourceCardId);
+
+            Assert.That(battle.TryBeginPlayerSatanContractAction(satan.SourceCardId), Is.True);
+
+            Assert.That(automaticHandler.ResolveCount, Is.EqualTo(1));
+            Assert.That(battle.PendingPlayerAutomaticInteraction, Is.Null);
+            Assert.That(GetSatanState(battle).CurrentFace,
+                Is.EqualTo(SatanContractFace.Upper));
+        }
+
+        [Test]
+        public void DCR02_U11_EnemyOwnedSatanUsesPublicCandidatesSymmetrically()
+        {
+            var policy = new EnemySatanContractActionPolicy();
+            CoreLoopBattle battle = CreateStartedBattle(
+                CreatePlainDeck(new[] { 10, 2, 2, 2, 2, 2 }),
+                CreatePlainDeck(LowRanks(12), startId: 100),
+                policy,
+                new DemonContractDeck(Array.Empty<DemonContractCard>(), seed: 0),
+                playerCurrentSoul: 12,
+                enemyMaximumSoul: 5,
+                enemyDemonDeck: CreateRepeatedSatanDeck());
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(battle.ActiveEnemyDemonContracts, Has.Count.EqualTo(1));
+            Assert.That(battle.TryPlayerHit(), Is.True);
+
+            Assert.That(battle.LastResolution.Value.Cause,
+                Is.EqualTo(RoundEndCause.ContractEffectBust));
+            Assert.That(battle.LastResolution.Value.Outcome,
+                Is.EqualTo(RoundOutcome.PlayerBust));
+            Assert.That(policy.ObservedHiddenRanks, Is.False);
+        }
+
+        [Test]
+        public void DCR02_U12_PresentationShowsDoomCountAndContractFace()
+        {
+            CoreLoopBattle battle = CreateSatanBattle(
+                LowRanks(10),
+                new[] { 10, 7, 2, 2, 2, 2 },
                 new StandPolicy());
             ActivateSatan(battle);
 
             DemonContractPanelViewModel model = DemonContractPresenter.Create(battle);
 
-            Assert.That(model.ActiveContracts.Single(), Does.Contain("남은 정상 차례 4"));
-            Assert.That(model.ActiveContracts.Single(), Does.Contain("권능 화염(10)"));
+            Assert.That(model.ActiveContracts.Single(), Does.Contain("종말 카운트 3"));
+            Assert.That(model.ActiveContracts.Single(), Does.Contain("윗면"));
+            Assert.That(model.ActiveContracts.Single(), Does.Not.Contain("권능"));
         }
 
         private static CoreLoopBattle CreateSatanBattle(
@@ -226,36 +329,45 @@ namespace DiaBlackJack.CoreLoop.Tests
             int playerCurrentSoul = 12,
             int enemyMaximumSoul = 3)
         {
-            return CreateStartedBattle(
-                CreatePlainDeck(playerRanks),
-                CreatePlainDeck(enemyRanks, startId: 100),
+            return CreateSatanBattle(
+                playerRanks,
+                CreateCards(enemyRanks, startId: 100),
                 enemyPolicy,
-                CreateRepeatedSatanDeck(),
                 playerCurrentSoul,
                 enemyMaximumSoul);
         }
 
-        private static CoreLoopBattle CreateStartedBattleWithoutContract(
-            BlackjackDeck playerDeck,
-            BlackjackDeck enemyDeck,
-            IEnemyBehaviorPolicy enemyPolicy)
+        private static CoreLoopBattle CreateSatanBattle(
+            IReadOnlyList<int> playerRanks,
+            IReadOnlyList<BlackjackCard> enemyCards,
+            IEnemyBehaviorPolicy enemyPolicy,
+            int playerCurrentSoul = 12,
+            int enemyMaximumSoul = 3,
+            AutomaticCardEffectResolver automaticCardEffectResolver = null,
+            IAutomaticCardDecisionPolicy enemyAutomaticCardDecisionPolicy = null)
         {
             return CreateStartedBattle(
-                playerDeck,
-                enemyDeck,
+                CreatePlainDeck(playerRanks),
+                BlackjackDeck.CreateInDrawOrder(enemyCards),
                 enemyPolicy,
-                new DemonContractDeck(Array.Empty<DemonContractCard>(), seed: 0),
-                playerCurrentSoul: 12,
-                enemyMaximumSoul: 3);
+                CreateRepeatedSatanDeck(),
+                playerCurrentSoul,
+                enemyMaximumSoul,
+                automaticCardEffectResolver: automaticCardEffectResolver,
+                enemyAutomaticCardDecisionPolicy:
+                    enemyAutomaticCardDecisionPolicy);
         }
 
         private static CoreLoopBattle CreateStartedBattle(
             BlackjackDeck playerDeck,
             BlackjackDeck enemyDeck,
             IEnemyBehaviorPolicy enemyPolicy,
-            DemonContractDeck demonDeck,
+            DemonContractDeck playerDemonDeck,
             int playerCurrentSoul,
-            int enemyMaximumSoul)
+            int enemyMaximumSoul,
+            DemonContractDeck enemyDemonDeck = null,
+            AutomaticCardEffectResolver automaticCardEffectResolver = null,
+            IAutomaticCardDecisionPolicy enemyAutomaticCardDecisionPolicy = null)
         {
             var battle = new CoreLoopBattle(
                 playerDeck,
@@ -265,8 +377,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                 enemyMaximumSoul,
                 enemyPolicy,
                 CardEffectResolver.CreateDefault(),
-                demonDeck,
-                DemonContractResolver.CreateDefault());
+                playerDemonDeck,
+                DemonContractResolver.CreateDefault(),
+                enemyDemonDeck,
+                automaticCardEffectResolver,
+                enemyAutomaticCardDecisionPolicy);
             Assert.That(battle.Start(), Is.True);
             return battle;
         }
@@ -283,18 +398,40 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(DemonContractKind.Satan));
         }
 
+        private static void FailUpperPower(
+            CoreLoopBattle battle,
+            int sourceContractCardId)
+        {
+            Assert.That(battle.TryBeginPlayerSatanContractAction(sourceContractCardId), Is.True);
+            Assert.That(ResolveNumber(
+                battle,
+                battle.PendingPlayerDemonContractInteraction,
+                3), Is.True);
+            Assert.That(ResolveNumber(
+                battle,
+                battle.PendingPlayerDemonContractInteraction,
+                4), Is.True);
+            Assert.That(GetSatanState(battle).CurrentFace,
+                Is.EqualTo(SatanContractFace.Lower));
+        }
+
+        private static bool ResolveNumber(
+            CoreLoopBattle battle,
+            PendingDemonContractInteraction pending,
+            int number)
+        {
+            DemonContractOption option = pending.Options.Single(
+                candidate => candidate.NumericValue == number);
+            return battle.TryResolvePlayerDemonContract(
+                pending.InteractionId,
+                option.OptionId);
+        }
+
         private static SatanRuntimeState GetSatanState(CoreLoopBattle battle)
         {
             return (SatanRuntimeState)battle.ActivePlayerDemonContracts
                 .Single(contract => contract.Kind == DemonContractKind.Satan)
                 .RuntimeState;
-        }
-
-        private static BlackjackCard GetPowerCard(CoreLoopBattle battle, int cardId)
-        {
-            Assert.That(battle.Player.Hand.TryGetCard(cardId, out BlackjackCard card),
-                Is.True);
-            return card;
         }
 
         private static DemonContractDeck CreateRepeatedSatanDeck()
@@ -307,40 +444,116 @@ namespace DiaBlackJack.CoreLoop.Tests
                 seed: 73);
         }
 
+        private static IReadOnlyList<int> LowRanks(int count)
+        {
+            return Enumerable.Repeat(2, count).ToArray();
+        }
+
+        private static IReadOnlyList<BlackjackCard> CreateCards(
+            IReadOnlyList<int> ranks,
+            int startId)
+        {
+            return ranks.Select((rank, index) =>
+                new BlackjackCard(startId + index, rank)).ToArray();
+        }
+
         private static BlackjackDeck CreatePlainDeck(
             IReadOnlyList<int> ranks,
             int startId = 0)
         {
-            return BlackjackDeck.CreateInDrawOrder(ranks.Select(
-                (rank, index) => new BlackjackCard(startId + index, rank)));
+            return BlackjackDeck.CreateInDrawOrder(CreateCards(ranks, startId));
         }
 
         private sealed class StandPolicy : IEnemyBehaviorPolicy
         {
-            public int DecisionCount { get; private set; }
-
             public EnemyDecision Decide(EnemyObservation observation)
             {
-                DecisionCount++;
-                return new EnemyDecision(EnemyActionType.Stand, "dc06-stand");
+                EnemyActionCandidate stand = observation.ActionCandidates.FirstOrDefault(
+                    candidate => candidate.ActionType == EnemyActionType.Stand);
+                EnemyActionCandidate fallback = stand ??
+                    observation.ActionCandidates.First();
+                return EnemyDecision.FromCandidate(fallback, "dcr02-stand-or-first");
             }
         }
 
-        private sealed class SequencePolicy : IEnemyBehaviorPolicy
+        private sealed class WaitingAutomaticHandler : IAutomaticCardEffectHandler
         {
-            private readonly Queue<EnemyActionType> _actions;
+            public const int ResolveOptionId = 7;
 
-            public SequencePolicy(params EnemyActionType[] actions)
+            private readonly CombatantSide _decisionSide;
+
+            public WaitingAutomaticHandler(
+                CombatantSide decisionSide = CombatantSide.Player)
             {
-                _actions = new Queue<EnemyActionType>(actions);
+                _decisionSide = decisionSide;
             }
+
+            public CardEffectKind EffectKind => CardEffectKind.Poison;
+
+            public int ResolveCount { get; private set; }
+
+            public AutomaticCardEffectStep Begin(AutomaticCardEffectContext context)
+            {
+                return AutomaticCardEffectStep.AwaitChoice(
+                    _decisionSide,
+                    AutomaticCardChoiceKind.PoisonDecision,
+                    "Resolve the forced automatic card.",
+                    new[]
+                    {
+                        new AutomaticCardChoiceOption(ResolveOptionId, "Resolve")
+                    });
+            }
+
+            public AutomaticCardEffectStep ResolveChoice(
+                AutomaticCardEffectContext context,
+                PendingAutomaticCardInteraction pendingInteraction,
+                AutomaticCardChoiceOption selectedOption)
+            {
+                ResolveCount++;
+                return AutomaticCardEffectStep.Complete(
+                    AutomaticCardSourceDisposition.RetainFaceUp);
+            }
+        }
+
+        private sealed class EnemySatanContractActionPolicy : IEnemyBehaviorPolicy
+        {
+            private int _declarationCount;
+
+            public bool ObservedHiddenRanks { get; private set; }
 
             public EnemyDecision Decide(EnemyObservation observation)
             {
-                EnemyActionType action = _actions.Count > 0
-                    ? _actions.Dequeue()
-                    : EnemyActionType.Stand;
-                return new EnemyDecision(action, "dc06-sequence");
+                ObservedHiddenRanks |= observation.PlayerFaceUpCards.Count > 0 &&
+                    observation.PlayerFaceUpCards.Any(card => card.Rank == 10) &&
+                    observation.PlayerHiddenCardCount == 0;
+
+                EnemyActionCandidate candidate = observation.ActionCandidates
+                    .FirstOrDefault(action =>
+                        action.ActionType == EnemyActionType.DemonContract &&
+                        action.DemonContractInteractionKind ==
+                            DemonContractInteractionKind.ChooseContract &&
+                        action.DemonContractKind == DemonContractKind.Satan);
+                if (candidate == null)
+                {
+                    candidate = observation.ActionCandidates.FirstOrDefault(action =>
+                        action.ActionType == EnemyActionType.DemonContract &&
+                        action.DemonContractSourceCardId.HasValue &&
+                        !action.DemonContractOptionId.HasValue);
+                }
+
+                if (candidate == null)
+                {
+                    int desiredNumber = _declarationCount++ == 0 ? 1 : 2;
+                    candidate = observation.ActionCandidates.FirstOrDefault(action =>
+                        action.ActionType == EnemyActionType.DemonContract &&
+                        action.DemonContractOptionNumericValue == desiredNumber);
+                }
+
+                candidate = candidate ?? observation.ActionCandidates.FirstOrDefault(action =>
+                    action.ActionType == EnemyActionType.DemonContract &&
+                    !action.DemonContractOptionId.HasValue) ??
+                    observation.ActionCandidates.First();
+                return EnemyDecision.FromCandidate(candidate, "dcr02-enemy-satan");
             }
         }
     }

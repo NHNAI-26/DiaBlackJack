@@ -10,7 +10,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         private const int SimulationCount = 400;
 
         [Test]
-        public void DC08_U01_SatanRequiresSoulToSurviveItsExpirationCost()
+        public void DC08_U01_SatanRequiresSoulToSurviveItsDoomCost()
         {
             EnemyActionCandidate satan = CreateContractChoice(
                 0,
@@ -21,11 +21,11 @@ namespace DiaBlackJack.CoreLoop.Tests
             var policy = new CultistEnemyPolicy();
 
             EnemyDecision fatal = policy.Decide(CreateObservation(
-                enemySoul: SatanDemonContractHandler.ExpirationSoulCost,
+                enemySoul: SatanDemonContractHandler.DoomSoulCost,
                 candidates: new[] { satan, belphegor }));
             EnemyDecision survivable = policy.Decide(CreateObservation(
-                enemySoul: SatanDemonContractHandler.ExpirationSoulCost + 1,
-                enemyMaximumSoul: SatanDemonContractHandler.ExpirationSoulCost + 1,
+                enemySoul: SatanDemonContractHandler.DoomSoulCost + 1,
+                enemyMaximumSoul: SatanDemonContractHandler.DoomSoulCost + 1,
                 candidates: new[] { satan, belphegor }));
 
             Assert.That(GetSelectedContractKind(fatal),
@@ -48,7 +48,7 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             EnemyDecision decision = new CultistEnemyPolicy().Decide(
                 CreateObservation(
-                    enemySoul: SatanDemonContractHandler.ExpirationSoulCost,
+                    enemySoul: SatanDemonContractHandler.DoomSoulCost,
                     candidates: new[] { satan, leviathan }));
 
             Assert.That(

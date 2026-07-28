@@ -31,6 +31,13 @@ namespace DiaBlackJack.CoreLoop
             CombatantSide actorSide);
     }
 
+    internal interface IDemonContractNormalTurnEndHandler
+    {
+        void OnNormalTurnEnded(
+            DemonContractContext context,
+            CombatantSide actorSide);
+    }
+
     internal interface IDemonContractStandRestrictionHandler
     {
         bool PreventsOwnerStand(DemonContractContext context);
@@ -80,18 +87,6 @@ namespace DiaBlackJack.CoreLoop
         public void ApplyOwnerSoulDamage(int amount)
         {
             Owner.Soul.ApplyDamage(amount);
-        }
-
-        public BlackjackCard AddOwnerTemporaryFaceUpCard(CardDefinition definition)
-        {
-            return _battle.AddTemporaryFaceUpCard(
-                ActiveContract.OwnerSide,
-                definition);
-        }
-
-        public bool TryRemoveOwnerTemporaryCard(int cardId)
-        {
-            return Owner.TryRemoveTemporaryCard(cardId);
         }
 
         public RoundResolution CreateOpponentContractEffectBustResolution()
@@ -237,6 +232,43 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return endedContracts.AsReadOnly();
+        }
+
+        public void NotifyNormalTurnEnded(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            CombatantSide actorSide)
+        {
+            if (battle == null)
+            {
+                throw new ArgumentNullException(nameof(battle));
+            }
+
+            if (activeContracts == null)
+            {
+                throw new ArgumentNullException(nameof(activeContracts));
+            }
+
+            if (!Enum.IsDefined(typeof(CombatantSide), actorSide))
+            {
+                throw new ArgumentOutOfRangeException(nameof(actorSide));
+            }
+
+            foreach (ActiveDemonContract activeContract in activeContracts)
+            {
+                if (activeContract.OwnerSide != actorSide ||
+                    !_handlers.TryGetValue(
+                        activeContract.Kind,
+                        out IDemonContractHandler handler) ||
+                    !(handler is IDemonContractNormalTurnEndHandler turnEndHandler))
+                {
+                    continue;
+                }
+
+                turnEndHandler.OnNormalTurnEnded(
+                    new DemonContractContext(battle, activeContract),
+                    actorSide);
+            }
         }
 
         public void NotifyBattleEnded(

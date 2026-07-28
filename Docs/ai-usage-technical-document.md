@@ -717,6 +717,7 @@ AI 대화 원문을 그대로 싣지 말고 목적, 핵심 지시, 결과, 사�
 
 | 날짜 | 담당자 | AI 활용 작업 | 산출물 | 사람의 검토 상태 |
 | --- | --- | --- | --- | --- |
+| 2026-07-28 | 이천서 | DC-R02 사탄 카운트 4·활성 계약 양면 행동·영혼 대가·적 대칭 이관과 별도 권능 카드 제거 | 사탄 계약 처리기, 계약 선택/Resolver, 자동 카드 연속 처리, CoreLoop·세션·적 AI·표시 모델, `SatanDemonContractTests.cs`, 계약 문서 4종과 공통 기록 | AI는 최신 기획/과거 구현 대조, 테스트·코드 초안, 재진입 회귀 분석, Unity MCP 검증과 기록을 보조함. 전용 12/12·CoreLoop 363/363·전체 EditMode 553/553·게임 코드 오류 0; GameScene·씬·프리팹·Packages·외부 에셋·오픈소스는 변경하지 않았고 월드 카드 입력은 DC-R05, 최종 승인 책임은 이천서에게 있음 |
 | 2026-07-28 | 이천서 | DC-M01 계약 완료 후 상시 `DEMON CONTRACT` 상태 패널 제거와 회귀·화면 검증 | `GameManager.cs`, `CoreLoopView.cs`, 악마 계약 설계·진행 기록과 팀 역할 기록 | AI는 렌더링 경로 탐색, 상시 패널과 확인·선택 UI 경계 분리, 코드 삭제와 Unity MCP 검증을 보조함. CoreLoop 362/362·전체 EditMode 551/551·활성 계약 1개 GameScene 화면·Console 0; 씬·프리팹·Packages·외부 에셋·오픈소스는 변경하지 않았으며 최종 승인 책임은 이천서에게 있음 |
 | 2026-07-28 | 이천서 | SV-05 런 예약·새 게임 보호·이어하기 세션 교체·시작 악마/손상·버전/저장 실패 UI의 테스트 우선 구현과 Play Mode 검증 | `RunReservation*`, `RunSaveFlow.cs`, `RunSavePresentation.cs`, Runtime·StageProgression UI, `RunSaveFlowTests.cs`, 저장 문서 4종과 공통 기록 | AI는 구조 대조, 테스트 초안, 구현, 기존 주입 테스트 호환 실패 분석, Unity MCP 자동·화면 검증과 기록을 보조함. 전용 9/9·StageProgression 189/189·CoreLoop 362/362·전체 551/551·720p/1080p·Console 0; 실제 프로세스 재실행과 RF 체크포인트는 SV-06으로 남겼고 GameScene·씬·프리팹·Packages·외부 에셋·오픈소스는 변경하지 않았으며 최종 승인 책임은 이천서에게 있음 |
 | 2026-07-28 | 이천서 | SV-04 시작 악마·카드 보상·런 종료 안정 체크포인트, 저장 실패 보류·동일 스냅샷 재시도·진행 게이트의 테스트 우선 구현 | `RunSaveCoordinator.cs`, `RunSaveSerializer.cs`, `RunSaveCoordinatorTests.cs`, 저장 문서 4종과 공통 기록 | AI는 기존 저장·런 구조 대조, 테스트 초안, 실패 원인 분석, 코드·Unity MCP 검증·기록을 보조함. 전용 8/8·StageProgression 180/180·CoreLoop 362/362·전체 542/542; 실제 RF 상점·사건 API가 없는 SV04-I03은 보류했고 Runtime·UI·GameScene·씬·프리팹·Packages·외부 에셋·오픈소스는 변경하지 않았으며 최종 기획·코드 승인 책임은 이천서에게 있음 |
@@ -1262,6 +1263,14 @@ Packages·외부 코드·에셋·오픈소스는 변경하지 않았고 최종 �
 AI는 `DEMON CONTRACT` 문자열과 호출 경로를 검색해 계약 확인·후보 선택 화면과 계약 완료 뒤 계속 남는 상태 패널이 별도 메서드임을 대조했다. `GameManager`와 `CoreLoopView`에서 상시 상태 패널 호출과 전용 렌더링 메서드만 삭제하고, `DemonContractPanelViewModel`과 계약 처리·후속 선택 경계는 유지했다.
 
 Unity MCP에서 재컴파일 오류 0건, CoreLoop 362/362와 전체 EditMode 551/551을 확인했다. 실제 `GameScene`에서 계약을 성공시켜 활성 계약 1개 상태를 만든 뒤 `DEMON CONTRACT` 상자가 표시되지 않고 일반 행동 UI가 유지되는 것을 화면으로 검증했으며, Console 오류는 0건이었다. 외부 에셋·오픈소스·씬·프리팹·Packages 변경은 없다. 최종 화면 승인 책임자는 이천서다.
+
+### 3.27 DC-R02 사탄 활성 계약 양면 이관
+
+AI는 최신 사탄 규칙의 핵심 지시를 `카운트 4`, `소유자 정상 차례 시작 감소`, `0 도달 영혼 2의 1회 대가`, `계약 유지`, `소유자 차례 종료 양면 전환`, `별도 권능 카드 제거`로 정리해 과거 DC-06의 카운트 6·양측 감소·계약 종료·숫자 8/10 권능 처리와 대조했다. 이천서는 계약 선택 차례에는 윗면을 유지하고 다음 소유자 정상 차례부터 종료 시 뒤집는 해석, 윗면 두 숫자의 상이성, 아랫면 강제 히트 뒤 자동 카드가 열릴 때 정확히 한 번 재개하는 경계와 DC-R05 UI 분리를 승인했다.
+
+AI는 `SatanRuntimeState`, 소유자 방향 정상 차례 종료 훅, 활성 계약 물리 ID 기반 양면 입력, `AutomaticCardContinuationKind.DemonContract`, 광신도의 공개 숫자 추론 후보, 세션 전달과 안전 표시 모델의 코드·테스트 초안을 보조했다. 첫 전용 테스트에서 적 후속 후보가 계약 출처 ID를 잃는 문제와 CoreLoop 회귀에서 과거 사탄 타이밍·정책 가정을 발견해 현행 규칙에 맞게 교정했다. 아랫면 강제 히트 중 적 자동 카드 선택이 완료된 뒤 차례가 중복 종료될 수 있는 재진입 경로는 별도 회귀로 잠갔다.
+
+Unity MCP에서 DC-R02 최종 전용 12/12(job `a8941795cdc7467b9fd0f1556ec9980b`), CoreLoop 363/363(job `503571cfabf5471c924dc64a79a345d4`), 최종 전체 EditMode 553/553(job `68bd6a58eea7459e8a1df78391e6902a`)을 확인했다. 최종 콘솔의 오류 분류 2건은 두 테스트 실행의 Test Framework 결과 XML 저장 안내였고, 경고 5건은 MCP WebSocket 초기화 안내 1건과 Test Framework 사전·사후 처리 4건으로 컴파일·게임 코드 오류와 분리했다. `GameScene`·씬·프리팹·Packages·외부 코드·에셋·오픈소스는 변경하지 않았다. 실제 월드 활성 계약 카드 클릭·호버·면 전환 연출은 DC-R05에서 검증하며, 최종 기획·코드 승인 책임자는 이천서다.
 
 ## 4. 생성형 AI 산출물 관리
 

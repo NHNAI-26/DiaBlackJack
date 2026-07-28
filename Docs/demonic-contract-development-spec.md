@@ -3,8 +3,8 @@
 > 프로젝트: DiaBlackJack  
 > 기획·개발 책임자: 이천서  
 > 작업 식별자: DC-00~DC-08
-> 버전: v1.4
-> 상태: DC-R01 완료·DC-M01 계약 후 상시 패널 제거 완료, DC-R02 사탄 개정 대기
+> 버전: v1.5
+> 상태: DC-R02 완료·DC-M01 계약 후 상시 패널 제거 완료, DC-R03 마몬·레비아탄 개정 대기
 > 최종 갱신: 2026-07-28
 
 > **현행 기획 변경 안내 (2026-07-26)**
@@ -390,6 +390,16 @@ DC-03 구현에서는 기본 `DemonContractResolver`에 벨페고르만 등록�
 - 윗면 두 수 선언과 아랫면 강제 히트·비버스트 카드 폐기
 - 계약 카드 면이 일반 손패 숫자·사용 상태·덱 순환에 섞이지 않는 경계
 
+DC-R02에서는 다음 구조로 구현했다.
+
+- `SatanRuntimeState`는 계약 인스턴스마다 `RemainingDoomCount`, `CurrentFace`, `PenaltyApplied`와 소유자 정상 차례 진행 여부를 보존한다.
+- `IDemonContractNormalTurnStartHandler`와 `IDemonContractNormalTurnEndHandler`가 소유자 방향의 시작 감소·종료 뒤집기를 담당한다. 계약을 선택한 최초 차례는 뒤집지 않고 다음 소유자 정상 차례부터 종료 훅을 적용한다.
+- `TryBeginPlayerSatanContractAction(sourceContractCardId)`와 같은 소유자 방향 내부 실행 경계가 활성 계약 물리 ID와 현재 면을 재검증한다. 윗면은 서로 다른 두 숫자 선택, 아랫면은 상대 강제 공개 드로우를 시작한다.
+- 아랫면 드로우가 자동 카드 선택을 열면 `AutomaticCardContinuationKind.DemonContract`가 상호작용 완료 뒤 계약 처리를 정확히 한 번 재개한다. 전투가 이미 끝났거나 후속 처리가 완료된 경우 중복 차례 완료를 하지 않는다.
+- 적 후보는 활성 사탄 계약 물리 ID와 현재 면만 공개 관측에 넣는다. 광신도의 윗면 선언은 `EnemyNumberInference` 확률을 사용하며 실제 비공개 숫자는 관측·결정·표시 모델에 넣지 않는다.
+- `CardDefinitionCatalog`의 별도 사탄 권능 정의와 `SatanPowerEffectHandler`를 제거했다. 이후 카드 효과 enum 번호의 저장 호환을 위해 과거 슬롯 이름만 `LegacySatanPower`로 남기며 실행 처리기는 등록하지 않는다.
+- `DemonContractPresentation`은 종말 카운트·현재 면·대가 적용 여부만 안전하게 문자열로 만든다. 실제 `GameScene` 월드 계약 카드 클릭·호버·뒤집기 연출은 DC-R05에서 이 세션 API를 연결한다.
+
 ## 10. 런 전투 변환
 
 `StageBattleFactory`는 일반 카드와 악마 카드를 서로 다른 변환 함수로 처리한다.
@@ -552,6 +562,7 @@ Assets/06.Packages/Tests/EditMode/StageProgression/
 
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
+| 2026-07-28 | 이천서 | DC-R02 활성 사탄 상태·소유자 차례 시작/종료 훅·영혼 대가 1회·양면 선택/강제 히트·자동 카드 재개·광신도 공개 추론·별도 권능 제거 구조와 전용 12/12·CoreLoop 363/363·전체 553/553 검증 명세 추가 |
 | 2026-07-28 | 이천서 | DC-M01 계약 완료 후 상시 `DEMON CONTRACT` 패널을 제거하되 표시 모델·확인·후보/후속 선택 경계는 유지하도록 UI 명세 갱신 |
 | 2026-07-27 | 이천서 | DC-R01 실제 구현에 맞춰 시작 악마 제안·선택 세션, 최초/현재 덱과 물리 ID, 가변 후보 0·1·2장, 루시퍼 5장 상수, 시작 체크포인트와 DCR01 14개 테스트 명세를 기록 |
 | 2026-07-27 | 이천서 | 노션 v0.6의 가변 후보 1~2장, 사탄 카운트 4·활성 계약 양면, 마몬 행동 소비 재굴림, 레비아탄 리볼버 2회와 안전한 연속 입력을 후속 구현 명세로 추가하고 기존 DC-04·DC-06을 과거 구현으로 구분 |

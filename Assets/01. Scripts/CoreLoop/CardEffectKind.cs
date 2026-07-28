@@ -7,7 +7,8 @@ namespace DiaBlackJack.CoreLoop
         ThreatHammer,
         AutoPistol,
         MilitaryKnife,
-        SatanPower,
+        // Reserved to keep later serialized enum values stable after DC-R02.
+        LegacySatanPower,
         Poison,
         ResurrectionHerb,
         LieDetector,

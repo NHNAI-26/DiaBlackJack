@@ -461,7 +461,8 @@ namespace DiaBlackJack.CoreLoop
     {
         PlayerHit,
         EnemyHit,
-        CardEffect
+        CardEffect,
+        DemonContract
     }
 
     internal sealed class AutomaticCardContinuation
@@ -469,11 +470,15 @@ namespace DiaBlackJack.CoreLoop
         private AutomaticCardContinuation(
             AutomaticCardContinuationKind kind,
             CombatantSide actorSide,
-            CardEffectContinuation cardEffectContinuation)
+            CardEffectContinuation cardEffectContinuation,
+            int? sourceContractCardId = null,
+            int? enteredCardId = null)
         {
             Kind = kind;
             ActorSide = actorSide;
             CardEffectContinuation = cardEffectContinuation;
+            SourceContractCardId = sourceContractCardId;
+            EnteredCardId = enteredCardId;
         }
 
         public AutomaticCardContinuationKind Kind { get; }
@@ -481,6 +486,10 @@ namespace DiaBlackJack.CoreLoop
         public CombatantSide ActorSide { get; }
 
         public CardEffectContinuation CardEffectContinuation { get; }
+
+        public int? EnteredCardId { get; }
+
+        public int? SourceContractCardId { get; }
 
         public static AutomaticCardContinuation ForPlayerHit()
         {
@@ -508,6 +517,29 @@ namespace DiaBlackJack.CoreLoop
                 cardEffectContinuation ??
                     throw new ArgumentNullException(
                         nameof(cardEffectContinuation)));
+        }
+
+        public static AutomaticCardContinuation ForDemonContract(
+            CombatantSide actorSide,
+            int sourceContractCardId,
+            int enteredCardId)
+        {
+            if (sourceContractCardId < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceContractCardId));
+            }
+
+            if (enteredCardId < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(enteredCardId));
+            }
+
+            return new AutomaticCardContinuation(
+                AutomaticCardContinuationKind.DemonContract,
+                actorSide,
+                cardEffectContinuation: null,
+                sourceContractCardId,
+                enteredCardId);
         }
     }
 }

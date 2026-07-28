@@ -21,7 +21,9 @@ namespace DiaBlackJack.CoreLoop
         ChooseContract,
         BelphegorTopCard,
         MammonReroll,
-        MammonApplyDie
+        MammonApplyDie,
+        SatanDeclareFirstNumber,
+        SatanDeclareSecondNumber
     }
 
     public sealed class DemonContractAvailability
@@ -125,7 +127,8 @@ namespace DiaBlackJack.CoreLoop
             DemonContractKind? contractKind,
             IEnumerable<DemonContractOption> options,
             string publicPrompt,
-            int? sourceContractCardId = null)
+            int? sourceContractCardId = null,
+            int? contextNumericValue = null)
         {
             if (interactionId <= 0)
             {
@@ -146,6 +149,12 @@ namespace DiaBlackJack.CoreLoop
             if (sourceContractCardId < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(sourceContractCardId));
+            }
+
+            if (contextNumericValue.HasValue &&
+                (contextNumericValue.Value < 1 || contextNumericValue.Value > 10))
+            {
+                throw new ArgumentOutOfRangeException(nameof(contextNumericValue));
             }
 
             if (options == null)
@@ -259,16 +268,61 @@ namespace DiaBlackJack.CoreLoop
                     }
                 }
             }
+            else if (kind == DemonContractInteractionKind.SatanDeclareFirstNumber ||
+                kind == DemonContractInteractionKind.SatanDeclareSecondNumber)
+            {
+                int expectedOptionCount = kind ==
+                    DemonContractInteractionKind.SatanDeclareFirstNumber
+                        ? 10
+                        : 9;
+                bool requiresContext = kind ==
+                    DemonContractInteractionKind.SatanDeclareSecondNumber;
+                if (contractKind != DemonContractKind.Satan ||
+                    !sourceContractCardId.HasValue ||
+                    copiedOptions.Count != expectedOptionCount ||
+                    contextNumericValue.HasValue != requiresContext)
+                {
+                    throw new ArgumentException(
+                        "Satan number declaration has an invalid contract or option shape.",
+                        nameof(options));
+                }
+
+                var numbers = new HashSet<int>();
+                foreach (DemonContractOption option in copiedOptions)
+                {
+                    if (option.ContractCardId.HasValue ||
+                        !option.NumericValue.HasValue ||
+                        option.NumericValue.Value < 1 ||
+                        option.NumericValue.Value > 10 ||
+                        !numbers.Add(option.NumericValue.Value) ||
+                        option.NumericValue == contextNumericValue)
+                    {
+                        throw new ArgumentException(
+                            "Satan declarations require distinct public numbers from 1 to 10.",
+                            nameof(options));
+                    }
+                }
+            }
+            if (kind != DemonContractInteractionKind.SatanDeclareSecondNumber &&
+                contextNumericValue.HasValue)
+            {
+                throw new ArgumentException(
+                    "Only a Satan second declaration can retain a prior number.",
+                    nameof(contextNumericValue));
+            }
 
             InteractionId = interactionId;
             Kind = kind;
             ContractKind = contractKind;
             SourceContractCardId = sourceContractCardId;
+            ContextNumericValue = contextNumericValue;
             _options = copiedOptions.AsReadOnly();
             PublicPrompt = publicPrompt.Trim();
         }
 
         public DemonContractKind? ContractKind { get; }
+
+        public int? ContextNumericValue { get; }
 
         public int InteractionId { get; }
 

@@ -5,7 +5,7 @@
 > 작업 식별자: AC-00~AC-06, AC-RV00~AC-RV01
 > 버전: v0.3
 > 현재 단계: AC-RV01 숫자·정의 키·저장 호환 정책 이관 완료
-> 다음 단계: 자동 카드 개정 범위 종료 · DC-R02는 별도 계약 작업
+> 다음 단계: 자동 카드 개정 범위 종료 · DC-R02 완료, 다음 별도 계약 작업은 DC-R03
 > 최종 갱신: 2026-07-28
 
 ## 1. 기록 원칙
@@ -146,7 +146,7 @@ AC-00은 문서 단계로 완료했다. 자동 카드의 실제 정의·실행·
 - `Assets/01. Scripts/CoreLoop/CardEffectResolver.cs`
 - `Assets/01. Scripts/CoreLoop/CrystalOrbEffectHandler.cs`
 - `Assets/01. Scripts/CoreLoop/MilitaryKnifeEffectHandler.cs`
-- `Assets/01. Scripts/CoreLoop/SatanPowerEffectHandler.cs`
+- `Assets/01. Scripts/CoreLoop/SatanPowerEffectHandler.cs`(AC-01 당시 변경 파일, DC-R02에서 별도 권능 제거와 함께 삭제)
 - `Assets/06.Packages/Tests/EditMode/CoreLoop/AutomaticCardFoundationTests.cs`
 - 기존 카탈로그·적 정책 기대를 현행 정의 수에 맞춘 회귀 테스트
 

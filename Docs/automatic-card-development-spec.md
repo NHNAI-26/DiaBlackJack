@@ -185,7 +185,7 @@ None
 - 적 `Hit` 실행
 - `CrystalOrbEffectHandler`의 선택 카드 획득
 - `MilitaryKnifeEffectHandler`의 상대 강제 드로우
-- `SatanPowerEffectHandler`의 상대 강제 드로우
+- 활성 사탄 계약 아랫면 행동의 상대 강제 드로우
 - 향후 공개 카드를 추가하는 계약·카드 효과
 
 `StartRound`, 체인지 선택 카드와 해머의 비공개 교체는 자동 발동에서 제외한다.

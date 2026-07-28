@@ -88,7 +88,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             SatanRuntimeState satan = (SatanRuntimeState)battle
                 .ActiveEnemyDemonContracts.Single().RuntimeState;
             Assert.That(battle.CanEnemyStand, Is.False);
-            Assert.That(battle.Enemy.Hand.Contains(satan.PowerCardId), Is.True);
+            Assert.That(satan.CurrentFace, Is.EqualTo(SatanContractFace.Upper));
 
             Assert.That(battle.TryPlayerHit(), Is.True);
             Assert.That(battle.TryPlayerHit(), Is.True);
@@ -101,7 +101,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DC07_U05_EnemySatanExpirationCanEndBattleAndRemovesPower()
+        public void DC07_U05_EnemySatanDoomCostCanEndBattleWithoutRemovingContractEarly()
         {
             CoreLoopBattle battle = CreateBattle(
                 new ForcedSatanPolicy(),
@@ -109,8 +109,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 enemyMaximumSoul: 3);
 
             Assert.That(battle.TryPlayerHit(), Is.True);
-            int powerCardId = ((SatanRuntimeState)battle
-                .ActiveEnemyDemonContracts.Single().RuntimeState).PowerCardId;
+            Assert.That(battle.TryPlayerHit(), Is.True);
             Assert.That(battle.TryPlayerHit(), Is.True);
             Assert.That(battle.TryPlayerHit(), Is.True);
             Assert.That(battle.TryPlayerHit(), Is.True);
@@ -119,8 +118,6 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.Outcome, Is.EqualTo(BattleOutcome.PlayerVictory));
             Assert.That(battle.Enemy.Soul.Current, Is.Zero);
             Assert.That(battle.ActiveEnemyDemonContracts, Is.Empty);
-            Assert.That(battle.Enemy.Hand.Contains(powerCardId), Is.False);
-            Assert.That(battle.Enemy.Deck.ContainsKnownCardId(powerCardId), Is.False);
         }
 
         [Test]
@@ -442,9 +439,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                 EnemyActionCandidate candidate = observation.ActionCandidates
                     .FirstOrDefault(option =>
                         option.ActionType == EnemyActionType.DemonContract &&
-                        option.DemonContractKind == DemonContractKind.Satan)
+                        option.DemonContractKind == DemonContractKind.Satan &&
+                        option.DemonContractInteractionKind ==
+                            DemonContractInteractionKind.ChooseContract)
                     ?? observation.ActionCandidates.FirstOrDefault(option =>
-                        option.ActionType == EnemyActionType.DemonContract)
+                        option.ActionType == EnemyActionType.DemonContract &&
+                        !option.DemonContractSourceCardId.HasValue &&
+                        !option.DemonContractOptionId.HasValue)
                     ?? observation.ActionCandidates.First(option =>
                         option.ActionType == EnemyActionType.Hit);
                 return EnemyDecision.FromCandidate(candidate, "force-satan-or-hit");

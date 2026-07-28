@@ -19,8 +19,6 @@ namespace DiaBlackJack.CoreLoop.Tests
             CardDefinitionCatalog.GetByKey("threat-hammer-6");
         private static readonly CardDefinition MilitaryKnife =
             CardDefinitionCatalog.GetByKey("military-knife-9");
-        private static readonly CardDefinition SatanFlame =
-            CardDefinitionCatalog.GetByKey(CardDefinitionCatalog.SatanPowerFlameKey);
         private static readonly CardDefinition Poison =
             CardDefinitionCatalog.GetByKey(CardDefinitionCatalog.PoisonKey);
 
@@ -192,16 +190,13 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
         }
 
-        [TestCase(false)]
-        [TestCase(true)]
-        public void AC01_U06_ForcedPublicDrawResumesKnifeAndSatanAfterAutomaticChoice(
-            bool useSatan)
+        [Test]
+        public void AC01_U06_ForcedPublicDrawResumesKnifeAfterAutomaticChoice()
         {
             var handler = new FakeAutomaticCardEffectHandler(waitForChoice: true);
-            CardDefinition sourceDefinition = useSatan ? SatanFlame : MilitaryKnife;
             BlackjackCard forcedAutomaticCard = new BlackjackCard(2, Poison);
             CoreLoopBattle battle = CreateBattle(
-                CreateCards(PlainTwo, sourceDefinition),
+                CreateCards(PlainTwo, MilitaryKnife),
                 new[]
                 {
                     new BlackjackCard(0, PlainFour),
@@ -233,14 +228,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.Enemy.Deck.GetDiscardedCards()
                 .Count(card => card.Id == forcedAutomaticCard.Id), Is.EqualTo(1));
             Assert.That(battle.LastCardEffectResult.Value.EffectKind,
-                Is.EqualTo(useSatan
-                    ? CardEffectKind.SatanPower
-                    : CardEffectKind.MilitaryKnife));
-            if (useSatan)
-            {
-                Assert.That(sourceCard.DefinitionKey,
-                    Is.EqualTo(CardDefinitionCatalog.SatanPowerMightKey));
-            }
+                Is.EqualTo(CardEffectKind.MilitaryKnife));
         }
 
         [Test]
@@ -327,19 +315,15 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
         }
 
-        [TestCase(false)]
-        [TestCase(true)]
-        public void AC01_U09_ImmediateForcedAutomaticDiscardIsNotDiscardedTwice(
-            bool useSatan)
+        [Test]
+        public void AC01_U09_ImmediateForcedAutomaticDiscardIsNotDiscardedTwice()
         {
             var handler = new FakeAutomaticCardEffectHandler(
                 waitForChoice: false,
                 disposition: AutomaticCardSourceDisposition.Discard);
             BlackjackCard forcedAutomaticCard = new BlackjackCard(2, Poison);
             CoreLoopBattle battle = CreateBattle(
-                CreateCards(
-                    PlainTwo,
-                    useSatan ? SatanFlame : MilitaryKnife),
+                CreateCards(PlainTwo, MilitaryKnife),
                 new[]
                 {
                     new BlackjackCard(0, PlainFour),

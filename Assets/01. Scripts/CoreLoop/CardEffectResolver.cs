@@ -328,8 +328,7 @@ namespace DiaBlackJack.CoreLoop
                 new CrystalOrbEffectHandler(),
                 new ThreatHammerEffectHandler(),
                 new AutoPistolEffectHandler(),
-                new MilitaryKnifeEffectHandler(),
-                new SatanPowerEffectHandler());
+                new MilitaryKnifeEffectHandler());
         }
 
         public bool Supports(CardEffectKind effectKind)

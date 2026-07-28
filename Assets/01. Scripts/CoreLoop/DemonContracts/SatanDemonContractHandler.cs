@@ -2,67 +2,78 @@ using System;
 
 namespace DiaBlackJack.CoreLoop
 {
+    public enum SatanContractFace
+    {
+        Upper,
+        Lower
+    }
+
     public sealed class SatanRuntimeState : DemonContractRuntimeState
     {
-        internal SatanRuntimeState(int remainingNormalTurns, int powerCardId)
+        private bool _ownerTurnInProgress;
+
+        internal SatanRuntimeState(int remainingDoomCount)
         {
-            if (remainingNormalTurns <= 0)
+            if (remainingDoomCount <= 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(remainingNormalTurns));
+                throw new ArgumentOutOfRangeException(nameof(remainingDoomCount));
             }
 
-            if (powerCardId < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(powerCardId));
-            }
-
-            RemainingNormalTurns = remainingNormalTurns;
-            PowerCardId = powerCardId;
-            IsActive = true;
+            RemainingDoomCount = remainingDoomCount;
+            CurrentFace = SatanContractFace.Upper;
         }
 
-        public bool IsActive { get; private set; }
+        public SatanContractFace CurrentFace { get; private set; }
 
-        public int PowerCardId { get; }
+        public bool PenaltyApplied { get; private set; }
 
-        public int RemainingNormalTurns { get; private set; }
+        public int RemainingDoomCount { get; private set; }
 
-        internal bool AdvanceNormalTurn()
+        internal bool BeginOwnerTurn()
         {
-            if (!IsActive)
+            _ownerTurnInProgress = true;
+            if (RemainingDoomCount > 0)
             {
-                return false;
+                RemainingDoomCount--;
             }
 
-            RemainingNormalTurns--;
-            return RemainingNormalTurns == 0;
+            return RemainingDoomCount == 0 && !PenaltyApplied;
         }
 
-        internal void End()
+        internal void MarkPenaltyApplied()
         {
-            IsActive = false;
-            RemainingNormalTurns = 0;
+            PenaltyApplied = true;
+        }
+
+        internal void EndOwnerTurn()
+        {
+            if (!_ownerTurnInProgress)
+            {
+                return;
+            }
+
+            CurrentFace = CurrentFace == SatanContractFace.Upper
+                ? SatanContractFace.Lower
+                : SatanContractFace.Upper;
+            _ownerTurnInProgress = false;
         }
     }
 
     internal sealed class SatanDemonContractHandler :
         IDemonContractHandler,
         IDemonContractNormalTurnHandler,
+        IDemonContractNormalTurnEndHandler,
         IDemonContractStandRestrictionHandler,
-        IDemonContractBustPreventionHandler,
-        IDemonContractBattleEndHandler
+        IDemonContractBustPreventionHandler
     {
-        public const int InitialNormalTurnCount = 6;
-        public const int ExpirationSoulCost = 2;
+        public const int InitialDoomCount = 4;
+        public const int DoomSoulCost = 2;
 
         public DemonContractKind Kind => DemonContractKind.Satan;
 
         public DemonContractRuntimeState Activate(DemonContractContext context)
         {
-            BlackjackCard power = context.AddOwnerTemporaryFaceUpCard(
-                CardDefinitionCatalog.GetByKey(
-                    CardDefinitionCatalog.SatanPowerFlameKey));
-            return new SatanRuntimeState(InitialNormalTurnCount, power.Id);
+            return new SatanRuntimeState(InitialDoomCount);
         }
 
         public bool OnNormalTurnStarted(
@@ -70,32 +81,35 @@ namespace DiaBlackJack.CoreLoop
             CombatantSide actorSide)
         {
             SatanRuntimeState state = GetState(context);
-            if (!state.AdvanceNormalTurn())
+            if (actorSide != context.ActiveContract.OwnerSide ||
+                !state.BeginOwnerTurn())
             {
                 return false;
             }
 
-            context.ApplyOwnerSoulDamage(ExpirationSoulCost);
-            context.TryRemoveOwnerTemporaryCard(state.PowerCardId);
-            state.End();
-            return true;
+            context.ApplyOwnerSoulDamage(DoomSoulCost);
+            state.MarkPenaltyApplied();
+            return false;
+        }
+
+        public void OnNormalTurnEnded(
+            DemonContractContext context,
+            CombatantSide actorSide)
+        {
+            if (actorSide == context.ActiveContract.OwnerSide)
+            {
+                GetState(context).EndOwnerTurn();
+            }
         }
 
         public bool PreventsOwnerStand(DemonContractContext context)
         {
-            return GetState(context).IsActive;
+            return true;
         }
 
         public bool PreventsOwnerBust(DemonContractContext context)
         {
-            return GetState(context).IsActive;
-        }
-
-        public void OnBattleEnded(DemonContractContext context)
-        {
-            SatanRuntimeState state = GetState(context);
-            context.TryRemoveOwnerTemporaryCard(state.PowerCardId);
-            state.End();
+            return true;
         }
 
         private static SatanRuntimeState GetState(DemonContractContext context)

@@ -6,8 +6,6 @@ namespace DiaBlackJack.CoreLoop
 {
     public static class CardDefinitionCatalog
     {
-        public const string SatanPowerMightKey = "satan-power-might-8";
-        public const string SatanPowerFlameKey = "satan-power-flame-10";
         public const string PoisonKey = "poison-1";
         public const string ResurrectionHerbKey = "resurrection-herb-2";
         public const string LieDetectorKey = "lie-detector-3";
@@ -82,18 +80,6 @@ namespace DiaBlackJack.CoreLoop
                     10,
                     CardActivationKind.Manual,
                     CardEffectKind.MilitaryKnife),
-                new CardDefinition(
-                    SatanPowerMightKey,
-                    "사탄의 권능: 괴력",
-                    8,
-                    CardActivationKind.Manual,
-                    CardEffectKind.SatanPower),
-                new CardDefinition(
-                    SatanPowerFlameKey,
-                    "사탄의 권능: 화염",
-                    10,
-                    CardActivationKind.Manual,
-                    CardEffectKind.SatanPower),
                 new CardDefinition(
                     PoisonKey,
                     "독극물",

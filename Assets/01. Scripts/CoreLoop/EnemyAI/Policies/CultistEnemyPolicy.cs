@@ -51,6 +51,15 @@ namespace DiaBlackJack.CoreLoop
             EnemyObservation observation,
             EnemyActionCandidate candidate)
         {
+            if (candidate.DemonContractSourceCardId.HasValue &&
+                !candidate.DemonContractOptionId.HasValue)
+            {
+                return Score(
+                    candidate,
+                    980,
+                    "cultist-use-active-satan-contract");
+            }
+
             if (!candidate.DemonContractOptionId.HasValue)
             {
                 return Score(candidate, 1000, "cultist-begin-demon-contract");
@@ -66,6 +75,9 @@ namespace DiaBlackJack.CoreLoop
                     return EvaluateMammonReroll(candidate);
                 case DemonContractInteractionKind.MammonApplyDie:
                     return EvaluateMammonFinalChoice(observation, candidate);
+                case DemonContractInteractionKind.SatanDeclareFirstNumber:
+                case DemonContractInteractionKind.SatanDeclareSecondNumber:
+                    return EvaluateSatanNumber(observation, candidate);
                 default:
                     throw new InvalidOperationException(
                         "Cultist contract option has no interaction kind.");
@@ -80,7 +92,7 @@ namespace DiaBlackJack.CoreLoop
             {
                 case DemonContractKind.Satan:
                     bool guaranteedDeath = observation.EnemySoul.Current <=
-                        SatanDemonContractHandler.ExpirationSoulCost;
+                        SatanDemonContractHandler.DoomSoulCost;
                     return Score(
                         candidate,
                         guaranteedDeath ? FatalContractScore : SafeSatanScore,
@@ -109,6 +121,29 @@ namespace DiaBlackJack.CoreLoop
                     throw new InvalidOperationException(
                         "Cultist received an unknown demon contract choice.");
             }
+        }
+
+        private static EnemyActionScore EvaluateSatanNumber(
+            EnemyObservation observation,
+            EnemyActionCandidate candidate)
+        {
+            int number = candidate.DemonContractOptionNumericValue ??
+                throw new InvalidOperationException(
+                    "Cultist Satan declaration requires a public number option.");
+            int probability = 0;
+            foreach (EnemyNumberInference inference in observation.NumberInferences)
+            {
+                if (inference.Number == number)
+                {
+                    probability = inference.ProbabilityPercent;
+                    break;
+                }
+            }
+
+            return Score(
+                candidate,
+                1200 + probability,
+                "cultist-declare-likely-satan-number");
         }
 
         private static EnemyActionScore EvaluateBelphegorChoice(

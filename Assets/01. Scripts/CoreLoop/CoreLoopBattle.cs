@@ -43,7 +43,6 @@ namespace DiaBlackJack.CoreLoop
         private PendingAutomaticCardInteraction _pendingAutomaticCardInteraction;
         private bool _isResolvingEnemyAutomaticChoice;
         private int _nextAutomaticCardInteractionId = 1;
-        private int _nextTemporaryCardId = int.MaxValue;
         private int _enemyDecisionOrdinal;
         private int _nextDemonContractInteractionId = 1;
         private PendingDemonContractInteraction _pendingPlayerDemonContractInteraction;
@@ -426,6 +425,13 @@ namespace DiaBlackJack.CoreLoop
                     return TryResolveMammonReroll(pending, selectedOption);
                 case DemonContractInteractionKind.MammonApplyDie:
                     return TryResolveMammonFinalChoice(pending, selectedOption);
+                case DemonContractInteractionKind.SatanDeclareFirstNumber:
+                case DemonContractInteractionKind.SatanDeclareSecondNumber:
+                    return TryResolveSatanNumberChoice(
+                        CombatantSide.Player,
+                        pending,
+                        selectedOption,
+                        out _);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(pending));
             }
@@ -486,6 +492,15 @@ namespace DiaBlackJack.CoreLoop
                     return TryResolveEnemyMammonReroll(pending, selectedOption);
                 case DemonContractInteractionKind.MammonApplyDie:
                     return TryResolveEnemyMammonFinalChoice(pending, selectedOption);
+                case DemonContractInteractionKind.SatanDeclareFirstNumber:
+                case DemonContractInteractionKind.SatanDeclareSecondNumber:
+                    bool resolved = TryResolveSatanNumberChoice(
+                        CombatantSide.Enemy,
+                        pending,
+                        selectedOption,
+                        out bool completedSatanAction);
+                    completedOwnerAction = completedSatanAction;
+                    return resolved;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(pending));
             }
@@ -553,6 +568,7 @@ namespace DiaBlackJack.CoreLoop
                     triggered: true,
                     bustedTarget: CombatantSide.Enemy,
                     paidSoulCost: 0);
+                NotifyNormalTurnEnded(CombatantSide.Enemy);
                 CompleteRound(RoundResolver.ResolveContractEffectBust(
                     RoundNumber,
                     playerIsTarget: false));
@@ -626,6 +642,7 @@ namespace DiaBlackJack.CoreLoop
                     RaiseStepped();
                     if (Enemy.VisibleHandValue.IsBust && !PreventsEnemyBust())
                     {
+                        NotifyNormalTurnEnded(CombatantSide.Enemy);
                         CompleteRound(RoundResolver.ResolveNumericBust(
                             RoundNumber,
                             playerIsTarget: false));
@@ -673,6 +690,7 @@ namespace DiaBlackJack.CoreLoop
                     triggered: true,
                     bustedTarget: CombatantSide.Enemy,
                     paidSoulCost: 0);
+                NotifyNormalTurnEnded(CombatantSide.Enemy);
                 CompleteRound(RoundResolver.ResolveContractEffectBust(
                     RoundNumber,
                     playerIsTarget: false));
@@ -766,6 +784,7 @@ namespace DiaBlackJack.CoreLoop
                     triggered: true,
                     bustedTarget: CombatantSide.Player,
                     paidSoulCost: 0);
+                NotifyNormalTurnEnded(CombatantSide.Player);
                 CompleteRound(RoundResolver.ResolveContractEffectBust(
                     RoundNumber,
                     playerIsTarget: true));
@@ -829,6 +848,7 @@ namespace DiaBlackJack.CoreLoop
         {
             if (Player.VisibleHandValue.IsBust && !PreventsPlayerBust())
             {
+                NotifyNormalTurnEnded(CombatantSide.Player);
                 CompleteRound(RoundResolver.ResolveNumericBust(
                     RoundNumber,
                     playerIsTarget: true));
@@ -930,6 +950,7 @@ namespace DiaBlackJack.CoreLoop
                     triggered: true,
                     bustedTarget: CombatantSide.Player,
                     paidSoulCost: 0);
+                NotifyNormalTurnEnded(CombatantSide.Player);
                 CompleteRound(RoundResolver.ResolveContractEffectBust(
                     RoundNumber,
                     playerIsTarget: true));
@@ -1213,6 +1234,57 @@ namespace DiaBlackJack.CoreLoop
                 options,
                 "최종 승부에 현재 주사위 값을 적용할지 선택하십시오.",
                 activeContract.SourceCardId);
+        }
+
+        private static PendingDemonContractInteraction
+            CreateSatanFirstNumberInteraction(
+                int interactionId,
+                int sourceContractCardId)
+        {
+            return new PendingDemonContractInteraction(
+                interactionId,
+                DemonContractInteractionKind.SatanDeclareFirstNumber,
+                DemonContractKind.Satan,
+                CreateSatanNumberOptions(excludedNumber: null),
+                "Declare the first number.",
+                sourceContractCardId);
+        }
+
+        private static PendingDemonContractInteraction
+            CreateSatanSecondNumberInteraction(
+                int interactionId,
+                int sourceContractCardId,
+                int firstNumber)
+        {
+            return new PendingDemonContractInteraction(
+                interactionId,
+                DemonContractInteractionKind.SatanDeclareSecondNumber,
+                DemonContractKind.Satan,
+                CreateSatanNumberOptions(firstNumber),
+                "Declare a different second number.",
+                sourceContractCardId,
+                firstNumber);
+        }
+
+        private static IReadOnlyList<DemonContractOption>
+            CreateSatanNumberOptions(int? excludedNumber)
+        {
+            var options = new List<DemonContractOption>(10);
+            for (int number = 1; number <= 10; number++)
+            {
+                if (number == excludedNumber)
+                {
+                    continue;
+                }
+
+                options.Add(new DemonContractOption(
+                    number,
+                    contractCardId: null,
+                    numericValue: number,
+                    number.ToString()));
+            }
+
+            return options.AsReadOnly();
         }
 
         private int TakeNextDemonContractInteractionId()
@@ -1695,6 +1767,12 @@ namespace DiaBlackJack.CoreLoop
             if (step.CompletionFlow ==
                 AutomaticCardCompletionFlow.EndBattle)
             {
+                if (continuation.Kind ==
+                    AutomaticCardContinuationKind.DemonContract)
+                {
+                    NotifyNormalTurnEnded(continuation.ActorSide);
+                }
+
                 EndBattleWithoutRound();
                 return false;
             }
@@ -1702,6 +1780,12 @@ namespace DiaBlackJack.CoreLoop
             if (step.CompletionFlow ==
                 AutomaticCardCompletionFlow.RestartRound)
             {
+                if (continuation.Kind ==
+                    AutomaticCardContinuationKind.DemonContract)
+                {
+                    NotifyNormalTurnEnded(continuation.ActorSide);
+                }
+
                 RestartRoundFromResurrectionHerb(result);
                 return false;
             }
@@ -1712,6 +1796,321 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return false;
+        }
+
+        public bool TryBeginPlayerSatanContractAction(int sourceContractCardId)
+        {
+            return TryBeginSatanContractAction(
+                CombatantSide.Player,
+                sourceContractCardId);
+        }
+
+        private bool TryBeginSatanContractAction(
+            CombatantSide ownerSide,
+            int sourceContractCardId)
+        {
+            if (sourceContractCardId < 0)
+            {
+                return false;
+            }
+
+            bool canAcceptAction = ownerSide == CombatantSide.Player
+                ? CanAcceptPlayerAction()
+                : State == CoreLoopState.EnemyTurn &&
+                    !Enemy.IsStanding &&
+                    PendingEnemyCardEffect == null &&
+                    _pendingEnemyDemonContractInteraction == null;
+            if (!canAcceptAction ||
+                !TryGetActiveSatanContract(
+                    ownerSide,
+                    sourceContractCardId,
+                    out ActiveDemonContract activeContract) ||
+                !(activeContract.RuntimeState is SatanRuntimeState satanState))
+            {
+                return false;
+            }
+
+            BattleParticipant opponent = GetOpponent(ownerSide);
+            if (satanState.CurrentFace == SatanContractFace.Upper)
+            {
+                if (!TryGetSingleHiddenCard(opponent, out _))
+                {
+                    return false;
+                }
+
+                PendingDemonContractInteraction pending =
+                    CreateSatanFirstNumberInteraction(
+                        TakeNextDemonContractInteractionId(),
+                        sourceContractCardId);
+                SetPendingDemonContractInteraction(ownerSide, pending);
+                State = ownerSide == CombatantSide.Player
+                    ? CoreLoopState.PlayerResolvingDemonContract
+                    : CoreLoopState.EnemyTurn;
+                RecordPublicAction(
+                    ownerSide,
+                    PublicCombatActionType.DemonContract,
+                    activeContract.Definition.Key);
+                RaiseStepped();
+                return true;
+            }
+
+            if (!opponent.Deck.CanDraw(1))
+            {
+                return false;
+            }
+
+            RecordPublicAction(
+                ownerSide,
+                PublicCombatActionType.DemonContract,
+                activeContract.Definition.Key);
+            int roundBeforeForcedDraw = RoundNumber;
+            SatanContractFace faceBeforeForcedDraw = satanState.CurrentFace;
+            BlackjackCard drawnCard = opponent.Draw(faceUp: true);
+            RaiseStepped();
+            bool isWaitingForAutomaticChoice = TryBeginAutomaticCardEffect(
+                ownerSide == CombatantSide.Player
+                    ? CombatantSide.Enemy
+                    : CombatantSide.Player,
+                drawnCard,
+                AutomaticCardContinuation.ForDemonContract(
+                    ownerSide,
+                    sourceContractCardId,
+                    drawnCard.Id),
+                out AutomaticCardResult? immediateAutomaticResult);
+            if (isWaitingForAutomaticChoice)
+            {
+                return true;
+            }
+
+            if (State == CoreLoopState.BattleEnded ||
+                RoundNumber != roundBeforeForcedDraw ||
+                !TryGetActiveSatanContract(
+                    ownerSide,
+                    sourceContractCardId,
+                    out ActiveDemonContract currentContract) ||
+                !(currentContract.RuntimeState is SatanRuntimeState currentState) ||
+                currentState.CurrentFace != faceBeforeForcedDraw)
+            {
+                return true;
+            }
+
+            CompleteSatanLowerContractAction(
+                ownerSide,
+                sourceContractCardId,
+                drawnCard.Id,
+                immediateAutomaticResult?.SourceDisposition ??
+                    AutomaticCardSourceDisposition.RetainFaceUp);
+            return true;
+        }
+
+        private bool TryResolveSatanNumberChoice(
+            CombatantSide ownerSide,
+            PendingDemonContractInteraction pending,
+            DemonContractOption selectedOption,
+            out bool completedOwnerAction)
+        {
+            completedOwnerAction = false;
+            if (pending.ContractKind != DemonContractKind.Satan ||
+                !pending.SourceContractCardId.HasValue ||
+                !selectedOption.NumericValue.HasValue ||
+                !TryGetActiveSatanContract(
+                    ownerSide,
+                    pending.SourceContractCardId.Value,
+                    out ActiveDemonContract activeContract) ||
+                !(activeContract.RuntimeState is SatanRuntimeState satanState) ||
+                satanState.CurrentFace != SatanContractFace.Upper)
+            {
+                return false;
+            }
+
+            int selectedNumber = selectedOption.NumericValue.Value;
+            if (pending.Kind == DemonContractInteractionKind.SatanDeclareFirstNumber)
+            {
+                PendingDemonContractInteraction second =
+                    CreateSatanSecondNumberInteraction(
+                        TakeNextDemonContractInteractionId(),
+                        activeContract.SourceCardId,
+                        selectedNumber);
+                SetPendingDemonContractInteraction(ownerSide, second);
+                RaiseStepped();
+                return true;
+            }
+
+            if (pending.Kind !=
+                    DemonContractInteractionKind.SatanDeclareSecondNumber ||
+                !pending.ContextNumericValue.HasValue ||
+                pending.ContextNumericValue.Value == selectedNumber ||
+                !TryGetSingleHiddenCard(
+                    GetOpponent(ownerSide),
+                    out BlackjackCard hiddenCard))
+            {
+                return false;
+            }
+
+            bool succeeded = hiddenCard.Rank == pending.ContextNumericValue.Value ||
+                hiddenCard.Rank == selectedNumber;
+            SetPendingDemonContractInteraction(ownerSide, pending: null);
+            bool bustPrevented = succeeded && IsBustPrevented(
+                RoundResolver.ResolveContractEffectBust(
+                    RoundNumber,
+                    playerIsTarget: ownerSide == CombatantSide.Enemy));
+            LastDemonContractEffectResult = new DemonContractEffectResult(
+                triggered: true,
+                bustedTarget: succeeded && !bustPrevented
+                    ? (CombatantSide?)GetOppositeSide(ownerSide)
+                    : null,
+                paidSoulCost: 0);
+            RaiseStepped();
+
+            if (succeeded && !bustPrevented)
+            {
+                NotifyNormalTurnEnded(ownerSide);
+                CompleteRound(RoundResolver.ResolveContractEffectBust(
+                    RoundNumber,
+                    playerIsTarget: ownerSide == CombatantSide.Enemy));
+                completedOwnerAction = true;
+                return true;
+            }
+
+            State = ownerSide == CombatantSide.Player
+                ? CoreLoopState.PlayerTurn
+                : CoreLoopState.EnemyTurn;
+            CompleteSatanContractAction(ownerSide);
+            completedOwnerAction = true;
+            return true;
+        }
+
+        private void CompleteSatanLowerContractAction(
+            CombatantSide ownerSide,
+            int sourceContractCardId,
+            int drawnCardId,
+            AutomaticCardSourceDisposition sourceDisposition)
+        {
+            if (!TryGetActiveSatanContract(
+                    ownerSide,
+                    sourceContractCardId,
+                    out _))
+            {
+                throw new InvalidOperationException(
+                    "Satan lower power lost its active contract.");
+            }
+
+            CombatantSide opponentSide = GetOppositeSide(ownerSide);
+            BattleParticipant opponent = GetParticipant(opponentSide);
+            bool busted = opponent.VisibleHandValue.IsBust;
+            if (!busted &&
+                sourceDisposition == AutomaticCardSourceDisposition.RetainFaceUp &&
+                !opponent.TryDiscardCard(drawnCardId))
+            {
+                throw new InvalidOperationException(
+                    "Satan lower power could not discard its safe forced draw.");
+            }
+
+            bool bustPrevented = busted && (opponentSide == CombatantSide.Player
+                ? PreventsPlayerBust()
+                : PreventsEnemyBust());
+            LastDemonContractEffectResult = new DemonContractEffectResult(
+                triggered: true,
+                bustedTarget: busted && !bustPrevented
+                    ? (CombatantSide?)opponentSide
+                    : null,
+                paidSoulCost: 0);
+            RaiseStepped();
+
+            if (busted && !bustPrevented)
+            {
+                NotifyNormalTurnEnded(ownerSide);
+                CompleteRound(RoundResolver.ResolveNumericBust(
+                    RoundNumber,
+                    playerIsTarget: opponentSide == CombatantSide.Player));
+                return;
+            }
+
+            State = ownerSide == CombatantSide.Player
+                ? CoreLoopState.PlayerTurn
+                : CoreLoopState.EnemyTurn;
+            CompleteSatanContractAction(ownerSide);
+        }
+
+        private void CompleteSatanContractAction(CombatantSide ownerSide)
+        {
+            if (ownerSide == CombatantSide.Player)
+            {
+                CompletePlayerActionAndRunEnemyTurn();
+            }
+            else
+            {
+                CompleteEnemyAction();
+            }
+        }
+
+        private bool TryGetActiveSatanContract(
+            CombatantSide ownerSide,
+            int sourceContractCardId,
+            out ActiveDemonContract activeContract)
+        {
+            IReadOnlyList<ActiveDemonContract> contracts =
+                ownerSide == CombatantSide.Player
+                    ? _activePlayerDemonContracts
+                    : _activeEnemyDemonContracts;
+            foreach (ActiveDemonContract candidate in contracts)
+            {
+                if (candidate.OwnerSide == ownerSide &&
+                    candidate.SourceCardId == sourceContractCardId &&
+                    candidate.Kind == DemonContractKind.Satan)
+                {
+                    activeContract = candidate;
+                    return true;
+                }
+            }
+
+            activeContract = null;
+            return false;
+        }
+
+        private static bool TryGetSingleHiddenCard(
+            BattleParticipant participant,
+            out BlackjackCard hiddenCard)
+        {
+            hiddenCard = null;
+            foreach (BlackjackCard card in participant.Hand.Cards)
+            {
+                if (card.IsFaceUp)
+                {
+                    continue;
+                }
+
+                if (hiddenCard != null)
+                {
+                    hiddenCard = null;
+                    return false;
+                }
+
+                hiddenCard = card;
+            }
+
+            return hiddenCard != null;
+        }
+
+        private void SetPendingDemonContractInteraction(
+            CombatantSide ownerSide,
+            PendingDemonContractInteraction pending)
+        {
+            if (ownerSide == CombatantSide.Player)
+            {
+                _pendingPlayerDemonContractInteraction = pending;
+            }
+            else
+            {
+                _pendingEnemyDemonContractInteraction = pending;
+            }
+        }
+
+        private static CombatantSide GetOppositeSide(CombatantSide side)
+        {
+            return side == CombatantSide.Player
+                ? CombatantSide.Enemy
+                : CombatantSide.Player;
         }
 
         private void ResolvePendingEnemyAutomaticChoices()
@@ -1836,6 +2235,21 @@ namespace DiaBlackJack.CoreLoop
                         CompleteEnemyAction();
                     }
 
+                    return;
+                case AutomaticCardContinuationKind.DemonContract:
+                    if (!continuation.SourceContractCardId.HasValue ||
+                        !continuation.EnteredCardId.HasValue ||
+                        continuation.EnteredCardId.Value != result.SourceCardId)
+                    {
+                        throw new InvalidOperationException(
+                            "Automatic card continuation lost its parent demon contract.");
+                    }
+
+                    CompleteSatanLowerContractAction(
+                        continuation.ActorSide,
+                        continuation.SourceContractCardId.Value,
+                        continuation.EnteredCardId.Value,
+                        result.SourceDisposition);
                     return;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(continuation));
@@ -2009,6 +2423,7 @@ namespace DiaBlackJack.CoreLoop
 
             if (roundResolution.HasValue)
             {
+                NotifyNormalTurnEnded(actorSide);
                 CompleteRound(roundResolution.Value);
                 return CardEffectApplicationResult.RoundEnded;
             }
@@ -2041,6 +2456,7 @@ namespace DiaBlackJack.CoreLoop
 
                 if (contractResolution.HasValue)
                 {
+                    NotifyNormalTurnEnded(actorSide);
                     CompleteRound(contractResolution.Value);
                     return CardEffectApplicationResult.RoundEnded;
                 }
@@ -2098,38 +2514,6 @@ namespace DiaBlackJack.CoreLoop
             RaiseStepped();
         }
 
-        internal BlackjackCard AddTemporaryFaceUpCard(
-            CombatantSide ownerSide,
-            CardDefinition definition)
-        {
-            if (!Enum.IsDefined(typeof(CombatantSide), ownerSide))
-            {
-                throw new ArgumentOutOfRangeException(nameof(ownerSide));
-            }
-
-            if (definition == null)
-            {
-                throw new ArgumentNullException(nameof(definition));
-            }
-
-            while (Player.Deck.ContainsKnownCardId(_nextTemporaryCardId) ||
-                Enemy.Deck.ContainsKnownCardId(_nextTemporaryCardId))
-            {
-                if (_nextTemporaryCardId == 0)
-                {
-                    throw new InvalidOperationException(
-                        "No physical card id remains for a temporary contract card.");
-                }
-
-                _nextTemporaryCardId--;
-            }
-
-            int cardId = _nextTemporaryCardId--;
-            return GetParticipant(ownerSide).AddTemporaryFaceUpCard(
-                cardId,
-                definition);
-        }
-
         private void CompletePlayerActionAndRunEnemyTurn()
         {
             if (State != CoreLoopState.PlayerTurn)
@@ -2149,6 +2533,7 @@ namespace DiaBlackJack.CoreLoop
                 RaiseStepped();
             }
 
+            NotifyNormalTurnEnded(CombatantSide.Player);
             RunEnemyTurn();
         }
 
@@ -2347,7 +2732,11 @@ namespace DiaBlackJack.CoreLoop
                         ? TryResolveEnemyDemonContract(
                             decision.DemonContractOptionId.Value,
                             out completedOwnerAction)
-                        : TryBeginEnemyDemonContract();
+                        : decision.DemonContractSourceCardId.HasValue
+                            ? TryBeginSatanContractAction(
+                                CombatantSide.Enemy,
+                                decision.DemonContractSourceCardId.Value)
+                            : TryBeginEnemyDemonContract();
 
                     if (executed &&
                         completedOwnerAction &&
@@ -2375,6 +2764,7 @@ namespace DiaBlackJack.CoreLoop
         {
             if (Enemy.VisibleHandValue.IsBust && !PreventsEnemyBust())
             {
+                NotifyNormalTurnEnded(CombatantSide.Enemy);
                 CompleteRound(RoundResolver.ResolveNumericBust(
                     RoundNumber,
                     playerIsTarget: false));
@@ -2404,6 +2794,8 @@ namespace DiaBlackJack.CoreLoop
                 Enemy.Stand();
                 RaiseStepped();
             }
+
+            NotifyNormalTurnEnded(CombatantSide.Enemy);
 
             if (Enemy.IsStanding)
             {
@@ -2549,6 +2941,18 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return true;
+        }
+
+        private void NotifyNormalTurnEnded(CombatantSide actorSide)
+        {
+            IReadOnlyList<ActiveDemonContract> activeContracts =
+                actorSide == CombatantSide.Player
+                    ? _activePlayerDemonContracts
+                    : _activeEnemyDemonContracts;
+            _demonContractResolver.NotifyNormalTurnEnded(
+                this,
+                activeContracts,
+                actorSide);
         }
 
         private void EndBattleWithoutRound()

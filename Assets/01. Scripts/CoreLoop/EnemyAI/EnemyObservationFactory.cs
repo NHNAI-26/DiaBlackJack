@@ -145,6 +145,30 @@ namespace DiaBlackJack.CoreLoop
                 return candidates.AsReadOnly();
             }
 
+            foreach (ActiveDemonContract activeContract in
+                battle.ActiveEnemyDemonContracts)
+            {
+                if (activeContract.Kind != DemonContractKind.Satan ||
+                    !(activeContract.RuntimeState is SatanRuntimeState satanState))
+                {
+                    continue;
+                }
+
+                bool canUse = satanState.CurrentFace == SatanContractFace.Upper
+                    ? battle.Player.Hand.HiddenCardCount == 1
+                    : battle.Player.Deck.CanDraw(1);
+                if (canUse)
+                {
+                    candidates.Add(new EnemyActionCandidate(
+                        EnemyActionType.DemonContract,
+                        demonContractKind: DemonContractKind.Satan,
+                        demonContractDefinitionKey:
+                            activeContract.Definition.Key,
+                        demonContractSourceCardId:
+                            activeContract.SourceCardId));
+                }
+            }
+
             if (battle.Enemy.Deck.CanDraw(1))
             {
                 candidates.Add(new EnemyActionCandidate(EnemyActionType.Hit));
@@ -213,6 +237,22 @@ namespace DiaBlackJack.CoreLoop
                 privateNumericValue = mammonState.CurrentDieValue;
                 definitionKey = activeContract.Definition.Key;
             }
+            else if (pending.Kind ==
+                    DemonContractInteractionKind.SatanDeclareFirstNumber ||
+                pending.Kind ==
+                    DemonContractInteractionKind.SatanDeclareSecondNumber)
+            {
+                ActiveDemonContract activeContract = FindActiveEnemyContract(
+                    battle,
+                    pending);
+                if (!(activeContract.RuntimeState is SatanRuntimeState))
+                {
+                    throw new InvalidOperationException(
+                        "Pending enemy Satan choice has an invalid runtime state.");
+                }
+
+                definitionKey = activeContract.Definition.Key;
+            }
 
             foreach (DemonContractOption option in pending.Options)
             {
@@ -232,7 +272,20 @@ namespace DiaBlackJack.CoreLoop
                     demonContractInteractionKind: pending.Kind,
                     demonContractKind: contractKind,
                     demonContractDefinitionKey: optionDefinitionKey,
-                    demonContractOptionNumericValue: privateNumericValue));
+                    demonContractOptionNumericValue:
+                        pending.Kind ==
+                            DemonContractInteractionKind.SatanDeclareFirstNumber ||
+                        pending.Kind ==
+                            DemonContractInteractionKind.SatanDeclareSecondNumber
+                            ? option.NumericValue
+                            : privateNumericValue,
+                    demonContractSourceCardId:
+                        pending.Kind ==
+                            DemonContractInteractionKind.SatanDeclareFirstNumber ||
+                        pending.Kind ==
+                            DemonContractInteractionKind.SatanDeclareSecondNumber
+                            ? pending.SourceContractCardId
+                            : null));
             }
         }
 
