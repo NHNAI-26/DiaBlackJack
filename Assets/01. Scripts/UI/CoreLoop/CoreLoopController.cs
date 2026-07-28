@@ -40,6 +40,8 @@ namespace DiaBlackJack.CoreLoop.UI
                 RequestResolveAutomaticCardChoice;
             _view.DemonContractBeginRequested += RequestBeginDemonContract;
             _view.DemonContractChoiceRequested += RequestResolveDemonContract;
+            _view.ActiveDemonContractActionRequested +=
+                RequestBeginActiveDemonContractAction;
             _view.RestartRequested += RequestRestart;
 
             _stageRuntime = StageProgressionRuntime.Instance;
@@ -75,6 +77,8 @@ namespace DiaBlackJack.CoreLoop.UI
                 RequestResolveAutomaticCardChoice;
             _view.DemonContractBeginRequested -= RequestBeginDemonContract;
             _view.DemonContractChoiceRequested -= RequestResolveDemonContract;
+            _view.ActiveDemonContractActionRequested -=
+                RequestBeginActiveDemonContractAction;
             _view.RestartRequested -= RequestRestart;
         }
 
@@ -145,6 +149,16 @@ namespace DiaBlackJack.CoreLoop.UI
             ProcessInput(() => IsStageBattle
                 ? _stageSession.TryResolvePlayerDemonContract(interactionId, optionId)
                 : _session.TryResolvePlayerDemonContract(interactionId, optionId));
+        }
+
+        public void RequestBeginActiveDemonContractAction(
+            int sourceContractCardId)
+        {
+            ProcessInput(() => IsStageBattle
+                ? _stageSession.TryBeginPlayerActiveDemonContractAction(
+                    sourceContractCardId)
+                : _session.TryBeginPlayerActiveDemonContractAction(
+                    sourceContractCardId));
         }
 
         public void RequestRestart()

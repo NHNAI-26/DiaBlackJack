@@ -58,6 +58,25 @@ namespace DiaBlackJack.CoreLoop.UI
         }
     }
 
+    public sealed class ActiveDemonContractActionViewModel
+    {
+        public ActiveDemonContractActionViewModel(
+            int sourceCardId,
+            DemonContractKind kind,
+            string label)
+        {
+            SourceCardId = sourceCardId;
+            Kind = kind;
+            Label = label ?? string.Empty;
+        }
+
+        public int SourceCardId { get; }
+
+        public DemonContractKind Kind { get; }
+
+        public string Label { get; }
+    }
+
     public sealed class DemonContractPanelViewModel
     {
         public DemonContractPanelViewModel(
@@ -73,6 +92,7 @@ namespace DiaBlackJack.CoreLoop.UI
             string prompt,
             IReadOnlyList<DemonContractChoiceViewModel> choices,
             IReadOnlyList<string> activeContracts,
+            IReadOnlyList<ActiveDemonContractActionViewModel> activeActions,
             string ownerPreview,
             string lastContractResult,
             string lastEffectResult)
@@ -90,6 +110,8 @@ namespace DiaBlackJack.CoreLoop.UI
             Choices = choices ?? throw new ArgumentNullException(nameof(choices));
             ActiveContracts = activeContracts ??
                 throw new ArgumentNullException(nameof(activeContracts));
+            ActiveActions = activeActions ??
+                throw new ArgumentNullException(nameof(activeActions));
             OwnerPreview = ownerPreview ?? string.Empty;
             LastContractResult = lastContractResult ?? string.Empty;
             LastEffectResult = lastEffectResult ?? string.Empty;
@@ -118,6 +140,16 @@ namespace DiaBlackJack.CoreLoop.UI
         public IReadOnlyList<DemonContractChoiceViewModel> Choices { get; }
 
         public IReadOnlyList<string> ActiveContracts { get; }
+
+        public IReadOnlyList<ActiveDemonContractActionViewModel> ActiveActions
+        {
+            get;
+        }
+
+        public bool UsesContractCandidateLayout =>
+            InteractionKind == DemonContractInteractionKind.ChooseContract ||
+            InteractionKind ==
+                DemonContractInteractionKind.LuciferChooseAdditionalContract;
 
         public string OwnerPreview { get; }
 
@@ -152,6 +184,7 @@ namespace DiaBlackJack.CoreLoop.UI
                 pending?.PublicPrompt,
                 FormatChoices(pending),
                 FormatActiveContracts(battle),
+                FormatActiveActions(battle),
                 FormatOwnerPreview(battle.PlayerDemonContractPreview),
                 FormatLastContractResult(battle.LastDemonContractResult),
                 FormatLastEffectResult(battle.LastDemonContractEffectResult));
@@ -294,6 +327,48 @@ namespace DiaBlackJack.CoreLoop.UI
             }
 
             return labels.AsReadOnly();
+        }
+
+        private static IReadOnlyList<ActiveDemonContractActionViewModel>
+            FormatActiveActions(CoreLoopBattle battle)
+        {
+            List<ActiveDemonContractActionViewModel> actions =
+                new List<ActiveDemonContractActionViewModel>();
+            foreach (ActiveDemonContract contract in
+                battle.ActivePlayerDemonContracts)
+            {
+                if (!battle.CanBeginPlayerActiveDemonContractAction(
+                    contract.SourceCardId))
+                {
+                    continue;
+                }
+
+                string actionLabel;
+                switch (contract.Kind)
+                {
+                    case DemonContractKind.Mammon:
+                        MammonRuntimeState mammon =
+                            (MammonRuntimeState)contract.RuntimeState;
+                        actionLabel = $"MAMMON REROLL ({mammon.CurrentDieValue})";
+                        break;
+                    case DemonContractKind.Satan:
+                        SatanRuntimeState satan =
+                            (SatanRuntimeState)contract.RuntimeState;
+                        actionLabel = satan.CurrentFace == SatanContractFace.Upper
+                            ? "SATAN DECLARE"
+                            : "SATAN FORCE HIT";
+                        break;
+                    default:
+                        continue;
+                }
+
+                actions.Add(new ActiveDemonContractActionViewModel(
+                    contract.SourceCardId,
+                    contract.Kind,
+                    actionLabel));
+            }
+
+            return actions.AsReadOnly();
         }
 
         private static string FormatOwnerPreview(PlayerDemonContractPreview preview)

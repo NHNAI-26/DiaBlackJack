@@ -230,6 +230,20 @@ namespace DiaBlackJack.StageProgression
             return true;
         }
 
+        public bool TryBeginPlayerActiveDemonContractAction(
+            int sourceContractCardId)
+        {
+            if (!CanForwardBattleAction() ||
+                !_battleSession.TryBeginPlayerActiveDemonContractAction(
+                    sourceContractCardId))
+            {
+                return false;
+            }
+
+            SynchronizeFinishedBattle();
+            return true;
+        }
+
         public bool TryAdvanceToNextStage()
         {
             if (Progress.State != StageProgressionState.StageCleared)

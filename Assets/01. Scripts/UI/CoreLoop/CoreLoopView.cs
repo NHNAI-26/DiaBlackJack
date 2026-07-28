@@ -34,6 +34,8 @@ namespace DiaBlackJack.CoreLoop.UI
 
         public event Action<int, int> DemonContractChoiceRequested;
 
+        public event Action<int> ActiveDemonContractActionRequested;
+
         public event Action RestartRequested;
 
         public void Render(CoreLoopViewModel model)
@@ -75,6 +77,19 @@ namespace DiaBlackJack.CoreLoop.UI
             GUILayout.Label($"ROUND {_model.RoundNumber}  |  {_model.State}", _headingStyle);
             GUILayout.Space(4f);
 
+            if (UsesCompactDemonContractCandidateScreen())
+            {
+                GUILayout.Label(
+                    $"PLAYER SOUL  {_model.PlayerSoul}  |  " +
+                    $"ENEMY SOUL  {_model.EnemySoul}",
+                    _bodyStyle);
+                GUILayout.FlexibleSpace();
+                DrawActions();
+                GUILayout.Space(4f);
+                GUILayout.EndArea();
+                return;
+            }
+
             GUILayout.BeginHorizontal();
             DrawParticipant(
                 "PLAYER",
@@ -102,6 +117,14 @@ namespace DiaBlackJack.CoreLoop.UI
             DrawActions();
             GUILayout.Space(4f);
             GUILayout.EndArea();
+        }
+
+        private bool UsesCompactDemonContractCandidateScreen()
+        {
+            DemonContractPanelViewModel contract = _model.DemonContract;
+            return contract.IsResolving &&
+                contract.UsesContractCandidateLayout &&
+                (_styleScreenHeight <= 720 || contract.Choices.Count > 3);
         }
 
         private void DrawEnemyInformation()
@@ -242,6 +265,20 @@ namespace DiaBlackJack.CoreLoop.UI
             if (GUILayout.Button("CONTRACT", _buttonStyle, GUILayout.Height(primaryActionHeight)))
             {
                 _showDemonContractConfirmation = true;
+            }
+
+            foreach (ActiveDemonContractActionViewModel action in
+                _model.DemonContract.ActiveActions)
+            {
+                GUI.enabled = !_inputLocked;
+                if (GUILayout.Button(
+                    action.Label,
+                    _buttonStyle,
+                    GUILayout.Height(primaryActionHeight)))
+                {
+                    ActiveDemonContractActionRequested?.Invoke(
+                        action.SourceCardId);
+                }
             }
 
             GUI.enabled = wasEnabled;
@@ -452,46 +489,58 @@ namespace DiaBlackJack.CoreLoop.UI
             }
 
             GUILayout.Space(6f);
-            GUILayout.BeginHorizontal();
             bool wasEnabled = GUI.enabled;
-            foreach (DemonContractChoiceViewModel choice in contract.Choices)
+            int choicesPerRow = contract.UsesContractCandidateLayout ? 3 : 5;
+            for (int rowStart = 0;
+                rowStart < contract.Choices.Count;
+                rowStart += choicesPerRow)
             {
-                GUILayout.BeginVertical(
-                    GUI.skin.box,
-                    GUILayout.ExpandWidth(true),
-                    GUILayout.MinHeight(contract.InteractionKind ==
-                        DemonContractInteractionKind.ChooseContract ? 124f : 56f));
-                GUILayout.Label(choice.Title, _headingStyle);
-                if (!string.IsNullOrEmpty(choice.Ability))
+                GUILayout.BeginHorizontal();
+                int rowEnd = Mathf.Min(
+                    rowStart + choicesPerRow,
+                    contract.Choices.Count);
+                for (int i = rowStart; i < rowEnd; i++)
                 {
-                    GUILayout.Label(choice.Ability, _bodyStyle);
-                }
-
-                if (!string.IsNullOrEmpty(choice.Cost))
-                {
-                    GUILayout.Label(choice.Cost, _warningStyle);
-                }
-
-                GUI.enabled = choice.CanSelect && !_inputLocked;
-                if (GUILayout.Button(
-                    choice.CanSelect ? "SELECT" : choice.DisabledReason,
-                    _buttonStyle,
-                    GUILayout.MinHeight(38f),
-                    GUILayout.ExpandWidth(true)))
-                {
-                    if (contract.InteractionId.HasValue)
+                    DemonContractChoiceViewModel choice = contract.Choices[i];
+                    GUILayout.BeginVertical(
+                        GUI.skin.box,
+                        GUILayout.ExpandWidth(true),
+                        GUILayout.MinHeight(
+                            contract.UsesContractCandidateLayout ? 124f : 56f));
+                    GUILayout.Label(choice.Title, _headingStyle);
+                    if (!string.IsNullOrEmpty(choice.Ability))
                     {
-                        DemonContractChoiceRequested?.Invoke(
-                            contract.InteractionId.Value,
-                            choice.OptionId);
+                        GUILayout.Label(choice.Ability, _bodyStyle);
                     }
+
+                    if (!string.IsNullOrEmpty(choice.Cost))
+                    {
+                        GUILayout.Label(choice.Cost, _warningStyle);
+                    }
+
+                    GUI.enabled = choice.CanSelect && !_inputLocked;
+                    if (GUILayout.Button(
+                        choice.CanSelect ? "SELECT" : choice.DisabledReason,
+                        _buttonStyle,
+                        GUILayout.MinHeight(38f),
+                        GUILayout.ExpandWidth(true)))
+                    {
+                        if (contract.InteractionId.HasValue)
+                        {
+                            DemonContractChoiceRequested?.Invoke(
+                                contract.InteractionId.Value,
+                                choice.OptionId);
+                        }
+                    }
+
+                    GUILayout.EndVertical();
                 }
 
-                GUILayout.EndVertical();
+                GUILayout.EndHorizontal();
+                GUILayout.Space(4f);
             }
 
             GUI.enabled = wasEnabled;
-            GUILayout.EndHorizontal();
         }
 
         private void EnsureStyles()

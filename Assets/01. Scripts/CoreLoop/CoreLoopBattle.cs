@@ -2568,6 +2568,77 @@ namespace DiaBlackJack.CoreLoop
                 sourceContractCardId);
         }
 
+        public bool CanBeginPlayerActiveDemonContractAction(
+            int sourceContractCardId)
+        {
+            if (sourceContractCardId < 0 || !CanAcceptPlayerAction())
+            {
+                return false;
+            }
+
+            foreach (ActiveDemonContract activeContract in
+                _activePlayerDemonContracts)
+            {
+                if (activeContract.SourceCardId != sourceContractCardId)
+                {
+                    continue;
+                }
+
+                switch (activeContract.Kind)
+                {
+                    case DemonContractKind.Mammon:
+                        return _demonContractResolver.CanOwnerRerollMammon(
+                            this,
+                            activeContract);
+                    case DemonContractKind.Satan:
+                        if (!(activeContract.RuntimeState is SatanRuntimeState
+                            satanState))
+                        {
+                            return false;
+                        }
+
+                        return satanState.CurrentFace == SatanContractFace.Upper
+                            ? TryGetSingleHiddenCard(Enemy, out _)
+                            : Enemy.Deck.CanDraw(1);
+                    default:
+                        return false;
+                }
+            }
+
+            return false;
+        }
+
+        public bool TryBeginPlayerActiveDemonContractAction(
+            int sourceContractCardId)
+        {
+            if (!CanBeginPlayerActiveDemonContractAction(sourceContractCardId))
+            {
+                return false;
+            }
+
+            foreach (ActiveDemonContract activeContract in
+                _activePlayerDemonContracts)
+            {
+                if (activeContract.SourceCardId != sourceContractCardId)
+                {
+                    continue;
+                }
+
+                switch (activeContract.Kind)
+                {
+                    case DemonContractKind.Mammon:
+                        return TryBeginPlayerMammonReroll(sourceContractCardId);
+                    case DemonContractKind.Satan:
+                        return TryBeginPlayerSatanContractAction(
+                            sourceContractCardId);
+                    default:
+                        return false;
+                }
+            }
+
+            return false;
+        }
+
         private bool TryBeginMammonReroll(
             CombatantSide ownerSide,
             int sourceContractCardId)

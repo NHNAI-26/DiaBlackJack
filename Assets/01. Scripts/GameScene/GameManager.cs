@@ -672,22 +672,39 @@ namespace DiaBlackJack.GameScene
             DrawHeading(
                 _core.ChangeActionText + "  ·  " +
                 _core.DemonContract.ActionText);
+            var labels = new List<string>
+            {
+                "HIT", "STAND", "CHANGE", "CONTRACT"
+            };
+            var enabled = new List<bool>
+            {
+                _core.CanHit,
+                _core.CanStand,
+                _core.CanChange,
+                _core.DemonContract.CanBegin
+            };
+            var actions = new List<Func<bool>>
+            {
+                _session.TryPlayerHit,
+                _session.TryPlayerStand,
+                _session.TryBeginPlayerChange,
+                BeginDemonContractConfirmation
+            };
+            foreach (ActiveDemonContractActionViewModel action in
+                _core.DemonContract.ActiveActions)
+            {
+                int sourceCardId = action.SourceCardId;
+                labels.Add(action.Label);
+                enabled.Add(true);
+                actions.Add(() =>
+                    _session.TryBeginPlayerActiveDemonContractAction(
+                        sourceCardId));
+            }
+
             DrawButtonRow(
-                new[] { "HIT", "STAND", "CHANGE", "CONTRACT" },
-                new[]
-                {
-                    _core.CanHit,
-                    _core.CanStand,
-                    _core.CanChange,
-                    _core.DemonContract.CanBegin
-                },
-                new Func<bool>[]
-                {
-                    _session.TryPlayerHit,
-                    _session.TryPlayerStand,
-                    _session.TryBeginPlayerChange,
-                    BeginDemonContractConfirmation
-                });
+                labels.ToArray(),
+                enabled.ToArray(),
+                actions.ToArray());
         }
 
         private void DrawShopControls()
@@ -898,7 +915,7 @@ namespace DiaBlackJack.GameScene
                 heading += "  |  " + contract.OwnerPreview;
             }
 
-            if (contract.InteractionKind != DemonContractInteractionKind.ChooseContract)
+            if (!contract.UsesContractCandidateLayout)
             {
                 var labels = new string[count];
                 var enabled = new bool[count];

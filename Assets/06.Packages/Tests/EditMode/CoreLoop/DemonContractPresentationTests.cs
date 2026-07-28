@@ -151,6 +151,146 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void DCR05_U01_MammonActiveActionUsesPhysicalContractCardId()
+        {
+            CoreLoopBattle battle = CreateStartedBattle(DemonContractKind.Mammon);
+            SelectContract(battle, DemonContractKind.Mammon);
+            ActiveDemonContract activeContract =
+                battle.ActivePlayerDemonContracts.Single();
+
+            DemonContractPanelViewModel before =
+                DemonContractPresenter.Create(battle);
+            ActiveDemonContractActionViewModel action =
+                before.ActiveActions.Single();
+            int playerContractActionsBefore = battle.PublicActionHistory.Count(
+                entry =>
+                    entry.ActorSide == CombatantSide.Player &&
+                    entry.ActionType == PublicCombatActionType.DemonContract);
+
+            Assert.That(action.SourceCardId, Is.EqualTo(activeContract.SourceCardId));
+            Assert.That(action.Kind, Is.EqualTo(DemonContractKind.Mammon));
+            Assert.That(action.Label, Does.Contain("MAMMON REROLL"));
+            Assert.That(
+                battle.TryBeginPlayerActiveDemonContractAction(
+                    action.SourceCardId),
+                Is.True);
+            Assert.That(
+                battle.PublicActionHistory.Count(entry =>
+                    entry.ActorSide == CombatantSide.Player &&
+                    entry.ActionType == PublicCombatActionType.DemonContract),
+                Is.EqualTo(playerContractActionsBefore + 1));
+            Assert.That(
+                DemonContractPresenter.Create(battle).ActiveActions.Single()
+                    .SourceCardId,
+                Is.EqualTo(activeContract.SourceCardId));
+        }
+
+        [Test]
+        public void DCR05_U02_SatanActiveActionBeginsCurrentFaceInteraction()
+        {
+            CoreLoopBattle battle = CreateStartedBattle(DemonContractKind.Satan);
+            SelectContract(battle, DemonContractKind.Satan);
+            ActiveDemonContractActionViewModel action =
+                DemonContractPresenter.Create(battle).ActiveActions.Single();
+
+            Assert.That(action.Kind, Is.EqualTo(DemonContractKind.Satan));
+            Assert.That(action.Label, Is.EqualTo("SATAN DECLARE"));
+            Assert.That(
+                battle.TryBeginPlayerActiveDemonContractAction(
+                    action.SourceCardId),
+                Is.True);
+            Assert.That(
+                battle.PendingPlayerDemonContractInteraction.Kind,
+                Is.EqualTo(
+                    DemonContractInteractionKind.SatanDeclareFirstNumber));
+            Assert.That(
+                DemonContractPresenter.Create(battle).ActiveActions,
+                Is.Empty);
+        }
+
+        [Test]
+        public void DCR05_U03_ControllerForwardsActiveContractCardInput()
+        {
+            GameObject gameObject = new GameObject("DCR05 Controller Test");
+            gameObject.AddComponent<CoreLoopView>();
+            CoreLoopController controller =
+                gameObject.AddComponent<CoreLoopController>();
+            try
+            {
+                if (controller.Battle == null)
+                {
+                    MethodInfo awake = typeof(CoreLoopController).GetMethod(
+                        "Awake",
+                        BindingFlags.Instance | BindingFlags.NonPublic);
+                    awake.Invoke(controller, null);
+                }
+
+                CoreLoopSession session = new CoreLoopSession(() =>
+                    CreateUnstartedBattle(DemonContractKind.Mammon));
+                ReplaceControllerSession(controller, session);
+                controller.RequestBeginDemonContract();
+                PendingDemonContractInteraction pending =
+                    controller.Battle.PendingPlayerDemonContractInteraction;
+                controller.RequestResolveDemonContract(
+                    pending.InteractionId,
+                    pending.Options.Single().OptionId);
+                ActiveDemonContractActionViewModel action =
+                    controller.CurrentViewModel.DemonContract.ActiveActions.Single();
+                int playerContractActionsBefore =
+                    controller.Battle.PublicActionHistory.Count(entry =>
+                        entry.ActorSide == CombatantSide.Player &&
+                        entry.ActionType ==
+                            PublicCombatActionType.DemonContract);
+
+                controller.RequestBeginActiveDemonContractAction(
+                    action.SourceCardId);
+
+                Assert.That(
+                    controller.Battle.PublicActionHistory.Count(entry =>
+                        entry.ActorSide == CombatantSide.Player &&
+                        entry.ActionType ==
+                            PublicCombatActionType.DemonContract),
+                    Is.EqualTo(playerContractActionsBefore + 1));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(gameObject);
+            }
+        }
+
+        [Test]
+        public void DCR05_U04_LuciferAdditionalOfferUsesCandidateCardLayout()
+        {
+            CoreLoopBattle battle = CreateStartedBattle(
+                Enumerable.Repeat(DemonContractKind.Lucifer, 7).ToArray());
+            Assert.That(battle.TryBeginPlayerDemonContract(), Is.True);
+            PendingDemonContractInteraction pending =
+                battle.PendingPlayerDemonContractInteraction;
+            DemonContractOption firstLucifer = pending.Options.First(option =>
+                option.ContractDefinitionKey == DemonContractCatalog.LuciferKey);
+            Assert.That(
+                battle.TryResolvePlayerDemonContract(
+                    pending.InteractionId,
+                    firstLucifer.OptionId),
+                Is.True);
+
+            DemonContractPanelViewModel model =
+                DemonContractPresenter.Create(battle);
+
+            Assert.That(
+                model.InteractionKind,
+                Is.EqualTo(
+                    DemonContractInteractionKind.LuciferChooseAdditionalContract));
+            Assert.That(model.UsesContractCandidateLayout, Is.True);
+            Assert.That(model.Choices.Count, Is.EqualTo(6));
+            Assert.That(
+                model.Choices.Count(choice =>
+                    !string.IsNullOrEmpty(choice.Ability) &&
+                    !string.IsNullOrEmpty(choice.Cost)),
+                Is.EqualTo(5));
+        }
+
+        [Test]
         public void DCR04_U08_PrototypeDeckContainsOneOfEachImplementedContract()
         {
             DemonContractDeck deck = DemonContractDeck.CreatePrototype(seed: 20260723);
@@ -232,6 +372,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                     return DemonContractCatalog.MammonKey;
                 case DemonContractKind.Leviathan:
                     return DemonContractCatalog.LeviathanKey;
+                case DemonContractKind.Lucifer:
+                    return DemonContractCatalog.LuciferKey;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(kind));
             }
