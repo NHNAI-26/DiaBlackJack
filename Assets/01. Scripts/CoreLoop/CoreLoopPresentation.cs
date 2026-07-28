@@ -646,6 +646,8 @@ namespace DiaBlackJack.CoreLoop.UI
                     return "EFFECT NOT IMPLEMENTED";
                 case CardUseUnavailableReason.EffectRequirementsNotMet:
                     return "REQUIREMENTS NOT MET";
+                case CardUseUnavailableReason.DemonContractRestricted:
+                    return "BLOCKED BY DEMON CONTRACT";
                 default:
                     throw new ArgumentOutOfRangeException();
             }

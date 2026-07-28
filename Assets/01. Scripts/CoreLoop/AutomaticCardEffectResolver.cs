@@ -471,12 +471,14 @@ namespace DiaBlackJack.CoreLoop
             AutomaticCardContinuationKind kind,
             CombatantSide actorSide,
             CardEffectContinuation cardEffectContinuation,
+            DemonContractKind? demonContractKind = null,
             int? sourceContractCardId = null,
             int? enteredCardId = null)
         {
             Kind = kind;
             ActorSide = actorSide;
             CardEffectContinuation = cardEffectContinuation;
+            DemonContractKind = demonContractKind;
             SourceContractCardId = sourceContractCardId;
             EnteredCardId = enteredCardId;
         }
@@ -486,6 +488,8 @@ namespace DiaBlackJack.CoreLoop
         public CombatantSide ActorSide { get; }
 
         public CardEffectContinuation CardEffectContinuation { get; }
+
+        public DemonContractKind? DemonContractKind { get; }
 
         public int? EnteredCardId { get; }
 
@@ -521,6 +525,7 @@ namespace DiaBlackJack.CoreLoop
 
         public static AutomaticCardContinuation ForDemonContract(
             CombatantSide actorSide,
+            DemonContractKind demonContractKind,
             int sourceContractCardId,
             int enteredCardId)
         {
@@ -534,12 +539,18 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentOutOfRangeException(nameof(enteredCardId));
             }
 
+            if (!Enum.IsDefined(typeof(DemonContractKind), demonContractKind))
+            {
+                throw new ArgumentOutOfRangeException(nameof(demonContractKind));
+            }
+
             return new AutomaticCardContinuation(
                 AutomaticCardContinuationKind.DemonContract,
                 actorSide,
                 cardEffectContinuation: null,
-                sourceContractCardId,
-                enteredCardId);
+                demonContractKind: demonContractKind,
+                sourceContractCardId: sourceContractCardId,
+                enteredCardId: enteredCardId);
         }
     }
 }

@@ -7,6 +7,8 @@ namespace DiaBlackJack.CoreLoop
         Mammon,
         Leviathan,
         Beelzebub,
-        Mephistopheles
+        Mephistopheles,
+        Asmodeus,
+        Azazel
     }
 }

@@ -476,6 +476,13 @@ namespace DiaBlackJack.CoreLoop
                 return Unavailable(cardId, CardUseUnavailableReason.CardIsNotManual);
             }
 
+            if (!battle.CanOwnerUseCardByDemonContract(actorSide, card))
+            {
+                return Unavailable(
+                    cardId,
+                    CardUseUnavailableReason.DemonContractRestricted);
+            }
+
             if (!card.CanUse)
             {
                 return Unavailable(cardId, CardUseUnavailableReason.CardIsUnavailable);

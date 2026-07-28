@@ -264,6 +264,18 @@ namespace DiaBlackJack.CoreLoop
 
                 definitionKey = activeContract.Definition.Key;
             }
+            else if (pending.Kind ==
+                    DemonContractInteractionKind.BeelzebubChooseOwnerCard ||
+                pending.Kind ==
+                    DemonContractInteractionKind.BeelzebubChooseOpponentCard)
+            {
+                definitionKey = DemonContractCatalog.BeelzebubKey;
+            }
+            else if (pending.Kind ==
+                DemonContractInteractionKind.AsmodeusForceOpponentHit)
+            {
+                definitionKey = DemonContractCatalog.AsmodeusKey;
+            }
 
             foreach (DemonContractOption option in pending.Options)
             {
@@ -275,6 +287,18 @@ namespace DiaBlackJack.CoreLoop
                         .GetByKey(option.ContractDefinitionKey);
                     contractKind = definition.Kind;
                     optionDefinitionKey = definition.Key;
+                }
+
+                int? optionNumericValue = privateNumericValue;
+                if (pending.Kind ==
+                        DemonContractInteractionKind.BeelzebubChooseOwnerCard ||
+                    pending.Kind ==
+                        DemonContractInteractionKind.BeelzebubChooseOpponentCard)
+                {
+                    optionNumericValue = GetBeelzebubOptionRank(
+                        battle,
+                        pending,
+                        option);
                 }
 
                 candidates.Add(new EnemyActionCandidate(
@@ -289,7 +313,7 @@ namespace DiaBlackJack.CoreLoop
                         pending.Kind ==
                             DemonContractInteractionKind.SatanDeclareSecondNumber
                             ? option.NumericValue
-                            : privateNumericValue,
+                            : optionNumericValue,
                     demonContractSourceCardId:
                         pending.Kind ==
                             DemonContractInteractionKind.SatanDeclareFirstNumber ||
@@ -298,6 +322,33 @@ namespace DiaBlackJack.CoreLoop
                             ? pending.SourceContractCardId
                             : null));
             }
+        }
+
+        private static int GetBeelzebubOptionRank(
+            CoreLoopBattle battle,
+            PendingDemonContractInteraction pending,
+            DemonContractOption option)
+        {
+            if (!option.ContractCardId.HasValue)
+            {
+                throw new InvalidOperationException(
+                    "Beelzebub discard option lost its public card id.");
+            }
+
+            BattleParticipant participant = pending.Kind ==
+                DemonContractInteractionKind.BeelzebubChooseOwnerCard
+                    ? battle.Enemy
+                    : battle.Player;
+            if (!participant.Hand.TryGetCard(
+                    option.ContractCardId.Value,
+                    out BlackjackCard card) ||
+                !card.IsFaceUp)
+            {
+                throw new InvalidOperationException(
+                    "Beelzebub discard option no longer identifies a face-up card.");
+            }
+
+            return card.Rank;
         }
 
         private static ActiveDemonContract FindActiveEnemyContract(

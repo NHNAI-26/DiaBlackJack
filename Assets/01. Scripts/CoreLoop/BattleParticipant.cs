@@ -5,6 +5,8 @@ namespace DiaBlackJack.CoreLoop
 {
     public sealed class BattleParticipant
     {
+        internal event Action<BlackjackCard> FaceUpCardAdded;
+
         public BattleParticipant(BlackjackDeck deck, int maximumSoul)
             : this(deck, maximumSoul, maximumSoul)
         {
@@ -39,6 +41,11 @@ namespace DiaBlackJack.CoreLoop
             }
 
             Hand.Add(card);
+            if (faceUp)
+            {
+                FaceUpCardAdded?.Invoke(card);
+            }
+
             return card;
         }
 
@@ -51,6 +58,7 @@ namespace DiaBlackJack.CoreLoop
 
             card.Reveal();
             Hand.Add(card);
+            FaceUpCardAdded?.Invoke(card);
         }
 
         internal BlackjackCard AddTemporaryFaceUpCard(
@@ -60,6 +68,7 @@ namespace DiaBlackJack.CoreLoop
             var card = new BlackjackCard(cardId, definition, isFaceUp: true);
             Deck.RegisterTemporaryCardInPlay(card);
             Hand.Add(card);
+            FaceUpCardAdded?.Invoke(card);
             return card;
         }
 

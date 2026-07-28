@@ -12,6 +12,8 @@ namespace DiaBlackJack.CoreLoop
         public const string LeviathanKey = "leviathan";
         public const string BeelzebubKey = "beelzebub";
         public const string MephistophelesKey = "mephistopheles";
+        public const string AsmodeusKey = "asmodeus";
+        public const string AzazelKey = "azazel";
 
         private static readonly DemonContractCatalog DefaultCatalog =
             new DemonContractCatalog(CreateDefaultDefinitions());
@@ -127,6 +129,20 @@ namespace DiaBlackJack.CoreLoop
                     baseSoulCost,
                     "보위 나이프의 공개 합 버스트 판정을 강화한다.",
                     "계약 시 영혼 1, 비버스트 시 자신의 비공개 카드 공개"),
+                new DemonContractDefinition(
+                    AsmodeusKey,
+                    "아스모데우스",
+                    DemonContractKind.Asmodeus,
+                    baseSoulCost,
+                    "차례 시작에 스탠드하지 않은 상대를 히트시킬 수 있다.",
+                    "계약 시 영혼 1, 숫자 6 이하 카드 사용 불가"),
+                new DemonContractDefinition(
+                    AzazelKey,
+                    "아자젤",
+                    DemonContractKind.Azazel,
+                    baseSoulCost,
+                    "사용 완료 공개 카드를 계약 시와 히트 뒤 재사용 가능하게 한다.",
+                    "계약 시 영혼 1, 같은 숫자 공개 카드 유입 시 버스트"),
             };
         }
     }

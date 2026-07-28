@@ -32,32 +32,38 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR04_U02_BeelzebubPaysSoulAndDiscardsLatestFaceUpCardsOnBust()
+        public void DCR04_U02_BeelzebubOwnerChoosesBothFaceUpDiscardCards()
         {
             CoreLoopBattle battle = CreateBattle(
                 PlainDeck(new[] { 10, 2, 10, 10, 2, 2, 2, 2 }),
                 PlainDeck(new[] { 8, 7, 2, 2, 2, 2 }, 100),
-                new StandPolicy(),
+                new SequencePolicy(EnemyActionType.Hit, EnemyActionType.Stand),
                 DemonContractKind.Beelzebub,
                 playerCurrentSoul: 12);
             ActivateFirstContract(battle);
 
             Assert.That(battle.TryPlayerHit(), Is.True);
-            int latestPlayerCardId = 3;
-            BlackjackCard latestEnemyFaceUpCard = battle.Enemy.Hand.GetFaceUpCards().Last();
             Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(battle.State,
+                Is.EqualTo(CoreLoopState.PlayerResolvingDemonContract));
+            ResolveBeelzebubDiscardChoices(
+                battle,
+                ownerCardId: 0,
+                opponentCardId: 100);
 
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
             Assert.That(battle.LastResolution, Is.Null);
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(10));
-            Assert.That(battle.Player.Hand.Contains(latestPlayerCardId), Is.False);
-            Assert.That(battle.Enemy.Hand.Contains(latestEnemyFaceUpCard.Id), Is.False);
+            Assert.That(battle.Player.Hand.Contains(0), Is.False);
+            Assert.That(battle.Player.Hand.Contains(3), Is.True);
+            Assert.That(battle.Enemy.Hand.Contains(100), Is.False);
+            Assert.That(battle.Enemy.Hand.Contains(102), Is.True);
             Assert.That(
                 battle.Player.Deck.GetDiscardedCards().Select(card => card.Id),
-                Does.Contain(latestPlayerCardId));
+                Does.Contain(0));
             Assert.That(
                 battle.Enemy.Deck.GetDiscardedCards().Select(card => card.Id),
-                Does.Contain(latestEnemyFaceUpCard.Id));
+                Does.Contain(100));
             Assert.That(battle.LastDemonContractEffectResult.PaidSoulCost,
                 Is.EqualTo(1));
         }
@@ -97,6 +103,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                 playerCurrentSoul: 12);
 
             ActivateFirstContract(battle);
+
+            ResolveBeelzebubDiscardChoices(
+                battle,
+                battle.Player.Hand.GetFaceUpCards().Single().Id,
+                battle.Enemy.Hand.GetFaceUpCards().Single().Id);
 
             Assert.That(battle.LastResolution, Is.Null);
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(10));
@@ -205,13 +216,17 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.CanPlayerStand, Is.True);
 
             Assert.That(battle.TryPlayerStand(), Is.True);
+            ResolveBeelzebubDiscardChoices(
+                battle,
+                ownerCardId: 2,
+                opponentCardId: 100);
 
             Assert.That(battle.LastResolution.Value.Outcome,
                 Is.EqualTo(RoundOutcome.PlayerWin));
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(10));
             Assert.That(
                 battle.Player.Deck.GetDiscardedCards().Select(card => card.Id),
-                Does.Contain(4));
+                Does.Contain(2));
             Assert.That(
                 battle.Enemy.Deck.GetDiscardedCards().Select(card => card.Id),
                 Does.Contain(100));
@@ -263,6 +278,34 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.TryResolvePlayerDemonContract(
                 pending.InteractionId,
                 pending.Options[0].OptionId), Is.True);
+        }
+
+        private static void ResolveBeelzebubDiscardChoices(
+            CoreLoopBattle battle,
+            int ownerCardId,
+            int opponentCardId)
+        {
+            PendingDemonContractInteraction ownerChoice =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(ownerChoice, Is.Not.Null);
+            Assert.That(ownerChoice.Kind, Is.EqualTo(
+                DemonContractInteractionKind.BeelzebubChooseOwnerCard));
+            DemonContractOption ownerOption = ownerChoice.Options.Single(option =>
+                option.ContractCardId == ownerCardId);
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                ownerChoice.InteractionId,
+                ownerOption.OptionId), Is.True);
+
+            PendingDemonContractInteraction opponentChoice =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(opponentChoice.Kind, Is.EqualTo(
+                DemonContractInteractionKind.BeelzebubChooseOpponentCard));
+            DemonContractOption opponentOption =
+                opponentChoice.Options.Single(option =>
+                    option.ContractCardId == opponentCardId);
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                opponentChoice.InteractionId,
+                opponentOption.OptionId), Is.True);
         }
 
         private static DemonContractDeck CreateDemonDeck(DemonContractKind kind)

@@ -85,6 +85,23 @@ namespace DiaBlackJack.CoreLoop
                 case DemonContractInteractionKind.SatanDeclareFirstNumber:
                 case DemonContractInteractionKind.SatanDeclareSecondNumber:
                     return EvaluateSatanNumber(observation, candidate);
+                case DemonContractInteractionKind.BeelzebubChooseOwnerCard:
+                    return EvaluateBeelzebubDiscard(
+                        candidate,
+                        preferHigherRank: true);
+                case DemonContractInteractionKind.BeelzebubChooseOpponentCard:
+                    return EvaluateBeelzebubDiscard(
+                        candidate,
+                        preferHigherRank: false);
+                case DemonContractInteractionKind.AsmodeusForceOpponentHit:
+                    bool forcesHit = candidate.DemonContractOptionId ==
+                        AsmodeusDemonContractHandler.ForceHitOptionId;
+                    return Score(
+                        candidate,
+                        forcesHit ? 1500 : 0,
+                        forcesHit
+                            ? "cultist-force-opponent-hit-with-asmodeus"
+                            : "cultist-skip-asmodeus-forced-hit");
                 default:
                     throw new InvalidOperationException(
                         "Cultist contract option has no interaction kind.");
@@ -142,6 +159,16 @@ namespace DiaBlackJack.CoreLoop
                         hasKnife
                             ? "cultist-select-mephistopheles-with-knife"
                             : "cultist-avoid-mephistopheles-without-knife");
+                case DemonContractKind.Asmodeus:
+                    return Score(
+                        candidate,
+                        PreferredContractScore,
+                        "cultist-select-asmodeus");
+                case DemonContractKind.Azazel:
+                    return Score(
+                        candidate,
+                        PreferredContractScore,
+                        "cultist-select-azazel");
                 default:
                     throw new InvalidOperationException(
                         "Cultist received an unknown demon contract choice.");
@@ -169,6 +196,22 @@ namespace DiaBlackJack.CoreLoop
                 candidate,
                 1200 + probability,
                 "cultist-declare-likely-satan-number");
+        }
+
+        private static EnemyActionScore EvaluateBeelzebubDiscard(
+            EnemyActionCandidate candidate,
+            bool preferHigherRank)
+        {
+            int rank = candidate.DemonContractOptionNumericValue ??
+                throw new InvalidOperationException(
+                    "Cultist Beelzebub choice requires a public card rank.");
+            int score = preferHigherRank ? 1200 + rank : 1200 - rank;
+            return Score(
+                candidate,
+                score,
+                preferHigherRank
+                    ? "cultist-beelzebub-discard-highest-own-card"
+                    : "cultist-beelzebub-discard-lowest-opponent-card");
         }
 
         private static EnemyActionScore EvaluateBelphegorChoice(

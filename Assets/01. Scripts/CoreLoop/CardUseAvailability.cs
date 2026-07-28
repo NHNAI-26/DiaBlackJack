@@ -9,7 +9,8 @@ namespace DiaBlackJack.CoreLoop
         CardIsNotManual,
         CardIsUnavailable,
         EffectNotImplemented,
-        EffectRequirementsNotMet
+        EffectRequirementsNotMet,
+        DemonContractRestricted
     }
 
     public readonly struct CardUseAvailability

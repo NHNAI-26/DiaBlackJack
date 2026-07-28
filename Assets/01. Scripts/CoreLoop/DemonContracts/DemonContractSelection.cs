@@ -22,7 +22,10 @@ namespace DiaBlackJack.CoreLoop
         BelphegorTopCard,
         MammonApplyDie,
         SatanDeclareFirstNumber,
-        SatanDeclareSecondNumber
+        SatanDeclareSecondNumber,
+        BeelzebubChooseOwnerCard,
+        BeelzebubChooseOpponentCard,
+        AsmodeusForceOpponentHit
     }
 
     public sealed class DemonContractAvailability
@@ -297,6 +300,53 @@ namespace DiaBlackJack.CoreLoop
                     {
                         throw new ArgumentException(
                             "Satan declarations require distinct public numbers from 1 to 10.",
+                            nameof(options));
+                    }
+                }
+            }
+            else if (kind ==
+                    DemonContractInteractionKind.BeelzebubChooseOwnerCard ||
+                kind ==
+                    DemonContractInteractionKind.BeelzebubChooseOpponentCard)
+            {
+                if (contractKind != DemonContractKind.Beelzebub ||
+                    !sourceContractCardId.HasValue)
+                {
+                    throw new ArgumentException(
+                        "Beelzebub discard choice requires its active contract.",
+                        nameof(options));
+                }
+
+                foreach (DemonContractOption option in copiedOptions)
+                {
+                    if (!option.ContractCardId.HasValue ||
+                        option.NumericValue.HasValue)
+                    {
+                        throw new ArgumentException(
+                            "Beelzebub discard options require only a face-up card id.",
+                            nameof(options));
+                    }
+                }
+            }
+            else if (kind ==
+                DemonContractInteractionKind.AsmodeusForceOpponentHit)
+            {
+                if (contractKind != DemonContractKind.Asmodeus ||
+                    !sourceContractCardId.HasValue ||
+                    copiedOptions.Count != 2)
+                {
+                    throw new ArgumentException(
+                        "Asmodeus turn-start choice requires two options and its active contract.",
+                        nameof(options));
+                }
+
+                foreach (DemonContractOption option in copiedOptions)
+                {
+                    if (option.ContractCardId.HasValue ||
+                        option.NumericValue.HasValue)
+                    {
+                        throw new ArgumentException(
+                            "Asmodeus public options cannot contain card or hidden data.",
                             nameof(options));
                     }
                 }

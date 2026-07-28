@@ -43,6 +43,30 @@ namespace DiaBlackJack.CoreLoop
         bool PreventsOwnerStand(DemonContractContext context);
     }
 
+    internal interface IDemonContractCardUseRestrictionHandler
+    {
+        bool PreventsOwnerCardUse(
+            DemonContractContext context,
+            BlackjackCard card);
+    }
+
+    internal interface IDemonContractOwnerTurnStartChoiceHandler
+    {
+        bool CanOfferOwnerTurnStartChoice(DemonContractContext context);
+    }
+
+    internal interface IDemonContractOwnerHitHandler
+    {
+        void OnOwnerHit(DemonContractContext context);
+    }
+
+    internal interface IDemonContractFaceUpCardAddedBustHandler
+    {
+        bool BustsOwnerAfterFaceUpCardAdded(
+            DemonContractContext context,
+            BlackjackCard addedCard);
+    }
+
     internal interface IDemonContractBustPreventionHandler
     {
         bool PreventsOwnerBust(DemonContractContext context);
@@ -93,6 +117,19 @@ namespace DiaBlackJack.CoreLoop
 
         public int OwnerFaceUpCardCount => Owner.Hand.GetFaceUpCards().Count;
 
+        public bool OpponentCanDraw => Opponent.Deck.CanDraw(1);
+
+        public IReadOnlyList<BlackjackCard> OwnerFaceUpCards =>
+            Owner.Hand.GetFaceUpCards();
+
+        public IReadOnlyList<BlackjackCard> OpponentFaceUpCards =>
+            Opponent.Hand.GetFaceUpCards();
+
+        public bool CanChooseBeelzebubDiscardCards =>
+            !Owner.Soul.IsDepleted &&
+            Owner.Hand.GetFaceUpCards().Count > 0 &&
+            Opponent.Hand.GetFaceUpCards().Count > 0;
+
         public void ApplyOwnerSoulDamage(int amount)
         {
             Owner.Soul.ApplyDamage(amount);
@@ -105,28 +142,20 @@ namespace DiaBlackJack.CoreLoop
                 playerIsTarget: OpponentSide == CombatantSide.Player);
         }
 
-        public bool TryPayOwnerSoulAndDiscardLatestFaceUpCards(int soulCost)
+        public bool TryDiscardChosenFaceUpCards(
+            int ownerCardId,
+            int opponentCardId)
         {
-            if (soulCost <= 0 || Owner.Soul.IsDepleted)
+            if (!Owner.Hand.TryGetCard(
+                    ownerCardId,
+                    out BlackjackCard ownerCard) ||
+                !ownerCard.IsFaceUp ||
+                !Opponent.Hand.TryGetCard(
+                    opponentCardId,
+                    out BlackjackCard opponentCard) ||
+                !opponentCard.IsFaceUp)
             {
                 return false;
-            }
-
-            IReadOnlyList<BlackjackCard> ownerFaceUpCards =
-                Owner.Hand.GetFaceUpCards();
-            IReadOnlyList<BlackjackCard> opponentFaceUpCards =
-                Opponent.Hand.GetFaceUpCards();
-            if (ownerFaceUpCards.Count == 0 || opponentFaceUpCards.Count == 0)
-            {
-                return false;
-            }
-
-            int ownerCardId = ownerFaceUpCards[ownerFaceUpCards.Count - 1].Id;
-            int opponentCardId = opponentFaceUpCards[opponentFaceUpCards.Count - 1].Id;
-            Owner.Soul.ApplyDamage(soulCost);
-            if (Owner.Soul.IsDepleted)
-            {
-                return true;
             }
 
             if (!Owner.TryDiscardCard(ownerCardId) ||
@@ -137,6 +166,20 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return true;
+        }
+
+        public bool TryGetOwnerFaceUpCard(
+            int cardId,
+            out BlackjackCard card)
+        {
+            return TryGetFaceUpCard(Owner, cardId, out card);
+        }
+
+        public bool TryGetOpponentFaceUpCard(
+            int cardId,
+            out BlackjackCard card)
+        {
+            return TryGetFaceUpCard(Opponent, cardId, out card);
         }
 
         public bool TryRevealOwnerHiddenCard()
@@ -166,11 +209,63 @@ namespace DiaBlackJack.CoreLoop
             return true;
         }
 
+        public int ReactivateOwnerUsedFaceUpManualCards()
+        {
+            int reactivatedCount = 0;
+            foreach (BlackjackCard card in Owner.Hand.Cards)
+            {
+                if (!card.IsFaceUp ||
+                    card.Definition.Activation != CardActivationKind.Manual ||
+                    !card.TryReactivate())
+                {
+                    continue;
+                }
+
+                reactivatedCount++;
+            }
+
+            return reactivatedCount;
+        }
+
+        public bool OwnerHasAnotherFaceUpCardWithRank(BlackjackCard addedCard)
+        {
+            if (addedCard == null || !addedCard.IsFaceUp)
+            {
+                return false;
+            }
+
+            foreach (BlackjackCard card in Owner.Hand.Cards)
+            {
+                if (!ReferenceEquals(card, addedCard) &&
+                    card.IsFaceUp &&
+                    card.Rank == addedCard.Rank)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private BattleParticipant Owner =>
             _battle.GetParticipant(ActiveContract.OwnerSide);
 
         private BattleParticipant Opponent =>
             _battle.GetOpponent(ActiveContract.OwnerSide);
+
+        private static bool TryGetFaceUpCard(
+            BattleParticipant participant,
+            int cardId,
+            out BlackjackCard card)
+        {
+            if (participant.Hand.TryGetCard(cardId, out card) && card.IsFaceUp)
+            {
+                return true;
+            }
+
+            card = null;
+            return false;
+        }
     }
 
     internal sealed class DemonContractResolver
@@ -219,7 +314,9 @@ namespace DiaBlackJack.CoreLoop
                     new DeterministicDemonDieRoller(seed: 20260722)),
                 new LeviathanDemonContractHandler(),
                 new BeelzebubDemonContractHandler(),
-                new MephistophelesDemonContractHandler());
+                new MephistophelesDemonContractHandler(),
+                new AsmodeusDemonContractHandler(),
+                new AzazelDemonContractHandler());
         }
 
         public bool CanPlayerStand(
@@ -242,6 +339,74 @@ namespace DiaBlackJack.CoreLoop
                 activeContracts,
                 ownerSide,
                 (handler, context) => handler.PreventsOwnerStand(context));
+        }
+
+        public bool CanOwnerUseCard(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            CombatantSide ownerSide,
+            BlackjackCard card)
+        {
+            if (card == null)
+            {
+                throw new ArgumentNullException(nameof(card));
+            }
+
+            return !HasOwnerRestriction<IDemonContractCardUseRestrictionHandler>(
+                battle,
+                activeContracts,
+                ownerSide,
+                (handler, context) =>
+                    handler.PreventsOwnerCardUse(context, card));
+        }
+
+        public bool TryGetOwnerTurnStartChoiceContract(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            CombatantSide ownerSide,
+            out ActiveDemonContract choiceContract)
+        {
+            return TryGetOwnerChoiceContract<
+                IDemonContractOwnerTurnStartChoiceHandler>(
+                battle,
+                activeContracts,
+                ownerSide,
+                (handler, context) =>
+                    handler.CanOfferOwnerTurnStartChoice(context),
+                out choiceContract);
+        }
+
+        public void NotifyOwnerHit(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            CombatantSide ownerSide)
+        {
+            VisitOwnerHandlers<IDemonContractOwnerHitHandler>(
+                battle,
+                activeContracts,
+                ownerSide,
+                (handler, context) => handler.OnOwnerHit(context));
+        }
+
+        public bool BustsOwnerAfterFaceUpCardAdded(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            CombatantSide ownerSide,
+            BlackjackCard addedCard)
+        {
+            if (addedCard == null)
+            {
+                throw new ArgumentNullException(nameof(addedCard));
+            }
+
+            return HasOwnerRestriction<IDemonContractFaceUpCardAddedBustHandler>(
+                battle,
+                activeContracts,
+                ownerSide,
+                (handler, context) =>
+                    handler.BustsOwnerAfterFaceUpCardAdded(
+                        context,
+                        addedCard));
         }
 
         public bool PreventsPlayerBust(
@@ -270,7 +435,8 @@ namespace DiaBlackJack.CoreLoop
             CoreLoopBattle battle,
             IReadOnlyList<ActiveDemonContract> activeContracts,
             CombatantSide ownerSide,
-            out DemonContractEffectResult result)
+            out DemonContractEffectResult result,
+            out ActiveDemonContract replacementContract)
         {
             if (battle == null)
             {
@@ -298,12 +464,42 @@ namespace DiaBlackJack.CoreLoop
                     new DemonContractContext(battle, activeContract),
                     out result))
                 {
+                    replacementContract = activeContract;
                     return true;
                 }
             }
 
             result = null;
+            replacementContract = null;
             return false;
+        }
+
+        public bool TryCompleteOwnerBustReplacement(
+            CoreLoopBattle battle,
+            ActiveDemonContract activeContract,
+            int ownerCardId,
+            int opponentCardId)
+        {
+            if (battle == null)
+            {
+                throw new ArgumentNullException(nameof(battle));
+            }
+
+            if (activeContract == null)
+            {
+                throw new ArgumentNullException(nameof(activeContract));
+            }
+
+            if (!_handlers.TryGetValue(
+                    activeContract.Kind,
+                    out IDemonContractHandler handler) ||
+                !(handler is IDemonContractBustReplacementHandler))
+            {
+                return false;
+            }
+
+            return new DemonContractContext(battle, activeContract)
+                .TryDiscardChosenFaceUpCards(ownerCardId, opponentCardId);
         }
 
         public IReadOnlyList<ActiveDemonContract> NotifyNormalTurnStarted(
@@ -761,6 +957,45 @@ namespace DiaBlackJack.CoreLoop
                 }
 
                 visit(turnHandler, new DemonContractContext(battle, activeContract));
+            }
+        }
+
+        private void VisitOwnerHandlers<THandler>(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            CombatantSide ownerSide,
+            Action<THandler, DemonContractContext> visit)
+            where THandler : class
+        {
+            if (battle == null)
+            {
+                throw new ArgumentNullException(nameof(battle));
+            }
+
+            if (activeContracts == null)
+            {
+                throw new ArgumentNullException(nameof(activeContracts));
+            }
+
+            if (visit == null)
+            {
+                throw new ArgumentNullException(nameof(visit));
+            }
+
+            foreach (ActiveDemonContract activeContract in activeContracts)
+            {
+                if (activeContract.OwnerSide != ownerSide ||
+                    !_handlers.TryGetValue(
+                        activeContract.Kind,
+                        out IDemonContractHandler handler) ||
+                    !(handler is THandler specializedHandler))
+                {
+                    continue;
+                }
+
+                visit(
+                    specializedHandler,
+                    new DemonContractContext(battle, activeContract));
             }
         }
 

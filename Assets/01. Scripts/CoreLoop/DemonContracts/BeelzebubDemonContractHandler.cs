@@ -30,11 +30,12 @@ namespace DiaBlackJack.CoreLoop
             out DemonContractEffectResult result)
         {
             result = null;
-            if (!context.TryPayOwnerSoulAndDiscardLatestFaceUpCards(BustSoulCost))
+            if (!context.CanChooseBeelzebubDiscardCards)
             {
                 return false;
             }
 
+            context.ApplyOwnerSoulDamage(BustSoulCost);
             result = new DemonContractEffectResult(
                 triggered: true,
                 bustedTarget: null,

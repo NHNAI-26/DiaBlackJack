@@ -203,15 +203,19 @@ namespace DiaBlackJack.CoreLoop.Tests
                 $"DC-08 {SimulationCount}회 선택: " +
                 string.Join(", ", counts.Select(pair => $"{pair.Key}={pair.Value}")));
             Assert.That(counts[DemonContractKind.Belphegor],
-                Is.InRange(60, 110));
+                Is.InRange(20, 90));
             Assert.That(counts[DemonContractKind.Mammon],
-                Is.InRange(60, 110));
+                Is.InRange(20, 90));
             Assert.That(counts[DemonContractKind.Beelzebub],
-                Is.InRange(60, 110));
+                Is.InRange(20, 90));
             Assert.That(counts[DemonContractKind.Satan], Is.Zero);
-            Assert.That(counts[DemonContractKind.Leviathan], Is.InRange(35, 90));
+            Assert.That(counts[DemonContractKind.Leviathan], Is.InRange(20, 90));
             Assert.That(counts[DemonContractKind.Mephistopheles],
-                Is.InRange(35, 90));
+                Is.InRange(20, 90));
+            Assert.That(counts[DemonContractKind.Asmodeus],
+                Is.InRange(20, 90));
+            Assert.That(counts[DemonContractKind.Azazel],
+                Is.InRange(20, 90));
             Assert.That(counts.Values.Sum(), Is.EqualTo(SimulationCount));
         }
 
