@@ -45,6 +45,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameObject revolverRoot;
         [SerializeField] private float revolverAnimationSeconds = 8.8f;
         [SerializeField] private string revolverBaseStateName = "Revolver_Base";
+        [SerializeField] private string playerReadyTrigger = "PlayerTurnStart";
         [SerializeField] private string playerSuccessTrigger = "PlayerSuccess";
         [SerializeField] private string playerFailTrigger = "PlayerFail";
         [SerializeField] private string enemySuccessTrigger = "EnemySuccess";
@@ -75,7 +76,12 @@ namespace DiaBlackJack.GameScene
         private int _lastRevolverAnimationRoundNumber;
         private int _lastRevolverAnimationSourceCardId;
         private CombatantSide _lastRevolverAnimationActorSide;
+        private GameSceneRevolverAnimationPhase _lastRevolverAnimationPhase;
         private bool _lastRevolverAnimationSucceeded;
+        private bool _revolverReadyActive;
+        private int _revolverReadyRoundNumber;
+        private int _revolverReadySourceCardId;
+        private CombatantSide _revolverReadyActorSide;
         private Coroutine _revolverHideRoutine;
         private readonly List<GameSceneViewModel> _timeline = new List<GameSceneViewModel>();
         private readonly List<PurchasedNormalCard> _purchasedNormalCards =
@@ -1363,8 +1369,24 @@ namespace DiaBlackJack.GameScene
 
             StopRevolverHideRoutine();
             ResetRevolverTriggers();
-            ResetRevolverAnimatorToBase();
+
+            if (cue.Phase == GameSceneRevolverAnimationPhase.Ready)
+            {
+                ResetRevolverAnimatorToBase();
+                revolverAnimator.SetTrigger(playerReadyTrigger);
+                RememberActiveRevolverReady(cue);
+                return false;
+            }
+
+            if (cue.ActorSide == CombatantSide.Player &&
+                !IsMatchingActiveRevolverReady(cue))
+            {
+                ResetRevolverAnimatorToBase();
+                revolverAnimator.SetTrigger(playerReadyTrigger);
+            }
+
             revolverAnimator.SetTrigger(ResolveRevolverTrigger(cue));
+            _revolverReadyActive = false;
 
             if (Application.isPlaying && revolverAnimationSeconds > 0f)
             {
@@ -1382,6 +1404,7 @@ namespace DiaBlackJack.GameScene
                 _lastRevolverAnimationRoundNumber == cue.RoundNumber &&
                 _lastRevolverAnimationSourceCardId == cue.SourceCardId &&
                 _lastRevolverAnimationActorSide == cue.ActorSide &&
+                _lastRevolverAnimationPhase == cue.Phase &&
                 _lastRevolverAnimationSucceeded == cue.Succeeded;
         }
 
@@ -1392,7 +1415,26 @@ namespace DiaBlackJack.GameScene
             _lastRevolverAnimationRoundNumber = cue.RoundNumber;
             _lastRevolverAnimationSourceCardId = cue.SourceCardId;
             _lastRevolverAnimationActorSide = cue.ActorSide;
+            _lastRevolverAnimationPhase = cue.Phase;
             _lastRevolverAnimationSucceeded = cue.Succeeded;
+        }
+
+        private void RememberActiveRevolverReady(
+            GameSceneRevolverAnimationCue cue)
+        {
+            _revolverReadyActive = true;
+            _revolverReadyRoundNumber = cue.RoundNumber;
+            _revolverReadySourceCardId = cue.SourceCardId;
+            _revolverReadyActorSide = cue.ActorSide;
+        }
+
+        private bool IsMatchingActiveRevolverReady(
+            GameSceneRevolverAnimationCue cue)
+        {
+            return _revolverReadyActive &&
+                _revolverReadyRoundNumber == cue.RoundNumber &&
+                _revolverReadySourceCardId == cue.SourceCardId &&
+                _revolverReadyActorSide == cue.ActorSide;
         }
 
         private string ResolveRevolverTrigger(GameSceneRevolverAnimationCue cue)
@@ -1411,7 +1453,9 @@ namespace DiaBlackJack.GameScene
             _lastRevolverAnimationRoundNumber = 0;
             _lastRevolverAnimationSourceCardId = 0;
             _lastRevolverAnimationActorSide = CombatantSide.Player;
+            _lastRevolverAnimationPhase = GameSceneRevolverAnimationPhase.Ready;
             _lastRevolverAnimationSucceeded = false;
+            ClearActiveRevolverReady();
             HideRevolverAnimation();
         }
 
@@ -1426,6 +1470,8 @@ namespace DiaBlackJack.GameScene
             {
                 root.SetActive(false);
             }
+
+            ClearActiveRevolverReady();
         }
 
         private void HideRevolverAnimation()
@@ -1438,6 +1484,8 @@ namespace DiaBlackJack.GameScene
             {
                 root.SetActive(false);
             }
+
+            ClearActiveRevolverReady();
         }
 
         private void StopRevolverHideRoutine()
@@ -1466,6 +1514,7 @@ namespace DiaBlackJack.GameScene
 
         private void ResetRevolverTriggers()
         {
+            ResetRevolverTrigger(playerReadyTrigger);
             ResetRevolverTrigger(playerSuccessTrigger);
             ResetRevolverTrigger(playerFailTrigger);
             ResetRevolverTrigger(enemySuccessTrigger);
@@ -1488,6 +1537,14 @@ namespace DiaBlackJack.GameScene
             }
 
             return revolverAnimator != null ? revolverAnimator.gameObject : null;
+        }
+
+        private void ClearActiveRevolverReady()
+        {
+            _revolverReadyActive = false;
+            _revolverReadyRoundNumber = 0;
+            _revolverReadySourceCardId = 0;
+            _revolverReadyActorSide = CombatantSide.Player;
         }
 
         // Open the shop the moment a battle is won. Called from RefreshView, which lands on the true

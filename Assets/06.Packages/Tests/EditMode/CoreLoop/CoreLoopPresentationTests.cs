@@ -525,6 +525,29 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CUM06_U01_GameSceneCreatesPlayerRevolverReadyCueWhileChoosingNumber()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 7, 2 },
+                enemyRanks: new[] { 5, 7, 5 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            battle.Start();
+            BlackjackCard sourceCard = battle.Player.Hand.Cards[0];
+
+            Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
+
+            GameSceneRevolverAnimationCue cue =
+                GameScenePresenter.Create(battle).RevolverAnimationCue;
+            Assert.That(cue, Is.Not.Null);
+            Assert.That(cue.RoundNumber, Is.EqualTo(1));
+            Assert.That(cue.SourceCardId, Is.EqualTo(sourceCard.Id));
+            Assert.That(cue.ActorSide, Is.EqualTo(CombatantSide.Player));
+            Assert.That(cue.Phase,
+                Is.EqualTo(GameSceneRevolverAnimationPhase.Ready));
+        }
+
+        [Test]
         public void CU05_GameSceneCreatesRevolverAnimationCueWhenRevolverResolves()
         {
             CoreLoopBattle battle = CreateBattle(
@@ -553,6 +576,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(cue.RoundNumber, Is.EqualTo(1));
             Assert.That(cue.SourceCardId, Is.EqualTo(sourceCard.Id));
             Assert.That(cue.ActorSide, Is.EqualTo(CombatantSide.Player));
+            Assert.That(cue.Phase,
+                Is.EqualTo(GameSceneRevolverAnimationPhase.Resolved));
             Assert.That(cue.Succeeded, Is.False);
         }
 

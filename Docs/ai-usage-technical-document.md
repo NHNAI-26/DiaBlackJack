@@ -717,6 +717,7 @@ AI 대화 원문을 그대로 싣지 말고 목적, 핵심 지시, 결과, 사�
 
 | 날짜 | 담당자 | AI 활용 작업 | 산출물 | 사람의 검토 상태 |
 | --- | --- | --- | --- | --- |
+| 2026-07-29 | 이천서 | CU-M06 GameScene 리볼버 사용→준비 등장→숫자 예측→성공/실패 연출 연결 | `Revolver_Anim` 전이·GameScene 표시 경로 분석, `Ready/Resolved` 단서·Animator 연결·회귀 테스트·문서·Unity MCP 검증 | AI는 `PlayerSuccess/PlayerFail`이 준비 루프에서만 소비되는데 기존 코드가 결과 직전 `Base`로 초기화하는 원인을 찾아 코드와 테스트를 보조함. 대상 2/2·CoreLoop 438/438·전체 627/627 및 실제 `Ready/Success/Fail` 상태를 확인함. 씬·프리팹·Controller·Packages·외부 코드·에셋·오픈소스는 변경하지 않았고 최종 승인 책임은 이천서에게 있음 |
 | 2026-07-29 | 이천서 | CL-M01 플레이어 전체 합·공개 카드 합 표시 경계 분석·구현·회귀·화면 검증 | `CoreLoopPresentation.cs`, `CoreLoopView.cs`, `TableTotalsView.cs`, `GameManager.cs`, CLM01 회귀와 코어 루프 문서 4종·공통 기록 | AI는 기존 `HandValue`/`VisibleHandValue` 경계 대조, 사전 포맷 표시 모델·코드·테스트·Unity MCP 검증과 기록을 보조함. 전용 2/2·전체 EditMode 623/623·GameScene 두 줄 화면·게임 코드 오류 0; 씬·프리팹·Packages·외부 에셋·오픈소스는 변경하지 않았고 최종 승인 책임은 이천서에게 있음 |
 | 2026-07-29 | 이천서 | CU-M05 적 공개 카드 호버 정보 결손 진단·정보 은닉 회귀·구현·전체 검증 | `GameScenePresentation.cs`, `CardView.cs`, CUM05 테스트 3건과 카드 사용 문서 4종·공통 기록 | AI는 포인터 레이캐스트·표시 모델·HUD 배지 경로 추적, 실패 회귀 작성, 공개 수동·자동 효과 정보만 투영하는 코드와 Unity MCP 검증을 보조함. 신규 3/3·전체 EditMode 622/622·GameScene 런타임 HUD 배지 화면, 게임 코드 오류 0; 운영체제 물리 마우스 이동 자동 주입은 미검증이고 씬·프리팹·Packages·외부 에셋·오픈소스는 변경하지 않았으며 최종 승인 책임은 이천서에게 있음 |
 | 2026-07-28 | 이천서 | DC-R04 4/5 바포메트 오망성 수명·소진·덱 초기화·재삽입·버스트 연속 처리와 전체 회귀 검증 | 바포메트 처리기·임시 카드 상태·덱 API·CoreLoop·광신도 정책, `BaphometDemonContractTests.cs`, 계약 문서 4종과 공통 기록 | AI는 원문 `제거·소진·초기화` 모호성 분석, DC-D15 프로토타입 결정, 파이몬/벨리알 중첩·테스트·코드 초안, Unity MCP 검증과 기록을 보조함. 전용 7/7·광신도 9/9·CoreLoop 410/410·전체 599/599를 확인함. 외부 에셋·외부 코드·오픈소스·새 패키지와 GameScene·씬·프리팹·Packages·HONG RunFlow/Shop·Shim0Hwan 아트는 변경하지 않았고 최종 승인 책임은 이천서에게 있음 |
@@ -1369,6 +1370,14 @@ Unity MCP에서 전용 2/2(job `de9ac628df334ddd8fd31ea8812bfc90`)와 전체 Edi
 AI에는 정식 RF 도메인과 HONG의 소유 범위를 완료로 오기하지 말고, 현재 GameScene 독립 상점 MVP만 수정하며 씬·프리팹 직렬화를 바꾸지 말라는 경계를 적용했다. RFM01 테스트는 위스키만 이용한 첫 방문 뒤 두 가격 상승, 둘 다 이용한 둘째 방문 뒤에도 1단계만 추가 상승, 미이용 방문 유지, 새 런 초기화와 세 카드 슬롯 연속 구매를 검증한다.
 
 Unity MCP에서 대상 3/3(job `be7463c015f64188a8d6dbccba9526e6`)과 최종 전체 EditMode 626/626(job `1144276f15a64abd90841ce310416ab9`)을 통과했다. GameScene에서 위스키 이용 뒤 다음 상점의 라이터·위스키가 모두 2→3골드가 된 데이터와 라이터 호버 `PRICE 3 GOLD`, 일반 상점 및 라이터 선택 패널의 `나가기`를 확인했다. Play Mode 종료 뒤 씬은 `isDirty=false`였다. Test Framework 저장 안내와 기존 음수 스케일 BoxCollider 오류를 별도 기반 상태로 기록했으며 신규 컴파일 오류·테스트 실패는 0이다. 외부 코드·에셋·오픈소스·새 패키지는 사용하지 않았고 최종 기획·코드·화면 승인 책임자는 이천서다.
+
+### 3.39 CU-M06 GameScene 리볼버 준비·결과 연출
+
+이천서는 GameScene에 빠져 있던 `리볼버 카드 사용 → 리볼버 등장 → 숫자 예측 → 성공/실패 연출` 흐름을 연결하도록 지시했다. AI에는 기존 규칙 판정을 바꾸지 않고 현재 씬의 직렬화 참조와 아트 Animator를 먼저 대조하며, 기존 상점 변경과 다른 팀원 소유 에셋을 보존하라는 제약을 적용했다.
+
+분석 결과 `Revolver_Anim`의 플레이어 성공·실패 전이는 `Revolver_Shoot_PlayerReadyLoop`에서만 시작하지만 기존 `GameManager`는 결과를 받은 뒤 Animator를 `Revolver_Base`로 되돌리고 `PlayerSuccess/PlayerFail`만 보내고 있었다. 구현은 표시 단서를 `Ready/Resolved`로 나누고, 카드 사용 승인 시 `PlayerTurnStart`로 준비 상태를 시작해 선택 중 루트를 유지한 뒤 결과 트리거를 같은 상태 흐름에 전달한다. 결과 단서가 먼저 도착한 예외 경로에는 준비 트리거를 함께 보내는 복구를 두었고, 라운드·카드·행위자·단계별 중복 재생 방지는 유지했다.
+
+Unity MCP에서 대상 2/2(job `c32dbd9121ab41faa4745628361e4f28`), CoreLoop 438/438(job `742e4362aea547158b34c60f61b99f13`), 전체 EditMode 627/627(job `eaf6d8bccc1f46ed9241ca55992b42bf`)을 통과했다. GameScene Play Mode에서 선택지 10개와 활성 리볼버 루트, `Revolver_Shoot_PlayerReady`, 실패 `Revolver_ShootFail`, 성공 `Revolver_ShootSuccess` 상태를 직접 확인했다. 씬·프리팹·Animator Controller·Packages·외부 코드·에셋·오픈소스는 변경하지 않았고, 최종 Console 6건은 Test Framework 사전·사후 처리와 결과 파일 저장 안내이며 신규 컴파일·게임 코드 오류는 0이다. 최종 기획·코드·화면 승인 책임자는 이천서다.
 
 ## 4. 생성형 AI 산출물 관리
 

@@ -2,7 +2,7 @@
 
 > 프로젝트: DiaBlackJack  
 > 기록·구현 책임자: 이천서  
-> 현재 단계: CU-M05 적 공개 카드 호버 정보와 비공개 차단 완료
+> 현재 단계: CU-M06 GameScene 리볼버 준비·결과 연출 연결 완료
 > 다음 단계: 독극물·루시퍼 등 후속 카드 콘텐츠는 별도 작업으로 계획
 > 최종 갱신: 2026-07-29
 
@@ -33,6 +33,7 @@
 | CU-M03 | 완료 | 양측 비공개 카드의 플레이어 시점 최좌측 표시, 모델 순서·정보 은닉 보존 | 신규 1/1·전체 EditMode 310/310, Game View 확인 |
 | CU-M04 | 완료 | 비공개 역할과 앞·뒷면 상태 분리, 공개 합·대상 보정, 공개 숫자 적 리볼버 확정 대응과 왼쪽 표시 유지 | 신규 5/5·CoreLoop 430/430·StageProgression 189/189·전체 619/619, Console Error 0 |
 | CU-M05 | 완료 | 공개 적 카드 숫자·이름·수동·자동 효과 호버 정보, 미공개 적 카드 표시 문자열 차단 | 신규 3/3·전체 EditMode 622/622, 컴파일·게임 코드 오류 0 |
+| CU-M06 | 완료 | 리볼버 사용 직후 준비 등장, 숫자 예측, 성공·실패 사격의 GameScene Animator 연결 | 대상 2/2·CoreLoop 438/438·전체 EditMode 627/627, 실제 Animator 세 상태 확인 |
 
 ## 3. 착수 기준선
 
@@ -448,6 +449,15 @@ MCP가 Unity 창의 포커스를 가져가지 않은 상태에서는 게임 프�
 - 최종 Console 1건은 Test Framework 결과 파일 저장 안내이며 컴파일·게임 코드 오류는 0이다. 씬·프리팹·Packages·외부 에셋·오픈소스는 변경하지 않았다.
 - `GameScene` Play Mode에서 공개 적 카드 ID 5를 기존 `UpdateHover → UpdateCardHoverBadge` 런타임 경로로 전달해 `3 기본 카드` HUD 배지가 실제 화면에 활성화되는 것을 확인했다. 운영체제 물리 마우스 이동 자체는 자동 주입하지 않았다.
 
+### 6.6 CU-M06 — 리볼버 준비·예측·결과 연출
+
+- `Revolver_Anim` Controller를 대조해 플레이어 성공·실패 전이가 `Revolver_Shoot_PlayerReadyLoop`에서만 시작하지만 기존 코드는 결과 시점에 Animator를 `Revolver_Base`로 초기화하는 원인을 확인했다.
+- `GameSceneRevolverAnimationCue`에 `Ready/Resolved` 단계를 추가하고, 플레이어 리볼버 숫자 선택 대기에는 준비 단서를 투영했다.
+- `GameManager`는 `Ready`에서 `PlayerTurnStart`를 실행해 리볼버를 표시하고, 결과에는 준비 상태를 유지한 채 `PlayerSuccess` 또는 `PlayerFail`을 실행한다. 결과 연출 뒤에만 기존 지연 종료·숨김을 적용한다.
+- 대상 2/2(job `c32dbd9121ab41faa4745628361e4f28`), CoreLoop 438/438(job `742e4362aea547158b34c60f61b99f13`), 전체 EditMode 627/627(job `eaf6d8bccc1f46ed9241ca55992b42bf`)을 통과했다.
+- GameScene Play Mode에서 리볼버 사용 승인 뒤 `PlayerResolvingCardEffect`, 선택지 10개, 활성 루트와 `Revolver_Shoot_PlayerReady`를 확인했다. 실제 실패 판정은 `Revolver_ShootFail`, 성공 판정은 `Revolver_ShootSuccess`로 전환됐다.
+- 기존 씬·프리팹·Animator Controller·Packages·외부 에셋·오픈소스는 수정하지 않았다. 최종 Console 6건은 Test Framework의 사전·사후 처리와 결과 파일 저장 안내이며 신규 컴파일·게임 코드 오류는 0이다.
+
 ## 7. 미해결 사항
 
 - 해머의 적 대상 우선순위는 프로토타입 임시 결정이다. 나이프 비버스트 카드는 선택 없이 강제 폐기하는 현행 규칙으로 확정했다.
@@ -460,6 +470,7 @@ MCP가 Unity 창의 포커스를 가져가지 않은 상태에서는 게임 프�
 
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
+| 2026-07-29 | 이천서 | CU-M06 리볼버 사용→준비 등장→숫자 예측→성공/실패 사격 흐름을 GameScene에 연결하고 대상 2/2·CoreLoop 438/438·전체 627/627·실제 Animator 상태로 검증 기록 |
 | 2026-07-29 | 이천서 | CU-M05 공개 적 카드의 수동·자동 효과 호버 정보와 미공개 카드의 배지 문자열 차단을 구현하고 신규 3/3·전체 EditMode 622/622·게임 코드 오류 0으로 검증 기록 |
 | 2026-07-29 | 이천서 | CU-M04 비공개 역할/표시 분리, 공개 합·공개 대상·최종 합 경계, 적 리볼버 확정 우선 대응과 양측 왼쪽 표시 유지 구현 및 신규 5/5·전체 619/619 검증 기록 |
 | 2026-07-19 | 이천서 | 카드 사용 CU-00 기준선, 결정 대장, 단계별 상태와 검증 누적표 작성 |

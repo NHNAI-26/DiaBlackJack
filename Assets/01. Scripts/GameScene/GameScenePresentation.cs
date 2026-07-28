@@ -79,6 +79,12 @@ namespace DiaBlackJack.GameScene
         public bool ShowHoverBadgeWhenUnavailable { get; }
     }
 
+    public enum GameSceneRevolverAnimationPhase
+    {
+        Ready,
+        Resolved,
+    }
+
     public sealed class GameSceneRevolverAnimationCue
     {
         public GameSceneRevolverAnimationCue(
@@ -86,6 +92,21 @@ namespace DiaBlackJack.GameScene
             int sourceCardId,
             CombatantSide actorSide,
             bool succeeded)
+            : this(
+                roundNumber,
+                sourceCardId,
+                actorSide,
+                GameSceneRevolverAnimationPhase.Resolved,
+                succeeded)
+        {
+        }
+
+        public GameSceneRevolverAnimationCue(
+            int roundNumber,
+            int sourceCardId,
+            CombatantSide actorSide,
+            GameSceneRevolverAnimationPhase phase,
+            bool succeeded = false)
         {
             if (roundNumber < 1)
             {
@@ -102,9 +123,15 @@ namespace DiaBlackJack.GameScene
                 throw new ArgumentOutOfRangeException(nameof(actorSide));
             }
 
+            if (!Enum.IsDefined(typeof(GameSceneRevolverAnimationPhase), phase))
+            {
+                throw new ArgumentOutOfRangeException(nameof(phase));
+            }
+
             RoundNumber = roundNumber;
             SourceCardId = sourceCardId;
             ActorSide = actorSide;
+            Phase = phase;
             Succeeded = succeeded;
         }
 
@@ -113,6 +140,8 @@ namespace DiaBlackJack.GameScene
         public int SourceCardId { get; }
 
         public CombatantSide ActorSide { get; }
+
+        public GameSceneRevolverAnimationPhase Phase { get; }
 
         public bool Succeeded { get; }
     }
@@ -190,8 +219,18 @@ namespace DiaBlackJack.GameScene
         private static GameSceneRevolverAnimationCue CreateRevolverAnimationCue(
             CoreLoopBattle battle)
         {
-            if (battle.PendingPlayerCardEffect != null ||
-                battle.PendingEnemyCardEffect != null ||
+            PendingCardEffect pendingPlayerEffect = battle.PendingPlayerCardEffect;
+            if (pendingPlayerEffect != null &&
+                pendingPlayerEffect.EffectKind == CardEffectKind.AutoPistol)
+            {
+                return new GameSceneRevolverAnimationCue(
+                    battle.RoundNumber,
+                    pendingPlayerEffect.SourceCardId,
+                    CombatantSide.Player,
+                    GameSceneRevolverAnimationPhase.Ready);
+            }
+
+            if (battle.PendingEnemyCardEffect != null ||
                 !battle.LastCardEffectResult.HasValue ||
                 !battle.LastCardEffectActorSide.HasValue)
             {

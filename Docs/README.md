@@ -27,10 +27,10 @@
 | [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | 현행 규칙 이관 완료 v0.2 |
 | [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 이력과 현행 규칙 이관 결과 | 현행 규칙 이관 완료 v0.2 |
 | [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | 현행 규칙 이관 완료 v0.2 |
-| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | CU-M05 적 공개 카드 호버 정보 v0.10 |
-| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M05 검증 완료 v0.5 |
-| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M05 작업 순서와 단계별 검증 게이트 | CU-M05 완료 v0.5 |
-| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M05 완료·전체 622/622 |
+| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | CU-M06 리볼버 연출 흐름 v0.11 |
+| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M06 검증 완료 v0.6 |
+| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M06 작업 순서와 단계별 검증 게이트 | CU-M06 완료 v0.6 |
+| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M06 완료·전체 627/627 |
 | [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | 공개된 비공개 카드 정보 경계 반영 v0.4 |
 | [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | 비공개 역할·앞뒷면 경계 반영 v0.4 |
 | [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 이력과 AC-RV00~RV01 개정 계획 | AC-RV01 전용 11/11·전체 522/522 완료 v0.3 |
@@ -74,6 +74,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-29 | 이천서 | CU-M06에서 GameScene 리볼버의 `PlayerTurnStart` 준비 등장과 숫자 예측 뒤 `PlayerSuccess/PlayerFail` 결과 사격을 연결하고 대상 2/2·CoreLoop 438/438·전체 EditMode 627/627·실제 Animator 세 상태로 검증; 씬·프리팹·Animator Controller·Packages·외부 에셋·오픈소스 무변경 |
 | 2026-07-29 | 이천서 | RFM01에서 상점 카드의 방문 전체 구매 상한을 제거하고 라이터·위스키 독립 1회, 이용 방문당 다음 상점 공통 가격 +1단계, 일반/라이터 선택 화면 `나가기`를 구현·문서화해 전용 3/3·전체 EditMode 626/626·GameScene 화면으로 검증; 정식 RF-01~RF-05는 HONG 담당 미완료로 유지 |
 | 2026-07-29 | 이천서 | CL-M01에서 플레이어 합계를 비공개 역할 포함 `총합`과 제외한 `공개 카드 합`으로 분리하고 적은 공개 합만 유지해 전용 2/2·전체 EditMode 623/623·GameScene 두 줄 표시·게임 코드 오류 0으로 검증; 씬·프리팹·Packages·외부 에셋·오픈소스 무변경 |
 | 2026-07-29 | 이천서 | CU-M05에서 공개된 적 카드와 앞면 공개된 비공개 역할 카드의 숫자·이름·수동·자동 효과 호버 배지를 연결하고 미공개 적 카드의 문자열을 차단해 신규 3/3·전체 EditMode 622/622·GameScene HUD 화면으로 검증; 씬·프리팹·Packages·외부 에셋·오픈소스 무변경 |
