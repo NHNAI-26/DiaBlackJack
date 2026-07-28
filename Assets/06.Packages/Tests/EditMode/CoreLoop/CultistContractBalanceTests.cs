@@ -147,14 +147,14 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DC08_U04_MammonRerollsTwoButKeepsThree()
+        public void DC08_U04_MammonUsesRerollActionForTwoButSkipsThree()
         {
-            AssertMammonTurnChoice(
+            AssertMammonRerollAction(
                 dieValue: 2,
-                MammonDemonContractHandler.RerollDieOptionId);
-            AssertMammonTurnChoice(
+                expectedAction: EnemyActionType.DemonContract);
+            AssertMammonRerollAction(
                 dieValue: 3,
-                MammonDemonContractHandler.KeepDieOptionId);
+                expectedAction: EnemyActionType.Hit);
         }
 
         [Test]
@@ -339,21 +339,22 @@ namespace DiaBlackJack.CoreLoop.Tests
                 demonContractOptionNumericValue: previewRank);
         }
 
-        private static void AssertMammonTurnChoice(int dieValue, int expectedOptionId)
+        private static void AssertMammonRerollAction(
+            int dieValue,
+            EnemyActionType expectedAction)
         {
-            EnemyActionCandidate keep = CreateMammonOption(
-                DemonContractInteractionKind.MammonReroll,
-                MammonDemonContractHandler.KeepDieOptionId,
-                dieValue);
-            EnemyActionCandidate reroll = CreateMammonOption(
-                DemonContractInteractionKind.MammonReroll,
-                MammonDemonContractHandler.RerollDieOptionId,
-                dieValue);
+            var reroll = new EnemyActionCandidate(
+                EnemyActionType.DemonContract,
+                demonContractKind: DemonContractKind.Mammon,
+                demonContractDefinitionKey: DemonContractCatalog.MammonKey,
+                demonContractOptionNumericValue: dieValue,
+                demonContractSourceCardId: 77);
+            var hit = new EnemyActionCandidate(EnemyActionType.Hit);
             EnemyDecision decision = new CultistEnemyPolicy().Decide(
                 CreateObservation(
                     enemySoul: 2,
-                    candidates: new[] { keep, reroll }));
-            Assert.That(decision.DemonContractOptionId, Is.EqualTo(expectedOptionId));
+                    candidates: new[] { reroll, hit }));
+            Assert.That(decision.ActionType, Is.EqualTo(expectedAction));
         }
 
         private static void AssertMammonFinalChoice(

@@ -251,7 +251,10 @@ namespace DiaBlackJack.CoreLoop.UI
                 string status;
                 if (contract.RuntimeState is MammonRuntimeState mammon)
                 {
-                    status = $"주사위 {mammon.CurrentDieValue}";
+                    status = $"주사위 {mammon.CurrentDieValue}" +
+                        (mammon.CanRerollThisTurn
+                            ? " · 재굴림 행동 가능"
+                            : string.Empty);
                 }
                 else if (contract.RuntimeState is SatanRuntimeState satan)
                 {
@@ -272,7 +275,7 @@ namespace DiaBlackJack.CoreLoop.UI
                 }
                 else if (contract.Kind == DemonContractKind.Leviathan)
                 {
-                    status = "리볼버 실패 후 판정";
+                    status = "리볼버 최대 2회 발동";
                 }
                 else
                 {

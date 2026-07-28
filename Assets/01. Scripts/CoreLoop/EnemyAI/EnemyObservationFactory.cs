@@ -148,22 +148,34 @@ namespace DiaBlackJack.CoreLoop
             foreach (ActiveDemonContract activeContract in
                 battle.ActiveEnemyDemonContracts)
             {
-                if (activeContract.Kind != DemonContractKind.Satan ||
-                    !(activeContract.RuntimeState is SatanRuntimeState satanState))
+                if (activeContract.Kind == DemonContractKind.Satan &&
+                    activeContract.RuntimeState is SatanRuntimeState satanState)
                 {
-                    continue;
+                    bool canUse = satanState.CurrentFace == SatanContractFace.Upper
+                        ? battle.Player.Hand.HiddenCardCount == 1
+                        : battle.Player.Deck.CanDraw(1);
+                    if (canUse)
+                    {
+                        candidates.Add(new EnemyActionCandidate(
+                            EnemyActionType.DemonContract,
+                            demonContractKind: DemonContractKind.Satan,
+                            demonContractDefinitionKey:
+                                activeContract.Definition.Key,
+                            demonContractSourceCardId:
+                                activeContract.SourceCardId));
+                    }
                 }
-
-                bool canUse = satanState.CurrentFace == SatanContractFace.Upper
-                    ? battle.Player.Hand.HiddenCardCount == 1
-                    : battle.Player.Deck.CanDraw(1);
-                if (canUse)
+                else if (activeContract.Kind == DemonContractKind.Mammon &&
+                    activeContract.RuntimeState is MammonRuntimeState mammonState &&
+                    mammonState.CanRerollThisTurn)
                 {
                     candidates.Add(new EnemyActionCandidate(
                         EnemyActionType.DemonContract,
-                        demonContractKind: DemonContractKind.Satan,
+                        demonContractKind: DemonContractKind.Mammon,
                         demonContractDefinitionKey:
                             activeContract.Definition.Key,
+                        demonContractOptionNumericValue:
+                            mammonState.CurrentDieValue,
                         demonContractSourceCardId:
                             activeContract.SourceCardId));
                 }
@@ -222,8 +234,7 @@ namespace DiaBlackJack.CoreLoop
                 privateNumericValue = preview.Rank;
                 definitionKey = DemonContractCatalog.BelphegorKey;
             }
-            else if (pending.Kind == DemonContractInteractionKind.MammonReroll ||
-                pending.Kind == DemonContractInteractionKind.MammonApplyDie)
+            else if (pending.Kind == DemonContractInteractionKind.MammonApplyDie)
             {
                 ActiveDemonContract activeContract = FindActiveEnemyContract(
                     battle,

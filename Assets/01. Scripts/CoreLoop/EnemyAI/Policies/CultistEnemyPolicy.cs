@@ -54,10 +54,19 @@ namespace DiaBlackJack.CoreLoop
             if (candidate.DemonContractSourceCardId.HasValue &&
                 !candidate.DemonContractOptionId.HasValue)
             {
-                return Score(
-                    candidate,
-                    980,
-                    "cultist-use-active-satan-contract");
+                switch (candidate.DemonContractKind)
+                {
+                    case DemonContractKind.Satan:
+                        return Score(
+                            candidate,
+                            980,
+                            "cultist-use-active-satan-contract");
+                    case DemonContractKind.Mammon:
+                        return EvaluateActiveMammonReroll(candidate);
+                    default:
+                        throw new InvalidOperationException(
+                            "Cultist received an unsupported active contract action.");
+                }
             }
 
             if (!candidate.DemonContractOptionId.HasValue)
@@ -71,8 +80,6 @@ namespace DiaBlackJack.CoreLoop
                     return EvaluateContractChoice(observation, candidate);
                 case DemonContractInteractionKind.BelphegorTopCard:
                     return EvaluateBelphegorChoice(observation, candidate);
-                case DemonContractInteractionKind.MammonReroll:
-                    return EvaluateMammonReroll(candidate);
                 case DemonContractInteractionKind.MammonApplyDie:
                     return EvaluateMammonFinalChoice(observation, candidate);
                 case DemonContractInteractionKind.SatanDeclareFirstNumber:
@@ -166,23 +173,19 @@ namespace DiaBlackJack.CoreLoop
                     : "cultist-reject-belphegor-option");
         }
 
-        private static EnemyActionScore EvaluateMammonReroll(
+        private static EnemyActionScore EvaluateActiveMammonReroll(
             EnemyActionCandidate candidate)
         {
             int dieValue = candidate.DemonContractOptionNumericValue ??
                 throw new InvalidOperationException(
-                    "Cultist Mammon turn choice requires the current die value.");
+                    "Cultist active Mammon action requires the current die value.");
             bool shouldReroll = dieValue <= MammonRerollCeiling;
-            bool isReroll = candidate.DemonContractOptionId ==
-                MammonDemonContractHandler.RerollDieOptionId;
             return Score(
                 candidate,
-                shouldReroll == isReroll ? 1500 : 0,
-                shouldReroll == isReroll
-                    ? (isReroll
-                        ? "cultist-reroll-low-mammon-die"
-                        : "cultist-keep-mammon-die")
-                    : "cultist-reject-mammon-turn-option");
+                shouldReroll ? 1100 : 0,
+                shouldReroll
+                    ? "cultist-use-mammon-reroll-action"
+                    : "cultist-skip-mammon-reroll-action");
         }
 
         private static EnemyActionScore EvaluateMammonFinalChoice(

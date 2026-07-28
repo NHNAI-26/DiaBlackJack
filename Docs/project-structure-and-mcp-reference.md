@@ -941,10 +941,31 @@ Unity MCP에서 최종 전용 job `a8941795cdc7467b9fd0f1556ec9980b` 12/12, Core
 테스트 실행의 Test Framework 결과 XML 저장 안내였고, 경고 5건은 MCP WebSocket 초기화
 안내 1건과 Test Framework 사전·사후 처리 4건으로 컴파일·게임 코드 오류와 분리했다.
 
+### 7.48 악마 계약 DC-R03 마몬·레비아탄 개정 검증
+
+| 경계 | 확인 결과 |
+| --- | --- |
+| 마몬 상태 | `MammonRuntimeState`가 계약별 현재 주사위와 소유자 차례 재굴림 가능 여부를 보존하고 차례 시작 선택 상호작용은 제거 |
+| 마몬 행동 | `CoreLoopBattle.TryBeginPlayerMammonReroll`이 활성 계약 물리 ID·현재 차례·가능 여부를 검증한 뒤 주사위 갱신과 버스트/상대 차례 전환을 한 행동으로 완료 |
+| 적 마몬 | 공개된 현재 주사위와 계약 출처 ID만 후보에 포함하며 광신도는 1~2에서 재굴림, 미래 난수·비공개 카드 비노출 |
+| 레비아탄 연속 처리 | `IDemonContractCardEffectRepeatHandler`와 `LeviathanCardEffectSequence`가 같은 리볼버 물리 카드에서 기존 처리기를 다시 시작해 발동별 새 선언을 요청 |
+| 종료·대가 | 첫 발동이 전투를 끝내면 중단, 버스트 방지로 계속되면 두 번째 수행, 두 번째 뒤 상대 생존 시 소유자 영혼 1·0 즉시 패배 |
+| 안전 결과 | `LeviathanCardEffectResult`는 1~2회 성공 여부·버스트 대상·지불 영혼만 제공하고 실제 비공개 숫자·덱 순서 비노출 |
+| 세션·표시 | CoreLoop/StageProgression 세션이 마몬 정상 행동 입력을 전달하고 표시 모델은 재굴림 가능·레비아탄 최대 2회 발동 문구만 투영 |
+| 검증 | 전용 14/14·CoreLoop 367/367·전체 EditMode 556/556, 실패·건너뜀 0 |
+| 변경 보호 | `GameScene`·씬·프리팹·Packages·HONG RF/Shop·Shim0Hwan 아트·외부 에셋·오픈소스 무변경 |
+| 후속 경계 | 다중 레비아탄 중첩은 기획 미확정, 월드 활성 계약 입력·연출과 두 해상도 화면은 DC-R05 |
+
+Unity MCP에서 최종 전용 job `a7bd42c80d65412cac84a55472d06a3f` 14/14, CoreLoop job
+`8d0888f4f18140a6b4ac3f8b3408ddc1` 367/367, 전체 job
+`25822e798ef4400d8b241de3cdac1f43` 556/556을 확인했다. 최종 Console 조회 3건은
+Test Framework 준비·결과 저장·정리 안내였으며 컴파일·게임 코드 오류와 분리했다.
+
 ## 8. 변경 기록
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-28 | 이천서 | 악마 계약 DC-R03 마몬 정상 행동·적 공개 주사위 후보, 레비아탄 기존 리볼버 연속 처리·안전 결과·종료/대가 구조와 전용 14/14·CoreLoop 367/367·전체 556/556 결과 추가; GameScene·씬·프리팹·Packages·외부 에셋 무변경 |
 | 2026-07-28 | 이천서 | 악마 계약 DC-R02 활성 사탄 카운트·양면·자동 연속 처리·공개 추론·세션/표시 구조와 별도 권능 제거, 전용 12/12·CoreLoop 363/363·전체 553/553 결과 추가; GameScene·씬·프리팹·Packages·외부 에셋 무변경 |
 | 2026-07-28 | 이천서 | 저장 SV-05 런 예약·`RunSaveFlow`·Runtime 세션 교체·StageTest 메뉴/시작 악마/손상·버전/실패 재시도 구조와 전용 9/9·StageProgression 189/189·CoreLoop 362/362·전체 551/551·두 해상도·Console 0 결과 추가; GameScene·씬·프리팹·Packages·외부 에셋 무변경 |
 | 2026-07-28 | 이천서 | 저장 SV-04 시작 악마·카드 보상·런 종료 체크포인트, 실패 보류·동일 스냅샷 재시도·진행 게이트·선택적 예약 ID 정규화 구조와 전용 8/8·저장 관련 29/29·StageProgression 180/180·CoreLoop 362/362·전체 542/542·게임 코드 오류 0 결과 추가; SV04-I03 RF API 대기 및 Runtime·UI·씬 무변경 기록 |

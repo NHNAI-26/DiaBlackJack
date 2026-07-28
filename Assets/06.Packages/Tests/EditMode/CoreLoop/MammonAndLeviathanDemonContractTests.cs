@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using DiaBlackJack.CoreLoop.UI;
 using NUnit.Framework;
 
 namespace DiaBlackJack.CoreLoop.Tests
@@ -9,7 +10,7 @@ namespace DiaBlackJack.CoreLoop.Tests
     public sealed class MammonAndLeviathanDemonContractTests
     {
         [Test]
-        public void DC04_U01_MammonActivationSixBustsBeforeEnemyActs()
+        public void DCR03_U01_MammonActivationSixBustsBeforeEnemyActs()
         {
             var enemyPolicy = new SequenceEnemyPolicy(EnemyActionType.Stand);
             CoreLoopBattle battle = CreateMammonBattle(
@@ -32,7 +33,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DC04_U02_MammonRerollIsOfferedOncePerTurnAndSixBusts()
+        public void DCR03_U02_MammonRerollIsANormalActionAndSixBusts()
         {
             var enemyPolicy = new SequenceEnemyPolicy(EnemyActionType.Stand);
             CoreLoopBattle battle = CreateMammonBattle(
@@ -41,30 +42,24 @@ namespace DiaBlackJack.CoreLoop.Tests
                 enemyPolicy,
                 dieValues: new[] { 2, 6 });
             ActivateFirstContract(battle);
-            PendingDemonContractInteraction pending =
-                battle.PendingPlayerDemonContractInteraction;
+            ActiveDemonContract mammon = battle.ActivePlayerDemonContracts.Single();
+            Assert.That(battle.PendingPlayerDemonContractInteraction, Is.Null);
+            Assert.That(((MammonRuntimeState)mammon.RuntimeState).CurrentDieValue,
+                Is.EqualTo(2));
 
-            Assert.That(pending.Kind,
-                Is.EqualTo(DemonContractInteractionKind.MammonReroll));
-            Assert.That(((MammonRuntimeState)battle.ActivePlayerDemonContracts[0]
-                .RuntimeState).CurrentDieValue, Is.EqualTo(2));
-
-            Assert.That(battle.TryResolvePlayerDemonContract(
-                pending.InteractionId,
-                MammonDemonContractHandler.RerollDieOptionId), Is.True);
+            Assert.That(
+                battle.TryBeginPlayerMammonReroll(mammon.SourceCardId),
+                Is.True);
 
             Assert.That(battle.LastResolution.Value.Cause,
                 Is.EqualTo(RoundEndCause.ContractEffectBust));
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(9));
-            Assert.That(((MammonRuntimeState)battle.ActivePlayerDemonContracts[0]
-                .RuntimeState).CurrentDieValue, Is.EqualTo(6));
-            Assert.That(battle.TryResolvePlayerDemonContract(
-                pending.InteractionId,
-                MammonDemonContractHandler.RerollDieOptionId), Is.False);
+            Assert.That(((MammonRuntimeState)mammon.RuntimeState).CurrentDieValue,
+                Is.EqualTo(6));
         }
 
         [Test]
-        public void DC04_U03_MammonKeepDoesNotConsumeTheNormalPlayerAction()
+        public void DCR03_U03_MammonNoLongerBlocksTurnStartWithKeepChoice()
         {
             CoreLoopBattle battle = CreateMammonBattle(
                 playerRanks: new[] { 5, 5, 2, 3, 4, 5 },
@@ -72,22 +67,19 @@ namespace DiaBlackJack.CoreLoop.Tests
                 new SequenceEnemyPolicy(EnemyActionType.Stand),
                 dieValues: new[] { 3 });
             ActivateFirstContract(battle);
-            PendingDemonContractInteraction pending =
-                battle.PendingPlayerDemonContractInteraction;
-
-            Assert.That(battle.TryResolvePlayerDemonContract(
-                pending.InteractionId,
-                MammonDemonContractHandler.KeepDieOptionId), Is.True);
 
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+            Assert.That(battle.PendingPlayerDemonContractInteraction, Is.Null);
             Assert.That(battle.TryPlayerHit(), Is.True);
-            Assert.That(battle.PendingPlayerDemonContractInteraction.Kind,
-                Is.EqualTo(DemonContractInteractionKind.MammonReroll));
+            Assert.That(
+                ((MammonRuntimeState)battle.ActivePlayerDemonContracts.Single()
+                    .RuntimeState).CurrentDieValue,
+                Is.EqualTo(3));
         }
 
         [TestCase(false, RoundOutcome.EnemyWin, 10, 3)]
         [TestCase(true, RoundOutcome.PlayerWin, 11, 2)]
-        public void DC04_U04_MammonFinalChoiceDistinguishesIgnoredAndAppliedDie(
+        public void DCR03_U04_MammonFinalChoiceDistinguishesIgnoredAndAppliedDie(
             bool applyDie,
             RoundOutcome expectedOutcome,
             int expectedPlayerSoul,
@@ -99,7 +91,6 @@ namespace DiaBlackJack.CoreLoop.Tests
                 new SequenceEnemyPolicy(EnemyActionType.Stand),
                 dieValues: new[] { 3 });
             ActivateFirstContract(battle);
-            KeepMammonDie(battle);
 
             Assert.That(battle.TryPlayerStand(), Is.True);
             PendingDemonContractInteraction pending =
@@ -121,7 +112,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DC04_U05_MammonAppliedDieCanCauseNumericBust()
+        public void DCR03_U05_MammonAppliedDieCanCauseNumericBust()
         {
             CoreLoopBattle battle = CreateMammonBattle(
                 playerRanks: new[] { 10, 10, 2, 3 },
@@ -129,7 +120,6 @@ namespace DiaBlackJack.CoreLoop.Tests
                 new SequenceEnemyPolicy(EnemyActionType.Stand),
                 dieValues: new[] { 3 });
             ActivateFirstContract(battle);
-            KeepMammonDie(battle);
             Assert.That(battle.TryPlayerStand(), Is.True);
             PendingDemonContractInteraction pending =
                 battle.PendingPlayerDemonContractInteraction;
@@ -146,7 +136,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DC04_U06_LeviathanIgnoresHiddenTotalBeforeShowdown()
+        public void DCR03_U06_LeviathanRequestsTwoFreshDeclarationsBeforeCost()
         {
             var enemyPolicy = new SequenceEnemyPolicy(EnemyActionType.Hit);
             CoreLoopBattle battle = CreateLeviathanBattle(
@@ -156,9 +146,19 @@ namespace DiaBlackJack.CoreLoop.Tests
             ActivateFirstContract(battle);
             BlackjackCard hiddenEnemyCard = battle.Enemy.Hand.Cards[1];
 
-            UseAutoPistolWithGuess(battle, guess: 6);
+            BlackjackCard autoPistol = battle.Player.Hand.Cards.Single(card =>
+                card.Definition.Effect == CardEffectKind.AutoPistol);
+            Assert.That(battle.TryBeginPlayerCardUse(autoPistol.Id), Is.True);
+            PendingCardEffect first = battle.PendingPlayerCardEffect;
+            Assert.That(battle.TryResolvePlayerCardChoice(6), Is.True);
+            PendingCardEffect second = battle.PendingPlayerCardEffect;
 
             Assert.That(battle.LastCardEffectResult.Value.Succeeded, Is.False);
+            Assert.That(second, Is.Not.Null);
+            Assert.That(second, Is.Not.SameAs(first));
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(11));
+            Assert.That(battle.TryResolvePlayerCardChoice(8), Is.True);
+
             Assert.That(hiddenEnemyCard.IsFaceUp, Is.False);
             Assert.That(battle.LastResolution, Is.Null);
             Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(3));
@@ -167,11 +167,14 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.LastDemonContractEffectResult.BustedTarget,
                 Is.Null);
             Assert.That(battle.LastDemonContractEffectResult.PaidSoulCost, Is.EqualTo(1));
+            Assert.That(
+                battle.LastLeviathanCardEffectResult.ActivationSuccesses,
+                Is.EqualTo(new[] { false, false }));
             Assert.That(enemyPolicy.DecisionCount, Is.EqualTo(2));
         }
 
         [Test]
-        public void DC04_U07_LeviathanDoesNotChargeWhenOriginalPistolSucceeds()
+        public void DCR03_U07_LeviathanStopsAfterFirstActivationBustsOpponent()
         {
             CoreLoopBattle battle = CreateLeviathanBattle(
                 playerCurrentSoul: 12,
@@ -187,28 +190,37 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(RoundEndCause.CardEffectBust));
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(soulAfterBaseCost));
             Assert.That(battle.LastDemonContractEffectResult, Is.Null);
+            Assert.That(
+                battle.LastLeviathanCardEffectResult.ActivationSuccesses,
+                Is.EqualTo(new[] { true }));
+            Assert.That(battle.LastLeviathanCardEffectResult.PaidSoulCost, Is.Zero);
         }
 
         [Test]
-        public void DC04_U08_LeviathanTotalFailurePaysExactlyOneSoul()
+        public void DCR03_U08_LeviathanSecondActivationCanBustWithoutSoulCost()
         {
             CoreLoopBattle battle = CreateLeviathanBattle(
-                playerCurrentSoul: 3,
+                playerCurrentSoul: 12,
                 enemyRanks: new[] { 10, 7, 2, 3 },
                 new SequenceEnemyPolicy(EnemyActionType.Stand));
             ActivateFirstContract(battle);
+            int soulAfterBaseCost = battle.Player.Soul.Current;
 
             UseAutoPistolWithGuess(battle, guess: 6);
+            Assert.That(battle.PendingPlayerCardEffect, Is.Not.Null);
+            Assert.That(battle.TryResolvePlayerCardChoice(7), Is.True);
 
-            Assert.That(battle.Player.Soul.Current, Is.EqualTo(1));
-            Assert.That(battle.LastResolution, Is.Null);
-            Assert.That(battle.LastDemonContractEffectResult.BustedTarget, Is.Null);
-            Assert.That(battle.LastDemonContractEffectResult.PaidSoulCost, Is.EqualTo(1));
-            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+            Assert.That(battle.LastResolution.Value.Cause,
+                Is.EqualTo(RoundEndCause.CardEffectBust));
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(soulAfterBaseCost));
+            Assert.That(
+                battle.LastLeviathanCardEffectResult.ActivationSuccesses,
+                Is.EqualTo(new[] { false, true }));
+            Assert.That(battle.LastLeviathanCardEffectResult.PaidSoulCost, Is.Zero);
         }
 
         [Test]
-        public void DC04_U09_LeviathanSoulCostAtZeroEndsBattleWithoutEnemyTurn()
+        public void DCR03_U09_LeviathanSoulCostAtZeroEndsBattleAfterTwoFailures()
         {
             var enemyPolicy = new SequenceEnemyPolicy(EnemyActionType.Stand);
             CoreLoopBattle battle = CreateLeviathanBattle(
@@ -218,6 +230,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             ActivateFirstContract(battle);
 
             UseAutoPistolWithGuess(battle, guess: 6);
+            Assert.That(battle.TryResolvePlayerCardChoice(8), Is.True);
 
             Assert.That(battle.Player.Soul.Current, Is.Zero);
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.BattleEnded));
@@ -227,16 +240,94 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DC04_U10_PublicLeviathanResultDoesNotExposeHiddenTotal()
+        public void DCR03_U10_PublicLeviathanResultDoesNotExposeHiddenRank()
         {
-            string[] propertyNames = typeof(DemonContractEffectResult)
+            string[] propertyNames = typeof(LeviathanCardEffectResult)
                 .GetProperties(BindingFlags.Instance | BindingFlags.Public)
                 .Select(property => property.Name)
                 .OrderBy(name => name)
                 .ToArray();
 
             Assert.That(propertyNames,
-                Is.EqualTo(new[] { "BustedTarget", "PaidSoulCost", "Triggered" }));
+                Is.EqualTo(new[]
+                {
+                    "ActivationSuccesses",
+                    "BustedTarget",
+                    "PaidSoulCost"
+                }));
+        }
+
+        [Test]
+        public void DCR03_U11_InvalidSecondDeclarationLeavesSequenceUnchanged()
+        {
+            CoreLoopBattle battle = CreateLeviathanBattle(
+                playerCurrentSoul: 12,
+                enemyRanks: new[] { 10, 7, 2, 3 },
+                new SequenceEnemyPolicy(EnemyActionType.Stand));
+            ActivateFirstContract(battle);
+            int soulBeforePistol = battle.Player.Soul.Current;
+
+            UseAutoPistolWithGuess(battle, guess: 6);
+            PendingCardEffect pending = battle.PendingPlayerCardEffect;
+
+            Assert.That(battle.TryResolvePlayerCardChoice(99), Is.False);
+            Assert.That(battle.PendingPlayerCardEffect, Is.SameAs(pending));
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(soulBeforePistol));
+            Assert.That(battle.LastLeviathanCardEffectResult, Is.Null);
+
+            Assert.That(battle.TryResolvePlayerCardChoice(8), Is.True);
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(soulBeforePistol - 1));
+        }
+
+        [Test]
+        public void DCR03_U12_PresentationShowsRerollActionAndTwoPistolRule()
+        {
+            CoreLoopBattle mammonBattle = CreateMammonBattle(
+                playerRanks: new[] { 5, 5, 2, 3 },
+                enemyRanks: new[] { 10, 7, 2, 3 },
+                new SequenceEnemyPolicy(EnemyActionType.Stand),
+                dieValues: new[] { 2 });
+            ActivateFirstContract(mammonBattle);
+            DemonContractPanelViewModel mammonModel =
+                DemonContractPresenter.Create(mammonBattle);
+
+            CoreLoopBattle leviathanBattle = CreateLeviathanBattle(
+                playerCurrentSoul: 12,
+                enemyRanks: new[] { 10, 7, 2, 3 },
+                new SequenceEnemyPolicy(EnemyActionType.Stand));
+            ActivateFirstContract(leviathanBattle);
+            DemonContractPanelViewModel leviathanModel =
+                DemonContractPresenter.Create(leviathanBattle);
+
+            Assert.That(mammonModel.ActiveContracts.Single(),
+                Does.Contain("재굴림 행동 가능"));
+            Assert.That(leviathanModel.ActiveContracts.Single(),
+                Does.Contain("리볼버 최대 2회 발동"));
+        }
+
+        [Test]
+        public void DCR03_U13_InvalidMammonSourceLeavesTurnAndDieUnchanged()
+        {
+            CoreLoopBattle battle = CreateMammonBattle(
+                playerRanks: new[] { 5, 5, 2, 3 },
+                enemyRanks: new[] { 10, 7, 2, 3 },
+                new SequenceEnemyPolicy(EnemyActionType.Stand),
+                dieValues: new[] { 2, 4 });
+            ActivateFirstContract(battle);
+            ActiveDemonContract mammon = battle.ActivePlayerDemonContracts.Single();
+            MammonRuntimeState state = (MammonRuntimeState)mammon.RuntimeState;
+
+            Assert.That(
+                battle.TryBeginPlayerMammonReroll(mammon.SourceCardId + 1000),
+                Is.False);
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+            Assert.That(state.CurrentDieValue, Is.EqualTo(2));
+            Assert.That(state.CanRerollThisTurn, Is.True);
+
+            Assert.That(
+                battle.TryBeginPlayerMammonReroll(mammon.SourceCardId),
+                Is.True);
+            Assert.That(state.CurrentDieValue, Is.EqualTo(4));
         }
 
         private static CoreLoopBattle CreateMammonBattle(
@@ -299,17 +390,6 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.TryResolvePlayerDemonContract(
                 pending.InteractionId,
                 pending.Options[0].OptionId), Is.True);
-        }
-
-        private static void KeepMammonDie(CoreLoopBattle battle)
-        {
-            PendingDemonContractInteraction pending =
-                battle.PendingPlayerDemonContractInteraction;
-            Assert.That(pending.Kind,
-                Is.EqualTo(DemonContractInteractionKind.MammonReroll));
-            Assert.That(battle.TryResolvePlayerDemonContract(
-                pending.InteractionId,
-                MammonDemonContractHandler.KeepDieOptionId), Is.True);
         }
 
         private static void UseAutoPistolWithGuess(CoreLoopBattle battle, int guess)

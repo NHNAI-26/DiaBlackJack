@@ -10,8 +10,8 @@
 
 | 문서 | 용도 | 상태 |
 | --- | --- | --- |
-| [rule.md](./rule.md) | 게임 원본 규칙 | 겁쟁이 도박사 18장 합계·행동 경계 정정 v0.8 |
-| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | 겁쟁이 도박사 EP-R01 편입 반영 v0.7 |
+| [rule.md](./rule.md) | 게임 원본 규칙 | DC-R03 레비아탄 연속 발동 결정 반영 v0.9 |
+| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | DC-R03 발동 순서·대가 반영 v0.8 |
 | [core-loop-design.md](./core-loop-design.md) | 최소 코어 루프 기획 범위 | 4단계 완료 기준안 v0.1 |
 | [core-loop-development-spec.md](./core-loop-development-spec.md) | 코어 루프 구조·상태·검증 명세 | 4단계 검증 완료 v0.1 |
 | [core-loop-implementation-plan.md](./core-loop-implementation-plan.md) | 코어 루프 작업 순서·담당·일정·완료 증거 | 전체 완료 v0.1 |
@@ -35,10 +35,10 @@
 | [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | 새 키·런 변환·`prototype-v2` 반영 v0.3 |
 | [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 이력과 AC-RV00~RV01 개정 계획 | AC-RV01 전용 11/11·전체 522/522 완료 v0.3 |
 | [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | 두 전투 화면·Console 0까지 완료 v0.3 |
-| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | DC-R02 사탄 개정 완료 v1.6 |
-| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | DC-R02 구현 반영·DC-R03 대기 v1.5 |
-| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 이력과 DC-R00~R05 개정 계획 | DC-R02 완료·DC-R03 다음 v1.5 |
-| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | DC-R02 전용 12/12·전체 553/553 v1.5 |
+| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | DC-R03 마몬·레비아탄 개정 완료 v1.7 |
+| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | DC-R03 구현 반영·DC-R04 대기 v1.6 |
+| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC-00~DC-08 이력과 DC-R00~R05 개정 계획 | DC-R03 완료·DC-R04 다음 v1.6 |
+| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | DC-R03 전용 14/14·전체 556/556 v1.6 |
 | [battle-reward-design.md](./battle-reward-design.md) | 일반·엘리트·보스 전투 보상 규칙과 프로토타입 카드 풀 | RW-00~RW-05 완료 v0.1 |
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW-05 최종 검증 완료 v0.1 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | 전체 완료 v0.1 |
@@ -74,6 +74,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-28 | 이천서 | DC-R03 마몬 재굴림을 행동 소비·차례 종료로 이관하고 레비아탄의 독립 선언 2회·첫 전투 종료 중단·최종 생존 영혼 대가를 구현해 전용 14/14·CoreLoop 367/367·전체 EditMode 556/556으로 검증; GameScene·씬·프리팹·Packages·외부 에셋 무변경 |
 | 2026-07-28 | 이천서 | 저장 SV-05 원자 런 예약·새 게임 덮어쓰기 보호·예약 재개·이어하기 세션 교체·시작 악마/손상·버전/저장 실패 UI를 StageTest에 연결하고 전용 9/9·StageProgression 189/189·CoreLoop 362/362·전체 EditMode 551/551·두 해상도·Console 0으로 검증; GameScene·씬·프리팹·Packages·외부 에셋 무변경 |
 | 2026-07-28 | 이천서 | 저장 SV-04의 시작 악마·카드 보상·런 종료 체크포인트, 저장 실패 보류·동일 스냅샷 재시도·다음 진행 차단과 선택적 예약 ID 정규화를 구현하고 전용 8/8·StageProgression 180/180·CoreLoop 362/362·전체 EditMode 542/542로 검증; 실제 상점·사건 API가 없는 SV04-I03은 RF 구현 뒤로 보류하고 Runtime·UI·GameScene·씬·프리팹·Packages·외부 에셋은 변경하지 않음 |
 | 2026-07-28 | 이천서 | EP-R01 겁쟁이 도박사를 18장 덱·영혼 2·합계 14 스탠드·수동 카드 비사용의 네 번째 일반 적으로 편입하고 전용 9/9·전체 EditMode 534/534·게임 코드 오류 0으로 검증, 최종 Test Framework 결과 저장 안내 3건 분리; UI·GameScene·씬·프리팹·Packages·외부 에셋 무변경 |

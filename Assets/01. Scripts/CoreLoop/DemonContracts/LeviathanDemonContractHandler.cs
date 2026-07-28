@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace DiaBlackJack.CoreLoop
 {
@@ -28,12 +30,112 @@ namespace DiaBlackJack.CoreLoop
             CardEffectResult cardEffectResult);
     }
 
+    internal interface IDemonContractCardEffectRepeatHandler
+    {
+        bool SupportsOwnerCardEffect(
+            DemonContractContext context,
+            CardEffectKind effectKind);
+
+        bool RequiresAdditionalActivation(
+            DemonContractContext context,
+            CardEffectResult cardEffectResult);
+    }
+
+    public sealed class LeviathanCardEffectResult
+    {
+        private readonly ReadOnlyCollection<bool> _activationSuccesses;
+
+        internal LeviathanCardEffectResult(
+            IEnumerable<bool> activationSuccesses,
+            CombatantSide? bustedTarget,
+            int paidSoulCost)
+        {
+            if (activationSuccesses == null)
+            {
+                throw new ArgumentNullException(nameof(activationSuccesses));
+            }
+
+            List<bool> copiedSuccesses = new List<bool>(activationSuccesses);
+            if (copiedSuccesses.Count < 1 || copiedSuccesses.Count > 2)
+            {
+                throw new ArgumentException(
+                    "Leviathan must resolve one or two auto-pistol activations.",
+                    nameof(activationSuccesses));
+            }
+
+            if (bustedTarget.HasValue &&
+                !Enum.IsDefined(typeof(CombatantSide), bustedTarget.Value))
+            {
+                throw new ArgumentOutOfRangeException(nameof(bustedTarget));
+            }
+
+            if (paidSoulCost < 0 || paidSoulCost > 1 ||
+                (bustedTarget.HasValue && paidSoulCost != 0) ||
+                (!bustedTarget.HasValue &&
+                    copiedSuccesses.Count == 2 &&
+                    paidSoulCost != 1))
+            {
+                throw new ArgumentOutOfRangeException(nameof(paidSoulCost));
+            }
+
+            _activationSuccesses = copiedSuccesses.AsReadOnly();
+            BustedTarget = bustedTarget;
+            PaidSoulCost = paidSoulCost;
+        }
+
+        public IReadOnlyList<bool> ActivationSuccesses => _activationSuccesses;
+
+        public CombatantSide? BustedTarget { get; }
+
+        public int PaidSoulCost { get; }
+    }
+
+    internal sealed class LeviathanCardEffectSequence
+    {
+        public LeviathanCardEffectSequence(
+            CombatantSide ownerSide,
+            int sourceContractCardId,
+            int sourceCardId,
+            bool firstActivationSucceeded)
+        {
+            if (!Enum.IsDefined(typeof(CombatantSide), ownerSide))
+            {
+                throw new ArgumentOutOfRangeException(nameof(ownerSide));
+            }
+
+            if (sourceContractCardId < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(sourceContractCardId));
+            }
+
+            if (sourceCardId < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceCardId));
+            }
+
+            OwnerSide = ownerSide;
+            SourceContractCardId = sourceContractCardId;
+            SourceCardId = sourceCardId;
+            FirstActivationSucceeded = firstActivationSucceeded;
+        }
+
+        public bool FirstActivationSucceeded { get; }
+
+        public CombatantSide OwnerSide { get; }
+
+        public int SourceCardId { get; }
+
+        public int SourceContractCardId { get; }
+    }
+
     public sealed class LeviathanRuntimeState : DemonContractRuntimeState
     {
     }
 
     internal sealed class LeviathanDemonContractHandler :
         IDemonContractHandler,
+        IDemonContractCardEffectRepeatHandler,
         IDemonContractAfterCardEffectHandler
     {
         public DemonContractKind Kind => DemonContractKind.Leviathan;
@@ -43,12 +145,26 @@ namespace DiaBlackJack.CoreLoop
             return new LeviathanRuntimeState();
         }
 
+        public bool SupportsOwnerCardEffect(
+            DemonContractContext context,
+            CardEffectKind effectKind)
+        {
+            return effectKind == CardEffectKind.AutoPistol;
+        }
+
+        public bool RequiresAdditionalActivation(
+            DemonContractContext context,
+            CardEffectResult cardEffectResult)
+        {
+            return SupportsOwnerCardEffect(context, cardEffectResult.EffectKind) &&
+                !cardEffectResult.EndedRound;
+        }
+
         public bool CanResolveAfterOwnerCardEffect(
             DemonContractContext context,
             CardEffectResult cardEffectResult)
         {
             return cardEffectResult.EffectKind == CardEffectKind.AutoPistol &&
-                !cardEffectResult.Succeeded &&
                 !cardEffectResult.EndedRound;
         }
 
@@ -59,17 +175,7 @@ namespace DiaBlackJack.CoreLoop
             if (!CanResolveAfterOwnerCardEffect(context, cardEffectResult))
             {
                 throw new InvalidOperationException(
-                    "Leviathan can only follow a failed auto-pistol effect.");
-            }
-
-            if (context.OpponentHandValue.IsBust)
-            {
-                return new DemonContractAfterCardEffectStep(
-                    new DemonContractEffectResult(
-                        triggered: true,
-                        bustedTarget: context.OpponentSide,
-                        paidSoulCost: 0),
-                    context.CreateOpponentContractEffectBustResolution());
+                    "Leviathan can only finish an auto-pistol effect that did not end combat.");
             }
 
             context.ApplyOwnerSoulDamage(1);

@@ -147,7 +147,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DC07_U07_EnemyMammonResolvesTurnChoiceBeforeNormalAction()
+        public void DC07_U07_EnemyMammonUsesRerollAsItsNormalAction()
         {
             var dieRoller = new SequenceDieRoller(1, 2);
             var resolver = new DemonContractResolver(
@@ -169,7 +169,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.TryPlayerHit(), Is.True);
 
             Assert.That(mammon.CurrentDieValue, Is.EqualTo(2));
-            Assert.That(mammon.TurnChoiceResolved, Is.True);
+            Assert.That(mammon.CanRerollThisTurn, Is.False);
             Assert.That(battle.PendingEnemyDemonContractInteraction, Is.Null);
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
         }
@@ -235,6 +235,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.LastDemonContractEffectResult.Triggered, Is.True);
             Assert.That(battle.LastDemonContractEffectResult.BustedTarget, Is.Null);
             Assert.That(battle.LastDemonContractEffectResult.PaidSoulCost, Is.EqualTo(1));
+            Assert.That(
+                battle.LastLeviathanCardEffectResult.ActivationSuccesses.Count,
+                Is.EqualTo(2));
             Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(2));
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
         }
@@ -502,15 +505,12 @@ namespace DiaBlackJack.CoreLoop.Tests
                         (option.DemonContractInteractionKind ==
                                 DemonContractInteractionKind.ChooseContract ||
                             (option.DemonContractInteractionKind ==
-                                    DemonContractInteractionKind.MammonReroll &&
-                                option.DemonContractOptionId ==
-                                    MammonDemonContractHandler.KeepDieOptionId) ||
-                            (option.DemonContractInteractionKind ==
                                     DemonContractInteractionKind.MammonApplyDie &&
                                 option.DemonContractOptionId ==
                                     MammonDemonContractHandler.ApplyDieOptionId)))
                     ?? observation.ActionCandidates.FirstOrDefault(option =>
-                        option.ActionType == EnemyActionType.DemonContract)
+                        option.ActionType == EnemyActionType.DemonContract &&
+                        !option.DemonContractSourceCardId.HasValue)
                     ?? observation.ActionCandidates.First(option =>
                         option.ActionType == EnemyActionType.Stand);
                 return EnemyDecision.FromCandidate(candidate, "force-mammon-or-stand");

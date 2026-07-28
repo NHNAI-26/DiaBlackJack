@@ -32,18 +32,13 @@ namespace DiaBlackJack.CoreLoop
 
         public int CurrentDieValue { get; private set; }
 
-        public bool FinalChoiceResolved { get; private set; }
+        public bool CanRerollThisTurn { get; private set; }
 
-        public bool TurnChoiceResolved { get; private set; }
+        public bool FinalChoiceResolved { get; private set; }
 
         internal void BeginOwnerTurn()
         {
-            TurnChoiceResolved = false;
-        }
-
-        internal void KeepCurrentValue()
-        {
-            TurnChoiceResolved = true;
+            CanRerollThisTurn = true;
         }
 
         internal int Reroll(IDemonDieRoller dieRoller)
@@ -53,14 +48,14 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentNullException(nameof(dieRoller));
             }
 
-            if (TurnChoiceResolved)
+            if (!CanRerollThisTurn)
             {
                 throw new InvalidOperationException(
-                    "Mammon die choice was already resolved for this turn.");
+                    "Mammon die cannot be rerolled on this turn.");
             }
 
             SetDieValue(dieRoller.RollD6());
-            TurnChoiceResolved = true;
+            CanRerollThisTurn = false;
             return CurrentDieValue;
         }
 
@@ -77,7 +72,7 @@ namespace DiaBlackJack.CoreLoop
 
         internal void ResetRound()
         {
-            TurnChoiceResolved = true;
+            CanRerollThisTurn = false;
             FinalChoiceResolved = false;
         }
 
@@ -93,9 +88,9 @@ namespace DiaBlackJack.CoreLoop
         }
     }
 
-    internal readonly struct DemonContractTurnChoiceResult
+    internal readonly struct MammonRerollResult
     {
-        public DemonContractTurnChoiceResult(int currentDieValue, bool ownerBusted)
+        public MammonRerollResult(int currentDieValue, bool ownerBusted)
         {
             CurrentDieValue = currentDieValue;
             OwnerBusted = ownerBusted;
@@ -106,13 +101,11 @@ namespace DiaBlackJack.CoreLoop
         public bool OwnerBusted { get; }
     }
 
-    internal interface IDemonContractOwnerTurnChoiceHandler
+    internal interface IDemonContractMammonRerollHandler
     {
-        bool RequiresOwnerTurnChoice(DemonContractContext context);
+        bool CanReroll(DemonContractContext context);
 
-        DemonContractTurnChoiceResult ResolveOwnerTurnChoice(
-            DemonContractContext context,
-            int optionId);
+        MammonRerollResult Reroll(DemonContractContext context);
     }
 
     internal interface IDemonContractFinalChoiceHandler
@@ -125,11 +118,9 @@ namespace DiaBlackJack.CoreLoop
     internal sealed class MammonDemonContractHandler :
         IDemonContractHandler,
         IDemonContractOwnerTurnHandler,
-        IDemonContractOwnerTurnChoiceHandler,
+        IDemonContractMammonRerollHandler,
         IDemonContractFinalChoiceHandler
     {
-        internal const int KeepDieOptionId = 0;
-        internal const int RerollDieOptionId = 1;
         internal const int DoNotApplyDieOptionId = 0;
         internal const int ApplyDieOptionId = 1;
 
@@ -162,33 +153,25 @@ namespace DiaBlackJack.CoreLoop
             GetState(context).ResetRound();
         }
 
-        public bool RequiresOwnerTurnChoice(DemonContractContext context)
+        public bool CanReroll(DemonContractContext context)
         {
-            return !context.OwnerIsStanding && !GetState(context).TurnChoiceResolved;
+            return !context.OwnerIsStanding && GetState(context).CanRerollThisTurn;
         }
 
-        public DemonContractTurnChoiceResult ResolveOwnerTurnChoice(
-            DemonContractContext context,
-            int optionId)
+        public MammonRerollResult Reroll(DemonContractContext context)
         {
-            MammonRuntimeState state = GetState(context);
-            bool rerolled = false;
-            switch (optionId)
+            if (!CanReroll(context))
             {
-                case KeepDieOptionId:
-                    state.KeepCurrentValue();
-                    break;
-                case RerollDieOptionId:
-                    state.Reroll(_dieRoller);
-                    rerolled = true;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(optionId));
+                throw new InvalidOperationException(
+                    "Mammon cannot reroll outside an available owner turn.");
             }
 
-            return new DemonContractTurnChoiceResult(
+            MammonRuntimeState state = GetState(context);
+            state.Reroll(_dieRoller);
+
+            return new MammonRerollResult(
                 state.CurrentDieValue,
-                ownerBusted: rerolled && state.CurrentDieValue == 6);
+                ownerBusted: state.CurrentDieValue == 6);
         }
 
         public bool RequiresFinalChoice(DemonContractContext context)

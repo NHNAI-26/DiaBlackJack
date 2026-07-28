@@ -396,50 +396,26 @@ namespace DiaBlackJack.CoreLoop
                 (handler, context) => handler.OnOwnerTurnStarted(context));
         }
 
-        public bool TryGetPlayerTurnChoiceContract(
+        public bool CanOwnerRerollMammon(
             CoreLoopBattle battle,
-            IReadOnlyList<ActiveDemonContract> activeContracts,
-            out ActiveDemonContract choiceContract)
+            ActiveDemonContract activeContract)
         {
-            return TryGetOwnerTurnChoiceContract(
-                battle,
-                activeContracts,
-                CombatantSide.Player,
-                out choiceContract);
+            IDemonContractMammonRerollHandler handler =
+                GetSpecializedHandler<IDemonContractMammonRerollHandler>(
+                    activeContract);
+            return handler.CanReroll(
+                new DemonContractContext(battle, activeContract));
         }
 
-        public bool TryGetOwnerTurnChoiceContract(
+        public MammonRerollResult RerollMammon(
             CoreLoopBattle battle,
-            IReadOnlyList<ActiveDemonContract> activeContracts,
-            CombatantSide ownerSide,
-            out ActiveDemonContract choiceContract)
+            ActiveDemonContract activeContract)
         {
-            return TryGetOwnerChoiceContract<IDemonContractOwnerTurnChoiceHandler>(
-                battle,
-                activeContracts,
-                ownerSide,
-                (handler, context) => handler.RequiresOwnerTurnChoice(context),
-                out choiceContract);
-        }
-
-        public DemonContractTurnChoiceResult ResolvePlayerTurnChoice(
-            CoreLoopBattle battle,
-            ActiveDemonContract activeContract,
-            int optionId)
-        {
-            return ResolveOwnerTurnChoice(battle, activeContract, optionId);
-        }
-
-        public DemonContractTurnChoiceResult ResolveOwnerTurnChoice(
-            CoreLoopBattle battle,
-            ActiveDemonContract activeContract,
-            int optionId)
-        {
-            IDemonContractOwnerTurnChoiceHandler handler =
-                GetSpecializedHandler<IDemonContractOwnerTurnChoiceHandler>(activeContract);
-            return handler.ResolveOwnerTurnChoice(
-                new DemonContractContext(battle, activeContract),
-                optionId);
+            IDemonContractMammonRerollHandler handler =
+                GetSpecializedHandler<IDemonContractMammonRerollHandler>(
+                    activeContract);
+            return handler.Reroll(
+                new DemonContractContext(battle, activeContract));
         }
 
         public bool TryGetPlayerFinalChoiceContract(
@@ -486,6 +462,61 @@ namespace DiaBlackJack.CoreLoop
             return handler.ResolveFinalChoice(
                 new DemonContractContext(battle, activeContract),
                 optionId);
+        }
+
+        public bool TryGetOwnerCardEffectSequenceContract(
+            CoreLoopBattle battle,
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            CombatantSide ownerSide,
+            CardEffectKind effectKind,
+            out ActiveDemonContract sequenceContract)
+        {
+            if (battle == null)
+            {
+                throw new ArgumentNullException(nameof(battle));
+            }
+
+            if (activeContracts == null)
+            {
+                throw new ArgumentNullException(nameof(activeContracts));
+            }
+
+            foreach (ActiveDemonContract activeContract in activeContracts)
+            {
+                if (activeContract.OwnerSide != ownerSide ||
+                    !_handlers.TryGetValue(
+                        activeContract.Kind,
+                        out IDemonContractHandler handler) ||
+                    !(handler is IDemonContractCardEffectRepeatHandler
+                        repeatHandler))
+                {
+                    continue;
+                }
+
+                if (repeatHandler.SupportsOwnerCardEffect(
+                    new DemonContractContext(battle, activeContract),
+                    effectKind))
+                {
+                    sequenceContract = activeContract;
+                    return true;
+                }
+            }
+
+            sequenceContract = null;
+            return false;
+        }
+
+        public bool RequiresAdditionalOwnerCardEffectActivation(
+            CoreLoopBattle battle,
+            ActiveDemonContract activeContract,
+            CardEffectResult cardEffectResult)
+        {
+            IDemonContractCardEffectRepeatHandler handler =
+                GetSpecializedHandler<IDemonContractCardEffectRepeatHandler>(
+                    activeContract);
+            return handler.RequiresAdditionalActivation(
+                new DemonContractContext(battle, activeContract),
+                cardEffectResult);
         }
 
         public bool TryResolvePlayerAfterCardEffect(
