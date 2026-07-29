@@ -29,6 +29,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private CharacterView playerCharacter;
         [SerializeField] private CharacterView enemyCharacter;
         [SerializeField] private TableTotalsView totals;
+        [SerializeField] private DeckStackView remainingDeck;
+        [SerializeField] private DeckStackView discardDeck;
 
         [Header("Standalone enemy profile")]
         [SerializeField] private string enemyProfileKey =
@@ -1449,6 +1451,7 @@ namespace DiaBlackJack.GameScene
                 hud.SetGold(shop != null ? shop.Gold : 0);
             }
 
+            RefreshDeckStacks();
             RefreshShopUtilityItems();
 
             bool playedRevolverAnimation =
@@ -1519,6 +1522,36 @@ namespace DiaBlackJack.GameScene
             {
                 enemyHand.Render(vm.EnemyCards);
             }
+        }
+
+        private void RefreshDeckStacks()
+        {
+            CoreLoopBattle battle = Battle;
+            if (battle == null)
+            {
+                remainingDeck?.Render(0);
+                discardDeck?.Render(0);
+                return;
+            }
+
+            remainingDeck?.Render(SumRankCounts(battle.Player.Deck.GetDrawPileRankCounts()));
+            discardDeck?.Render(SumRankCounts(battle.Player.Deck.GetDiscardPileRankCounts()));
+        }
+
+        private static int SumRankCounts(IReadOnlyList<int> counts)
+        {
+            if (counts == null)
+            {
+                return 0;
+            }
+
+            int total = 0;
+            for (int i = 0; i < counts.Count; i++)
+            {
+                total += counts[i];
+            }
+
+            return total;
         }
 
         private void RefreshShopUtilityItems()
