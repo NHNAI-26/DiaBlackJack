@@ -18,7 +18,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 catalog,
                 EnemyCombatProfileCatalog.CowardlyGamblerKey,
                 EnemyGrade.Normal,
-                2,
+                3,
                 EnemyBehaviorPolicyCatalog.CowardlyGambler);
             AssertProfile(
                 catalog,
@@ -30,13 +30,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                 catalog,
                 EnemyCombatProfileCatalog.CultistKey,
                 EnemyGrade.Normal,
-                3,
+                5,
                 EnemyBehaviorPolicyCatalog.Cultist);
             AssertProfile(
                 catalog,
                 EnemyCombatProfileCatalog.TricksterKey,
                 EnemyGrade.Normal,
-                4,
+                5,
                 EnemyBehaviorPolicyCatalog.Trickster);
             AssertProfile(
                 catalog,
@@ -48,8 +48,71 @@ namespace DiaBlackJack.CoreLoop.Tests
                 catalog,
                 EnemyCombatProfileCatalog.FinalBossKey,
                 EnemyGrade.Boss,
-                7,
+                8,
                 EnemyBehaviorPolicyCatalog.FinalBoss);
+        }
+
+        [TestCase(EnemyCombatProfileCatalog.CowardlyGamblerKey, 3, 18, BattleRewardTier.Normal)]
+        [TestCase(EnemyCombatProfileCatalog.GunslingerKey, 3, 14, BattleRewardTier.Normal)]
+        [TestCase(EnemyCombatProfileCatalog.CultistKey, 5, 20, BattleRewardTier.Normal)]
+        [TestCase(EnemyCombatProfileCatalog.TricksterKey, 5, 18, BattleRewardTier.Normal)]
+        [TestCase(EnemyCombatProfileCatalog.EnforcerKey, 5, 19, BattleRewardTier.HighGrade)]
+        [TestCase(EnemyCombatProfileCatalog.FinalBossKey, 8, 25, BattleRewardTier.HighGrade)]
+        public void EPR04_U01_RevisedProfilesFlowThroughBattleConfiguration(
+            string profileKey,
+            int expectedMaximumSoul,
+            int expectedDeckCount,
+            BattleRewardTier expectedRewardTier)
+        {
+            EnemyCombatProfile profile = EnemyCombatProfileCatalog.Default.GetByKey(profileKey);
+            EnemyBattleConfiguration configuration = EnemyBattleConfigurationFactory.Create(
+                profileKey,
+                enemyDeckSeed: 20260729);
+
+            Assert.That(profile.MaximumSoul, Is.EqualTo(expectedMaximumSoul));
+            Assert.That(profile.DeckDefinitionKeys.Count, Is.EqualTo(expectedDeckCount));
+            Assert.That(configuration.EnemyMaximumSoul, Is.EqualTo(expectedMaximumSoul));
+            Assert.That(configuration.EnemyDeckDefinitions.Count, Is.EqualTo(expectedDeckCount));
+            Assert.That(configuration.ExpectedRewardTier, Is.EqualTo(expectedRewardTier));
+            Assert.That(configuration.CreateEnemyDeck().TotalCardCount, Is.EqualTo(expectedDeckCount));
+        }
+
+        [Test]
+        public void EPR04_U02_RevisedDecksMatchEveryAuthoredCardCount()
+        {
+            AssertDeckCounts(
+                EnemyCombatProfileCatalog.GunslingerKey,
+                ("standard-ace-1", 1), ("standard-plain-2", 1),
+                ("standard-plain-3", 1), ("standard-plain-4", 1),
+                ("crystal-orb-5", 1), ("threat-hammer-6", 1),
+                ("auto-pistol-7", 4), ("auto-pistol-8", 4));
+            AssertDeckCounts(
+                EnemyCombatProfileCatalog.CultistKey,
+                ("standard-ace-1", 2), ("standard-plain-2", 2),
+                ("standard-plain-3", 2), ("standard-plain-4", 2),
+                ("crystal-orb-5", 2), ("threat-hammer-6", 2),
+                ("auto-pistol-7", 2), ("auto-pistol-8", 2),
+                ("military-knife-9", 2), ("military-knife-10", 2));
+            AssertDeckCounts(
+                EnemyCombatProfileCatalog.TricksterKey,
+                ("standard-ace-1", 3), ("standard-plain-2", 3),
+                (CardDefinitionCatalog.LieDetectorKey, 3), ("standard-plain-4", 3),
+                ("crystal-orb-5", 3), ("threat-hammer-6", 1),
+                ("auto-pistol-7", 2));
+            AssertDeckCounts(
+                EnemyCombatProfileCatalog.EnforcerKey,
+                (CardDefinitionCatalog.PoisonKey, 3), ("standard-ace-1", 3),
+                ("standard-plain-2", 2), (CardDefinitionCatalog.LieDetectorKey, 2),
+                (CardDefinitionCatalog.FlamethrowerKey, 2),
+                (CardDefinitionCatalog.PocketWatchKey, 2),
+                ("threat-hammer-6", 1), ("auto-pistol-7", 1),
+                ("auto-pistol-8", 1), ("military-knife-9", 1),
+                ("military-knife-10", 1));
+            AssertDeckCounts(
+                EnemyCombatProfileCatalog.FinalBossKey,
+                ("standard-ace-1", 10), ("crystal-orb-5", 5),
+                ("threat-hammer-6", 2), ("auto-pistol-7", 4),
+                ("military-knife-9", 4));
         }
 
         [Test]
@@ -122,7 +185,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 EnemyCombatProfileCatalog.EnforcerKey);
 
             Assert.That(preview.ProfileKey, Is.EqualTo(EnemyCombatProfileCatalog.EnforcerKey));
-            Assert.That(preview.DisplayName, Is.EqualTo("집행관"));
+            Assert.That(preview.DisplayName, Is.EqualTo("집행자"));
             Assert.That(preview.Grade, Is.EqualTo(EnemyGrade.Elite));
             Assert.That(preview.MaximumSoul, Is.EqualTo(5));
             Assert.That(preview.Summary, Is.Not.Empty);
@@ -249,6 +312,23 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(profile.MaximumSoul, Is.EqualTo(expectedMaximumSoul));
             Assert.That(profile.BehaviorPolicyKey, Is.EqualTo(expectedPolicyKey));
             Assert.That(profile.DeckDefinitionKeys, Is.Not.Empty);
+        }
+
+        private static void AssertDeckCounts(
+            string profileKey,
+            params (string Key, int Count)[] expectedCounts)
+        {
+            EnemyCombatProfile profile = EnemyCombatProfileCatalog.Default.GetByKey(profileKey);
+            Dictionary<string, int> actualCounts = profile.DeckDefinitionKeys
+                .GroupBy(key => key, StringComparer.Ordinal)
+                .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
+
+            Assert.That(actualCounts.Count, Is.EqualTo(expectedCounts.Length), profileKey);
+            foreach ((string key, int expectedCount) in expectedCounts)
+            {
+                Assert.That(actualCounts.ContainsKey(key), Is.True, $"{profileKey}:{key}");
+                Assert.That(actualCounts[key], Is.EqualTo(expectedCount), $"{profileKey}:{key}");
+            }
         }
 
         private static EnemyCombatProfile CreateProfile(

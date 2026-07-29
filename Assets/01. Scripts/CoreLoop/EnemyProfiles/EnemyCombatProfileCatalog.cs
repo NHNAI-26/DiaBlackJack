@@ -103,9 +103,10 @@ namespace DiaBlackJack.CoreLoop
                     new[]
                     {
                         "standard-ace-1", "standard-plain-2", "standard-plain-3",
-                        "standard-plain-4", "auto-pistol-7", "auto-pistol-8",
-                        "standard-ace-1", "standard-plain-2", "standard-plain-3",
-                        "standard-plain-4"
+                        "standard-plain-4", "crystal-orb-5", "threat-hammer-6",
+                        "auto-pistol-7", "auto-pistol-7", "auto-pistol-7",
+                        "auto-pistol-7", "auto-pistol-8", "auto-pistol-8",
+                        "auto-pistol-8", "auto-pistol-8"
                     },
                     "공개 정보로 숫자를 추측하고 공격 기회를 노린다.",
                     EnemyInformationMode.Standard),
@@ -113,29 +114,39 @@ namespace DiaBlackJack.CoreLoop
                     CultistKey,
                     "광신도",
                     EnemyGrade.Normal,
-                    3,
+                    5,
                     EnemyBehaviorPolicyCatalog.Cultist,
                     new[]
                     {
-                        "standard-ace-1", "standard-plain-2", "standard-plain-3",
-                        "standard-plain-4", "standard-plain-2", "standard-plain-3",
-                        "standard-plain-4", "standard-ace-1", "standard-plain-2",
-                        "standard-plain-4"
+                        "standard-ace-1", "standard-ace-1",
+                        "standard-plain-2", "standard-plain-2",
+                        "standard-plain-3", "standard-plain-3",
+                        "standard-plain-4", "standard-plain-4",
+                        "crystal-orb-5", "crystal-orb-5",
+                        "threat-hammer-6", "threat-hammer-6",
+                        "auto-pistol-7", "auto-pistol-7",
+                        "auto-pistol-8", "auto-pistol-8",
+                        "military-knife-9", "military-knife-9",
+                        "military-knife-10", "military-knife-10"
                     },
-                    "생존보다 공격 기대값을 우선하는 위험한 상대다.",
+                    "계약을 성사시킬 때까지 집요하게 악마의 힘을 좇는다.",
                     EnemyInformationMode.Standard),
                 new EnemyCombatProfile(
                     TricksterKey,
                     "사기꾼",
                     EnemyGrade.Normal,
-                    4,
+                    5,
                     EnemyBehaviorPolicyCatalog.Trickster,
                     new[]
                     {
-                        "standard-ace-1", "standard-plain-2", "standard-plain-3",
-                        "standard-plain-4", "crystal-orb-5", "crystal-orb-5",
-                        "standard-ace-1", "standard-plain-2", "standard-plain-3",
-                        CardDefinitionCatalog.LieDetectorKey
+                        "standard-ace-1", "standard-ace-1", "standard-ace-1",
+                        "standard-plain-2", "standard-plain-2", "standard-plain-2",
+                        CardDefinitionCatalog.LieDetectorKey,
+                        CardDefinitionCatalog.LieDetectorKey,
+                        CardDefinitionCatalog.LieDetectorKey,
+                        "standard-plain-4", "standard-plain-4", "standard-plain-4",
+                        "crystal-orb-5", "crystal-orb-5", "crystal-orb-5",
+                        "threat-hammer-6", "auto-pistol-7", "auto-pistol-7"
                     },
                     "직접 피해보다 덱과 정보 우위를 먼저 만든다.",
                     EnemyInformationMode.Standard),
@@ -143,7 +154,7 @@ namespace DiaBlackJack.CoreLoop
                     CowardlyGamblerKey,
                     "겁쟁이 도박사",
                     EnemyGrade.Normal,
-                    2,
+                    3,
                     EnemyBehaviorPolicyCatalog.CowardlyGambler,
                     new[]
                     {
@@ -155,37 +166,53 @@ namespace DiaBlackJack.CoreLoop
                         "threat-hammer-6", "auto-pistol-7", "auto-pistol-8",
                         "military-knife-9", "military-knife-10"
                     },
-                    "낮은 숫자 중심의 덱으로 공개 합 14부터 빠르게 스탠드한다.",
+                    "낮은 숫자 중심의 덱으로 공개 합 15부터 빠르게 스탠드한다.",
                     EnemyInformationMode.Standard),
                 new EnemyCombatProfile(
                     EnforcerKey,
-                    "집행관",
+                    "집행자",
                     EnemyGrade.Elite,
                     5,
                     EnemyBehaviorPolicyCatalog.Enforcer,
                     new[]
                     {
-                        "standard-ace-1", "standard-plain-2", "standard-plain-3",
-                        "standard-plain-4", "threat-hammer-6", "threat-hammer-6",
-                        "military-knife-9", "military-knife-10", "standard-plain-3",
-                        "standard-plain-4"
+                        CardDefinitionCatalog.PoisonKey,
+                        CardDefinitionCatalog.PoisonKey,
+                        CardDefinitionCatalog.PoisonKey,
+                        "standard-ace-1", "standard-ace-1", "standard-ace-1",
+                        "standard-plain-2", "standard-plain-2",
+                        CardDefinitionCatalog.LieDetectorKey,
+                        CardDefinitionCatalog.LieDetectorKey,
+                        CardDefinitionCatalog.FlamethrowerKey,
+                        CardDefinitionCatalog.FlamethrowerKey,
+                        CardDefinitionCatalog.PocketWatchKey,
+                        CardDefinitionCatalog.PocketWatchKey,
+                        "threat-hammer-6", "auto-pistol-7", "auto-pistol-8",
+                        "military-knife-9", "military-knife-10"
                     },
-                    "카드 효과로 안전 행동을 방해하고 압박한다.",
+                    "독극물과 강제 행동으로 장기전의 안전 지대를 무너뜨린다.",
                     EnemyInformationMode.Condensed),
                 new EnemyCombatProfile(
                     FinalBossKey,
                     "최종 보스",
                     EnemyGrade.Boss,
-                    7,
+                    8,
                     EnemyBehaviorPolicyCatalog.FinalBoss,
                     new[]
                     {
-                        "standard-ace-1", "standard-plain-2", "standard-plain-3",
-                        "standard-plain-4", "crystal-orb-5", "threat-hammer-6",
-                        "auto-pistol-7", "auto-pistol-8", "military-knife-9",
-                        "military-knife-10"
+                        "standard-ace-1", "standard-ace-1", "standard-ace-1",
+                        "standard-ace-1", "standard-ace-1", "standard-ace-1",
+                        "standard-ace-1", "standard-ace-1", "standard-ace-1",
+                        "standard-ace-1",
+                        "crystal-orb-5", "crystal-orb-5", "crystal-orb-5",
+                        "crystal-orb-5", "crystal-orb-5",
+                        "threat-hammer-6", "threat-hammer-6",
+                        "auto-pistol-7", "auto-pistol-7", "auto-pistol-7",
+                        "auto-pistol-7",
+                        "military-knife-9", "military-knife-9",
+                        "military-knife-9", "military-knife-9"
                     },
-                    "남은 영혼 구간에 따라 생존과 강행동의 비중이 변한다.",
+                    "영혼 구간마다 계약과 강행동의 양상을 바꾸는 최종 상대다.",
                     EnemyInformationMode.PhaseDependent)
             };
         }

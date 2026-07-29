@@ -25,7 +25,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                     .And.Contain(EnemyCombatProfileCatalog.TricksterKey));
             Assert.That(profile.DisplayName, Is.EqualTo("겁쟁이 도박사"));
             Assert.That(profile.Grade, Is.EqualTo(EnemyGrade.Normal));
-            Assert.That(profile.MaximumSoul, Is.EqualTo(2));
+            Assert.That(profile.MaximumSoul, Is.EqualTo(3));
             Assert.That(
                 profile.BehaviorPolicyKey,
                 Is.EqualTo(EnemyBehaviorPolicyCatalog.CowardlyGambler));
@@ -55,9 +55,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(counts.Count, Is.EqualTo(10));
         }
 
-        [TestCase(13, EnemyActionType.Hit)]
-        [TestCase(14, EnemyActionType.Stand)]
-        public void EPR01_U03_PolicyUsesFourteenAsLowRiskStandBoundary(
+        [TestCase(14, EnemyActionType.Hit)]
+        [TestCase(15, EnemyActionType.Stand)]
+        public void EPR04_U03_PolicyUsesFifteenAsLowRiskStandBoundary(
             int total,
             EnemyActionType expectedAction)
         {
@@ -83,7 +83,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 cardId: 7,
                 cardDefinitionKey: "crystal-orb-5");
             EnemyObservation observation = CreateObservation(
-                total: 14,
+                total: 15,
                 playerHiddenCardCount: 1,
                 new[]
                 {
@@ -135,7 +135,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Array.Empty<PublicCardObservation>(),
                 playerHiddenCardCount,
                 new SoulObservation(12, 12),
-                new SoulObservation(2, 2),
+                new SoulObservation(3, 3),
                 roundNumber: 1,
                 playerIsStanding: false,
                 enemyIsStanding: false,
@@ -153,22 +153,22 @@ namespace DiaBlackJack.CoreLoop.Tests
         private static IReadOnlyList<EnemyOwnedCardObservation> CreateOwnCards(
             int faceUpTotal)
         {
-            int secondRank = faceUpTotal - 4;
-            string secondDefinitionKey = secondRank == 9
-                ? "military-knife-9"
-                : "military-knife-10";
+            const int firstRank = 5;
+            int secondRank = faceUpTotal - firstRank;
+            CardDefinition firstDefinition = CardDefinitionCatalog.GetDefaultForRank(firstRank);
+            CardDefinition secondDefinition = CardDefinitionCatalog.GetDefaultForRank(secondRank);
             return new[]
             {
                 new EnemyOwnedCardObservation(
                     cardId: 0,
-                    definitionKey: "standard-plain-4",
-                    rank: 4,
+                    definitionKey: firstDefinition.Key,
+                    rank: firstRank,
                     isFaceUp: true,
                     useState: CardUseState.Available,
                     canUse: false),
                 new EnemyOwnedCardObservation(
                     cardId: 1,
-                    definitionKey: secondDefinitionKey,
+                    definitionKey: secondDefinition.Key,
                     rank: secondRank,
                     isFaceUp: true,
                     useState: CardUseState.Available,

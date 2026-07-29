@@ -18,28 +18,28 @@ namespace DiaBlackJack.StageProgression.Tests
 
         [TestCase(
             EnemyCombatProfileCatalog.CowardlyGamblerKey,
-            2,
+            3,
             18,
             "CowardlyGamblerEnemyPolicy")]
         [TestCase(
             EnemyCombatProfileCatalog.GunslingerKey,
             3,
-            10,
+            14,
             "GunslingerEnemyPolicy")]
         [TestCase(
             EnemyCombatProfileCatalog.CultistKey,
-            3,
-            10,
+            5,
+            20,
             "CultistEnemyPolicy")]
         [TestCase(
             EnemyCombatProfileCatalog.TricksterKey,
-            4,
-            10,
+            5,
+            18,
             "TricksterEnemyPolicy")]
         [TestCase(
             EnemyCombatProfileCatalog.EnforcerKey,
             5,
-            10,
+            19,
             "EnforcerEnemyPolicy")]
         public void EUI03_I01_SelectedCandidateCreatesItsProfileBattle(
             string profileKey,
@@ -216,7 +216,7 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(session.ActiveStage.BattleProfileKey,
                 Is.EqualTo(EnemyCombatProfileCatalog.FinalBossKey));
             Assert.That(session.Battle, Is.Not.Null);
-            Assert.That(session.Battle.Enemy.Soul.Maximum, Is.EqualTo(7));
+            Assert.That(session.Battle.Enemy.Soul.Maximum, Is.EqualTo(8));
         }
 
         [Test]

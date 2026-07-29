@@ -18,7 +18,7 @@
 | [core-loop-development-spec.md](./core-loop-development-spec.md) | 코어 루프 구조·상태·검증 명세 | CL-M01 검증 완료 v0.2 |
 | [core-loop-implementation-plan.md](./core-loop-implementation-plan.md) | 코어 루프 작업 순서·담당·일정·완료 증거 | CL-M01 완료 v0.2 |
 | [core-loop-progress-log.md](./core-loop-progress-log.md) | 단계별 착수·구현·검증·변경 누적 기록 | CL-M01 완료·전체 623/623 v0.2 |
-| [project-structure-and-mcp-reference.md](./project-structure-and-mcp-reference.md) | Unity 구조·어셈블리·MCP 참조 및 연결 확인 | 확인 완료 v0.7 |
+| [project-structure-and-mcp-reference.md](./project-structure-and-mcp-reference.md) | Unity 구조·어셈블리·MCP 참조 및 연결 확인 | 확인 완료 v0.8 |
 | [ai-usage-technical-document.md](./ai-usage-technical-document.md) | 개발 AI와 게임 내 AI 활용 기술 기록 | 지속 갱신 |
 | [team-role-technical-document.md](./team-role-technical-document.md) | 팀원별 담당 및 실제 구현 기록 | 지속 갱신 |
 | [stage-progression-design.md](./stage-progression-design.md) | 코어 루프와 분리된 런·스테이지 진행 기획 범위 | 적 6종·정식 RF 후속 분리 v0.3 |
@@ -29,26 +29,26 @@
 | [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | 공통 체인지 판단·사기꾼 예외 v0.4 |
 | [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 이력과 현행 규칙 이관 결과 | BA-R01 구현 순서 확정 v0.4 |
 | [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | BA-R01 기획 완료·코드 미착수 v0.4 |
-| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | 아스모데우스 7 이하 재명세 v0.13 |
-| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | CU-M07 완료·DC-R06 연계 v0.8 |
-| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M07 작업 순서와 단계별 검증 게이트 | CU-M07 완료·아스모데우스 후속 v0.8 |
-| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | CU-M07 완료·DC-R06 미착수 |
+| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | EP-R04 아스모데우스 7 이하 완료 v0.14 |
+| [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | EP-R04 경계 검증 완료 v0.9 |
+| [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M07 작업 순서와 단계별 검증 게이트 | 아스모데우스 완료·DC-R06 연계 v0.9 |
+| [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | EP-R04 완료·나머지 DC-R06 대기 |
 | [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | 집행자 배분 전 독극물 확정 v0.6 |
 | [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | AC-RV02 주입 순서 명세 v0.6 |
 | [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 이력과 AC-RV00~RV02 개정 계획 | AC-RV02 구현 순서 확정 v0.5 |
 | [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | AC-RV01 완료·AC-RV02 미착수 v0.5 |
-| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | 광신도·보스 전환 DC-R06 확정 v1.17 |
-| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | 적 계약 전이 명세 v1.16 |
-| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC 이력과 DC-R06 개정 계획 | DC-R06 결정 게이트 해제 v1.16 |
-| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | 기존 완료 증거·DC-R06 미착수 v1.16 |
+| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | 아스모데우스 완료·나머지 DC-R06 대기 v1.18 |
+| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | 제한 경계 완료·적 계약 전이 대기 v1.17 |
+| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC 이력과 DC-R06 개정 계획 | DC-R06 부분 완료 v1.17 |
+| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | 아스모데우스 완료·적별 계약 미착수 v1.17 |
 | [battle-reward-design.md](./battle-reward-design.md) | 일반·엘리트·보스 전투 보상 규칙과 프로토타입 카드 풀 | 적 6종 등급·골드 확정 v0.3 |
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW 완료·EP/RF 후속 v0.3 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | 카드 보상 유지·RF-01B 수치 확정 v0.3 |
 | [battle-reward-progress-log.md](./battle-reward-progress-log.md) | 전투 보상 결정·구현·검증 누적 기록 | RW-05 증거 유지·골드 구현 대기 |
-| [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 적 6종의 전투 성향·책임 경계 | 세부 결정 완료·EP-R04 대기 v1.5 |
-| [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | EP-R04~R06 확정 기준 v1.5 |
-| [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP 이력과 Notion v0.7 이관 계획 | EP-R04 착수 가능 v1.5 |
-| [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | 결정 게이트 해제·코드 미착수 v1.5 |
+| [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 적 6종의 전투 성향·책임 경계 | EP-R04 프로필 데이터 완료 v1.6 |
+| [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | EP-R04 완료·EP-R05 대기 v1.6 |
+| [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP 이력과 Notion v0.7 이관 계획 | EP-R04 완료·EP-R05 다음 v1.6 |
+| [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | EP-R04 구현·대상 검증 완료 v1.6 |
 | [enemy-selection-combat-ui-design.md](./enemy-selection-combat-ui-design.md) | 상대 후보 2명 비교·확정과 등급별 전투 정보 표시 규칙 | EUI-R01 확정 정보 대기 v0.4 |
 | [enemy-selection-combat-ui-development-spec.md](./enemy-selection-combat-ui-development-spec.md) | 후보 생성·선택 상태·전투 변환·안전 표시 스냅샷과 테스트 명세 | 계약 단계·예상 골드 연계 v0.3 |
 | [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI 이력과 새 적 정보 연결 계획 | EP/RF 뒤 EUI-R01 v0.3 |
@@ -77,6 +77,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-29 | 이천서 | EP-R04에서 적 6종 영혼·전용 덱·겁쟁이 합 15·집행자 표시명·보스 영혼 8 표시·아스모데우스 7 이하 제한과 광신도 사탄 선택 정체 방지를 구현하고 EPR04 14/14·CoreLoop 451/451·StageProgression 189/189·전체 EditMode 640/640으로 검증; GameScene·씬·프리팹·Packages·외부 에셋·오픈소스 무변경 |
 | 2026-07-29 | 이천서 | 겁쟁이 합 15·수동 카드 15%, 전 적 공통 체인지, 광신도 성공까지 계약 재시도, 집행자 배분 전 독극물, 보스 영혼 5·2 계약 전환과 적별 골드 3·4·6·7·9·15를 확정하고 관련 EP/BA/AC/DC/EUI/RF/SV 문서 상태 갱신; 코드·테스트·씬·외부 자산 무변경 |
 | 2026-07-29 | 이천서 | 최신 Notion v0.7의 적 6종 영혼·덱·능력·계약과 관련 BA/AC/DC/EUI/RW/RF/SV 파급을 문서 전반에 이관하고, 과거 완료 증거·새 구현 대기·미정 골드 값을 구분; DOCX 2종은 초기 보관본으로 명시, 코드·테스트·씬·외부 자산 무변경 |
 | 2026-07-29 | 이천서 | CU-M07에서 레비아탄을 첫 예측 실패 때만 재예측하고 두 번 모두 실패할 때만 영혼 1을 잃도록 규칙·코드·GameScene 연출·카드/계약 문서를 동기화; 신규 4/4·CoreLoop 442/442·전체 631/631, 씬·프리팹·Animator Controller·Packages·외부 에셋·오픈소스 무변경 |

@@ -30,7 +30,7 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
-        public void ACRV01_I02_TricksterDeckKeepsRevisedLieDetectorReference()
+        public void ACRV01_I02_TricksterDeckKeepsRevisedLieDetectorReferences()
         {
             EnemyCombatProfile trickster = EnemyCombatProfileCatalog.Default.GetByKey(
                 EnemyCombatProfileCatalog.TricksterKey);
@@ -38,7 +38,7 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(
                 trickster.DeckDefinitionKeys.Count(
                     key => key == "lie-detector-3"),
-                Is.EqualTo(1));
+                Is.EqualTo(3));
             Assert.That(
                 trickster.DeckDefinitionKeys.Any(IsLegacyAutomaticKey),
                 Is.False);

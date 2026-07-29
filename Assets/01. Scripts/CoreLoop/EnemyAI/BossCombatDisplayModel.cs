@@ -26,17 +26,17 @@ namespace DiaBlackJack.CoreLoop
 
     public static class FinalBossPhaseResolver
     {
-        public const int ExpectedMaximumSoul = 7;
+        public const int ExpectedMaximumSoul = 8;
 
         public static FinalBossPhase Resolve(SoulObservation enemySoul)
         {
             if (enemySoul.Maximum != ExpectedMaximumSoul)
             {
                 throw new InvalidOperationException(
-                    "Final boss policy requires maximum soul 7.");
+                    "Final boss policy requires maximum soul 8.");
             }
 
-            if (enemySoul.Current >= 5)
+            if (enemySoul.Current >= 6)
             {
                 return FinalBossPhase.Survival;
             }

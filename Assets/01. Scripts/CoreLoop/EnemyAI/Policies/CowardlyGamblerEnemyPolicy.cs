@@ -4,7 +4,7 @@ namespace DiaBlackJack.CoreLoop
 {
     public sealed class CowardlyGamblerEnemyPolicy : IEnemyBehaviorPolicy
     {
-        public const int StandThreshold = 14;
+        public const int StandThreshold = 15;
 
         public EnemyDecision Decide(EnemyObservation observation)
         {

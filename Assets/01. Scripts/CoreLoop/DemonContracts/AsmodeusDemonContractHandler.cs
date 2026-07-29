@@ -11,7 +11,7 @@ namespace DiaBlackJack.CoreLoop
     {
         public const int SkipForcedHitOptionId = 0;
         public const int ForceHitOptionId = 1;
-        public const int MaximumRestrictedCardRank = 6;
+        public const int MaximumRestrictedCardRank = 7;
 
         public DemonContractKind Kind => DemonContractKind.Asmodeus;
 

@@ -233,7 +233,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void AC06_U01_TricksterOwnsOneLieDetectorWithoutContracts()
+        public void EPR04_U05_TricksterOwnsThreeLieDetectorsWithoutContracts()
         {
             EnemyCombatProfile cultist = EnemyCombatProfileCatalog.Default.GetByKey(
                 EnemyCombatProfileCatalog.CultistKey);
@@ -246,7 +246,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 trickster.DeckDefinitionKeys.Count(key =>
                     key == CardDefinitionCatalog.LieDetectorKey),
-                Is.EqualTo(1));
+                Is.EqualTo(3));
             Assert.That(
                 CardDefinitionCatalog.All.Any(definition =>
                     definition.Key.Contains("contract")),

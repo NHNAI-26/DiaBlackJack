@@ -139,7 +139,7 @@ namespace DiaBlackJack.CoreLoop
                     DemonContractKind.Asmodeus,
                     baseSoulCost,
                     "차례 시작에 스탠드하지 않은 상대를 히트시킬 수 있다.",
-                    "계약 시 영혼 1, 숫자 6 이하 카드 사용 불가"),
+                    "계약 시 영혼 1, 숫자 7 이하 카드 사용 불가"),
                 new DemonContractDefinition(
                     AzazelKey,
                     "아자젤",

@@ -203,7 +203,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 {
                     new StageDefinition(
                         "enforcer",
-                        "집행관",
+                        "집행자",
                         StageKind.NormalCombat,
                         configuration.EnemyMaximumSoul,
                         10,

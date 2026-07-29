@@ -207,7 +207,7 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(session.TryRestartRun(), Is.True);
             Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.InBattle));
             Assert.That(session.Progress.CurrentStage.BattleProfileKey, Is.EqualTo(EnemyCombatProfileCatalog.FinalBossKey));
-            Assert.That(session.Battle.Enemy.Soul.Current, Is.EqualTo(7));
+            Assert.That(session.Battle.Enemy.Soul.Current, Is.EqualTo(8));
             Assert.That(session.Progress.PendingReward, Is.Null);
         }
 

@@ -10,7 +10,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         private const int SimulationCount = 400;
 
         [Test]
-        public void DC08_U01_SatanRequiresSoulToSurviveItsDoomCost()
+        public void EPR04_U06_CultistAvoidsSatanAtRevisedSoulMaximum()
         {
             EnemyActionCandidate satan = CreateContractChoice(
                 0,
@@ -32,8 +32,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(DemonContractKind.Belphegor));
             Assert.That(fatal.ReasonCode, Is.EqualTo("cultist-select-belphegor"));
             Assert.That(GetSelectedContractKind(survivable),
-                Is.EqualTo(DemonContractKind.Satan));
-            Assert.That(survivable.ReasonCode, Is.EqualTo("cultist-select-satan"));
+                Is.EqualTo(DemonContractKind.Belphegor));
+            Assert.That(survivable.ReasonCode, Is.EqualTo("cultist-select-belphegor"));
         }
 
         [Test]

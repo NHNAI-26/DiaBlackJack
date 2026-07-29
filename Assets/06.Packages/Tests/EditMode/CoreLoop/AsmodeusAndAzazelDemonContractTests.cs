@@ -71,8 +71,9 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [TestCase("threat-hammer-6", CardUseUnavailableReason.DemonContractRestricted)]
-        [TestCase("auto-pistol-7", CardUseUnavailableReason.None)]
-        public void DCR04_U12_AsmodeusBlocksManualCardsThroughRankSix(
+        [TestCase("auto-pistol-7", CardUseUnavailableReason.DemonContractRestricted)]
+        [TestCase("auto-pistol-8", CardUseUnavailableReason.None)]
+        public void EPR04_U04_AsmodeusBlocksManualCardsThroughRankSeven(
             string definitionKey,
             CardUseUnavailableReason expectedReason)
         {

@@ -8,7 +8,6 @@ namespace DiaBlackJack.CoreLoop
         public const int MammonRerollCeiling = 2;
 
         private const int PreferredContractScore = 950;
-        private const int SafeSatanScore = 970;
         private const int UsefulLeviathanScore = 960;
         private const int AvoidContractScore = -1000;
         private const int FatalContractScore = -1100;
@@ -136,14 +135,10 @@ namespace DiaBlackJack.CoreLoop
             switch (candidate.DemonContractKind)
             {
                 case DemonContractKind.Satan:
-                    bool guaranteedDeath = observation.EnemySoul.Current <=
-                        SatanDemonContractHandler.DoomSoulCost;
                     return Score(
                         candidate,
-                        guaranteedDeath ? FatalContractScore : SafeSatanScore,
-                        guaranteedDeath
-                            ? "cultist-avoid-fatal-satan"
-                            : "cultist-select-satan");
+                        FatalContractScore,
+                        "cultist-avoid-satan");
                 case DemonContractKind.Belphegor:
                     return Score(
                         candidate,
