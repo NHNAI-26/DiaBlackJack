@@ -19,6 +19,8 @@ namespace DiaBlackJack.GameScene
         Win,
         Lose,
         UseCard,
+        AttackThreatened,
+        Attacked,
     }
 
     /// <summary>
@@ -383,13 +385,23 @@ namespace DiaBlackJack.GameScene
         }
 
         // MVP presentation: derive one coarse visual + short action label per side from public
-        // battle state only. Priority: battle end > round resolution > this side's last action >
-        // resting. Bust is transient (the hand clears the instant a round resolves), so round
-        // results are read from the surviving LastResolution rather than a live hand value.
+        // battle state only. Priority: incoming attack reaction > battle end > round resolution >
+        // other card effects > this side's last action > resting. Bust is transient (the hand
+        // clears the instant a round resolves), so round results are read from the surviving
+        // LastResolution rather than a live hand value.
         private static (CharacterVisualState Visual, string Label) ResolveSide(
             CoreLoopBattle battle,
             CombatantSide side)
         {
+            bool hasCardEffect = TryResolveCardEffect(
+                battle,
+                side,
+                out (CharacterVisualState Visual, string Label) effect);
+            if (hasCardEffect && IsAttackReaction(effect.Visual))
+            {
+                return effect;
+            }
+
             if (battle.Outcome != BattleOutcome.InProgress)
             {
                 bool won =
@@ -407,7 +419,7 @@ namespace DiaBlackJack.GameScene
 
             // A card effect surfaces on the actor ("USE: <name>") and on the character it lands on
             // ("GUESS" / "DRAW" / "DISCARD") — during the choosing (pending) phase and the use beat.
-            if (TryResolveCardEffect(battle, side, out (CharacterVisualState Visual, string Label) effect))
+            if (hasCardEffect)
             {
                 return effect;
             }
@@ -515,7 +527,20 @@ namespace DiaBlackJack.GameScene
                 string label = completedResult.HasValue
                     ? EffectResultLabel(kind, completedResult.Value)
                     : EffectActionLabel(kind);
-                result = (CharacterVisualState.UseCard, label);
+                CharacterVisualState visual = CharacterVisualState.UseCard;
+                if (IsAttackEffect(kind))
+                {
+                    if (!completedResult.HasValue)
+                    {
+                        visual = CharacterVisualState.AttackThreatened;
+                    }
+                    else if (completedResult.Value.Succeeded)
+                    {
+                        visual = CharacterVisualState.Attacked;
+                    }
+                }
+
+                result = (visual, label);
                 return true;
             }
 
@@ -526,6 +551,25 @@ namespace DiaBlackJack.GameScene
             }
 
             return false;
+        }
+
+        private static bool IsAttackEffect(CardEffectKind kind)
+        {
+            switch (kind)
+            {
+                case CardEffectKind.AutoPistol:
+                case CardEffectKind.MilitaryKnife:
+                case CardEffectKind.ThreatHammer:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private static bool IsAttackReaction(CharacterVisualState state)
+        {
+            return state == CharacterVisualState.AttackThreatened ||
+                state == CharacterVisualState.Attacked;
         }
 
         // The character an effect's visible action lands on. REVOLVER / BOWIE KNIFE / THREAT HAMMER

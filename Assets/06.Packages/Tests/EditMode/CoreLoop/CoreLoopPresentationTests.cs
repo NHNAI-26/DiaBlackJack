@@ -491,7 +491,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 card => card.CardId == sourceCard.Id);
             Assert.That(model.PlayerVisual, Is.EqualTo(CharacterVisualState.UseCard));
             Assert.That(model.PlayerActionLabel, Is.EqualTo("USE: THREAT HAMMER"));
-            Assert.That(model.EnemyVisual, Is.EqualTo(CharacterVisualState.UseCard));
+            Assert.That(
+                model.EnemyVisual,
+                Is.EqualTo(CharacterVisualState.AttackThreatened));
             Assert.That(model.EnemyActionLabel, Is.EqualTo("DISCARD"));
             Assert.That(
                 sourceModel.AbilityDescription,
@@ -535,14 +537,18 @@ namespace DiaBlackJack.CoreLoop.Tests
             battle.TryBeginPlayerCardUse(sourceCard.Id);
 
             GameSceneHammerAnimationCue cue = null;
+            CharacterVisualState? targetVisual = null;
             battle.Stepped += () =>
             {
+                GameSceneViewModel currentModel =
+                    GameScenePresenter.Create(battle);
                 GameSceneHammerAnimationCue currentCue =
-                    GameScenePresenter.Create(battle).HammerAnimationCue;
+                    currentModel.HammerAnimationCue;
                 if (currentCue != null &&
                     currentCue.Phase == GameSceneHammerAnimationPhase.Smash)
                 {
                     cue = currentCue;
+                    targetVisual = currentModel.EnemyVisual;
                 }
             };
 
@@ -554,6 +560,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(cue.ActorSide, Is.EqualTo(CombatantSide.Player));
             Assert.That(cue.Phase, Is.EqualTo(GameSceneHammerAnimationPhase.Smash));
             Assert.That(cue.TargetCardId, Is.EqualTo(targetCard.Id));
+            Assert.That(
+                targetVisual,
+                Is.EqualTo(CharacterVisualState.Attacked));
         }
 
         [Test]
@@ -655,13 +664,17 @@ namespace DiaBlackJack.CoreLoop.Tests
             battle.TryBeginPlayerCardUse(sourceCard.Id);
 
             GameSceneRevolverAnimationCue cue = null;
+            CharacterVisualState? targetVisual = null;
             battle.Stepped += () =>
             {
+                GameSceneViewModel currentModel =
+                    GameScenePresenter.Create(battle);
                 GameSceneRevolverAnimationCue currentCue =
-                    GameScenePresenter.Create(battle).RevolverAnimationCue;
+                    currentModel.RevolverAnimationCue;
                 if (currentCue != null)
                 {
                     cue = currentCue;
+                    targetVisual = currentModel.EnemyVisual;
                 }
             };
 
@@ -674,6 +687,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(cue.Phase,
                 Is.EqualTo(GameSceneRevolverAnimationPhase.Resolved));
             Assert.That(cue.Succeeded, Is.False);
+            Assert.That(
+                targetVisual,
+                Is.EqualTo(CharacterVisualState.UseCard));
         }
 
         [Test]

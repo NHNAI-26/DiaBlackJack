@@ -109,29 +109,29 @@ MonoBehaviour:
   actionLabel: {fileID: 0}
   enemySpriteProfiles:
   - profileKey: cowardly-gambler
-    normal: {fileID: -6519568242785216333, guid: 22aa22444d6050045815396b307d8760, type: 3}
-    surprised: {fileID: 2522541276449830916, guid: 22aa22444d6050045815396b307d8760, type: 3}
-    damaged: {fileID: -6506946170598701262, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    defaultState: {fileID: -6519568242785216333, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    attackThreatened: {fileID: 2522541276449830916, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    attacked: {fileID: -6506946170598701262, guid: 22aa22444d6050045815396b307d8760, type: 3}
   - profileKey: gunslinger
-    normal: {fileID: 2701115833248770500, guid: 22aa22444d6050045815396b307d8760, type: 3}
-    surprised: {fileID: -8190794718758583916, guid: 22aa22444d6050045815396b307d8760, type: 3}
-    damaged: {fileID: 5148309097437163307, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    defaultState: {fileID: 2701115833248770500, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    attackThreatened: {fileID: -8190794718758583916, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    attacked: {fileID: 5148309097437163307, guid: 22aa22444d6050045815396b307d8760, type: 3}
   - profileKey: cultist
-    normal: {fileID: -6423348728433730566, guid: 22aa22444d6050045815396b307d8760, type: 3}
-    surprised: {fileID: 7118711276679716695, guid: 22aa22444d6050045815396b307d8760, type: 3}
-    damaged: {fileID: 404928220577656870, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    defaultState: {fileID: -6423348728433730566, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    attackThreatened: {fileID: 7118711276679716695, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    attacked: {fileID: 404928220577656870, guid: 22aa22444d6050045815396b307d8760, type: 3}
   - profileKey: trickster
-    normal: {fileID: 2911093068676753536, guid: 22aa22444d6050045815396b307d8760, type: 3}
-    surprised: {fileID: 285522446110894077, guid: 22aa22444d6050045815396b307d8760, type: 3}
-    damaged: {fileID: -4235864237886665952, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    defaultState: {fileID: 2911093068676753536, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    attackThreatened: {fileID: 285522446110894077, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    attacked: {fileID: -4235864237886665952, guid: 22aa22444d6050045815396b307d8760, type: 3}
   - profileKey: enforcer
-    normal: {fileID: -404268745147865992, guid: 22aa22444d6050045815396b307d8760, type: 3}
-    surprised: {fileID: -1710887399850272957, guid: 22aa22444d6050045815396b307d8760, type: 3}
-    damaged: {fileID: -6119022989780323266, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    defaultState: {fileID: -404268745147865992, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    attackThreatened: {fileID: -1710887399850272957, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    attacked: {fileID: -6119022989780323266, guid: 22aa22444d6050045815396b307d8760, type: 3}
   - profileKey: final-boss
-    normal: {fileID: 2706189474060104132, guid: 22aa22444d6050045815396b307d8760, type: 3}
-    surprised: {fileID: 8305373514700201296, guid: 22aa22444d6050045815396b307d8760, type: 3}
-    damaged: {fileID: -9137110423780871092, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    defaultState: {fileID: 2706189474060104132, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    attackThreatened: {fileID: 8305373514700201296, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    attacked: {fileID: -9137110423780871092, guid: 22aa22444d6050045815396b307d8760, type: 3}
   idleColor: {r: 1, g: 1, b: 1, a: 1}
   activeColor: {r: 1, g: 0.95, b: 0.65, a: 1}
   standColor: {r: 0.7, g: 0.8, b: 1, a: 1}

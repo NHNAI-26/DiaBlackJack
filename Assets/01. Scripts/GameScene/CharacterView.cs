@@ -19,9 +19,9 @@ namespace DiaBlackJack.GameScene
         private sealed class EnemySpriteProfile
         {
             [SerializeField] private string profileKey;
-            [SerializeField] private Sprite normal;
-            [SerializeField] private Sprite surprised;
-            [SerializeField] private Sprite damaged;
+            [SerializeField] private Sprite defaultState;
+            [SerializeField] private Sprite attackThreatened;
+            [SerializeField] private Sprite attacked;
 
             public string ProfileKey => profileKey;
 
@@ -29,16 +29,14 @@ namespace DiaBlackJack.GameScene
             {
                 switch (state)
                 {
-                    case CharacterVisualState.Bust:
-                        return damaged != null ? damaged : normal;
-                    case CharacterVisualState.Lose:
-                        return surprised != null
-                            ? surprised
-                            : damaged != null
-                                ? damaged
-                                : normal;
+                    case CharacterVisualState.Attacked:
+                        return attacked != null ? attacked : defaultState;
+                    case CharacterVisualState.AttackThreatened:
+                        return attackThreatened != null
+                            ? attackThreatened
+                            : defaultState;
                     default:
-                        return normal;
+                        return defaultState;
                 }
             }
         }
@@ -239,6 +237,10 @@ namespace DiaBlackJack.GameScene
                     return loseColor;
                 case CharacterVisualState.UseCard:
                     return useCardColor;
+                case CharacterVisualState.AttackThreatened:
+                    return activeColor;
+                case CharacterVisualState.Attacked:
+                    return bustColor;
                 default:
                     return idleColor;
             }
@@ -260,6 +262,10 @@ namespace DiaBlackJack.GameScene
                     return loseScale;
                 case CharacterVisualState.UseCard:
                     return useCardScale;
+                case CharacterVisualState.AttackThreatened:
+                    return activeScale;
+                case CharacterVisualState.Attacked:
+                    return bustScale;
                 default:
                     return idleScale;
             }

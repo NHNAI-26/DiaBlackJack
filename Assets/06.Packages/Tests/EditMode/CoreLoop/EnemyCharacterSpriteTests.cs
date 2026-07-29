@@ -10,9 +10,9 @@ namespace DiaBlackJack.CoreLoop.Tests
     {
         private GameObject _root;
         private Texture2D _texture;
-        private Sprite _normal;
-        private Sprite _surprised;
-        private Sprite _damaged;
+        private Sprite _defaultState;
+        private Sprite _attackThreatened;
+        private Sprite _attacked;
         private Sprite _merchant;
 
         [SetUp]
@@ -23,25 +23,25 @@ namespace DiaBlackJack.CoreLoop.Tests
             _root.AddComponent<CharacterView>();
 
             _texture = new Texture2D(4, 1);
-            _normal = CreateSprite(0);
-            _surprised = CreateSprite(1);
-            _damaged = CreateSprite(2);
+            _defaultState = CreateSprite(0);
+            _attackThreatened = CreateSprite(1);
+            _attacked = CreateSprite(2);
             _merchant = CreateSprite(3);
         }
 
         [TearDown]
         public void TearDown()
         {
-            Object.DestroyImmediate(_normal);
-            Object.DestroyImmediate(_surprised);
-            Object.DestroyImmediate(_damaged);
+            Object.DestroyImmediate(_defaultState);
+            Object.DestroyImmediate(_attackThreatened);
+            Object.DestroyImmediate(_attacked);
             Object.DestroyImmediate(_merchant);
             Object.DestroyImmediate(_texture);
             Object.DestroyImmediate(_root);
         }
 
         [Test]
-        public void GSV01_U01_ProfileSpritesFollowNormalLoseAndBustStates()
+        public void GSV01_U01_ProfileSpritesFollowDefaultThreatenedAndAttackedStates()
         {
             CharacterView view = ConfigureView();
             SpriteRenderer renderer = _root.GetComponent<SpriteRenderer>();
@@ -51,13 +51,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.True);
 
             view.Render(CharacterVisualState.Idle, string.Empty);
-            Assert.That(renderer.sprite, Is.SameAs(_normal));
+            Assert.That(renderer.sprite, Is.SameAs(_defaultState));
 
-            view.Render(CharacterVisualState.Lose, "LOSE");
-            Assert.That(renderer.sprite, Is.SameAs(_surprised));
+            view.Render(CharacterVisualState.AttackThreatened, "GUESS");
+            Assert.That(renderer.sprite, Is.SameAs(_attackThreatened));
 
-            view.Render(CharacterVisualState.Bust, "BUST");
-            Assert.That(renderer.sprite, Is.SameAs(_damaged));
+            view.Render(CharacterVisualState.Attacked, "HIT!");
+            Assert.That(renderer.sprite, Is.SameAs(_attacked));
         }
 
         [Test]
@@ -70,9 +70,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.True);
 
             Assert.That(view.TrySetEnemyProfile("missing-profile"), Is.False);
-            view.Render(CharacterVisualState.Bust, "BUST");
+            view.Render(CharacterVisualState.Attacked, "HIT!");
 
-            Assert.That(renderer.sprite, Is.SameAs(_damaged));
+            Assert.That(renderer.sprite, Is.SameAs(_attacked));
         }
 
         [Test]
@@ -83,13 +83,13 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 view.TrySetEnemyProfile(EnemyCombatProfileCatalog.GunslingerKey),
                 Is.True);
-            view.Render(CharacterVisualState.Lose, "LOSE");
+            view.Render(CharacterVisualState.AttackThreatened, "GUESS");
 
             view.EnterMerchant();
             Assert.That(renderer.sprite, Is.SameAs(_merchant));
 
             view.ExitMerchant();
-            Assert.That(renderer.sprite, Is.SameAs(_surprised));
+            Assert.That(renderer.sprite, Is.SameAs(_attackThreatened));
         }
 
         private CharacterView ConfigureView()
@@ -102,9 +102,11 @@ namespace DiaBlackJack.CoreLoop.Tests
             SerializedProperty profile = profiles.GetArrayElementAtIndex(0);
             profile.FindPropertyRelative("profileKey").stringValue =
                 EnemyCombatProfileCatalog.GunslingerKey;
-            profile.FindPropertyRelative("normal").objectReferenceValue = _normal;
-            profile.FindPropertyRelative("surprised").objectReferenceValue = _surprised;
-            profile.FindPropertyRelative("damaged").objectReferenceValue = _damaged;
+            profile.FindPropertyRelative("defaultState").objectReferenceValue =
+                _defaultState;
+            profile.FindPropertyRelative("attackThreatened").objectReferenceValue =
+                _attackThreatened;
+            profile.FindPropertyRelative("attacked").objectReferenceValue = _attacked;
             serialized.FindProperty("merchantSprite").objectReferenceValue = _merchant;
             serialized.ApplyModifiedPropertiesWithoutUndo();
             return view;
