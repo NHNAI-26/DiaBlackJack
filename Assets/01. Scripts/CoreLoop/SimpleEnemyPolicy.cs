@@ -70,6 +70,8 @@ namespace DiaBlackJack.CoreLoop
                     return ownHand.Total >= 17 ? 100 : 0;
                 case EnemyActionType.UseCard:
                     return -1000;
+                case EnemyActionType.Change:
+                    return 2000;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(candidate));
             }

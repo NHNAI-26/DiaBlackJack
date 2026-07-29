@@ -3,11 +3,46 @@ using System.Collections.Generic;
 
 namespace DiaBlackJack.CoreLoop
 {
-    public sealed class EnforcerEnemyPolicy : IEnemyBehaviorPolicy
+    public sealed class EnforcerEnemyPolicy :
+        IEnemyBehaviorPolicy,
+        IEnemyForcedActionPolicy
     {
         public EnemyDecision Decide(EnemyObservation observation)
         {
             return EnemyPolicyDecisionSelector.Select(observation, Evaluate);
+        }
+
+        public bool TryDecideForcedAction(
+            EnemyObservation observation,
+            out EnemyDecision decision)
+        {
+            decision = null;
+            foreach (EnemyActionCandidate candidate in observation.ActionCandidates)
+            {
+                if (candidate.ActionType != EnemyActionType.DemonContract)
+                {
+                    continue;
+                }
+
+                bool startsContract = !candidate.DemonContractOptionId.HasValue &&
+                    !candidate.DemonContractSourceCardId.HasValue;
+                bool selectsPaimon = candidate.DemonContractInteractionKind ==
+                        DemonContractInteractionKind.ChooseContract &&
+                    candidate.DemonContractKind == DemonContractKind.Paimon;
+                if (!startsContract && !selectsPaimon)
+                {
+                    continue;
+                }
+
+                decision = EnemyDecision.FromCandidate(
+                    candidate,
+                    startsContract
+                        ? "enforcer-begin-paimon-contract"
+                        : "enforcer-select-paimon-contract");
+                return true;
+            }
+
+            return false;
         }
 
         private static EnemyActionScore Evaluate(
@@ -28,9 +63,44 @@ namespace DiaBlackJack.CoreLoop
                         "enforcer-basic-stand");
                 case EnemyActionType.UseCard:
                     return EvaluateCard(observation, candidate);
+                case EnemyActionType.DemonContract:
+                    return EvaluateDemonContract(candidate);
+                case EnemyActionType.Change:
+                    return Score(candidate, 2000, "enforcer-required-change");
                 default:
                     throw new ArgumentOutOfRangeException(nameof(candidate));
             }
+        }
+
+        private static EnemyActionScore EvaluateDemonContract(
+            EnemyActionCandidate candidate)
+        {
+            if (candidate.DemonContractInteractionKind ==
+                DemonContractInteractionKind.PaimonChooseDeck)
+            {
+                bool choosesOpponentDeck = candidate.DemonContractOptionId ==
+                    PaimonDemonContractHandler.OpponentDeckOptionId;
+                return Score(
+                    candidate,
+                    choosesOpponentDeck ? 1500 : 100,
+                    choosesOpponentDeck
+                        ? "enforcer-inspect-opponent-deck-with-paimon"
+                        : "enforcer-avoid-own-deck-paimon-exile");
+            }
+
+            if (candidate.DemonContractInteractionKind ==
+                DemonContractInteractionKind.PaimonChooseExileCard)
+            {
+                int? rank = candidate.DemonContractOptionNumericValue;
+                return Score(
+                    candidate,
+                    rank.HasValue && rank.Value > 0 ? 1200 + rank.Value : 0,
+                    rank.HasValue && rank.Value > 0
+                        ? "enforcer-exile-highest-opponent-card-with-paimon"
+                        : "enforcer-skip-own-card-paimon-exile");
+            }
+
+            return Score(candidate, -1000, "enforcer-ignore-unsupported-contract");
         }
 
         private static EnemyActionScore EvaluateCard(

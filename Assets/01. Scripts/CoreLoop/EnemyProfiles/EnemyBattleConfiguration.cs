@@ -49,12 +49,23 @@ namespace DiaBlackJack.CoreLoop
             EnemyDeckSeed = enemyDeckSeed;
             EnemyDeckDefinitions = new ReadOnlyCollection<CardDefinition>(definitions);
             BehaviorPolicy = behaviorPolicy ?? throw new ArgumentNullException(nameof(behaviorPolicy));
+            ChangeCostMode = profile.ChangeCostMode;
+            DemonContractCandidateCount = profile.DemonContractCandidateCount;
+            DemonContractDefinitionKeys = profile.DemonContractDefinitionKeys;
+            InjectsPoisonIntoPlayerDeckEachRound =
+                profile.InjectsPoisonIntoPlayerDeckEachRound;
             ExpectedRewardTier = profile.Grade == EnemyGrade.Normal
                 ? BattleRewardTier.Normal
                 : BattleRewardTier.HighGrade;
         }
 
         public IEnemyBehaviorPolicy BehaviorPolicy { get; }
+
+        public EnemyChangeCostMode ChangeCostMode { get; }
+
+        public int DemonContractCandidateCount { get; }
+
+        public IReadOnlyList<string> DemonContractDefinitionKeys { get; }
 
         public IReadOnlyList<CardDefinition> EnemyDeckDefinitions { get; }
 
@@ -65,6 +76,8 @@ namespace DiaBlackJack.CoreLoop
         public BattleRewardTier ExpectedRewardTier { get; }
 
         public EnemyGrade Grade { get; }
+
+        public bool InjectsPoisonIntoPlayerDeckEachRound { get; }
 
         public string ProfileKey { get; }
 

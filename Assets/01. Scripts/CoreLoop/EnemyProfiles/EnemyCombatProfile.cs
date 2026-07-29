@@ -4,6 +4,12 @@ using System.Collections.ObjectModel;
 
 namespace DiaBlackJack.CoreLoop
 {
+    public enum EnemyChangeCostMode
+    {
+        Accumulating,
+        FixedOne
+    }
+
     public sealed class EnemyCombatProfile
     {
         public EnemyCombatProfile(
@@ -14,7 +20,12 @@ namespace DiaBlackJack.CoreLoop
             string behaviorPolicyKey,
             IEnumerable<string> deckDefinitionKeys,
             string summary,
-            EnemyInformationMode playerInformationMode)
+            EnemyInformationMode playerInformationMode,
+            EnemyChangeCostMode changeCostMode = EnemyChangeCostMode.Accumulating,
+            IEnumerable<string> demonContractDefinitionKeys = null,
+            int demonContractCandidateCount =
+                DemonContractDeck.MaximumCandidateCount,
+            bool injectsPoisonIntoPlayerDeckEachRound = false)
         {
             if (string.IsNullOrWhiteSpace(key))
             {
@@ -87,6 +98,35 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentOutOfRangeException(nameof(playerInformationMode));
             }
 
+            if (!Enum.IsDefined(typeof(EnemyChangeCostMode), changeCostMode))
+            {
+                throw new ArgumentOutOfRangeException(nameof(changeCostMode));
+            }
+
+            List<string> validatedDemonContractKeys = new List<string>();
+            if (demonContractDefinitionKeys != null)
+            {
+                foreach (string definitionKey in demonContractDefinitionKeys)
+                {
+                    if (string.IsNullOrWhiteSpace(definitionKey))
+                    {
+                        throw new ArgumentException(
+                            "Enemy demon contract key cannot be empty.",
+                            nameof(demonContractDefinitionKeys));
+                    }
+
+                    DemonContractCatalog.Default.GetByKey(definitionKey);
+                    validatedDemonContractKeys.Add(definitionKey);
+                }
+            }
+
+            if (demonContractCandidateCount <= 0 ||
+                demonContractCandidateCount > DemonContractDeck.LuciferCandidateCount)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(demonContractCandidateCount));
+            }
+
             Key = key;
             DisplayName = displayName;
             Grade = grade;
@@ -95,17 +135,31 @@ namespace DiaBlackJack.CoreLoop
             DeckDefinitionKeys = new ReadOnlyCollection<string>(validatedDeckKeys);
             Summary = summary;
             PlayerInformationMode = playerInformationMode;
+            ChangeCostMode = changeCostMode;
+            DemonContractDefinitionKeys = new ReadOnlyCollection<string>(
+                validatedDemonContractKeys);
+            DemonContractCandidateCount = demonContractCandidateCount;
+            InjectsPoisonIntoPlayerDeckEachRound =
+                injectsPoisonIntoPlayerDeckEachRound;
         }
 
         public string BehaviorPolicyKey { get; }
 
         public IReadOnlyList<string> DeckDefinitionKeys { get; }
 
+        public EnemyChangeCostMode ChangeCostMode { get; }
+
+        public int DemonContractCandidateCount { get; }
+
+        public IReadOnlyList<string> DemonContractDefinitionKeys { get; }
+
         public string DisplayName { get; }
 
         public EnemyGrade Grade { get; }
 
         public string Key { get; }
+
+        public bool InjectsPoisonIntoPlayerDeckEachRound { get; }
 
         public int MaximumSoul { get; }
 

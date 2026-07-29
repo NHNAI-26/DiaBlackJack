@@ -210,6 +210,12 @@ namespace DiaBlackJack.CoreLoop
                     EnemyActionType.DemonContract));
             }
 
+            if (battle.CanBeginEnemyChange)
+            {
+                candidates.Add(new EnemyActionCandidate(
+                    EnemyActionType.Change));
+            }
+
             foreach (EnemyOwnedCardObservation card in ownCards)
             {
                 if (!card.CanUse)
@@ -471,7 +477,8 @@ namespace DiaBlackJack.CoreLoop
             {
                 observations.Add(new PublicCardObservation(
                     card.DefinitionKey,
-                    card.Rank));
+                    card.Rank,
+                    card.CanUse));
             }
 
             return observations.AsReadOnly();

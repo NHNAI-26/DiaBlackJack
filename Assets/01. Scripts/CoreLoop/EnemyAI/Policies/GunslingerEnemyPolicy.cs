@@ -30,6 +30,8 @@ namespace DiaBlackJack.CoreLoop
                         "gunslinger-basic-stand");
                 case EnemyActionType.UseCard:
                     return EvaluateCard(observation, candidate, mostLikely);
+                case EnemyActionType.Change:
+                    return Score(candidate, 2000, "gunslinger-required-change");
                 default:
                     throw new ArgumentOutOfRangeException(nameof(candidate));
             }

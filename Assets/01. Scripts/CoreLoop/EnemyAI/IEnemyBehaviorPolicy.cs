@@ -4,4 +4,11 @@ namespace DiaBlackJack.CoreLoop
     {
         EnemyDecision Decide(EnemyObservation observation);
     }
+
+    public interface IEnemyForcedActionPolicy
+    {
+        bool TryDecideForcedAction(
+            EnemyObservation observation,
+            out EnemyDecision decision);
+    }
 }

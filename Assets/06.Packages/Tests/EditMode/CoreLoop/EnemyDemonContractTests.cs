@@ -254,7 +254,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DC07_I01_StageFactoryGivesContractsOnlyToCultistAndIsolatesFiftyRuns()
+        public void EPR05_I01_StageFactoryBuildsProfileContractDecksAndIsolatesFiftyRuns()
         {
             PlayerRunState player = CreateRunPlayer();
             DemonContractDeck previous = null;
@@ -266,8 +266,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                     iteration + 100);
                 CoreLoopBattle battle = StageBattleFactory.Create(stage, player);
 
-                Assert.That(battle.EnemyDemonDeck.TotalCardCount, Is.EqualTo(12));
-                Assert.That(battle.EnemyDemonDeck.AvailableCardCount, Is.EqualTo(12));
+                Assert.That(battle.EnemyDemonDeck.TotalCardCount, Is.EqualTo(3));
+                Assert.That(battle.EnemyDemonDeck.AvailableCardCount, Is.EqualTo(3));
                 Assert.That(battle.ActiveEnemyDemonContracts, Is.Empty);
                 Assert.That(battle.EnemyDemonDeck, Is.Not.SameAs(previous));
                 previous = battle.EnemyDemonDeck;
@@ -277,6 +277,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                 CreateStage(EnemyCombatProfileCatalog.GunslingerKey, 90, 91),
                 player);
             Assert.That(gunslinger.EnemyDemonDeck.TotalCardCount, Is.Zero);
+
+            CoreLoopBattle enforcer = StageBattleFactory.Create(
+                CreateStage(EnemyCombatProfileCatalog.EnforcerKey, 92, 93),
+                player);
+            Assert.That(enforcer.EnemyDemonDeck.TotalCardCount, Is.EqualTo(1));
         }
 
         [Test]

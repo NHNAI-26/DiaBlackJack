@@ -1383,6 +1383,14 @@ Unity MCP에서 대상 3/3(job `be7463c015f64188a8d6dbccba9526e6`)과 최종 전
 
 Unity MCP에서 대상 2/2(job `c32dbd9121ab41faa4745628361e4f28`), CoreLoop 438/438(job `742e4362aea547158b34c60f61b99f13`), 전체 EditMode 627/627(job `eaf6d8bccc1f46ed9241ca55992b42bf`)을 통과했다. GameScene Play Mode에서 선택지 10개와 활성 리볼버 루트, `Revolver_Shoot_PlayerReady`, 실패 `Revolver_ShootFail`, 성공 `Revolver_ShootSuccess` 상태를 직접 확인했다. 씬·프리팹·Animator Controller·Packages·외부 코드·에셋·오픈소스는 변경하지 않았고, 최종 Console 6건은 Test Framework 사전·사후 처리와 결과 파일 저장 안내이며 신규 컴파일·게임 코드 오류는 0이다. 최종 기획·코드·화면 승인 책임자는 이천서다.
 
+### 3.40 EP-R05 일반·엘리트 특수 정책과 전투 상태 이관
+
+이천서는 최신 적 프로필 문서의 다음 단계인 EP-R05 착수를 지시했다. AI에 전달한 주요 제약은 `rule.md`와 Notion v0.7 이관 문서를 우선하고, 적 AI가 미공개 비공개 카드·물리 ID·덱 순서를 읽지 않는 공정성 경계를 유지하며, `GameScene`·UI·씬·프리팹·Packages와 다른 팀원 소유 영역을 변경하지 않는 것이었다. 또한 겁쟁이 수동 카드 15%, 광신도 성공까지 계약 재시도, 전 적 공통 체인지와 사기꾼 비용 1, 집행자 파이몬·라운드별 독극물을 한 프로필 전투 생성 경계에서 연결하도록 했다. 최종 기획·코드·검증 책임자는 이천서다.
+
+AI는 실패 테스트와 구조 대조를 바탕으로 `EnemyCombatProfile → EnemyBattleConfiguration → StageBattleFactory → CoreLoopBattle` 구성 흐름에 체인지 비용 모드, 악마 정의 키·후보 수, 독극물 주입 플래그를 추가했다. 강제행동 순서를 `확정 리볼버 → 프로필 강제 계약 → 필수 체인지 → 성향 판단`으로 정리하고, 광신도는 세 후보를 모두 제시한 뒤 공개 영혼·사용 가능한 공개 카드 수로 정확한 악마를 고르게 했다. 집행자의 독극물은 전투 한정 고유 물리 ID로 매 라운드 배분 전에 가용 덱에 섞고 전투 종료 시 모두 제거한다. 직접 생성 전투와 독립 `GameScene`은 기본 체인지 비활성으로 보존하고 실제 스테이지 프로필 전투만 활성화했다.
+
+검증은 Unity Roslyn 런타임 컴파일, EP-R05 정책 12/12, CoreLoop 466/466, StageProgression 189/189와 전체 EditMode 655/655로 완료했다. 원본 Unity Editor는 종료하지 않고 별도 복제본의 Test Runner를 사용했으며, `GameScene`·UI·씬·프리팹·Packages·외부 코드·에셋·오픈소스·새 의존성은 변경하거나 추가하지 않았다. 최초 전체 CoreLoop 회귀에서 직접 생성 전투에 공통 체인지가 켜진 범위 확장과 루시퍼 후보 이중 폐기를 발견해 각각 프로필 변환 경계의 명시적 활성화와 후보 소유권 단일 정리로 교정한 뒤 전부 재검증했다.
+
 ## 4. 생성형 AI 산출물 관리
 
 ### 4.1 코드

@@ -2,7 +2,9 @@ using System;
 
 namespace DiaBlackJack.CoreLoop
 {
-    public sealed class CultistEnemyPolicy : IEnemyBehaviorPolicy
+    public sealed class CultistEnemyPolicy :
+        IEnemyBehaviorPolicy,
+        IEnemyForcedActionPolicy
     {
         public const int AggressiveHitCeiling = 18;
         public const int MammonRerollCeiling = 2;
@@ -15,6 +17,49 @@ namespace DiaBlackJack.CoreLoop
         public EnemyDecision Decide(EnemyObservation observation)
         {
             return EnemyPolicyDecisionSelector.Select(observation, Evaluate);
+        }
+
+        public bool TryDecideForcedAction(
+            EnemyObservation observation,
+            out EnemyDecision decision)
+        {
+            decision = null;
+            EnemyActionCandidate startCandidate = null;
+            DemonContractKind desiredKind = GetDesiredContractKind(observation);
+            foreach (EnemyActionCandidate candidate in observation.ActionCandidates)
+            {
+                if (candidate.ActionType != EnemyActionType.DemonContract)
+                {
+                    continue;
+                }
+
+                if (!candidate.DemonContractOptionId.HasValue &&
+                    !candidate.DemonContractSourceCardId.HasValue)
+                {
+                    startCandidate = candidate;
+                    continue;
+                }
+
+                if (candidate.DemonContractInteractionKind ==
+                        DemonContractInteractionKind.ChooseContract &&
+                    candidate.DemonContractKind == desiredKind)
+                {
+                    decision = EnemyDecision.FromCandidate(
+                        candidate,
+                        "cultist-force-profile-contract-choice");
+                    return true;
+                }
+            }
+
+            if (startCandidate == null)
+            {
+                return false;
+            }
+
+            decision = EnemyDecision.FromCandidate(
+                startCandidate,
+                "cultist-retry-contract-until-success");
+            return true;
         }
 
         private static EnemyActionScore Evaluate(
@@ -41,9 +86,33 @@ namespace DiaBlackJack.CoreLoop
                     return Score(candidate, 500, "cultist-use-implemented-aggression-card");
                 case EnemyActionType.DemonContract:
                     return EvaluateDemonContract(observation, candidate);
+                case EnemyActionType.Change:
+                    return Score(candidate, 2000, "cultist-required-change");
                 default:
                     throw new ArgumentOutOfRangeException(nameof(candidate));
             }
+        }
+
+        private static DemonContractKind GetDesiredContractKind(
+            EnemyObservation observation)
+        {
+            if (observation.EnemySoul.Current < 4)
+            {
+                return DemonContractKind.Belphegor;
+            }
+
+            int usablePlayerFaceUpCardCount = 0;
+            foreach (PublicCardObservation card in observation.PlayerFaceUpCards)
+            {
+                if (card.CanUse)
+                {
+                    usablePlayerFaceUpCardCount++;
+                }
+            }
+
+            return usablePlayerFaceUpCardCount >= 2
+                ? DemonContractKind.Belial
+                : DemonContractKind.Beelzebub;
         }
 
         private static EnemyActionScore EvaluateDemonContract(

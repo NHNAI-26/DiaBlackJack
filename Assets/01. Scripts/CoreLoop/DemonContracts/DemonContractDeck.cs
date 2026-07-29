@@ -135,9 +135,15 @@ namespace DiaBlackJack.CoreLoop
             return TakeCandidates(LuciferCandidateCount);
         }
 
-        private IReadOnlyList<DemonContractCard> TakeCandidates(
+        internal IReadOnlyList<DemonContractCard> TakeCandidates(
             int maximumCandidateCount)
         {
+            if (maximumCandidateCount <= 0 ||
+                maximumCandidateCount > LuciferCandidateCount)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maximumCandidateCount));
+            }
+
             if (!CanTakeCandidates)
             {
                 throw new InvalidOperationException(

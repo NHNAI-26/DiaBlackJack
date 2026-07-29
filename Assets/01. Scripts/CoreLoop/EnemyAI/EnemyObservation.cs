@@ -29,7 +29,10 @@ namespace DiaBlackJack.CoreLoop
 
     public sealed class PublicCardObservation
     {
-        public PublicCardObservation(string definitionKey, int rank)
+        public PublicCardObservation(
+            string definitionKey,
+            int rank,
+            bool canUse = false)
         {
             if (string.IsNullOrWhiteSpace(definitionKey))
             {
@@ -43,7 +46,10 @@ namespace DiaBlackJack.CoreLoop
 
             DefinitionKey = definitionKey;
             Rank = rank;
+            CanUse = canUse;
         }
+
+        public bool CanUse { get; }
 
         public string DefinitionKey { get; }
 

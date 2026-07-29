@@ -27,6 +27,8 @@ namespace DiaBlackJack.CoreLoop
                         "trickster-basic-stand");
                 case EnemyActionType.UseCard:
                     return EvaluateCard(observation, candidate);
+                case EnemyActionType.Change:
+                    return Score(candidate, 2000, "trickster-required-change");
                 default:
                     throw new ArgumentOutOfRangeException(nameof(candidate));
             }

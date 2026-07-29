@@ -29,12 +29,37 @@ namespace DiaBlackJack.CoreLoop
                         faceUpTotal >= StandThreshold ? 700 : 100,
                         "cowardly-gambler-early-stand");
                 case EnemyActionType.UseCard:
-                    return Score(candidate, -500, "cowardly-gambler-keep-manual-card");
+                    return EvaluateCard(observation, candidate);
                 case EnemyActionType.DemonContract:
                     return Score(candidate, -1000, "cowardly-gambler-has-no-contract");
+                case EnemyActionType.Change:
+                    return Score(candidate, 2000, "cowardly-gambler-required-change");
                 default:
                     throw new ArgumentOutOfRangeException(nameof(candidate));
             }
+        }
+
+        private static EnemyActionScore EvaluateCard(
+            EnemyObservation observation,
+            EnemyActionCandidate candidate)
+        {
+            if (observation.PendingCardEffectKind.HasValue)
+            {
+                int choiceValue = candidate.CardEffectOptionCardRank ??
+                    candidate.CardEffectOptionNumericValue ?? 0;
+                return Score(
+                    candidate,
+                    1200 + choiceValue,
+                    "cowardly-gambler-complete-manual-card");
+            }
+
+            bool usesCard = (uint)observation.DecisionSeed % 100u < 15u;
+            return Score(
+                candidate,
+                usesCard ? 900 : -500,
+                usesCard
+                    ? "cowardly-gambler-low-chance-manual-card"
+                    : "cowardly-gambler-keep-manual-card");
         }
 
         private static int GetOwnFaceUpTotal(EnemyObservation observation)

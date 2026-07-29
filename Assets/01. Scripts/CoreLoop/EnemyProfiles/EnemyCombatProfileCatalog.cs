@@ -130,7 +130,14 @@ namespace DiaBlackJack.CoreLoop
                         "military-knife-10", "military-knife-10"
                     },
                     "계약을 성사시킬 때까지 집요하게 악마의 힘을 좇는다.",
-                    EnemyInformationMode.Standard),
+                    EnemyInformationMode.Standard,
+                    demonContractDefinitionKeys: new[]
+                    {
+                        DemonContractCatalog.BelphegorKey,
+                        DemonContractCatalog.BeelzebubKey,
+                        DemonContractCatalog.BelialKey
+                    },
+                    demonContractCandidateCount: 3),
                 new EnemyCombatProfile(
                     TricksterKey,
                     "사기꾼",
@@ -149,7 +156,8 @@ namespace DiaBlackJack.CoreLoop
                         "threat-hammer-6", "auto-pistol-7", "auto-pistol-7"
                     },
                     "직접 피해보다 덱과 정보 우위를 먼저 만든다.",
-                    EnemyInformationMode.Standard),
+                    EnemyInformationMode.Standard,
+                    changeCostMode: EnemyChangeCostMode.FixedOne),
                 new EnemyCombatProfile(
                     CowardlyGamblerKey,
                     "겁쟁이 도박사",
@@ -191,7 +199,13 @@ namespace DiaBlackJack.CoreLoop
                         "military-knife-9", "military-knife-10"
                     },
                     "독극물과 강제 행동으로 장기전의 안전 지대를 무너뜨린다.",
-                    EnemyInformationMode.Condensed),
+                    EnemyInformationMode.Condensed,
+                    demonContractDefinitionKeys: new[]
+                    {
+                        DemonContractCatalog.PaimonKey
+                    },
+                    demonContractCandidateCount: 1,
+                    injectsPoisonIntoPlayerDeckEachRound: true),
                 new EnemyCombatProfile(
                     FinalBossKey,
                     "최종 보스",

@@ -80,4 +80,55 @@ namespace DiaBlackJack.CoreLoop
             }
         }
     }
+
+    internal static class EnemyChangeCandidateSelector
+    {
+        public static int Select(
+            IReadOnlyList<BlackjackCard> remainingHand,
+            IReadOnlyList<BlackjackCard> candidates)
+        {
+            if (remainingHand == null)
+            {
+                throw new ArgumentNullException(nameof(remainingHand));
+            }
+
+            if (candidates == null || candidates.Count != 2)
+            {
+                throw new ArgumentException(
+                    "Enemy change requires exactly two candidates.",
+                    nameof(candidates));
+            }
+
+            int firstTotal = CalculateTotal(remainingHand, candidates[0]);
+            int secondTotal = CalculateTotal(remainingHand, candidates[1]);
+            bool firstSafe = firstTotal <= 21;
+            bool secondSafe = secondTotal <= 21;
+
+            if (firstSafe != secondSafe)
+            {
+                return firstSafe ? 0 : 1;
+            }
+
+            if (firstSafe)
+            {
+                return secondTotal > firstTotal ? 1 : 0;
+            }
+
+            return secondTotal < firstTotal ? 1 : 0;
+        }
+
+        private static int CalculateTotal(
+            IReadOnlyList<BlackjackCard> remainingHand,
+            BlackjackCard candidate)
+        {
+            List<BlackjackCard> cards = new List<BlackjackCard>(remainingHand.Count + 1);
+            foreach (BlackjackCard card in remainingHand)
+            {
+                cards.Add(card);
+            }
+
+            cards.Add(candidate ?? throw new ArgumentNullException(nameof(candidate)));
+            return HandValueCalculator.Calculate(cards).Total;
+        }
+    }
 }

@@ -49,11 +49,9 @@ namespace DiaBlackJack.StageProgression
                     "The selected enemy profile no longer matches the stage soul configuration.");
             }
 
-            DemonContractDeck enemyDemonDeck =
-                stage.BattleProfileKey == EnemyCombatProfileCatalog.CultistKey
-                    ? DemonContractDeck.CreatePrototype(
-                        DeriveEnemyDemonDeckSeed(stage.EnemyDeckSeed))
-                    : null;
+            DemonContractDeck enemyDemonDeck = CreateEnemyDemonDeck(
+                enemy.DemonContractDefinitionKeys,
+                DeriveEnemyDemonDeckSeed(stage.EnemyDeckSeed));
 
             return new CoreLoopBattle(
                 playerDeck,
@@ -61,9 +59,30 @@ namespace DiaBlackJack.StageProgression
                 player.MaximumSoul,
                 player.CurrentSoul,
                 enemy.EnemyMaximumSoul,
-                enemy.BehaviorPolicy,
-                playerDemonDeck,
-                enemyDemonDeck);
+                enemyPolicy: enemy.BehaviorPolicy,
+                playerDemonDeck: playerDemonDeck,
+                enemyDemonDeck: enemyDemonDeck,
+                enemyChangeCostMode: enemy.ChangeCostMode,
+                enemyDemonContractCandidateCount:
+                    enemy.DemonContractCandidateCount,
+                injectsPoisonIntoPlayerDeckEachRound:
+                    enemy.InjectsPoisonIntoPlayerDeckEachRound,
+                enablesEnemyChange: true);
+        }
+
+        private static DemonContractDeck CreateEnemyDemonDeck(
+            IReadOnlyList<string> definitionKeys,
+            int seed)
+        {
+            List<DemonContractCard> cards = new List<DemonContractCard>(definitionKeys.Count);
+            for (int i = 0; i < definitionKeys.Count; i++)
+            {
+                DemonContractDefinition definition =
+                    DemonContractCatalog.Default.GetByKey(definitionKeys[i]);
+                cards.Add(new DemonContractCard(i, definition));
+            }
+
+            return new DemonContractDeck(cards, seed);
         }
 
         private static DemonContractDeck CreateDemonDeck(

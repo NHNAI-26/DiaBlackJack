@@ -42,6 +42,32 @@ namespace DiaBlackJack.CoreLoop
             return false;
         }
 
+        public static bool TrySelectRequiredChange(
+            EnemyObservation observation,
+            out EnemyDecision decision)
+        {
+            decision = null;
+            if (observation == null)
+            {
+                return false;
+            }
+
+            foreach (EnemyActionCandidate candidate in observation.ActionCandidates)
+            {
+                if (candidate.ActionType != EnemyActionType.Change)
+                {
+                    continue;
+                }
+
+                decision = EnemyDecision.FromCandidate(
+                    candidate,
+                    "required-hidden-or-bust-change");
+                return true;
+            }
+
+            return false;
+        }
+
         public static EnemyDecision Select(
             EnemyObservation observation,
             Func<EnemyObservation, EnemyActionCandidate, EnemyActionScore> evaluate)

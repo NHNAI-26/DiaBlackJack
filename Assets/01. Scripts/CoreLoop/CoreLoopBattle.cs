@@ -35,6 +35,10 @@ namespace DiaBlackJack.CoreLoop
         private readonly CardEffectResolver _cardEffectResolver;
         private readonly AutomaticCardEffectResolver _automaticCardEffectResolver;
         private readonly DemonContractResolver _demonContractResolver;
+        private readonly EnemyChangeCostMode _enemyChangeCostMode;
+        private readonly bool _enablesEnemyChange;
+        private readonly int _enemyDemonContractCandidateCount;
+        private readonly bool _injectsPoisonIntoPlayerDeckEachRound;
         private readonly AutomaticCardBattleState _automaticCardBattleState =
             new AutomaticCardBattleState();
         private readonly DemonContractCardState _demonContractCardState =
@@ -46,6 +50,7 @@ namespace DiaBlackJack.CoreLoop
             new List<ActiveDemonContract>();
         private readonly List<PublicCombatAction> _publicActionHistory =
             new List<PublicCombatAction>();
+        private readonly List<int> _injectedPoisonCardIds = new List<int>();
         private CardEffectContext _activeCardEffectContext;
         private CombatantSide? _activeCardEffectActorSide;
         private PendingCardEffect _pendingCardEffect;
@@ -81,6 +86,7 @@ namespace DiaBlackJack.CoreLoop
         private int _enemyDemonContractSoulAfterCost;
         private int _playerFinalBonusForEnemyChoice;
         private PlayerChangeSelection _playerChangeSelection;
+        private int _nextInjectedPoisonCardId = 1000000000;
 
         private sealed class PendingBeelzebubBustResolution
         {
@@ -154,7 +160,13 @@ namespace DiaBlackJack.CoreLoop
             int enemyMaximumSoul = 3,
             IEnemyBehaviorPolicy enemyPolicy = null,
             DemonContractDeck playerDemonDeck = null,
-            DemonContractDeck enemyDemonDeck = null)
+            DemonContractDeck enemyDemonDeck = null,
+            EnemyChangeCostMode enemyChangeCostMode =
+                EnemyChangeCostMode.Accumulating,
+            int enemyDemonContractCandidateCount =
+                DemonContractDeck.MaximumCandidateCount,
+            bool injectsPoisonIntoPlayerDeckEachRound = false,
+            bool enablesEnemyChange = false)
             : this(
                 playerDeck,
                 enemyDeck,
@@ -163,7 +175,11 @@ namespace DiaBlackJack.CoreLoop
                 enemyMaximumSoul,
                 enemyPolicy,
                 playerDemonDeck,
-                enemyDemonDeck)
+                enemyDemonDeck,
+                enemyChangeCostMode,
+                enemyDemonContractCandidateCount,
+                injectsPoisonIntoPlayerDeckEachRound,
+                enablesEnemyChange)
         {
         }
 
@@ -175,7 +191,13 @@ namespace DiaBlackJack.CoreLoop
             int enemyMaximumSoul,
             IEnemyBehaviorPolicy enemyPolicy = null,
             DemonContractDeck playerDemonDeck = null,
-            DemonContractDeck enemyDemonDeck = null)
+            DemonContractDeck enemyDemonDeck = null,
+            EnemyChangeCostMode enemyChangeCostMode =
+                EnemyChangeCostMode.Accumulating,
+            int enemyDemonContractCandidateCount =
+                DemonContractDeck.MaximumCandidateCount,
+            bool injectsPoisonIntoPlayerDeckEachRound = false,
+            bool enablesEnemyChange = false)
             : this(
                 playerDeck,
                 enemyDeck,
@@ -187,7 +209,13 @@ namespace DiaBlackJack.CoreLoop
                 playerDemonDeck,
                 enemyDemonDeck: enemyDemonDeck,
                 enemyAutomaticCardDecisionPolicy:
-                    DefaultAutomaticCardDecisionPolicy.Instance)
+                    DefaultAutomaticCardDecisionPolicy.Instance,
+                enemyChangeCostMode: enemyChangeCostMode,
+                enemyDemonContractCandidateCount:
+                    enemyDemonContractCandidateCount,
+                injectsPoisonIntoPlayerDeckEachRound:
+                    injectsPoisonIntoPlayerDeckEachRound,
+                enablesEnemyChange: enablesEnemyChange)
         {
         }
 
@@ -203,8 +231,27 @@ namespace DiaBlackJack.CoreLoop
             DemonContractResolver demonContractResolver = null,
             DemonContractDeck enemyDemonDeck = null,
             AutomaticCardEffectResolver automaticCardEffectResolver = null,
-            IAutomaticCardDecisionPolicy enemyAutomaticCardDecisionPolicy = null)
+            IAutomaticCardDecisionPolicy enemyAutomaticCardDecisionPolicy = null,
+            EnemyChangeCostMode enemyChangeCostMode =
+                EnemyChangeCostMode.Accumulating,
+            int enemyDemonContractCandidateCount =
+                DemonContractDeck.MaximumCandidateCount,
+            bool injectsPoisonIntoPlayerDeckEachRound = false,
+            bool enablesEnemyChange = false)
         {
+            if (!Enum.IsDefined(typeof(EnemyChangeCostMode), enemyChangeCostMode))
+            {
+                throw new ArgumentOutOfRangeException(nameof(enemyChangeCostMode));
+            }
+
+            if (enemyDemonContractCandidateCount <= 0 ||
+                enemyDemonContractCandidateCount >
+                    DemonContractDeck.LuciferCandidateCount)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(enemyDemonContractCandidateCount));
+            }
+
             Player = new BattleParticipant(playerDeck, playerMaximumSoul, playerCurrentSoul);
             Enemy = new BattleParticipant(enemyDeck, enemyMaximumSoul);
             PlayerDemonDeck = playerDemonDeck ??
@@ -220,6 +267,11 @@ namespace DiaBlackJack.CoreLoop
                 enemyAutomaticCardDecisionPolicy;
             _demonContractResolver = demonContractResolver ??
                 DemonContractResolver.CreateDefault();
+            _enemyChangeCostMode = enemyChangeCostMode;
+            _enablesEnemyChange = enablesEnemyChange;
+            _enemyDemonContractCandidateCount = enemyDemonContractCandidateCount;
+            _injectsPoisonIntoPlayerDeckEachRound =
+                injectsPoisonIntoPlayerDeckEachRound;
             Player.FaceUpCardAdded += card => HandleFaceUpCardAdded(
                 CombatantSide.Player,
                 card);
@@ -285,6 +337,17 @@ namespace DiaBlackJack.CoreLoop
             Player.Deck.CanDraw(2) &&
             Player.Soul.Current > NextPlayerChangeSoulCost;
 
+        internal bool CanBeginEnemyChange =>
+            _enablesEnemyChange &&
+            State == CoreLoopState.EnemyTurn &&
+            !Enemy.IsStanding &&
+            _pendingEnemyDemonContractInteraction == null &&
+            PendingEnemyCardEffect == null &&
+            Enemy.Hand.HiddenCardCount == 1 &&
+            Enemy.Deck.CanDraw(2) &&
+            Enemy.Soul.Current > NextEnemyChangeSoulCost &&
+            ShouldEnemyChange();
+
         public bool CanSelectChangedCard =>
             State == CoreLoopState.PlayerChoosingChangeCard &&
             _playerChangeSelection != null;
@@ -292,6 +355,13 @@ namespace DiaBlackJack.CoreLoop
         public int CompletedPlayerChangeCount { get; private set; }
 
         public int NextPlayerChangeSoulCost => CompletedPlayerChangeCount;
+
+        internal int CompletedEnemyChangeCount { get; private set; }
+
+        internal int NextEnemyChangeSoulCost =>
+            _enemyChangeCostMode == EnemyChangeCostMode.FixedOne
+                ? 1
+                : CompletedEnemyChangeCount;
 
         public IReadOnlyList<BlackjackCard> PlayerChangeCandidates =>
             _playerChangeSelection?.Candidates ?? NoChangeCandidates;
@@ -312,6 +382,8 @@ namespace DiaBlackJack.CoreLoop
 
         internal int PendingPoisonWinRewardCount =>
             _automaticCardBattleState.PendingPoisonWinRewardCount;
+
+        internal int InjectedPoisonCardCount => _injectedPoisonCardIds.Count;
 
         internal bool CanRestartRoundFromResurrectionHerb =>
             Player.Soul.Current >= 2 &&
@@ -594,13 +666,12 @@ namespace DiaBlackJack.CoreLoop
             }
 
             Enemy.Soul.ApplyDamage(availability.SoulCost);
-            UsedEnemyBaseDemonContractCount = checked(
-                UsedEnemyBaseDemonContractCount + 1);
             _enemyDemonContractSoulAfterCost = Enemy.Soul.Current;
-            _enemyDemonContractCandidates = EnemyDemonDeck.TakeCandidates();
+            _enemyDemonContractCandidates = EnemyDemonDeck.TakeCandidates(
+                _enemyDemonContractCandidateCount);
             if (_enemyDemonContractCandidates.Count == 0 ||
                 _enemyDemonContractCandidates.Count >
-                    DemonContractDeck.MaximumCandidateCount)
+                    _enemyDemonContractCandidateCount)
             {
                 throw new InvalidOperationException(
                     "Validated enemy demon contract deck returned an invalid candidate count.");
@@ -718,6 +789,7 @@ namespace DiaBlackJack.CoreLoop
                 CombatantSide.Enemy,
                 new EmptyDemonContractRuntimeState());
             _activeEnemyDemonContracts.Add(activeContract);
+            _enemyDemonContractCandidates = null;
             ClearEnemyDemonContractInteraction();
             int enemySoulBeforeActivation = Enemy.Soul.Current;
             activeContract.SetRuntimeState(
@@ -725,6 +797,8 @@ namespace DiaBlackJack.CoreLoop
             RecordDemonContractActivationSoulCost(
                 enemySoulBeforeActivation,
                 Enemy.Soul.Current);
+            UsedEnemyBaseDemonContractCount = checked(
+                UsedEnemyBaseDemonContractCount + 1);
             RecordPublicAction(
                 CombatantSide.Enemy,
                 PublicCombatActionType.DemonContract,
@@ -1217,6 +1291,7 @@ namespace DiaBlackJack.CoreLoop
                 LuciferDemonContractHandler.SkipAdditionalContractOptionId)
             {
                 EnemyDemonDeck.Discard(_enemyDemonContractCandidates);
+                _enemyDemonContractCandidates = null;
                 ClearEnemyDemonContractInteraction();
                 RaiseStepped();
                 return true;
@@ -1237,6 +1312,7 @@ namespace DiaBlackJack.CoreLoop
                 CombatantSide.Enemy,
                 new EmptyDemonContractRuntimeState());
             _activeEnemyDemonContracts.Add(activeContract);
+            _enemyDemonContractCandidates = null;
             ClearEnemyDemonContractInteraction();
 
             int enemySoulBeforeActivation = Enemy.Soul.Current;
@@ -1626,6 +1702,50 @@ namespace DiaBlackJack.CoreLoop
 
             State = CoreLoopState.PlayerTurn;
             CompletePlayerActionAndRunEnemyTurn();
+            return true;
+        }
+
+        private bool ShouldEnemyChange()
+        {
+            if (!Enemy.Hand.TryGetSingleHiddenCard(out BlackjackCard hiddenCard))
+            {
+                return false;
+            }
+
+            return hiddenCard.IsFaceUp || Enemy.HandValue.IsBust;
+        }
+
+        private bool TryExecuteEnemyChange()
+        {
+            if (!CanBeginEnemyChange)
+            {
+                return false;
+            }
+
+            Enemy.Soul.ApplyDamage(NextEnemyChangeSoulCost);
+            if (!Enemy.TryBeginChange(out PlayerChangeSelection selection))
+            {
+                throw new InvalidOperationException(
+                    "Validated enemy change could not begin.");
+            }
+
+            _automaticCardBattleState.InvalidateKnowledgeAboutHiddenCard(
+                CombatantSide.Enemy,
+                selection.PreviousHiddenCardId);
+            int candidateIndex = EnemyChangeCandidateSelector.Select(
+                Enemy.Hand.Cards,
+                selection.Candidates);
+            if (!selection.TrySelectCandidate(candidateIndex))
+            {
+                throw new InvalidOperationException(
+                    "Validated enemy change candidate could not be selected.");
+            }
+
+            Enemy.CompleteChange(selection);
+            CompletedEnemyChangeCount = checked(CompletedEnemyChangeCount + 1);
+            RecordPublicAction(CombatantSide.Enemy, PublicCombatActionType.Change);
+            RaiseStepped();
+            CompleteEnemyAction();
             return true;
         }
 
@@ -2142,6 +2262,11 @@ namespace DiaBlackJack.CoreLoop
 
         private void ClearEnemyDemonContractInteraction()
         {
+            if (_enemyDemonContractCandidates != null)
+            {
+                EnemyDemonDeck.Discard(_enemyDemonContractCandidates);
+            }
+
             _pendingEnemyDemonContractInteraction = null;
             _enemyDemonContractPreview = null;
             _enemyDemonContractCandidates = null;
@@ -4644,6 +4769,8 @@ namespace DiaBlackJack.CoreLoop
                 return;
             }
 
+            InjectPoisonIntoPlayerDeck();
+
             Player.Draw(faceUp: true);
             Enemy.Draw(faceUp: true);
             Player.Draw(faceUp: false);
@@ -4793,7 +4920,18 @@ namespace DiaBlackJack.CoreLoop
                         observation,
                         out decision))
                 {
-                    decision = _enemyPolicy.Decide(observation);
+                    if (!(_enemyPolicy is IEnemyForcedActionPolicy forcedPolicy) ||
+                        !forcedPolicy.TryDecideForcedAction(
+                            observation,
+                            out decision))
+                    {
+                        if (!EnemyPolicyDecisionSelector.TrySelectRequiredChange(
+                                observation,
+                                out decision))
+                        {
+                            decision = _enemyPolicy.Decide(observation);
+                        }
+                    }
                 }
 
                 if (EnemyDecisionValidator.CanExecute(observation, decision))
@@ -4916,6 +5054,10 @@ namespace DiaBlackJack.CoreLoop
                         CompleteEnemyAction();
                     }
 
+                    break;
+
+                case EnemyActionType.Change:
+                    executed = TryExecuteEnemyChange();
                     break;
 
                 default:
@@ -5553,6 +5695,7 @@ namespace DiaBlackJack.CoreLoop
         {
             RestorePendingPaimonPeek();
             _demonContractCardState.RestoreAll();
+            CleanupInjectedPoisonCards();
             _demonContractResolver.NotifyBattleEnded(
                 this,
                 _activePlayerDemonContracts);
@@ -5562,6 +5705,52 @@ namespace DiaBlackJack.CoreLoop
             _activePlayerDemonContracts.Clear();
             _activeEnemyDemonContracts.Clear();
             _resolvedPaimonOpponentBustContractIds.Clear();
+        }
+
+        private void InjectPoisonIntoPlayerDeck()
+        {
+            if (!_injectsPoisonIntoPlayerDeckEachRound)
+            {
+                return;
+            }
+
+            Player.Deck.ResetAvailableCards();
+            while (_nextInjectedPoisonCardId >= 0 &&
+                Player.Deck.ContainsKnownCardId(_nextInjectedPoisonCardId))
+            {
+                _nextInjectedPoisonCardId--;
+            }
+
+            if (_nextInjectedPoisonCardId < 0)
+            {
+                throw new InvalidOperationException(
+                    "No card id remains for an injected poison card.");
+            }
+
+            BlackjackCard poison = new BlackjackCard(
+                _nextInjectedPoisonCardId--,
+                CardDefinitionCatalog.GetByKey(CardDefinitionCatalog.PoisonKey));
+            if (!Player.Deck.TryAddTemporaryAvailableCard(poison))
+            {
+                throw new InvalidOperationException(
+                    "Validated poison card could not be added to the player deck.");
+            }
+
+            _injectedPoisonCardIds.Add(poison.Id);
+        }
+
+        private void CleanupInjectedPoisonCards()
+        {
+            foreach (int cardId in _injectedPoisonCardIds)
+            {
+                if (!Player.TryRemoveTemporaryCard(cardId))
+                {
+                    throw new InvalidOperationException(
+                        $"Injected poison card id {cardId} could not be removed.");
+                }
+            }
+
+            _injectedPoisonCardIds.Clear();
         }
 
         private void ResolveRoundWithEnemyFinalChoice(int playerBonus)
