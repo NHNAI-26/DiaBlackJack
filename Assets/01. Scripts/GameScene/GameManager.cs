@@ -530,6 +530,7 @@ namespace DiaBlackJack.GameScene
             }
 
             RemoveRunDeckCard(option);
+            RemoveCurrentBattleAvailableCard(option);
             _choosingLighterRemoval = false;
             RefreshView();
             return true;
@@ -681,6 +682,19 @@ namespace DiaBlackJack.GameScene
                 option.Suit));
         }
 
+        private void RemoveCurrentBattleAvailableCard(RunDeckCardOption option)
+        {
+            CoreLoopBattle battle = Battle;
+            if (battle == null)
+            {
+                return;
+            }
+
+            battle.Player.Deck.TryRemoveAvailableCard(
+                option.DefinitionKey,
+                option.Suit);
+        }
+
         private bool IsBaseNormalCardRemoved(string definitionKey, CardSuit suit)
         {
             foreach (RemovedNormalCard card in _removedNormalCards)
@@ -736,6 +750,12 @@ namespace DiaBlackJack.GameScene
             }
 
             DrawAutomaticCardStatusPanel();
+
+            if (shop != null && shop.IsOpen && _choosingLighterRemoval)
+            {
+                DrawLighterRemovalPanel();
+                return;
+            }
 
             if (_core.State == CoreLoopState.BattleEnded)
             {

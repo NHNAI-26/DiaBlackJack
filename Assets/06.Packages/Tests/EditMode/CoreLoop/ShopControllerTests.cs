@@ -119,6 +119,56 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(_shop.Gold, Is.EqualTo(11));
         }
 
+        [Test]
+        public void RFM01_U04_CurrentBattleDeckRemovalUpdatesVisibleComposition()
+        {
+            string rankOneKey = CardDefinitionCatalog.GetDefaultForRank(1).Key;
+            var drawDeck = BlackjackDeck.CreateInDrawOrder(new[]
+            {
+                new BlackjackCard(
+                    0,
+                    CardDefinitionCatalog.GetDefaultForRank(1),
+                    suit: CardSuit.Spade),
+                new BlackjackCard(
+                    1,
+                    CardDefinitionCatalog.GetDefaultForRank(1),
+                    suit: CardSuit.Clover),
+                new BlackjackCard(
+                    2,
+                    CardDefinitionCatalog.GetDefaultForRank(2),
+                    suit: CardSuit.Spade),
+            });
+
+            Assert.That(
+                drawDeck.TryRemoveAvailableCard(rankOneKey, CardSuit.Spade),
+                Is.True);
+            Assert.That(drawDeck.ContainsKnownCardId(0), Is.False);
+            Assert.That(drawDeck.GetDrawPileRankCounts()[1], Is.EqualTo(1));
+            Assert.That(drawDeck.DrawCount, Is.EqualTo(2));
+
+            var discardDeck = BlackjackDeck.CreateInDrawOrder(new[]
+            {
+                new BlackjackCard(
+                    10,
+                    CardDefinitionCatalog.GetDefaultForRank(3),
+                    suit: CardSuit.Spade),
+                new BlackjackCard(
+                    11,
+                    CardDefinitionCatalog.GetDefaultForRank(4),
+                    suit: CardSuit.Spade),
+            });
+            BlackjackCard discarded = discardDeck.Draw();
+            discardDeck.Discard(discarded);
+
+            Assert.That(
+                discardDeck.TryRemoveAvailableCard(
+                    discarded.DefinitionKey,
+                    discarded.Suit),
+                Is.True);
+            Assert.That(discardDeck.ContainsKnownCardId(discarded.Id), Is.False);
+            Assert.That(discardDeck.DiscardCount, Is.Zero);
+        }
+
         private void SetPrivateField(string fieldName, object value)
         {
             FieldInfo field = typeof(ShopController).GetField(

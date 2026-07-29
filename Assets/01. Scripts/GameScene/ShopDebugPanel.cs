@@ -61,13 +61,13 @@ namespace DiaBlackJack.GameScene
             if (DebugButton(ref x, ref y, w, h, gap, "Open Shop"))
             {
                 shop.Open();
-                RefreshGold();
+                Represent();
             }
 
             if (DebugButton(ref x, ref y, w, h, gap, "Close Shop"))
             {
                 shop.Close();
-                RefreshGold();
+                Represent();
             }
 
             if (DebugButton(ref x, ref y, w, h, gap, "Reset Gold"))

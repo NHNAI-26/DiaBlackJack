@@ -226,6 +226,18 @@ namespace DiaBlackJack.CoreLoop
             return true;
         }
 
+        internal bool TryRemoveAvailableCard(string definitionKey, CardSuit suit)
+        {
+            if (string.IsNullOrWhiteSpace(definitionKey) ||
+                !Enum.IsDefined(typeof(CardSuit), suit))
+            {
+                return false;
+            }
+
+            return TryRemoveAvailableCardFromPile(_drawPile, definitionKey, suit) ||
+                TryRemoveAvailableCardFromPile(_discardPile, definitionKey, suit);
+        }
+
         internal bool IsInDrawPile(int cardId)
         {
             foreach (BlackjackCard card in _drawPile)
@@ -234,6 +246,32 @@ namespace DiaBlackJack.CoreLoop
                 {
                     return true;
                 }
+            }
+
+            return false;
+        }
+
+        private bool TryRemoveAvailableCardFromPile(
+            List<BlackjackCard> pile,
+            string definitionKey,
+            CardSuit suit)
+        {
+            for (int i = 0; i < pile.Count; i++)
+            {
+                BlackjackCard card = pile[i];
+                if (_temporaryCardIds.Contains(card.Id) ||
+                    !StringComparer.Ordinal.Equals(card.DefinitionKey, definitionKey) ||
+                    card.Suit != suit)
+                {
+                    continue;
+                }
+
+                pile.RemoveAt(i);
+                _availableCardIds.Remove(card.Id);
+                _knownCardIds.Remove(card.Id);
+                _knownRankCounts[card.Rank]--;
+                TotalCardCount--;
+                return true;
             }
 
             return false;
