@@ -12,6 +12,7 @@ CBUFFER_START(UnityPerMaterial)
     float4 _DissolveTilingOffset;
 #if defined(NHN_SPRITE_UBER)
     float4 _BaseSpriteUVRect;
+    float4 _CardBlendUVRect;
 #endif
     half4 _BaseColor;
     half _HueShift;
@@ -96,7 +97,8 @@ inline half4 NHNSampleBase(float2 rawUV, out float2 surfaceUV)
     surfaceUV = rawUV;
     half4 baseSample = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, rawUV);
     float2 baseSpriteUV = NHNGetBaseSpriteUV(rawUV);
-    half4 blendSample = SAMPLE_TEXTURE2D(_CardBlendTex, sampler_CardBlendTex, baseSpriteUV);
+    float2 blendSpriteUV = _CardBlendUVRect.xy + baseSpriteUV * _CardBlendUVRect.zw;
+    half4 blendSample = SAMPLE_TEXTURE2D(_CardBlendTex, sampler_CardBlendTex, blendSpriteUV);
     return lerp(baseSample, blendSample, saturate(_CardBlendAmount));
 #else
     surfaceUV = TRANSFORM_TEX(rawUV, _BaseMap);

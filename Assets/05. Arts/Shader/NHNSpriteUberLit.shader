@@ -24,6 +24,7 @@ Shader "Shader/Sprite Uber Lit"
         [Tex(SurfaceInputs)] [NoScaleOffset] _CardBlendTex("Blend Card Sprite", 2D) = "white" {}
         [Sub(SurfaceInputs)] _CardBlendAmount("Card Blend", Range(0,1)) = 0
         [HideInInspector] [PerRendererData] _BaseSpriteUVRect("Base Sprite UV Rect", Vector) = (0,0,1,1)
+        [HideInInspector] [PerRendererData] _CardBlendUVRect("Card Blend UV Rect", Vector) = (0,0,1,1)
         [Sub(SurfaceInputs)] _HueShift("Hue Shift", Range(-180,180)) = 0
         [Sub(SurfaceInputs)] _Saturation("Saturation", Range(0,2)) = 1
         [Sub(SurfaceInputs)] _Brightness("Brightness", Range(0,2)) = 1

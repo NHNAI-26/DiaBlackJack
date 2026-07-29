@@ -454,15 +454,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ShopUtilityItemView
   kind: 0
-  bodyRenderer: {fileID: 3795005150099411801}
   nameText: {fileID: 3879847998483440863}
   hoverBadge: {fileID: 3169398093149201028}
   hoverText: {fileID: 8856677999567629907}
   hoverScale: 1.12
   scaleLerp: 12
-  availableColor: {r: 0.9, g: 0.78, b: 0.42, a: 1}
-  unavailableColor: {r: 0.32, g: 0.32, b: 0.32, a: 1}
-  hoverColor: {r: 1, g: 0.9, b: 0.25, a: 1}
 --- !u!1 &9196873438216898575
 GameObject:
   m_ObjectHideFlags: 0

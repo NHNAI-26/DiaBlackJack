@@ -102,8 +102,6 @@ MonoBehaviour:
   topPosition: {fileID: 5217502089744215780}
   hoverScale: 1.15
   scaleLerp: 12
-  glowColor: {r: 0.95, g: 0.25, b: 0.22, a: 1}
-  backTint: {r: 0.42, g: 0.12, b: 0.16, a: 1}
 --- !u!1 &805380802697689471 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7359149338926229531, guid: f1c533b6369da3a43a661a372b761d01, type: 3}

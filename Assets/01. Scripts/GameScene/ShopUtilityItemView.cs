@@ -13,7 +13,6 @@ namespace DiaBlackJack.GameScene
     public sealed class ShopUtilityItemView : MonoBehaviour
     {
         [SerializeField] private ShopUtilityItemKind kind;
-        [SerializeField] private Renderer bodyRenderer;
         [SerializeField] private TMP_Text nameText;
         [SerializeField] private GameObject hoverBadge;
         [SerializeField] private TMP_Text hoverText;
@@ -21,14 +20,6 @@ namespace DiaBlackJack.GameScene
         [Header("Hover feel")]
         [SerializeField] private float hoverScale = 1.12f;
         [SerializeField] private float scaleLerp = 12f;
-        [SerializeField] private Color availableColor = new Color(0.9f, 0.78f, 0.42f);
-        [SerializeField] private Color unavailableColor = new Color(0.32f, 0.32f, 0.32f);
-        [SerializeField] private Color hoverColor = new Color(1f, 0.9f, 0.25f);
-
-        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
-        private static readonly int ColorId = Shader.PropertyToID("_Color");
-
-        private MaterialPropertyBlock _propertyBlock;
         private Vector3 _baseScale = Vector3.one;
         private Vector3 _targetScale = Vector3.one;
         private Camera _camera;
@@ -81,52 +72,23 @@ namespace DiaBlackJack.GameScene
                 hoverText.text = description ?? string.Empty;
             }
 
-            ApplyHoverVisuals();
+            UpdateHoverBadge();
         }
 
         public void SetHovered(bool hovered)
         {
             _hovered = hovered;
             _targetScale = hovered ? _baseScale * hoverScale : _baseScale;
-            ApplyHoverVisuals();
+            UpdateHoverBadge();
         }
 
-        private void ApplyHoverVisuals()
+        private void UpdateHoverBadge()
         {
             if (hoverBadge != null)
             {
                 hoverBadge.SetActive(_hovered);
             }
 
-            Color color = _hovered && CanUse
-                ? hoverColor
-                : CanUse ? availableColor : unavailableColor;
-            ApplyTint(color);
-        }
-
-        private void ApplyTint(Color color)
-        {
-            Renderer renderer = BodyRenderer();
-            if (renderer == null)
-            {
-                return;
-            }
-
-            _propertyBlock ??= new MaterialPropertyBlock();
-            renderer.GetPropertyBlock(_propertyBlock);
-            _propertyBlock.SetColor(BaseColorId, color);
-            _propertyBlock.SetColor(ColorId, color);
-            renderer.SetPropertyBlock(_propertyBlock);
-        }
-
-        private Renderer BodyRenderer()
-        {
-            if (bodyRenderer == null)
-            {
-                bodyRenderer = GetComponentInChildren<Renderer>();
-            }
-
-            return bodyRenderer;
         }
 
         private void FaceLabelsToCamera()

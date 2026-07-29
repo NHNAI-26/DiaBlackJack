@@ -11,6 +11,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             Shader.PropertyToID("_CardBlendTex");
         private static readonly int CardBlendAmountId =
             Shader.PropertyToID("_CardBlendAmount");
+        private static readonly int CardBlendUvRectId =
+            Shader.PropertyToID("_CardBlendUVRect");
 
         private const string CardPrefabPath = "Assets/03. Prefabs/Card/Card.prefab";
         private const string DemonCardPrefabPath =
@@ -165,6 +167,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                     properties.GetTexture(CardBlendTextureId),
                     Is.SameAs(frontRenderer.sprite.texture));
                 Assert.That(properties.GetFloat(CardBlendAmountId), Is.GreaterThan(0f));
+                Assert.That(
+                    properties.GetVector(CardBlendUvRectId),
+                    Is.EqualTo(GetSpriteUvRect(frontRenderer.sprite)));
             }
             finally
             {
@@ -257,6 +262,21 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             return AssetDatabase.LoadAssetAtPath<Sprite>(
                 DemonArtRoot + index.ToString("00") + ".png");
+        }
+
+        private static Vector4 GetSpriteUvRect(Sprite sprite)
+        {
+            Vector2[] uvs = sprite.uv;
+            Vector2 minimum = uvs[0];
+            Vector2 maximum = uvs[0];
+            for (int i = 1; i < uvs.Length; i++)
+            {
+                minimum = Vector2.Min(minimum, uvs[i]);
+                maximum = Vector2.Max(maximum, uvs[i]);
+            }
+
+            Vector2 size = maximum - minimum;
+            return new Vector4(minimum.x, minimum.y, size.x, size.y);
         }
     }
 }

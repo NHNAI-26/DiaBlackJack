@@ -17,17 +17,7 @@ namespace DiaBlackJack.GameScene
         [Header("Hover feel")]
         [SerializeField] private float hoverScale = 1.15f;
         [SerializeField] private float scaleLerp = 12f;
-        [SerializeField] private Color glowColor = new Color(0.95f, 0.25f, 0.22f);
-
-        [Header("Face-down tint")]
-        [SerializeField] private Color backTint = new Color(0.42f, 0.12f, 0.16f, 1f);
-
-        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
-
-        private MaterialPropertyBlock _propertyBlock;
         private SpriteRenderer _frontSpriteRenderer;
-        private Renderer _frontRenderer;
-        private Renderer _backRenderer;
         private Vector3 _baseScale = Vector3.one;
         private Vector3 _targetScale = Vector3.one;
         private bool _showingFrontFace = true;
@@ -90,14 +80,12 @@ namespace DiaBlackJack.GameScene
             _hovered = false;
             transform.localScale = _baseScale;
             _targetScale = _baseScale;
-            ApplyHoverVisuals();
         }
 
         public void SetHovered(bool hovered)
         {
             _hovered = hovered;
             _targetScale = hovered ? _baseScale * hoverScale : _baseScale;
-            ApplyHoverVisuals();
         }
 
         public Sprite GetFaceSprite(string definitionKey)
@@ -140,22 +128,6 @@ namespace DiaBlackJack.GameScene
             return text;
         }
 
-        private void ApplyHoverVisuals()
-        {
-            bool lit = _hovered && CanUse;
-
-            if (lit && _showingFrontFace)
-            {
-                ApplyTint(FrontRenderer(), glowColor);
-            }
-            else
-            {
-                ClearTint(FrontRenderer());
-            }
-
-            ApplyTint(BackRenderer(), lit && !_showingFrontFace ? glowColor : backTint);
-        }
-
         private void ApplyFaceSprite(int index)
         {
             SpriteRenderer renderer = FrontSpriteRenderer();
@@ -176,37 +148,6 @@ namespace DiaBlackJack.GameScene
             return faceSpritesByIndex[index];
         }
 
-        private void ApplyTint(Renderer renderer, Color color)
-        {
-            if (renderer == null)
-            {
-                return;
-            }
-
-            _propertyBlock ??= new MaterialPropertyBlock();
-            renderer.GetPropertyBlock(_propertyBlock);
-            _propertyBlock.SetColor(BaseColorId, color);
-            renderer.SetPropertyBlock(_propertyBlock);
-        }
-
-        private static void ClearTint(Renderer renderer)
-        {
-            if (renderer != null)
-            {
-                renderer.SetPropertyBlock(null);
-            }
-        }
-
-        private Renderer FrontRenderer()
-        {
-            if (_frontRenderer == null && front != null)
-            {
-                _frontRenderer = FrontSpriteRenderer();
-            }
-
-            return _frontRenderer;
-        }
-
         private SpriteRenderer FrontSpriteRenderer()
         {
             if (_frontSpriteRenderer == null && front != null)
@@ -215,16 +156,6 @@ namespace DiaBlackJack.GameScene
             }
 
             return _frontSpriteRenderer;
-        }
-
-        private Renderer BackRenderer()
-        {
-            if (_backRenderer == null && back != null)
-            {
-                _backRenderer = back.GetComponent<Renderer>();
-            }
-
-            return _backRenderer;
         }
     }
 }

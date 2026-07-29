@@ -12,26 +12,6 @@ PrefabInstance:
       propertyPath: kind
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 1191069393801395701, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
-      propertyPath: hoverColor.b
-      value: 0.34
-      objectReference: {fileID: 0}
-    - target: {fileID: 1191069393801395701, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
-      propertyPath: hoverColor.g
-      value: 0.72
-      objectReference: {fileID: 0}
-    - target: {fileID: 1191069393801395701, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
-      propertyPath: availableColor.b
-      value: 0.32
-      objectReference: {fileID: 0}
-    - target: {fileID: 1191069393801395701, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
-      propertyPath: availableColor.g
-      value: 0.58
-      objectReference: {fileID: 0}
-    - target: {fileID: 1191069393801395701, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
-      propertyPath: availableColor.r
-      value: 0.78
-      objectReference: {fileID: 0}
     - target: {fileID: 3795005150099411801, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 

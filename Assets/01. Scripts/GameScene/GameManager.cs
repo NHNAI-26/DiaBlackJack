@@ -127,7 +127,7 @@ namespace DiaBlackJack.GameScene
             RefreshView();
         }
 
-        // Diegetic input: hover any card to enlarge it (usable cards also glow + show a HUD badge), and
+        // Diegetic input: hover any card to enlarge it (usable cards also show a HUD badge), and
         // click a usable card to activate its effect. New Input System — legacy OnMouseDown does not
         // fire, so we raycast the pointer ourselves. Hit/Stand/Change and the choices stay as OnGUI.
         private void Update()
