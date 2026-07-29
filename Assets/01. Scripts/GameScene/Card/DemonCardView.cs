@@ -1,3 +1,4 @@
+using Border.Audio;
 using UnityEngine;
 
 namespace DiaBlackJack.GameScene
@@ -17,6 +18,7 @@ namespace DiaBlackJack.GameScene
         [Header("Hover feel")]
         [SerializeField] private float hoverScale = 1.15f;
         [SerializeField] private float scaleLerp = 12f;
+        [SerializeField] private string hoverSfxId = "cardHover";
         private SpriteRenderer _frontSpriteRenderer;
         private Vector3 _baseScale = Vector3.one;
         private Vector3 _targetScale = Vector3.one;
@@ -84,7 +86,13 @@ namespace DiaBlackJack.GameScene
 
         public void SetHovered(bool hovered)
         {
+            if (_hovered == hovered)
+            {
+                return;
+            }
+
             _hovered = hovered;
+            PlayHoverSfx(hovered);
             _targetScale = hovered ? _baseScale * hoverScale : _baseScale;
         }
 
@@ -136,6 +144,16 @@ namespace DiaBlackJack.GameScene
             {
                 renderer.sprite = sprite;
             }
+        }
+
+        private void PlayHoverSfx(bool hovered)
+        {
+            if (!hovered || string.IsNullOrWhiteSpace(hoverSfxId))
+            {
+                return;
+            }
+
+            SoundManager.Current?.PlaySfx(hoverSfxId);
         }
 
         private Sprite SpriteForIndex(int index)
