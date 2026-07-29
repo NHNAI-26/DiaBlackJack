@@ -23,6 +23,7 @@ namespace DiaBlackJack.StageProgression
         private readonly int _whiskeyBasePrice;
         private readonly int _utilityPriceIncrease;
         private readonly int _whiskeyRecovery;
+        private readonly int _seed;
         private int _nextOfferId;
 
         public ShopOfferGenerator(
@@ -52,10 +53,23 @@ namespace DiaBlackJack.StageProgression
             _whiskeyBasePrice = whiskeyBasePrice;
             _utilityPriceIncrease = utilityPriceIncrease;
             _whiskeyRecovery = whiskeyRecovery;
+            _seed = seed;
             _random.Reseed(seed);
         }
 
         internal int NextOfferOrdinal => _nextOfferId;
+
+        internal ShopOfferGenerator CreateFresh()
+        {
+            return new ShopOfferGenerator(
+                _seed,
+                _normalCardPrice,
+                _demonCardPrice,
+                _lighterBasePrice,
+                _whiskeyBasePrice,
+                _utilityPriceIncrease,
+                _whiskeyRecovery);
+        }
 
         public ShopOffer Generate(
             int visitIndex,

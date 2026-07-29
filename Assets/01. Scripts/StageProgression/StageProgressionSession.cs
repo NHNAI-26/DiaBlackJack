@@ -11,6 +11,7 @@ namespace DiaBlackJack.StageProgression
         private readonly BattleRewardGenerator _rewardGenerator;
         private readonly Func<StageDefinition, BattleRewardTier> _rewardTierSelector;
         private readonly GoldRewardCatalog _goldRewardCatalog;
+        private readonly bool _usesBattleRewards;
         private readonly StartingDemonSelectionGenerator _startingDemonSelectionGenerator;
         private OpponentSelectionGenerator _opponentSelectionGenerator;
         private CoreLoopSession _battleSession;
@@ -23,7 +24,8 @@ namespace DiaBlackJack.StageProgression
             Func<StageDefinition, BattleRewardTier> rewardTierSelector = null,
             OpponentSelectionGenerator opponentSelectionGenerator = null,
             StartingDemonSelectionGenerator startingDemonSelectionGenerator = null,
-            GoldRewardCatalog goldRewardCatalog = null)
+            GoldRewardCatalog goldRewardCatalog = null,
+            bool usesBattleRewards = true)
         {
             Progress = progress ?? throw new ArgumentNullException(nameof(progress));
             _battleFactory = battleFactory ?? StageBattleFactory.Create;
@@ -32,6 +34,7 @@ namespace DiaBlackJack.StageProgression
                 DefaultRewardSeed);
             _rewardTierSelector = rewardTierSelector ?? SelectDefaultRewardTier;
             _goldRewardCatalog = goldRewardCatalog ?? GoldRewardCatalog.CreatePrototype();
+            _usesBattleRewards = usesBattleRewards;
             _opponentSelectionGenerator = opponentSelectionGenerator;
             _startingDemonSelectionGenerator = startingDemonSelectionGenerator;
             ActiveStage = opponentSelectionGenerator == null
@@ -45,11 +48,15 @@ namespace DiaBlackJack.StageProgression
 
         public bool IsOpponentSelectionEnabled => _opponentSelectionGenerator != null;
 
+        public bool UsesBattleRewards => _usesBattleRewards;
+
         public OpponentSelectionOffer PendingOpponentSelection { get; private set; }
 
         public StartingDemonSelectionOffer PendingStartingDemonSelection { get; private set; }
 
         public RunProgress Progress { get; }
+
+        internal event Action BattleResultSynchronized;
 
         internal int BattleRewardOrdinal => _rewardGenerator.NextOfferOrdinal;
 
@@ -432,7 +439,9 @@ namespace DiaBlackJack.StageProgression
             switch (battle.Outcome)
             {
                 case BattleOutcome.PlayerVictory:
-                    resultApplied = TryBeginBattleReward();
+                    resultApplied = _usesBattleRewards
+                        ? TryBeginBattleReward()
+                        : Progress.TryCompleteBattleWithoutReward();
                     break;
                 case BattleOutcome.PlayerDefeat:
                     resultApplied = Progress.TryDefeatRun();
@@ -452,6 +461,7 @@ namespace DiaBlackJack.StageProgression
             }
 
             _processedBattle = battle;
+            BattleResultSynchronized?.Invoke();
         }
 
         private int ResolveGoldReward(CoreLoopBattle battle)

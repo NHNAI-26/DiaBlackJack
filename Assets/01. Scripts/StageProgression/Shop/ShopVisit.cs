@@ -123,7 +123,7 @@ namespace DiaBlackJack.StageProgression
 
         public bool TryClose(int offerId)
         {
-            if (IsClosed || offerId != Offer.OfferId)
+            if (!CanClose(offerId))
             {
                 return false;
             }
@@ -136,6 +136,11 @@ namespace DiaBlackJack.StageProgression
                 null,
                 0);
             return true;
+        }
+
+        internal bool CanClose(int offerId)
+        {
+            return !IsClosed && offerId == Offer.OfferId;
         }
 
         private bool CanProcess(int offerId, PlayerRunState player)
