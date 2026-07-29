@@ -425,7 +425,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Border::DiaBlackJack.StageProgression.UI.StageProgressionRuntime
   progressionSceneName: StageTest
-  battleSceneName: CoreLoopTest
+  battleSceneName: GameScene
   seed: 20260719
 --- !u!4 &2032088910
 Transform:

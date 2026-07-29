@@ -94,12 +94,62 @@ namespace DiaBlackJack.StageProgression.UI
         public string Summary { get; }
     }
 
+    public sealed class ShopCardOptionViewModel
+    {
+        public ShopCardOptionViewModel(
+            int optionId,
+            string displayName,
+            string category,
+            string summary,
+            string price,
+            bool canBuy,
+            bool isSold)
+        {
+            OptionId = optionId;
+            DisplayName = displayName;
+            Category = category;
+            Summary = summary;
+            Price = price;
+            CanBuy = canBuy;
+            IsSold = isSold;
+        }
+
+        public bool CanBuy { get; }
+        public string Category { get; }
+        public string DisplayName { get; }
+        public bool IsSold { get; }
+        public int OptionId { get; }
+        public string Price { get; }
+        public string Summary { get; }
+    }
+
+    public sealed class ShopOwnedCardViewModel
+    {
+        public ShopOwnedCardViewModel(
+            int cardId,
+            string displayName,
+            bool canRemove)
+        {
+            CardId = cardId;
+            DisplayName = displayName;
+            CanRemove = canRemove;
+        }
+
+        public int CardId { get; }
+        public bool CanRemove { get; }
+        public string DisplayName { get; }
+    }
+
     public sealed class StageProgressionViewModel
     {
         private readonly ReadOnlyCollection<BattleRewardOptionViewModel> _rewardOptions;
         private readonly ReadOnlyCollection<OpponentCandidateViewModel> _opponentCandidates;
         private readonly ReadOnlyCollection<StartingDemonOptionViewModel>
             _startingDemonOptions;
+        private readonly ReadOnlyCollection<ShopCardOptionViewModel>
+            _shopCardOptions;
+        private readonly ReadOnlyCollection<ShopOwnedCardViewModel>
+            _shopOwnedCards;
 
         public StageProgressionViewModel(
             string stageProgress,
@@ -125,7 +175,18 @@ namespace DiaBlackJack.StageProgression.UI
             bool canConfirmOpponent,
             int? startingDemonOfferId,
             IEnumerable<StartingDemonOptionViewModel> startingDemonOptions,
-            bool canSelectStartingDemon)
+            bool canSelectStartingDemon,
+            string playerGold,
+            string goldResult,
+            bool isShop,
+            int? shopOfferId,
+            IEnumerable<ShopCardOptionViewModel> shopCardOptions,
+            IEnumerable<ShopOwnedCardViewModel> shopOwnedCards,
+            string lighterLabel,
+            string whiskeyLabel,
+            bool canRestAtShop,
+            bool canLeaveShop,
+            string shopTransactionResult)
         {
             StageProgress = stageProgress;
             StageName = stageName;
@@ -159,6 +220,21 @@ namespace DiaBlackJack.StageProgression.UI
                     nameof(startingDemonOptions)))
                 .AsReadOnly();
             CanSelectStartingDemon = canSelectStartingDemon;
+            PlayerGold = playerGold;
+            GoldResult = goldResult;
+            IsShop = isShop;
+            ShopOfferId = shopOfferId;
+            _shopCardOptions = new List<ShopCardOptionViewModel>(
+                shopCardOptions ?? throw new ArgumentNullException(
+                    nameof(shopCardOptions))).AsReadOnly();
+            _shopOwnedCards = new List<ShopOwnedCardViewModel>(
+                shopOwnedCards ?? throw new ArgumentNullException(
+                    nameof(shopOwnedCards))).AsReadOnly();
+            LighterLabel = lighterLabel;
+            WhiskeyLabel = whiskeyLabel;
+            CanRestAtShop = canRestAtShop;
+            CanLeaveShop = canLeaveShop;
+            ShopTransactionResult = shopTransactionResult;
         }
 
         public string StageProgress { get; }
@@ -210,6 +286,20 @@ namespace DiaBlackJack.StageProgression.UI
             StartingDemonOptions => _startingDemonOptions;
 
         public bool CanSelectStartingDemon { get; }
+
+        public bool CanLeaveShop { get; }
+        public bool CanRestAtShop { get; }
+        public string GoldResult { get; }
+        public bool IsShop { get; }
+        public string LighterLabel { get; }
+        public string PlayerGold { get; }
+        public IReadOnlyList<ShopCardOptionViewModel> ShopCardOptions =>
+            _shopCardOptions;
+        public int? ShopOfferId { get; }
+        public IReadOnlyList<ShopOwnedCardViewModel> ShopOwnedCards =>
+            _shopOwnedCards;
+        public string ShopTransactionResult { get; }
+        public string WhiskeyLabel { get; }
     }
 
     public static class StageProgressionPresenter
@@ -221,7 +311,7 @@ namespace DiaBlackJack.StageProgression.UI
                 throw new ArgumentNullException(nameof(progress));
             }
 
-            return Create(progress, null, null, null);
+            return Create(progress, null, null, null, null);
         }
 
         public static StageProgressionViewModel Create(
@@ -237,14 +327,34 @@ namespace DiaBlackJack.StageProgression.UI
                 session.Progress,
                 session.PendingOpponentSelection,
                 session.PendingStartingDemonSelection,
-                focusedProfileKey);
+                focusedProfileKey,
+                null);
+        }
+
+        public static StageProgressionViewModel Create(
+            FormalRunSession session,
+            string focusedProfileKey = null)
+        {
+            if (session == null)
+            {
+                throw new ArgumentNullException(nameof(session));
+            }
+
+            session.SynchronizeExternalState();
+            return Create(
+                session.CombatSession.Progress,
+                session.CombatSession.PendingOpponentSelection,
+                session.CombatSession.PendingStartingDemonSelection,
+                focusedProfileKey,
+                session);
         }
 
         private static StageProgressionViewModel Create(
             RunProgress progress,
             OpponentSelectionOffer opponentOffer,
             StartingDemonSelectionOffer startingDemonOffer,
-            string focusedProfileKey)
+            string focusedProfileKey,
+            FormalRunSession formalSession)
         {
             bool isStartingDemonSelection =
                 progress.State == StageProgressionState.NotStarted &&
@@ -265,11 +375,13 @@ namespace DiaBlackJack.StageProgression.UI
                 isOpponentSelection
                     ? CreateOpponentCandidates(
                         opponentOffer,
-                        validatedFocusedProfileKey)
+                        validatedFocusedProfileKey,
+                        formalSession != null)
                     : Array.Empty<OpponentCandidateViewModel>();
 
             StageDefinition stage = progress.CurrentStage;
-            bool canResolveReward = progress.State == StageProgressionState.RewardSelection;
+            bool canResolveReward = formalSession == null &&
+                progress.State == StageProgressionState.RewardSelection;
             PendingBattleReward pendingReward = progress.PendingReward;
             if (canResolveReward && pendingReward == null)
             {
@@ -277,20 +389,41 @@ namespace DiaBlackJack.StageProgression.UI
                     "Reward selection state requires a pending battle reward.");
             }
 
+            ShopVisit shop = formalSession?.ActiveShop;
+            bool isShop = formalSession?.Phase == FormalRunPhase.Shop;
+            if (isShop && shop == null)
+            {
+                throw new InvalidOperationException(
+                    "Formal shop phase requires an active shop visit.");
+            }
+
+            IReadOnlyList<ShopCardOptionViewModel> shopOptions = isShop
+                ? CreateShopOptions(shop, progress.Player)
+                : Array.Empty<ShopCardOptionViewModel>();
+            IReadOnlyList<ShopOwnedCardViewModel> ownedCards = isShop
+                ? CreateOwnedCards(shop, progress.Player)
+                : Array.Empty<ShopOwnedCardViewModel>();
+
             return new StageProgressionViewModel(
                 $"STAGE {progress.CurrentStageIndex + 1} / {progress.Stages.Count}",
                 stage.DisplayName,
                 stage.Kind == StageKind.FinalBossCombat ? "FINAL BOSS" : "NORMAL COMBAT",
                 $"{progress.Player.CurrentSoul} / {progress.Player.MaximumSoul}",
                 progress.State,
-                isStartingDemonSelection
-                    ? "CHOOSE STARTING DEMON"
-                    : GetMessage(progress.State),
+                isShop
+                    ? "SHOP"
+                    : isStartingDemonSelection
+                        ? "CHOOSE STARTING DEMON"
+                        : GetMessage(progress.State),
                 progress.State == StageProgressionState.NotStarted &&
                     !isStartingDemonSelection,
-                progress.State == StageProgressionState.StageCleared,
-                progress.State == StageProgressionState.RunVictory ||
-                    progress.State == StageProgressionState.RunDefeat,
+                formalSession == null &&
+                    progress.State == StageProgressionState.StageCleared,
+                formalSession == null
+                    ? progress.State == StageProgressionState.RunVictory ||
+                        progress.State == StageProgressionState.RunDefeat
+                    : formalSession.Phase == FormalRunPhase.RunVictory ||
+                        formalSession.Phase == FormalRunPhase.RunDefeat,
                 canResolveReward ? GetRewardTier(pendingReward.Offer.Tier) : string.Empty,
                 canResolveReward
                     ? CreateRewardOptions(pendingReward.Offer)
@@ -313,7 +446,33 @@ namespace DiaBlackJack.StageProgression.UI
                 isStartingDemonSelection
                     ? CreateStartingDemonOptions(startingDemonOffer)
                     : Array.Empty<StartingDemonOptionViewModel>(),
-                isStartingDemonSelection);
+                isStartingDemonSelection,
+                $"{progress.Player.CurrentGold} GOLD",
+                formalSession != null && formalSession.LastGoldReward > 0
+                    ? $"VICTORY +{formalSession.LastGoldReward} GOLD"
+                    : string.Empty,
+                isShop,
+                isShop ? shop.Offer.OfferId : (int?)null,
+                shopOptions,
+                ownedCards,
+                isShop
+                    ? CreateUtilityLabel(
+                        "LIGHTER",
+                        shop.Offer.LighterPrice,
+                        shop.HasRemovedCard)
+                    : string.Empty,
+                isShop
+                    ? CreateUtilityLabel(
+                        "WHISKEY",
+                        shop.Offer.WhiskeyPrice,
+                        shop.HasRested)
+                    : string.Empty,
+                isShop &&
+                    !shop.HasRested &&
+                    progress.Player.CurrentSoul < progress.Player.MaximumSoul &&
+                    progress.Player.CurrentGold >= shop.Offer.WhiskeyPrice,
+                isShop && !shop.IsClosed,
+                isShop ? CreateShopTransactionResult(shop) : string.Empty);
         }
 
         private static IReadOnlyList<StartingDemonOptionViewModel>
@@ -336,9 +495,13 @@ namespace DiaBlackJack.StageProgression.UI
 
         private static IReadOnlyList<OpponentCandidateViewModel> CreateOpponentCandidates(
             OpponentSelectionOffer offer,
-            string focusedProfileKey)
+            string focusedProfileKey,
+            bool usesFormalRewards)
         {
             var candidates = new List<OpponentCandidateViewModel>(offer.Candidates.Count);
+            GoldRewardCatalog goldCatalog = usesFormalRewards
+                ? GoldRewardCatalog.CreatePrototype()
+                : null;
             foreach (OpponentSelectionCandidate candidate in offer.Candidates)
             {
                 EnemyProfilePreview preview = candidate.Preview;
@@ -348,13 +511,126 @@ namespace DiaBlackJack.StageProgression.UI
                     preview.Grade.ToString().ToUpperInvariant(),
                     $"SOUL {preview.MaximumSoul}",
                     preview.Summary,
-                    GetRewardTier(preview.ExpectedRewardTier),
+                    usesFormalRewards
+                        ? $"VICTORY GOLD {goldCatalog.GetAmount(preview.ProfileKey)}"
+                        : GetRewardTier(preview.ExpectedRewardTier),
                     StringComparer.Ordinal.Equals(
                         candidate.ProfileKey,
                         focusedProfileKey)));
             }
 
             return candidates;
+        }
+
+        private static IReadOnlyList<ShopCardOptionViewModel> CreateShopOptions(
+            ShopVisit shop,
+            PlayerRunState player)
+        {
+            var options = new List<ShopCardOptionViewModel>(
+                shop.Offer.CardOptions.Count);
+            foreach (ShopCardOption option in shop.Offer.CardOptions)
+            {
+                bool isSold = ContainsOptionId(
+                    shop.PurchasedOptionIds,
+                    option.OptionId);
+                string displayName;
+                string summary;
+                string category;
+                if (option.DeckKind == ShopCardDeckKind.Normal)
+                {
+                    CardDefinition definition = CardDefinitionCatalog.GetByKey(
+                        option.DefinitionKey);
+                    displayName = $"{definition.Rank} {definition.DisplayName}";
+                    summary = GetEffectSummary(definition);
+                    category = "CARD";
+                }
+                else
+                {
+                    DemonContractDefinition definition =
+                        DemonContractCatalog.Default.GetByKey(option.DefinitionKey);
+                    displayName = definition.DisplayName;
+                    summary = definition.Summary;
+                    category = "DEMON";
+                }
+
+                options.Add(new ShopCardOptionViewModel(
+                    option.OptionId,
+                    displayName,
+                    category,
+                    summary,
+                    $"{option.Price} GOLD",
+                    !isSold && player.CurrentGold >= option.Price,
+                    isSold));
+            }
+
+            return options;
+        }
+
+        private static IReadOnlyList<ShopOwnedCardViewModel> CreateOwnedCards(
+            ShopVisit shop,
+            PlayerRunState player)
+        {
+            var cards = new List<ShopOwnedCardViewModel>(player.Deck.Count);
+            foreach (RunCardDefinition card in player.Deck)
+            {
+                CardDefinition definition = CardDefinitionCatalog.GetByKey(
+                    card.DefinitionKey);
+                cards.Add(new ShopOwnedCardViewModel(
+                    card.Id,
+                    $"{definition.Rank} {definition.DisplayName}",
+                    !shop.HasRemovedCard &&
+                        player.CurrentGold >= shop.Offer.LighterPrice &&
+                        player.CanRemoveCard(card.Id)));
+            }
+
+            return cards;
+        }
+
+        private static bool ContainsOptionId(
+            IReadOnlyCollection<int> optionIds,
+            int optionId)
+        {
+            foreach (int candidate in optionIds)
+            {
+                if (candidate == optionId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static string CreateUtilityLabel(
+            string name,
+            int price,
+            bool wasUsed)
+        {
+            return wasUsed ? $"{name}  USED" : $"{name}  {price} GOLD";
+        }
+
+        private static string CreateShopTransactionResult(ShopVisit shop)
+        {
+            ShopTransaction transaction = shop.LastTransaction;
+            if (transaction == null)
+            {
+                return string.Empty;
+            }
+
+            switch (transaction.Kind)
+            {
+                case ShopTransactionKind.CardPurchase:
+                    return $"PURCHASED  {transaction.DefinitionKey}";
+                case ShopTransactionKind.CardRemoval:
+                    return $"REMOVED CARD  {transaction.AffectedCardId}";
+                case ShopTransactionKind.SoulRecovery:
+                    return $"RECOVERED {transaction.SoulRecovered} SOUL";
+                case ShopTransactionKind.Leave:
+                    return "SHOP CLOSED";
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(transaction.Kind));
+            }
         }
 
         private static bool ContainsProfileKey(

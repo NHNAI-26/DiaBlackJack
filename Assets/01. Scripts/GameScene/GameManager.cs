@@ -3,21 +3,22 @@ using System.Collections;
 using System.Collections.Generic;
 using DiaBlackJack.CoreLoop;
 using DiaBlackJack.CoreLoop.UI;
+using DiaBlackJack.StageProgression;
+using DiaBlackJack.StageProgression.UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace DiaBlackJack.GameScene
 {
     /// <summary>
-    /// Owns and drives one standalone CoreLoop battle for the GameScene. The single coordinator: it
+    /// Owns and drives a CoreLoop battle for the GameScene. The single coordinator: it
     /// holds the <see cref="CoreLoopSession"/>, takes input (temporary IMGUI buttons — the project is
     /// new-Input-System-only, so legacy OnMouseDown / Input.GetKey do not fire), and on every action
     /// re-presents through <see cref="GameScenePresenter"/> into the HUD and the two hands. Rendering
     /// lives in <see cref="GameHudView"/> and <see cref="CardHand"/>; this type only orchestrates.
-    /// MVP surface: hit, stand, restart, and a post-victory shop delegated to <see cref="ShopController"/>
-    /// (gold reward + merchant + goods on the table + leave). The shop is GameScene-local (no
-    /// StageProgression); leaving it restarts into the next battle with gold kept, while a defeat
-    /// restart starts a fresh run with gold reset to 0.
+    /// During a formal run, actions are forwarded through <see cref="StageProgressionSession"/> so
+    /// battle completion, gold, and the next shop remain authoritative there. When opened directly,
+    /// the existing standalone shop MVP remains available for isolated scene testing.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameManager : MonoBehaviour
@@ -65,6 +66,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameSceneCameraViewController cameraViewController;
 
         private CoreLoopSession _session;
+        private StageProgressionSession _stageSession;
+        private StageProgressionRuntime _stageRuntime;
         private CoreLoopViewModel _core;
         private Camera _camera;
         private CardView _hoveredCard;
@@ -106,19 +109,37 @@ namespace DiaBlackJack.GameScene
         private readonly List<RemovedNormalCard> _removedNormalCards =
             new List<RemovedNormalCard>();
 
-        public CoreLoopBattle Battle => _session?.Battle;
+        public CoreLoopBattle Battle => IsStageBattle
+            ? _stageSession.Battle
+            : _session?.Battle;
 
         private void Awake()
         {
             HideRevolverAnimation();
             ResolveHammerAnimation()?.Hide();
-            _activeEnemyProfileKey = ResolveEnemyProfileKey();
+            _stageRuntime = StageProgressionRuntime.Instance;
+            StageProgressionSession runtimeSession =
+                _stageRuntime?.FormalSession?.CombatSession ??
+                _stageRuntime?.Session;
+            if (runtimeSession != null &&
+                runtimeSession.Progress.State == StageProgressionState.InBattle &&
+                runtimeSession.Battle != null)
+            {
+                _stageSession = runtimeSession;
+                _activeEnemyProfileKey =
+                    runtimeSession.ActiveStage?.BattleProfileKey ??
+                    ResolveEnemyProfileKey();
+            }
+            else
+            {
+                _activeEnemyProfileKey = ResolveEnemyProfileKey();
+                _session = new CoreLoopSession(CreateBattle);
+            }
+
             if (enemyCharacter != null)
             {
                 enemyCharacter.TrySetEnemyProfile(_activeEnemyProfileKey);
             }
-
-            _session = new CoreLoopSession(CreateBattle);
             EnsureDeckPreview();
         }
 
@@ -202,7 +223,7 @@ namespace DiaBlackJack.GameScene
             if (pointedBattleCard != null && pointedBattleCard.CanUse)
             {
                 int cardId = pointedBattleCard.CardId;
-                ProcessInput(() => _session.TryBeginPlayerCardUse(cardId));
+                ProcessInput(() => TryBeginPlayerCardUse(cardId));
                 return;
             }
 
@@ -823,7 +844,11 @@ namespace DiaBlackJack.GameScene
 
             if (_core.State == CoreLoopState.BattleEnded)
             {
-                if (shop != null && shop.IsOpen)
+                if (IsStageBattle)
+                {
+                    DrawHeading("RETURNING TO RUN");
+                }
+                else if (shop != null && shop.IsOpen)
                 {
                     DrawShopControls();
                 }
@@ -884,9 +909,9 @@ namespace DiaBlackJack.GameScene
             };
             var actions = new List<Func<bool>>
             {
-                _session.TryPlayerHit,
-                _session.TryPlayerStand,
-                _session.TryBeginPlayerChange,
+                TryPlayerHit,
+                TryPlayerStand,
+                TryBeginPlayerChange,
                 BeginDemonContractConfirmation
             };
             foreach (ActiveDemonContractActionViewModel action in
@@ -896,7 +921,7 @@ namespace DiaBlackJack.GameScene
                 labels.Add(action.Label);
                 enabled.Add(true);
                 actions.Add(() =>
-                    _session.TryBeginPlayerActiveDemonContractAction(
+                    TryBeginPlayerActiveDemonContractAction(
                         sourceCardId));
             }
 
@@ -1049,7 +1074,7 @@ namespace DiaBlackJack.GameScene
                 int index = i;
                 labels[i] = $"[ {candidates[i]} ]";
                 enabled[i] = true;
-                actions[i] = () => _session.TrySelectChangedCard(index);
+                actions[i] = () => TrySelectChangedCard(index);
             }
 
             DrawHeading("CHOOSE A NEW HIDDEN CARD");
@@ -1068,7 +1093,7 @@ namespace DiaBlackJack.GameScene
                 CardEffectChoiceViewModel choice = choices[i];
                 labels[i] = choice.Label;
                 enabled[i] = true;
-                actions[i] = () => _session.TryResolvePlayerCardChoice(choice.OptionId);
+                actions[i] = () => TryResolvePlayerCardChoice(choice.OptionId);
             }
 
             DrawHeading(_core.CardEffectPrompt);
@@ -1098,7 +1123,7 @@ namespace DiaBlackJack.GameScene
                 labels[i] = choice.Label;
                 enabled[i] = true;
                 actions[i] = () =>
-                    _session.TryResolvePlayerAutomaticCardChoice(
+                    TryResolvePlayerAutomaticCardChoice(
                         interactionId,
                         optionId);
             }
@@ -1141,7 +1166,7 @@ namespace DiaBlackJack.GameScene
                     labels[i] = choice.Title;
                     enabled[i] = choice.CanSelect;
                     actions[i] = () => contract.InteractionId.HasValue &&
-                        _session.TryResolvePlayerDemonContract(
+                        TryResolvePlayerDemonContract(
                             contract.InteractionId.Value,
                             choice.OptionId);
                 }
@@ -1241,7 +1266,7 @@ namespace DiaBlackJack.GameScene
                     {
                         int interactionId = contract.InteractionId.Value;
                         int optionId = choice.OptionId;
-                        ProcessInput(() => _session.TryResolvePlayerDemonContract(
+                        ProcessInput(() => TryResolvePlayerDemonContract(
                             interactionId,
                             optionId));
                     }
@@ -1325,7 +1350,7 @@ namespace DiaBlackJack.GameScene
         private bool ConfirmDemonContract()
         {
             _showDemonContractConfirmation = false;
-            return _session.TryBeginPlayerDemonContract();
+            return TryBeginPlayerDemonContract();
         }
 
         private bool CancelDemonContract()
@@ -1458,7 +1483,93 @@ namespace DiaBlackJack.GameScene
             {
                 RefreshView();
                 UnlockInput();
+                ReturnToProgressionIfStageBattleEnded();
             }
+        }
+
+        private bool TryPlayerHit()
+        {
+            return IsStageBattle
+                ? _stageSession.TryPlayerHit()
+                : _session.TryPlayerHit();
+        }
+
+        private bool TryPlayerStand()
+        {
+            return IsStageBattle
+                ? _stageSession.TryPlayerStand()
+                : _session.TryPlayerStand();
+        }
+
+        private bool TryBeginPlayerChange()
+        {
+            return IsStageBattle
+                ? _stageSession.TryBeginPlayerChange()
+                : _session.TryBeginPlayerChange();
+        }
+
+        private bool TrySelectChangedCard(int candidateIndex)
+        {
+            return IsStageBattle
+                ? _stageSession.TrySelectChangedCard(candidateIndex)
+                : _session.TrySelectChangedCard(candidateIndex);
+        }
+
+        private bool TryBeginPlayerCardUse(int cardId)
+        {
+            return IsStageBattle
+                ? _stageSession.TryBeginPlayerCardUse(cardId)
+                : _session.TryBeginPlayerCardUse(cardId);
+        }
+
+        private bool TryResolvePlayerCardChoice(int optionId)
+        {
+            return IsStageBattle
+                ? _stageSession.TryResolvePlayerCardChoice(optionId)
+                : _session.TryResolvePlayerCardChoice(optionId);
+        }
+
+        private bool TryResolvePlayerAutomaticCardChoice(
+            int interactionId,
+            int optionId)
+        {
+            return IsStageBattle
+                ? _stageSession.TryResolvePlayerAutomaticCardChoice(
+                    interactionId,
+                    optionId)
+                : _session.TryResolvePlayerAutomaticCardChoice(
+                    interactionId,
+                    optionId);
+        }
+
+        private bool TryBeginPlayerDemonContract()
+        {
+            return IsStageBattle
+                ? _stageSession.TryBeginPlayerDemonContract()
+                : _session.TryBeginPlayerDemonContract();
+        }
+
+        private bool TryResolvePlayerDemonContract(
+            int interactionId,
+            int optionId)
+        {
+            return IsStageBattle
+                ? _stageSession.TryResolvePlayerDemonContract(
+                    interactionId,
+                    optionId)
+                : _session.TryResolvePlayerDemonContract(
+                    interactionId,
+                    optionId);
+        }
+
+        private bool TryBeginPlayerActiveDemonContractAction(
+            int sourceContractCardId)
+        {
+            return IsStageBattle
+                ? _stageSession.TryBeginPlayerActiveDemonContractAction(
+                    sourceContractCardId)
+                : _session.TryBeginPlayerActiveDemonContractAction(
+                    sourceContractCardId);
         }
 
         // Fires synchronously for each sub-step while the battle resolves the turn. Snapshots the
@@ -1518,6 +1629,7 @@ namespace DiaBlackJack.GameScene
             // Land on the true current state — e.g. BattleEnded, which is not itself a step.
             RefreshView();
             UnlockInput();
+            ReturnToProgressionIfStageBattleEnded();
         }
 
         private void RefreshView()
@@ -1538,7 +1650,10 @@ namespace DiaBlackJack.GameScene
             if (hud != null)
             {
                 hud.Render(vm.Core);
-                hud.SetGold(shop != null ? shop.Gold : 0);
+                int gold = IsStageBattle
+                    ? _stageSession.Progress.Player.CurrentGold
+                    : shop != null ? shop.Gold : 0;
+                hud.SetGold(gold);
             }
 
             RefreshDeckStacks();
@@ -2181,7 +2296,7 @@ namespace DiaBlackJack.GameScene
         // repeat opens, so this fires the shop exactly once per victory; a defeat opens no shop.
         private void MaybeOpenShop(GameSceneViewModel vm)
         {
-            if (shop == null || shop.IsOpen ||
+            if (IsStageBattle || shop == null || shop.IsOpen ||
                 vm.Core.State != CoreLoopState.BattleEnded ||
                 vm.Core.Outcome != BattleOutcome.PlayerVictory)
             {
@@ -2198,6 +2313,11 @@ namespace DiaBlackJack.GameScene
         private bool LeaveShop()
         {
             CloseDeckPreview();
+            if (IsStageBattle)
+            {
+                return false;
+            }
+
             bool restarted = _session.TryRestart();
             if (restarted && shop != null)
             {
@@ -2217,6 +2337,11 @@ namespace DiaBlackJack.GameScene
         private bool RestartRun()
         {
             CloseDeckPreview();
+            if (IsStageBattle)
+            {
+                return false;
+            }
+
             bool restarted = _session.TryRestart();
             if (restarted && shop != null)
             {
@@ -2233,6 +2358,19 @@ namespace DiaBlackJack.GameScene
             }
 
             return restarted;
+        }
+
+        private bool IsStageBattle => _stageSession != null;
+
+        private void ReturnToProgressionIfStageBattleEnded()
+        {
+            if (!IsStageBattle ||
+                _stageSession.Progress.State == StageProgressionState.InBattle)
+            {
+                return;
+            }
+
+            _stageRuntime?.LoadProgressionScene();
         }
 
         private void UnlockInput()

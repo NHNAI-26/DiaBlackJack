@@ -10,6 +10,7 @@ namespace DiaBlackJack.StageProgression.UI
     public sealed class StageProgressionController : MonoBehaviour
     {
         private StageProgressionRuntime _runtime;
+        private FormalRunSession _formalSession;
         private StageProgressionView _view;
         private bool _inputLocked;
         private int? _focusedOpponentOfferId;
@@ -49,6 +50,10 @@ namespace DiaBlackJack.StageProgression.UI
             _view.ResumeReservationRequested += RequestResumeReservation;
             _view.StartingDemonSelected += RequestSelectStartingDemon;
             _view.SaveRetryRequested += RequestRetrySave;
+            _view.ShopCardPurchaseRequested += RequestBuyShopCard;
+            _view.ShopCardRemovalRequested += RequestRemoveShopCard;
+            _view.ShopRestRequested += RequestRestAtShop;
+            _view.ShopLeaveRequested += RequestLeaveShop;
 
             _runtime.SaveFlow?.TryCheckpointRunEnd();
             RefreshView();
@@ -75,6 +80,10 @@ namespace DiaBlackJack.StageProgression.UI
             _view.ResumeReservationRequested -= RequestResumeReservation;
             _view.StartingDemonSelected -= RequestSelectStartingDemon;
             _view.SaveRetryRequested -= RequestRetrySave;
+            _view.ShopCardPurchaseRequested -= RequestBuyShopCard;
+            _view.ShopCardRemovalRequested -= RequestRemoveShopCard;
+            _view.ShopRestRequested -= RequestRestAtShop;
+            _view.ShopLeaveRequested -= RequestLeaveShop;
         }
 
         public void RequestStartRun()
@@ -151,21 +160,53 @@ namespace DiaBlackJack.StageProgression.UI
                 _runtime.SaveFlow.TryRetryPendingCheckpoint());
         }
 
+        public void RequestBuyShopCard(int offerId, int optionId)
+        {
+            ProcessShopInput(() =>
+                _formalSession != null &&
+                _formalSession.TryBuyShopCard(offerId, optionId));
+        }
+
+        public void RequestRemoveShopCard(int offerId, int cardId)
+        {
+            ProcessShopInput(() =>
+                _formalSession != null &&
+                _formalSession.TryRemoveShopCard(offerId, cardId));
+        }
+
+        public void RequestRestAtShop(int offerId)
+        {
+            ProcessShopInput(() =>
+                _formalSession != null &&
+                _formalSession.TryRestAtShop(offerId));
+        }
+
+        public void RequestLeaveShop(int offerId)
+        {
+            ProcessInput(() =>
+                _formalSession != null &&
+                _formalSession.TryLeaveShop(offerId));
+        }
+
         public void RequestFocusOpponent(string profileKey)
         {
             if (_inputLocked ||
                 CurrentSaveViewModel == null ||
                 CurrentSaveViewModel.BlocksProgressionInput ||
-                _runtime.Session.Progress.State !=
+                ActiveSession.Progress.State !=
                     StageProgressionState.OpponentSelection)
             {
                 return;
             }
 
             StageProgressionViewModel requestedModel =
-                StageProgressionPresenter.Create(
-                    _runtime.Session,
-                    profileKey);
+                _formalSession == null
+                    ? StageProgressionPresenter.Create(
+                        ActiveSession,
+                        profileKey)
+                    : StageProgressionPresenter.Create(
+                        _formalSession,
+                        profileKey);
             if (!StringComparer.Ordinal.Equals(
                     requestedModel.FocusedOpponentProfileKey,
                     profileKey))
@@ -194,7 +235,9 @@ namespace DiaBlackJack.StageProgression.UI
             int offerId = CurrentViewModel.OpponentOfferId.Value;
             string profileKey = CurrentViewModel.FocusedOpponentProfileKey;
             ProcessInput(() =>
-                _runtime.Session.TrySelectOpponent(offerId, profileKey));
+                _formalSession != null
+                    ? _formalSession.TrySelectOpponent(offerId, profileKey)
+                    : ActiveSession.TrySelectOpponent(offerId, profileKey));
         }
 
         private void ProcessInput(Func<bool> action)
@@ -249,12 +292,38 @@ namespace DiaBlackJack.StageProgression.UI
             }
         }
 
+        private void ProcessShopInput(Func<bool> action)
+        {
+            if (_inputLocked || action == null)
+            {
+                return;
+            }
+
+            _inputLocked = true;
+            _view.SetInputLocked(true);
+            try
+            {
+                action();
+                RefreshView();
+            }
+            finally
+            {
+                _inputLocked = false;
+                _view.SetInputLocked(false);
+            }
+        }
+
         private void RefreshView()
         {
+            _formalSession = _runtime.FormalSession;
             SynchronizeFocusedOpponent();
-            CurrentViewModel = StageProgressionPresenter.Create(
-                _runtime.Session,
-                _focusedOpponentProfileKey);
+            CurrentViewModel = _formalSession == null
+                ? StageProgressionPresenter.Create(
+                    ActiveSession,
+                    _focusedOpponentProfileKey)
+                : StageProgressionPresenter.Create(
+                    _formalSession,
+                    _focusedOpponentProfileKey);
             CurrentSaveViewModel = _runtime.SaveFlow == null
                 ? CreateStandaloneSaveViewModel()
                 : RunSavePresenter.Create(_runtime.SaveFlow);
@@ -263,9 +332,9 @@ namespace DiaBlackJack.StageProgression.UI
 
         private void RouteAfterProgressionInput()
         {
-            if (_runtime.Session.Progress.State ==
+            if (ActiveSession.Progress.State ==
                     StageProgressionState.InBattle &&
-                _runtime.Session.Battle != null)
+                ActiveSession.Battle != null)
             {
                 ClearFocusedOpponent();
                 _runtime.LoadBattleScene();
@@ -285,10 +354,10 @@ namespace DiaBlackJack.StageProgression.UI
         private void SynchronizeFocusedOpponent()
         {
             OpponentSelectionOffer offer =
-                _runtime.Session.PendingOpponentSelection;
+                ActiveSession.PendingOpponentSelection;
             if ((_runtime.SaveFlow != null &&
                  _runtime.SaveFlow.IsMenuVisible) ||
-                _runtime.Session.Progress.State !=
+                ActiveSession.Progress.State !=
                     StageProgressionState.OpponentSelection ||
                 offer == null)
             {
@@ -311,45 +380,62 @@ namespace DiaBlackJack.StageProgression.UI
 
         private bool TryStartRun()
         {
-            return _runtime.SaveFlow == null
-                ? _runtime.Session.TryStartRun()
-                : _runtime.SaveFlow.TryStartRun();
+            if (_runtime.SaveFlow != null)
+            {
+                bool started = _runtime.SaveFlow.TryStartRun();
+                _formalSession = _runtime.FormalSession;
+                return started;
+            }
+
+            return _formalSession != null
+                ? _formalSession.TryStartRun()
+                : ActiveSession.TryStartRun();
         }
 
         private bool TryAdvanceToNextStage()
         {
+            if (_formalSession != null)
+            {
+                return false;
+            }
+
             return _runtime.SaveFlow == null
-                ? _runtime.Session.TryAdvanceToNextStage()
+                ? ActiveSession.TryAdvanceToNextStage()
                 : _runtime.SaveFlow.TryAdvanceToNextStage();
         }
 
         private bool TryOpenRunMenu()
         {
             return _runtime.SaveFlow == null
-                ? _runtime.Session.TryRestartRun()
+                ? _formalSession != null
+                    ? _formalSession.TryRestartRun()
+                    : ActiveSession.TryRestartRun()
                 : _runtime.SaveFlow.TryOpenRunMenu();
         }
 
         private bool TrySelectBattleReward(int optionId)
         {
             return _runtime.SaveFlow == null
-                ? _runtime.Session.TrySelectBattleReward(optionId)
+                ? ActiveSession.TrySelectBattleReward(optionId)
                 : _runtime.SaveFlow.TrySelectBattleReward(optionId);
         }
 
         private bool TrySkipBattleReward()
         {
             return _runtime.SaveFlow == null
-                ? _runtime.Session.TrySkipBattleReward()
+                ? ActiveSession.TrySkipBattleReward()
                 : _runtime.SaveFlow.TrySkipBattleReward();
         }
 
         private bool TrySelectStartingDemon(int offerId, int optionId)
         {
             return _runtime.SaveFlow == null
-                ? _runtime.Session.TrySelectStartingDemon(offerId, optionId)
+                ? ActiveSession.TrySelectStartingDemon(offerId, optionId)
                 : _runtime.SaveFlow.TrySelectStartingDemon(offerId, optionId);
         }
+
+        private StageProgressionSession ActiveSession =>
+            _formalSession?.CombatSession ?? _runtime.Session;
 
         private static RunSaveViewModel CreateStandaloneSaveViewModel()
         {

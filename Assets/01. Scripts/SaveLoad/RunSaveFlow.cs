@@ -33,6 +33,7 @@ namespace Border.SaveLoad
         private readonly Func<int, StageProgressionSession> _sessionFactory;
         private readonly Func<int, IReadOnlyList<StageDefinition>> _stagePathFactory;
         private readonly Func<DateTimeOffset> _utcNowProvider;
+        private readonly bool _usesBattleRewards;
         private bool _reservationBlocksSavedRun;
 
         public RunSaveFlow(
@@ -40,7 +41,8 @@ namespace Border.SaveLoad
             RunReservationRepository reservationRepository,
             Func<int, IReadOnlyList<StageDefinition>> stagePathFactory,
             Func<int, StageProgressionSession> sessionFactory,
-            int defaultRootSeed)
+            int defaultRootSeed,
+            bool usesBattleRewards = true)
             : this(
                 saveRepository,
                 reservationRepository,
@@ -48,7 +50,8 @@ namespace Border.SaveLoad
                 sessionFactory,
                 defaultRootSeed,
                 () => Guid.NewGuid().ToString("N"),
-                () => DateTimeOffset.UtcNow)
+                () => DateTimeOffset.UtcNow,
+                usesBattleRewards)
         {
         }
 
@@ -59,7 +62,8 @@ namespace Border.SaveLoad
             Func<int, StageProgressionSession> sessionFactory,
             int defaultRootSeed,
             Func<string> runIdFactory,
-            Func<DateTimeOffset> utcNowProvider)
+            Func<DateTimeOffset> utcNowProvider,
+            bool usesBattleRewards = true)
         {
             _saveRepository = saveRepository ??
                 throw new ArgumentNullException(nameof(saveRepository));
@@ -74,6 +78,7 @@ namespace Border.SaveLoad
             _utcNowProvider = utcNowProvider ??
                 throw new ArgumentNullException(nameof(utcNowProvider));
             _defaultRootSeed = defaultRootSeed;
+            _usesBattleRewards = usesBattleRewards;
 
             Session = _sessionFactory(defaultRootSeed) ??
                 throw new InvalidOperationException(
@@ -192,7 +197,8 @@ namespace Border.SaveLoad
             }
 
             RunRestoreFactory restoreFactory = new RunRestoreFactory(
-                _stagePathFactory);
+                _stagePathFactory,
+                usesBattleRewards: _usesBattleRewards);
             if (!restoreFactory.TryRestore(
                     LastLoadResult.Snapshot,
                     out RunRestoreResult restored,

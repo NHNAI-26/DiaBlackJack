@@ -1447,6 +1447,20 @@ RF-03의 `FormalRunSession`이 아직 없으므로 현재 전투 종료 동기�
 
 두 상점의 나가기 전에는 스테이지 인덱스를 유지하고 나가기 성공 뒤에만 다음 상대 선택 또는 고정 보스를 준비한다. 상점의 회복·구매는 다음 전투 팩토리에 전달되며 서비스 이용 방문은 다음 가격 단계를 한 번 올린다. RF03 12건과 RF-01~03 누적 37/37, Unity 생성 응답 파일 기반 런타임·테스트 어셈블리 컴파일을 확인했다. Unity MCP 미연결과 실행 중 Editor 때문에 전체 EditMode·실제 씬은 실행하지 않았다. UI·씬·프리팹·Packages·외부 에셋·외부 코드·오픈소스·새 의존성은 변경하지 않았고 최종 기획·코드 승인 책임자는 이천서다.
 
+### 3.49 RF-04 정식 런 화면·씬 코드 연결
+
+이천서는 RF-04 착수를 지시했다. AI는 `StageProgressionRuntime`, 저장 흐름의 세션 교체, 진행 Presenter/View/Controller와 `CoreLoopController`의 씬 복귀 조건을 대조했다. Runtime은 현재 저장 세션을 정식 런으로 재결합하고 신규·복원 세션에만 `usesBattleRewards: false`를 적용하며, 기본 유산 세션은 기존 RW 화면을 보존한다. Presenter는 현재/획득 골드, 상대별 승리 골드, 상점 후보·판매 상태·서비스 가격/이용 여부·최근 거래를 계산하고 IMGUI View와 Controller는 구매·제거·회복·나가기 입력을 전달한다.
+
+AI는 RF04 표시·Controller 테스트 6개를 작성하고 런타임과 전체 StageProgression 테스트 어셈블리 컴파일을 확인했다. Unity 비의존 RF04 5개와 RF-01~04 누적 42/42는 격리 실행기로 통과했다. 이후 `GameManager`가 Runtime의 실제 전투 세션을 채택하고 모든 행동을 진행 세션에 위임하도록 보완했다. 선택 상대 프로필과 런 골드를 사용하며, 정식 전투 종료 시 GameScene-local 임시 상점을 열지 않고 `StageTest`의 정식 상점으로 복귀한다. `StageTest`의 전투 목적지를 `GameScene`으로 바꾸고 Build Settings에 GameScene을 추가했으며, 단독 GameScene과 `CoreLoopTest`는 독립 검증 경로로 보존했다.
+
+Unity MCP 지침에 따라 연결 상태를 재확인했으나 로컬 `127.0.0.1:8080/mcp`는 TCP 연결만 되고 initialize handshake가 실패했으며 현재 작업에는 Unity 호출 도구가 노출되지 않았다. 따라서 Unity 전용 Controller 1건, 전체 EditMode, 두 해상도와 실제 `StageTest ↔ GameScene` 왕복은 실행하지 못했다. 런타임·테스트 어셈블리 컴파일, RF 비Unity 42/42와 씬 이름·GUID 직렬화는 확인했다. 외부 에셋·외부 코드·오픈소스·새 패키지·새 의존성은 추가하지 않았으며 최종 기획·코드·화면 승인 책임자는 이천서다.
+
+### 3.50 RF-05 정식 런 반복 회귀와 마감
+
+이천서는 RF-05 착수를 지시했다. AI에는 정식 런의 새 기능을 늘리지 않고 구현 계획의 반복 기준을 테스트로 고정하며, 원본 Unity Editor와 다른 팀원 변경을 보존하고 실제로 확인한 결과만 문서에 기록하도록 지시했다. `FormalRunSystemValidationTests`는 전체 승리·재시작, 상점 구매·라이터·위스키·나가기와 중복 거부, 오래된 상대·상점 입력, 세 전투 위치 패배·재시작, 네 일반 적 선택·골드, 두 씬 직렬화를 검증한다.
+
+AI는 Unity MCP resource-first 연결을 시도했으나 `127.0.0.1:8080/mcp` initialize handshake가 실패했다. 원본 Editor를 종료하지 않고 `Temp/RF05UnityClone` 격리 복제본을 만들어 Unity 6000.3.10f1 EditMode를 실행했다. 신규 RF05 8/8, RF-01~05 비Unity 대상 49/49, 전체 EditMode 744/744가 통과했고 실패·건너뜀·미결정, `error CS`, 처리되지 않은 예외는 0이었다. `StageTest`·`GameScene`의 Build Settings, Runtime 목적지, 필수 컴포넌트와 누락 스크립트 0도 자동 확인했다. 실제 두 해상도 Play Mode 왕복은 확인하지 않았다고 분리 기록했다. 외부 에셋·외부 코드·오픈소스·새 패키지·새 의존성은 추가하지 않았으며 최종 승인 책임자는 이천서다.
+
 ## 4. 생성형 AI 산출물 관리
 
 ### 4.1 코드
