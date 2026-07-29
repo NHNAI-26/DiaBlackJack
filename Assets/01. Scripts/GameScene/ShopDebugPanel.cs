@@ -1,21 +1,12 @@
+using System.Reflection;
+using DiaBlackJack.CoreLoop;
 using UnityEngine;
 
 namespace DiaBlackJack.GameScene
 {
     /// <summary>
-    /// Editor-only debug panel for exercising the GameScene shop without grinding a full battle to a
-    /// win. It drives only public APIs — <see cref="ShopController.Open"/>/<see cref="ShopController.Close"/>/
-    /// <see cref="ShopController.ResetGold"/>, <see cref="GameHudView.SetGold"/>, and the public battle
-    /// soul via <see cref="GameManager.Battle"/> — so it touches no production logic. Drop it on a
-    /// dev-only GameObject in GameScene (which is not in build settings); the panel is also compiled
-    /// out of player builds via <c>UNITY_EDITOR</c>.
-    ///
-    /// Two ways to reach the shop:
-    ///  - "Win Now" depletes the enemy's soul; the next normal STAND then ends the battle in victory,
-    ///    so GameManager's own flow opens the shop for real (natural gold + the "상점 나가기" button +
-    ///    leave-to-next-battle).
-    ///  - "Open Shop" opens it instantly for isolated visual checks (the battle is not actually over,
-    ///    so GameManager keeps drawing HIT/STAND; use "Close Shop" to leave).
+    /// Editor-only debug entry point for the GameScene shop.
+    /// Select the scene's Shop Debug object and use its custom Inspector while in Play Mode.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class ShopDebugPanel : MonoBehaviour
@@ -25,90 +16,111 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameHudView hud;
 
 #if UNITY_EDITOR
-        private GUIStyle _buttonStyle;
+        private const BindingFlags PrivateInstance =
+            BindingFlags.NonPublic | BindingFlags.Instance;
 
-        private void OnGUI()
+        public bool HasGameManager => gameManager != null;
+
+        public bool HasShop => shop != null;
+
+        public bool IsShopOpen => shop != null && shop.IsOpen;
+
+        public int Gold => shop != null ? shop.Gold : 0;
+
+        public bool CanWinNow =>
+            Application.isPlaying &&
+            gameManager != null &&
+            shop != null &&
+            !shop.IsOpen &&
+            gameManager.Battle != null &&
+            gameManager.Battle.State == CoreLoopState.PlayerTurn;
+
+        public bool DebugWinNow()
         {
-            if (shop == null)
+            if (!CanWinNow)
             {
-                return;
+                return false;
             }
 
-            _buttonStyle ??= new GUIStyle(GUI.skin.button) { fontSize = 14, fontStyle = FontStyle.Bold };
-
-            const float w = 160f;
-            const float h = 34f;
-            const float gap = 6f;
-            float x = 16f;
-            float y = Screen.height * 0.5f - (4f * h + 3f * gap) * 0.5f;
-
-            GUI.Label(new Rect(x, y - 22f, w, 20f), $"DEBUG  (gold {shop.Gold})");
-
-            if (DebugButton(ref x, ref y, w, h, gap, "Win Now (적 즉사)"))
+            CoreLoopBattle battle = gameManager.Battle;
+            battle.Enemy.Soul.ApplyDamage(9999);
+            if (!battle.TryPlayerStand())
             {
-                var battle = gameManager != null ? gameManager.Battle : null;
-                if (battle != null)
-                {
-                    // Kill the enemy, then finish the round via STAND so the battle ends in a real
-                    // PlayerVictory, then nudge GameManager to re-present so its own MaybeOpenShop opens
-                    // the shop through the production path (natural gold + the "상점 나가기" button).
-                    battle.Enemy.Soul.ApplyDamage(9999);
-                    battle.TryPlayerStand();
-                    Represent();
-                }
+                return false;
             }
 
-            if (DebugButton(ref x, ref y, w, h, gap, "Open Shop"))
+            RefreshGameView();
+            return true;
+        }
+
+        public bool DebugOpenShop()
+        {
+            if (!Application.isPlaying || shop == null || shop.IsOpen)
             {
-                shop.Open();
-                Represent();
+                return false;
             }
 
-            if (DebugButton(ref x, ref y, w, h, gap, "Close Shop"))
+            shop.Open();
+            RefreshGameView();
+            return true;
+        }
+
+        public bool DebugCloseShop()
+        {
+            if (!Application.isPlaying || shop == null || !shop.IsOpen)
+            {
+                return false;
+            }
+
+            bool leftVictoryShop =
+                gameManager != null &&
+                InvokePrivateBoolean(gameManager, "LeaveShop");
+            if (!leftVictoryShop)
             {
                 shop.Close();
-                Represent();
             }
 
-            if (DebugButton(ref x, ref y, w, h, gap, "Reset Gold"))
+            RefreshGameView();
+            return !shop.IsOpen;
+        }
+
+        public bool DebugResetGold()
+        {
+            if (!Application.isPlaying || shop == null)
             {
-                shop.ResetGold();
-                RefreshGold();
+                return false;
             }
-        }
 
-        // Draws one button in the vertical stack and advances y. Returns true on the frame it is clicked.
-        private bool DebugButton(ref float x, ref float y, float w, float h, float gap, string label)
-        {
-            bool clicked = GUI.Button(new Rect(x, y, w, h), label, _buttonStyle);
-            y += h + gap;
-            return clicked;
-        }
-
-        // The shop owns gold, but the HUD only re-reads it on a GameManager re-present (private). Push
-        // the value straight to the HUD so the counter tracks these debug actions immediately.
-        private void RefreshGold()
-        {
+            shop.ResetGold();
             if (hud != null)
             {
                 hud.SetGold(shop.Gold);
             }
+
+            return true;
         }
 
-        // GameManager's re-present (RefreshView) is private; from this editor-only debug tool we invoke
-        // it reflectively so "Win Now" reaches the same MaybeOpenShop path a real STAND would — without
-        // widening any production API.
-        private void Represent()
+        private void RefreshGameView()
         {
             if (gameManager == null)
             {
                 return;
             }
 
-            System.Reflection.MethodInfo method = typeof(GameManager).GetMethod(
+            MethodInfo method = typeof(GameManager).GetMethod(
                 "RefreshView",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                PrivateInstance);
             method?.Invoke(gameManager, null);
+        }
+
+        private static bool InvokePrivateBoolean(
+            GameManager manager,
+            string methodName)
+        {
+            MethodInfo method = typeof(GameManager).GetMethod(
+                methodName,
+                PrivateInstance);
+            return method?.Invoke(manager, null) is bool result && result;
         }
 #endif
     }
