@@ -25,7 +25,9 @@ namespace DiaBlackJack.CoreLoop
             IEnumerable<string> demonContractDefinitionKeys = null,
             int demonContractCandidateCount =
                 DemonContractDeck.MaximumCandidateCount,
-            bool injectsPoisonIntoPlayerDeckEachRound = false)
+            bool injectsPoisonIntoPlayerDeckEachRound = false,
+            IEnumerable<FixedDemonContractPhaseDefinition>
+                fixedDemonContractPhases = null)
         {
             if (string.IsNullOrWhiteSpace(key))
             {
@@ -127,6 +129,34 @@ namespace DiaBlackJack.CoreLoop
                     nameof(demonContractCandidateCount));
             }
 
+            IReadOnlyList<FixedDemonContractPhaseDefinition>
+                validatedFixedPhases =
+                    FixedDemonContractPhaseDefinition.ValidateAndCopy(
+                        fixedDemonContractPhases,
+                        maximumSoul);
+            if (validatedFixedPhases.Count > 0 && grade != EnemyGrade.Boss)
+            {
+                throw new ArgumentException(
+                    "Only a boss profile can define fixed demon contract phases.",
+                    nameof(fixedDemonContractPhases));
+            }
+
+            var configuredDemonKeys = new HashSet<string>(
+                validatedDemonContractKeys,
+                StringComparer.Ordinal);
+            foreach (FixedDemonContractPhaseDefinition phase in
+                validatedFixedPhases)
+            {
+                if (!configuredDemonKeys.Contains(phase.ActiveDefinitionKey) ||
+                    !configuredDemonKeys.Contains(
+                        phase.DiscardedDefinitionKey))
+                {
+                    throw new ArgumentException(
+                        "Every fixed phase card must exist in the profile demon deck.",
+                        nameof(fixedDemonContractPhases));
+                }
+            }
+
             Key = key;
             DisplayName = displayName;
             Grade = grade;
@@ -141,6 +171,7 @@ namespace DiaBlackJack.CoreLoop
             DemonContractCandidateCount = demonContractCandidateCount;
             InjectsPoisonIntoPlayerDeckEachRound =
                 injectsPoisonIntoPlayerDeckEachRound;
+            FixedDemonContractPhases = validatedFixedPhases;
         }
 
         public string BehaviorPolicyKey { get; }
@@ -154,6 +185,9 @@ namespace DiaBlackJack.CoreLoop
         public IReadOnlyList<string> DemonContractDefinitionKeys { get; }
 
         public string DisplayName { get; }
+
+        public IReadOnlyList<FixedDemonContractPhaseDefinition>
+            FixedDemonContractPhases { get; }
 
         public EnemyGrade Grade { get; }
 

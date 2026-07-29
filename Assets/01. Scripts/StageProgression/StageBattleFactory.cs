@@ -67,7 +67,9 @@ namespace DiaBlackJack.StageProgression
                     enemy.DemonContractCandidateCount,
                 injectsPoisonIntoPlayerDeckEachRound:
                     enemy.InjectsPoisonIntoPlayerDeckEachRound,
-                enablesEnemyChange: true);
+                enablesEnemyChange: true,
+                fixedEnemyDemonContractPhases:
+                    enemy.FixedDemonContractPhases);
         }
 
         private static DemonContractDeck CreateEnemyDemonDeck(

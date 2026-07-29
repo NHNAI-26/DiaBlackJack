@@ -90,6 +90,47 @@ namespace DiaBlackJack.CoreLoop
             return true;
         }
 
+        internal bool ContainsAvailableDefinitionKey(string definitionKey)
+        {
+            if (string.IsNullOrWhiteSpace(definitionKey))
+            {
+                return false;
+            }
+
+            return FindAvailableCard(_drawPile, definitionKey) != null ||
+                FindAvailableCard(_discardPile, definitionKey) != null;
+        }
+
+        internal bool ContainsDiscardedDefinitionKey(string definitionKey)
+        {
+            return !string.IsNullOrWhiteSpace(definitionKey) &&
+                FindAvailableCard(_discardPile, definitionKey) != null;
+        }
+
+        internal bool TryTakeFixedPhaseCards(
+            string activeDefinitionKey,
+            string discardedDefinitionKey,
+            out DemonContractCard activeCard,
+            out DemonContractCard discardedCard)
+        {
+            activeCard = FindAvailableCard(_drawPile, activeDefinitionKey) ??
+                FindAvailableCard(_discardPile, activeDefinitionKey);
+            discardedCard = FindAvailableCard(_drawPile, discardedDefinitionKey) ??
+                FindAvailableCard(_discardPile, discardedDefinitionKey);
+            if (activeCard == null ||
+                discardedCard == null ||
+                activeCard.Id == discardedCard.Id)
+            {
+                activeCard = null;
+                discardedCard = null;
+                return false;
+            }
+
+            RemoveAvailableCard(activeCard);
+            RemoveAvailableCard(discardedCard);
+            return true;
+        }
+
         public void Discard(DemonContractCard card)
         {
             if (card == null)
@@ -182,6 +223,35 @@ namespace DiaBlackJack.CoreLoop
             _drawPile.AddRange(_discardPile);
             _discardPile.Clear();
             Shuffle(_drawPile);
+        }
+
+        private static DemonContractCard FindAvailableCard(
+            IReadOnlyList<DemonContractCard> cards,
+            string definitionKey)
+        {
+            for (int index = 0; index < cards.Count; index++)
+            {
+                DemonContractCard card = cards[index];
+                if (string.Equals(
+                    card.DefinitionKey,
+                    definitionKey,
+                    StringComparison.Ordinal))
+                {
+                    return card;
+                }
+            }
+
+            return null;
+        }
+
+        private void RemoveAvailableCard(DemonContractCard card)
+        {
+            bool removed = _drawPile.Remove(card) || _discardPile.Remove(card);
+            if (!removed || !_availableCardIds.Remove(card.Id))
+            {
+                throw new InvalidOperationException(
+                    $"Demon contract card id {card.Id} is not available.");
+            }
         }
 
         private void Shuffle(List<DemonContractCard> cards)

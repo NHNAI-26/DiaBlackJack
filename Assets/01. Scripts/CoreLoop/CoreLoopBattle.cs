@@ -39,6 +39,8 @@ namespace DiaBlackJack.CoreLoop
         private readonly bool _enablesEnemyChange;
         private readonly int _enemyDemonContractCandidateCount;
         private readonly bool _injectsPoisonIntoPlayerDeckEachRound;
+        private readonly IReadOnlyList<FixedDemonContractPhaseDefinition>
+            _fixedEnemyDemonContractPhases;
         private readonly AutomaticCardBattleState _automaticCardBattleState =
             new AutomaticCardBattleState();
         private readonly DemonContractCardState _demonContractCardState =
@@ -87,6 +89,8 @@ namespace DiaBlackJack.CoreLoop
         private int _playerFinalBonusForEnemyChoice;
         private PlayerChangeSelection _playerChangeSelection;
         private int _nextInjectedPoisonCardId = 1000000000;
+        private int _fixedEnemyDemonContractPhaseIndex = -1;
+        private ActiveDemonContract _activeFixedEnemyDemonContract;
 
         private sealed class PendingBeelzebubBustResolution
         {
@@ -166,7 +170,9 @@ namespace DiaBlackJack.CoreLoop
             int enemyDemonContractCandidateCount =
                 DemonContractDeck.MaximumCandidateCount,
             bool injectsPoisonIntoPlayerDeckEachRound = false,
-            bool enablesEnemyChange = false)
+            bool enablesEnemyChange = false,
+            IEnumerable<FixedDemonContractPhaseDefinition>
+                fixedEnemyDemonContractPhases = null)
             : this(
                 playerDeck,
                 enemyDeck,
@@ -179,7 +185,8 @@ namespace DiaBlackJack.CoreLoop
                 enemyChangeCostMode,
                 enemyDemonContractCandidateCount,
                 injectsPoisonIntoPlayerDeckEachRound,
-                enablesEnemyChange)
+                enablesEnemyChange,
+                fixedEnemyDemonContractPhases)
         {
         }
 
@@ -197,7 +204,9 @@ namespace DiaBlackJack.CoreLoop
             int enemyDemonContractCandidateCount =
                 DemonContractDeck.MaximumCandidateCount,
             bool injectsPoisonIntoPlayerDeckEachRound = false,
-            bool enablesEnemyChange = false)
+            bool enablesEnemyChange = false,
+            IEnumerable<FixedDemonContractPhaseDefinition>
+                fixedEnemyDemonContractPhases = null)
             : this(
                 playerDeck,
                 enemyDeck,
@@ -215,7 +224,9 @@ namespace DiaBlackJack.CoreLoop
                     enemyDemonContractCandidateCount,
                 injectsPoisonIntoPlayerDeckEachRound:
                     injectsPoisonIntoPlayerDeckEachRound,
-                enablesEnemyChange: enablesEnemyChange)
+                enablesEnemyChange: enablesEnemyChange,
+                fixedEnemyDemonContractPhases:
+                    fixedEnemyDemonContractPhases)
         {
         }
 
@@ -237,7 +248,9 @@ namespace DiaBlackJack.CoreLoop
             int enemyDemonContractCandidateCount =
                 DemonContractDeck.MaximumCandidateCount,
             bool injectsPoisonIntoPlayerDeckEachRound = false,
-            bool enablesEnemyChange = false)
+            bool enablesEnemyChange = false,
+            IEnumerable<FixedDemonContractPhaseDefinition>
+                fixedEnemyDemonContractPhases = null)
         {
             if (!Enum.IsDefined(typeof(EnemyChangeCostMode), enemyChangeCostMode))
             {
@@ -272,6 +285,23 @@ namespace DiaBlackJack.CoreLoop
             _enemyDemonContractCandidateCount = enemyDemonContractCandidateCount;
             _injectsPoisonIntoPlayerDeckEachRound =
                 injectsPoisonIntoPlayerDeckEachRound;
+            _fixedEnemyDemonContractPhases =
+                FixedDemonContractPhaseDefinition.ValidateAndCopy(
+                    fixedEnemyDemonContractPhases,
+                    enemyMaximumSoul);
+            foreach (FixedDemonContractPhaseDefinition phase in
+                _fixedEnemyDemonContractPhases)
+            {
+                if (!EnemyDemonDeck.ContainsAvailableDefinitionKey(
+                        phase.ActiveDefinitionKey) ||
+                    !EnemyDemonDeck.ContainsAvailableDefinitionKey(
+                        phase.DiscardedDefinitionKey))
+                {
+                    throw new ArgumentException(
+                        "The enemy demon deck does not contain every fixed phase card.",
+                        nameof(enemyDemonDeck));
+                }
+            }
             Player.FaceUpCardAdded += card => HandleFaceUpCardAdded(
                 CombatantSide.Player,
                 card);
@@ -423,6 +453,9 @@ namespace DiaBlackJack.CoreLoop
 
         public int UsedEnemyBaseDemonContractCount { get; private set; }
 
+        public int FixedEnemyDemonContractPhaseNumber =>
+            _fixedEnemyDemonContractPhaseIndex + 1;
+
         public DemonContractResult LastDemonContractResult { get; private set; }
 
         public DemonContractEffectResult LastDemonContractEffectResult { get; private set; }
@@ -538,6 +571,7 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
+            AdvanceFixedEnemyDemonContractPhases();
             StartRound();
             return true;
         }
@@ -665,7 +699,7 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
-            Enemy.Soul.ApplyDamage(availability.SoulCost);
+            ApplySoulDamage(CombatantSide.Enemy, availability.SoulCost);
             _enemyDemonContractSoulAfterCost = Enemy.Soul.Current;
             _enemyDemonContractCandidates = EnemyDemonDeck.TakeCandidates(
                 _enemyDemonContractCandidateCount);
@@ -1722,7 +1756,7 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
-            Enemy.Soul.ApplyDamage(NextEnemyChangeSoulCost);
+            ApplySoulDamage(CombatantSide.Enemy, NextEnemyChangeSoulCost);
             if (!Enemy.TryBeginChange(out PlayerChangeSelection selection))
             {
                 throw new InvalidOperationException(
@@ -1799,6 +1833,11 @@ namespace DiaBlackJack.CoreLoop
 
         private DemonContractFailureReason EvaluateEnemyDemonContractFailureReason()
         {
+            if (_fixedEnemyDemonContractPhases.Count > 0)
+            {
+                return DemonContractFailureReason.BaseUseLimitReached;
+            }
+
             if (_pendingEnemyDemonContractInteraction != null ||
                 _pendingPlayerDemonContractInteraction != null ||
                 _pendingCardEffect != null ||
@@ -2380,9 +2419,75 @@ namespace DiaBlackJack.CoreLoop
             return true;
         }
 
+        private void AdvanceFixedEnemyDemonContractPhases()
+        {
+            if (_fixedEnemyDemonContractPhases.Count == 0 ||
+                Enemy.Soul.IsDepleted)
+            {
+                return;
+            }
+
+            while (_fixedEnemyDemonContractPhaseIndex + 1 <
+                _fixedEnemyDemonContractPhases.Count)
+            {
+                int nextPhaseIndex = _fixedEnemyDemonContractPhaseIndex + 1;
+                FixedDemonContractPhaseDefinition nextPhase =
+                    _fixedEnemyDemonContractPhases[nextPhaseIndex];
+                if (nextPhaseIndex > 0 &&
+                    Enemy.Soul.Current >
+                        nextPhase.ActivationSoulThreshold.Value)
+                {
+                    return;
+                }
+
+                if (!EnemyDemonDeck.TryTakeFixedPhaseCards(
+                        nextPhase.ActiveDefinitionKey,
+                        nextPhase.DiscardedDefinitionKey,
+                        out DemonContractCard activeCard,
+                        out DemonContractCard discardedCard))
+                {
+                    throw new InvalidOperationException(
+                        "Validated fixed enemy demon contract phase cards are unavailable.");
+                }
+
+                EnemyDemonDeck.Discard(discardedCard);
+                if (_activeFixedEnemyDemonContract != null)
+                {
+                    if (!_activeEnemyDemonContracts.Remove(
+                        _activeFixedEnemyDemonContract))
+                    {
+                        throw new InvalidOperationException(
+                            "The active fixed enemy demon contract is missing.");
+                    }
+
+                    EnemyDemonDeck.Discard(
+                        _activeFixedEnemyDemonContract.SourceCard);
+                }
+
+                var activeContract = new ActiveDemonContract(
+                    activeCard,
+                    CombatantSide.Enemy,
+                    new EmptyDemonContractRuntimeState());
+                _activeEnemyDemonContracts.Add(activeContract);
+                activeContract.SetRuntimeState(
+                    _demonContractResolver.Activate(this, activeContract));
+                _activeFixedEnemyDemonContract = activeContract;
+                _fixedEnemyDemonContractPhaseIndex = nextPhaseIndex;
+                RecordPublicAction(
+                    CombatantSide.Enemy,
+                    PublicCombatActionType.DemonContract,
+                    activeContract.Definition.Key);
+                RaiseStepped();
+            }
+        }
+
         internal void ApplySoulDamage(CombatantSide ownerSide, int amount)
         {
             GetParticipant(ownerSide).Soul.ApplyDamage(amount);
+            if (ownerSide == CombatantSide.Enemy)
+            {
+                AdvanceFixedEnemyDemonContractPhases();
+            }
         }
 
         internal void RegisterPoisonWinReward(
@@ -5648,7 +5753,7 @@ namespace DiaBlackJack.CoreLoop
             int previousRoundNumber = RoundNumber;
 
             Player.Soul.ApplyDamage(1);
-            Enemy.Soul.ApplyDamage(1);
+            ApplySoulDamage(CombatantSide.Enemy, 1);
 
             _automaticCardBattleState.ClearRoundState();
             ClearPlayerDemonContractInteraction();
@@ -6136,6 +6241,7 @@ namespace DiaBlackJack.CoreLoop
                 _activeEnemyDemonContracts);
             State = CoreLoopState.ResolvingRound;
             _damageApplier.TryApply(resolution, Player.Soul, Enemy.Soul);
+            AdvanceFixedEnemyDemonContractPhases();
             _automaticCardBattleState.ResolvePoisonWinRewards(
                 resolution,
                 RoundNumber,

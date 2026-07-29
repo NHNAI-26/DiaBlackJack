@@ -2,7 +2,7 @@
 
 > 프로젝트: DiaBlackJack  
 > 확인 책임자: 이천서  
-> 버전: v0.9
+> 버전: v0.10
 > 확인일: 2026-07-29
 
 ## 1. 확인 목적
@@ -1030,6 +1030,7 @@ Test Framework 준비·결과 저장·정리 안내였으며 컴파일·게임 �
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-29 | 이천서 | EP-R06의 `FixedDemonContractPhaseDefinition`을 기존 `CoreLoop/EnemyProfiles`에 추가하고 프로필→전투 설정→`StageBattleFactory`→`CoreLoopBattle` 순수 경계로 보스 계약 단계를 전달, EPR06 10/10·전체 665/665를 별도 복제본 Unity Test Runner로 검증; 원본 Editor와 GameScene·씬·프리팹·Packages 무변경 |
 | 2026-07-29 | 이천서 | EP-R05 프로필 구성→StageBattleFactory→CoreLoopBattle 경계에 적 체인지·전용 계약·독극물 수명을 추가하고 Unity Roslyn 컴파일, 정책 12/12·CoreLoop 466/466·StageProgression 189/189·전체 655/655 검증; 원본 Editor 유지, GameScene·씬·프리팹·Packages 무변경 |
 | 2026-07-29 | 이천서 | EP-R04의 적 6종 영혼·전용 덱·겁쟁이 합 15·집행자 표시명·보스 영혼 8 표시 호환·아스모데우스 7 이하 제한과 광신도 사탄 선택 정체 방지를 순수 CoreLoop/StageProgression 경계에 반영하고, 별도 복제본 Unity Test Runner에서 EPR04 14/14·CoreLoop 451/451·StageProgression 189/189·전체 EditMode 640/640 통과를 기록; GameScene·씬·프리팹·Packages·외부 자산 무변경 |
 | 2026-07-29 | 이천서 | 평탄화된 `Assets/01. Scripts`·현행 테스트 경로·6400 MCP 브리지를 현재 구조로 정정하고, Notion v0.7 문서 이관은 Unity MCP·Editor·테스트를 사용하지 않은 문서 전용 작업으로 기록 |

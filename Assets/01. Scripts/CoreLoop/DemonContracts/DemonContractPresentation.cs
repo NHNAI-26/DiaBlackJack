@@ -314,6 +314,18 @@ namespace DiaBlackJack.CoreLoop.UI
                 {
                     status = "리볼버 첫 실패 시 재예측";
                 }
+                else if (contract.Kind == DemonContractKind.Baphomet)
+                {
+                    status = "오망성 덱 적용";
+                }
+                else if (contract.Kind == DemonContractKind.Asmodeus)
+                {
+                    status = "숫자 7 이하 카드 제한 · 강제 히트 선택";
+                }
+                else if (contract.Kind == DemonContractKind.Azazel)
+                {
+                    status = "중복 공개 숫자 버스트 · 수동 카드 재활성";
+                }
                 else
                 {
                     status = "효과 구현 예정";

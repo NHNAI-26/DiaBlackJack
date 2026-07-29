@@ -227,7 +227,32 @@ namespace DiaBlackJack.CoreLoop
                         "military-knife-9", "military-knife-9"
                     },
                     "영혼 구간마다 계약과 강행동의 양상을 바꾸는 최종 상대다.",
-                    EnemyInformationMode.PhaseDependent)
+                    EnemyInformationMode.PhaseDependent,
+                    demonContractDefinitionKeys: new[]
+                    {
+                        DemonContractCatalog.BaphometKey,
+                        DemonContractCatalog.MammonKey,
+                        DemonContractCatalog.AsmodeusKey,
+                        DemonContractCatalog.LeviathanKey,
+                        DemonContractCatalog.AzazelKey,
+                        DemonContractCatalog.LuciferKey
+                    },
+                    demonContractCandidateCount: 1,
+                    fixedDemonContractPhases: new[]
+                    {
+                        new FixedDemonContractPhaseDefinition(
+                            activationSoulThreshold: null,
+                            DemonContractCatalog.BaphometKey,
+                            DemonContractCatalog.MammonKey),
+                        new FixedDemonContractPhaseDefinition(
+                            activationSoulThreshold: 5,
+                            DemonContractCatalog.AsmodeusKey,
+                            DemonContractCatalog.LeviathanKey),
+                        new FixedDemonContractPhaseDefinition(
+                            activationSoulThreshold: 2,
+                            DemonContractCatalog.AzazelKey,
+                            DemonContractCatalog.LuciferKey)
+                    })
             };
         }
 

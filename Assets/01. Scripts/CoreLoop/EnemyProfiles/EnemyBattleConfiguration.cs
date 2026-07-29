@@ -52,6 +52,7 @@ namespace DiaBlackJack.CoreLoop
             ChangeCostMode = profile.ChangeCostMode;
             DemonContractCandidateCount = profile.DemonContractCandidateCount;
             DemonContractDefinitionKeys = profile.DemonContractDefinitionKeys;
+            FixedDemonContractPhases = profile.FixedDemonContractPhases;
             InjectsPoisonIntoPlayerDeckEachRound =
                 profile.InjectsPoisonIntoPlayerDeckEachRound;
             ExpectedRewardTier = profile.Grade == EnemyGrade.Normal
@@ -66,6 +67,9 @@ namespace DiaBlackJack.CoreLoop
         public int DemonContractCandidateCount { get; }
 
         public IReadOnlyList<string> DemonContractDefinitionKeys { get; }
+
+        public IReadOnlyList<FixedDemonContractPhaseDefinition>
+            FixedDemonContractPhases { get; }
 
         public IReadOnlyList<CardDefinition> EnemyDeckDefinitions { get; }
 
