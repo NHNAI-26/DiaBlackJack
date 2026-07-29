@@ -785,10 +785,11 @@ namespace DiaBlackJack.GameScene
                     definitionKey: sourceCard?.DefinitionKey);
 
                 // PlayerHand's world orientation makes the highest index land at screen-left.
-                // Keep hidden cards last in the projection while preserving group order.
+                // Keep hidden cards last and prepend face-up cards so new draws appear at
+                // screen-right from the player's perspective.
                 if (!isHiddenCard)
                 {
-                    cards.Insert(cards.Count - hiddenCardCount, projectedCard);
+                    cards.Insert(0, projectedCard);
                 }
                 else
                 {

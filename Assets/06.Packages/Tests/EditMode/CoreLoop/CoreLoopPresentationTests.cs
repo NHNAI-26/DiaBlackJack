@@ -103,7 +103,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void GameSceneProjectsHiddenCardsAtScreenLeftEdgesWithoutMutatingHandOrder()
+        public void GameSceneProjectsNewPlayerDrawsAtScreenRightWithoutMutatingHandOrder()
         {
             CoreLoopBattle battle = CreateBattle(
                 playerRanks: new[] { 10, 2, 4 },
@@ -140,8 +140,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 model.PlayerCards.Select(card => card.CardId),
                 Is.EqualTo(new[]
                 {
-                    playerFaceUpCardId,
                     playerDrawnFaceUpCardId,
+                    playerFaceUpCardId,
                     playerHiddenCardId,
                 }));
             Assert.That(
