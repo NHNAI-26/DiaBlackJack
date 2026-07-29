@@ -31,6 +31,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private TableTotalsView totals;
         [SerializeField] private DeckStackView remainingDeck;
         [SerializeField] private DeckStackView discardDeck;
+        [SerializeField] private DeckPreviewView deckPreview;
 
         [Header("Standalone enemy profile")]
         [SerializeField] private string enemyProfileKey =
@@ -75,7 +76,6 @@ namespace DiaBlackJack.GameScene
         private string _activeEnemyProfileKey;
         private GUIStyle _buttonStyle;
         private GUIStyle _labelStyle;
-        private GUIStyle _panelStyle;
         private GUIStyle _automaticCardPanelStyle;
         private GUIStyle _contractTitleStyle;
         private GUIStyle _contractBodyStyle;
@@ -83,7 +83,6 @@ namespace DiaBlackJack.GameScene
         private GUIStyle _shopPanelStyle;
         private GUIStyle _shopCardButtonStyle;
         private Vector2 _lighterRemovalScroll;
-        private DeckClickable _hoveredDeck;
         private bool _showDemonContractConfirmation;
         private bool _hasLastRevolverAnimationCue;
         private int _lastRevolverAnimationRoundNumber;
@@ -120,11 +119,17 @@ namespace DiaBlackJack.GameScene
             }
 
             _session = new CoreLoopSession(CreateBattle);
+            EnsureDeckPreview();
         }
 
         private void Start()
         {
             RefreshView();
+        }
+
+        private void OnDisable()
+        {
+            CloseDeckPreview();
         }
 
         // Diegetic input: hover any card to enlarge it (usable cards also show a HUD badge), and
@@ -153,16 +158,26 @@ namespace DiaBlackJack.GameScene
                 ? hit.collider.GetComponentInParent<ShopUtilityItemView>()
                 : null;
 
+            if (deckPreview != null && deckPreview.IsOpen)
+            {
+                UpdateHover(null);
+                UpdateDemonCardHover(null);
+                UpdateShopUtilityItemHover(null);
+                hud?.HideCardHoverBadge();
+
+                if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+                {
+                    CloseDeckPreview();
+                }
+
+                return;
+            }
+
             // Hover is visual-only, so it runs even while input is locked (during timeline playback).
             UpdateHover(shopOpen ? pointedShopCard : pointedBattleCard);
             UpdateDemonCardHover(pointedDemonCard);
             UpdateCardHoverBadge();
             UpdateShopUtilityItemHover(pointedShopUtilityItem);
-
-            // A deck's card-list panel shows while the pointer hovers it (draw or discard).
-            _hoveredDeck = !shopOpen && hasHit
-                ? hit.collider.GetComponentInParent<DeckClickable>()
-                : null;
 
             if (_inputLocked || _choosingLighterRemoval)
             {
@@ -172,6 +187,15 @@ namespace DiaBlackJack.GameScene
             Mouse mouse = Mouse.current;
             if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
             {
+                return;
+            }
+
+            DeckClickable pointedDeck = !shopOpen && hasHit
+                ? hit.collider.GetComponentInParent<DeckClickable>()
+                : null;
+            if (pointedDeck != null)
+            {
+                OpenDeckPreview(pointedDeck.Kind);
                 return;
             }
 
@@ -235,6 +259,49 @@ namespace DiaBlackJack.GameScene
             {
                 _hoveredCard.SetHovered(true);
             }
+        }
+
+        private void EnsureDeckPreview()
+        {
+            if (deckPreview == null)
+            {
+                Debug.LogError(
+                    "GameManager requires the scene-authored DeckPreviewOverlay reference.",
+                    this);
+                return;
+            }
+
+            deckPreview.Configure(playerHand == null ? null : playerHand.CardPrefab);
+        }
+
+        private void OpenDeckPreview(DeckKind kind)
+        {
+            CoreLoopBattle battle = Battle;
+            if (battle == null)
+            {
+                return;
+            }
+
+            EnsureDeckPreview();
+            if (deckPreview == null)
+            {
+                return;
+            }
+
+            UpdateHover(null);
+            deckPreview.Open(GameScenePresenter.CreateDeckPreview(battle, kind));
+        }
+
+        private void CloseDeckPreview()
+        {
+            if (deckPreview == null || !deckPreview.IsOpen)
+            {
+                return;
+            }
+
+            deckPreview.Close();
+            UpdateHover(null);
+            hud?.HideCardHoverBadge();
         }
 
         private void UpdateCardHoverBadge()
@@ -745,11 +812,6 @@ namespace DiaBlackJack.GameScene
                 alignment = TextAnchor.MiddleCenter,
                 normal = { textColor = Color.white }
             };
-
-            if (_hoveredDeck != null)
-            {
-                DrawDeckPanel(_hoveredDeck.Kind);
-            }
 
             DrawAutomaticCardStatusPanel();
 
@@ -1307,30 +1369,6 @@ namespace DiaBlackJack.GameScene
                     }
                 }
             }
-        }
-
-        private void DrawDeckPanel(DeckKind kind)
-        {
-            _panelStyle ??= new GUIStyle(GUI.skin.box)
-            {
-                font = uiFont,
-                fontSize = 20,
-                fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.UpperCenter,
-                padding = new RectOffset(18, 18, 18, 18),
-                normal = { textColor = Color.white }
-            };
-
-            const float w = 430f;
-            const float h = 200f;
-            bool draw = kind == DeckKind.Draw;
-            string content = draw
-                ? GameScenePresenter.FormatDrawDeck(Battle)
-                : GameScenePresenter.FormatDiscardDeck(Battle);
-            // Draw-deck panel on the left, discard-deck panel on the right, so they never overlap.
-            float x = draw ? 28f : Screen.width - w - 28f;
-            var rect = new Rect(x, (Screen.height - h) * 0.5f, w, h);
-            GUI.Box(rect, content, _panelStyle);
         }
 
         private void DrawAutomaticCardStatusPanel()
@@ -2150,6 +2188,7 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            CloseDeckPreview();
             shop.Open();
         }
 
@@ -2158,6 +2197,7 @@ namespace DiaBlackJack.GameScene
         // and emits no Stepped events, so ProcessInput re-presents immediately via RefreshView.
         private bool LeaveShop()
         {
+            CloseDeckPreview();
             bool restarted = _session.TryRestart();
             if (restarted && shop != null)
             {
@@ -2176,6 +2216,7 @@ namespace DiaBlackJack.GameScene
         // gold returns to 0.
         private bool RestartRun()
         {
+            CloseDeckPreview();
             bool restarted = _session.TryRestart();
             if (restarted && shop != null)
             {

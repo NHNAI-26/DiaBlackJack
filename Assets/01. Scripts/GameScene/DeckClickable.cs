@@ -11,8 +11,8 @@ namespace DiaBlackJack.GameScene
 
     /// <summary>
     /// Marker on a deck object (draw or discard). <see cref="GameManager"/>'s pointer raycast looks
-    /// for this (via <c>GetComponentInParent</c>) and shows the matching hover panel based on
-    /// <see cref="Kind"/>. Needs a collider on this object (or a child) so the raycast can hit it.
+    /// for this (via <c>GetComponentInParent</c>) and opens the matching card inspector on click.
+    /// Needs a collider on this object (or a child) so the raycast can hit it.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class DeckClickable : MonoBehaviour

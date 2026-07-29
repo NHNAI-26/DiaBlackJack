@@ -324,6 +324,24 @@ namespace DiaBlackJack.CoreLoop
             return CountRanks(_discardPile);
         }
 
+        /// <summary>
+        /// Immutable display snapshots for cards currently waiting in the draw pile. The returned
+        /// sequence is a stable display order, never the next-draw order.
+        /// </summary>
+        public IReadOnlyList<DeckCardDisplaySnapshot> GetDrawPileDisplayCards()
+        {
+            return CreateDisplaySnapshots(_drawPile);
+        }
+
+        /// <summary>
+        /// Immutable display snapshots for cards currently in the discard pile. The returned
+        /// sequence is a stable display order, never the internal discard order.
+        /// </summary>
+        public IReadOnlyList<DeckCardDisplaySnapshot> GetDiscardPileDisplayCards()
+        {
+            return CreateDisplaySnapshots(_discardPile);
+        }
+
         private static IReadOnlyList<int> CountRanks(List<BlackjackCard> pile)
         {
             int[] counts = new int[11];
@@ -333,6 +351,41 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return Array.AsReadOnly(counts);
+        }
+
+        private static IReadOnlyList<DeckCardDisplaySnapshot> CreateDisplaySnapshots(
+            List<BlackjackCard> pile)
+        {
+            var snapshots = new List<DeckCardDisplaySnapshot>(pile.Count);
+            foreach (BlackjackCard card in pile)
+            {
+                snapshots.Add(new DeckCardDisplaySnapshot(card));
+            }
+
+            snapshots.Sort(CompareDisplaySnapshots);
+            return snapshots.AsReadOnly();
+        }
+
+        private static int CompareDisplaySnapshots(
+            DeckCardDisplaySnapshot left,
+            DeckCardDisplaySnapshot right)
+        {
+            int comparison = StringComparer.Ordinal.Compare(
+                left.DefinitionKey,
+                right.DefinitionKey);
+            if (comparison != 0)
+            {
+                return comparison;
+            }
+
+            comparison = left.Rank.CompareTo(right.Rank);
+            if (comparison != 0)
+            {
+                return comparison;
+            }
+
+            comparison = left.Suit.CompareTo(right.Suit);
+            return comparison != 0 ? comparison : left.Id.CompareTo(right.Id);
         }
 
         public static BlackjackDeck CreateStandard(int seed)

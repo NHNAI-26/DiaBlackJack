@@ -307,6 +307,36 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GSV03_U02_DeckPreviewProjectsOnlyAvailablePlayerDrawCards()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 2, 6, 7, 10 },
+                enemyRanks: new[] { 10, 8 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            Assert.That(battle.Start(), Is.True);
+
+            GameSceneDeckViewModel preview = GameScenePresenter.CreateDeckPreview(
+                battle,
+                DeckKind.Draw);
+
+            Assert.That(preview.Title, Is.EqualTo("뽑을 카드"));
+            Assert.That(preview.CardCount, Is.EqualTo(battle.Player.Deck.DrawCount));
+            Assert.That(
+                preview.Cards.Select(card => card.CardId),
+                Is.Not.Contains(battle.Player.Hand.Cards[0].Id));
+            Assert.That(
+                preview.Cards.Select(card => card.CardId),
+                Is.Not.Contains(battle.Player.Hand.Cards[1].Id));
+            Assert.That(preview.Cards.All(card => card.IsFaceUp), Is.True);
+            Assert.That(preview.Cards.All(card => card.RevealRank), Is.True);
+            Assert.That(preview.Cards.All(card => !card.CanUse), Is.True);
+            Assert.That(
+                preview.Cards.All(card => card.ShowHoverBadgeWhenUnavailable),
+                Is.True);
+        }
+
+        [Test]
         public void BA04_PlayerTurnShowsFreeChangeAction()
         {
             CoreLoopBattle battle = CreateBattle(

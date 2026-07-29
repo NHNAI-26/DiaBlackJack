@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 
 namespace DiaBlackJack.CoreLoop.Tests
@@ -82,6 +83,38 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(deck.GetDrawPileRankCounts()[7], Is.EqualTo(1));
             Assert.That(deck.TryAddAvailableCard(new BlackjackCard(2, 7)), Is.False);
             Assert.That(deck.TotalCardCount, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void GSV03_U01_DisplaySnapshotsAreImmutablePileCopiesInStableNonDrawOrder()
+        {
+            var deck = BlackjackDeck.CreateInDrawOrder(
+                new BlackjackCard[]
+                {
+                    new BlackjackCard(
+                        3,
+                        CardDefinitionCatalog.GetByKey(CardDefinitionCatalog.PoisonKey),
+                        suit: CardSuit.Clover),
+                    new BlackjackCard(
+                        2,
+                        CardDefinitionCatalog.GetByKey(CardDefinitionCatalog.PoisonKey),
+                        suit: CardSuit.Spade),
+                    new BlackjackCard(1, 10),
+                    new BlackjackCard(0, 7),
+                });
+
+            var drawDisplay = deck.GetDrawPileDisplayCards();
+
+            Assert.That(drawDisplay.Select(card => card.Id), Is.EqualTo(new[] { 0, 1, 2, 3 }));
+            Assert.That(drawDisplay[2].Suit, Is.EqualTo(CardSuit.Spade));
+            Assert.That(drawDisplay[3].Suit, Is.EqualTo(CardSuit.Clover));
+
+            BlackjackCard nextDraw = deck.Draw();
+            deck.Discard(nextDraw);
+
+            Assert.That(nextDraw.Id, Is.EqualTo(3));
+            Assert.That(drawDisplay[0].Id, Is.Not.EqualTo(nextDraw.Id));
+            Assert.That(deck.GetDiscardPileDisplayCards().Single().Id, Is.EqualTo(3));
         }
 
         [Test]

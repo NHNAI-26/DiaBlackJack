@@ -19,6 +19,8 @@ namespace DiaBlackJack.GameScene
 
         private readonly List<CardView> _spawned = new List<CardView>();
 
+        internal CardView CardPrefab => cardPrefab;
+
         public void Render(IReadOnlyList<GameSceneCardViewModel> cards)
         {
             if (cardPrefab == null || cards == null)

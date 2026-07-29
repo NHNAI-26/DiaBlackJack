@@ -86,6 +86,14 @@ namespace DiaBlackJack.GameScene
         public bool ShouldShowHoverBadge =>
             _hovered && _showBadgeOnHover && !string.IsNullOrEmpty(HoverBadgeText);
 
+        /// <summary>Returns the authored front sprite used for an already-projected card model.</summary>
+        internal Sprite GetFaceSprite(GameSceneCardViewModel card)
+        {
+            return card == null || !card.RevealRank
+                ? null
+                : SpriteForCard(card.DefinitionKey, card.Rank, card.Suit);
+        }
+
         private void Awake()
         {
             _baseScale = transform.localScale;
@@ -171,6 +179,17 @@ namespace DiaBlackJack.GameScene
             PlayHoverScaleTween(hovered ? _baseScale * hoverScale : _baseScale);
             ApplyHoverOutline(hovered);
             ApplyHoverCardBlend(hovered);
+        }
+
+        /// <summary>
+        /// Sets the resting scale used by hover feedback. World-space preview grids call this after
+        /// binding so their cards can be smaller without snapping to the hand-card scale on hover.
+        /// </summary>
+        internal void SetBaseScale(Vector3 baseScale)
+        {
+            _baseScale = baseScale;
+            StopScaleTween();
+            transform.localScale = _baseScale;
         }
 
         /// <summary>

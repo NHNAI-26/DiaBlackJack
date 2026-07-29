@@ -90,6 +90,31 @@ namespace DiaBlackJack.GameScene
     }
 
     /// <summary>
+    /// Immutable projection for inspecting one player deck pile in the GameScene. Cards are already
+    /// in display order and never reveal the next physical draw order.
+    /// </summary>
+    public sealed class GameSceneDeckViewModel
+    {
+        public GameSceneDeckViewModel(
+            DeckKind kind,
+            string title,
+            IReadOnlyList<GameSceneCardViewModel> cards)
+        {
+            Kind = kind;
+            Title = title ?? string.Empty;
+            Cards = cards ?? throw new ArgumentNullException(nameof(cards));
+        }
+
+        public DeckKind Kind { get; }
+
+        public string Title { get; }
+
+        public IReadOnlyList<GameSceneCardViewModel> Cards { get; }
+
+        public int CardCount => Cards.Count;
+    }
+
+    /// <summary>
     /// Maps stable rule definition keys to the numbered source artwork stored in the Unity prefabs.
     /// The authored file order is intentionally not the same as rank or catalog order.
     /// </summary>
@@ -347,6 +372,42 @@ namespace DiaBlackJack.GameScene
                 enemyLabel,
                 CreateRevolverAnimationCue(battle),
                 CreateHammerAnimationCue(battle));
+        }
+
+        /// <summary>
+        /// Projects one of the player's available card piles for inspection. The source deck returns
+        /// immutable, non-draw-ordered snapshots, so this view cannot disclose the next card.
+        /// </summary>
+        public static GameSceneDeckViewModel CreateDeckPreview(
+            CoreLoopBattle battle,
+            DeckKind kind)
+        {
+            if (battle == null)
+            {
+                throw new ArgumentNullException(nameof(battle));
+            }
+
+            IReadOnlyList<DeckCardDisplaySnapshot> snapshots = kind == DeckKind.Draw
+                ? battle.Player.Deck.GetDrawPileDisplayCards()
+                : battle.Player.Deck.GetDiscardPileDisplayCards();
+            var cards = new List<GameSceneCardViewModel>(snapshots.Count);
+            foreach (DeckCardDisplaySnapshot card in snapshots)
+            {
+                cards.Add(new GameSceneCardViewModel(
+                    card.Id,
+                    card.Rank,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    card.DisplayName,
+                    abilityDescription: ResolveAbilityDescription(card.Effect),
+                    suit: card.Suit,
+                    showHoverBadgeWhenUnavailable: true,
+                    definitionKey: card.DefinitionKey));
+            }
+
+            string title = kind == DeckKind.Draw ? "뽑을 카드" : "버린 카드";
+            return new GameSceneDeckViewModel(kind, title, cards.AsReadOnly());
         }
 
         private static GameSceneHammerAnimationCue CreateHammerAnimationCue(
@@ -741,13 +802,16 @@ namespace DiaBlackJack.GameScene
 
         private static string ResolveAbilityDescription(BlackjackCard card)
         {
-            if (card != null &&
-                EffectDescriptions.TryGetValue(card.Definition.Effect, out string description))
-            {
-                return description;
-            }
+            return card == null
+                ? string.Empty
+                : ResolveAbilityDescription(card.Definition.Effect);
+        }
 
-            return string.Empty;
+        private static string ResolveAbilityDescription(CardEffectKind effect)
+        {
+            return EffectDescriptions.TryGetValue(effect, out string description)
+                ? description
+                : string.Empty;
         }
 
         private static BlackjackCard FindCardById(IReadOnlyList<BlackjackCard> cards, int cardId)
