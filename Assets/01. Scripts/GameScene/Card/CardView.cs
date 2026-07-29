@@ -1,3 +1,4 @@
+using DG.Tweening;
 using TMPro;
 using DiaBlackJack.CoreLoop;
 using UnityEngine;
@@ -29,8 +30,19 @@ namespace DiaBlackJack.GameScene
 
         [Header("Hover feel")]
         [SerializeField] private float hoverScale = 1.15f;
-        [SerializeField] private float scaleLerp = 12f;
+        [Min(0.01f)]
+        [SerializeField] private float hoverScaleDuration = 0.08f;
+        [SerializeField] private AnimationCurve hoverScaleCurve =
+            AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
         [SerializeField] private Color glowColor = new Color(1f, 0.85f, 0.3f);
+
+        [Header("Hover outline")]
+        [SerializeField] private bool useMaterialHoverOutlineSettings = true;
+        [ColorUsage(true, true)]
+        [SerializeField] private Color hoverOutlineColor = new Color(0.08f, 0.06f, 0.05f, 1f);
+        [SerializeField] private float hoverOutlineWidth = 1f;
+        [Range(0f, 1f)]
+        [SerializeField] private float hoverOutlineAlphaThreshold = 0.5f;
 
         [Header("Face-down tint")]
         [Tooltip("Tint applied to the card back (face-down) so a hidden card is distinguishable from a "
@@ -39,6 +51,13 @@ namespace DiaBlackJack.GameScene
 
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int BaseSpriteUvRectId = Shader.PropertyToID("_BaseSpriteUVRect");
+        private static readonly int PixelOutlineColorId = Shader.PropertyToID("_PixelOutlineColor");
+        private static readonly int PixelOutlineWidthId = Shader.PropertyToID("_PixelOutlineWidth");
+        private static readonly int PixelOutlineAlphaThresholdId =
+            Shader.PropertyToID("_PixelOutlineAlphaThreshold");
+        private static readonly int PixelOutlineVisibilityId =
+            Shader.PropertyToID("_PixelOutlineVisibility");
+        private const string PixelOutlineKeyword = "_PIXEL_OUTLINE_ON";
 
         private MaterialPropertyBlock _propertyBlock;
         private SpriteRenderer _frontSpriteRenderer;
@@ -47,8 +66,8 @@ namespace DiaBlackJack.GameScene
         private Renderer _backRenderer;
         private Sprite _frontUvSprite;
         private Sprite _backUvSprite;
+        private Tween _scaleTween;
         private Vector3 _baseScale = Vector3.one;
-        private Vector3 _targetScale = Vector3.one;
         private bool _showingFrontFace = true;
         private bool _showBadgeOnHover;
         private bool _hovered;
@@ -69,21 +88,23 @@ namespace DiaBlackJack.GameScene
         private void Awake()
         {
             _baseScale = transform.localScale;
-            _targetScale = _baseScale;
 
             HideRankText();
             RefreshSpriteUvRects();
+            ApplyHoverOutline(false);
         }
 
         private void Update()
         {
             RefreshSpriteUvRects();
+        }
 
-            Vector3 current = transform.localScale;
-            if ((current - _targetScale).sqrMagnitude > 0.0000001f)
-            {
-                transform.localScale = Vector3.Lerp(current, _targetScale, Time.deltaTime * scaleLerp);
-            }
+        private void OnDisable()
+        {
+            StopScaleTween();
+            transform.localScale = _baseScale;
+            _hovered = false;
+            ApplyHoverOutline(false);
         }
 
         public void Bind(GameSceneCardViewModel card)
@@ -123,16 +144,21 @@ namespace DiaBlackJack.GameScene
 
             // Pooled cards are reused; clear any prior hover state and snap to base size.
             _hovered = false;
+            StopScaleTween();
             transform.localScale = _baseScale;
-            _targetScale = _baseScale;
             ApplyHoverVisuals();
         }
 
         /// <summary>Called by the pointer raycast when this card gains/loses hover.</summary>
         public void SetHovered(bool hovered)
         {
+            if (_hovered == hovered)
+            {
+                return;
+            }
+
             _hovered = hovered;
-            _targetScale = hovered ? _baseScale * hoverScale : _baseScale;
+            PlayHoverScaleTween(hovered ? _baseScale * hoverScale : _baseScale);
             ApplyHoverVisuals();
         }
 
@@ -175,6 +201,110 @@ namespace DiaBlackJack.GameScene
             // Back is tinted so a face-down card is distinguishable even though it shares the front's
             // sprite material; the glow overrides it when the face-down card is the hovered usable one.
             ApplyTint(BackRenderer(), lit && !_showingFrontFace ? glowColor : backTint);
+            ApplyHoverOutline(_hovered);
+        }
+
+        private void PlayHoverScaleTween(Vector3 targetScale)
+        {
+            StopScaleTween();
+
+            float duration = Mathf.Max(hoverScaleDuration, 0.01f);
+            _scaleTween = transform.DOScale(targetScale, duration)
+                .SetEase(hoverScaleCurve)
+                .SetTarget(this);
+        }
+
+        private void StopScaleTween()
+        {
+            if (_scaleTween == null)
+            {
+                return;
+            }
+
+            _scaleTween.Kill();
+            _scaleTween = null;
+        }
+
+        private void ApplyHoverOutline(bool visible)
+        {
+            ApplyOutline(FrontRenderer(), visible && _showingFrontFace);
+            ApplyOutline(BackRenderer(), visible && !_showingFrontFace);
+        }
+
+        private void ApplyOutline(Renderer renderer, bool visible)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            EnablePixelOutlineKeyword(renderer);
+
+            Color outlineColor = ResolveOutlineColor(renderer);
+            float outlineWidth = ResolveOutlineWidth(renderer);
+            float outlineAlphaThreshold = ResolveOutlineAlphaThreshold(renderer);
+            if (visible && outlineColor.a <= 0f)
+            {
+                outlineColor.a = 1f;
+            }
+
+            _propertyBlock ??= new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(_propertyBlock);
+            _propertyBlock.SetColor(PixelOutlineColorId, outlineColor);
+            _propertyBlock.SetFloat(PixelOutlineWidthId, outlineWidth);
+            _propertyBlock.SetFloat(PixelOutlineAlphaThresholdId, outlineAlphaThreshold);
+            _propertyBlock.SetFloat(PixelOutlineVisibilityId, visible ? 1f : 0f);
+            renderer.SetPropertyBlock(_propertyBlock);
+        }
+
+        private Color ResolveOutlineColor(Renderer renderer)
+        {
+            Material material = renderer.sharedMaterial;
+            if (useMaterialHoverOutlineSettings &&
+                material != null &&
+                material.HasProperty(PixelOutlineColorId))
+            {
+                return material.GetColor(PixelOutlineColorId);
+            }
+
+            return hoverOutlineColor;
+        }
+
+        private float ResolveOutlineWidth(Renderer renderer)
+        {
+            Material material = renderer.sharedMaterial;
+            if (useMaterialHoverOutlineSettings &&
+                material != null &&
+                material.HasProperty(PixelOutlineWidthId))
+            {
+                return material.GetFloat(PixelOutlineWidthId);
+            }
+
+            return hoverOutlineWidth;
+        }
+
+        private float ResolveOutlineAlphaThreshold(Renderer renderer)
+        {
+            Material material = renderer.sharedMaterial;
+            if (useMaterialHoverOutlineSettings &&
+                material != null &&
+                material.HasProperty(PixelOutlineAlphaThresholdId))
+            {
+                return material.GetFloat(PixelOutlineAlphaThresholdId);
+            }
+
+            return hoverOutlineAlphaThreshold;
+        }
+
+        private static void EnablePixelOutlineKeyword(Renderer renderer)
+        {
+            Material material = renderer.sharedMaterial;
+            if (material == null || material.IsKeywordEnabled(PixelOutlineKeyword))
+            {
+                return;
+            }
+
+            material.EnableKeyword(PixelOutlineKeyword);
         }
 
         private void ApplyFaceSprite(string definitionKey, int rank, CardSuit suit)

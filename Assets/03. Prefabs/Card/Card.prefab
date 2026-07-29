@@ -295,7 +295,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -368705857027367275, guid: d32ffc49dc930b1449c290c74e0561a5, type: 3}
+  m_Sprite: {fileID: 21300000, guid: f23e5edf4db140347b381ed64247f40b, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -480,10 +480,38 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 08a8a36231d3ca1459e4d5080236463c, type: 3}
   - {fileID: 21300000, guid: 4e43362725ff64747a873c16de35fcca, type: 3}
   topPosition: {fileID: 2694824136228126592}
-  hoverScale: 1.15
-  scaleLerp: 12
-  glowColor: {r: 1, g: 0.85, b: 0.3, a: 1}
-  backTint: {r: 0.72, g: 0.28, b: 0.28, a: 1}
+  hoverScale: 1.05
+  hoverScaleDuration: 0.08
+  hoverScaleCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 7.064832
+      outSlope: 7.064832
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.026453484
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  glowColor: {r: 1, g: 1, b: 1, a: 1}
+  useMaterialHoverOutlineSettings: 1
+  hoverOutlineColor: {r: 8, g: 5.5896726, b: 0, a: 1}
+  hoverOutlineWidth: 0
+  hoverOutlineAlphaThreshold: 0.5
+  backTint: {r: 1, g: 1, b: 1, a: 1}
 --- !u!65 &4320678956030072837
 BoxCollider:
   m_ObjectHideFlags: 0

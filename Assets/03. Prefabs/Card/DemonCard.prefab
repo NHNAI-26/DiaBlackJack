@@ -50,8 +50,8 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3268433383922083516, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
       propertyPath: m_Sprite
-      value:
-      objectReference: {fileID: -1460862321811198322, guid: efe05c58df0dff84fbe6fafc5bb71211, type: 3}
+      value: 
+      objectReference: {fileID: 21300000, guid: f793ca74147d4d741981ca7f4041f82e, type: 3}
     - target: {fileID: 7797684679087765860, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
       propertyPath: m_Name
       value: DemonCard

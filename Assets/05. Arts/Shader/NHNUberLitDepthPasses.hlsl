@@ -21,7 +21,7 @@ struct NHNDepthAttributes
 
 struct NHNSilhouetteVaryings
 {
-#if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON)
+#if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON)
     float2 rawUV : TEXCOORD0;
 #endif
 #if defined(NHN_SPRITE_UBER)
@@ -49,7 +49,7 @@ NHNSilhouetteVaryings NHNShadowVertex(NHNDepthAttributes input)
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
-#if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON)
+#if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON)
     output.rawUV = input.uv;
 #endif
 #if defined(NHN_SPRITE_UBER)
@@ -77,7 +77,7 @@ NHNSilhouetteVaryings NHNDepthOnlyVertex(NHNDepthAttributes input)
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
-#if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON)
+#if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON)
     output.rawUV = input.uv;
 #endif
 #if defined(NHN_SPRITE_UBER)
@@ -91,7 +91,7 @@ half4 NHNSilhouetteFragment(NHNSilhouetteVaryings input) : SV_Target
 {
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-#if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON)
+#if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON)
 #if defined(NHN_SPRITE_UBER)
     NHNClipSilhouette(input.rawUV, input.vertexAlpha);
 #else
@@ -103,7 +103,7 @@ half4 NHNSilhouetteFragment(NHNSilhouetteVaryings input) : SV_Target
 
 struct NHNDepthNormalsVaryings
 {
-#if defined(_NORMALMAP) || defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON)
+#if defined(_NORMALMAP) || defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON)
     float2 rawUV : TEXCOORD0;
 #endif
     half3 normalWS : TEXCOORD1;
@@ -131,7 +131,7 @@ NHNDepthNormalsVaryings NHNDepthNormalsVertex(NHNDepthAttributes input)
 #else
     VertexNormalInputs normalInputs = GetVertexNormalInputs(input.normalOS, input.tangentOS);
 #endif
-#if defined(_NORMALMAP) || defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON)
+#if defined(_NORMALMAP) || defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON)
     output.rawUV = input.uv;
 #endif
 #if defined(NHN_SPRITE_UBER)
@@ -170,7 +170,7 @@ half4 NHNDepthNormalsFragment(NHNDepthNormalsVaryings input) : SV_Target
     surfaceUV = TRANSFORM_TEX(input.rawUV, _BaseMap);
 #endif
 #endif
-#if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON)
+#if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON)
     half dissolveEdge;
 #if defined(NHN_SPRITE_UBER)
     NHNApplySurfaceClipping(input.rawUV, baseAlpha, input.vertexAlpha, dissolveEdge);

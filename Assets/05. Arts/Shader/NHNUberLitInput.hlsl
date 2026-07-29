@@ -27,6 +27,10 @@ CBUFFER_START(UnityPerMaterial)
 #if defined(NHN_SPRITE_UBER)
     half _AlphaMultiplier;
     half _CardBlendAmount;
+    half4 _PixelOutlineColor;
+    half _PixelOutlineWidth;
+    half _PixelOutlineAlphaThreshold;
+    half _PixelOutlineVisibility;
 #endif
     half _Cutoff;
     half _Metallic;
@@ -59,15 +63,28 @@ SAMPLER(sampler_DissolveNoiseMap);
 #if defined(NHN_SPRITE_UBER)
 TEXTURE2D(_MainTex);
 SAMPLER(sampler_MainTex);
+float4 _MainTex_TexelSize;
 TEXTURE2D(_CardBlendTex);
 SAMPLER(sampler_CardBlendTex);
 #endif
 
 #if defined(NHN_SPRITE_UBER)
+inline float2 NHNGetBaseSpriteUVUnclamped(float2 rawUV)
+{
+    return (rawUV - _BaseSpriteUVRect.xy)
+        / max(_BaseSpriteUVRect.zw, float2(0.00001, 0.00001));
+}
+
 inline float2 NHNGetBaseSpriteUV(float2 rawUV)
 {
-    return saturate((rawUV - _BaseSpriteUVRect.xy)
-        / max(_BaseSpriteUVRect.zw, float2(0.00001, 0.00001)));
+    return saturate(NHNGetBaseSpriteUVUnclamped(rawUV));
+}
+
+inline half NHNGetSpriteUVInside(float2 baseSpriteUV)
+{
+    half2 lower = step(half2(0.0h, 0.0h), baseSpriteUV);
+    half2 upper = step(baseSpriteUV, half2(1.0h, 1.0h));
+    return lower.x * lower.y * upper.x * upper.y;
 }
 #endif
 
@@ -92,6 +109,84 @@ inline half4 NHNSampleBase(float2 rawUV)
     float2 surfaceUV;
     return NHNSampleBase(rawUV, surfaceUV);
 }
+
+#if defined(NHN_SPRITE_UBER)
+inline half NHNSampleSpriteBaseAlpha(float2 rawUV)
+{
+    float2 baseSpriteUV = NHNGetBaseSpriteUVUnclamped(rawUV);
+    half inside = NHNGetSpriteUVInside(baseSpriteUV);
+    half mainAlpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, rawUV).a;
+    half blendAlpha = SAMPLE_TEXTURE2D(_CardBlendTex, sampler_CardBlendTex,
+        saturate(baseSpriteUV)).a;
+    return lerp(mainAlpha, blendAlpha, saturate(_CardBlendAmount)) * inside;
+}
+
+inline half NHNGetPixelOutlineMask(float2 rawUV, half baseAlpha)
+{
+#if defined(_PIXEL_OUTLINE_ON)
+    half visibility = saturate(_PixelOutlineVisibility);
+    if (visibility <= 0.0h)
+    {
+        return 0.0h;
+    }
+
+    half threshold = saturate(_PixelOutlineAlphaThreshold);
+    half centerOpaque = step(threshold, baseAlpha);
+    half neighborAlpha = 0.0h;
+    half neighborOpaque = 1.0h;
+    float2 texel = _MainTex_TexelSize.xy;
+
+    [unroll]
+    for (int i = 1; i <= 4; i++)
+    {
+        half ringEnabled = step((half)i - 0.5h, _PixelOutlineWidth);
+        float2 offset = texel * (float)i;
+        half sampleAlpha = NHNSampleSpriteBaseAlpha(rawUV + float2(offset.x, 0.0));
+        neighborAlpha = max(neighborAlpha, sampleAlpha * ringEnabled);
+        neighborOpaque = min(neighborOpaque, lerp(1.0h, step(threshold, sampleAlpha), ringEnabled));
+
+        sampleAlpha = NHNSampleSpriteBaseAlpha(rawUV - float2(offset.x, 0.0));
+        neighborAlpha = max(neighborAlpha, sampleAlpha * ringEnabled);
+        neighborOpaque = min(neighborOpaque, lerp(1.0h, step(threshold, sampleAlpha), ringEnabled));
+
+        sampleAlpha = NHNSampleSpriteBaseAlpha(rawUV + float2(0.0, offset.y));
+        neighborAlpha = max(neighborAlpha, sampleAlpha * ringEnabled);
+        neighborOpaque = min(neighborOpaque, lerp(1.0h, step(threshold, sampleAlpha), ringEnabled));
+
+        sampleAlpha = NHNSampleSpriteBaseAlpha(rawUV - float2(0.0, offset.y));
+        neighborAlpha = max(neighborAlpha, sampleAlpha * ringEnabled);
+        neighborOpaque = min(neighborOpaque, lerp(1.0h, step(threshold, sampleAlpha), ringEnabled));
+
+        sampleAlpha = NHNSampleSpriteBaseAlpha(rawUV + offset);
+        neighborAlpha = max(neighborAlpha, sampleAlpha * ringEnabled);
+        neighborOpaque = min(neighborOpaque, lerp(1.0h, step(threshold, sampleAlpha), ringEnabled));
+
+        sampleAlpha = NHNSampleSpriteBaseAlpha(rawUV - offset);
+        neighborAlpha = max(neighborAlpha, sampleAlpha * ringEnabled);
+        neighborOpaque = min(neighborOpaque, lerp(1.0h, step(threshold, sampleAlpha), ringEnabled));
+
+        sampleAlpha = NHNSampleSpriteBaseAlpha(rawUV + float2(offset.x, -offset.y));
+        neighborAlpha = max(neighborAlpha, sampleAlpha * ringEnabled);
+        neighborOpaque = min(neighborOpaque, lerp(1.0h, step(threshold, sampleAlpha), ringEnabled));
+
+        sampleAlpha = NHNSampleSpriteBaseAlpha(rawUV + float2(-offset.x, offset.y));
+        neighborAlpha = max(neighborAlpha, sampleAlpha * ringEnabled);
+        neighborOpaque = min(neighborOpaque, lerp(1.0h, step(threshold, sampleAlpha), ringEnabled));
+    }
+
+    half outsideMask = (1.0h - centerOpaque) * step(threshold, neighborAlpha);
+    half insideMask = centerOpaque * (1.0h - neighborOpaque);
+    return max(outsideMask, insideMask) * visibility;
+#else
+    return 0.0h;
+#endif
+}
+
+inline half NHNGetPixelOutlineAlpha(float2 rawUV, half baseAlpha)
+{
+    return NHNGetPixelOutlineMask(rawUV, baseAlpha) * _PixelOutlineColor.a;
+}
+#endif
 
 inline half3 NHNAdjustBaseColor(half3 color)
 {
@@ -142,6 +237,9 @@ inline half3 NHNSampleEmission(float2 surfaceUV)
 inline half NHNApplySurfaceClipping(float2 rawUV, half baseAlpha, half vertexAlpha,
     out half dissolveEdge)
 {
+#if defined(NHN_SPRITE_UBER)
+    baseAlpha = max(baseAlpha, NHNGetPixelOutlineAlpha(rawUV, baseAlpha));
+#endif
     half alpha = baseAlpha * _BaseColor.a * vertexAlpha;
 
 #if defined(_ALPHATEST_ON)
@@ -224,12 +322,19 @@ inline void InitializeNHNUberLitSurfaceData(float2 rawUV, half4 vertexColor,
     float2 surfaceUV;
     half4 baseSample = NHNSampleBase(rawUV, surfaceUV);
     half2 metallicSmoothness = NHNSampleMetallicSmoothness(surfaceUV);
+    half outlineMask = 0.0h;
+#if defined(NHN_SPRITE_UBER)
+    outlineMask = NHNGetPixelOutlineMask(rawUV, baseSample.a);
+#endif
 
     surfaceData.alpha = NHNApplySurfaceClipping(rawUV, baseSample.a, vertexColor.a, dissolveEdge);
 #if defined(NHN_SPRITE_UBER)
     surfaceData.alpha *= _AlphaMultiplier;
 #endif
     surfaceData.albedo = NHNAdjustBaseColor(baseSample.rgb * _BaseColor.rgb * vertexColor.rgb);
+#if defined(NHN_SPRITE_UBER)
+    surfaceData.albedo = lerp(surfaceData.albedo, _PixelOutlineColor.rgb, outlineMask);
+#endif
     surfaceData.albedo = AlphaModulate(surfaceData.albedo, surfaceData.alpha);
     surfaceData.metallic = metallicSmoothness.x;
     surfaceData.specular = half3(0.0h, 0.0h, 0.0h);

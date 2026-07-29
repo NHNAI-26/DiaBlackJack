@@ -41,6 +41,12 @@ Shader "Shader/Sprite Uber Lit"
         [Tex(SurfaceInputs_OCCLUSIONMAP, _OcclusionStrength)] [NoScaleOffset] _OcclusionMap("Occlusion", 2D) = "white" {}
         [HideInInspector] _OcclusionStrength("Occlusion Strength", Range(0,1)) = 1
 
+        [Main(PixelOutline, _PIXEL_OUTLINE_ON, on)] _PixelOutlineEnabled("Pixel Outline", Float) = 0
+        [Sub(PixelOutline)] [HDR] _PixelOutlineColor("Outline Color", Color) = (0.08,0.06,0.05,1)
+        [Sub(PixelOutline)] _PixelOutlineWidth("Outline Width (Pixels)", Range(0,4)) = 1
+        [Sub(PixelOutline)] _PixelOutlineAlphaThreshold("Outline Alpha Threshold", Range(0,1)) = 0.5
+        [HideInInspector] _PixelOutlineVisibility("Outline Visibility", Range(0,1)) = 0
+
         [Main(Emission, _EMISSION, on)] _EmissionEnabled("Emission", Float) = 0
         [Tex(Emission_EMISSION, _EmissionColor)] [NoScaleOffset] _EmissionMap("Emission Map", 2D) = "white" {}
         [HideInInspector] [HDR] _EmissionColor("Emission Color", Color) = (0,0,0,1)
@@ -103,6 +109,7 @@ Shader "Shader/Sprite Uber Lit"
             #pragma shader_feature_local_fragment _RIM_ON
             #pragma shader_feature_local_fragment _HEIGHT_FADE_ON
             #pragma shader_feature_local_fragment _DISSOLVE_ON
+            #pragma shader_feature_local _PIXEL_OUTLINE_ON
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma shader_feature_local_fragment _SURFACE_TYPE_TRANSPARENT
             #pragma shader_feature_local_fragment _ _ALPHAPREMULTIPLY_ON _ALPHAMODULATE_ON
@@ -143,6 +150,7 @@ Shader "Shader/Sprite Uber Lit"
             #pragma fragment NHNSilhouetteFragment
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma shader_feature_local _DISSOLVE_ON
+            #pragma shader_feature_local _PIXEL_OUTLINE_ON
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
@@ -164,6 +172,7 @@ Shader "Shader/Sprite Uber Lit"
             #pragma fragment NHNSilhouetteFragment
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma shader_feature_local _DISSOLVE_ON
+            #pragma shader_feature_local _PIXEL_OUTLINE_ON
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
             #include "NHNUberLitDepthPasses.hlsl"
@@ -184,6 +193,7 @@ Shader "Shader/Sprite Uber Lit"
             #pragma shader_feature_local _NORMALMAP
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma shader_feature_local _DISSOLVE_ON
+            #pragma shader_feature_local _PIXEL_OUTLINE_ON
             #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"

@@ -56,7 +56,7 @@ MonoBehaviour:
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
-    FieldOfView: 70
+    FieldOfView: 50
     OrthographicSize: 10
     NearClipPlane: 0.1
     FarClipPlane: 5000
@@ -103,8 +103,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3120304687376308232}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.000000030908623, y: 0.7071068, z: -0.7071068, w: -0.000000030908623}
-  m_LocalPosition: {x: 0, y: 7.08, z: 15.98}
+  m_LocalRotation: {x: -0.000000009832922, y: 0.97437006, z: -0.22495104, w: -0.00000004259107}
+  m_LocalPosition: {x: 0, y: 5.4, z: 17.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -143,9 +143,9 @@ Camera:
     height: 1
   near clip plane: 0.1
   far clip plane: 5000
-  field of view: 70
+  field of view: 50
   orthographic: 0
-  orthographic size: 2.14
+  orthographic size: 10
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
