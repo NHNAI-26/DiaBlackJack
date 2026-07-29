@@ -10,6 +10,7 @@ namespace DiaBlackJack.StageProgression
         private readonly Func<StageDefinition, PlayerRunState, CoreLoopBattle> _battleFactory;
         private readonly BattleRewardGenerator _rewardGenerator;
         private readonly Func<StageDefinition, BattleRewardTier> _rewardTierSelector;
+        private readonly GoldRewardCatalog _goldRewardCatalog;
         private readonly StartingDemonSelectionGenerator _startingDemonSelectionGenerator;
         private OpponentSelectionGenerator _opponentSelectionGenerator;
         private CoreLoopSession _battleSession;
@@ -21,7 +22,8 @@ namespace DiaBlackJack.StageProgression
             BattleRewardGenerator rewardGenerator = null,
             Func<StageDefinition, BattleRewardTier> rewardTierSelector = null,
             OpponentSelectionGenerator opponentSelectionGenerator = null,
-            StartingDemonSelectionGenerator startingDemonSelectionGenerator = null)
+            StartingDemonSelectionGenerator startingDemonSelectionGenerator = null,
+            GoldRewardCatalog goldRewardCatalog = null)
         {
             Progress = progress ?? throw new ArgumentNullException(nameof(progress));
             _battleFactory = battleFactory ?? StageBattleFactory.Create;
@@ -29,6 +31,7 @@ namespace DiaBlackJack.StageProgression
                 BattleRewardCatalog.CreateDefault(),
                 DefaultRewardSeed);
             _rewardTierSelector = rewardTierSelector ?? SelectDefaultRewardTier;
+            _goldRewardCatalog = goldRewardCatalog ?? GoldRewardCatalog.CreatePrototype();
             _opponentSelectionGenerator = opponentSelectionGenerator;
             _startingDemonSelectionGenerator = startingDemonSelectionGenerator;
             ActiveStage = opponentSelectionGenerator == null
@@ -416,6 +419,13 @@ namespace DiaBlackJack.StageProgression
                 return;
             }
 
+            int goldReward = ResolveGoldReward(battle);
+            if (Progress.Player.CurrentGold > int.MaxValue - goldReward)
+            {
+                throw new InvalidOperationException(
+                    "The finished battle gold reward would overflow the run gold balance.");
+            }
+
             Progress.Player.SetCurrentSoul(battle.Player.Soul.Current);
 
             bool resultApplied;
@@ -436,7 +446,26 @@ namespace DiaBlackJack.StageProgression
                 throw new InvalidOperationException("Run progress rejected a finished battle result.");
             }
 
+            if (goldReward > 0)
+            {
+                Progress.Player.AddGold(goldReward);
+            }
+
             _processedBattle = battle;
+        }
+
+        private int ResolveGoldReward(CoreLoopBattle battle)
+        {
+            if (battle.Outcome != BattleOutcome.PlayerVictory)
+            {
+                return 0;
+            }
+
+            StageDefinition stage = ActiveStage ?? throw new InvalidOperationException(
+                "A finished battle must have an active stage.");
+            return stage.BattleProfileKey == null
+                ? 0
+                : _goldRewardCatalog.GetAmount(stage.BattleProfileKey);
         }
 
         private bool TryBeginBattleReward()

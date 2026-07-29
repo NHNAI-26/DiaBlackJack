@@ -33,7 +33,7 @@ StageProgressionRuntime.Session
 복원은 기존 세션을 필드별로 덮어쓰지 않는다. 모든 데이터를 먼저 검증하고 새 `PlayerRunState`·`RunProgress`·세션을 구성한 뒤 성공한 객체만 Runtime에 교체한다.
 
 > **Notion v0.7 저장 경계 (2026-07-29)**
-> 사기꾼의 체인지 상태, 집행자의 주입 독극물, 적 활성 계약과 보스 계약 단계는 전투 중 상태라 스냅샷 필드가 아니다. 저장된 상대 `BattleProfileKey`와 결정적 시드로 전투를 다시 생성한다. RF-01A에서 `PlayerRunState.CurrentGold`의 캡처·복원은 활성화했으며, 확정 골드 3·4·6·7·9·15의 실제 지급과 정산 완료 체크포인트는 RF-01B·SV-06에서 연결한다.
+> 사기꾼의 체인지 상태, 집행자의 주입 독극물, 적 활성 계약과 보스 계약 단계는 전투 중 상태라 스냅샷 필드가 아니다. 저장된 상대 `BattleProfileKey`와 결정적 시드로 전투를 다시 생성한다. RF-01A에서 `PlayerRunState.CurrentGold`의 캡처·복원을 활성화했고 RF-01B에서 확정 골드 3·4·6·7·9·15의 실제 지급을 연결했다. 정산 완료 체크포인트는 RF-02~03 뒤 SV-06에 남아 있다.
 
 ## 2. 현재 코드 기준선
 
@@ -42,14 +42,14 @@ StageProgressionRuntime.Session
 | `Border.SaveLoad.Save` | 직렬화할 필드가 없는 빈 클래스 | 런 저장 전용 DTO와 분리 또는 교체 |
 | `SaveLoadSystem` | ScriptableObject가 `SaveData`를 직접 보유 | 저장소·직렬화·조정 책임 분리 |
 | `FileManager` | 기본 파일에 `WriteAllText` 직접 수행 | 경로 검증, 임시/백업, 원자 교체, 명시적 결과 |
-| `PlayerRunState` | 영혼·골드·일반/악마 덱·마지막 발급 ID·시작 악마 키를 보유하고 검증된 새 객체 생성 | RF-01B 정산 이벤트 연결 |
+| `PlayerRunState` | 영혼·골드·일반/악마 덱·마지막 발급 ID·시작 악마 키를 보유하고 검증된 새 객체 생성 | RF-01B 정산 이벤트 연결 완료 |
 | 시작 악마 선택 | Runtime 새 런 경로가 빈 악마 덱에서 후보 2장·1장 확정과 첫 체크포인트를 수행 | RF 시작 흐름과 최종 통합 검토 |
 | `RunProgress` | `StageCleared`·`RunVictory`·`RunDefeat`의 스테이지 위치와 안정 상태를 새 객체로 복원 | 시작 악마·상점·사건 체크포인트 연결 |
 | `StageProgression/Save` | 스키마 1 스냅샷·검증·세션 순번 캡처·검증된 `RunRestoreFactory` 구현 | SV-06 RF 안정 상태 확장 |
 | `SaveLoad/RunSave*` | 파일 저장소·복원·체크포인트 조정·런 예약·응용 흐름·표시 모델 구현 | SV-06 RF 완료 전이 연결 |
 | `StageProgressionSession` | 상대·보상 제안 생성 순번을 저장 캡처에 제공 | 안정 전이 후 자동 저장 조정 |
 | `StageProgressionRuntime` | `RunSaveFlow`를 소유하고 저장·예약·이어하기 세션을 `DontDestroyOnLoad`로 유지 | RF 화면 라우팅 연동 |
-| RF 골드·상점·사건 | 골드 상태·캡처·복원 구현, 지급량 확정 | RF-01B~RF-03 뒤 정산·상점 안정 체크포인트 연결 |
+| RF 골드·상점·사건 | 골드 상태·캡처·복원·프로필별 승리 정산 구현 | RF-02~RF-03 뒤 상점 안정 체크포인트 연결 |
 
 기존 `SaveLoad` 코드는 Unity-facing 지원 계층이며 CoreLoop·StageProgression 순수성의 기준이 아니다. 순수 상태 타입에는 `UnityEngine`, `Application.persistentDataPath`, `JsonUtility`를 참조하지 않는다.
 

@@ -1,0 +1,89 @@
+using System;
+using System.Collections.Generic;
+using DiaBlackJack.CoreLoop;
+
+namespace DiaBlackJack.StageProgression
+{
+    public sealed class GoldRewardCatalog
+    {
+        private readonly Dictionary<string, int> _amountsByProfileKey;
+
+        public GoldRewardCatalog(IEnumerable<KeyValuePair<string, int>> rewards)
+        {
+            if (rewards == null)
+            {
+                throw new ArgumentNullException(nameof(rewards));
+            }
+
+            _amountsByProfileKey = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (KeyValuePair<string, int> reward in rewards)
+            {
+                if (string.IsNullOrWhiteSpace(reward.Key))
+                {
+                    throw new ArgumentException(
+                        "Gold reward profile key cannot be empty.",
+                        nameof(rewards));
+                }
+
+                if (reward.Value <= 0)
+                {
+                    throw new ArgumentOutOfRangeException(
+                        nameof(rewards),
+                        "Gold reward amount must be positive.");
+                }
+
+                if (!_amountsByProfileKey.TryAdd(reward.Key, reward.Value))
+                {
+                    throw new ArgumentException(
+                        $"Gold reward profile key '{reward.Key}' is duplicated.",
+                        nameof(rewards));
+                }
+            }
+
+            if (_amountsByProfileKey.Count == 0)
+            {
+                throw new ArgumentException(
+                    "Gold reward catalog must contain at least one reward.",
+                    nameof(rewards));
+            }
+        }
+
+        public static GoldRewardCatalog CreatePrototype()
+        {
+            return new GoldRewardCatalog(new[]
+            {
+                CreateReward(EnemyCombatProfileCatalog.CowardlyGamblerKey, 3),
+                CreateReward(EnemyCombatProfileCatalog.GunslingerKey, 4),
+                CreateReward(EnemyCombatProfileCatalog.CultistKey, 6),
+                CreateReward(EnemyCombatProfileCatalog.TricksterKey, 7),
+                CreateReward(EnemyCombatProfileCatalog.EnforcerKey, 9),
+                CreateReward(EnemyCombatProfileCatalog.FinalBossKey, 15)
+            });
+        }
+
+        public int GetAmount(string profileKey)
+        {
+            if (string.IsNullOrWhiteSpace(profileKey))
+            {
+                throw new ArgumentException(
+                    "Gold reward profile key cannot be empty.",
+                    nameof(profileKey));
+            }
+
+            if (!_amountsByProfileKey.TryGetValue(profileKey, out int amount))
+            {
+                throw new KeyNotFoundException(
+                    $"Gold reward for profile '{profileKey}' does not exist.");
+            }
+
+            return amount;
+        }
+
+        private static KeyValuePair<string, int> CreateReward(
+            string profileKey,
+            int amount)
+        {
+            return new KeyValuePair<string, int>(profileKey, amount);
+        }
+    }
+}
