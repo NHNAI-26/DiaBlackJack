@@ -7,6 +7,11 @@ namespace DiaBlackJack.CoreLoop.Tests
 {
     public sealed class GameSceneCardSpriteTests
     {
+        private static readonly int CardBlendTextureId =
+            Shader.PropertyToID("_CardBlendTex");
+        private static readonly int CardBlendAmountId =
+            Shader.PropertyToID("_CardBlendAmount");
+
         private const string CardPrefabPath = "Assets/03. Prefabs/Card/Card.prefab";
         private const string DemonCardPrefabPath =
             "Assets/03. Prefabs/Card/DemonCard.prefab";
@@ -129,13 +134,115 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
         }
 
+        [Test]
+        public void GSV02_U05_PlayerHiddenCardBlendsRealFaceOverBack()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                Assert.That(view, Is.Not.Null);
+                SpriteRenderer frontRenderer = GetFrontRenderer(view);
+                SpriteRenderer backRenderer = GetBackRenderer(view);
+
+                view.Bind(new GameSceneCardViewModel(
+                    cardId: 1,
+                    rank: 1,
+                    isFaceUp: false,
+                    revealRank: true,
+                    canUse: false,
+                    displayName: "Ace"));
+
+                MaterialPropertyBlock properties = new MaterialPropertyBlock();
+                backRenderer.GetPropertyBlock(properties);
+
+                Assert.That(frontRenderer.gameObject.activeSelf, Is.False);
+                Assert.That(backRenderer.gameObject.activeSelf, Is.True);
+                Assert.That(
+                    properties.GetTexture(CardBlendTextureId),
+                    Is.SameAs(frontRenderer.sprite.texture));
+                Assert.That(properties.GetFloat(CardBlendAmountId), Is.GreaterThan(0f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSV02_U06_EnemyHiddenAndFaceUpCardsDoNotUsePlayerBlend()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                Assert.That(view, Is.Not.Null);
+                SpriteRenderer frontRenderer = GetFrontRenderer(view);
+                SpriteRenderer backRenderer = GetBackRenderer(view);
+                MaterialPropertyBlock properties = new MaterialPropertyBlock();
+
+                view.Bind(new GameSceneCardViewModel(
+                    cardId: 1,
+                    rank: 1,
+                    isFaceUp: false,
+                    revealRank: true,
+                    canUse: false,
+                    displayName: "Ace"));
+                view.Bind(new GameSceneCardViewModel(
+                    cardId: 2,
+                    rank: 0,
+                    isFaceUp: false,
+                    revealRank: false,
+                    canUse: false,
+                    displayName: ""));
+
+                backRenderer.GetPropertyBlock(properties);
+                Assert.That(frontRenderer.gameObject.activeSelf, Is.False);
+                Assert.That(backRenderer.gameObject.activeSelf, Is.True);
+                Assert.That(properties.GetFloat(CardBlendAmountId), Is.Zero);
+
+                view.Bind(new GameSceneCardViewModel(
+                    cardId: 3,
+                    rank: 3,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    displayName: "Three"));
+
+                backRenderer.GetPropertyBlock(properties);
+                Assert.That(frontRenderer.gameObject.activeSelf, Is.True);
+                Assert.That(backRenderer.gameObject.activeSelf, Is.False);
+                Assert.That(properties.GetFloat(CardBlendAmountId), Is.Zero);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
         private static SpriteRenderer GetFrontRenderer(CardView view)
         {
-            var serialized = new SerializedObject(view);
-            GameObject front = serialized.FindProperty("front").objectReferenceValue as
+            return GetRenderer(view, "front");
+        }
+
+        private static SpriteRenderer GetBackRenderer(CardView view)
+        {
+            return GetRenderer(view, "back");
+        }
+
+        private static SpriteRenderer GetRenderer(CardView view, string propertyName)
+        {
+            SerializedObject serialized = new SerializedObject(view);
+            GameObject face = serialized.FindProperty(propertyName).objectReferenceValue as
                 GameObject;
-            Assert.That(front, Is.Not.Null);
-            SpriteRenderer renderer = front.GetComponent<SpriteRenderer>();
+            Assert.That(face, Is.Not.Null);
+            SpriteRenderer renderer = face.GetComponent<SpriteRenderer>();
             Assert.That(renderer, Is.Not.Null);
             return renderer;
         }

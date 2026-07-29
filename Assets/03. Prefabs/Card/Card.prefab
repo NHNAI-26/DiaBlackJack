@@ -512,6 +512,7 @@ MonoBehaviour:
   hoverOutlineWidth: 0
   hoverOutlineAlphaThreshold: 0.5
   backTint: {r: 1, g: 1, b: 1, a: 1}
+  hiddenCardBlendAmount: 0.45
 --- !u!65 &4320678956030072837
 BoxCollider:
   m_ObjectHideFlags: 0

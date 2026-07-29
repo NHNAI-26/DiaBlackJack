@@ -49,6 +49,11 @@ namespace DiaBlackJack.GameScene
             + "face-up one even when both faces share the same sprite material. Per-instance, no extra material.")]
         [SerializeField] private Color backTint = new Color(0.72f, 0.28f, 0.28f, 1f);
 
+        [Header("Player hidden card")]
+        [Tooltip("Blends the real face over the card back while only the player may see its rank.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float hiddenCardBlendAmount = 0.45f;
+
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int BaseSpriteUvRectId = Shader.PropertyToID("_BaseSpriteUVRect");
         private static readonly int PixelOutlineColorId = Shader.PropertyToID("_PixelOutlineColor");
@@ -58,6 +63,8 @@ namespace DiaBlackJack.GameScene
         private static readonly int PixelOutlineVisibilityId =
             Shader.PropertyToID("_PixelOutlineVisibility");
         private const string PixelOutlineKeyword = "_PIXEL_OUTLINE_ON";
+        private static readonly int CardBlendTextureId = Shader.PropertyToID("_CardBlendTex");
+        private static readonly int CardBlendAmountId = Shader.PropertyToID("_CardBlendAmount");
 
         private MaterialPropertyBlock _propertyBlock;
         private SpriteRenderer _frontSpriteRenderer;
@@ -116,23 +123,29 @@ namespace DiaBlackJack.GameScene
 
             CardId = card.CardId;
             CanUse = card.CanUse;
-            _showingFrontFace = card.RevealRank;
+            bool showPlayerHiddenBlend = card.RevealRank && !card.IsFaceUp;
+            _showingFrontFace = card.RevealRank && !showPlayerHiddenBlend;
             _showBadgeOnHover = CanUse || card.ShowHoverBadgeWhenUnavailable;
+
+            Sprite faceSprite = null;
+            if (card.RevealRank)
+            {
+                faceSprite = ApplyFaceSprite(card.DefinitionKey, card.Rank, card.Suit);
+            }
 
             if (front != null)
             {
                 front.SetActive(_showingFrontFace);
             }
 
-            if (_showingFrontFace)
-            {
-                ApplyFaceSprite(card.DefinitionKey, card.Rank, card.Suit);
-            }
-
             if (back != null)
             {
                 back.SetActive(!_showingFrontFace);
             }
+
+            ApplyCardBlend(
+                showPlayerHiddenBlend ? faceSprite : null,
+                showPlayerHiddenBlend && faceSprite != null ? hiddenCardBlendAmount : 0f);
 
             HideRankText();
 
@@ -307,7 +320,7 @@ namespace DiaBlackJack.GameScene
             material.EnableKeyword(PixelOutlineKeyword);
         }
 
-        private void ApplyFaceSprite(string definitionKey, int rank, CardSuit suit)
+        private Sprite ApplyFaceSprite(string definitionKey, int rank, CardSuit suit)
         {
             SpriteRenderer renderer = FrontSpriteRenderer();
             Sprite sprite = SpriteForCard(definitionKey, rank, suit);
@@ -316,6 +329,27 @@ namespace DiaBlackJack.GameScene
                 renderer.sprite = sprite;
                 RefreshSpriteUvRect(renderer, ref _frontUvSprite);
             }
+
+            return sprite;
+        }
+
+        private void ApplyCardBlend(Sprite sprite, float amount)
+        {
+            Renderer renderer = BackRenderer();
+            if (renderer == null)
+            {
+                return;
+            }
+
+            _propertyBlock ??= new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(_propertyBlock);
+            if (sprite != null)
+            {
+                _propertyBlock.SetTexture(CardBlendTextureId, sprite.texture);
+            }
+
+            _propertyBlock.SetFloat(CardBlendAmountId, Mathf.Clamp01(amount));
+            renderer.SetPropertyBlock(_propertyBlock);
         }
 
         private Sprite SpriteForCard(string definitionKey, int rank, CardSuit suit)
