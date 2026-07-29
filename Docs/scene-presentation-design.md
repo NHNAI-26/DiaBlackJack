@@ -186,10 +186,11 @@
 
 - 플레이어의 `뽑을 카드`·`버린 카드` 더미는 호버 텍스트 대신 클릭 가능한 카드 검사창을 연다.
 - 검사창은 `DeckPreviewOverlay.prefab` 기반 Screen Space Overlay uGUI다. `Card.prefab`의 앞면 스프라이트를 5열 `ScrollRect` 그리드에 표시하고 휠·드래그로 연속 스크롤한다.
-- 카드 슬롯 100개는 `DeckPreviewOverlay.prefab` 안에 미리 배치한다. `GameScene`도 해당 프리팹 인스턴스와 `GameManager.deckPreview` 참조를 직렬화하며 런타임에 검사창이나 슬롯을 생성하지 않는다.
+- 카드 슬롯 100개는 `DeckPreviewOverlay.prefab` 안에 미리 배치한다. `GameScene`에는 이를 기반으로 만든 단일 `UIDeckPreview`와 `GameManager.deckPreview` 참조를 직렬화하며 런타임에 검사창이나 슬롯을 생성하지 않는다.
+- `UIDeckPreview`는 평소 비활성 상태다. 더미 클릭 시 오브젝트 자체를 활성화하고, 배경 클릭·`ESC`·닫기 버튼·상점 진입·재시작·매니저 비활성화 시 다시 비활성화해 재사용한다. 에디터 로드·컴파일 후 자동 설치는 수행하지 않는다.
 - 카드 목록은 종류·숫자·무늬·ID의 안정 순서다. 내부 더미 및 다음 드로우 순서는 표시하지 않는다.
-- 열린 동안 전투 입력은 차단한다. 카드 호버는 검사창 상단 이름·효과 설명을 갱신하고, 배경 클릭·`ESC`·닫기 버튼으로 닫는다.
-- 검증: 전용 EditMode 5/5, 전체 EditMode 735/735 통과. GameScene Play Mode에서 뽑을 카드 18장·직렬화 슬롯 100개·스크롤 콘텐츠 높이 1376/뷰포트 655.776·닫기 버튼을 확인했고 Console Error/Warning 0.
+- 열린 동안 전투 입력과 `W`·`S` 카메라 전환을 차단한다. 카드 호버는 검사창 상단 이름·효과 설명을 갱신하고, 배경 클릭·`ESC`·닫기 버튼으로 닫는다.
+- 검증: 전용 `GameSceneDeckPreviewTests` 3/3, 전체 EditMode 749/749 통과. GameScene Play Mode에서 단일 `UIDeckPreview`가 뽑을 카드 18장으로 활성화되고 카메라 입력 잠금 수가 1이 되는지, 직접 닫은 뒤 오브젝트가 비활성화되고 다음 프레임 잠금 수가 0으로 복구되는지 확인했다. Console Error/Warning 0.
 
 ## 11. 완료 기준
 
@@ -211,6 +212,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-30 | HONG | GSV-03 씬 구성을 단일 `UIDeckPreview`의 Active/Inactive 재사용 방식으로 정리하고 에디터 자동 설치를 제거했다. 검사창이 열린 동안 `W`·`S` 카메라 전환도 잠그도록 입력 경계를 보강했다. 전용 EditMode 3/3, 전체 EditMode 749/749 및 GameScene 활성화·잠금·직접 닫기·잠금 복구를 확인했다. |
 | 2026-07-30 | HONG | GSV-03 검사창을 `DeckPreviewOverlay.prefab` 기반 uGUI 5열 연속 스크롤로 교체했다. `Card.prefab` 앞면 스프라이트, 프리팹 내 사전 배치 슬롯 100개, 안정 정렬·모달 입력 차단·호버 설명·닫기 동작을 확정했다. 전용 EditMode 5/5, 전체 EditMode 735/735 및 GameScene 18장 스크롤·닫기 확인. |
 | 2026-07-30 | 이천서 | 정식 런 화면 경계를 `StageTest → GameScene → StageTest`로 확정했다. GameScene은 선택 상대의 실제 전투와 런 골드를 표시하고 종료 뒤 진행 화면의 정식 상점으로 복귀하며, 단독 실행에서만 기존 임시 상점을 유지한다. |
 | 2026-07-30 | 이천서 | 정식 런의 전투 보상 화면을 제거하고 승리 골드 표시 뒤 같은 테이블에서 바로 상점으로 전환하도록 연출 기준을 개정했다. 자동 발동 카드는 상점 일반 상품 슬롯에서 전용 스프라이트로 표시한다. |

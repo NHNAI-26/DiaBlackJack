@@ -17,6 +17,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         public void GSV03_U03_DeckPreviewKeepsAllCardsInScrollableModelAndClearsOnClose()
         {
             GameObject previewObject = new GameObject("Deck Preview Test View");
+            previewObject.SetActive(false);
             DeckPreviewView preview = previewObject.AddComponent<DeckPreviewView>();
 
             try
@@ -27,12 +28,14 @@ namespace DiaBlackJack.CoreLoop.Tests
                     CreateCards(21)));
 
                 Assert.That(preview.IsOpen, Is.True);
+                Assert.That(previewObject.activeSelf, Is.True);
                 Assert.That(preview.CardCount, Is.EqualTo(21));
                 Assert.That(preview.CardSlotCount, Is.Zero);
 
                 preview.Close();
 
                 Assert.That(preview.IsOpen, Is.False);
+                Assert.That(previewObject.activeSelf, Is.False);
                 Assert.That(preview.CardCount, Is.Zero);
             }
             finally

@@ -20,15 +20,6 @@ namespace DiaBlackJack.GameScene.Editor
 
         private const string GameScenePath = "Assets/00. Scenes/GameScene.unity";
         private const int CardSlotCount = 100;
-        private static bool _installScheduled;
-
-        [InitializeOnLoadMethod]
-        private static void ScheduleAutomaticInstall()
-        {
-            EditorApplication.playModeStateChanged -= HandlePlayModeStateChanged;
-            EditorApplication.playModeStateChanged += HandlePlayModeStateChanged;
-            ScheduleInstall();
-        }
 
         [MenuItem("Tools/DiaBlackJack/Rebuild Deck Preview Prefabs")]
         public static void Build()
@@ -90,11 +81,17 @@ namespace DiaBlackJack.GameScene.Editor
                     GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(
                         overlayPrefab,
                         targetScene);
-                    instance.name = "DeckPreviewOverlay";
+                    instance.name = "UIDeckPreview";
                     preview = instance.GetComponent<DeckPreviewView>();
                 }
 
                 bool sceneChanged = false;
+                if (preview.gameObject.activeSelf)
+                {
+                    preview.gameObject.SetActive(false);
+                    sceneChanged = true;
+                }
+
                 EnsureEventSystem(targetScene, ref sceneChanged);
                 SerializedObject managerData = new SerializedObject(manager);
                 SerializedProperty previewProperty =
@@ -369,50 +366,6 @@ namespace DiaBlackJack.GameScene.Editor
             }
         }
 
-        private static void ScheduleInstall()
-        {
-            if (_installScheduled)
-            {
-                return;
-            }
-
-            _installScheduled = true;
-            EditorApplication.delayCall += InstallWhenSafe;
-        }
-
-        private static void InstallWhenSafe()
-        {
-            _installScheduled = false;
-            if (EditorApplication.isCompiling ||
-                EditorApplication.isUpdating ||
-                EditorApplication.isPlayingOrWillChangePlaymode)
-            {
-                return;
-            }
-
-            try
-            {
-                if (AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath) == null)
-                {
-                    Build();
-                }
-
-                InstallInGameScene();
-            }
-            catch (System.Exception exception)
-            {
-                Debug.LogException(exception);
-            }
-        }
-
-        private static void HandlePlayModeStateChanged(PlayModeStateChange state)
-        {
-            if (state == PlayModeStateChange.EnteredEditMode)
-            {
-                ScheduleInstall();
-            }
-        }
-
         private static T FindInScene<T>(Scene scene)
             where T : Component
         {
@@ -432,24 +385,34 @@ namespace DiaBlackJack.GameScene.Editor
         private static DeckPreviewView FindOverlayInScene(Scene scene)
         {
             GameObject[] roots = scene.GetRootGameObjects();
+            DeckPreviewView fallback = null;
             for (int i = 0; i < roots.Length; i++)
             {
-                if (!roots[i].name.StartsWith(
-                        "DeckPreviewOverlay",
-                        System.StringComparison.Ordinal))
+                DeckPreviewView preview =
+                    roots[i].GetComponent<DeckPreviewView>();
+                if (preview == null)
                 {
                     continue;
                 }
 
-                DeckPreviewView preview =
-                    roots[i].GetComponent<DeckPreviewView>();
-                if (preview != null)
+                if (string.Equals(
+                        roots[i].name,
+                        "UIDeckPreview",
+                        System.StringComparison.Ordinal))
                 {
                     return preview;
                 }
+
+                if (fallback == null &&
+                    roots[i].name.StartsWith(
+                        "DeckPreviewOverlay",
+                        System.StringComparison.Ordinal))
+                {
+                    fallback = preview;
+                }
             }
 
-            return null;
+            return fallback;
         }
 
         private static void EnsureEventSystem(

@@ -99,6 +99,7 @@ namespace DiaBlackJack.GameScene
         private CombatantSide _revolverReadyActorSide;
         private Coroutine _revolverHideRoutine;
         private bool _hammerSwitchInputLocked;
+        private bool _deckPreviewSwitchInputLocked;
         private bool _returnCameraToCurrentAfterHammer;
         private HammerAnimationController _hammerCameraLockController;
         private HammerAnimationController _playedHammerAnimationController;
@@ -158,6 +159,12 @@ namespace DiaBlackJack.GameScene
         // fire, so we raycast the pointer ourselves. Hit/Stand/Change and the choices stay as OnGUI.
         private void Update()
         {
+            if (_deckPreviewSwitchInputLocked &&
+                (deckPreview == null || !deckPreview.IsOpen))
+            {
+                EndDeckPreviewSwitchInputLock();
+            }
+
             if (_core == null)
             {
                 return;
@@ -287,7 +294,7 @@ namespace DiaBlackJack.GameScene
             if (deckPreview == null)
             {
                 Debug.LogError(
-                    "GameManager requires the scene-authored DeckPreviewOverlay reference.",
+                    "GameManager requires the scene-authored UIDeckPreview reference.",
                     this);
                 return;
             }
@@ -311,18 +318,50 @@ namespace DiaBlackJack.GameScene
 
             UpdateHover(null);
             deckPreview.Open(GameScenePresenter.CreateDeckPreview(battle, kind));
+            BeginDeckPreviewSwitchInputLock();
         }
 
         private void CloseDeckPreview()
         {
-            if (deckPreview == null || !deckPreview.IsOpen)
+            if (deckPreview != null && deckPreview.IsOpen)
+            {
+                deckPreview.Close();
+                UpdateHover(null);
+                hud?.HideCardHoverBadge();
+            }
+
+            EndDeckPreviewSwitchInputLock();
+        }
+
+        private void BeginDeckPreviewSwitchInputLock()
+        {
+            if (_deckPreviewSwitchInputLocked)
             {
                 return;
             }
 
-            deckPreview.Close();
-            UpdateHover(null);
-            hud?.HideCardHoverBadge();
+            GameSceneCameraViewController controller =
+                ResolveCameraViewController();
+            if (controller == null)
+            {
+                return;
+            }
+
+            controller.LockSwitchInput();
+            _deckPreviewSwitchInputLocked = true;
+        }
+
+        private void EndDeckPreviewSwitchInputLock()
+        {
+            if (!_deckPreviewSwitchInputLocked)
+            {
+                return;
+            }
+
+            GameSceneCameraViewController controller =
+                ResolveCameraViewController();
+            controller?.UnlockSwitchInput();
+            _deckPreviewSwitchInputLocked = false;
         }
 
         private void UpdateCardHoverBadge()

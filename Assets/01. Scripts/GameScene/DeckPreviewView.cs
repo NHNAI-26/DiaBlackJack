@@ -26,6 +26,7 @@ namespace DiaBlackJack.GameScene
         private CardView _cardVisualSource;
         private DeckPreviewCardView _hoveredSlot;
         private Coroutine _enableRaycasterRoutine;
+        private bool _controlsBound;
 
         public bool IsOpen { get; private set; }
 
@@ -36,8 +37,15 @@ namespace DiaBlackJack.GameScene
         private void Awake()
         {
             BindControls();
-            SetVisible(false);
             SetSlotsVisible(false);
+        }
+
+        private void OnDisable()
+        {
+            IsOpen = false;
+            _model = null;
+            _hoveredSlot = null;
+            _enableRaycasterRoutine = null;
         }
 
         private void OnDestroy()
@@ -55,22 +63,32 @@ namespace DiaBlackJack.GameScene
         {
             _model = model ?? throw new ArgumentNullException(nameof(model));
             IsOpen = true;
-            SetVisible(true);
+
+            if (previewCanvas != null)
+            {
+                previewCanvas.enabled = true;
+            }
+
             if (previewRaycaster != null)
             {
                 previewRaycaster.enabled = false;
-                _enableRaycasterRoutine =
-                    StartCoroutine(EnableRaycasterNextFrame());
             }
 
+            gameObject.SetActive(true);
             RenderSlots();
             ResetScrollToTop();
             ShowDefaultDetails();
+
+            if (previewRaycaster != null)
+            {
+                _enableRaycasterRoutine =
+                    StartCoroutine(EnableRaycasterNextFrame());
+            }
         }
 
         public void Close()
         {
-            if (!IsOpen)
+            if (!IsOpen && !gameObject.activeSelf)
             {
                 return;
             }
@@ -85,11 +103,17 @@ namespace DiaBlackJack.GameScene
             }
 
             SetSlotsVisible(false);
-            SetVisible(false);
+            gameObject.SetActive(false);
         }
 
         private void BindControls()
         {
+            if (_controlsBound)
+            {
+                return;
+            }
+
+            _controlsBound = true;
             if (backgroundCloseButton != null)
             {
                 backgroundCloseButton.onClick.AddListener(Close);
@@ -116,6 +140,12 @@ namespace DiaBlackJack.GameScene
 
         private void UnbindControls()
         {
+            if (!_controlsBound)
+            {
+                return;
+            }
+
+            _controlsBound = false;
             if (backgroundCloseButton != null)
             {
                 backgroundCloseButton.onClick.RemoveListener(Close);
@@ -209,19 +239,6 @@ namespace DiaBlackJack.GameScene
                 {
                     cardSlots[i].gameObject.SetActive(visible);
                 }
-            }
-        }
-
-        private void SetVisible(bool visible)
-        {
-            if (previewCanvas != null)
-            {
-                previewCanvas.enabled = visible;
-            }
-
-            if (previewRaycaster != null)
-            {
-                previewRaycaster.enabled = visible;
             }
         }
 
