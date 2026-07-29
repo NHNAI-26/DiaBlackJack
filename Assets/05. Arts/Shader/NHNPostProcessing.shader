@@ -8,6 +8,9 @@ Shader "Shader/NHN Post Processing"
         _ColorLevels("Color Levels", Range(2, 64)) = 16
         [Toggle(_ORDERED_DITHER_ON)] _OrderedDitherEnabled("Ordered Dithering", Float) = 1
         _DitherStrength("Dither Strength", Range(0, 1)) = 0.65
+        [Toggle(_COLOR_SCREEN_BLEND_ON)] _ColorScreenBlendEnabled("Color Screen Blend", Float) = 1
+        _ColorScreen("Color Screen", Color) = (1, 1, 1, 1)
+        _BlendStrength("Blend Strength", Range(0, 1)) = 0
     }
 
     SubShader
@@ -27,6 +30,7 @@ Shader "Shader/NHN Post Processing"
             #pragma shader_feature_local_fragment _PIXELATION_ON
             #pragma shader_feature_local_fragment _COLOR_QUANTIZATION_ON
             #pragma shader_feature_local_fragment _ORDERED_DITHER_ON
+            #pragma shader_feature_local_fragment _COLOR_SCREEN_BLEND_ON
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
@@ -35,6 +39,8 @@ Shader "Shader/NHN Post Processing"
                 float _PixelSize;
                 float _ColorLevels;
                 float _DitherStrength;
+                half4 _ColorScreen;
+                float _BlendStrength;
             CBUFFER_END
 
             float Bayer4x4(uint2 pixelPosition)
@@ -72,7 +78,12 @@ Shader "Shader/NHN Post Processing"
                     float levelCount = max(round(_ColorLevels), 2.0);
                     color.rgb = round(saturate(color.rgb) * (levelCount - 1.0)) / (levelCount - 1.0);
                 #endif
-
+                
+                #if defined(_COLOR_SCREEN_BLEND_ON)
+                    half3 screenColor = 1.0h - (1.0h - color.rgb) * (1.0h - _ColorScreen.rgb);
+                    color.rgb = lerp(color.rgb, screenColor, saturate(_BlendStrength));
+                #endif
+                
                 return color;
             }
             ENDHLSL
