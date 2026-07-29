@@ -35,15 +35,28 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private AnimationCurve hoverScaleCurve =
             AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
+        [Header("Hover outline")]
+        [SerializeField] private bool useMaterialHoverOutlineSettings = true;
+        [ColorUsage(true, true)]
+        [SerializeField] private Color hoverOutlineColor = new Color(1f, 0.685f, 0f, 1f);
+        [SerializeField] private float hoverOutlineWidth = 1f;
+        [Range(0f, 1f)]
+        [SerializeField] private float hoverOutlineAlphaThreshold = 0.5f;
+
         [Header("Player hidden card")]
         [Tooltip("Blends the real face over the card back while only the player may see its rank.")]
         [Range(0f, 1f)]
-        [SerializeField] private float hiddenCardBlendAmount = 0.45f;
+        [SerializeField] private float hiddenCardBlendAmount = 0.5f;
 
         private static readonly int BaseSpriteUvRectId = Shader.PropertyToID("_BaseSpriteUVRect");
         private static readonly int CardBlendTextureId = Shader.PropertyToID("_CardBlendTex");
         private static readonly int CardBlendAmountId = Shader.PropertyToID("_CardBlendAmount");
         private static readonly int CardBlendUvRectId = Shader.PropertyToID("_CardBlendUVRect");
+        private static readonly int PixelOutlineColorId = Shader.PropertyToID("_PixelOutlineColor");
+        private static readonly int PixelOutlineWidthId = Shader.PropertyToID("_PixelOutlineWidth");
+        private static readonly int PixelOutlineAlphaThresholdId = Shader.PropertyToID("_PixelOutlineAlphaThreshold");
+        private static readonly int PixelOutlineVisibilityId = Shader.PropertyToID("_PixelOutlineVisibility");
+        private const string PixelOutlineKeyword = "_PIXEL_OUTLINE_ON";
 
         private MaterialPropertyBlock _propertyBlock;
         private SpriteRenderer _frontSpriteRenderer;
@@ -54,6 +67,7 @@ namespace DiaBlackJack.GameScene
         private Tween _scaleTween;
         private Vector3 _baseScale = Vector3.one;
         private bool _showingFrontFace = true;
+        private bool _usesHoverCardBlend;
         private bool _showBadgeOnHover;
         private bool _hovered;
 
@@ -76,6 +90,7 @@ namespace DiaBlackJack.GameScene
 
             HideRankText();
             RefreshSpriteUvRects();
+            ApplyHoverOutline(false);
         }
 
         private void Update()
@@ -88,6 +103,8 @@ namespace DiaBlackJack.GameScene
             StopScaleTween();
             transform.localScale = _baseScale;
             _hovered = false;
+            ApplyHoverOutline(false);
+            ApplyHoverCardBlend(false);
         }
 
         public void Bind(GameSceneCardViewModel card)
@@ -101,6 +118,7 @@ namespace DiaBlackJack.GameScene
             CanUse = card.CanUse;
             bool showPlayerHiddenBlend = card.RevealRank && !card.IsFaceUp;
             _showingFrontFace = card.RevealRank && !showPlayerHiddenBlend;
+            _usesHoverCardBlend = showPlayerHiddenBlend;
             _showBadgeOnHover = CanUse || card.ShowHoverBadgeWhenUnavailable;
 
             Sprite faceSprite = null;
@@ -121,7 +139,7 @@ namespace DiaBlackJack.GameScene
 
             ApplyCardBlend(
                 showPlayerHiddenBlend ? faceSprite : null,
-                showPlayerHiddenBlend && faceSprite != null ? hiddenCardBlendAmount : 0f);
+                0f);
 
             HideRankText();
 
@@ -135,6 +153,7 @@ namespace DiaBlackJack.GameScene
             _hovered = false;
             StopScaleTween();
             transform.localScale = _baseScale;
+            ApplyHoverOutline(false);
         }
 
         /// <summary>Called by the pointer raycast when this card gains/loses hover.</summary>
@@ -147,6 +166,8 @@ namespace DiaBlackJack.GameScene
 
             _hovered = hovered;
             PlayHoverScaleTween(hovered ? _baseScale * hoverScale : _baseScale);
+            ApplyHoverOutline(hovered);
+            ApplyHoverCardBlend(hovered);
         }
 
         /// <summary>
@@ -190,6 +211,97 @@ namespace DiaBlackJack.GameScene
             _scaleTween.Kill();
             _scaleTween = null;
         }
+
+        private void ApplyHoverOutline(bool visible)
+        {
+            ApplyOutline(FrontSpriteRenderer(), visible && _showingFrontFace);
+            ApplyOutline(BackRenderer(), visible && !_showingFrontFace);
+        }
+
+        private void ApplyOutline(Renderer renderer, bool visible)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            EnablePixelOutlineKeyword(renderer);
+
+            Color outlineColor = ResolveOutlineColor(renderer);
+            if (visible && outlineColor.a <= 0f)
+            {
+                outlineColor.a = 1f;
+            }
+
+            _propertyBlock ??= new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(_propertyBlock);
+            _propertyBlock.SetColor(PixelOutlineColorId, outlineColor);
+            _propertyBlock.SetFloat(PixelOutlineWidthId, ResolveOutlineWidth(renderer));
+            _propertyBlock.SetFloat(
+                PixelOutlineAlphaThresholdId,
+                ResolveOutlineAlphaThreshold(renderer));
+            _propertyBlock.SetFloat(PixelOutlineVisibilityId, visible ? 1f : 0f);
+            renderer.SetPropertyBlock(_propertyBlock);
+        }
+
+        private Color ResolveOutlineColor(Renderer renderer)
+        {
+            Material material = renderer.sharedMaterial;
+            if (useMaterialHoverOutlineSettings &&
+                material != null &&
+                material.HasProperty(PixelOutlineColorId))
+            {
+                return material.GetColor(PixelOutlineColorId);
+            }
+
+            return hoverOutlineColor;
+        }
+
+        private float ResolveOutlineWidth(Renderer renderer)
+        {
+            Material material = renderer.sharedMaterial;
+            if (useMaterialHoverOutlineSettings &&
+                material != null &&
+                material.HasProperty(PixelOutlineWidthId))
+            {
+                return material.GetFloat(PixelOutlineWidthId);
+            }
+
+            return hoverOutlineWidth;
+        }
+
+        private float ResolveOutlineAlphaThreshold(Renderer renderer)
+        {
+            Material material = renderer.sharedMaterial;
+            if (useMaterialHoverOutlineSettings &&
+                material != null &&
+                material.HasProperty(PixelOutlineAlphaThresholdId))
+            {
+                return material.GetFloat(PixelOutlineAlphaThresholdId);
+            }
+
+            return hoverOutlineAlphaThreshold;
+        }
+
+        private static void EnablePixelOutlineKeyword(Renderer renderer)
+        {
+            Material material = renderer.sharedMaterial;
+            if (material != null && !material.IsKeywordEnabled(PixelOutlineKeyword))
+            {
+                material.EnableKeyword(PixelOutlineKeyword);
+            }
+        }
+
+        private void ApplyHoverCardBlend(bool hovered)
+        {
+            if (!_usesHoverCardBlend)
+            {
+                return;
+            }
+
+            SetCardBlendAmount(hovered ? hiddenCardBlendAmount : 0f);
+        }
+
         private Sprite ApplyFaceSprite(string definitionKey, int rank, CardSuit suit)
         {
             SpriteRenderer renderer = FrontSpriteRenderer();
@@ -219,6 +331,20 @@ namespace DiaBlackJack.GameScene
             }
 
             _propertyBlock.SetVector(CardBlendUvRectId, GetSpriteUvRect(sprite));
+            _propertyBlock.SetFloat(CardBlendAmountId, Mathf.Clamp01(amount));
+            renderer.SetPropertyBlock(_propertyBlock);
+        }
+
+        private void SetCardBlendAmount(float amount)
+        {
+            Renderer renderer = BackRenderer();
+            if (renderer == null)
+            {
+                return;
+            }
+
+            _propertyBlock ??= new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(_propertyBlock);
             _propertyBlock.SetFloat(CardBlendAmountId, Mathf.Clamp01(amount));
             renderer.SetPropertyBlock(_propertyBlock);
         }

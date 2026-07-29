@@ -137,7 +137,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void GSV02_U05_PlayerHiddenCardBlendsRealFaceOverBack()
+        public void GSV02_U05_PlayerHiddenCardBlendsRealFaceOverBackOnlyWhileHovered()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
             Assert.That(prefab, Is.Not.Null);
@@ -166,10 +166,18 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(
                     properties.GetTexture(CardBlendTextureId),
                     Is.SameAs(frontRenderer.sprite.texture));
-                Assert.That(properties.GetFloat(CardBlendAmountId), Is.GreaterThan(0f));
+                Assert.That(properties.GetFloat(CardBlendAmountId), Is.Zero);
                 Assert.That(
                     properties.GetVector(CardBlendUvRectId),
                     Is.EqualTo(GetSpriteUvRect(frontRenderer.sprite)));
+
+                view.SetHovered(true);
+                backRenderer.GetPropertyBlock(properties);
+                Assert.That(properties.GetFloat(CardBlendAmountId), Is.EqualTo(0.5f));
+
+                view.SetHovered(false);
+                backRenderer.GetPropertyBlock(properties);
+                Assert.That(properties.GetFloat(CardBlendAmountId), Is.Zero);
             }
             finally
             {

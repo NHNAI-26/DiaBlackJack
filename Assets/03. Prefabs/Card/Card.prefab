@@ -480,7 +480,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 08a8a36231d3ca1459e4d5080236463c, type: 3}
   - {fileID: 21300000, guid: 4e43362725ff64747a873c16de35fcca, type: 3}
   topPosition: {fileID: 2694824136228126592}
-  hoverScale: 1.05
+  hoverScale: 1.02
   hoverScaleDuration: 0.08
   hoverScaleCurve:
     serializedVersion: 2
@@ -506,7 +506,11 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  hiddenCardBlendAmount: 0.2
+  useMaterialHoverOutlineSettings: 1
+  hoverOutlineColor: {r: 1, g: 0.72604626, b: 0, a: 1}
+  hoverOutlineWidth: 1
+  hoverOutlineAlphaThreshold: 0.5
+  hiddenCardBlendAmount: 0.5
 --- !u!65 &4320678956030072837
 BoxCollider:
   m_ObjectHideFlags: 0
