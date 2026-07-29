@@ -506,6 +506,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  hoverSfxId: cardHover
   useMaterialHoverOutlineSettings: 1
   hoverOutlineColor: {r: 1, g: 0.72604626, b: 0, a: 1}
   hoverOutlineWidth: 1

@@ -1,5 +1,6 @@
 using DG.Tweening;
 using TMPro;
+using Border.Audio;
 using DiaBlackJack.CoreLoop;
 using UnityEngine;
 
@@ -34,6 +35,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float hoverScaleDuration = 0.08f;
         [SerializeField] private AnimationCurve hoverScaleCurve =
             AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+        [SerializeField] private string hoverSfxId = "cardHover";
 
         [Header("Hover outline")]
         [SerializeField] private bool useMaterialHoverOutlineSettings = true;
@@ -165,6 +167,7 @@ namespace DiaBlackJack.GameScene
             }
 
             _hovered = hovered;
+            PlayHoverSfx(hovered);
             PlayHoverScaleTween(hovered ? _baseScale * hoverScale : _baseScale);
             ApplyHoverOutline(hovered);
             ApplyHoverCardBlend(hovered);
@@ -210,6 +213,16 @@ namespace DiaBlackJack.GameScene
 
             _scaleTween.Kill();
             _scaleTween = null;
+        }
+
+        private void PlayHoverSfx(bool hovered)
+        {
+            if (!hovered || string.IsNullOrWhiteSpace(hoverSfxId))
+            {
+                return;
+            }
+
+            SoundManager.Current?.PlaySfx(hoverSfxId);
         }
 
         private void ApplyHoverOutline(bool visible)
