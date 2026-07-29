@@ -1,0 +1,135 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &4280156547118392548
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 1.486
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 3.551
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 16.5
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.6389553
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.7692439
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: -100.572
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: da051edfc6574ae7876a6536ecf3019f, type: 2}
+    - target: {fileID: 919132149155446097, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      propertyPath: m_Name
+      value: CardDeck
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8587766540803689262}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6577874032054276190}
+  m_SourcePrefab: {fileID: 100100000, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+--- !u!23 &3217749443779459168 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+  m_PrefabInstance: {fileID: 4280156547118392548}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &4010246982575643061 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
+  m_PrefabInstance: {fileID: 4280156547118392548}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &8587766540803689262
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4010246982575643061}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.72, y: 0.99999994, z: 2.44}
+  m_Center: {x: 0, y: 0.49999997, z: 0}
+--- !u!114 &6577874032054276190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4010246982575643061}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89cbcd05085f4d68a42b15391645d529, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.DeckStackView
+  renderers:
+  - {fileID: 3217749443779459168}
+  colliders:
+  - {fileID: 8587766540803689262}
+  minimumHeight: 0.08
+  heightPerCard: 0.035
+  maximumHeight: 1.2

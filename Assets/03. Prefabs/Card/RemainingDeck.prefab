@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7914414769920268993}
   - component: {fileID: 9158423222639703523}
   - component: {fileID: 578577744107582327}
+  - component: {fileID: 7508884376432409000}
   m_Layer: 0
   m_Name: RemainingDeck
   m_TagString: Untagged
@@ -30,7 +31,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.64380455, z: -0, w: 0.76518995}
   m_LocalPosition: {x: 1.502, y: 3.397, z: 16.436}
-  m_LocalScale: {x: 0.6000001, y: 0.9, z: 0.28}
+  m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -42,7 +43,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7297903055653142785}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  m_Mesh: {fileID: -5495902117074765545, guid: 1092a569a68c30949b7e5013b810ed29, type: 3}
 --- !u!65 &7914414769920268993
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -62,8 +63,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 4.3947244, y: 1.6864586, z: 3.162773}
+  m_Center: {x: -0.0048860908, y: 0.8230102, z: -0.00012367967}
 --- !u!23 &9158423222639703523
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -89,7 +90,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: db5d66f37334a0a46bcf13691020a86e, type: 2}
+  - {fileID: 2100000, guid: da051edfc6574ae7876a6536ecf3019f, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -125,3 +126,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a51ce0808f3043b4c8978c7a3c08065e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.DeckClickable
+  kind: 0
+--- !u!114 &7508884376432409000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7297903055653142785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89cbcd05085f4d68a42b15391645d529, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.DeckStackView
+  renderers:
+  - {fileID: 9158423222639703523}
+  colliders:
+  - {fileID: 7914414769920268993}
+  minimumHeight: 0.08
+  heightPerCard: 0.035
+  maximumHeight: 1.2
