@@ -6,123 +6,82 @@ using UnityEngine;
 namespace DiaBlackJack.GameScene
 {
     /// <summary>
-    /// Editor-only panel for forcing enemy AI card-use scenes in GameScene. It builds a dedicated
-    /// deterministic battle and then routes a player STAND through GameManager's normal input path,
-    /// so timeline snapshots, enemy policy validation, camera cuts, and weapon animations all run
-    /// through the production presentation flow.
+    /// Editor-only debug entry point for forced enemy-card scenes.
+    /// Attach it beside ShopDebugPanel and use its custom Inspector while in Play Mode.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameSceneEnemyAITestPanel : MonoBehaviour
     {
         [SerializeField] private GameManager gameManager;
+        [SerializeField] private ShopController shop;
 
 #if UNITY_EDITOR
         private const BindingFlags PrivateInstance =
             BindingFlags.NonPublic | BindingFlags.Instance;
 
-        private GUIStyle _buttonStyle;
-        private GUIStyle _labelStyle;
+        public bool HasGameManager => gameManager != null;
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void CreateForGameScene()
+        public bool HasShop => shop != null;
+
+        public bool IsShopOpen => shop != null && shop.IsOpen;
+
+        public bool CanRunTest =>
+            Application.isPlaying &&
+            gameManager != null &&
+            shop != null &&
+            !shop.IsOpen;
+
+        public bool DebugEnemyRevolverHit()
         {
-            if (FindFirstObjectByType<GameSceneEnemyAITestPanel>(
-                    FindObjectsInactive.Include) != null ||
-                FindFirstObjectByType<GameManager>(
-                    FindObjectsInactive.Include) == null)
-            {
-                return;
-            }
-
-            var panelObject = new GameObject("Enemy AI Test Panel");
-            panelObject.AddComponent<GameSceneEnemyAITestPanel>();
+            return StartEnemyCardScene(
+                CardEffectKind.AutoPistol,
+                pistolGuessNumber: 7);
         }
 
-        private void OnGUI()
+        public bool DebugEnemyRevolverMiss()
         {
-            if (ResolveGameManager() == null)
-            {
-                return;
-            }
-
-            _buttonStyle ??= new GUIStyle(GUI.skin.button)
-            {
-                fontSize = 13,
-                fontStyle = FontStyle.Bold
-            };
-            _labelStyle ??= new GUIStyle(GUI.skin.label)
-            {
-                fontSize = 13,
-                fontStyle = FontStyle.Bold
-            };
-
-            const float w = 190f;
-            const float h = 32f;
-            const float gap = 6f;
-            float x = 184f;
-            float y = Screen.height * 0.5f - (4f * h + 3f * gap) * 0.5f;
-
-            GUI.Label(new Rect(x, y - 22f, w, 20f), "ENEMY AI TEST", _labelStyle);
-
-            if (DebugButton(ref y, x, w, h, gap, "Enemy Revolver Hit"))
-            {
-                StartEnemyCardScene(CardEffectKind.AutoPistol, pistolGuessNumber: 7);
-            }
-
-            if (DebugButton(ref y, x, w, h, gap, "Enemy Revolver Miss"))
-            {
-                StartEnemyCardScene(CardEffectKind.AutoPistol, pistolGuessNumber: 1);
-            }
-
-            if (DebugButton(ref y, x, w, h, gap, "Enemy Hammer"))
-            {
-                StartEnemyCardScene(CardEffectKind.ThreatHammer, pistolGuessNumber: 7);
-            }
+            return StartEnemyCardScene(
+                CardEffectKind.AutoPistol,
+                pistolGuessNumber: 1);
         }
 
-        private bool DebugButton(
-            ref float y,
-            float x,
-            float w,
-            float h,
-            float gap,
-            string label)
+        public bool DebugEnemyHammer()
         {
-            bool clicked = GUI.Button(new Rect(x, y, w, h), label, _buttonStyle);
-            y += h + gap;
-            return clicked;
+            return StartEnemyCardScene(
+                CardEffectKind.ThreatHammer,
+                pistolGuessNumber: 7);
         }
 
-        private void StartEnemyCardScene(
+        private bool StartEnemyCardScene(
             CardEffectKind effectKind,
             int pistolGuessNumber)
         {
-            GameManager manager = ResolveGameManager();
-            if (manager == null)
+            if (!CanRunTest)
             {
-                return;
+                return false;
             }
 
             var session = new CoreLoopSession(
                 () => CreateBattle(effectKind, pistolGuessNumber));
-            SetPrivateField(manager, "_session", session);
-            SetPrivateField(manager, "_inputLocked", false);
-            SetPrivateField(manager, "_choosingLighterRemoval", false);
+            SetPrivateField(gameManager, "_session", session);
+            SetPrivateField(gameManager, "_inputLocked", false);
+            SetPrivateField(gameManager, "_choosingLighterRemoval", false);
 
-            InvokePrivate(manager, "ResetRevolverAnimationState");
+            InvokePrivate(gameManager, "ResetRevolverAnimationState");
             HammerAnimationController hammer =
                 FindFirstObjectByType<HammerAnimationController>(
                     FindObjectsInactive.Include);
             hammer?.Hide();
 
-            InvokePrivate(manager, "RefreshView");
+            InvokePrivate(gameManager, "RefreshView");
             InvokePrivate(
-                manager,
+                gameManager,
                 "ProcessInput",
                 new object[] { new Func<bool>(session.TryPlayerStand) });
+            return true;
         }
 
-        private CoreLoopBattle CreateBattle(
+        private static CoreLoopBattle CreateBattle(
             CardEffectKind effectKind,
             int pistolGuessNumber)
         {
@@ -151,17 +110,6 @@ namespace DiaBlackJack.GameScene
                 enemyPolicy: new ForcedEnemyCardPolicy(
                     effectKind,
                     pistolGuessNumber));
-        }
-
-        private GameManager ResolveGameManager()
-        {
-            if (gameManager == null)
-            {
-                gameManager = FindFirstObjectByType<GameManager>(
-                    FindObjectsInactive.Include);
-            }
-
-            return gameManager;
         }
 
         private static BlackjackCard EnemyWeaponCard(
