@@ -463,7 +463,8 @@ namespace DiaBlackJack.GameScene
                 canUse: Gold >= offer.Price,
                 definition.DisplayName,
                 definition.Summary,
-                costSummary));
+                costSummary,
+                showHoverBadgeWhenUnavailable: true));
         }
 
         private void BindOfferView(NormalCardOffer offer)

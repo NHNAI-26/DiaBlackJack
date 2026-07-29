@@ -142,10 +142,12 @@ namespace DiaBlackJack.GameScene
             CardView pointedCard = hasHit
                 ? hit.collider.GetComponentInParent<CardView>()
                 : null;
-            CardView pointedBattleCard = shopOpen ? null : pointedCard;
-            CardView pointedShopCard = shopOpen ? pointedCard : null;
             DemonCardView pointedDemonCard = shopOpen && hasHit
                 ? hit.collider.GetComponentInParent<DemonCardView>()
+                : null;
+            CardView pointedBattleCard = shopOpen ? null : pointedCard;
+            CardView pointedShopCard = shopOpen && pointedDemonCard == null
+                ? pointedCard
                 : null;
             ShopUtilityItemView pointedShopUtilityItem = shopOpen && hasHit
                 ? hit.collider.GetComponentInParent<ShopUtilityItemView>()
@@ -153,8 +155,8 @@ namespace DiaBlackJack.GameScene
 
             // Hover is visual-only, so it runs even while input is locked (during timeline playback).
             UpdateHover(shopOpen ? pointedShopCard : pointedBattleCard);
-            UpdateCardHoverBadge();
             UpdateDemonCardHover(pointedDemonCard);
+            UpdateCardHoverBadge();
             UpdateShopUtilityItemHover(pointedShopUtilityItem);
 
             // A deck's card-list panel shows while the pointer hovers it (draw or discard).
@@ -253,12 +255,40 @@ namespace DiaBlackJack.GameScene
                     _camera,
                     out Vector2 screenPosition))
             {
-                hud.HideCardHoverBadge();
+                UpdateDemonCardHoverBadge();
                 return;
             }
 
             hud.ShowCardHoverBadge(
                 _hoveredCard.HoverBadgeText,
+                screenPosition,
+                _camera);
+        }
+
+        private void UpdateDemonCardHoverBadge()
+        {
+            if (hud == null)
+            {
+                return;
+            }
+
+            if (_camera == null)
+            {
+                _camera = Camera.main;
+            }
+
+            if (_hoveredDemonCard == null ||
+                !_hoveredDemonCard.ShouldShowHoverBadge ||
+                !_hoveredDemonCard.TryGetHoverBadgeScreenPosition(
+                    _camera,
+                    out Vector2 screenPosition))
+            {
+                hud.HideCardHoverBadge();
+                return;
+            }
+
+            hud.ShowCardHoverBadge(
+                _hoveredDemonCard.HoverBadgeText,
                 screenPosition,
                 _camera);
         }

@@ -11,7 +11,8 @@ namespace DiaBlackJack.GameScene
             bool canUse,
             string displayName,
             string summary = "",
-            string costSummary = "")
+            string costSummary = "",
+            bool showHoverBadgeWhenUnavailable = false)
         {
             if (cardId < 0)
             {
@@ -32,6 +33,7 @@ namespace DiaBlackJack.GameScene
             DisplayName = displayName ?? string.Empty;
             Summary = summary ?? string.Empty;
             CostSummary = costSummary ?? string.Empty;
+            ShowHoverBadgeWhenUnavailable = showHoverBadgeWhenUnavailable;
         }
 
         public int CardId { get; }
@@ -45,6 +47,8 @@ namespace DiaBlackJack.GameScene
         public int FaceSpriteIndex { get; }
 
         public bool IsFaceUp { get; }
+
+        public bool ShowHoverBadgeWhenUnavailable { get; }
 
         public string Summary { get; }
     }

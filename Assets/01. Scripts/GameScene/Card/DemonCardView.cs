@@ -1,4 +1,3 @@
-using TMPro;
 using UnityEngine;
 
 namespace DiaBlackJack.GameScene
@@ -11,9 +10,9 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Sprite[] faceSpritesByIndex = new Sprite[13];
         [SerializeField] private int defaultFaceSpriteIndex = 1;
 
-        [Header("Usable badge (hover)")]
-        [SerializeField] private GameObject badge;
-        [SerializeField] private TMP_Text badgeText;
+        [Header("Hover badge anchor")]
+        [Tooltip("World-space anchor projected to the HUD while this demon card is hovered.")]
+        [SerializeField] private Transform topPosition;
 
         [Header("Hover feel")]
         [SerializeField] private float hoverScale = 1.15f;
@@ -32,20 +31,22 @@ namespace DiaBlackJack.GameScene
         private Vector3 _baseScale = Vector3.one;
         private Vector3 _targetScale = Vector3.one;
         private bool _showingFrontFace = true;
+        private bool _showBadgeOnHover;
         private bool _hovered;
 
         public int CardId { get; private set; } = -1;
 
         public bool CanUse { get; private set; }
 
+        public string HoverBadgeText { get; private set; } = string.Empty;
+
+        public bool ShouldShowHoverBadge =>
+            _hovered && _showBadgeOnHover && !string.IsNullOrEmpty(HoverBadgeText);
+
         private void Awake()
         {
             _baseScale = transform.localScale;
             _targetScale = _baseScale;
-            if (badge != null)
-            {
-                badge.SetActive(false);
-            }
         }
 
         private void Update()
@@ -67,6 +68,7 @@ namespace DiaBlackJack.GameScene
             CardId = card.CardId;
             CanUse = card.CanUse;
             _showingFrontFace = card.IsFaceUp;
+            _showBadgeOnHover = CanUse || card.ShowHoverBadgeWhenUnavailable;
 
             if (front != null)
             {
@@ -83,10 +85,7 @@ namespace DiaBlackJack.GameScene
                 back.SetActive(!_showingFrontFace);
             }
 
-            if (badgeText != null)
-            {
-                badgeText.text = FormatBadgeText(card);
-            }
+            HoverBadgeText = !card.IsFaceUp ? string.Empty : FormatBadgeText(card);
 
             _hovered = false;
             transform.localScale = _baseScale;
@@ -105,6 +104,24 @@ namespace DiaBlackJack.GameScene
         {
             return SpriteForIndex(
                 GameSceneCardVisualCatalog.DemonCardSpriteIndexFor(definitionKey));
+        }
+
+        public bool TryGetHoverBadgeScreenPosition(Camera camera, out Vector2 screenPosition)
+        {
+            screenPosition = default;
+            if (camera == null || topPosition == null)
+            {
+                return false;
+            }
+
+            Vector3 projected = camera.WorldToScreenPoint(topPosition.position);
+            if (projected.z <= 0f)
+            {
+                return false;
+            }
+
+            screenPosition = new Vector2(projected.x, projected.y);
+            return true;
         }
 
         private static string FormatBadgeText(GameSceneDemonCardViewModel card)
@@ -126,11 +143,6 @@ namespace DiaBlackJack.GameScene
         private void ApplyHoverVisuals()
         {
             bool lit = _hovered && CanUse;
-
-            if (badge != null)
-            {
-                badge.SetActive(_hovered);
-            }
 
             if (lit && _showingFrontFace)
             {
