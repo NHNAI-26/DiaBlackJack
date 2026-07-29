@@ -51,6 +51,12 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private string enemySuccessTrigger = "EnemySuccess";
         [SerializeField] private string enemyFailTrigger = "EnemyFail";
 
+        [Header("Hammer animation")]
+        [SerializeField] private HammerAnimationController hammerAnimation;
+
+        [Header("Cinematic camera")]
+        [SerializeField] private GameSceneCameraViewController cameraViewController;
+
         private CoreLoopSession _session;
         private CoreLoopViewModel _core;
         private Camera _camera;
@@ -83,6 +89,10 @@ namespace DiaBlackJack.GameScene
         private int _revolverReadySourceCardId;
         private CombatantSide _revolverReadyActorSide;
         private Coroutine _revolverHideRoutine;
+        private bool _hammerSwitchInputLocked;
+        private bool _returnCameraToCurrentAfterHammer;
+        private HammerAnimationController _hammerCameraLockController;
+        private HammerAnimationController _playedHammerAnimationController;
         private readonly List<GameSceneViewModel> _timeline = new List<GameSceneViewModel>();
         private readonly List<PurchasedNormalCard> _purchasedNormalCards =
             new List<PurchasedNormalCard>();
@@ -95,6 +105,7 @@ namespace DiaBlackJack.GameScene
         private void Awake()
         {
             HideRevolverAnimation();
+            ResolveHammerAnimation()?.Hide();
             _session = new CoreLoopSession(CreateBattle);
         }
 
@@ -1250,24 +1261,38 @@ namespace DiaBlackJack.GameScene
 
         private IEnumerator PlayTimeline()
         {
-            foreach (GameSceneViewModel vm in _timeline)
+            List<GameSceneViewModel> timeline =
+                new List<GameSceneViewModel>(_timeline);
+            _timeline.Clear();
+
+            foreach (GameSceneViewModel vm in timeline)
             {
-                bool playedRevolverAnimation = ApplyView(
+                AppliedAnimationResult playedAnimation = ApplyView(
                     vm,
-                    scheduleRevolverRetry: false);
+                    scheduleRevolverRetry: false,
+                    deferHammerSmashCardRender: true);
 
                 bool resolveBeat = vm.Core.State == CoreLoopState.ResolvingRound;
                 float waitSeconds = resolveBeat ? resolveHoldSeconds : stepSeconds;
-                if (playedRevolverAnimation)
+                if (playedAnimation.PlayedAny)
                 {
-                    waitSeconds = Mathf.Max(waitSeconds, revolverAnimationSeconds);
+                    waitSeconds = Mathf.Max(
+                        waitSeconds,
+                        playedAnimation.WaitSeconds);
                 }
 
-                yield return new WaitForSeconds(waitSeconds);
+                yield return WaitForAnimationOrSeconds(
+                    playedAnimation,
+                    waitSeconds);
+
+                if (playedAnimation.DeferredCardRender)
+                {
+                    RenderHands(playedAnimation.DeferredViewModel);
+                }
 
                 GameSceneRevolverAnimationCue revolverCue =
                     vm.RevolverAnimationCue;
-                if (playedRevolverAnimation &&
+                if (playedAnimation.PlayedRevolver &&
                     revolverCue != null &&
                     revolverCue.Phase ==
                         GameSceneRevolverAnimationPhase.ResolvedWithRetry)
@@ -1293,9 +1318,10 @@ namespace DiaBlackJack.GameScene
             ApplyView(vm);
         }
 
-        private bool ApplyView(
+        private AppliedAnimationResult ApplyView(
             GameSceneViewModel vm,
-            bool scheduleRevolverRetry = true)
+            bool scheduleRevolverRetry = true,
+            bool deferHammerSmashCardRender = false)
         {
             _core = vm.Core;
 
@@ -1311,22 +1337,28 @@ namespace DiaBlackJack.GameScene
                 TryPlayRevolverAnimation(
                     vm.RevolverAnimationCue,
                     scheduleRevolverRetry);
+            _playedHammerAnimationController = null;
+            bool playedHammerAnimation =
+                TryPlayHammerAnimation(vm.HammerAnimationCue);
+            bool deferredCardRender =
+                deferHammerSmashCardRender &&
+                playedHammerAnimation &&
+                IsHammerSmashCue(vm.HammerAnimationCue);
 
             // While the shop is open its presentation (merchant, hidden combat objects, goods) is owned
             // by ShopController; skip the combat re-render so it doesn't repaint the enemy over the merchant.
             if (shop != null && shop.IsOpen)
             {
-                return playedRevolverAnimation;
+                return CreateAppliedAnimationResult(
+                    playedRevolverAnimation,
+                    playedHammerAnimation,
+                    deferredCardRender: false,
+                    deferredViewModel: null);
             }
 
-            if (playerHand != null)
+            if (!deferredCardRender)
             {
-                playerHand.Render(vm.PlayerCards);
-            }
-
-            if (enemyHand != null)
-            {
-                enemyHand.Render(vm.EnemyCards);
+                RenderHands(vm);
             }
 
             if (playerCharacter != null)
@@ -1346,7 +1378,29 @@ namespace DiaBlackJack.GameScene
                     vm.Core.EnemyVisibleTotalText);
             }
 
-            return playedRevolverAnimation;
+            return CreateAppliedAnimationResult(
+                playedRevolverAnimation,
+                playedHammerAnimation,
+                deferredCardRender,
+                deferredCardRender ? vm : null);
+        }
+
+        private void RenderHands(GameSceneViewModel vm)
+        {
+            if (vm == null)
+            {
+                return;
+            }
+
+            if (playerHand != null)
+            {
+                playerHand.Render(vm.PlayerCards);
+            }
+
+            if (enemyHand != null)
+            {
+                enemyHand.Render(vm.EnemyCards);
+            }
         }
 
         private void RefreshShopUtilityItems()
@@ -1410,6 +1464,9 @@ namespace DiaBlackJack.GameScene
 
             revolverAnimator.SetTrigger(ResolveRevolverTrigger(cue));
             _revolverReadyActive = false;
+            ApplyCinematicCamera(
+                GameSceneCameraView.Current,
+                revolverAnimationSeconds);
 
             if (Application.isPlaying &&
                 cue.Phase == GameSceneRevolverAnimationPhase.ResolvedWithRetry &&
@@ -1434,6 +1491,232 @@ namespace DiaBlackJack.GameScene
             }
 
             return true;
+        }
+
+        private bool TryPlayHammerAnimation(GameSceneHammerAnimationCue cue)
+        {
+            HammerAnimationController controller = ResolveHammerAnimation();
+            if (controller == null || !controller.TryPlay(cue, playerHand, enemyHand))
+            {
+                return false;
+            }
+
+            ApplyCinematicCamera(
+                cue.ActorSide == CombatantSide.Player
+                    ? GameSceneCameraView.EnemyFocus
+                    : GameSceneCameraView.Current,
+                controller,
+                cue.ActorSide == CombatantSide.Player);
+            _playedHammerAnimationController = controller;
+            return true;
+        }
+
+        private HammerAnimationController ResolveHammerAnimation()
+        {
+            if (hammerAnimation != null)
+            {
+                return hammerAnimation;
+            }
+
+            hammerAnimation =
+                FindFirstObjectByType<HammerAnimationController>(
+                    FindObjectsInactive.Include);
+            if (hammerAnimation != null)
+            {
+                return hammerAnimation;
+            }
+
+            Animator[] animators = FindObjectsByType<Animator>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+            for (int i = 0; i < animators.Length; i++)
+            {
+                Animator candidate = animators[i];
+                if (candidate != null && candidate.gameObject.name == "Hammer_Anim")
+                {
+                    hammerAnimation =
+                        candidate.GetComponent<HammerAnimationController>() ??
+                        candidate.gameObject.AddComponent<HammerAnimationController>();
+                    return hammerAnimation;
+                }
+            }
+
+            return null;
+        }
+
+        private void ApplyCinematicCamera(
+            GameSceneCameraView view,
+            float lockSeconds)
+        {
+            GameSceneCameraViewController controller =
+                ResolveCameraViewController();
+            if (controller == null)
+            {
+                return;
+            }
+
+            controller.SetView(view);
+            controller.LockSwitchInputForSeconds(lockSeconds);
+        }
+
+        private void ApplyCinematicCamera(
+            GameSceneCameraView view,
+            HammerAnimationController hammerController,
+            bool returnToCurrentWhenFinished)
+        {
+            GameSceneCameraViewController controller =
+                ResolveCameraViewController();
+            if (controller == null)
+            {
+                return;
+            }
+
+            controller.SetView(view);
+            _returnCameraToCurrentAfterHammer = returnToCurrentWhenFinished;
+            BeginHammerSwitchInputLock(hammerController);
+        }
+
+        private void BeginHammerSwitchInputLock(
+            HammerAnimationController hammerController)
+        {
+            GameSceneCameraViewController controller =
+                ResolveCameraViewController();
+            if (controller == null)
+            {
+                return;
+            }
+
+            if (!_hammerSwitchInputLocked)
+            {
+                controller.LockSwitchInput();
+                _hammerSwitchInputLocked = true;
+            }
+
+            if (_hammerCameraLockController == hammerController)
+            {
+                return;
+            }
+
+            if (_hammerCameraLockController != null)
+            {
+                _hammerCameraLockController.SmashAnimationFinished -=
+                    HandleHammerSmashAnimationFinished;
+            }
+
+            _hammerCameraLockController = hammerController;
+            if (_hammerCameraLockController != null)
+            {
+                _hammerCameraLockController.SmashAnimationFinished +=
+                    HandleHammerSmashAnimationFinished;
+            }
+        }
+
+        private void HandleHammerSmashAnimationFinished()
+        {
+            if (_returnCameraToCurrentAfterHammer)
+            {
+                GameSceneCameraViewController controller =
+                    ResolveCameraViewController();
+                controller?.SetView(GameSceneCameraView.Current);
+            }
+
+            _returnCameraToCurrentAfterHammer = false;
+            EndHammerSwitchInputLock();
+        }
+
+        private void EndHammerSwitchInputLock()
+        {
+            if (_hammerCameraLockController != null)
+            {
+                _hammerCameraLockController.SmashAnimationFinished -=
+                    HandleHammerSmashAnimationFinished;
+                _hammerCameraLockController = null;
+            }
+
+            _returnCameraToCurrentAfterHammer = false;
+
+            if (!_hammerSwitchInputLocked)
+            {
+                return;
+            }
+
+            GameSceneCameraViewController controller =
+                ResolveCameraViewController();
+            if (controller != null)
+            {
+                controller.UnlockSwitchInput();
+            }
+
+            _hammerSwitchInputLocked = false;
+        }
+
+        private GameSceneCameraViewController ResolveCameraViewController()
+        {
+            if (cameraViewController != null)
+            {
+                return cameraViewController;
+            }
+
+            cameraViewController =
+                FindFirstObjectByType<GameSceneCameraViewController>(
+                    FindObjectsInactive.Include);
+            return cameraViewController;
+        }
+
+        private AppliedAnimationResult CreateAppliedAnimationResult(
+            bool playedRevolver,
+            bool playedHammer,
+            bool deferredCardRender = false,
+            GameSceneViewModel deferredViewModel = null)
+        {
+            float waitSeconds = 0f;
+            if (playedRevolver)
+            {
+                waitSeconds = Mathf.Max(waitSeconds, revolverAnimationSeconds);
+            }
+
+            if (playedHammer)
+            {
+                HammerAnimationController controller = ResolveHammerAnimation();
+                waitSeconds = Mathf.Max(
+                    waitSeconds,
+                    controller != null ? controller.AnimationSeconds : 0f);
+            }
+
+            return new AppliedAnimationResult(
+                playedRevolver,
+                playedHammer,
+                waitSeconds,
+                playedHammer ? _playedHammerAnimationController : null,
+                deferredCardRender,
+                deferredViewModel);
+        }
+
+        private static bool IsHammerSmashCue(GameSceneHammerAnimationCue cue)
+        {
+            return cue != null &&
+                cue.Phase == GameSceneHammerAnimationPhase.Smash;
+        }
+
+        private IEnumerator WaitForAnimationOrSeconds(
+            AppliedAnimationResult animation,
+            float waitSeconds)
+        {
+            if (!animation.PlayedHammer ||
+                animation.HammerController == null ||
+                !animation.HammerController.IsSmashAnimationPlaying)
+            {
+                yield return new WaitForSeconds(waitSeconds);
+                yield break;
+            }
+
+            float elapsedSeconds = 0f;
+            while (elapsedSeconds < waitSeconds ||
+                animation.HammerController.IsSmashAnimationPlaying)
+            {
+                elapsedSeconds += Time.deltaTime;
+                yield return null;
+            }
         }
 
         private bool IsLastRevolverAnimationCue(
@@ -1617,6 +1900,39 @@ namespace DiaBlackJack.GameScene
             _revolverReadyRoundNumber = 0;
             _revolverReadySourceCardId = 0;
             _revolverReadyActorSide = CombatantSide.Player;
+        }
+
+        private readonly struct AppliedAnimationResult
+        {
+            public AppliedAnimationResult(
+                bool playedRevolver,
+                bool playedHammer,
+                float waitSeconds,
+                HammerAnimationController hammerController,
+                bool deferredCardRender,
+                GameSceneViewModel deferredViewModel)
+            {
+                PlayedRevolver = playedRevolver;
+                PlayedHammer = playedHammer;
+                WaitSeconds = waitSeconds;
+                HammerController = hammerController;
+                DeferredCardRender = deferredCardRender;
+                DeferredViewModel = deferredViewModel;
+            }
+
+            public bool PlayedRevolver { get; }
+
+            public bool PlayedHammer { get; }
+
+            public bool PlayedAny => PlayedRevolver || PlayedHammer;
+
+            public float WaitSeconds { get; }
+
+            public HammerAnimationController HammerController { get; }
+
+            public bool DeferredCardRender { get; }
+
+            public GameSceneViewModel DeferredViewModel { get; }
         }
 
         // Open the shop the moment a battle is won. Called from RefreshView, which lands on the true

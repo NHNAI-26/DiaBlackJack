@@ -177,6 +177,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 enemyRanks: new[] { 10, 7, 5, 4 });
             BlackjackCard sourceCard = battle.Player.Draw(faceUp: true);
             battle.Enemy.Draw(faceUp: true);
+            BlackjackCard targetCard = battle.Enemy.Hand.Cards.Single(
+                card => card.Id == optionId);
 
             Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
             Assert.That(battle.TryResolvePlayerCardChoice(optionId), Is.True);
@@ -188,6 +190,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 battle.Enemy.Deck.GetDiscardedCards().Select(card => card.Rank),
                 Does.Contain(discardedRank));
             Assert.That(battle.Enemy.Hand.Contains(optionId), Is.False);
+            Assert.That(
+                battle.LastCardEffectResult.Value.TargetCardId,
+                Is.EqualTo(targetCard.Id));
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
         }
 

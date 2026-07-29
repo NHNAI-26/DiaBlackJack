@@ -147,6 +147,64 @@ namespace DiaBlackJack.GameScene
         public bool Succeeded { get; }
     }
 
+    public enum GameSceneHammerAnimationPhase
+    {
+        Ready,
+        Smash,
+    }
+
+    public sealed class GameSceneHammerAnimationCue
+    {
+        public GameSceneHammerAnimationCue(
+            int roundNumber,
+            int sourceCardId,
+            CombatantSide actorSide,
+            GameSceneHammerAnimationPhase phase,
+            int? targetCardId = null)
+        {
+            if (roundNumber < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(roundNumber));
+            }
+
+            if (sourceCardId < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceCardId));
+            }
+
+            if (!Enum.IsDefined(typeof(CombatantSide), actorSide))
+            {
+                throw new ArgumentOutOfRangeException(nameof(actorSide));
+            }
+
+            if (!Enum.IsDefined(typeof(GameSceneHammerAnimationPhase), phase))
+            {
+                throw new ArgumentOutOfRangeException(nameof(phase));
+            }
+
+            if (targetCardId < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(targetCardId));
+            }
+
+            RoundNumber = roundNumber;
+            SourceCardId = sourceCardId;
+            ActorSide = actorSide;
+            Phase = phase;
+            TargetCardId = targetCardId;
+        }
+
+        public int RoundNumber { get; }
+
+        public int SourceCardId { get; }
+
+        public CombatantSide ActorSide { get; }
+
+        public GameSceneHammerAnimationPhase Phase { get; }
+
+        public int? TargetCardId { get; }
+    }
+
     /// <summary>
     /// Read-only projection consumed by <c>GameSceneView</c>. Wraps the shared
     /// <see cref="CoreLoopViewModel"/> (souls, totals, state, player card actions) and adds
@@ -162,7 +220,8 @@ namespace DiaBlackJack.GameScene
             CharacterVisualState enemyVisual,
             string playerActionLabel,
             string enemyActionLabel,
-            GameSceneRevolverAnimationCue revolverAnimationCue = null)
+            GameSceneRevolverAnimationCue revolverAnimationCue = null,
+            GameSceneHammerAnimationCue hammerAnimationCue = null)
         {
             Core = core ?? throw new ArgumentNullException(nameof(core));
             PlayerCards = playerCards ?? throw new ArgumentNullException(nameof(playerCards));
@@ -172,6 +231,7 @@ namespace DiaBlackJack.GameScene
             PlayerActionLabel = playerActionLabel ?? string.Empty;
             EnemyActionLabel = enemyActionLabel ?? string.Empty;
             RevolverAnimationCue = revolverAnimationCue;
+            HammerAnimationCue = hammerAnimationCue;
         }
 
         public CoreLoopViewModel Core { get; }
@@ -190,6 +250,8 @@ namespace DiaBlackJack.GameScene
         public string EnemyActionLabel { get; }
 
         public GameSceneRevolverAnimationCue RevolverAnimationCue { get; }
+
+        public GameSceneHammerAnimationCue HammerAnimationCue { get; }
     }
 
     public static class GameScenePresenter
@@ -214,7 +276,45 @@ namespace DiaBlackJack.GameScene
                 enemyVisual,
                 playerLabel,
                 enemyLabel,
-                CreateRevolverAnimationCue(battle));
+                CreateRevolverAnimationCue(battle),
+                CreateHammerAnimationCue(battle));
+        }
+
+        private static GameSceneHammerAnimationCue CreateHammerAnimationCue(
+            CoreLoopBattle battle)
+        {
+            PendingCardEffect pendingPlayerEffect = battle.PendingPlayerCardEffect;
+            if (pendingPlayerEffect != null &&
+                pendingPlayerEffect.EffectKind == CardEffectKind.ThreatHammer)
+            {
+                return new GameSceneHammerAnimationCue(
+                    battle.RoundNumber,
+                    pendingPlayerEffect.SourceCardId,
+                    CombatantSide.Player,
+                    GameSceneHammerAnimationPhase.Ready);
+            }
+
+            if (battle.PendingEnemyCardEffect != null ||
+                !battle.LastCardEffectResult.HasValue ||
+                !battle.LastCardEffectActorSide.HasValue)
+            {
+                return null;
+            }
+
+            CardEffectResult result = battle.LastCardEffectResult.Value;
+            if (result.EffectKind != CardEffectKind.ThreatHammer ||
+                !result.TargetCardId.HasValue ||
+                !IsLastUseCardEffect(battle, result.EffectKind))
+            {
+                return null;
+            }
+
+            return new GameSceneHammerAnimationCue(
+                battle.RoundNumber,
+                result.SourceCardId,
+                battle.LastCardEffectActorSide.Value,
+                GameSceneHammerAnimationPhase.Smash,
+                result.TargetCardId);
         }
 
         private static GameSceneRevolverAnimationCue CreateRevolverAnimationCue(

@@ -107,6 +107,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 enemyPolicy: new EnforcerEnemyPolicy());
             battle.Start();
             BlackjackCard hammer = battle.Enemy.Hand.Cards[0];
+            BlackjackCard targetCard = battle.Player.Hand.Cards[0];
 
             Assert.That(battle.TryPlayerStand(), Is.True);
 
@@ -127,6 +128,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 battle.LastCardEffectResult.Value.EffectKind,
                 Is.EqualTo(CardEffectKind.ThreatHammer));
+            Assert.That(
+                battle.LastCardEffectResult.Value.TargetCardId,
+                Is.EqualTo(targetCard.Id));
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
         }
 

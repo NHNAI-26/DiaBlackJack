@@ -189,7 +189,14 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(
                 publicPropertyNames,
-                Is.EqualTo(new[] { "EffectKind", "EndedRound", "SourceCardId", "Succeeded" }));
+                Is.EqualTo(new[]
+                {
+                    "EffectKind",
+                    "EndedRound",
+                    "SourceCardId",
+                    "Succeeded",
+                    "TargetCardId"
+                }));
         }
 
         private static CoreLoopBattle CreateStartedBattle(

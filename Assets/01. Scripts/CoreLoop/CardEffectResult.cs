@@ -8,11 +8,17 @@ namespace DiaBlackJack.CoreLoop
             int sourceCardId,
             CardEffectKind effectKind,
             bool succeeded,
-            bool endedRound)
+            bool endedRound,
+            int? targetCardId = null)
         {
             if (sourceCardId < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(sourceCardId));
+            }
+
+            if (targetCardId < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(targetCardId));
             }
 
             if (!Enum.IsDefined(typeof(CardEffectKind), effectKind) ||
@@ -25,6 +31,7 @@ namespace DiaBlackJack.CoreLoop
             EffectKind = effectKind;
             Succeeded = succeeded;
             EndedRound = endedRound;
+            TargetCardId = targetCardId;
         }
 
         public bool EndedRound { get; }
@@ -34,5 +41,7 @@ namespace DiaBlackJack.CoreLoop
         public int SourceCardId { get; }
 
         public bool Succeeded { get; }
+
+        public int? TargetCardId { get; }
     }
 }

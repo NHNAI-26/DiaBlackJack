@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -17,6 +18,7 @@ namespace DiaBlackJack.GameScene
     {
         private const int MinViewIndex = (int)GameSceneCameraView.Current;
         private const int MaxViewIndex = (int)GameSceneCameraView.EnemyFocus;
+        private const int MaxSwitchInputViewIndex = (int)GameSceneCameraView.TableTop;
 
         [Header("Cinemachine")]
         [SerializeField] private CinemachineBrain brain;
@@ -28,6 +30,15 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameSceneCameraView defaultView = GameSceneCameraView.Current;
         [SerializeField] private bool switchInputEnabled = true;
 
+        [Header("Blend")]
+        [SerializeField] private float transitionSeconds = 0.45f;
+        [SerializeField] private CinemachineBlendDefinition.Styles transitionStyle =
+            CinemachineBlendDefinition.Styles.Custom;
+        [SerializeField] private AnimationCurve transitionCurve =
+            AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+
+        private int _switchInputLockCount;
+
         public GameSceneCameraView CurrentView { get; private set; } = GameSceneCameraView.Current;
 
         private void Reset()
@@ -37,17 +48,26 @@ namespace DiaBlackJack.GameScene
 
         private void OnValidate()
         {
+            transitionSeconds = Mathf.Max(0f, transitionSeconds);
+            transitionCurve ??= AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
             EnsureBrainReference();
+            ApplyBlendSettings();
         }
 
         private void Start()
         {
+            ApplyBlendSettings();
             SetView(defaultView, instant: true);
+        }
+
+        private void OnDisable()
+        {
+            _switchInputLockCount = 0;
         }
 
         private void Update()
         {
-            if (!switchInputEnabled)
+            if (!CanUseSwitchInput)
                 return;
 
             Keyboard keyboard = Keyboard.current;
@@ -73,6 +93,7 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
+            ApplyBlendSettings();
             camera.Prioritize();
             CurrentView = view;
 
@@ -91,11 +112,33 @@ namespace DiaBlackJack.GameScene
             if (delta == 0)
                 return false;
 
-            int nextIndex = Mathf.Clamp((int)CurrentView + Math.Sign(delta), MinViewIndex, MaxViewIndex);
+            int nextIndex = Mathf.Clamp(
+                (int)CurrentView + Math.Sign(delta),
+                MinViewIndex,
+                MaxSwitchInputViewIndex);
             if (nextIndex == (int)CurrentView)
                 return false;
 
             return SetView((GameSceneCameraView)nextIndex);
+        }
+
+        public void LockSwitchInputForSeconds(float seconds)
+        {
+            if (!Application.isPlaying || seconds <= 0f)
+                return;
+
+            LockSwitchInput();
+            StartCoroutine(UnlockSwitchInputAfterSeconds(seconds));
+        }
+
+        public void LockSwitchInput()
+        {
+            _switchInputLockCount++;
+        }
+
+        public void UnlockSwitchInput()
+        {
+            _switchInputLockCount = Mathf.Max(0, _switchInputLockCount - 1);
         }
 
         private CinemachineCamera GetCamera(GameSceneCameraView view)
@@ -125,6 +168,27 @@ namespace DiaBlackJack.GameScene
             Camera mainCamera = Camera.main;
             if (mainCamera != null)
                 brain = mainCamera.GetComponent<CinemachineBrain>();
+        }
+
+        private bool CanUseSwitchInput => switchInputEnabled && _switchInputLockCount <= 0;
+
+        private IEnumerator UnlockSwitchInputAfterSeconds(float seconds)
+        {
+            yield return new WaitForSeconds(seconds);
+            UnlockSwitchInput();
+        }
+
+        private void ApplyBlendSettings()
+        {
+            EnsureBrainReference();
+            if (brain == null)
+                return;
+
+            CinemachineBlendDefinition blend = brain.DefaultBlend;
+            blend.Style = transitionStyle;
+            blend.Time = Mathf.Max(0f, transitionSeconds);
+            blend.CustomCurve = transitionCurve ?? AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+            brain.DefaultBlend = blend;
         }
     }
 }

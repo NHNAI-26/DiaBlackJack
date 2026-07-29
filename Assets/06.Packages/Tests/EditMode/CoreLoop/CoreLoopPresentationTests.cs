@@ -499,6 +499,101 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CU05_GameSceneCreatesPlayerHammerReadyCueWhileChoosingTarget()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 2, 6, 3 },
+                enemyRanks: new[] { 10, 7, 5 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            battle.Start();
+            BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+
+            Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
+
+            GameSceneHammerAnimationCue cue =
+                GameScenePresenter.Create(battle).HammerAnimationCue;
+            Assert.That(cue, Is.Not.Null);
+            Assert.That(cue.RoundNumber, Is.EqualTo(1));
+            Assert.That(cue.SourceCardId, Is.EqualTo(sourceCard.Id));
+            Assert.That(cue.ActorSide, Is.EqualTo(CombatantSide.Player));
+            Assert.That(cue.Phase, Is.EqualTo(GameSceneHammerAnimationPhase.Ready));
+            Assert.That(cue.TargetCardId, Is.Null);
+        }
+
+        [Test]
+        public void CU05_GameSceneCreatesPlayerHammerAnimationCueWhenHammerResolves()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 2, 6, 3 },
+                enemyRanks: new[] { 10, 7, 5 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            battle.Start();
+            BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+            BlackjackCard targetCard = battle.Enemy.Hand.Cards[0];
+            battle.TryBeginPlayerCardUse(sourceCard.Id);
+
+            GameSceneHammerAnimationCue cue = null;
+            battle.Stepped += () =>
+            {
+                GameSceneHammerAnimationCue currentCue =
+                    GameScenePresenter.Create(battle).HammerAnimationCue;
+                if (currentCue != null &&
+                    currentCue.Phase == GameSceneHammerAnimationPhase.Smash)
+                {
+                    cue = currentCue;
+                }
+            };
+
+            Assert.That(battle.TryResolvePlayerCardChoice(targetCard.Id), Is.True);
+
+            Assert.That(cue, Is.Not.Null);
+            Assert.That(cue.RoundNumber, Is.EqualTo(1));
+            Assert.That(cue.SourceCardId, Is.EqualTo(sourceCard.Id));
+            Assert.That(cue.ActorSide, Is.EqualTo(CombatantSide.Player));
+            Assert.That(cue.Phase, Is.EqualTo(GameSceneHammerAnimationPhase.Smash));
+            Assert.That(cue.TargetCardId, Is.EqualTo(targetCard.Id));
+        }
+
+        [Test]
+        public void CU05_GameSceneCreatesEnemyHammerAnimationCueWhenHammerResolves()
+        {
+            var battle = new CoreLoopBattle(
+                CreateRankDeck(10, 7, 3, 2),
+                CreateDefinitionDeck(
+                    "threat-hammer-6",
+                    "standard-plain-4",
+                    "standard-plain-3"),
+                enemyMaximumSoul: 5,
+                enemyPolicy: new EnforcerEnemyPolicy());
+            battle.Start();
+            BlackjackCard sourceCard = battle.Enemy.Hand.Cards[0];
+            BlackjackCard targetCard = battle.Player.Hand.Cards[0];
+
+            GameSceneHammerAnimationCue cue = null;
+            battle.Stepped += () =>
+            {
+                GameSceneHammerAnimationCue currentCue =
+                    GameScenePresenter.Create(battle).HammerAnimationCue;
+                if (currentCue != null &&
+                    currentCue.Phase == GameSceneHammerAnimationPhase.Smash)
+                {
+                    cue = currentCue;
+                }
+            };
+
+            Assert.That(battle.TryPlayerStand(), Is.True);
+
+            Assert.That(cue, Is.Not.Null);
+            Assert.That(cue.RoundNumber, Is.EqualTo(1));
+            Assert.That(cue.SourceCardId, Is.EqualTo(sourceCard.Id));
+            Assert.That(cue.ActorSide, Is.EqualTo(CombatantSide.Enemy));
+            Assert.That(cue.Phase, Is.EqualTo(GameSceneHammerAnimationPhase.Smash));
+            Assert.That(cue.TargetCardId, Is.EqualTo(targetCard.Id));
+        }
+
+        [Test]
         public void CU05_PresenterShowsUsedCardAndSafeRecentEffectResult()
         {
             CoreLoopBattle battle = CreateBattle(
@@ -694,6 +789,30 @@ namespace DiaBlackJack.CoreLoop.Tests
                 CreateDeck(enemyRanks),
                 playerMaximumSoul,
                 enemyMaximumSoul);
+        }
+
+        private static BlackjackDeck CreateRankDeck(params int[] ranks)
+        {
+            var cards = new List<BlackjackCard>(ranks.Length);
+            for (int i = 0; i < ranks.Length; i++)
+            {
+                cards.Add(new BlackjackCard(i, ranks[i]));
+            }
+
+            return BlackjackDeck.CreateInDrawOrder(cards);
+        }
+
+        private static BlackjackDeck CreateDefinitionDeck(params string[] definitionKeys)
+        {
+            var cards = new List<BlackjackCard>(definitionKeys.Length);
+            for (int i = 0; i < definitionKeys.Length; i++)
+            {
+                cards.Add(new BlackjackCard(
+                    i,
+                    CardDefinitionCatalog.GetByKey(definitionKeys[i])));
+            }
+
+            return BlackjackDeck.CreateInDrawOrder(cards);
         }
 
         private static BlackjackDeck CreateDeck(IReadOnlyList<int> ranks)

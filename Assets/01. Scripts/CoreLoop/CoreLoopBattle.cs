@@ -4227,7 +4227,8 @@ namespace DiaBlackJack.CoreLoop
                     result.SourceCardId,
                     result.EffectKind,
                     result.Succeeded,
-                    endedRound: true);
+                    endedRound: true,
+                    result.TargetCardId);
                 roundResolution = RoundResolver.ResolveContractEffectBust(
                     RoundNumber,
                     playerIsTarget:
@@ -4240,7 +4241,8 @@ namespace DiaBlackJack.CoreLoop
                     result.SourceCardId,
                     result.EffectKind,
                     result.Succeeded,
-                    endedRound: false);
+                    endedRound: false,
+                    result.TargetCardId);
                 OwnerBustHandlingResult handling = HandleRoundBust(
                     roundResolution.Value,
                     () => ResumeCardEffectAfterBeelzebubBust(

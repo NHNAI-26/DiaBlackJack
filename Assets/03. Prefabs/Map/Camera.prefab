@@ -56,7 +56,7 @@ MonoBehaviour:
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
-    FieldOfView: 48
+    FieldOfView: 70
     OrthographicSize: 10
     NearClipPlane: 0.1
     FarClipPlane: 5000
@@ -103,8 +103,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3120304687376308232}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.98650086, z: -0.16375637, w: 0}
-  m_LocalPosition: {x: 0, y: 5.1, z: 18.85}
+  m_LocalRotation: {x: -0.000000030908623, y: 0.7071068, z: -0.7071068, w: -0.000000030908623}
+  m_LocalPosition: {x: 0, y: 7.08, z: 15.98}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -142,10 +142,10 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.1
-  far clip plane: 1000
+  far clip plane: 5000
   field of view: 70
   orthographic: 0
-  orthographic size: 10
+  orthographic size: 2.14
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -236,11 +236,29 @@ MonoBehaviour:
     Enabled: 1
     DefaultMode: 2
   DefaultBlend:
-    Style: 1
-    Time: 2
+    Style: 7
+    Time: 0.45
     CustomCurve:
       serializedVersion: 2
-      m_Curve: []
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 3.0912244
+        outSlope: 3.0912244
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0.039281707
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
@@ -449,6 +467,32 @@ MonoBehaviour:
   enemyFocusCamera: {fileID: 320987490343568394}
   defaultView: 0
   switchInputEnabled: 1
+  transitionSeconds: 0.45
+  transitionStyle: 7
+  transitionCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 3.0912244
+      outSlope: 3.0912244
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.039281707
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &6518598503902413302
 GameObject:
   m_ObjectHideFlags: 0
@@ -505,7 +549,7 @@ MonoBehaviour:
     LookAtTarget: {fileID: 0}
     CustomLookAtTarget: 0
   Lens:
-    FieldOfView: 60
+    FieldOfView: 50
     OrthographicSize: 2.14
     NearClipPlane: 0.1
     FarClipPlane: 5000

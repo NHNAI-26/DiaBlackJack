@@ -54,7 +54,7 @@ namespace DiaBlackJack.CoreLoop
 
             if (!context.IsOpponentStanding)
             {
-                return Complete(context, endedRound: false);
+                return Complete(context, endedRound: false, selectedOption.CardId);
             }
 
             if (!context.TryReplaceStandingOpponentHiddenCard(out _, out _))
@@ -66,23 +66,31 @@ namespace DiaBlackJack.CoreLoop
             bool endedRound = context.OpponentVisibleHandValue.IsBust;
             return endedRound
                 ? CardEffectStep.Complete(
-                    CreateResult(context, endedRound: true),
+                    CreateResult(context, endedRound: true, selectedOption.CardId),
                     context.CreateOpponentNumericBustResolution())
-                : Complete(context, endedRound: false);
+                : Complete(context, endedRound: false, selectedOption.CardId);
         }
 
-        private CardEffectStep Complete(CardEffectContext context, bool endedRound)
+        private CardEffectStep Complete(
+            CardEffectContext context,
+            bool endedRound,
+            int? targetCardId)
         {
-            return CardEffectStep.Complete(CreateResult(context, endedRound));
+            return CardEffectStep.Complete(
+                CreateResult(context, endedRound, targetCardId));
         }
 
-        private CardEffectResult CreateResult(CardEffectContext context, bool endedRound)
+        private CardEffectResult CreateResult(
+            CardEffectContext context,
+            bool endedRound,
+            int? targetCardId)
         {
             return new CardEffectResult(
                 context.SourceCard.Id,
                 EffectKind,
                 succeeded: true,
-                endedRound);
+                endedRound,
+                targetCardId);
         }
     }
 }

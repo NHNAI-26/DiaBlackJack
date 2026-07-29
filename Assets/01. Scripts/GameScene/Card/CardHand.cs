@@ -53,6 +53,61 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        public bool TryGetCardWorldPosition(int cardId, out Vector3 position)
+        {
+            for (int i = 0; i < _spawned.Count; i++)
+            {
+                CardView card = _spawned[i];
+                if (card != null && card.CardId == cardId)
+                {
+                    position = card.transform.position;
+                    return true;
+                }
+            }
+
+            position = default;
+            return false;
+        }
+
+        public bool TryGetRandomCardWorldPosition(out Vector3 position)
+        {
+            int aliveCount = 0;
+            for (int i = 0; i < _spawned.Count; i++)
+            {
+                if (_spawned[i] != null)
+                {
+                    aliveCount++;
+                }
+            }
+
+            if (aliveCount == 0)
+            {
+                position = default;
+                return false;
+            }
+
+            int selected = Random.Range(0, aliveCount);
+            for (int i = 0; i < _spawned.Count; i++)
+            {
+                CardView card = _spawned[i];
+                if (card == null)
+                {
+                    continue;
+                }
+
+                if (selected == 0)
+                {
+                    position = card.transform.position;
+                    return true;
+                }
+
+                selected--;
+            }
+
+            position = default;
+            return false;
+        }
+
         private void ClearAll()
         {
             foreach (CardView card in _spawned)
