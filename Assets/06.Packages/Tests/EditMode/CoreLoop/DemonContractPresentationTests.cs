@@ -52,6 +52,7 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             DemonContractChoiceViewModel satan = model.DemonContract.Choices.Single(
                 choice => choice.Title == "사탄");
+            Assert.That(satan.DefinitionKey, Is.EqualTo(DemonContractCatalog.SatanKey));
             Assert.That(satan.CanSelect, Is.True);
             Assert.That(satan.DisabledReason, Is.Empty);
         }

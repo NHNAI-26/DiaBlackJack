@@ -1040,10 +1040,26 @@ Test Framework 준비·결과 저장·정리 안내였으며 컴파일·게임 �
 | 검증 한계 | 현재 세션에 Unity MCP 도구가 노출되지 않고 원본 Editor가 변경을 재임포트하지 않아 원본 `GameScene` Play Mode 배치·Console은 미검증 |
 | 변경 보호 | `GameScene.unity`·Packages·외부 코드·새 에셋·오픈소스·새 의존성 무변경 |
 
+### 7.55 GSV-02 자동 발동 카드·악마 카드 스프라이트 연결
+
+| 경계 | 확인 결과 |
+| --- | --- |
+| 공통 매핑 | 순수 `GameScenePresentation.cs`의 `GameSceneCardVisualCatalog`가 자동 5종의 도상 대조와 악마 12종의 프로젝트 확정 순서에 따라 정의 키를 원본 번호로 변환 |
+| 자동 카드 | `GameSceneCardViewModel.DefinitionKey`→`CardView`→`Card.prefab.automaticFaceSpritesByIndex`로 전용 앞면 선택; 일반 카드 문양은 폴백으로 유지 |
+| 정보 은닉 | 미공개 적 비공개 카드는 `Rank=0`, 빈 이름·효과와 함께 빈 정의 키를 투영하고 공개 뒤에만 실제 키 전달 |
+| 악마 상점 | `ShopController`의 미완성 4종 분기를 제거하고 12종 공통 매핑으로 `DemonCard.prefab`의 기존 스프라이트 사용 |
+| 계약 후보 | `DemonContractChoiceViewModel`에 계약 정의 키를 전달하고 `GameManager`가 상점과 같은 프리팹 스프라이트를 후보 카드 영역에 렌더링 |
+| 직렬화 | `Card.prefab`에 기존 `AutoCard_01~05`를 추가하고 `DemonCard.prefab`의 기존 `DevilCard_01~12` 배열은 변경 없이 재사용 |
+| 검증 | GSV-02 19/19·전체 EditMode 687/687, 프리팹 참조와 실제 PNG Sprite 객체 동일성 통과 |
+| 검증 경로 | Unity MCP 도구가 세션에 없어 원본 Editor를 유지한 채 `Temp` 격리 복제본 Unity 6000.3.10f1 Test Runner 사용 |
+| 검증 한계 | 원본 `GameScene` Play Mode의 계약 후보 1280×720·1920×1080 배치는 미검증 |
+| 변경 보호 | `GameScene.unity`·`DemonCard.prefab`·Packages·기존 PNG·외부 코드·오픈소스·새 의존성 무변경 |
+
 ## 8. 변경 기록
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-30 | 이천서 | GSV-02 자동 5종 도상·악마 12종 아트 확정 순서의 비순차 정의 키 매핑을 손패·상점·계약 후보에 연결하고 `Card.prefab` 자동 앞면 참조 및 정보 은닉 회귀 추가; 전용 19/19·전체 687/687, 원본 GameScene Play Mode 미검증 |
 | 2026-07-30 | 이천서 | GSV-01 스프라이트 의미를 기본·공격 위기·공격받음으로 정정하고 `AttackThreatened`/`Attacked` 표시 상태를 공격 효과의 처리 전/성공 처리에 연결; 일반 패배·숫자 버스트와 실패 리볼버의 잘못된 반응 제거, 전용 3/3·전체 668/668·세 상태 원본 일치 100/100 검증 |
 | 2026-07-29 | 이천서 | GSV-01 적 6종 기본·공격 위기·공격받음 및 상인 스프라이트를 `EnemyCharacter` 프리팹에 연결하고 독립 `GameScene`의 표시 프로필과 실제 전투 설정을 일치시킴; 전용 3/3·CoreLoop 479/479·StageProgression 189/189·전체 668/668 및 프리팹 렌더 100/100 검증, 원본 GameScene Play Mode는 미검증 |
 | 2026-07-29 | 이천서 | EP-R06의 `FixedDemonContractPhaseDefinition`을 기존 `CoreLoop/EnemyProfiles`에 추가하고 프로필→전투 설정→`StageBattleFactory`→`CoreLoopBattle` 순수 경계로 보스 계약 단계를 전달, EPR06 10/10·전체 665/665를 별도 복제본 Unity Test Runner로 검증; 원본 Editor와 GameScene·씬·프리팹·Packages 무변경 |

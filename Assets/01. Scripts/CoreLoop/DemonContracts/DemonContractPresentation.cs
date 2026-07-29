@@ -7,6 +7,7 @@ namespace DiaBlackJack.CoreLoop.UI
     {
         public DemonContractChoiceViewModel(
             int optionId,
+            string definitionKey,
             string title,
             string ability,
             string cost,
@@ -14,6 +15,7 @@ namespace DiaBlackJack.CoreLoop.UI
             string disabledReason)
         {
             OptionId = optionId;
+            DefinitionKey = definitionKey ?? string.Empty;
             Title = title ?? string.Empty;
             Ability = ability ?? string.Empty;
             Cost = cost ?? string.Empty;
@@ -22,6 +24,8 @@ namespace DiaBlackJack.CoreLoop.UI
         }
 
         public int OptionId { get; }
+
+        public string DefinitionKey { get; }
 
         public string Title { get; }
 
@@ -241,6 +245,7 @@ namespace DiaBlackJack.CoreLoop.UI
                         : null;
                 choices.Add(new DemonContractChoiceViewModel(
                     option.OptionId,
+                    definition?.Key ?? string.Empty,
                     definition?.DisplayName ?? option.PublicLabel,
                     definition?.Summary ?? string.Empty,
                     definition?.CostSummary ?? string.Empty,

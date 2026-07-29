@@ -472,6 +472,13 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 202ce314675335545b52176e297611ad, type: 3}
   - {fileID: 21300000, guid: a5bc2529e825df1439fa28a1822f42fe, type: 3}
   - {fileID: 21300000, guid: eb5492938a7548148a836fe572a49a76, type: 3}
+  automaticFaceSpritesByIndex:
+  - {fileID: 0}
+  - {fileID: 21300000, guid: b76faae24a1700f479371a2ddbbd6f7f, type: 3}
+  - {fileID: 21300000, guid: 28ac66a3eb54b6d488eb7133c65fa9a0, type: 3}
+  - {fileID: 21300000, guid: 5a73ddf569594244b9243b0a5c86fd68, type: 3}
+  - {fileID: 21300000, guid: 08a8a36231d3ca1459e4d5080236463c, type: 3}
+  - {fileID: 21300000, guid: 4e43362725ff64747a873c16de35fcca, type: 3}
   topPosition: {fileID: 2694824136228126592}
   hoverScale: 1.15
   scaleLerp: 12

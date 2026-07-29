@@ -41,7 +41,8 @@ namespace DiaBlackJack.GameScene
             string displayName,
             string abilityDescription = "",
             CardSuit suit = CardSuit.Spade,
-            bool showHoverBadgeWhenUnavailable = false)
+            bool showHoverBadgeWhenUnavailable = false,
+            string definitionKey = "")
         {
             CardId = cardId;
             Rank = rank;
@@ -52,6 +53,7 @@ namespace DiaBlackJack.GameScene
             DisplayName = displayName ?? string.Empty;
             AbilityDescription = abilityDescription ?? string.Empty;
             ShowHoverBadgeWhenUnavailable = showHoverBadgeWhenUnavailable;
+            DefinitionKey = definitionKey ?? string.Empty;
         }
 
         public int CardId { get; }
@@ -79,6 +81,71 @@ namespace DiaBlackJack.GameScene
         public string AbilityDescription { get; }
 
         public bool ShowHoverBadgeWhenUnavailable { get; }
+
+        /// <summary>
+        /// Stable card archetype key used only to select authored visuals. It remains empty for an
+        /// unrevealed enemy card so the presentation boundary does not leak hidden information.
+        /// </summary>
+        public string DefinitionKey { get; }
+    }
+
+    /// <summary>
+    /// Maps stable rule definition keys to the numbered source artwork stored in the Unity prefabs.
+    /// The authored file order is intentionally not the same as rank or catalog order.
+    /// </summary>
+    public static class GameSceneCardVisualCatalog
+    {
+        public static int AutomaticCardSpriteIndexFor(string definitionKey)
+        {
+            switch (definitionKey)
+            {
+                case CardDefinitionCatalog.ResurrectionHerbKey:
+                    return 1;
+                case CardDefinitionCatalog.PoisonKey:
+                    return 2;
+                case CardDefinitionCatalog.PocketWatchKey:
+                    return 3;
+                case CardDefinitionCatalog.LieDetectorKey:
+                    return 4;
+                case CardDefinitionCatalog.FlamethrowerKey:
+                    return 5;
+                default:
+                    return 0;
+            }
+        }
+
+        public static int DemonCardSpriteIndexFor(string definitionKey)
+        {
+            switch (definitionKey)
+            {
+                case DemonContractCatalog.SatanKey:
+                    return 1;
+                case DemonContractCatalog.MammonKey:
+                    return 2;
+                case DemonContractCatalog.LeviathanKey:
+                    return 3;
+                case DemonContractCatalog.BelphegorKey:
+                    return 4;
+                case DemonContractCatalog.BeelzebubKey:
+                    return 5;
+                case DemonContractCatalog.LuciferKey:
+                    return 6;
+                case DemonContractCatalog.AsmodeusKey:
+                    return 7;
+                case DemonContractCatalog.PaimonKey:
+                    return 8;
+                case DemonContractCatalog.BelialKey:
+                    return 9;
+                case DemonContractCatalog.AzazelKey:
+                    return 10;
+                case DemonContractCatalog.BaphometKey:
+                    return 11;
+                case DemonContractCatalog.MephistophelesKey:
+                    return 12;
+                default:
+                    return 0;
+            }
+        }
     }
 
     public enum GameSceneRevolverAnimationPhase
@@ -653,7 +720,8 @@ namespace DiaBlackJack.GameScene
                     canUse: card.CanUse,
                     card.DisplayName,
                     abilityDescription: ResolveAbilityDescription(sourceCard),
-                    suit: sourceCard == null ? CardSuit.Spade : sourceCard.Suit);
+                    suit: sourceCard == null ? CardSuit.Spade : sourceCard.Suit,
+                    definitionKey: sourceCard?.DefinitionKey);
 
                 // PlayerHand's world orientation makes the highest index land at screen-left.
                 // Keep hidden cards last in the projection while preserving group order.
@@ -781,7 +849,8 @@ namespace DiaBlackJack.GameScene
                         ? ResolveAbilityDescription(card)
                         : string.Empty,
                     suit: card.Suit,
-                    showHoverBadgeWhenUnavailable: faceUp);
+                    showHoverBadgeWhenUnavailable: faceUp,
+                    definitionKey: faceUp ? card.DefinitionKey : string.Empty);
 
                 // Both sides' hidden cards sit on the screen LEFT (each player's own right, mirrored
                 // across the table). The camera mirrors local X, so screen-left = highest index →

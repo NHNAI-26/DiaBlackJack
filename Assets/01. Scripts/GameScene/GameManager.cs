@@ -1066,24 +1066,44 @@ namespace DiaBlackJack.GameScene
                 float titleHeight = compact ? 24f : 30f;
                 float buttonHeight = compact ? 30f : 38f;
                 float contentWidth = width - inset * 2f;
+                Sprite faceSprite = shop == null
+                    ? null
+                    : shop.GetDemonCardFaceSprite(choice.DefinitionKey);
+                float textX = cardRect.x + inset;
+                float textWidth = contentWidth;
+                if (faceSprite != null)
+                {
+                    float artHeight = height - buttonHeight - (compact ? 22f : 26f);
+                    float artWidth = Mathf.Min(
+                        artHeight * faceSprite.rect.width / faceSprite.rect.height,
+                        contentWidth * 0.32f);
+                    var artRect = new Rect(
+                        cardRect.x + inset,
+                        cardRect.y + 7f,
+                        artWidth,
+                        artHeight);
+                    DrawSprite(faceSprite, artRect);
+                    textX = artRect.xMax + inset;
+                    textWidth = cardRect.xMax - inset - textX;
+                }
 
                 GUI.Label(
-                    new Rect(cardRect.x + inset, cardRect.y + 6f, contentWidth, titleHeight),
+                    new Rect(textX, cardRect.y + 6f, textWidth, titleHeight),
                     choice.Title,
                     _contractTitleStyle);
                 GUI.Label(
                     new Rect(
-                        cardRect.x + inset,
+                        textX,
                         cardRect.y + titleHeight + 8f,
-                        contentWidth,
+                        textWidth,
                         compact ? 55f : 74f),
                     choice.Ability,
                     _contractBodyStyle);
                 GUI.Label(
                     new Rect(
-                        cardRect.x + inset,
+                        textX,
                         cardRect.y + (compact ? 88f : 116f),
-                        contentWidth,
+                        textWidth,
                         compact ? 38f : 48f),
                     choice.Cost,
                     _contractCostStyle);
@@ -1111,6 +1131,37 @@ namespace DiaBlackJack.GameScene
                     }
                 }
             }
+        }
+
+        private static void DrawSprite(Sprite sprite, Rect destination)
+        {
+            if (sprite == null || sprite.texture == null)
+            {
+                return;
+            }
+
+            Texture2D texture = sprite.texture;
+            Vector2[] uvs = sprite.uv;
+            if (uvs == null || uvs.Length == 0)
+            {
+                GUI.DrawTexture(destination, texture, ScaleMode.ScaleToFit, true);
+                return;
+            }
+
+            Vector2 minimum = uvs[0];
+            Vector2 maximum = uvs[0];
+            for (int i = 1; i < uvs.Length; i++)
+            {
+                minimum = Vector2.Min(minimum, uvs[i]);
+                maximum = Vector2.Max(maximum, uvs[i]);
+            }
+
+            var coordinates = new Rect(
+                minimum.x,
+                minimum.y,
+                maximum.x - minimum.x,
+                maximum.y - minimum.y);
+            GUI.DrawTextureWithTexCoords(destination, texture, coordinates, true);
         }
 
         private void EnsureDemonContractStyles(bool compact)

@@ -27,6 +27,7 @@
 
 | 날짜 | 영역 | 실제 수행 내용 | 관련 파일/산출물 | 검증/비고 |
 | --- | --- | --- | --- | --- |
+| 2026-07-30 | GameScene 카드 스프라이트 GSV-02 | 자동 발동 카드 5종의 도상 매핑과 악마 카드 12종의 프로젝트 확정 순서를 고정하고 플레이어·공개 적 손패, 악마 상점, 전투 계약 후보에 전용 이미지를 연결했다. | `GameScenePresentation.cs`, `CardView.cs`, `DemonCardView.cs`, `ShopController.cs`, `GameManager.cs`, 계약 표시 모델, `Card.prefab`, `GameSceneCardSpriteTests.cs`, 자동/계약/씬/구조/AI 활용 문서 | 이천서 악마 순서 제공·매핑 승인·구현·검증 책임, AI PNG·카탈로그·직렬화 대조와 코드·테스트·문서화 보조; GSV-02 19/19·전체 687/687. 원본 GameScene Play Mode 미검증, 기존 팀 에셋 재사용·외부 에셋/새 패키지 없음 |
 | 2026-07-29 | GameScene 적 스프라이트 GSV-01 | 적 6종의 기본·공격 위기·공격받음 스프라이트와 상인 이미지를 프로필 키로 연결하고, 독립 GameScene의 표시 프로필과 실제 최대 영혼·덱·AI·계약 설정을 일치시켰다. | `CharacterView.cs`, `GameScenePresentation.cs`, `GameManager.cs`, `EnemyCharacter.prefab`, GSV/CoreLoop 표시 테스트, 씬 연출·구조·AI 활용 문서 | 이천서 기획·상태 의미 정정·구현·검증 책임, AI 에셋/프로필 대조·코드·테스트·프리팹 직렬화·문서화 보조; 전용 3/3·전체 668/668·세 상태 프리팹/PSB 원본 일치 100/100. 원본 GameScene Play Mode는 미검증, 외부 에셋·새 패키지 없음 |
 | 2026-07-29 | 적 전투 프로필 EP-R06·계약 DC-R06 | 최종 보스의 바포메트/마몬→아스모데우스/레비아탄→아자젤/루시퍼 고정 쌍을 전투 시작·생존 영혼 5·2에 연결하고 복수 경계·비역행·치명 피해 중단·일반 계약 차단과 현재 효과 표시를 구현했다. | `FixedDemonContractPhaseDefinition.cs`, 적 프로필/전투 설정, `StageBattleFactory.cs`, `CoreLoopBattle.cs`, `DemonContractDeck.cs`, 계약 표시, `EnemyBossContractPhaseTests.cs`, 규칙·EP/DC·공통 문서 | 이천서 기획·구현·검증 책임, AI 구조 대조·테스트 우선 구현·실패 분석·문서화 보조; 전용 10/10·전체 EditMode 665/665. GameScene·MonoBehaviour UI·씬·프리팹·Packages·외부 에셋 무변경, 골드·저장·정식 런 UI는 HONG RF 범위 유지 |
 | 2026-07-29 | 적 전투 프로필 EP-R05 | 겁쟁이 수동 카드 15%, 광신도 벨페고르·바알제붑·벨리알 전용 계약과 성공까지 재시도, 전 적 공통 체인지·사기꾼 비용 1, 집행자 파이몬·매 라운드 독극물 주입/누적/전투 종료 제거를 프로필 전투에 구현했다. 공개 관측에는 공개 카드 사용 가능 여부만 추가하고 미공개 비공개 카드 정보는 보존했다. | `CoreLoopBattle.cs`, `EnemyAI/`, `EnemyProfiles/`, `PlayerChangeSelection.cs`, `DemonContractDeck.cs`, `StageBattleFactory.cs`, EPR05 테스트, EP·BA·AC·DC·공통 문서 | 이천서 기획·구현·검증 책임, AI 구조 대조·테스트·회귀 진단·문서화 보조; 정책 12/12·CoreLoop 466/466·StageProgression 189/189·전체 655/655. GameScene·UI·씬·프리팹·Packages·외부 에셋 무변경 |
@@ -330,6 +331,7 @@ DC-00 공통 규칙 개정으로 동일 악마 추가 계약과 계약 임시 �
 
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
+| 2026-07-30 | 이천서 | GSV-02 자동 5종 도상 매핑과 악마 12종 아트 확정 순서를 손패·상점·계약 후보에 연결하고 전용 19/19·전체 687/687로 검증; 기존 팀 에셋 재사용, 원본 GameScene Play Mode 미검증 |
 | 2026-07-30 | 이천서 | GSV-01의 세 이미지를 기본·공격 위기·공격받음 상태로 정정하고 공격 효과 처리 전/성공 처리에만 반응하도록 구현 기준과 테스트를 개정; 전용 3/3·전체 668/668·세 상태 원본 일치 100/100 검증 |
 | 2026-07-29 | 이천서 | GSV-01 적 6종 상태 스프라이트·상인 이미지·실제 전투 프로필 동기화를 구현하고 전용 3/3·전체 668/668·프리팹 렌더 100/100으로 검증; 원본 GameScene Play Mode 미검증과 외부 에셋·새 패키지 없음 기록 |
 | 2026-07-29 | 이천서 | EP-R06·DC-R06 보스 시작·영혼 5·2 고정 계약 전환, 생존·복수 경계·비역행·일반 계약 차단과 표시를 구현하고 전용 10/10·전체 665/665 검증 기여 추가; GameScene·MonoBehaviour UI·씬·프리팹·Packages·외부 자산 무변경, HONG RF 경계 유지 |

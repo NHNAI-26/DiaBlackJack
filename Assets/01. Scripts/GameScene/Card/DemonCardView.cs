@@ -101,6 +101,12 @@ namespace DiaBlackJack.GameScene
             ApplyHoverVisuals();
         }
 
+        public Sprite GetFaceSprite(string definitionKey)
+        {
+            return SpriteForIndex(
+                GameSceneCardVisualCatalog.DemonCardSpriteIndexFor(definitionKey));
+        }
+
         private static string FormatBadgeText(GameSceneDemonCardViewModel card)
         {
             string text = card.DisplayName;

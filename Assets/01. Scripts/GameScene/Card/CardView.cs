@@ -21,6 +21,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private TMP_Text rankText;
         [SerializeField] private Sprite[] faceSpritesByRank = new Sprite[11];
         [SerializeField] private Sprite[] cloverFaceSpritesByRank = new Sprite[11];
+        [SerializeField] private Sprite[] automaticFaceSpritesByIndex = new Sprite[6];
 
         [Header("Hover badge anchor")]
         [Tooltip("World-space anchor projected to the HUD while this card is hovered.")]
@@ -104,7 +105,7 @@ namespace DiaBlackJack.GameScene
 
             if (_showingFrontFace)
             {
-                ApplyFaceSprite(card.Rank, card.Suit);
+                ApplyFaceSprite(card.DefinitionKey, card.Rank, card.Suit);
             }
 
             if (back != null)
@@ -176,10 +177,10 @@ namespace DiaBlackJack.GameScene
             ApplyTint(BackRenderer(), lit && !_showingFrontFace ? glowColor : backTint);
         }
 
-        private void ApplyFaceSprite(int rank, CardSuit suit)
+        private void ApplyFaceSprite(string definitionKey, int rank, CardSuit suit)
         {
             SpriteRenderer renderer = FrontSpriteRenderer();
-            Sprite sprite = SpriteForCard(rank, suit);
+            Sprite sprite = SpriteForCard(definitionKey, rank, suit);
             if (renderer != null && sprite != null)
             {
                 renderer.sprite = sprite;
@@ -187,8 +188,21 @@ namespace DiaBlackJack.GameScene
             }
         }
 
-        private Sprite SpriteForCard(int rank, CardSuit suit)
+        private Sprite SpriteForCard(string definitionKey, int rank, CardSuit suit)
         {
+            int automaticIndex =
+                GameSceneCardVisualCatalog.AutomaticCardSpriteIndexFor(definitionKey);
+            if (automaticIndex > 0 &&
+                automaticFaceSpritesByIndex != null &&
+                automaticIndex < automaticFaceSpritesByIndex.Length)
+            {
+                Sprite automaticSprite = automaticFaceSpritesByIndex[automaticIndex];
+                if (automaticSprite != null)
+                {
+                    return automaticSprite;
+                }
+            }
+
             Sprite[] sprites = suit == CardSuit.Clover
                 ? cloverFaceSpritesByRank
                 : faceSpritesByRank;

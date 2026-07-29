@@ -64,6 +64,13 @@ namespace DiaBlackJack.GameScene
 
         public int CurrentWhiskeyPrice => CalculateUtilityPrice(whiskeyPrice);
 
+        public Sprite GetDemonCardFaceSprite(string definitionKey)
+        {
+            return demonCardPrefab == null
+                ? null
+                : demonCardPrefab.GetFaceSprite(definitionKey);
+        }
+
         public void Open()
         {
             if (IsOpen)
@@ -344,7 +351,7 @@ namespace DiaBlackJack.GameScene
                 var offer = new DemonCardOffer(
                     _nextOfferId++,
                     definition,
-                    FaceSpriteIndexFor(definition.Key),
+                    GameSceneCardVisualCatalog.DemonCardSpriteIndexFor(definition.Key),
                     demonCardPrice,
                     view);
                 _demonOffers.Add(offer);
@@ -650,31 +657,6 @@ namespace DiaBlackJack.GameScene
                 default:
                     return string.Empty;
             }
-        }
-
-        private static int FaceSpriteIndexFor(string definitionKey)
-        {
-            if (StringComparer.Ordinal.Equals(definitionKey, DemonContractCatalog.SatanKey))
-            {
-                return 1;
-            }
-
-            if (StringComparer.Ordinal.Equals(definitionKey, DemonContractCatalog.BelphegorKey))
-            {
-                return 2;
-            }
-
-            if (StringComparer.Ordinal.Equals(definitionKey, DemonContractCatalog.MammonKey))
-            {
-                return 3;
-            }
-
-            if (StringComparer.Ordinal.Equals(definitionKey, DemonContractCatalog.LeviathanKey))
-            {
-                return 4;
-            }
-
-            return 1;
         }
 
         private sealed class DemonCardOffer

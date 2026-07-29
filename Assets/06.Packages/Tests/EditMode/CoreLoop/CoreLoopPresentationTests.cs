@@ -217,6 +217,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(visibleCardModel.ShowHoverBadgeWhenUnavailable, Is.True);
             Assert.That(hiddenCardModel.RevealRank, Is.False);
             Assert.That(hiddenCardModel.Rank, Is.Zero);
+            Assert.That(hiddenCardModel.DefinitionKey, Is.Empty);
             Assert.That(hiddenCardModel.DisplayName, Is.Empty);
             Assert.That(hiddenCardModel.AbilityDescription, Is.Empty);
             Assert.That(hiddenCardModel.ShowHoverBadgeWhenUnavailable, Is.False);
@@ -296,6 +297,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 .EnemyCards.Single(card => card.CardId == poison.Id);
 
             Assert.That(poisonModel.DisplayName, Is.EqualTo("독극물"));
+            Assert.That(
+                poisonModel.DefinitionKey,
+                Is.EqualTo(CardDefinitionCatalog.PoisonKey));
             Assert.That(
                 poisonModel.AbilityDescription,
                 Is.EqualTo("즉시 스탠드 또는 영혼 3 지불; 지불 후 승리 시 영혼 5 회복"));
