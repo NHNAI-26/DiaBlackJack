@@ -173,6 +173,10 @@ namespace DiaBlackJack.StageProgression
 
         internal int LastIssuedDemonCardId => _lastIssuedDemonCardId;
 
+        internal bool CanAddCard => _lastIssuedCardId < int.MaxValue;
+
+        internal bool CanAddDemonCard => _lastIssuedDemonCardId < int.MaxValue;
+
         internal static PlayerRunState Restore(
             int maximumSoul,
             int currentSoul,
@@ -233,6 +237,43 @@ namespace DiaBlackJack.StageProgression
 
             CurrentGold -= amount;
             return true;
+        }
+
+        internal bool CanRemoveCard(int cardId)
+        {
+            if (_currentDeck.Count <= 1)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < _currentDeck.Count; index++)
+            {
+                if (_currentDeck[index].Id == cardId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal bool TryRemoveCard(int cardId)
+        {
+            if (!CanRemoveCard(cardId))
+            {
+                return false;
+            }
+
+            for (int index = 0; index < _currentDeck.Count; index++)
+            {
+                if (_currentDeck[index].Id == cardId)
+                {
+                    _currentDeck.RemoveAt(index);
+                    return true;
+                }
+            }
+
+            throw new InvalidOperationException("Validated run card removal target disappeared.");
         }
 
         internal RunCardDefinition AddRewardCard(string definitionKey)

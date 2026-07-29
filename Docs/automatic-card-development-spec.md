@@ -8,7 +8,7 @@
 > 최종 갱신: 2026-07-30
 
 > **현행 획득 경로 변경(2026-07-30)**
-> 정식 런에서는 `BattleRewardCatalog`가 아니라 RF-02 상점 생성기가 `CardDefinitionCatalog.All`에서 자동 발동 카드 5종을 포함한 일반 후보를 만든다. 구매된 자동 카드는 기존 `RunCardDefinition`·`StageBattleFactory` 경로로 다음 전투에 전달한다. RW 카탈로그는 유산 기능으로 유지한다.
+> 정식 런에서는 `BattleRewardCatalog`가 아니라 RF-02에서 구현된 상점 생성기가 `CardDefinitionCatalog.All`에서 자동 발동 카드 5종을 포함한 일반 후보를 만든다. 구매된 자동 카드는 기존 `RunCardDefinition`·`StageBattleFactory` 경로로 다음 전투에 전달한다. RW 카탈로그는 유산 기능으로 유지한다.
 
 > **현행 숫자 변경 안내**
 > 현행 정의는 독극물 1, 부활초 2, 거짓말 탐지기 3, 화염 방사기 4, 회중시계 5다. AC-RV01에서 `poison-1`, `flamethrower-4`, `pocket-watch-5`와 관련 보상·런/전투 변환·테스트를 원자적으로 이관했다.
