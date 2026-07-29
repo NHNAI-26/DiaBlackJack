@@ -2,7 +2,7 @@
 
 > 프로젝트: DiaBlackJack  
 > 문서 책임자: 이천서  
-> 최종 갱신: 2026-07-29
+> 최종 갱신: 2026-07-30
 
 이 디렉터리는 게임 규칙, 기획, 개발 명세, AI 활용, 외부 출처 및 팀 기여 기록을 관리한다.
 
@@ -12,8 +12,8 @@
 
 | 문서 | 용도 | 상태 |
 | --- | --- | --- |
-| [rule.md](./rule.md) | 게임 원본 규칙 | EP-R06 보스 고정 계약 구현 동기화 v1.8 |
-| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | EP-R06 전투 완료·RF 후속 분리 v0.20 |
+| [rule.md](./rule.md) | 게임 원본 규칙 | 카드 성장을 상점으로 통합·코드 이관 대기 v1.9 |
+| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | 전투 보상 제거·상점 성장 통합 v0.21 |
 | [core-loop-design.md](./core-loop-design.md) | 최소 코어 루프 기획 범위 | CL-M01 합계 표시 개정 v0.2 |
 | [core-loop-development-spec.md](./core-loop-development-spec.md) | 코어 루프 구조·상태·검증 명세 | CL-M01 검증 완료 v0.2 |
 | [core-loop-implementation-plan.md](./core-loop-implementation-plan.md) | 코어 루프 작업 순서·담당·일정·완료 증거 | CL-M01 완료 v0.2 |
@@ -21,10 +21,10 @@
 | [project-structure-and-mcp-reference.md](./project-structure-and-mcp-reference.md) | Unity 구조·어셈블리·MCP 참조 및 연결 확인 | EP-R06 검증 경계 반영 v0.10 |
 | [ai-usage-technical-document.md](./ai-usage-technical-document.md) | 개발 AI와 게임 내 AI 활용 기술 기록 | 지속 갱신 |
 | [team-role-technical-document.md](./team-role-technical-document.md) | 팀원별 담당 및 실제 구현 기록 | 지속 갱신 |
-| [stage-progression-design.md](./stage-progression-design.md) | 코어 루프와 분리된 런·스테이지 진행 기획 범위 | 적 6종·정식 RF 후속 분리 v0.3 |
-| [stage-progression-development-spec.md](./stage-progression-development-spec.md) | 런 상태·스테이지 전이·전투·씬 연결·검증 명세 | SP-04 완료·EP/RF 연계 v0.2 |
-| [stage-progression-implementation-plan.md](./stage-progression-implementation-plan.md) | 독립 진행 시스템 작업 순서·일정·완료 증거 | SP 완료·후속 EP/EUI/RF 분리 v0.2 |
-| [stage-progression-progress-log.md](./stage-progression-progress-log.md) | 독립 진행 시스템 착수·구현·검증 누적 기록 | SP-04 증거 유지·Notion 영향 기록 v0.2 |
+| [stage-progression-design.md](./stage-progression-design.md) | 코어 루프와 분리된 런·스테이지 진행 기획 범위 | 정식 런 RW 우회·RF 연결 대기 v0.4 |
+| [stage-progression-development-spec.md](./stage-progression-development-spec.md) | 런 상태·스테이지 전이·전투·씬 연결·검증 명세 | SP/RW 증거 보존·무카드보상 RF 경계 v0.3 |
+| [stage-progression-implementation-plan.md](./stage-progression-implementation-plan.md) | 독립 진행 시스템 작업 순서·일정·완료 증거 | SP 완료·RW 우회 RF-03 분리 v0.3 |
+| [stage-progression-progress-log.md](./stage-progression-progress-log.md) | 독립 진행 시스템 착수·구현·검증 누적 기록 | SP/RW 증거 유지·새 흐름 미구현 v0.3 |
 | [combat-action-design.md](./combat-action-design.md) | 폴드 삭제, 체인지 누적 비용과 패배 피해의 현행 전투 행동 규칙 | BA-R01 적 공통 체인지 완료 v0.7 |
 | [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | 공통 체인지·사기꾼 예외 완료 v0.5 |
 | [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 이력과 현행 규칙 이관 결과 | BA-R01 완료 v0.5 |
@@ -33,35 +33,35 @@
 | [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | EP-R04 경계 검증 완료 v0.9 |
 | [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M07 작업 순서와 단계별 검증 게이트 | 아스모데우스 완료·DC-R06 연계 v0.9 |
 | [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | EP-R04 제한·DC-R06 적별 계약 연동 완료 |
-| [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | AC-RV02 집행자 독극물 주입 완료 v0.7 |
-| [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | AC-RV02 수명 구현 완료 v0.7 |
-| [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 이력과 AC-RV00~RV02 개정 계획 | AC-RV02 완료 v0.6 |
-| [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | AC-RV02 구현·전체 655/655 v0.6 |
+| [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | 효과 완료·상점 획득 이관 대기 v0.8 |
+| [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | RF-02 상점 후보 명세 v0.8 |
+| [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 이력과 AC-RV00~RV02 개정 계획 | AC 완료·RF-02 상점 편입 대기 v0.7 |
+| [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | 기존 증거 유지·상점 후보 미구현 v0.7 |
 | [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | DC-R06 적별 계약 이관 완료 v1.20 |
 | [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | DC-R06 보스 전이 완료 v1.19 |
 | [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC 이력과 DC-R06 개정 계획 | DC-R06 완료 v1.19 |
 | [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | DC-R06 완료·전체 665/665 v1.19 |
-| [battle-reward-design.md](./battle-reward-design.md) | 일반·엘리트·보스 전투 보상 규칙과 프로토타입 카드 풀 | 적 6종 등급·골드 확정 v0.3 |
-| [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 보상 생성·덱 추가·진행 상태·세션·UI와 테스트 명세 | RW 완료·EP/RF 후속 v0.3 |
-| [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 작업 순서와 단계별 검증 게이트 | 카드 보상 유지·RF-01B 수치 확정 v0.3 |
-| [battle-reward-progress-log.md](./battle-reward-progress-log.md) | 전투 보상 결정·구현·검증 누적 기록 | RW-05 증거 유지·골드 구현 대기 |
-| [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 적 6종의 전투 성향·책임 경계 | EP-R06 보스 고정 계약 완료 v1.8 |
-| [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | EP-R06 전투 범위 완료 v1.8 |
-| [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP 이력과 Notion v0.7 이관 계획 | EP-R06 완료·RF 후속 분리 v1.8 |
-| [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | EP-R06 구현·전체 665/665 v1.8 |
-| [enemy-selection-combat-ui-design.md](./enemy-selection-combat-ui-design.md) | 상대 후보 2명 비교·확정과 등급별 전투 정보 표시 규칙 | EUI-R01 확정 정보 대기 v0.4 |
-| [enemy-selection-combat-ui-development-spec.md](./enemy-selection-combat-ui-development-spec.md) | 후보 생성·선택 상태·전투 변환·안전 표시 스냅샷과 테스트 명세 | 계약 단계·예상 골드 연계 v0.3 |
-| [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI 이력과 새 적 정보 연결 계획 | EP/RF 뒤 EUI-R01 v0.3 |
-| [enemy-selection-combat-ui-progress-log.md](./enemy-selection-combat-ui-progress-log.md) | 상대 선택·적 전투 정보 UI 결정·구현·검증 누적 기록 | 기존 완료·EUI-R01 미착수 v0.3 |
-| [formal-run-flow-design.md](./formal-run-flow-design.md) | 골드·상점과 `전투→이벤트→전투→이벤트→보스` 정식 진행 규칙 | 적 6종 골드 확정 v0.7 |
-| [formal-run-flow-development-spec.md](./formal-run-flow-development-spec.md) | 골드 정산·상점 거래·정식 런 조정 API와 테스트 명세 | RF-01A→01B 착수 가능 v0.4 |
-| [formal-run-flow-implementation-plan.md](./formal-run-flow-implementation-plan.md) | RF-00~RF-05 HONG 인수인계 작업 순서와 검증 게이트 | RF-01 순차 착수 가능 v0.4 |
-| [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | 골드 확정·정식 RF 미착수 v0.4 |
-| [save-system-design.md](./save-system-design.md) | 안정 체크포인트·이어하기·재추첨 방지·단일 슬롯·파일 복구 기획 | 확정 골드·전투 상태 비저장 v0.9 |
-| [save-system-development-spec.md](./save-system-development-spec.md) | 순수 스냅샷·버전 JSON·원자 저장·백업·복원·RF 연결 명세 | RF-01B~03 뒤 SV-06 v0.9 |
-| [save-system-implementation-plan.md](./save-system-implementation-plan.md) | SV-00~SV-06 구현 순서와 검증 게이트 | SV-05 완료·SV-06 대기 v0.9 |
-| [save-system-progress-log.md](./save-system-progress-log.md) | 저장 시스템 결정·구현·파일·재실행 검증 기록 | 기존 완료·SV-06 미착수 v0.9 |
-| [scene-presentation-design.md](./scene-presentation-design.md) | 2.5D 술집 테이블의 씬 흐름·월드 오브젝트·UI·상점 전환 기획 | 사탄 윗면/아랫면 상태·적 표현 보류 v0.9 |
+| [battle-reward-design.md](./battle-reward-design.md) | RW 과거 구현 결정과 향후 무료 사건 재사용 경계 | 정식 런 비활성·코드 이관 대기 v0.4 |
+| [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 기존 보상 생성·상태·세션·UI 기술 계약 | RW 증거 보존·정식 런 우회 v0.4 |
+| [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 이력과 RF 우회 계획 | RW 완료·RF-03 비활성 연결 v0.4 |
+| [battle-reward-progress-log.md](./battle-reward-progress-log.md) | 전투 보상 결정·구현·검증 누적 기록 | RW-05 증거 유지·정식 런 비활성 미구현 v0.4 |
+| [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 적 6종의 전투 성향·책임 경계 | 골드·상점 품질 경계 개정 v1.9 |
+| [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | RW 호환·RF 승리 정산 재명세 v1.9 |
+| [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP 이력과 Notion v0.7 이관 계획 | EP 완료·RF-01B~03 후속 v1.9 |
+| [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | EP 증거 보존·새 보상 미구현 v1.9 |
+| [enemy-selection-combat-ui-design.md](./enemy-selection-combat-ui-design.md) | 상대 후보 2명 비교·확정과 등급별 전투 정보 표시 규칙 | 예상 골드·상점 품질 UI 개정 v0.5 |
+| [enemy-selection-combat-ui-development-spec.md](./enemy-selection-combat-ui-development-spec.md) | 후보 생성·선택 상태·전투 변환·안전 표시 스냅샷과 테스트 명세 | RewardTier 교체 명세 v0.4 |
+| [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI 이력과 새 적 정보 연결 계획 | RF-04 화면 이관 대기 v0.4 |
+| [enemy-selection-combat-ui-progress-log.md](./enemy-selection-combat-ui-progress-log.md) | 상대 선택·적 전투 정보 UI 결정·구현·검증 누적 기록 | 기존 증거 보존·RF-04 미구현 v0.4 |
+| [formal-run-flow-design.md](./formal-run-flow-design.md) | 골드·상점과 `전투→이벤트→전투→이벤트→보스` 정식 진행 규칙 | 전투 보상 제거·자동 카드 상점 통합 v0.8 |
+| [formal-run-flow-development-spec.md](./formal-run-flow-development-spec.md) | 골드 정산·상점 거래·정식 런 조정 API와 테스트 명세 | 무카드보상 승리 정산 재명세 v0.5 |
+| [formal-run-flow-implementation-plan.md](./formal-run-flow-implementation-plan.md) | RF-00~RF-05 HONG 인수인계 작업 순서와 검증 게이트 | RF-01~03 새 흐름으로 개정 v0.5 |
+| [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | 문서 개정 완료·정식 RF 미착수 v0.5 |
+| [save-system-design.md](./save-system-design.md) | 안정 체크포인트·이어하기·재추첨 방지·단일 슬롯·파일 복구 기획 | 승리 골드 체크포인트 개정 v1.0 |
+| [save-system-development-spec.md](./save-system-development-spec.md) | 순수 스냅샷·버전 JSON·원자 저장·백업·복원·RF 연결 명세 | 무카드보상 RF 뒤 SV-06 v1.0 |
+| [save-system-implementation-plan.md](./save-system-implementation-plan.md) | SV-00~SV-06 구현 순서와 검증 게이트 | SV-05 완료·새 SV-06 대기 v1.0 |
+| [save-system-progress-log.md](./save-system-progress-log.md) | 저장 시스템 결정·구현·파일·재실행 검증 기록 | 기존 완료·새 체크포인트 미구현 v1.0 |
+| [scene-presentation-design.md](./scene-presentation-design.md) | 2.5D 술집 테이블의 씬 흐름·월드 오브젝트·UI·상점 전환 기획 | 골드 정산→상점 전환·보상 화면 제거 v1.2 |
 | `기획서.docx`, `기획서_개정본.docx` | 초기 제출용 보관본 | 2026-07-20 보관본·현행 기준 아님 |
 
 ## 기록 원칙
@@ -77,6 +77,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-30 | 이천서 | 전투 보상과 상점의 성장 선택 중복을 제거해 일반전은 승리 골드→상점, 보스는 즉시 승리로 개정하고 자동 발동 카드 5종을 상점 일반 풀에 편입했다. 규칙·전체 기획·RW/RF/SP/AC/SV/씬 문서를 동기화했으며 기존 RW·SV 완료 증거는 보존하고 코드 이관은 미완료로 분리했다. |
 | 2026-07-30 | 이천서 | GSV-02 기존 자동 카드 5장의 도상 매핑과 악마 카드 12장의 프로젝트 확정 순서를 손패·상점·전투 계약 후보에 연결하고 미공개 적 카드 정보 은닉 및 프리팹 실제 에셋 회귀를 추가; 전용 19/19·전체 EditMode 687/687, 원본 GameScene Play Mode 미검증·외부 에셋/새 패키지 없음 |
 | 2026-07-30 | 이천서 | GSV-01 세 이미지를 기본·공격 위기·공격받음으로 정정하고 공격 효과의 처리 전/성공 처리 시점에 `AttackThreatened`/`Attacked`를 표시하도록 개정; 일반 패배·숫자 버스트·리볼버 실패의 잘못된 전환 제거, 전용 3/3·전체 668/668·세 상태 원본 일치 100/100 검증 |
 | 2026-07-29 | 이천서 | GSV-01에서 적 6종 기본·공격 위기·공격받음 및 상인 스프라이트를 `EnemyCharacter` 프리팹에 연결하고 독립 GameScene의 표시 프로필과 실제 전투 설정을 동기화; 전용 3/3·전체 EditMode 668/668·프리팹 렌더 100/100, 원본 GameScene Play Mode 미검증·외부 에셋/새 패키지 없음 기록 |

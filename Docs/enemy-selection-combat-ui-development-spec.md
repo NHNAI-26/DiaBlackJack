@@ -2,10 +2,12 @@
 
 > 프로젝트: DiaBlackJack  
 > 기획·개발 책임자: 이천서  
-> 작업 식별자: EUI-00~EUI-05, EUI-R01
-> 버전: v0.3
-> 상태: EUI-05 과거 완료 · EUI-R01 Notion v0.7 재연동 대기
-> 최종 갱신: 2026-07-29
+> 작업 식별자: EUI-00~EUI-05, EUI-R01, RF-04 연동
+> 버전: v0.4
+> 상태: EUI-05 과거 완료 · 골드/상점 품질 표시 재연동 대기
+> 최종 갱신: 2026-07-30
+
+> **보상 UI 재명세:** 현재 코드의 `RewardTier`·`ExpectedRewardTier` 표시는 과거 무료 카드 보상 호환이다. RF-04에서는 이를 예상 골드와 다음 목적지/상점 품질 표시로 교체한다.
 
 ## 1. 기술 목표
 
@@ -38,10 +40,10 @@ EnemyCombatProfileCatalog.Previews
 ## 2. 현재 코드 기준선
 
 - 현재 코드에는 일반 4종·엘리트 1종·보스 1종이 등록되어 있으나 최대 영혼·덱·능력은 Notion v0.7 이전 값이다.
-- `EnemyProfilePreview`는 키·이름·등급·최대 영혼·요약·예상 보상을 제공한다.
+- 현재 `EnemyProfilePreview`는 키·이름·등급·최대 영혼·요약·기존 예상 보상 등급을 제공한다. 정식 런 화면은 RF에서 같은 프로필 키로 예상 골드와 상점 품질을 추가 투영한다.
 - `StageDefinition.CreateForEnemyProfile(...)`가 키에서 최대 영혼을 파생하고 보스/일반 스테이지 불일치를 거절한다.
 - `StageBattleFactory`가 프로필 전용 10장 덱과 새 정책 인스턴스로 실제 전투를 만든다.
-- `StageProgressionSession`은 선택된 프로필의 보상 등급을 사용한다.
+- 현재 `StageProgressionSession`은 선택된 프로필의 기존 보상 등급을 사용한다. RF-03 이후에는 무료 보상 대신 프로필 골드와 상점 이동을 사용한다.
 - `StageProgressionState.OpponentSelection`과 후보·제안·결정적 생성기가 EUI-01에서 구현되었다.
 - `StageProgressionSession`은 선택 기능을 선택적으로 주입받고 Pending Offer·ActiveStage·활성 여부를 제공한다.
 - `StageProgressionRuntime`은 EUI-02부터 결정적 상대 생성기를 주입하고 일반전 진입 시 선택 제안을 만든다.
@@ -180,7 +182,7 @@ EUI-03에서 위 확정 API와 선택 프로필 전투 생성을 구현했다.
 - `TryAdvanceToNextStage`: 다음 스테이지가 일반전이면 새 제안, 최종 보스면 즉시 고정 전투
 - `TryRestartRun`: 제안 ID·생성기·집중 후보·활성 스테이지를 초기화하고 첫 상대 선택으로 복귀
 - 전투 패배: 제안 없이 `RunDefeat`
-- 보상 선택 중: 이전 `ActiveStage`를 유지해 보상 등급·표시에 사용
+- 승리 정산·상점 중: 이전 `ActiveStage`를 유지해 골드 중복 방지와 상점 품질 표시에 사용
 
 ## 6. 상대 선택 표시 구조
 
@@ -194,7 +196,8 @@ public sealed class OpponentCandidateViewModel
     public string Grade { get; }
     public string MaximumSoul { get; }
     public string Summary { get; }
-    public string RewardTier { get; }
+    public string GoldReward { get; }
+    public string NextDestination { get; }
     public bool IsFocused { get; }
 }
 ```
@@ -215,7 +218,7 @@ public bool CanConfirmOpponent { get; }
 Create(StageProgressionSession session, string focusedProfileKey = null)
 ```
 
-Presenter는 현재 제안에 없는 집중 키를 무시하고 `CanConfirmOpponent = false`로 만든다.
+Presenter는 현재 제안에 없는 집중 키를 무시하고 `CanConfirmOpponent = false`로 만든다. 현재 코드의 `RewardTier` 필드는 RF-04 전 호환 구현이며, 교체 시 하드코딩하지 않고 프로필 키 기반 골드 카탈로그와 등급을 사용한다.
 
 ### 6.2 View와 Controller
 
@@ -368,6 +371,8 @@ EUI-00 기준 전체 EditMode 260/260을 회귀 기준으로 사용한다.
 
 ### EUI-02 선택 화면 — 최소 7개
 
+아래 `EUI02` 항목은 과거 완료 테스트다. RF-04에서는 `보상 등급 문자열` 검증을 `예상 골드·다음 상점 품질 문자열` 검증으로 대체한다.
+
 | ID | 검증 내용 |
 | --- | --- |
 | EUI02-U01 | 후보 ViewModel이 미리보기 5개 필드와 키를 정확히 표시 |
@@ -418,6 +423,8 @@ EUI-00 기준 전체 EditMode 260/260을 회귀 기준으로 사용한다.
 | EUI05-I05 | 기존 고정 세션·독립 전투·카드·보상 전체 회귀 |
 
 실제 구현은 `OpponentSelectionSystemValidationTests`의 `EUI05-V01`~`V05` 다섯 테스트로 위 시나리오를 고정했다. V01·V03·V04·V05는 각 10회, V02는 일반과 엘리트를 각각 10회 실행한다. 카드 사용·보상 내부 규칙은 중복 테스트를 만들지 않고 기존 CoreLoop 193개와 StageProgression 122개 전체 회귀로 함께 검증한다.
+
+RF-04 재검증은 일반/엘리트 후보의 골드 일치, 엘리트 상점 품질 안내, 보스의 상점 없음 표시, 기존 `RewardTier` 문구 제거를 추가한다.
 
 ## 12. 예상 파일 배치
 
@@ -470,7 +477,7 @@ Assets/06.Packages/Tests/EditMode/CoreLoop/
 - 전체 EditMode 회귀 통과
 - 1280×720·1920×1080 선택·일반·엘리트·보스 화면 확인
 - `StageTest`·`CoreLoopTest` 누락 스크립트·깨진 프리팹 0
-- 실제 선택→전투→보상→다음 선택→보스→재시작 흐름 확인
+- 실제 선택→전투→골드 정산→상점→다음 선택→보스→골드 정산→런 승리→재시작 흐름 확인
 - 최종 Console Error/Warning 0
 - 패키지·외부 에셋 변경 없음 확인
 - AI 활용과 이천서 역할 기록 갱신
@@ -479,6 +486,7 @@ Assets/06.Packages/Tests/EditMode/CoreLoop/
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-30 | 이천서 | 상대 후보 표시 계약을 `RewardTier`에서 예상 골드·다음 목적지로 교체하고 엘리트 상점 품질과 보스 상점 없음 검증을 RF-04 재연동 범위로 추가 |
 | 2026-07-29 | 이천서 | EUI-R01 표시 계약에 적별 골드 3·4·6·7·9·15와 보스 계약 단계 8→5→2를 추가하고 RF·EP 구현 전에는 완료로 기록하지 않도록 명시 |
 | 2026-07-20 | 이천서 | EUI-01 후보 불변 타입·결정적 생성기·선택 대기 상태·세션 주입과 신규 13/13·전체 EditMode 273/273 검증 결과 반영 |
 | 2026-07-20 | 이천서 | 후보 생성·OfferId·선택 상태·ActiveStage·등급별 안전 표시 스냅샷·Presenter/View/Controller 연결과 EUI 테스트 명세를 구현 가능한 기준으로 확정 |
