@@ -2,7 +2,7 @@
 
 > 프로젝트: DiaBlackJack  
 > 확인 책임자: 이천서  
-> 버전: v0.6
+> 버전: v0.7
 > 확인일: 2026-07-29
 
 ## 1. 확인 목적
@@ -27,15 +27,16 @@ Unity MCP의 프로젝트 정보와 로컬 프로젝트 설정이 다음과 같�
 | 경로 | 역할 | 코어 루프 사용 여부 |
 | --- | --- | --- |
 | `Assets/00. Scenes` | 게임 및 테스트 씬 | 3단계 `CoreLoopTest` 통합 |
-| `Assets/01. Scripts/Runtime` | 런타임 코드와 `Border` 어셈블리 | 사용 |
-| `Assets/01. Scripts/Runtime/Core` | 로그, 스크린샷, 결정적 난수 공용 코드 | `DeterministicRng` 재사용 |
+| `Assets/01. Scripts` | `Border.asmdef` 아래 런타임 코드 루트(`Input/` 제외) | 사용 |
+| `Assets/01. Scripts/Core` | 로그, 스크린샷, 결정적 난수 공용 코드 | `DeterministicRng` 재사용 |
 | `Assets/01. Scripts/SaveLoad` | 레거시 `SaveLoadSystem`과 런 저장 DTO·직렬화·원자 파일 저장소·예약·`RunSaveCoordinator`·`RunSaveFlow`·표시 모델 | SV-05 새 런 예약·이어하기·Runtime 세션 교체·실패 재시도 |
 | `Assets/01. Scripts/StageProgression/Save` | Unity 비의존 런 스냅샷·검증·안정 상태 캡처 | SV-01 스키마 1·방어 복사·타입화된 오류·불안정 상태 차단 |
 | `Assets/01. Scripts/CoreLoop` | 전투 규칙·상태·세션, 카드 효과와 적 프로필·공개 관측·정책·안전 표시 스냅샷 | AC-06 자동 선택 정책·세션·표시·사기꾼 탐지기 통합 |
-| `Assets/01. Scripts/Runtime/Input` | Input System 연결 | 1~2단계 제외 |
-| `Assets/01. Scripts/Runtime/UI` | 공용 UI와 코어 루프 View | EUI-04 적 이름·등급·성향·추론·보스 예고 패널과 720p 반응형 배치 |
-| `Assets/01. Scripts/Runtime/StageProgression` | 런·스테이지 순수 상태, 전투·보상·상대 후보와 선택 프로필 키 변환 | EUI-03 OfferId+ProfileKey 원자적 확정과 실제 프로필 전투·보상 연결 |
-| `Assets/01. Scripts/Runtime/UI/StageProgression` | 진행 표시·입력과 씬 간 Runtime | EUI-03 확정 입력 전달·성공한 전투만 씬 전환, EUI-02 후보 비교·로컬 집중 재사용 |
+| `Assets/01. Scripts/Input` | 별도 `Border.Input` 어셈블리의 Input System 연결 | 규칙 계층 제외 |
+| `Assets/01. Scripts/UI` | 실제 화면·HUD·공용 위젯 MonoBehaviour | EUI·CoreLoop·StageProgression 화면과 입력 |
+| `Assets/01. Scripts/GameScene` | 월드 공간 전투 조정자와 카드·캐릭터 렌더러 | `GameManager`와 GameScene MVP |
+| `Assets/01. Scripts/StageProgression` | 런·스테이지 순수 상태, 전투·보상·상대 후보와 프로필 키 변환 | EUI·RW·SV 순수 도메인 |
+| `Assets/01. Scripts/Bootstrap` | 씬 간 `StageProgressionRuntime` 운반 | Runtime 세션·저장 흐름 유지 |
 | `Assets/02. ScriptableObjects` | 설정 및 데이터 에셋 | 코어 루프 제외 |
 | `Assets/06.Packages/Tests/EditMode/CoreLoop` | 코어 루프·카드 효과·자동 카드 기반·적 프로필·정책·표시 테스트 | AC-06 테스트 메서드 인벤토리 339개 |
 | `Assets/06.Packages/Tests/EditMode/StageProgression` | 진행·보상·상대 후보·선택 상태·표시·프로필 전투 변환·반복 호환 테스트 | AC-06 테스트 메서드 인벤토리 132개 |
@@ -48,9 +49,8 @@ Unity MCP의 프로젝트 정보와 로컬 프로젝트 설정이 다음과 같�
 
 | 어셈블리 | 위치 | 용도 |
 | --- | --- | --- |
-| `Border` | `Assets/01. Scripts/Runtime/Border.asmdef` | 공용 런타임 코드 |
-| `Border.Input` | `Assets/01. Scripts/Runtime/Input/Border.Input.asmdef` | Input System 연결 |
-| `Border.Editor` | `Assets/Editor/Border.Editor.asmdef` | Editor 전용 코드 |
+| `Border` | `Assets/01. Scripts/Border.asmdef` | `Input/`을 제외한 게임·지원 런타임 코드 |
+| `Border.Input` | `Assets/01. Scripts/Input/Border.Input.asmdef` | Input System 연결 |
 
 1~4단계 코어 루프는 새 런타임 어셈블리를 만들지 않고 `Border` 어셈블리 안의 `DiaBlackJack.CoreLoop` 및 `DiaBlackJack.CoreLoop.UI` 네임스페이스에 배치했다. 기존 어셈블리 수를 늘리지 않으면서 규칙·세션·표시 계층의 책임을 분리하기 위한 결정이다.
 
@@ -64,8 +64,8 @@ CU-03은 같은 어셈블리에 실제 `AutoPistolEffectHandler`를 추가하고
 
 | 어셈블리 | 위치 | 참조 |
 | --- | --- | --- |
-| `DiaBlackJack.CoreLoop.Tests.EditMode` | `Assets/Tests/EditMode/CoreLoop` | `Border`, Unity Test Assemblies |
-| `DiaBlackJack.StageProgression.Tests.EditMode` | `Assets/Tests/EditMode/StageProgression` | `Border`, Unity Test Assemblies |
+| `DiaBlackJack.CoreLoop.Tests.EditMode` | `Assets/06.Packages/Tests/EditMode/CoreLoop` | `Border`, Unity Test Assemblies |
+| `DiaBlackJack.StageProgression.Tests.EditMode` | `Assets/06.Packages/Tests/EditMode/StageProgression` | `Border`, Unity Test Assemblies |
 
 Unity가 테스트 어셈블리를 인식하면서 `DiaBlackJack.slnx`에 해당 테스트 프로젝트 참조가 자동 추가되었다.
 
@@ -85,25 +85,23 @@ Unity가 테스트 어셈블리를 인식하면서 `DiaBlackJack.slnx`에 해당
 
 Manifest가 `main` 브랜치를 참조하므로 패키지를 다시 해석할 때 원격 변경이 들어올 수 있다. 현재 Lock hash가 실제 사용 리비전을 기록하지만, 프로토타입 안정화 전에는 검증된 태그 또는 커밋으로 Manifest도 고정하는 것을 권장한다.
 
-### 5.2 MCP 연결 상태
+### 5.2 MCP 연결 기준과 현재 문서 작업 상태
 
 | 항목 | 확인 값 |
 | --- | --- |
-| 연결 인스턴스 수 | 1 |
-| 인스턴스 | `DiaBlackJack@5635a4cdcfecc8dd` |
-| 연결 방식 | HTTP |
-| Editor 상태 | Idle, 컴파일·도메인 리로드 없음 |
-| 도구 사용 가능 | `ready_for_tools = true` |
-| 활성 씬 | `StageTest` |
-| 테스트 도구 그룹 | 현재 세션에서 활성화 |
+| 프로젝트 패키지 | `com.coplaydev.unity-mcp` 유지 |
+| Editor 브리지 | 열린 Editor의 `127.0.0.1:6400` 사용 |
+| 클라이언트 등록 | 개발자별 로컬 설정, 저장소에 `.mcp.json`을 두지 않음 |
+| 현재 도구 표면 | Unity MCP 도구 미노출 |
+| 이번 Notion v0.7 작업 | 문서 전용, Editor·씬·컴파일·테스트 미실행 |
 
-MCP가 제공한 프로젝트 경로와 실제 작업 경로가 같으므로 다른 Unity 인스턴스에 잘못 연결된 상태가 아니다.
+과거 검증 절의 인스턴스 ID와 `8080/mcp` 기록은 당시 실행 증거로 보존한다. 현행 접속 기준은 6400 브리지이며, 도구가 없으면 `Codex mcp list`로 개발자 로컬 등록 여부를 확인한다.
 
 ## 6. 1단계 통합 결정
 
 - 기존 `Border.Core.DeterministicRng`를 덱 섞기에 재사용한다.
 - 코어 규칙은 Unity 오브젝트와 씬에 의존하지 않는다.
-- 런타임 코드는 `Assets/01. Scripts/Runtime/CoreLoop`에 둔다.
+- 런타임 규칙 코드는 `Assets/01. Scripts/CoreLoop`에 둔다.
 - 테스트는 별도 EditMode 테스트 어셈블리에 둔다.
 - `CoreLoopTest` 씬, Input, UI와 ScriptableObject는 1단계에서 수정하지 않는다.
 - MCP를 통해 스크립트 컴파일 상태, 정적 검증, Console 오류와 EditMode 테스트를 확인한다.
@@ -1032,6 +1030,7 @@ Test Framework 준비·결과 저장·정리 안내였으며 컴파일·게임 �
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-29 | 이천서 | 평탄화된 `Assets/01. Scripts`·현행 테스트 경로·6400 MCP 브리지를 현재 구조로 정정하고, Notion v0.7 문서 이관은 Unity MCP·Editor·테스트를 사용하지 않은 문서 전용 작업으로 기록 |
 | 2026-07-29 | 이천서 | CU-M07 레비아탄 첫 실패 조건부 재예측·두 번 실패 영혼 1·GameScene 재준비 연출의 규칙/표시 경계와 신규 4/4·CoreLoop 442/442·전체 631/631 결과 추가 |
 | 2026-07-29 | 이천서 | CU-M04·EP-R02의 비공개 역할/앞뒷면 분리, 공개 합·대상, `KnownPlayerHiddenCardRank`, 전 프로필 리볼버 확정 대응과 GameScene 역할 정렬 구조 및 전체 619/619 결과 추가 |
 | 2026-07-28 | 이천서 | DC-R04 3/5 파이몬의 덱 위 2장 임시 분리·추방·순서/소유권 복구와 벨리알의 전용 대리 ID·차례 시작 탈취·즉시 재사용·라운드 대가 구조를 추가하고 전용 10/10·광신도 9/9·CoreLoop 402/402·전체 591/591 결과 기록; GameScene·씬·프리팹·Packages·외부 에셋 무변경 |

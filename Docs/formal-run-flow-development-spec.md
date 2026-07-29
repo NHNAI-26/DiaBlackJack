@@ -4,8 +4,8 @@
 > 기획·통합 책임자: 이천서  
 > 구현 예정 담당자: HONG  
 > 작업 식별자: RF-00~RF-05  
-> 버전: v0.2
-> 상태: RF-01 착수 가능, GameScene 상점 규칙 RFM01 선반영
+> 버전: v0.3
+> 상태: RF-01A 골드 상태 착수 가능 · RF-01B 여섯 프로필 지급량 결정 대기
 > 최종 갱신: 2026-07-29
 
 > **현행 상점 규칙 변경 안내 (2026-07-29)**
@@ -13,6 +13,9 @@
 
 > **현행 저장 규칙 변경 안내 (2026-07-26)**
 > 시작 악마 선택, 전투 보상·골드 정산, 상점 나가기, 사건 해결과 런 종료 뒤에만 체크포인트를 갱신한다. 실제 저장 파일·버전 마이그레이션은 기존 RF-00~RF-05 범위에 구현되지 않았으며 `Docs/formal-run-flow-design.md` v0.5와 저장 시스템 v0.7을 기준으로 별도 이관한다.
+
+> **Notion v0.7 골드 재명세 (2026-07-29)**
+> 적은 `cowardly-gambler`, `gunslinger`, `cultist`, `trickster`, `enforcer`, `final-boss` 여섯 프로필이다. 옛 3·3·4·6·10 지급량은 현재 전투 난이도를 반영하지 못하므로 폐기하지 않고 RF-00 과거 기록으로만 보존한다. 골드 보유·지급·소비·초기화 API는 먼저 구현할 수 있지만 카탈로그와 전투 정산은 여섯 값을 확정한 뒤 구현한다.
 
 ## 1. 기술 목표
 
@@ -40,10 +43,10 @@ FormalRunSession
 
 | 경로 | 역할 | 담당 |
 | --- | --- | --- |
-| `Assets/01. Scripts/Runtime/StageProgression/RunFlow` | 골드 정산과 정식 순서 조정 | HONG |
-| `Assets/01. Scripts/Runtime/StageProgression/Shop` | 상점 제안·방문·거래 | HONG |
-| `Assets/01. Scripts/Runtime/StageProgression/PlayerRunState.cs` | 골드와 카드 제거 최소 확장 | HONG, 이천서 검토 |
-| `Assets/01. Scripts/Runtime/UI/StageProgression` | Runtime·Presenter·View·Controller 연결 | HONG, 이천서 검토 |
+| `Assets/01. Scripts/StageProgression/RunFlow` | 골드 정산과 정식 순서 조정 | HONG |
+| `Assets/01. Scripts/StageProgression/Shop` | 상점 제안·방문·거래 | HONG |
+| `Assets/01. Scripts/StageProgression/PlayerRunState.cs` | 골드와 카드 제거 최소 확장 | HONG, 이천서 검토 |
+| `Assets/01. Scripts/UI/StageProgression` | Runtime·Presenter·View·Controller 연결 | HONG, 이천서 검토 |
 | `Assets/06.Packages/Tests/EditMode/StageProgression/RunFlow` | RF 단위·통합·화면·반복 테스트 | HONG |
 
 새 asmdef, 패키지, 전용 씬과 외부 에셋은 추가하지 않는다.
@@ -80,8 +83,8 @@ public sealed class GoldRewardCatalog
 }
 ```
 
-- 키는 `gunslinger`, `cultist`, `trickster`, `enforcer`, `final-boss`다.
-- 지급량은 각각 3, 3, 4, 6, 10이다.
+- 키는 `cowardly-gambler`, `gunslinger`, `cultist`, `trickster`, `enforcer`, `final-boss`다.
+- 지급량은 Notion v0.7 적 전투 재구현과 경제 플레이 테스트 전에 이천서가 확정한다. 확정 전 임시 기본값이나 0 대체를 넣지 않는다.
 - 중복·빈 키·0 이하 금액은 카탈로그 생성 시 거부한다.
 - 알 수 없는 프로필은 0으로 대체하지 않고 명시적으로 실패한다.
 - 골드는 UI 표시 이름이나 스테이지 번호가 아니라 `ActiveStage.BattleProfileKey`로 조회한다.
@@ -230,7 +233,7 @@ NotStarted
 
 | ID | 검증 | 기대 결과 |
 | --- | --- | --- |
-| RF-U01 | 프로필별 골드 | 3·3·4·6·10 |
+| RF-U01 | 프로필별 골드 | 확정된 여섯 값과 `엘리트 > 일반`, `보스 > 엘리트` 일치 |
 | RF-U02 | 카드 선택/건너뛰기 정산 | 양쪽 모두 1회 지급 |
 | RF-U03 | 패배·잘못된·중복 입력 | 골드 변화 없음 |
 | RF-U04 | 복수 카드 구매 | 골드가 허용하는 모든 미판매 슬롯 구매 가능, 같은 슬롯 재구매 거부 |
@@ -274,6 +277,7 @@ NotStarted
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-29 | 이천서 | RF-01을 골드 상태 RF-01A와 지급량 확정 후 카탈로그·정산 RF-01B로 분리하고 여섯 프로필 키·현행 폴더 경로·테스트 기대를 재명세 |
 | 2026-07-29 | 이천서 | 카드 슬롯별 재고와 방문 전체 구매 상한 없음, 라이터·위스키 독립 1회, 이용 방문당 다음 상점 공통 가격 +1단계, 무료 나가기·재시작 초기화 계약과 RF-U04~U11 검증 기준으로 개정 |
 | 2026-07-20 | 이천서 | 골드 상태·적별 정산·상점 거래·정식 런 조정 API와 테스트 기준 확정 |
 

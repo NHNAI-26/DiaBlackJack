@@ -3,8 +3,8 @@
 > 프로젝트: DiaBlackJack
 > 기획·개발 책임자: 이천서
 > 작업 식별자: SV-00~SV-06
-> 버전: v0.7
-> 상태: SV-05 Runtime·런 예약·이어하기·실패 UI 완료 · SV04-I03은 SV-06 연계
+> 버전: v0.8
+> 상태: SV-05 완료 · Notion v0.7 영향 반영 · SV04-I03은 SV-06 연계
 > 최종 갱신: 2026-07-29
 
 ## 1. 기술 목표
@@ -29,6 +29,9 @@ StageProgressionRuntime.Session
 
 복원은 기존 세션을 필드별로 덮어쓰지 않는다. 모든 데이터를 먼저 검증하고 새 `PlayerRunState`·`RunProgress`·세션을 구성한 뒤 성공한 객체만 Runtime에 교체한다.
 
+> **Notion v0.7 저장 경계 (2026-07-29)**
+> 사기꾼의 체인지 상태, 집행자의 주입 독극물, 적 활성 계약과 보스 계약 단계는 전투 중 상태라 스냅샷 필드가 아니다. 저장된 상대 `BattleProfileKey`와 결정적 시드로 전투를 다시 생성한다. 여섯 프로필의 골드 값은 RF-01B 확정 후 `PlayerRunState.CurrentGold`와 정산 완료 체크포인트로만 연결한다.
+
 ## 2. 현재 코드 기준선
 
 | 구성 | 현재 상태 | 필요한 변경 |
@@ -43,7 +46,7 @@ StageProgressionRuntime.Session
 | `SaveLoad/RunSave*` | 파일 저장소·복원·체크포인트 조정·런 예약·응용 흐름·표시 모델 구현 | SV-06 RF 완료 전이 연결 |
 | `StageProgressionSession` | 상대·보상 제안 생성 순번을 저장 캡처에 제공 | 안정 전이 후 자동 저장 조정 |
 | `StageProgressionRuntime` | `RunSaveFlow`를 소유하고 저장·예약·이어하기 세션을 `DontDestroyOnLoad`로 유지 | RF 화면 라우팅 연동 |
-| RF 골드·상점·사건 | 기획만 있고 구현 미완료 | 실제 타입이 생긴 뒤 읽기 전용 저장 계약 연결 |
+| RF 골드·상점·사건 | 흐름은 확정, 적 6종 지급량과 실제 상태 API 미완료 | RF-01B~RF-03 뒤 읽기 전용 저장 계약 연결 |
 
 기존 `SaveLoad` 코드는 Unity-facing 지원 계층이며 CoreLoop·StageProgression 순수성의 기준이 아니다. 순수 상태 타입에는 `UnityEngine`, `Application.persistentDataPath`, `JsonUtility`를 참조하지 않는다.
 
@@ -494,6 +497,7 @@ SV04-I01·I02·I04~I08은 구현·검증했다. SV04-I03은 실제 상점 나가
 
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
+| 2026-07-29 | 이천서 | 적 6종 전투 임시 상태 비저장과 RF-01B 확정 골드·상점 안정 상태의 SV-06 연계 경계를 추가; 기존 스키마·코드·테스트 미변경 |
 | 2026-07-28 | 이천서 | SV-05 `RunReservation`·`RunSaveFlow`·표시 모델·Runtime·StageTest Controller/View 연결, 시작 후보 2장 재개·새 런 보호·손상/버전 안내·저장 실패 재시도와 전용 9/9·StageProgression 189/189·CoreLoop 362/362·전체 551/551·두 해상도·Console 0 반영 |
 | 2026-07-28 | 이천서 | SV-04 `RunSaveCoordinator`의 시작 악마·카드 보상·런 종료 저장, 실패 보류·동일 스냅샷 재시도·진행 게이트와 선택적 예약 ID 정규화 및 전용 8/8·StageProgression 180/180·전체 542/542 반영; SV04-I03은 RF API 대기 |
 | 2026-07-27 | 이천서 | SV-03 실제 구현에 맞춰 마지막 발급 ID·안정 `RunProgress`·세션 생성 순번 캡처·루트 시드 재생·새 세션 후보 복원·미구현 골드 거부와 7개 대상 테스트 완료 상태 반영 |
