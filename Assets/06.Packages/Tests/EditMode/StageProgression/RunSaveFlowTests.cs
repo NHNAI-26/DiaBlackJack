@@ -151,6 +151,29 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
+        public void SV05_I04_NewRunWithoutStartingSelectionActivatesDefaultDemonDeck()
+        {
+            MemoryRunFileStore files = new MemoryRunFileStore();
+            RunSaveFlow flow = CreateDirectFlow(files, "direct-run");
+
+            Assert.That(flow.TryRequestNewRun(), Is.True);
+
+            Assert.That(flow.IsMenuVisible, Is.False);
+            Assert.That(flow.Session.PendingStartingDemonSelection, Is.Null);
+            Assert.That(
+                flow.Session.Progress.State,
+                Is.EqualTo(StageProgressionState.OpponentSelection));
+            Assert.That(flow.Session.Progress.Player.DemonDeck.Count, Is.EqualTo(4));
+            Assert.That(
+                flow.Session.Progress.Player.DemonDeck
+                    .Select(card => card.DefinitionKey),
+                Is.EqualTo(DemonContractCatalog.PlayerDefaultDemonDeckKeys));
+            Assert.That(
+                files.Get(RunReservationRepository.PrimaryFileName),
+                Is.Null);
+        }
+
+        [Test]
         public void SV05_U01_NewRunCancelAndReservationFailurePreserveExistingSave()
         {
             MemoryRunFileStore files = new MemoryRunFileStore();
@@ -253,6 +276,25 @@ namespace DiaBlackJack.StageProgression.Tests
                 () => CreatedAt);
         }
 
+        private static RunSaveFlow CreateDirectFlow(
+            MemoryRunFileStore files,
+            string runId)
+        {
+            RunSaveRepository saveRepository = new RunSaveRepository(
+                files,
+                CreateStages(RootSeed));
+            RunReservationRepository reservationRepository =
+                new RunReservationRepository(files, DemonContractCatalog.Default);
+            return new RunSaveFlow(
+                saveRepository,
+                reservationRepository,
+                CreateStages,
+                CreateDirectSession,
+                RootSeed,
+                () => runId,
+                () => CreatedAt);
+        }
+
         private static StageProgressionSession CreateSession(int seed)
         {
             PlayerRunState player = new PlayerRunState(
@@ -278,6 +320,28 @@ namespace DiaBlackJack.StageProgression.Tests
                     new StartingDemonSelectionGenerator(
                         DemonContractCatalog.Default,
                         unchecked(seed + 2)));
+        }
+
+        private static StageProgressionSession CreateDirectSession(int seed)
+        {
+            PlayerRunState player = new PlayerRunState(
+                12,
+                12,
+                new[]
+                {
+                    new RunCardDefinition(0, 1),
+                    new RunCardDefinition(1, 2),
+                    new RunCardDefinition(2, 3),
+                    new RunCardDefinition(3, 4)
+                });
+            return new StageProgressionSession(
+                new RunProgress(CreateStages(seed), player),
+                rewardGenerator: new BattleRewardGenerator(
+                    BattleRewardCatalog.CreateDefault(),
+                    unchecked(seed + 1)),
+                opponentSelectionGenerator: new OpponentSelectionGenerator(
+                    EnemyCombatProfileCatalog.Default,
+                    seed));
         }
 
         private static IReadOnlyList<StageDefinition> CreateStages(int seed)

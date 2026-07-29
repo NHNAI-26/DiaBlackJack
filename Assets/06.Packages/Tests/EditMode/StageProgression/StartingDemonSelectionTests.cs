@@ -24,6 +24,9 @@ namespace DiaBlackJack.StageProgression.Tests
                 firstOffer.Options.Select(option => option.DefinitionKey).Distinct().Count(),
                 Is.EqualTo(2));
             Assert.That(
+                firstOffer.Options.Select(option => option.DefinitionKey),
+                Is.SubsetOf(DemonContractCatalog.PlayerDefaultDemonDeckKeys));
+            Assert.That(
                 secondOffer.Options.Select(option => option.DefinitionKey),
                 Is.EqualTo(firstOffer.Options.Select(option => option.DefinitionKey)));
         }

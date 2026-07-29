@@ -242,13 +242,15 @@ namespace DiaBlackJack.StageProgression
 
         private static IReadOnlyList<RunDemonDefinition> CreatePrototypeDemonDeck()
         {
-            return new[]
+            IReadOnlyList<string> keys =
+                DemonContractCatalog.PlayerDefaultDemonDeckKeys;
+            var cards = new List<RunDemonDefinition>(keys.Count);
+            for (int i = 0; i < keys.Count; i++)
             {
-                new RunDemonDefinition(0, DemonContractCatalog.SatanKey),
-                new RunDemonDefinition(1, DemonContractCatalog.BelphegorKey),
-                new RunDemonDefinition(2, DemonContractCatalog.MammonKey),
-                new RunDemonDefinition(3, DemonContractCatalog.LeviathanKey)
-            };
+                cards.Add(new RunDemonDefinition(i, keys[i]));
+            }
+
+            return cards.AsReadOnly();
         }
 
         private static List<RunDemonDefinition> ValidateAndCopyDemonDeck(

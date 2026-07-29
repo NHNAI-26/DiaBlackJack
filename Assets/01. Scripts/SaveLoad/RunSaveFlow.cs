@@ -365,7 +365,14 @@ namespace Border.SaveLoad
 
             StartingDemonSelectionOffer offer =
                 candidate.PendingStartingDemonSelection;
-            if (offer == null || offer.Options.Count != 2)
+            if (offer == null)
+            {
+                ActivateNewRun(candidate);
+                Notice = RunSaveNotice.None;
+                return true;
+            }
+
+            if (offer.Options.Count != 2)
             {
                 Notice = RunSaveNotice.ReservationInvalid;
                 return false;
@@ -454,6 +461,21 @@ namespace Border.SaveLoad
                 _saveRepository,
                 reservation.RunId,
                 reservation.RootSeed,
+                0,
+                _utcNowProvider);
+            IsMenuVisible = false;
+            RequiresNewRunConfirmation = false;
+        }
+
+        private void ActivateNewRun(StageProgressionSession session)
+        {
+            _reservationRepository.TryDelete();
+            Session = session;
+            Coordinator = new RunSaveCoordinator(
+                session,
+                _saveRepository,
+                _runIdFactory(),
+                _defaultRootSeed,
                 0,
                 _utcNowProvider);
             IsMenuVisible = false;

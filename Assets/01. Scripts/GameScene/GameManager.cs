@@ -410,12 +410,14 @@ namespace DiaBlackJack.GameScene
         private DemonContractDeck CreatePlayerDemonDeck(int deckSeed)
         {
             DemonContractCatalog catalog = DemonContractCatalog.Default;
-            IReadOnlyList<DemonContractDefinition> definitions = catalog.Definitions;
+            IReadOnlyList<string> defaultKeys =
+                DemonContractCatalog.PlayerDefaultDemonDeckKeys;
             var cards = new List<DemonContractCard>(
-                definitions.Count + _purchasedDemonContractKeys.Count);
+                defaultKeys.Count + _purchasedDemonContractKeys.Count);
             int id = 0;
-            foreach (DemonContractDefinition definition in definitions)
+            foreach (string definitionKey in defaultKeys)
             {
+                DemonContractDefinition definition = catalog.GetByKey(definitionKey);
                 cards.Add(new DemonContractCard(id++, definition));
             }
 

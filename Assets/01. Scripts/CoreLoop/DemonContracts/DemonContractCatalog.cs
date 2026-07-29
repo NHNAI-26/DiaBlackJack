@@ -19,6 +19,16 @@ namespace DiaBlackJack.CoreLoop
         public const string BaphometKey = "baphomet";
         public const string LuciferKey = "lucifer";
 
+        private static readonly ReadOnlyCollection<string>
+            PlayerDefaultDemonDeckDefinitionKeys =
+                new List<string>
+                {
+                    SatanKey,
+                    BelphegorKey,
+                    BeelzebubKey,
+                    MammonKey
+                }.AsReadOnly();
+
         private static readonly DemonContractCatalog DefaultCatalog =
             new DemonContractCatalog(CreateDefaultDefinitions());
 
@@ -65,6 +75,9 @@ namespace DiaBlackJack.CoreLoop
         }
 
         public static DemonContractCatalog Default => DefaultCatalog;
+
+        public static IReadOnlyList<string> PlayerDefaultDemonDeckKeys =>
+            PlayerDefaultDemonDeckDefinitionKeys;
 
         public IReadOnlyList<DemonContractDefinition> Definitions { get; }
 

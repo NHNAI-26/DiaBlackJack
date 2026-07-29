@@ -21,8 +21,8 @@ namespace DiaBlackJack.StageProgression.Tests
                 {
                     DemonContractCatalog.SatanKey,
                     DemonContractCatalog.BelphegorKey,
-                    DemonContractCatalog.MammonKey,
-                    DemonContractCatalog.LeviathanKey
+                    DemonContractCatalog.BeelzebubKey,
+                    DemonContractCatalog.MammonKey
                 }));
         }
 
@@ -144,6 +144,30 @@ namespace DiaBlackJack.StageProgression.Tests
                 Is.EquivalentTo(runDemonDeck.Select(card => card.DefinitionKey)));
         }
 
+        [Test]
+        public void DCR01_I07_DefaultDemonDeckStartsRunWithoutStartingSelection()
+        {
+            PlayerRunState player = CreatePlayer();
+            StageProgressionSession session = new StageProgressionSession(
+                new RunProgress(CreateRunStages(97), player),
+                startingDemonSelectionGenerator:
+                    new StartingDemonSelectionGenerator(
+                        DemonContractCatalog.Default,
+                        101));
+
+            Assert.That(session.TryStartRun(), Is.True);
+
+            Assert.That(session.PendingStartingDemonSelection, Is.Null);
+            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.InBattle));
+            Assert.That(session.Battle.PlayerDemonDeck.TotalCardCount, Is.EqualTo(4));
+            IReadOnlyList<DemonContractCard> candidates =
+                session.Battle.PlayerDemonDeck.TakeCandidates();
+            Assert.That(candidates.Count, Is.EqualTo(DemonContractDeck.MaximumCandidateCount));
+            Assert.That(
+                candidates.Select(card => card.DefinitionKey),
+                Is.SubsetOf(DemonContractCatalog.PlayerDefaultDemonDeckKeys));
+        }
+
         private static int[] DrawIds(BlackjackDeck deck, int count)
         {
             var ids = new int[count];
@@ -197,6 +221,21 @@ namespace DiaBlackJack.StageProgression.Tests
                 3,
                 playerDeckSeed,
                 31);
+        }
+
+        private static IReadOnlyList<StageDefinition> CreateRunStages(int seed)
+        {
+            return new[]
+            {
+                CreateStage(seed),
+                StageDefinition.CreateForEnemyProfile(
+                    "dc-test-boss",
+                    "Boss",
+                    StageKind.FinalBossCombat,
+                    EnemyCombatProfileCatalog.FinalBossKey,
+                    unchecked(seed + 1),
+                    unchecked(seed + 2))
+            };
         }
     }
 }

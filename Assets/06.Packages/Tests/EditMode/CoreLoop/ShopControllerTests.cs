@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Reflection;
 using DiaBlackJack.GameScene;
 using NUnit.Framework;
@@ -169,13 +170,155 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(discardDeck.DiscardCount, Is.Zero);
         }
 
+        [Test]
+        public void RFM01_U05_GameSceneDemonDeckUsesDefaultFourAndCarriesPurchases()
+        {
+            GameObject managerObject = new GameObject("Game Manager Test Root");
+            GameManager manager = managerObject.AddComponent<GameManager>();
+            try
+            {
+                DemonContractDeck baseDeck =
+                    InvokeCreatePlayerDemonDeck(manager, 17);
+                Assert.That(baseDeck.TotalCardCount, Is.EqualTo(4));
+                Assert.That(
+                    DrainDemonDeckKeys(baseDeck),
+                    Is.EquivalentTo(DemonContractCatalog.PlayerDefaultDemonDeckKeys));
+
+                CoreLoopSession session = new CoreLoopSession(
+                    () => new CoreLoopBattle(
+                        BlackjackDeck.CreateStandard(1),
+                        BlackjackDeck.CreateStandard(2),
+                        playerDemonDeck:
+                            InvokeCreatePlayerDemonDeck(manager, 19)));
+                SetPrivateField(manager, "_session", session);
+
+                InvokeAddPurchasedDemonContractToCurrentBattle(
+                    manager,
+                    DemonContractCatalog.LuciferKey);
+                Assert.That(manager.Battle.PlayerDemonDeck.TotalCardCount,
+                    Is.EqualTo(5));
+
+                IList<string> purchasedKeys =
+                    GetPurchasedDemonContractKeys(manager);
+                purchasedKeys.Add(DemonContractCatalog.LuciferKey);
+                DemonContractDeck nextDeck =
+                    InvokeCreatePlayerDemonDeck(manager, 23);
+                Assert.That(nextDeck.TotalCardCount, Is.EqualTo(5));
+                Assert.That(
+                    DrainDemonDeckKeys(nextDeck),
+                    Has.Member(DemonContractCatalog.LuciferKey));
+            }
+            finally
+            {
+                Object.DestroyImmediate(managerObject);
+            }
+        }
+
+        [Test]
+        public void RFM01_U06_ShopDemonOffersUseFullCatalogPool()
+        {
+            GameObject holderObject = new GameObject("Demon Card Holder");
+            holderObject.transform.SetParent(_root.transform);
+            GameObject prefabObject = new GameObject("Demon Card Prefab");
+            prefabObject.transform.SetParent(_root.transform);
+            DemonCardView prefab = prefabObject.AddComponent<DemonCardView>();
+            SetPrivateField("demonCardHolder", holderObject.transform);
+            SetPrivateField("demonCardPrefab", prefab);
+            SetPrivateField(
+                "demonCardOfferCount",
+                DemonContractCatalog.Default.Definitions.Count);
+            SetPrivateField("demonCardPrice", 0);
+
+            _shop.Open();
+            DemonCardView[] offers =
+                holderObject.GetComponentsInChildren<DemonCardView>(true);
+            var purchasedKeys = new List<string>();
+            foreach (DemonCardView offer in offers)
+            {
+                Assert.That(
+                    _shop.TryPurchaseDemonCard(
+                        offer.CardId,
+                        out string definitionKey),
+                    Is.True);
+                purchasedKeys.Add(definitionKey);
+            }
+
+            Assert.That(
+                purchasedKeys.Count,
+                Is.EqualTo(DemonContractCatalog.Default.Definitions.Count));
+            Assert.That(
+                purchasedKeys,
+                Has.Member(DemonContractCatalog.LuciferKey));
+            Assert.That(
+                purchasedKeys,
+                Has.Member(DemonContractCatalog.LeviathanKey));
+        }
+
         private void SetPrivateField(string fieldName, object value)
         {
-            FieldInfo field = typeof(ShopController).GetField(
+            SetPrivateField(_shop, fieldName, value);
+        }
+
+        private static void SetPrivateField(
+            object target,
+            string fieldName,
+            object value)
+        {
+            FieldInfo field = target.GetType().GetField(
                 fieldName,
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, fieldName);
-            field.SetValue(_shop, value);
+            field.SetValue(target, value);
+        }
+
+        private static DemonContractDeck InvokeCreatePlayerDemonDeck(
+            GameManager manager,
+            int seed)
+        {
+            MethodInfo method = typeof(GameManager).GetMethod(
+                "CreatePlayerDemonDeck",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
+            return (DemonContractDeck)method.Invoke(
+                manager,
+                new object[] { seed });
+        }
+
+        private static void InvokeAddPurchasedDemonContractToCurrentBattle(
+            GameManager manager,
+            string definitionKey)
+        {
+            MethodInfo method = typeof(GameManager).GetMethod(
+                "AddPurchasedDemonContractToCurrentBattle",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
+            method.Invoke(manager, new object[] { definitionKey });
+        }
+
+        private static IList<string> GetPurchasedDemonContractKeys(
+            GameManager manager)
+        {
+            FieldInfo field = typeof(GameManager).GetField(
+                "_purchasedDemonContractKeys",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null);
+            return (IList<string>)field.GetValue(manager);
+        }
+
+        private static string[] DrainDemonDeckKeys(DemonContractDeck deck)
+        {
+            var keys = new List<string>();
+            while (deck.CanTakeCandidates)
+            {
+                IReadOnlyList<DemonContractCard> candidates =
+                    deck.TakeCandidates();
+                foreach (DemonContractCard candidate in candidates)
+                {
+                    keys.Add(candidate.DefinitionKey);
+                }
+            }
+
+            return keys.ToArray();
         }
     }
 }

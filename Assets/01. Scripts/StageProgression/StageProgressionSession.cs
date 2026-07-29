@@ -56,11 +56,11 @@ namespace DiaBlackJack.StageProgression
         public bool TryStartRun()
         {
             if (_startingDemonSelectionGenerator != null &&
-                Progress.Player.StartingDemonDefinitionKey == null)
+                Progress.Player.StartingDemonDefinitionKey == null &&
+                Progress.Player.CanSelectStartingDemon)
             {
                 if (Progress.State != StageProgressionState.NotStarted ||
-                    PendingStartingDemonSelection != null ||
-                    !Progress.Player.CanSelectStartingDemon)
+                    PendingStartingDemonSelection != null)
                 {
                     return false;
                 }

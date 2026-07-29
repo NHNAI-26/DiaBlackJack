@@ -112,22 +112,62 @@ namespace DiaBlackJack.StageProgression
 
     public sealed class StartingDemonSelectionGenerator
     {
-        private readonly DemonContractCatalog _catalog;
+        private readonly ReadOnlyCollection<DemonContractDefinition>
+            _candidateDefinitions;
         private readonly DeterministicRng _random = new DeterministicRng();
         private int _nextOfferId;
 
         public StartingDemonSelectionGenerator(
             DemonContractCatalog catalog,
             int seed)
+            : this(
+                catalog,
+                seed,
+                DemonContractCatalog.PlayerDefaultDemonDeckKeys)
         {
-            _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
-            if (_catalog.Definitions.Count < 2)
+        }
+
+        public StartingDemonSelectionGenerator(
+            DemonContractCatalog catalog,
+            int seed,
+            IEnumerable<string> candidateDefinitionKeys)
+        {
+            if (catalog == null)
+            {
+                throw new ArgumentNullException(nameof(catalog));
+            }
+
+            if (candidateDefinitionKeys == null)
+            {
+                throw new ArgumentNullException(nameof(candidateDefinitionKeys));
+            }
+
+            List<DemonContractDefinition> candidates =
+                new List<DemonContractDefinition>();
+            HashSet<string> knownKeys =
+                new HashSet<string>(StringComparer.Ordinal);
+            foreach (string definitionKey in candidateDefinitionKeys)
+            {
+                DemonContractDefinition definition =
+                    catalog.GetByKey(definitionKey);
+                if (!knownKeys.Add(definition.Key))
+                {
+                    throw new ArgumentException(
+                        "Starting demon candidate keys must be distinct.",
+                        nameof(candidateDefinitionKeys));
+                }
+
+                candidates.Add(definition);
+            }
+
+            if (candidates.Count < 2)
             {
                 throw new ArgumentException(
                     "Starting demon selection requires at least two unlocked definitions.",
-                    nameof(catalog));
+                    nameof(candidateDefinitionKeys));
             }
 
+            _candidateDefinitions = candidates.AsReadOnly();
             _random.Reseed(seed);
         }
 
@@ -139,8 +179,8 @@ namespace DiaBlackJack.StageProgression
                     "Starting demon selection offer ids are exhausted.");
             }
 
-            int firstIndex = _random.Next(_catalog.Definitions.Count);
-            int secondIndex = _random.Next(_catalog.Definitions.Count - 1);
+            int firstIndex = _random.Next(_candidateDefinitions.Count);
+            int secondIndex = _random.Next(_candidateDefinitions.Count - 1);
             if (secondIndex >= firstIndex)
             {
                 secondIndex++;
@@ -153,10 +193,10 @@ namespace DiaBlackJack.StageProgression
                 {
                     new StartingDemonSelectionOption(
                         0,
-                        _catalog.Definitions[firstIndex]),
+                        _candidateDefinitions[firstIndex]),
                     new StartingDemonSelectionOption(
                         1,
-                        _catalog.Definitions[secondIndex])
+                        _candidateDefinitions[secondIndex])
                 });
         }
     }
