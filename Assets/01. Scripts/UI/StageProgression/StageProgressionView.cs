@@ -17,6 +17,7 @@ namespace DiaBlackJack.StageProgression.UI
         private GUIStyle _candidateBodyStyle;
         private GUIStyle _selectedStyle;
         private bool _inputLocked;
+        private Vector2 _shopScrollPosition;
 
         public event Action StartRunRequested;
 
@@ -45,6 +46,14 @@ namespace DiaBlackJack.StageProgression.UI
         public event Action<int, int> StartingDemonSelected;
 
         public event Action SaveRetryRequested;
+
+        public event Action<int, int> ShopCardPurchaseRequested;
+
+        public event Action<int, int> ShopCardRemovalRequested;
+
+        public event Action<int> ShopRestRequested;
+
+        public event Action<int> ShopLeaveRequested;
 
         public void Render(
             StageProgressionViewModel model,
@@ -168,6 +177,7 @@ namespace DiaBlackJack.StageProgression.UI
             GUILayout.Label(_model.StageKind, _bodyStyle);
             GUILayout.Space(Screen.height <= 720 ? 12f : 24f);
             GUILayout.Label($"PLAYER SOUL  {_model.PlayerSoul}", _headingStyle);
+            GUILayout.Label($"RUN GOLD  {_model.PlayerGold}", _headingStyle);
             GUILayout.Label($"RUN DECK  {_model.DeckCount}", _bodyStyle);
             GUILayout.Space(12f);
             GUILayout.Label(_model.Message, _messageStyle);
@@ -175,6 +185,12 @@ namespace DiaBlackJack.StageProgression.UI
             {
                 GUILayout.Space(6f);
                 GUILayout.Label(_model.RewardResult, _headingStyle);
+            }
+
+            if (!string.IsNullOrEmpty(_model.GoldResult))
+            {
+                GUILayout.Space(6f);
+                GUILayout.Label(_model.GoldResult, _selectedStyle);
             }
 
             if (!string.IsNullOrEmpty(_saveModel.SaveIndicator))
@@ -221,6 +237,13 @@ namespace DiaBlackJack.StageProgression.UI
                 return;
             }
 
+            if (_model.IsShop)
+            {
+                DrawShop();
+                GUI.enabled = previousEnabled;
+                return;
+            }
+
             if (_model.CanSelectReward)
             {
                 DrawBattleReward();
@@ -253,6 +276,107 @@ namespace DiaBlackJack.StageProgression.UI
             }
 
             GUI.enabled = previousEnabled;
+        }
+
+        private void DrawShop()
+        {
+            if (!_model.ShopOfferId.HasValue)
+            {
+                return;
+            }
+
+            int offerId = _model.ShopOfferId.Value;
+            _shopScrollPosition = GUILayout.BeginScrollView(
+                _shopScrollPosition,
+                GUILayout.MinHeight(Screen.height <= 720 ? 320f : 420f));
+            GUILayout.Label("CARDS", _headingStyle);
+            GUILayout.BeginHorizontal();
+            foreach (ShopCardOptionViewModel option in _model.ShopCardOptions)
+            {
+                GUILayout.BeginVertical(
+                    GUI.skin.box,
+                    GUILayout.MinHeight(190f),
+                    GUILayout.ExpandWidth(true));
+                GUILayout.Label(option.Category, _bodyStyle);
+                GUILayout.Label(option.DisplayName, _messageStyle);
+                GUILayout.Space(4f);
+                GUILayout.Label(option.Summary, _candidateBodyStyle);
+                GUILayout.FlexibleSpace();
+                GUILayout.Label(option.Price, _bodyStyle);
+                GUI.enabled = !_inputLocked && option.CanBuy;
+                if (GUILayout.Button(
+                        option.IsSold ? "SOLD OUT" : "BUY",
+                        _buttonStyle,
+                        GUILayout.Height(42f)))
+                {
+                    ShopCardPurchaseRequested?.Invoke(offerId, option.OptionId);
+                }
+
+                GUILayout.EndVertical();
+            }
+
+            GUILayout.EndHorizontal();
+            GUILayout.Space(10f);
+            GUILayout.Label("LIGHTER — REMOVE ONE CARD", _headingStyle);
+            GUILayout.BeginHorizontal();
+            foreach (ShopOwnedCardViewModel card in _model.ShopOwnedCards)
+            {
+                GUI.enabled = !_inputLocked && card.CanRemove;
+                if (GUILayout.Button(
+                        card.DisplayName,
+                        _buttonStyle,
+                        GUILayout.Height(40f)))
+                {
+                    ShopCardRemovalRequested?.Invoke(offerId, card.CardId);
+                }
+            }
+
+            GUILayout.EndHorizontal();
+            GUILayout.Space(8f);
+            GUILayout.BeginHorizontal();
+            GUI.enabled = !_inputLocked && _model.CanRestAtShop;
+            if (GUILayout.Button(
+                    _model.WhiskeyLabel,
+                    _buttonStyle,
+                    GUILayout.Height(48f)))
+            {
+                ShopRestRequested?.Invoke(offerId);
+            }
+
+            GUI.enabled = !_inputLocked &&
+                HasRemovableShopCard();
+            GUILayout.Label(_model.LighterLabel, _selectedStyle);
+
+            GUI.enabled = !_inputLocked && _model.CanLeaveShop;
+            if (GUILayout.Button(
+                    "LEAVE SHOP",
+                    _buttonStyle,
+                    GUILayout.Height(48f)))
+            {
+                ShopLeaveRequested?.Invoke(offerId);
+            }
+
+            GUILayout.EndHorizontal();
+            if (!string.IsNullOrEmpty(_model.ShopTransactionResult))
+            {
+                GUILayout.Space(6f);
+                GUILayout.Label(_model.ShopTransactionResult, _selectedStyle);
+            }
+
+            GUILayout.EndScrollView();
+        }
+
+        private bool HasRemovableShopCard()
+        {
+            foreach (ShopOwnedCardViewModel card in _model.ShopOwnedCards)
+            {
+                if (card.CanRemove)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void DrawStartingDemonSelection()

@@ -45,12 +45,15 @@ namespace DiaBlackJack.CoreLoop.UI
             _view.RestartRequested += RequestRestart;
 
             _stageRuntime = StageProgressionRuntime.Instance;
+            StageProgressionSession runtimeSession =
+                _stageRuntime?.FormalSession?.CombatSession ??
+                _stageRuntime?.Session;
             if (_stageRuntime != null &&
-                _stageRuntime.Session != null &&
-                _stageRuntime.Session.Progress.State == StageProgressionState.InBattle &&
-                _stageRuntime.Session.Battle != null)
+                runtimeSession != null &&
+                runtimeSession.Progress.State == StageProgressionState.InBattle &&
+                runtimeSession.Battle != null)
             {
-                _stageSession = _stageRuntime.Session;
+                _stageSession = runtimeSession;
             }
             else
             {

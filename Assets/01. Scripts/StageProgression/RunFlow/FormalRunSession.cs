@@ -162,6 +162,41 @@ namespace DiaBlackJack.StageProgression
             return true;
         }
 
+        internal void SynchronizeExternalState()
+        {
+            if (Phase != FormalRunPhase.NotStarted)
+            {
+                return;
+            }
+
+            StageProgressionState state = CombatSession.Progress.State;
+            switch (state)
+            {
+                case StageProgressionState.NotStarted:
+                    return;
+                case StageProgressionState.OpponentSelection:
+                case StageProgressionState.InBattle:
+                    _goldBeforeCurrentBattle =
+                        CombatSession.Progress.Player.CurrentGold;
+                    Phase = FormalRunPhase.Combat;
+                    return;
+                case StageProgressionState.StageCleared:
+                    RestoreShopForStableProgress();
+                    return;
+                case StageProgressionState.RunVictory:
+                    Phase = FormalRunPhase.RunVictory;
+                    return;
+                case StageProgressionState.RunDefeat:
+                    Phase = FormalRunPhase.RunDefeat;
+                    return;
+                case StageProgressionState.RewardSelection:
+                    throw new InvalidOperationException(
+                        "A formal run cannot adopt a battle reward selection state.");
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(state));
+            }
+        }
+
         private void HandleBattleResultSynchronized()
         {
             StageProgressionState state = CombatSession.Progress.State;
@@ -202,6 +237,37 @@ namespace DiaBlackJack.StageProgression
                     throw new InvalidOperationException(
                         "A synchronized battle must produce a stable formal run result.");
             }
+        }
+
+        private void RestoreShopForStableProgress()
+        {
+            int visitIndex = CombatSession.Progress.CurrentStageIndex;
+            if (visitIndex < 0 || visitIndex > 1)
+            {
+                throw new InvalidOperationException(
+                    "Only the two normal stages can restore a formal shop.");
+            }
+
+            for (int skippedVisit = 0; skippedVisit < visitIndex; skippedVisit++)
+            {
+                _shopOfferGenerator.Generate(skippedVisit, 0, false);
+            }
+
+            StageDefinition completedStage = CombatSession.ActiveStage ??
+                CombatSession.Progress.CurrentStage;
+            bool followsEliteVictory = completedStage.BattleProfileKey != null &&
+                EnemyCombatProfileCatalog.Default
+                    .GetPreviewByKey(completedStage.BattleProfileKey)
+                    .Grade == EnemyGrade.Elite;
+            ActiveShop = new ShopVisit(_shopOfferGenerator.Generate(
+                visitIndex,
+                0,
+                followsEliteVictory));
+            CompletedShopCount = visitIndex;
+            LastGoldReward = 0;
+            UtilityPriceLevel = 0;
+            _goldBeforeCurrentBattle = CombatSession.Progress.Player.CurrentGold;
+            Phase = FormalRunPhase.Shop;
         }
     }
 }

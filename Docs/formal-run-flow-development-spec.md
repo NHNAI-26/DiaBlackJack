@@ -4,8 +4,8 @@
 > 기획·통합 책임자: 이천서  
 > 구현 예정 담당자: HONG  
 > 작업 식별자: RF-00~RF-05  
-> 버전: v0.9
-> 상태: RF-01~RF-03 골드·상점·정식 순서 도메인 구현 · RF-04 대기
+> 버전: v1.0
+> 상태: RF-01~RF-04 코드 구현 · RF-04 Unity 실화면 검증 대기
 > 최종 갱신: 2026-07-30
 
 > **카드 성장 상점 통합 변경 안내 (2026-07-30)**
@@ -236,7 +236,13 @@ NotStarted
 - Presenter는 현재 골드, 최근 획득 골드, 상점 후보·서비스·가격·이용 가능 여부·거래 결과를 문자열 모델로 만든다.
 - View는 가격·가능 여부를 계산하지 않고 그리기와 이벤트 전달만 한다.
 - 상점 상태에서는 기존 `NEXT STAGE`를 숨긴다.
-- 첫 상점 뒤 같은 진행 씬에서 상대 선택을 표시하고, 둘째 상점 뒤 보스가 준비되면 `CoreLoopTest`로 이동한다.
+- 첫 상점 뒤 같은 진행 씬에서 상대 선택을 표시하고, 둘째 상점 뒤 보스가 준비되면 `GameScene`으로 이동한다.
+
+RF-04 구현에서 `StageProgressionRuntime.FormalSession`은 현재 저장 흐름의 세션 참조가 바뀌면 새 정식 세션으로 다시 결합한다. 새 게임 Factory와 이어하기 `RunRestoreFactory` 모두 `usesBattleRewards: false`를 사용한다. 기존 테스트나 독립 사용자가 기본 세션을 주입하면 `UsesBattleRewards == true`인 유산 표시 경로를 그대로 유지한다.
+
+`StageProgressionPresenter.Create(FormalRunSession)`은 현재·최근 획득 골드, 상대별 확정 골드, 상점 후보·판매 완료·서비스 가격/이용 여부·최근 거래와 카드 제거 대상을 완성된 문자열·가능 여부로 만든다. View는 계산하지 않고 IMGUI로 렌더링하며 Controller만 정식 세션 거래 API를 호출한다.
+
+`GameManager`는 `StageProgressionRuntime`에 진행 중인 전투가 있으면 독립 `CoreLoopSession`을 만들지 않고 해당 `StageProgressionSession`의 전투를 채택한다. 모든 전투 입력은 진행 세션을 통해 전달하여 승패 동기화와 골드 정산을 한 번만 수행한다. 정식 전투 종료 뒤에는 GameScene-local `ShopController.Open()`을 호출하지 않고 `StageTest`로 복귀한다. Runtime이 없는 단독 `GameScene` 실행만 기존 임시 상점 MVP를 사용한다.
 
 ## 9. 자동 테스트 명세
 
@@ -288,6 +294,8 @@ NotStarted
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-30 | 이천서 | 정식 런의 전투 목적지를 `GameScene`으로 바꾸고 `GameManager`에 진행 세션 입력 위임, 실제 프로필·골드 표시, 종료 후 진행 씬 복귀와 독립 MVP 호환 경계를 추가했다. 런타임·StageProgression 테스트 어셈블리 컴파일 및 RF 비Unity 42/42를 재확인했으며 실제 Play Mode 왕복은 Unity MCP 복구 뒤 검증한다. |
+| 2026-07-30 | 이천서 | RF-04 Runtime 재결합, 신규/복원 세션의 RW 우회, CoreLoop 전투 세션 제공, 정식 Presenter·IMGUI 상점·Controller 거래 입력을 구현했다. RF04 6건은 어셈블리 컴파일, 그중 Unity 비의존 5건은 실행 통과했고 기존 RF 누적 비Unity 42/42를 확인했다. Unity MCP 8080은 TCP 연결되지만 initialize handshake가 실패해 실제 EditMode·720p/1080p·씬 왕복은 미실행으로 남겼다. |
 | 2026-07-30 | 이천서 | RF-03 `FormalRunSession`, 무카드보상 완료 경계, 전투 결과 동기화, 두 상점·가격 단계·재시작을 구현했다. 첫/둘째 일반전·보스·세 위치 패배·상점 변경 전달·오래된 ID·기존 RW 회귀를 RF03 12건으로 검증했고 RF-01~03 누적 37/37 및 두 어셈블리 컴파일을 확인했다. |
 | 2026-07-30 | 이천서 | RF-02 불변 옵션·제안, 결정적 일반 3/악마 2 생성기, 복수 구매·라이터·위스키·무료 나가기 거래와 `PlayerRunState` 최소 덱 제거 경계를 구현했다. 자동 카드 5종 출현·구매 후 전투 전달, 엘리트 가중치, 실패 원자성, 가격 단계와 재시작을 대상 11/11 및 두 어셈블리 컴파일로 확인했다. |
 | 2026-07-30 | 이천서 | RF-01B `GoldRewardCatalog`와 `StageProgressionSession`의 종료 승리 전투별 1회 지급을 구현했다. 여섯 확정 금액·등급 역전 방지·잘못된 정의/조회·일반/보스 승리·중복·패배·구형 무프로필 호환을 RF01B 7개로 고정하고 RF-01 전체 대상 14/14 및 두 어셈블리 컴파일을 확인했다. |

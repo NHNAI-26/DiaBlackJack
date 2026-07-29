@@ -11,12 +11,37 @@ namespace DiaBlackJack.StageProgression.UI
     public sealed class StageProgressionRuntime : MonoBehaviour
     {
         [SerializeField] private string progressionSceneName = "StageTest";
-        [SerializeField] private string battleSceneName = "CoreLoopTest";
+        [SerializeField] private string battleSceneName = "GameScene";
         [SerializeField] private int seed = 20260719;
 
         public static StageProgressionRuntime Instance { get; private set; }
 
         public RunSaveFlow SaveFlow { get; private set; }
+
+        public FormalRunSession FormalSession
+        {
+            get
+            {
+                StageProgressionSession session = Session;
+                if (session == null || session.UsesBattleRewards)
+                {
+                    _formalSession = null;
+                    _formalCombatSession = null;
+                    return null;
+                }
+
+                if (!ReferenceEquals(session, _formalCombatSession))
+                {
+                    _formalCombatSession = session;
+                    _formalSession = new FormalRunSession(
+                        session,
+                        new ShopOfferGenerator(unchecked(seed + 2)));
+                }
+
+                _formalSession.SynchronizeExternalState();
+                return _formalSession;
+            }
+        }
 
         public StageProgressionSession Session
         {
@@ -25,6 +50,8 @@ namespace DiaBlackJack.StageProgression.UI
         }
 
         private StageProgressionSession _injectedSession;
+        private FormalRunSession _formalSession;
+        private StageProgressionSession _formalCombatSession;
 
         private void Awake()
         {
@@ -44,7 +71,9 @@ namespace DiaBlackJack.StageProgression.UI
                     DemonContractCatalog.Default),
                 CreatePrototypeStages,
                 CreatePrototypeSession,
-                seed);
+                seed,
+                usesBattleRewards: false);
+            _ = FormalSession;
         }
 
         private void OnDestroy()
@@ -76,7 +105,8 @@ namespace DiaBlackJack.StageProgression.UI
                     unchecked(rootSeed + 1)),
                 opponentSelectionGenerator: new OpponentSelectionGenerator(
                     EnemyCombatProfileCatalog.Default,
-                    rootSeed));
+                    rootSeed),
+                usesBattleRewards: false);
         }
 
         private static PlayerRunState CreatePrototypePlayer()

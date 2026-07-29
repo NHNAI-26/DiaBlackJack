@@ -902,7 +902,7 @@ Unity MCP 활성 인스턴스는 `DiaBlackJack@5635a4cdcfecc8dd`, Unity는
 | --- | --- |
 | 런 예약 | `RunReservationRepository`가 `run-reservation.tmp` 검증 뒤 `run-reservation.json`으로 교체하고 시작 악마 제안 ID·후보 키 2장을 보존 |
 | 응용 흐름 | `RunSaveFlow`가 새 런 확인·취소, 예약 재개, 체크포인트 이어하기, 세션 교체, 저장 실패 보류·재시도를 소유 |
-| Runtime | `StageProgressionRuntime`이 `SystemRunSaveFileStore`·저장/예약 저장소·세션 Factory를 조립하고 `DontDestroyOnLoad` 세션을 흐름에서 노출 |
+| Runtime | `StageProgressionRuntime`이 `SystemRunSaveFileStore`·저장/예약 저장소·세션 Factory를 조립하고, 현재 저장 세션을 `FormalRunSession`으로 재결합해 `DontDestroyOnLoad`로 노출 |
 | 화면 | 기존 StageTest IMGUI Controller/View에 런 메뉴·시작 악마 2장·백업/손상/버전 안내·`SAVED`·실패 재시도 연결 |
 | 호환 경계 | 저장 흐름 이전 테스트가 Runtime에 직접 주입하는 독립 세션 동작을 유지하고 실제 Runtime에서는 저장 흐름을 우선 |
 | 검증 | 전용 9/9·저장/시작 선택 관련 36/36·StageProgression 189/189·CoreLoop 362/362·전체 EditMode 551/551·Console 오류 0 |
@@ -1064,13 +1064,28 @@ Test Framework 준비·결과 저장·정리 안내였으며 컴파일·게임 �
 | 상점 후보 | `CardDefinitionCatalog.All`의 상점 허용 정의에서 자동 발동 카드 5종을 포함한 일반 3장과 악마 2장, 동일 정의 키 무중복 |
 | 엘리트 | 별도 무료 카드 보상 대신 추가 골드와 높은 등급 일반 상품 출현 가중치로 차별화 |
 | 저장 | 카드 보상 완료가 아니라 승리 골드 정산 완료를 일반전 체크포인트로 사용; 실제 RF API 뒤 SV-06에서 연결 |
-| 현재 코드 차이 | `StageProgressionSession`은 아직 승리 시 `RewardSelection`, `ShopController`는 기본 숫자 카드만 생성하므로 구현 이관 필요 |
-| 변경 범위 | 문서만 갱신; 코드·테스트·씬·프리팹·Packages·외부 에셋 무변경, Unity 검증 미실행 |
+| 현재 코드 | `FormalRunSession`이 정식 경로에서 `RewardSelection`을 우회하고 일반 3장·악마 2장 상점과 두 방문을 소유하며, 유산 세션은 기존 RW를 유지 |
+| 변경 범위 | RF-01~04 순수 도메인·Runtime·진행 UI·GameScene 연결 구현; 실제 Unity 반복 검증은 RF-05에 남김 |
+
+### 7.57 RF-04 정식 런 GameScene 연결
+
+| 경계 | 확인 결과 |
+| --- | --- |
+| 진행 화면 | `StageTest`가 상대 선택과 정식 상점·런 종료 UI를 담당 |
+| 전투 화면 | `StageTest.battleSceneName`과 Runtime 기본값을 `GameScene`으로 전환하고 Build Settings에 GameScene GUID 등록 |
+| 세션 소유권 | `GameManager`가 `StageProgressionRuntime.FormalSession.CombatSession`의 진행 중 전투를 채택하고 전투 입력을 모두 `StageProgressionSession`에 위임 |
+| 정산 경계 | 진행 세션이 승패·영혼·골드를 한 번 동기화하며 정식 런에서는 GameScene-local 임시 상점을 열지 않음 |
+| 복귀 | 전투 타임라인 연출 종료 뒤 진행 상태가 `InBattle`이 아니면 `StageTest`로 돌아가 정식 상점·승패 화면 표시 |
+| 호환 | Runtime 없이 직접 연 GameScene은 기존 독립 전투·임시 상점 MVP를 유지하고 `CoreLoopTest`는 독립 IMGUI 검증 씬으로 보존 |
+| 검증 | Border·StageProgression 테스트 어셈블리 컴파일, RF 비Unity 42/42, `git diff --check`, 씬 이름·GUID 직렬화 대조 통과 |
+| 미검증 | Unity MCP 8080은 TCP 연결되지만 initialize handshake가 실패하고 호출 도구가 없어 실제 `StageTest ↔ GameScene`, 720p·1080p, 전체 EditMode와 실시간 Console은 미실행 |
+| 변경 보호 | GameScene YAML·프리팹·Packages·외부 에셋·오픈소스·새 의존성 무변경 |
 
 ## 8. 변경 기록
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-30 | 이천서 | RF-04 정식 런의 전투 화면을 GameScene으로 연결하고 진행 세션 위임·실제 프로필·런 골드·종료 복귀 경계와 Build Settings 등록을 구조 기록에 추가했다. |
 | 2026-07-30 | 이천서 | RF 카드 성장을 상점으로 통합하는 현행 결정, 기존 RW 보존·정식 경로 우회, 자동 카드 상점 후보, 엘리트 가중치와 승리 골드 저장 경계를 구조 기록에 추가; 현행 코드 차이와 문서 전용 작업을 분리 기록 |
 | 2026-07-30 | 이천서 | GSV-02 자동 5종 도상·악마 12종 아트 확정 순서의 비순차 정의 키 매핑을 손패·상점·계약 후보에 연결하고 `Card.prefab` 자동 앞면 참조 및 정보 은닉 회귀 추가; 전용 19/19·전체 687/687, 원본 GameScene Play Mode 미검증 |
 | 2026-07-30 | 이천서 | GSV-01 스프라이트 의미를 기본·공격 위기·공격받음으로 정정하고 `AttackThreatened`/`Attacked` 표시 상태를 공격 효과의 처리 전/성공 처리에 연결; 일반 패배·숫자 버스트와 실패 리볼버의 잘못된 반응 제거, 전용 3/3·전체 668/668·세 상태 원본 일치 100/100 검증 |

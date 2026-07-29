@@ -46,17 +46,20 @@ namespace DiaBlackJack.StageProgression
         private readonly BattleRewardCatalog _battleRewardCatalog;
         private readonly EnemyCombatProfileCatalog _enemyCatalog;
         private readonly Func<int, IReadOnlyList<StageDefinition>> _stagePathFactory;
+        private readonly bool _usesBattleRewards;
 
         internal RunRestoreFactory(
             Func<int, IReadOnlyList<StageDefinition>> stagePathFactory,
             EnemyCombatProfileCatalog enemyCatalog = null,
-            BattleRewardCatalog battleRewardCatalog = null)
+            BattleRewardCatalog battleRewardCatalog = null,
+            bool usesBattleRewards = true)
         {
             _stagePathFactory = stagePathFactory ??
                 throw new ArgumentNullException(nameof(stagePathFactory));
             _enemyCatalog = enemyCatalog ?? EnemyCombatProfileCatalog.Default;
             _battleRewardCatalog = battleRewardCatalog ??
                 BattleRewardCatalog.CreateDefault();
+            _usesBattleRewards = usesBattleRewards;
         }
 
         internal bool TryRestore(
@@ -133,7 +136,8 @@ namespace DiaBlackJack.StageProgression
                 StageProgressionSession session = new StageProgressionSession(
                     progress,
                     rewardGenerator: rewardGenerator,
-                    opponentSelectionGenerator: opponentGenerator);
+                    opponentSelectionGenerator: opponentGenerator,
+                    usesBattleRewards: _usesBattleRewards);
 
                 result = new RunRestoreResult(
                     session,
