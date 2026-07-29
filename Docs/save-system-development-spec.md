@@ -3,8 +3,8 @@
 > 프로젝트: DiaBlackJack
 > 기획·개발 책임자: 이천서
 > 작업 식별자: SV-00~SV-06
-> 버전: v1.0
-> 상태: SV-05 완료 · 무카드보상 RF 정산 이벤트의 SV-06 연계 대기
+> 버전: v1.1
+> 상태: SV-05 완료 · RF-01A 골드 캡처·복원 활성 · SV-06 정산 이벤트 대기
 > 최종 갱신: 2026-07-30
 
 > **정식 런 카드 보상 제거 영향(2026-07-30)**
@@ -33,7 +33,7 @@ StageProgressionRuntime.Session
 복원은 기존 세션을 필드별로 덮어쓰지 않는다. 모든 데이터를 먼저 검증하고 새 `PlayerRunState`·`RunProgress`·세션을 구성한 뒤 성공한 객체만 Runtime에 교체한다.
 
 > **Notion v0.7 저장 경계 (2026-07-29)**
-> 사기꾼의 체인지 상태, 집행자의 주입 독극물, 적 활성 계약과 보스 계약 단계는 전투 중 상태라 스냅샷 필드가 아니다. 저장된 상대 `BattleProfileKey`와 결정적 시드로 전투를 다시 생성한다. 확정 골드 3·4·6·7·9·15는 RF-01B가 실제 구현한 `PlayerRunState.CurrentGold`와 정산 완료 체크포인트로만 연결한다.
+> 사기꾼의 체인지 상태, 집행자의 주입 독극물, 적 활성 계약과 보스 계약 단계는 전투 중 상태라 스냅샷 필드가 아니다. 저장된 상대 `BattleProfileKey`와 결정적 시드로 전투를 다시 생성한다. RF-01A에서 `PlayerRunState.CurrentGold`의 캡처·복원은 활성화했으며, 확정 골드 3·4·6·7·9·15의 실제 지급과 정산 완료 체크포인트는 RF-01B·SV-06에서 연결한다.
 
 ## 2. 현재 코드 기준선
 
@@ -42,14 +42,14 @@ StageProgressionRuntime.Session
 | `Border.SaveLoad.Save` | 직렬화할 필드가 없는 빈 클래스 | 런 저장 전용 DTO와 분리 또는 교체 |
 | `SaveLoadSystem` | ScriptableObject가 `SaveData`를 직접 보유 | 저장소·직렬화·조정 책임 분리 |
 | `FileManager` | 기본 파일에 `WriteAllText` 직접 수행 | 경로 검증, 임시/백업, 원자 교체, 명시적 결과 |
-| `PlayerRunState` | 영혼·일반/악마 덱·마지막 발급 ID·시작 악마 키를 보유하고 SV-03 내부 복원 Factory로 검증된 새 객체 생성 | 골드 실제 상태 연결 |
+| `PlayerRunState` | 영혼·골드·일반/악마 덱·마지막 발급 ID·시작 악마 키를 보유하고 검증된 새 객체 생성 | RF-01B 정산 이벤트 연결 |
 | 시작 악마 선택 | Runtime 새 런 경로가 빈 악마 덱에서 후보 2장·1장 확정과 첫 체크포인트를 수행 | RF 시작 흐름과 최종 통합 검토 |
 | `RunProgress` | `StageCleared`·`RunVictory`·`RunDefeat`의 스테이지 위치와 안정 상태를 새 객체로 복원 | 시작 악마·상점·사건 체크포인트 연결 |
 | `StageProgression/Save` | 스키마 1 스냅샷·검증·세션 순번 캡처·검증된 `RunRestoreFactory` 구현 | SV-06 RF 안정 상태 확장 |
 | `SaveLoad/RunSave*` | 파일 저장소·복원·체크포인트 조정·런 예약·응용 흐름·표시 모델 구현 | SV-06 RF 완료 전이 연결 |
 | `StageProgressionSession` | 상대·보상 제안 생성 순번을 저장 캡처에 제공 | 안정 전이 후 자동 저장 조정 |
 | `StageProgressionRuntime` | `RunSaveFlow`를 소유하고 저장·예약·이어하기 세션을 `DontDestroyOnLoad`로 유지 | RF 화면 라우팅 연동 |
-| RF 골드·상점·사건 | 흐름·지급량 3·4·6·7·9·15 확정, 실제 상태 API 미구현 | RF-01B~RF-03 뒤 읽기 전용 저장 계약 연결 |
+| RF 골드·상점·사건 | 골드 상태·캡처·복원 구현, 지급량 확정 | RF-01B~RF-03 뒤 정산·상점 안정 체크포인트 연결 |
 
 기존 `SaveLoad` 코드는 Unity-facing 지원 계층이며 CoreLoop·StageProgression 순수성의 기준이 아니다. 순수 상태 타입에는 `UnityEngine`, `Application.persistentDataPath`, `JsonUtility`를 참조하지 않는다.
 
@@ -131,7 +131,7 @@ public sealed class PlayerRunSaveSnapshot
 }
 ```
 
-`CurrentGold`는 RF 구현 전에는 0만 허용하는 임시 필드를 만들지 않는다. 스키마 필드는 v1에 포함하되 실제 캡처·복원 연결은 `PlayerRunState`의 골드 API가 구현된 뒤 활성화한다. 그 전 단계의 테스트 Fixture에서는 명시적으로 0을 사용한다.
+`CurrentGold`는 스키마 v1에 선행 포함됐고 RF-01A에서 실제 `PlayerRunState` 캡처·복원으로 활성화됐다. 복원 시 현재 골드는 보존하되 새 런 초기 골드는 0으로 분리하며, 음수는 계속 `InvalidGold`로 거부한다.
 
 ### 4.3 카드 스냅샷
 
@@ -329,8 +329,7 @@ public enum RunSaveLoadStatus
 SV-03 구현에서는 현재 도메인이 표현할 수 있는 `CombatSettlementCompleted`와
 `RunEnded`만 `StageCleared`·`RunVictory`·`RunDefeat`로 복원한다. 시작 악마·상점·
 사건 체크포인트는 실제 소유 상태가 준비되는 SV-04·SV-06까지 거부한다.
-`CurrentGold`도 `PlayerRunState`가 골드를 소유하기 전에는 0만 복원하고, 양수를
-묵시하지 않고 `InvalidGold`로 거부한다.
+RF-01A 이후 `CurrentGold`는 0 이상의 값을 복원한다. 양수 골드는 `PlayerRunState`의 현재 골드로 복원하고, 음수만 `InvalidGold`로 거부한다. 복원된 런을 재시작하면 프로토타입 초기 골드 0으로 돌아간다.
 
 상대 제안 생성기는 `rootSeed`, 보상 제안 생성기는 `rootSeed + 1`을 사용한다.
 각 생성기는 저장된 순번만큼 현재 경로의 스테이지·보상 등급을 재생해
@@ -451,7 +450,8 @@ SV-05에서 `RunSaveFlow`가 조정자·저장소·예약 저장소와 교체 �
 | SV03-I04 | 복원 실패가 기존 세션을 바꾸지 않는다 |
 | SV03-I05 | 같은 시드·순번에 같은 상대·보상 후보를 만든다 |
 | SV03-I06 | 세션 캡처가 현재 상대·보상 생성 순번을 보존한다 |
-| SV03-I07 | 런 상태가 아직 소유하지 않는 양수 골드를 묵시하지 않고 거부한다 |
+| SV03-I07(과거) | 런 상태가 골드를 소유하기 전 양수 골드를 거부한다 |
+| RF01A-I02 | 양수 골드를 복원하고 새 런 초기화 시 0으로 복구한다 |
 
 ### 13.4 SV-04~SV-06 체크포인트·UI·반복
 
@@ -501,6 +501,7 @@ SV04-I01·I02·I04~I08은 구현·검증했다. SV04-I03은 실제 상점 나가
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
 | 2026-07-30 | HONG | 기본 새 런이 시작 악마 예약 없이 4장 악마 덱으로 즉시 활성화되는 `RunSaveFlow` 경계를 반영하고, 시작 선택 체크포인트는 빈 덱·선택 생성기 호환 경로로 한정 |
+| 2026-07-30 | 이천서 | RF-01A `CurrentGold` 캡처·양수 복원·재시작 0 복구를 실제 코드와 대상 7/7에 맞춰 활성 상태로 개정; RF-01B 정산과 SV-06 체크포인트는 미완료 유지 |
 | 2026-07-30 | 이천서 | SV-06의 정식 런 입력을 카드 보상 선택·건너뛰기에서 승리 골드 정산 완료로 변경하고, 보스 즉시 승리와 기존 RW 저장 호환을 함께 검증하도록 명세했다. 기존 SV-04 구현·테스트 결과는 소급 변경하지 않았다. |
 | 2026-07-29 | 이천서 | 적 6종 골드 3·4·6·7·9·15는 기획 상수로 확정했으나 저장 대상 타입은 아직 없으므로 RF 구현 전 임시 DTO를 만들지 않는 SV-06 경계를 재확인 |
 | 2026-07-29 | 이천서 | 적 6종 전투 임시 상태 비저장과 RF-01B 확정 골드·상점 안정 상태의 SV-06 연계 경계를 추가; 기존 스키마·코드·테스트 미변경 |

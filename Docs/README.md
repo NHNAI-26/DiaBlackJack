@@ -54,13 +54,13 @@
 | [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI 이력과 새 적 정보 연결 계획 | RF-04 화면 이관 대기 v0.4 |
 | [enemy-selection-combat-ui-progress-log.md](./enemy-selection-combat-ui-progress-log.md) | 상대 선택·적 전투 정보 UI 결정·구현·검증 누적 기록 | 기존 증거 보존·RF-04 미구현 v0.4 |
 | [formal-run-flow-design.md](./formal-run-flow-design.md) | 골드·상점과 `전투→이벤트→전투→이벤트→보스` 정식 진행 규칙 | 전투 보상 제거·자동 카드 상점 통합 v0.8 |
-| [formal-run-flow-development-spec.md](./formal-run-flow-development-spec.md) | 골드 정산·상점 거래·정식 런 조정 API와 테스트 명세 | 무카드보상 승리 정산 재명세 v0.5 |
-| [formal-run-flow-implementation-plan.md](./formal-run-flow-implementation-plan.md) | RF-00~RF-05 HONG 인수인계 작업 순서와 검증 게이트 | RF-01~03 새 흐름으로 개정 v0.5 |
-| [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | 문서 개정 완료·정식 RF 미착수 v0.5 |
-| [save-system-design.md](./save-system-design.md) | 안정 체크포인트·이어하기·재추첨 방지·단일 슬롯·파일 복구 기획 | 승리 골드 체크포인트 개정 v1.0 |
-| [save-system-development-spec.md](./save-system-development-spec.md) | 순수 스냅샷·버전 JSON·원자 저장·백업·복원·RF 연결 명세 | 무카드보상 RF 뒤 SV-06 v1.0 |
-| [save-system-implementation-plan.md](./save-system-implementation-plan.md) | SV-00~SV-06 구현 순서와 검증 게이트 | SV-05 완료·새 SV-06 대기 v1.0 |
-| [save-system-progress-log.md](./save-system-progress-log.md) | 저장 시스템 결정·구현·파일·재실행 검증 기록 | 기존 완료·새 체크포인트 미구현 v1.0 |
+| [formal-run-flow-development-spec.md](./formal-run-flow-development-spec.md) | 골드 정산·상점 거래·정식 런 조정 API와 테스트 명세 | RF-01A 골드 상태 완료 v0.6 |
+| [formal-run-flow-implementation-plan.md](./formal-run-flow-implementation-plan.md) | RF-00~RF-05 작업 순서와 검증 게이트 | RF-01B 승리 정산 대기 v0.6 |
+| [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | RF-01A 대상 7/7 완료 v0.6 |
+| [save-system-design.md](./save-system-design.md) | 안정 체크포인트·이어하기·재추첨 방지·단일 슬롯·파일 복구 기획 | RF-01A 골드 저장 활성 v1.1 |
+| [save-system-development-spec.md](./save-system-development-spec.md) | 순수 스냅샷·버전 JSON·원자 저장·백업·복원·RF 연결 명세 | 양수 골드 캡처·복원 v1.1 |
+| [save-system-implementation-plan.md](./save-system-implementation-plan.md) | SV-00~SV-06 구현 순서와 검증 게이트 | RF-01B 뒤 SV-06 대기 v1.1 |
+| [save-system-progress-log.md](./save-system-progress-log.md) | 저장 시스템 결정·구현·파일·재실행 검증 기록 | RF-01A 저장 왕복 완료 v1.1 |
 | [scene-presentation-design.md](./scene-presentation-design.md) | 2.5D 술집 테이블의 씬 흐름·월드 오브젝트·UI·상점 전환 기획 | 골드 정산→상점 전환·보상 화면 제거 v1.2 |
 | `기획서.docx`, `기획서_개정본.docx` | 초기 제출용 보관본 | 2026-07-20 보관본·현행 기준 아님 |
 

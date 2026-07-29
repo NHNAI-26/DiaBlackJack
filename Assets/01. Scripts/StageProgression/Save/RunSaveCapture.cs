@@ -165,7 +165,7 @@ namespace DiaBlackJack.StageProgression
             return new PlayerRunSaveSnapshot(
                 player.MaximumSoul,
                 player.CurrentSoul,
-                0,
+                player.CurrentGold,
                 player.LastIssuedCardId,
                 player.LastIssuedDemonCardId,
                 player.StartingDemonDefinitionKey,

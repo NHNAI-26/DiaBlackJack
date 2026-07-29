@@ -14,6 +14,7 @@ namespace DiaBlackJack.StageProgression
         private readonly List<RunDemonDefinition> _currentDemonDeck;
         private readonly ReadOnlyCollection<RunCardDefinition> _deck;
         private readonly ReadOnlyCollection<RunDemonDefinition> _demonDeck;
+        private readonly int _initialGold;
         private readonly int _initialLastCardId;
         private int _initialLastDemonCardId;
         private int _lastIssuedCardId;
@@ -29,6 +30,27 @@ namespace DiaBlackJack.StageProgression
                 currentSoul,
                 deck,
                 demonDeck,
+                0,
+                0,
+                null,
+                null,
+                null)
+        {
+        }
+
+        public PlayerRunState(
+            int maximumSoul,
+            int currentSoul,
+            IEnumerable<RunCardDefinition> deck,
+            int initialGold,
+            IEnumerable<RunDemonDefinition> demonDeck = null)
+            : this(
+                maximumSoul,
+                currentSoul,
+                deck,
+                demonDeck,
+                initialGold,
+                initialGold,
                 null,
                 null,
                 null)
@@ -40,6 +62,8 @@ namespace DiaBlackJack.StageProgression
             int currentSoul,
             IEnumerable<RunCardDefinition> deck,
             IEnumerable<RunDemonDefinition> demonDeck,
+            int initialGold,
+            int currentGold,
             int? lastIssuedCardId,
             int? lastIssuedDemonCardId,
             string startingDemonDefinitionKey)
@@ -59,6 +83,20 @@ namespace DiaBlackJack.StageProgression
             if (deck == null)
             {
                 throw new ArgumentNullException(nameof(deck));
+            }
+
+            if (initialGold < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(initialGold),
+                    "Initial gold cannot be negative.");
+            }
+
+            if (currentGold < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(currentGold),
+                    "Current gold cannot be negative.");
             }
 
             var cards = new List<RunCardDefinition>();
@@ -85,6 +123,8 @@ namespace DiaBlackJack.StageProgression
 
             MaximumSoul = maximumSoul;
             CurrentSoul = currentSoul;
+            _initialGold = initialGold;
+            CurrentGold = currentGold;
             _initialDeck = new List<RunCardDefinition>(cards).AsReadOnly();
             _currentDeck = new List<RunCardDefinition>(cards);
             _deck = _currentDeck.AsReadOnly();
@@ -114,6 +154,8 @@ namespace DiaBlackJack.StageProgression
 
         public int CurrentSoul { get; private set; }
 
+        public int CurrentGold { get; private set; }
+
         public int MaximumSoul { get; }
 
         public bool IsDepleted => CurrentSoul == 0;
@@ -134,6 +176,7 @@ namespace DiaBlackJack.StageProgression
         internal static PlayerRunState Restore(
             int maximumSoul,
             int currentSoul,
+            int currentGold,
             IEnumerable<RunCardDefinition> deck,
             IEnumerable<RunDemonDefinition> demonDeck,
             int lastIssuedCardId,
@@ -145,6 +188,8 @@ namespace DiaBlackJack.StageProgression
                 currentSoul,
                 deck,
                 demonDeck,
+                0,
+                currentGold,
                 lastIssuedCardId,
                 lastIssuedDemonCardId,
                 startingDemonDefinitionKey);
@@ -160,6 +205,34 @@ namespace DiaBlackJack.StageProgression
             }
 
             CurrentSoul = currentSoul;
+        }
+
+        internal void AddGold(int amount)
+        {
+            if (amount < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(amount),
+                    "Gold amount cannot be negative.");
+            }
+
+            if (CurrentGold > int.MaxValue - amount)
+            {
+                throw new OverflowException("Run gold cannot exceed Int32.MaxValue.");
+            }
+
+            CurrentGold += amount;
+        }
+
+        internal bool TrySpendGold(int amount)
+        {
+            if (amount < 0 || amount > CurrentGold)
+            {
+                return false;
+            }
+
+            CurrentGold -= amount;
+            return true;
         }
 
         internal RunCardDefinition AddRewardCard(string definitionKey)
@@ -212,6 +285,7 @@ namespace DiaBlackJack.StageProgression
         internal void ResetForNewRun()
         {
             CurrentSoul = MaximumSoul;
+            CurrentGold = _initialGold;
             _currentDeck.Clear();
             foreach (RunCardDefinition card in _initialDeck)
             {

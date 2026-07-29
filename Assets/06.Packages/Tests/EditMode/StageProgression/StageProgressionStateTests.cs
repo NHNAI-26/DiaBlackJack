@@ -179,6 +179,73 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
+        public void RF01A_U01_LegacyPlayerRunStateStartsWithZeroGold()
+        {
+            PlayerRunState player = CreatePlayer();
+
+            Assert.That(player.CurrentGold, Is.Zero);
+        }
+
+        [Test]
+        public void RF01A_U02_PlayerRunStateGrantsAndSpendsGold()
+        {
+            PlayerRunState player = CreatePlayer();
+
+            player.AddGold(9);
+            bool spent = player.TrySpendGold(4);
+
+            Assert.That(spent, Is.True);
+            Assert.That(player.CurrentGold, Is.EqualTo(5));
+        }
+
+        [Test]
+        public void RF01A_U03_InvalidGoldSpendLeavesStateUnchanged()
+        {
+            PlayerRunState player = CreatePlayer();
+            player.AddGold(3);
+
+            Assert.That(player.TrySpendGold(-1), Is.False);
+            Assert.That(player.TrySpendGold(4), Is.False);
+            Assert.That(player.CurrentGold, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void RF01A_U04_InvalidGoldGrantLeavesStateUnchanged()
+        {
+            PlayerRunState player = new PlayerRunState(
+                12,
+                12,
+                new[] { new RunCardDefinition(0, 1) },
+                int.MaxValue);
+
+            Assert.Throws<ArgumentOutOfRangeException>(() => player.AddGold(-1));
+            Assert.Throws<OverflowException>(() => player.AddGold(1));
+            Assert.That(player.CurrentGold, Is.EqualTo(int.MaxValue));
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                new PlayerRunState(
+                    12,
+                    12,
+                    new[] { new RunCardDefinition(0, 1) },
+                    -1));
+        }
+
+        [Test]
+        public void RF01A_U05_RestartRestoresPrototypeGoldToZero()
+        {
+            PlayerRunState player = CreatePlayer();
+            RunProgress progress = new RunProgress(CreateStages(), player);
+            Assert.That(progress.StartRun(), Is.True);
+            player.AddGold(7);
+            player.SetCurrentSoul(0);
+            Assert.That(progress.TryDefeatRun(), Is.True);
+
+            bool restarted = progress.TryRestartRun();
+
+            Assert.That(restarted, Is.True);
+            Assert.That(player.CurrentGold, Is.Zero);
+        }
+
+        [Test]
         public void CU_U08_RunCardDefinitionSupportsLegacyRankAndStableKey()
         {
             var legacyCard = new RunCardDefinition(3, 5);

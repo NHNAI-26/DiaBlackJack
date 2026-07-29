@@ -96,13 +96,6 @@ namespace DiaBlackJack.StageProgression
                 return false;
             }
 
-            if (snapshot.Player.CurrentGold != 0)
-            {
-                validation = RunSaveValidationResult.Invalid(
-                    RunSaveValidationError.InvalidGold);
-                return false;
-            }
-
             StageProgressionState restoredState;
             if (!TryResolveStableState(snapshot, out restoredState))
             {
@@ -209,6 +202,7 @@ namespace DiaBlackJack.StageProgression
             return PlayerRunState.Restore(
                 snapshot.MaximumSoul,
                 snapshot.CurrentSoul,
+                snapshot.CurrentGold,
                 cards,
                 demonCards,
                 snapshot.LastIssuedCardId,

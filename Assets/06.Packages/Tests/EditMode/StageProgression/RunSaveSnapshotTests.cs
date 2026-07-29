@@ -62,6 +62,36 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
+        public void RF01A_I01_SnapshotPreservesCurrentGold()
+        {
+            PlayerRunState player = new PlayerRunState(
+                12,
+                12,
+                new[] { new RunCardDefinition(0, 1) });
+            RunProgress progress = new RunProgress(CreateStages(), player);
+            Assert.That(progress.StartRun(), Is.True);
+            player.AddGold(9);
+            Assert.That(CompleteCurrentStage(progress), Is.True);
+            Assert.That(player.CurrentGold, Is.EqualTo(9));
+
+            bool captured = RunSaveCapture.TryCapture(
+                progress,
+                new RunSaveCaptureContext(
+                    3,
+                    "run-gold",
+                    SavedAtUtc,
+                    RunCheckpointKind.CombatSettlementCompleted,
+                    20260730,
+                    RunNextContentKind.Shop),
+                out RunSaveSnapshot snapshot,
+                out RunSaveValidationResult validation);
+
+            Assert.That(captured, Is.True);
+            Assert.That(validation.IsValid, Is.True);
+            Assert.That(snapshot.Player.CurrentGold, Is.EqualTo(9));
+        }
+
+        [Test]
         public void SV01_U02_ValidatorRejectsDuplicateCardIds()
         {
             RunSaveSnapshot duplicateCards = CreateSnapshot(

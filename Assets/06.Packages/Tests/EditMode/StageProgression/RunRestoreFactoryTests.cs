@@ -226,18 +226,22 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
-        public void SV03_I07_RestoreRejectsGoldUntilRunStateOwnsIt()
+        public void RF01A_I02_RestorePreservesGoldAndNewRunResetClearsIt()
         {
-            RunSaveSnapshot snapshot = CreateSnapshot(currentGold: 1);
+            RunSaveSnapshot snapshot = CreateSnapshot(currentGold: 9);
 
             bool restored = CreateFactory().TryRestore(
                 snapshot,
                 out RunRestoreResult result,
                 out RunSaveValidationResult validation);
 
-            Assert.That(restored, Is.False);
-            Assert.That(result, Is.Null);
-            Assert.That(validation.Error, Is.EqualTo(RunSaveValidationError.InvalidGold));
+            Assert.That(restored, Is.True);
+            Assert.That(validation.IsValid, Is.True);
+            Assert.That(result, Is.Not.Null);
+            PlayerRunState player = result.Session.Progress.Player;
+            Assert.That(player.CurrentGold, Is.EqualTo(9));
+            player.ResetForNewRun();
+            Assert.That(player.CurrentGold, Is.Zero);
         }
 
         private static RunRestoreFactory CreateFactory()
