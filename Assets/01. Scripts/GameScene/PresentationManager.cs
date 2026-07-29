@@ -11,6 +11,10 @@ namespace DiaBlackJack.GameScene
     [DisallowMultipleComponent]
     public sealed class PresentationManager : MonoBehaviour
     {
+        private static readonly int ColorScreenBlendEnabledId = Shader.PropertyToID("_ColorScreenBlendEnabled");
+        private static readonly int BlendStrengthId = Shader.PropertyToID("_BlendStrength");
+        private const string ColorScreenBlendKeyword = "_COLOR_SCREEN_BLEND_ON";
+
         [Header("Mood")]
         [SerializeField] private Volume moodVolume;
 
@@ -20,6 +24,15 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private bool shakeEnabled = true;
 
         [SerializeField, Min(0.01f)] private float chromaticReturnSpeed = 2f;
+
+        [Header("Field Of View")]
+        [SerializeField] private CinemachineCamera fieldOfViewCamera;
+        [SerializeField, Range(1f, 179f)] private float fieldOfViewTarget = 90f;
+        [SerializeField, Min(0.01f)] private float fieldOfViewReturnSpeed = 120f;
+
+        [Header("Color Screen Blend")]
+        [SerializeField] private Material colorScreenBlendMaterial;
+
         private Tween moodTween;
         private Tween shakeDurationRestoreTween;
         private float originalImpulseDuration = -1f;
@@ -27,6 +40,10 @@ namespace DiaBlackJack.GameScene
         private VolumeProfile chromaticProfile;
         private ChromaticAberration chromaticAberration;
         private Tween chromaticTween;
+        private CinemachineCamera activeFieldOfViewCamera;
+        private float originalFieldOfView = -1f;
+        private Tween fieldOfViewTween;
+        private Tween colorScreenBlendTween;
 
         public static PresentationManager Current { get; private set; }
 
@@ -56,6 +73,8 @@ namespace DiaBlackJack.GameScene
             KillMoodTween();
             RestoreCameraShakeDuration();
             CleanupChromaticAberration();
+            RestoreFieldOfViewImmediate();
+            ResetColorScreenBlendImmediate();
         }
 
         public void BlendToMood(VolumeProfile profile, float duration)
@@ -120,6 +139,55 @@ namespace DiaBlackJack.GameScene
             if (chromaticVolume != null)
                 TweenChromaticAberration(0f, chromaticReturnSpeed);
         }
+
+        public void StartFieldOfViewIncrease(float riseSpeed)
+        {
+            if (riseSpeed <= 0f || float.IsNaN(riseSpeed) || float.IsInfinity(riseSpeed))
+                return;
+
+            CinemachineCamera camera = ResolveFieldOfViewCamera();
+            if (camera == null)
+            {
+                Log.W("[PresentationManager] Cannot animate FOV because no CinemachineCamera is available.", this);
+                return;
+            }
+
+            if (activeFieldOfViewCamera != camera || originalFieldOfView < 0f)
+            {
+                activeFieldOfViewCamera = camera;
+                originalFieldOfView = GetFieldOfView(camera);
+            }
+
+            TweenFieldOfView(fieldOfViewTarget, riseSpeed, clearOriginalOnComplete: false);
+        }
+
+        public void StopFieldOfViewIncrease()
+        {
+            if (activeFieldOfViewCamera == null || originalFieldOfView < 0f)
+                return;
+
+            TweenFieldOfView(originalFieldOfView, fieldOfViewReturnSpeed, clearOriginalOnComplete: true);
+        }
+
+        public void StartColorScreenBlend(float fadeOutSpeed)
+        {
+            if (fadeOutSpeed <= 0f || float.IsNaN(fadeOutSpeed) || float.IsInfinity(fadeOutSpeed))
+                return;
+
+            if (!EnsureColorScreenBlendMaterial())
+                return;
+
+            KillColorScreenBlendTween();
+            SetColorScreenBlendStrength(1f);
+            colorScreenBlendTween = DOTween
+                .To(() => colorScreenBlendMaterial.GetFloat(BlendStrengthId),
+                    SetColorScreenBlendStrength,
+                    0f,
+                    1f / fadeOutSpeed)
+                .SetEase(Ease.Linear)
+                .OnComplete(() => colorScreenBlendTween = null);
+        }
+
         private void SetMoodWeight(float targetWeight, float duration)
         {
             if (duration <= 0f || float.IsNaN(duration) || float.IsInfinity(duration))
@@ -204,6 +272,126 @@ namespace DiaBlackJack.GameScene
             chromaticProfile = null;
             chromaticAberration = null;
         }
+
+        private CinemachineCamera ResolveFieldOfViewCamera()
+        {
+            if (fieldOfViewCamera != null)
+                return fieldOfViewCamera;
+
+            for (int i = 0; i < CinemachineBrain.ActiveBrainCount; i++)
+            {
+                if (CinemachineBrain.GetActiveBrain(i).ActiveVirtualCamera is CinemachineCamera camera)
+                    return camera;
+            }
+
+            Camera mainCamera = Camera.main;
+            if (mainCamera != null &&
+                mainCamera.TryGetComponent(out CinemachineBrain brain) &&
+                brain.ActiveVirtualCamera is CinemachineCamera activeCamera)
+                return activeCamera;
+
+            return null;
+        }
+
+        private void TweenFieldOfView(float target, float speed, bool clearOriginalOnComplete)
+        {
+            if (activeFieldOfViewCamera == null)
+                return;
+
+            KillFieldOfViewTween();
+
+            float clampedTarget = Mathf.Clamp(target, 1f, 179f);
+            float current = GetFieldOfView(activeFieldOfViewCamera);
+            if (Mathf.Approximately(current, clampedTarget))
+            {
+                SetFieldOfView(activeFieldOfViewCamera, clampedTarget);
+                if (clearOriginalOnComplete)
+                    ClearOriginalFieldOfView();
+                return;
+            }
+
+            fieldOfViewTween = DOTween
+                .To(() => GetFieldOfView(activeFieldOfViewCamera),
+                    value => SetFieldOfView(activeFieldOfViewCamera, value),
+                    clampedTarget,
+                    Mathf.Abs(clampedTarget - current) / speed)
+                .SetEase(Ease.Linear)
+                .OnComplete(() =>
+                {
+                    fieldOfViewTween = null;
+                    if (clearOriginalOnComplete)
+                        ClearOriginalFieldOfView();
+                });
+        }
+
+        private void RestoreFieldOfViewImmediate()
+        {
+            KillFieldOfViewTween();
+            if (activeFieldOfViewCamera != null && originalFieldOfView >= 0f)
+                SetFieldOfView(activeFieldOfViewCamera, originalFieldOfView);
+            ClearOriginalFieldOfView();
+        }
+
+        private void KillFieldOfViewTween()
+        {
+            fieldOfViewTween?.Kill();
+            fieldOfViewTween = null;
+        }
+
+        private void ClearOriginalFieldOfView()
+        {
+            activeFieldOfViewCamera = null;
+            originalFieldOfView = -1f;
+        }
+
+        private static float GetFieldOfView(CinemachineCamera camera)
+        {
+            return camera.Lens.FieldOfView;
+        }
+
+        private static void SetFieldOfView(CinemachineCamera camera, float value)
+        {
+            camera.Lens.FieldOfView = Mathf.Clamp(value, 1f, 179f);
+        }
+
+        private bool EnsureColorScreenBlendMaterial()
+        {
+            if (colorScreenBlendMaterial == null)
+            {
+                Log.W("[PresentationManager] Cannot animate color screen blend because no material is assigned.", this);
+                return false;
+            }
+
+            if (!colorScreenBlendMaterial.HasProperty(BlendStrengthId))
+            {
+                Log.W("[PresentationManager] Color screen blend material does not have _BlendStrength.", this);
+                return false;
+            }
+
+            colorScreenBlendMaterial.EnableKeyword(ColorScreenBlendKeyword);
+            if (colorScreenBlendMaterial.HasProperty(ColorScreenBlendEnabledId))
+                colorScreenBlendMaterial.SetFloat(ColorScreenBlendEnabledId, 1f);
+            return true;
+        }
+
+        private void SetColorScreenBlendStrength(float value)
+        {
+            colorScreenBlendMaterial.SetFloat(BlendStrengthId, Mathf.Clamp01(value));
+        }
+
+        private void ResetColorScreenBlendImmediate()
+        {
+            KillColorScreenBlendTween();
+            if (colorScreenBlendMaterial != null && colorScreenBlendMaterial.HasProperty(BlendStrengthId))
+                colorScreenBlendMaterial.SetFloat(BlendStrengthId, 0f);
+        }
+
+        private void KillColorScreenBlendTween()
+        {
+            colorScreenBlendTween?.Kill();
+            colorScreenBlendTween = null;
+        }
+
         private void SetCameraShakeEnabled(bool enabled)
         {
             shakeEnabled = enabled;

@@ -38372,6 +38372,13 @@ AnimationClip:
     intParameter: 0
     messageOptions: 0
   - time: 3.9
+    functionName: StartFieldOfViewIncrease
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 5
+    intParameter: 0
+    messageOptions: 0
+  - time: 3.9
     functionName: StartChromaticAberration
     data: 
     objectReferenceParameter: {fileID: 0}
@@ -38381,6 +38388,13 @@ AnimationClip:
   - time: 5.9
     functionName: PlaySfx
     data: revolverFail
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 6.2
+    functionName: StopFieldOfViewIncrease
+    data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
     intParameter: 0

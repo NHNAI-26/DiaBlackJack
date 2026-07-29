@@ -35894,6 +35894,13 @@ AnimationClip:
     floatParameter: 0.5
     intParameter: 0
     messageOptions: 0
+  - time: 3.9666667
+    functionName: StartFieldOfViewIncrease
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 5
+    intParameter: 0
+    messageOptions: 0
   - time: 6.233333
     functionName: PlayVfx
     data: gun-fire
@@ -35911,6 +35918,13 @@ AnimationClip:
   - time: 6.266667
     functionName: PlaySfx
     data: revolverSuccess
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 6.266667
+    functionName: StopFieldOfViewIncrease
+    data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
     intParameter: 0

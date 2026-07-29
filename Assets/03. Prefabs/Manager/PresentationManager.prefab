@@ -51,6 +51,10 @@ MonoBehaviour:
   changeCameraShakeEvent: {fileID: 11400000, guid: f92f1f812ab1d64479f08b11c1c04f5c, type: 2}
   shakeEnabled: 1
   chromaticReturnSpeed: 100
+  fieldOfViewCamera: {fileID: 0}
+  fieldOfViewTarget: 90
+  fieldOfViewReturnSpeed: 200
+  colorScreenBlendMaterial: {fileID: 2100000, guid: 68e6105146ac402685b1572109885c39, type: 2}
 --- !u!114 &5903678456471986869
 MonoBehaviour:
   m_ObjectHideFlags: 0

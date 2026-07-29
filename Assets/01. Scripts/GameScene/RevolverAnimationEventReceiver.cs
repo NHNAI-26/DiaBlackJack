@@ -87,6 +87,12 @@ namespace DiaBlackJack.GameScene
             Presentation?.StartChromaticAberration(riseSpeed);
         public void StopChromaticAberration() =>
             Presentation?.StopChromaticAberration();
+        public void StartFieldOfViewIncrease(float riseSpeed) =>
+            Presentation?.StartFieldOfViewIncrease(riseSpeed);
+        public void StopFieldOfViewIncrease() =>
+            Presentation?.StopFieldOfViewIncrease();
+        public void StartColorScreenBlend(float fadeOutSpeed) =>
+            Presentation?.StartColorScreenBlend(fadeOutSpeed);
         private PresentationManager Presentation
         {
             get
