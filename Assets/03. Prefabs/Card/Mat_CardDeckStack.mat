@@ -30,21 +30,21 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _BottomShade: 0.45
+    - _BottomShade: 0.306
+    - _HeightFadeLower: 0.413
+    - _HeightFadeStrength: 0.597
+    - _HeightFadeUpper: 1.342
     - _LayerHeight: 0.01
     - _LayerLineWidth: 0.222
     - _LightColorInfluence: 0.956
     - _LightInfluence: 0.842
     - _MinimumLight: 0
     - _SideShade: 1
-    - _HeightFadeLower: 0.08
-    - _HeightFadeStrength: 0.45
-    - _HeightFadeUpper: 0.95
     - _TopNormalThreshold: 0.65
     m_Colors:
     - _BottomColor: {r: 0.12, g: 0.09, b: 0.08, a: 1}
     - _HeightFadeColor: {r: 0.08, g: 0.055, b: 0.035, a: 1}
-    - _LayerLineColor: {r: 0.23584908, g: 0.23584908, b: 0.23584908, a: 1}
+    - _LayerLineColor: {r: 0.4245283, g: 0.4245283, b: 0.4245283, a: 1}
     - _SideColor: {r: 0.6132076, g: 0.6132076, b: 0.6132076, a: 1}
     - _TopColor: {r: 1.35, g: 1.35, b: 1.35, a: 1}
   m_BuildTextureStacks: []
