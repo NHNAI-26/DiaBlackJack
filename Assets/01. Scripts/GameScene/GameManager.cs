@@ -30,6 +30,10 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private CharacterView enemyCharacter;
         [SerializeField] private TableTotalsView totals;
 
+        [Header("Standalone enemy profile")]
+        [SerializeField] private string enemyProfileKey =
+            EnemyCombatProfileCatalog.GunslingerKey;
+
         [Header("Shop (MVP)")]
         [SerializeField] private ShopController shop;
 
@@ -66,6 +70,7 @@ namespace DiaBlackJack.GameScene
         private bool _inputLocked;
         private bool _choosingLighterRemoval;
         private int _battleIndex;
+        private string _activeEnemyProfileKey;
         private GUIStyle _buttonStyle;
         private GUIStyle _labelStyle;
         private GUIStyle _panelStyle;
@@ -106,6 +111,12 @@ namespace DiaBlackJack.GameScene
         {
             HideRevolverAnimation();
             ResolveHammerAnimation()?.Hide();
+            _activeEnemyProfileKey = ResolveEnemyProfileKey();
+            if (enemyCharacter != null)
+            {
+                enemyCharacter.TrySetEnemyProfile(_activeEnemyProfileKey);
+            }
+
             _session = new CoreLoopSession(CreateBattle);
         }
 
@@ -293,10 +304,47 @@ namespace DiaBlackJack.GameScene
             ResetRevolverAnimationState();
             int battleSeed = seed + (_battleIndex * 2);
             _battleIndex++;
+            int enemyDeckSeed = battleSeed + 1;
+            EnemyBattleConfiguration enemy =
+                EnemyBattleConfigurationFactory.Create(
+                    _activeEnemyProfileKey,
+                    enemyDeckSeed);
             return new CoreLoopBattle(
                 CreatePlayerDeck(battleSeed),
-                BlackjackDeck.CreateStandard(battleSeed + 1),
-                playerDemonDeck: CreatePlayerDemonDeck(battleSeed + 1000));
+                enemy.CreateEnemyDeck(),
+                enemyMaximumSoul: enemy.EnemyMaximumSoul,
+                enemyPolicy: enemy.BehaviorPolicy,
+                playerDemonDeck: CreatePlayerDemonDeck(battleSeed + 1000),
+                enemyDemonDeck: CreateEnemyDemonDeck(
+                    enemy.DemonContractDefinitionKeys,
+                    enemyDeckSeed ^ unchecked((int)0x4C957F2Du)),
+                enemyChangeCostMode: enemy.ChangeCostMode,
+                enemyDemonContractCandidateCount:
+                    enemy.DemonContractCandidateCount,
+                injectsPoisonIntoPlayerDeckEachRound:
+                    enemy.InjectsPoisonIntoPlayerDeckEachRound,
+                enablesEnemyChange: true,
+                fixedEnemyDemonContractPhases:
+                    enemy.FixedDemonContractPhases);
+        }
+
+        private string ResolveEnemyProfileKey()
+        {
+            try
+            {
+                EnemyCombatProfileCatalog.Default.GetByKey(enemyProfileKey);
+                return enemyProfileKey;
+            }
+            catch (Exception exception)
+                when (exception is ArgumentException ||
+                      exception is KeyNotFoundException)
+            {
+                Debug.LogWarning(
+                    $"Enemy profile '{enemyProfileKey}' is invalid. " +
+                    $"Falling back to '{EnemyCombatProfileCatalog.GunslingerKey}'.",
+                    this);
+                return EnemyCombatProfileCatalog.GunslingerKey;
+            }
         }
 
         private BlackjackDeck CreatePlayerDeck(int deckSeed)
@@ -342,6 +390,24 @@ namespace DiaBlackJack.GameScene
             foreach (string definitionKey in _purchasedDemonContractKeys)
             {
                 cards.Add(new DemonContractCard(id++, catalog.GetByKey(definitionKey)));
+            }
+
+            return new DemonContractDeck(cards, deckSeed);
+        }
+
+        private static DemonContractDeck CreateEnemyDemonDeck(
+            IReadOnlyList<string> definitionKeys,
+            int deckSeed)
+        {
+            List<DemonContractCard> cards =
+                new List<DemonContractCard>(definitionKeys.Count);
+            DemonContractCatalog catalog = DemonContractCatalog.Default;
+            for (int i = 0; i < definitionKeys.Count; i++)
+            {
+                cards.Add(
+                    new DemonContractCard(
+                        i,
+                        catalog.GetByKey(definitionKeys[i])));
             }
 
             return new DemonContractDeck(cards, deckSeed);
@@ -1256,7 +1322,7 @@ namespace DiaBlackJack.GameScene
         // public view state at that instant so PlayTimeline can reveal them one beat at a time.
         private void OnBattleStepped()
         {
-            _timeline.Add(GameScenePresenter.Create(Battle));
+            _timeline.Add(GameScenePresenter.Create(Battle, _activeEnemyProfileKey));
         }
 
         private IEnumerator PlayTimeline()
@@ -1313,7 +1379,8 @@ namespace DiaBlackJack.GameScene
 
         private void RefreshView()
         {
-            GameSceneViewModel vm = GameScenePresenter.Create(Battle);
+            GameSceneViewModel vm =
+                GameScenePresenter.Create(Battle, _activeEnemyProfileKey);
             MaybeOpenShop(vm);
             ApplyView(vm);
         }

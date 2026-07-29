@@ -1026,10 +1026,25 @@ Test Framework 준비·결과 저장·정리 안내였으며 컴파일·게임 �
 | 검증 | 신규 4/4·관련 클래스 18/18(job `35bd1df8d35e467d9fdbaaf1359027f2`)·CoreLoop 442/442(job `0c51483524f74466995c4f33b6b15f3d`)·전체 EditMode 631/631(job `4546b3326ead476590aa8bfa422cd3e2`) 통과 |
 | 변경 보호 | 씬·프리팹·Animator Controller·Packages·외부 에셋·오픈소스 무변경 |
 
+### 7.54 GSV-01 적 프로필 스프라이트·독립 GameScene 전투 구성 연결
+
+| 경계 | 확인 결과 |
+| --- | --- |
+| 아트 원본 | 기존 PSB의 겁쟁이 도박사·총잡이·광신도·사기꾼·집행자·보스별 `normal`·`surprised`·`damaged`와 `shop` 스프라이트를 재사용 |
+| 프리팹 | `EnemyCharacter.prefab`의 `CharacterView`에 여섯 프로필 세트와 상인 스프라이트를 직렬화하고 기본 표시를 총잡이로 교체 |
+| 표시 상태 | 평상시·행동·스탠드·승리는 기본, 패배는 당황, 버스트는 피격 스프라이트를 사용하며 상점 퇴장 시 직전 전투 표정 복원 |
+| 전투 구성 | `GameManager.enemyProfileKey`를 `EnemyBattleConfigurationFactory`에 전달해 화면 스프라이트와 최대 영혼·덱·AI·악마 덱·체인지·독극물·보스 고정 계약 단계를 같은 프로필로 생성 |
+| 순수성 | `Sprite`와 프리팹 참조는 `GameScene/CharacterView`에만 두고 `CoreLoop`·`StageProgression` 순수 규칙에는 Unity 참조를 추가하지 않음 |
+| 테스트 | GSV 전용 EditMode 3/3, CoreLoop 479/479, StageProgression 189/189, 전체 668/668 통과 |
+| 시각 검증 | Unity 6000.3.10f1 최소 복제 프로젝트에서 PSB 원본 총잡이와 프리팹 렌더가 형태·색상·투명 영역까지 일치, 시각 판정 100/100 |
+| 검증 한계 | 현재 세션에 Unity MCP 도구가 노출되지 않고 원본 Editor가 변경을 재임포트하지 않아 원본 `GameScene` Play Mode 배치·Console은 미검증 |
+| 변경 보호 | `GameScene.unity`·Packages·외부 코드·새 에셋·오픈소스·새 의존성 무변경 |
+
 ## 8. 변경 기록
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-29 | 이천서 | GSV-01 적 6종 기본·당황·피격 및 상인 스프라이트를 `EnemyCharacter` 프리팹에 연결하고 독립 `GameScene`의 표시 프로필과 실제 전투 설정을 일치시킴; 전용 3/3·CoreLoop 479/479·StageProgression 189/189·전체 668/668 및 프리팹 렌더 100/100 검증, 원본 GameScene Play Mode는 미검증 |
 | 2026-07-29 | 이천서 | EP-R06의 `FixedDemonContractPhaseDefinition`을 기존 `CoreLoop/EnemyProfiles`에 추가하고 프로필→전투 설정→`StageBattleFactory`→`CoreLoopBattle` 순수 경계로 보스 계약 단계를 전달, EPR06 10/10·전체 665/665를 별도 복제본 Unity Test Runner로 검증; 원본 Editor와 GameScene·씬·프리팹·Packages 무변경 |
 | 2026-07-29 | 이천서 | EP-R05 프로필 구성→StageBattleFactory→CoreLoopBattle 경계에 적 체인지·전용 계약·독극물 수명을 추가하고 Unity Roslyn 컴파일, 정책 12/12·CoreLoop 466/466·StageProgression 189/189·전체 655/655 검증; 원본 Editor 유지, GameScene·씬·프리팹·Packages 무변경 |
 | 2026-07-29 | 이천서 | EP-R04의 적 6종 영혼·전용 덱·겁쟁이 합 15·집행자 표시명·보스 영혼 8 표시 호환·아스모데우스 7 이하 제한과 광신도 사탄 선택 정체 방지를 순수 CoreLoop/StageProgression 경계에 반영하고, 별도 복제본 Unity Test Runner에서 EPR04 14/14·CoreLoop 451/451·StageProgression 189/189·전체 EditMode 640/640 통과를 기록; GameScene·씬·프리팹·Packages·외부 자산 무변경 |

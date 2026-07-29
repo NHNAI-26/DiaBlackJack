@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 
@@ -14,8 +15,40 @@ namespace DiaBlackJack.GameScene
     [RequireComponent(typeof(SpriteRenderer))]
     public sealed class CharacterView : MonoBehaviour
     {
+        [Serializable]
+        private sealed class EnemySpriteProfile
+        {
+            [SerializeField] private string profileKey;
+            [SerializeField] private Sprite normal;
+            [SerializeField] private Sprite surprised;
+            [SerializeField] private Sprite damaged;
+
+            public string ProfileKey => profileKey;
+
+            public Sprite Resolve(CharacterVisualState state)
+            {
+                switch (state)
+                {
+                    case CharacterVisualState.Bust:
+                        return damaged != null ? damaged : normal;
+                    case CharacterVisualState.Lose:
+                        return surprised != null
+                            ? surprised
+                            : damaged != null
+                                ? damaged
+                                : normal;
+                    default:
+                        return normal;
+                }
+            }
+        }
+
         [SerializeField] private SpriteRenderer sprite;
         [SerializeField] private TMP_Text actionLabel;
+
+        [Header("Enemy profile sprites")]
+        [SerializeField] private EnemySpriteProfile[] enemySpriteProfiles =
+            Array.Empty<EnemySpriteProfile>();
 
         [Header("State tints")]
         [SerializeField] private Color idleColor = Color.white;
@@ -43,6 +76,8 @@ namespace DiaBlackJack.GameScene
 
         private Vector3 _baseScale;
         private Sprite _defaultSprite;
+        private EnemySpriteProfile _activeEnemySpriteProfile;
+        private CharacterVisualState _lastVisualState;
         private bool _initialized;
 
         private void Awake()
@@ -54,9 +89,11 @@ namespace DiaBlackJack.GameScene
         public void Render(CharacterVisualState state, string label)
         {
             EnsureInitialized();
+            _lastVisualState = state;
 
             if (sprite != null)
             {
+                ApplyEnemySprite(state);
                 sprite.color = ColorFor(state);
             }
 
@@ -71,6 +108,45 @@ namespace DiaBlackJack.GameScene
                     actionLabel.text = label;
                 }
             }
+        }
+
+        /// <summary>
+        /// Selects the authored sprite set for an enemy combat profile. Invalid or unwired keys are
+        /// rejected without changing the currently displayed profile.
+        /// </summary>
+        public bool TrySetEnemyProfile(string profileKey)
+        {
+            EnsureInitialized();
+            if (string.IsNullOrWhiteSpace(profileKey) || enemySpriteProfiles == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < enemySpriteProfiles.Length; i++)
+            {
+                EnemySpriteProfile candidate = enemySpriteProfiles[i];
+                if (candidate == null ||
+                    !string.Equals(candidate.ProfileKey, profileKey, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                Sprite resolved = candidate.Resolve(_lastVisualState);
+                if (resolved == null)
+                {
+                    return false;
+                }
+
+                _activeEnemySpriteProfile = candidate;
+                if (sprite != null)
+                {
+                    sprite.sprite = resolved;
+                }
+
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -110,8 +186,19 @@ namespace DiaBlackJack.GameScene
 
             if (sprite != null)
             {
-                sprite.sprite = _defaultSprite;
+                ApplyEnemySprite(_lastVisualState);
             }
+        }
+
+        private void ApplyEnemySprite(CharacterVisualState state)
+        {
+            if (sprite == null)
+            {
+                return;
+            }
+
+            Sprite resolved = _activeEnemySpriteProfile?.Resolve(state);
+            sprite.sprite = resolved != null ? resolved : _defaultSprite;
         }
 
         private void EnsureInitialized()

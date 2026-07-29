@@ -83,12 +83,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 587503b6015abc741ad5147fff8f4a06, type: 3}
+  m_Sprite: {fileID: 2701115833248770500, guid: 22aa22444d6050045815396b307d8760, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 3.46, y: 4.79}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -105,8 +105,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54321634db9e77942958378790d13da7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CharacterView
-  sprite: {fileID: 0}
+  sprite: {fileID: 548693120486492936}
   actionLabel: {fileID: 0}
+  enemySpriteProfiles:
+  - profileKey: cowardly-gambler
+    normal: {fileID: -6519568242785216333, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    surprised: {fileID: 2522541276449830916, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    damaged: {fileID: -6506946170598701262, guid: 22aa22444d6050045815396b307d8760, type: 3}
+  - profileKey: gunslinger
+    normal: {fileID: 2701115833248770500, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    surprised: {fileID: -8190794718758583916, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    damaged: {fileID: 5148309097437163307, guid: 22aa22444d6050045815396b307d8760, type: 3}
+  - profileKey: cultist
+    normal: {fileID: -6423348728433730566, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    surprised: {fileID: 7118711276679716695, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    damaged: {fileID: 404928220577656870, guid: 22aa22444d6050045815396b307d8760, type: 3}
+  - profileKey: trickster
+    normal: {fileID: 2911093068676753536, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    surprised: {fileID: 285522446110894077, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    damaged: {fileID: -4235864237886665952, guid: 22aa22444d6050045815396b307d8760, type: 3}
+  - profileKey: enforcer
+    normal: {fileID: -404268745147865992, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    surprised: {fileID: -1710887399850272957, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    damaged: {fileID: -6119022989780323266, guid: 22aa22444d6050045815396b307d8760, type: 3}
+  - profileKey: final-boss
+    normal: {fileID: 2706189474060104132, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    surprised: {fileID: 8305373514700201296, guid: 22aa22444d6050045815396b307d8760, type: 3}
+    damaged: {fileID: -9137110423780871092, guid: 22aa22444d6050045815396b307d8760, type: 3}
   idleColor: {r: 1, g: 1, b: 1, a: 1}
   activeColor: {r: 1, g: 0.95, b: 0.65, a: 1}
   standColor: {r: 0.7, g: 0.8, b: 1, a: 1}
@@ -121,7 +146,7 @@ MonoBehaviour:
   winScale: 1.15
   loseScale: 0.9
   useCardScale: 1.08
-  merchantSprite: {fileID: 0}
+  merchantSprite: {fileID: -5357205546685973846, guid: 22aa22444d6050045815396b307d8760, type: 3}
   merchantTint: {r: 0.32, g: 0.3, b: 0.36, a: 1}
   merchantScale: 0.8
 --- !u!1 &5156838660379731366
