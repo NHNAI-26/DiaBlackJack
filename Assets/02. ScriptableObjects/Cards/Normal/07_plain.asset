@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d658a77d998e43f1b3fa1f8d0a110001, type: 3}
-  m_Name: military-knife-9
+  m_Name: 07_plain
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
-  key: military-knife-9
-  displayName: 보위 나이프
-  description: 적에게 공개카드 1장 강제로 뽑게 함
+  key: auto-pistol-7
+  displayName: 리볼버
+  description: 적 비공개 숫자 맞히면 적 즉사
   basePurchasePrice: 3
   shopWeight: 1
-  rank: 9
+  rank: 7
   activation: 2
-  effect: 4
+  effect: 3
   isStandardDeckDefault: 1
-  spadeFaceSprite: {fileID: 21300000, guid: 697006daaa012bd41836b166d8e18a80, type: 3}
-  cloverFaceSprite: {fileID: 21300000, guid: a5bc2529e825df1439fa28a1822f42fe, type: 3}
+  spadeFaceSprite: {fileID: 21300000, guid: fcb3bd7cb601d0e4daf6f6d212908315, type: 3}
+  cloverFaceSprite: {fileID: 21300000, guid: 16ab928279d96e2439a4e09b672c516f, type: 3}

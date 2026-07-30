@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d658a77d998e43f1b3fa1f8d0a110001, type: 3}
-  m_Name: lie-detector-3
+  m_Name: 04_plain
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
-  key: lie-detector-3
-  displayName: 거짓말 탐지기
-  description: 숫자를 선언해 상대 비공개 카드의 이상·미만 확인
+  key: standard-plain-4
+  displayName: 기본 카드
+  description: 기본 카드
   basePurchasePrice: 3
   shopWeight: 1
-  rank: 3
-  activation: 3
-  effect: 8
-  isStandardDeckDefault: 0
-  spadeFaceSprite: {fileID: 21300000, guid: 08a8a36231d3ca1459e4d5080236463c, type: 3}
-  cloverFaceSprite: {fileID: 21300000, guid: 08a8a36231d3ca1459e4d5080236463c, type: 3}
+  rank: 4
+  activation: 0
+  effect: 0
+  isStandardDeckDefault: 1
+  spadeFaceSprite: {fileID: 21300000, guid: 21d2d2707f8a2924c86fba1b34cf729d, type: 3}
+  cloverFaceSprite: {fileID: 21300000, guid: ec927da624fcef5438b5f03d0f905aed, type: 3}

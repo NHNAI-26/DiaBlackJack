@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d658a77d998e43f1b3fa1f8d0a110001, type: 3}
-  m_Name: standard-plain-4
+  m_Name: 01_plain
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
-  key: standard-plain-4
-  displayName: 기본 카드
+  key: standard-ace-1
+  displayName: 에이스
   description: 기본 카드
   basePurchasePrice: 3
   shopWeight: 1
-  rank: 4
-  activation: 0
+  rank: 1
+  activation: 1
   effect: 0
   isStandardDeckDefault: 1
-  spadeFaceSprite: {fileID: 21300000, guid: 21d2d2707f8a2924c86fba1b34cf729d, type: 3}
-  cloverFaceSprite: {fileID: 21300000, guid: ec927da624fcef5438b5f03d0f905aed, type: 3}
+  spadeFaceSprite: {fileID: 21300000, guid: f54c421f5f46de9488f1d0a27ddd149a, type: 3}
+  cloverFaceSprite: {fileID: 21300000, guid: 65c1c7c53bda10945ac9066cc760c984, type: 3}

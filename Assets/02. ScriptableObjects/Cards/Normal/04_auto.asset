@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d658a77d998e43f1b3fa1f8d0a110001, type: 3}
-  m_Name: auto-pistol-7
+  m_Name: 04_auto
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
-  key: auto-pistol-7
-  displayName: 리볼버
-  description: 적 비공개 숫자 맞히면 적 즉사
+  key: flamethrower-4
+  displayName: 화염 방사기
+  description: 양측이 공개 카드 1장씩 선택해 버림
   basePurchasePrice: 3
   shopWeight: 1
-  rank: 7
-  activation: 2
-  effect: 3
-  isStandardDeckDefault: 1
-  spadeFaceSprite: {fileID: 21300000, guid: fcb3bd7cb601d0e4daf6f6d212908315, type: 3}
-  cloverFaceSprite: {fileID: 21300000, guid: 16ab928279d96e2439a4e09b672c516f, type: 3}
+  rank: 4
+  activation: 3
+  effect: 9
+  isStandardDeckDefault: 0
+  spadeFaceSprite: {fileID: 21300000, guid: 4e43362725ff64747a873c16de35fcca, type: 3}
+  cloverFaceSprite: {fileID: 21300000, guid: 4e43362725ff64747a873c16de35fcca, type: 3}

@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d658a77d998e43f1b3fa1f8d0a110001, type: 3}
-  m_Name: pocket-watch-5
+  m_Name: 02_plain
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
-  key: pocket-watch-5
-  displayName: 회중시계
-  description: 사용 완료 수동 카드 1장을 재활성화
+  key: standard-plain-2
+  displayName: 기본 카드
+  description: 기본 카드
   basePurchasePrice: 3
   shopWeight: 1
-  rank: 5
-  activation: 3
-  effect: 10
-  isStandardDeckDefault: 0
-  spadeFaceSprite: {fileID: 21300000, guid: 5a73ddf569594244b9243b0a5c86fd68, type: 3}
-  cloverFaceSprite: {fileID: 21300000, guid: 5a73ddf569594244b9243b0a5c86fd68, type: 3}
+  rank: 2
+  activation: 0
+  effect: 0
+  isStandardDeckDefault: 1
+  spadeFaceSprite: {fileID: 21300000, guid: 3b56ffd8afc97db42950e053eef4b3e5, type: 3}
+  cloverFaceSprite: {fileID: 21300000, guid: 4e92f7194900be448b278cadae96bc85, type: 3}

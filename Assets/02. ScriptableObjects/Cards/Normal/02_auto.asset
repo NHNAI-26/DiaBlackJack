@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d658a77d998e43f1b3fa1f8d0a110001, type: 3}
-  m_Name: standard-plain-2
+  m_Name: 02_auto
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
-  key: standard-plain-2
-  displayName: 기본 카드
-  description: 기본 카드
+  key: resurrection-herb-2
+  displayName: 부활초
+  description: 양측 영혼 1 지불 후 승패 없이 라운드 재시작
   basePurchasePrice: 3
   shopWeight: 1
   rank: 2
-  activation: 0
-  effect: 0
-  isStandardDeckDefault: 1
-  spadeFaceSprite: {fileID: 21300000, guid: 3b56ffd8afc97db42950e053eef4b3e5, type: 3}
-  cloverFaceSprite: {fileID: 21300000, guid: 4e92f7194900be448b278cadae96bc85, type: 3}
+  activation: 3
+  effect: 7
+  isStandardDeckDefault: 0
+  spadeFaceSprite: {fileID: 21300000, guid: b76faae24a1700f479371a2ddbbd6f7f, type: 3}
+  cloverFaceSprite: {fileID: 21300000, guid: b76faae24a1700f479371a2ddbbd6f7f, type: 3}

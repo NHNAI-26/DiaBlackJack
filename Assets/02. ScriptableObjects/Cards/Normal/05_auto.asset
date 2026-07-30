@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d658a77d998e43f1b3fa1f8d0a110001, type: 3}
-  m_Name: flamethrower-4
+  m_Name: 05_auto
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
-  key: flamethrower-4
-  displayName: 화염 방사기
-  description: 양측이 공개 카드 1장씩 선택해 버림
+  key: pocket-watch-5
+  displayName: 회중시계
+  description: 사용 완료 수동 카드 1장을 재활성화
   basePurchasePrice: 3
   shopWeight: 1
-  rank: 4
+  rank: 5
   activation: 3
-  effect: 9
+  effect: 10
   isStandardDeckDefault: 0
-  spadeFaceSprite: {fileID: 21300000, guid: 4e43362725ff64747a873c16de35fcca, type: 3}
-  cloverFaceSprite: {fileID: 21300000, guid: 4e43362725ff64747a873c16de35fcca, type: 3}
+  spadeFaceSprite: {fileID: 21300000, guid: 5a73ddf569594244b9243b0a5c86fd68, type: 3}
+  cloverFaceSprite: {fileID: 21300000, guid: 5a73ddf569594244b9243b0a5c86fd68, type: 3}

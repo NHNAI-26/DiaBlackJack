@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d658a77d998e43f1b3fa1f8d0a110001, type: 3}
-  m_Name: crystal-orb-5
+  m_Name: 03_plain
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
-  key: crystal-orb-5
-  displayName: 수정 구슬
-  description: 덱 맨 위 2장 훔쳐보고 1장 가져오기
+  key: standard-plain-3
+  displayName: 기본 카드
+  description: 기본 카드
   basePurchasePrice: 3
   shopWeight: 1
-  rank: 5
-  activation: 2
-  effect: 1
+  rank: 3
+  activation: 0
+  effect: 0
   isStandardDeckDefault: 1
-  spadeFaceSprite: {fileID: 21300000, guid: bd9200b8cda5bb349b6f3f396c221207, type: 3}
-  cloverFaceSprite: {fileID: 21300000, guid: e3f4db53c178f8d43947290c9bbed5b1, type: 3}
+  spadeFaceSprite: {fileID: 21300000, guid: 5cf2c08852229f6418d102a60724fbb8, type: 3}
+  cloverFaceSprite: {fileID: 21300000, guid: 1aec05e1749d5cb4d933daaf9f15bddd, type: 3}
