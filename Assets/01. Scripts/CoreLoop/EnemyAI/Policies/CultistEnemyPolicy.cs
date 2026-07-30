@@ -100,23 +100,9 @@ namespace DiaBlackJack.CoreLoop
         private static DemonContractKind GetDesiredContractKind(
             EnemyObservation observation)
         {
-            if (observation.EnemySoul.Current < 4)
-            {
-                return DemonContractKind.Belphegor;
-            }
-
-            int usablePlayerFaceUpCardCount = 0;
-            foreach (PublicCardObservation card in observation.PlayerFaceUpCards)
-            {
-                if (card.CanUse)
-                {
-                    usablePlayerFaceUpCardCount++;
-                }
-            }
-
-            return usablePlayerFaceUpCardCount >= 2
-                ? DemonContractKind.Belial
-                : DemonContractKind.Beelzebub;
+            return observation.PlayerFaceUpCards.Count >= 2
+                ? DemonContractKind.Beelzebub
+                : DemonContractKind.Belphegor;
         }
 
         private static EnemyActionScore EvaluateDemonContract(

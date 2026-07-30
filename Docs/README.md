@@ -2,7 +2,7 @@
 
 > 프로젝트: DiaBlackJack  
 > 문서 책임자: 이천서  
-> 최종 갱신: 2026-07-30
+> 최종 갱신: 2026-07-31
 
 이 디렉터리는 게임 규칙, 기획, 개발 명세, AI 활용, 외부 출처 및 팀 기여 기록을 관리한다.
 
@@ -38,17 +38,17 @@
 | [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 이력과 AC-RV00~RV03 개정 계획 | AC-RV03 이관 대기 v0.9 |
 | [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | 기존 증거 유지·AC-RV03 미구현 v0.9 |
 | [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | 광신도 2종 계약 선택 최신화 v1.22 |
-| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | 광신도 정책·콘텐츠 필터 이관 대기 v1.21 |
-| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC 이력과 현행 콘텐츠 필터 이관 계획 | 광신도 정책·악마 7종 필터 대기 v1.21 |
-| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | 기존 증거 보존·광신도 최신 정책 미구현 v1.21 |
+| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | EPR07 광신도 정책 완료·콘텐츠 필터 후속 v1.22 |
+| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC 이력과 현행 콘텐츠 필터 이관 계획 | EPR07 완료·악마 7종 필터 후속 v1.22 |
+| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | 광신도 2종 정책·전체 793/793 v1.22 |
 | [battle-reward-design.md](./battle-reward-design.md) | RW 과거 구현 결정과 향후 무료 사건 재사용 경계 | 정식 런 비활성·코드 이관 대기 v0.4 |
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 기존 보상 생성·상태·세션·UI 기술 계약 | RW 증거 보존·정식 런 우회 v0.4 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 이력과 RF 우회 계획 | RW 완료·RF-03 비활성 연결 v0.4 |
 | [battle-reward-progress-log.md](./battle-reward-progress-log.md) | 전투 보상 결정·구현·검증 누적 기록 | RW-05 증거 유지·정식 런 비활성 미구현 v0.4 |
 | [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 적 6종의 전투 성향·책임 경계 | 광신도 2종 계약 선택 최신화 v1.12 |
-| [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | 광신도 최신 정책 재이관 대기 v1.10 |
-| [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP 이력과 Notion 적 유형 이관 계획 | 광신도 2종 정책 코드 이관 대기 v1.10 |
-| [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | EP 증거 보존·광신도 최신 정책 미구현 v1.10 |
+| [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | EPR07 광신도 최신 정책 완료 v1.10 |
+| [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP 이력과 Notion 적 유형 이관 계획 | EPR07 코드·회귀 완료 v1.10 |
+| [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | EPR07 대상 21/21·전체 793/793 v1.10 |
 | [enemy-selection-combat-ui-design.md](./enemy-selection-combat-ui-design.md) | 상대 후보 2명 비교·확정과 등급별 전투 정보 표시 규칙 | 예상 골드·상점 품질 UI 개정 v0.5 |
 | [enemy-selection-combat-ui-development-spec.md](./enemy-selection-combat-ui-development-spec.md) | 후보 생성·선택 상태·전투 변환·안전 표시 스냅샷과 테스트 명세 | RewardTier 교체 명세 v0.4 |
 | [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI 이력과 새 적 정보 연결 계획 | RF-04 코드 이관·화면 검증 대기 v0.4 |

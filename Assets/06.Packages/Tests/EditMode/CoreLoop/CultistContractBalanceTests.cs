@@ -185,7 +185,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR04_I01_ImplementedContractSeedsRemainDistributed()
+        public void EPR07_I01_CultistUsesOnlyCurrentTwoContractPool()
         {
             var counts = new Dictionary<DemonContractKind, int>();
             foreach (DemonContractKind kind in Enum.GetValues(typeof(DemonContractKind)))
@@ -205,28 +205,19 @@ namespace DiaBlackJack.CoreLoop.Tests
             TestContext.WriteLine(
                 $"DC-08 {SimulationCount}회 선택: " +
                 string.Join(", ", counts.Select(pair => $"{pair.Key}={pair.Value}")));
-            Assert.That(counts[DemonContractKind.Belphegor],
-                Is.InRange(1, 100));
-            Assert.That(counts[DemonContractKind.Mammon],
-                Is.InRange(1, 100));
+            Assert.That(counts[DemonContractKind.Belphegor], Is.Zero);
             Assert.That(counts[DemonContractKind.Beelzebub],
-                Is.InRange(1, 100));
+                Is.EqualTo(SimulationCount));
+            Assert.That(counts[DemonContractKind.Mammon], Is.Zero);
             Assert.That(counts[DemonContractKind.Satan], Is.Zero);
-            Assert.That(counts[DemonContractKind.Leviathan], Is.InRange(1, 100));
-            Assert.That(counts[DemonContractKind.Mephistopheles],
-                Is.InRange(1, 100));
-            Assert.That(counts[DemonContractKind.Asmodeus],
-                Is.InRange(1, 100));
-            Assert.That(counts[DemonContractKind.Azazel],
-                Is.InRange(1, 100));
-            Assert.That(counts[DemonContractKind.Paimon],
-                Is.InRange(1, 100));
-            Assert.That(counts[DemonContractKind.Belial],
-                Is.InRange(1, 100));
-            Assert.That(counts[DemonContractKind.Baphomet],
-                Is.InRange(1, 100));
-            Assert.That(counts[DemonContractKind.Lucifer],
-                Is.InRange(1, 100));
+            Assert.That(counts[DemonContractKind.Leviathan], Is.Zero);
+            Assert.That(counts[DemonContractKind.Mephistopheles], Is.Zero);
+            Assert.That(counts[DemonContractKind.Asmodeus], Is.Zero);
+            Assert.That(counts[DemonContractKind.Azazel], Is.Zero);
+            Assert.That(counts[DemonContractKind.Paimon], Is.Zero);
+            Assert.That(counts[DemonContractKind.Belial], Is.Zero);
+            Assert.That(counts[DemonContractKind.Baphomet], Is.Zero);
+            Assert.That(counts[DemonContractKind.Lucifer], Is.Zero);
             Assert.That(counts.Values.Sum(), Is.EqualTo(SimulationCount));
         }
 
@@ -300,7 +291,27 @@ namespace DiaBlackJack.CoreLoop.Tests
                 CardEffectResolver.CreateDefault(),
                 new DemonContractDeck(Array.Empty<DemonContractCard>(), seed: 0),
                 DemonContractResolver.CreateDefault(),
-                DemonContractDeck.CreatePrototype(seed));
+                CreateEnemyDemonDeck(enemy, seed),
+                enemyDemonContractCandidateCount:
+                    enemy.DemonContractCandidateCount);
+        }
+
+        private static DemonContractDeck CreateEnemyDemonDeck(
+            EnemyBattleConfiguration enemy,
+            int seed)
+        {
+            var cards = new List<DemonContractCard>(
+                enemy.DemonContractDefinitionKeys.Count);
+            for (int index = 0;
+                index < enemy.DemonContractDefinitionKeys.Count;
+                index++)
+            {
+                DemonContractDefinition definition = DemonContractCatalog.Default
+                    .GetByKey(enemy.DemonContractDefinitionKeys[index]);
+                cards.Add(new DemonContractCard(index, definition));
+            }
+
+            return new DemonContractDeck(cards, seed);
         }
 
         private static BlackjackDeck CreatePlainDeck(IEnumerable<int> ranks)

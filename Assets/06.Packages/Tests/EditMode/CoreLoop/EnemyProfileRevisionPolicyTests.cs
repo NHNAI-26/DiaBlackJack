@@ -20,10 +20,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(new[]
                 {
                     DemonContractCatalog.BelphegorKey,
-                    DemonContractCatalog.BeelzebubKey,
-                    DemonContractCatalog.BelialKey
+                    DemonContractCatalog.BeelzebubKey
                 }));
-            Assert.That(cultist.DemonContractCandidateCount, Is.EqualTo(3));
+            Assert.That(cultist.DemonContractCandidateCount, Is.EqualTo(2));
             Assert.That(trickster.ChangeCostMode, Is.EqualTo(EnemyChangeCostMode.FixedOne));
             Assert.That(enforcer.DemonContractDefinitionKeys.Single(),
                 Is.EqualTo(DemonContractCatalog.PaimonKey));
@@ -56,19 +55,20 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(decision.ActionType, Is.EqualTo(expectedAction));
         }
 
-        [TestCase(3, 0, DemonContractKind.Belphegor)]
-        [TestCase(4, 0, DemonContractKind.Beelzebub)]
-        [TestCase(4, 2, DemonContractKind.Belial)]
-        public void EPR05_U03_CultistForcesAuthoredContractBySoulAndUsableCards(
+        [TestCase(1, 0, 1, DemonContractKind.Belphegor)]
+        [TestCase(4, 0, 2, DemonContractKind.Beelzebub)]
+        [TestCase(1, 2, 2, DemonContractKind.Beelzebub)]
+        public void EPR07_U01_CultistChoosesContractOnlyByPublicCardCount(
             int enemySoul,
             int usablePlayerCardCount,
+            int playerFaceUpCardCount,
             DemonContractKind expectedKind)
         {
-            PublicCardObservation[] publicCards = Enumerable.Range(0, usablePlayerCardCount)
+            PublicCardObservation[] publicCards = Enumerable.Range(0, playerFaceUpCardCount)
                 .Select(index => new PublicCardObservation(
                     "threat-hammer-6",
                     rank: 6,
-                    canUse: true))
+                    canUse: index < usablePlayerCardCount))
                 .ToArray();
             EnemyObservation observation = CreateObservation(
                 enemySoul,
@@ -281,8 +281,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             return new[]
             {
                 CreateContractCandidate(0, DemonContractKind.Belphegor),
-                CreateContractCandidate(1, DemonContractKind.Beelzebub),
-                CreateContractCandidate(2, DemonContractKind.Belial)
+                CreateContractCandidate(1, DemonContractKind.Beelzebub)
             };
         }
 

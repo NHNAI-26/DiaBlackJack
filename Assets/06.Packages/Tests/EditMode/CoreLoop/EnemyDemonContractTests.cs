@@ -254,7 +254,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void EPR05_I01_StageFactoryBuildsProfileContractDecksAndIsolatesFiftyRuns()
+        public void EPR07_I02_StageFactoryBuildsCurrentCultistDeckAndIsolatesFiftyRuns()
         {
             PlayerRunState player = CreateRunPlayer();
             DemonContractDeck previous = null;
@@ -266,8 +266,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                     iteration + 100);
                 CoreLoopBattle battle = StageBattleFactory.Create(stage, player);
 
-                Assert.That(battle.EnemyDemonDeck.TotalCardCount, Is.EqualTo(3));
-                Assert.That(battle.EnemyDemonDeck.AvailableCardCount, Is.EqualTo(3));
+                Assert.That(battle.EnemyDemonDeck.TotalCardCount, Is.EqualTo(2));
+                Assert.That(battle.EnemyDemonDeck.AvailableCardCount, Is.EqualTo(2));
                 Assert.That(battle.ActiveEnemyDemonContracts, Is.Empty);
                 Assert.That(battle.EnemyDemonDeck, Is.Not.SameAs(previous));
                 previous = battle.EnemyDemonDeck;

@@ -134,10 +134,9 @@ namespace DiaBlackJack.CoreLoop
                     demonContractDefinitionKeys: new[]
                     {
                         DemonContractCatalog.BelphegorKey,
-                        DemonContractCatalog.BeelzebubKey,
-                        DemonContractCatalog.BelialKey
+                        DemonContractCatalog.BeelzebubKey
                     },
-                    demonContractCandidateCount: 3),
+                    demonContractCandidateCount: 2),
                 new EnemyCombatProfile(
                     TricksterKey,
                     "사기꾼",
