@@ -23,14 +23,14 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private TMP_Text goldText;
 
         [Header("Card hover badge")]
+        [Tooltip("Runtime moves only this anchor. Header/body layout stays authored in the prefab.")]
+        [SerializeField] private RectTransform cardHoverTooltipRoot;
         [SerializeField] private RectTransform cardHoverBadge;
         [SerializeField] private TMP_Text cardHoverBadgeText;
         [SerializeField] private RectTransform cardHoverHeaderBadge;
         [SerializeField] private TMP_Text cardHoverHeaderText;
         [Tooltip("Pixel offset from the hovered card's screen-space anchor.")]
         [SerializeField] private Vector2 cardHoverBadgeScreenOffset = new Vector2(0f, 24f);
-        [Min(0f)]
-        [SerializeField] private float cardHoverBadgeSpacing = 8f;
 
         [Header("Combat controls")]
         [SerializeField] private GameObject combatControlsRoot;
@@ -133,7 +133,8 @@ namespace DiaBlackJack.GameScene
             Camera worldCamera,
             bool showBelow)
         {
-            if (cardHoverBadge == null ||
+            if (cardHoverTooltipRoot == null ||
+                cardHoverBadge == null ||
                 cardHoverBadgeText == null ||
                 cardHoverHeaderBadge == null ||
                 cardHoverHeaderText == null ||
@@ -143,7 +144,7 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            RectTransform parent = cardHoverBadge.parent as RectTransform;
+            RectTransform parent = cardHoverTooltipRoot.parent as RectTransform;
             if (parent == null)
             {
                 HideCardHoverBadge();
@@ -159,11 +160,9 @@ namespace DiaBlackJack.GameScene
                 _canvas.renderMode != RenderMode.ScreenSpaceOverlay
                 ? _canvas.worldCamera != null ? _canvas.worldCamera : worldCamera
                 : null;
-            Vector2 adjustedScreenPosition =
-                cardTopScreenPosition + cardHoverBadgeScreenOffset;
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
                     parent,
-                    adjustedScreenPosition,
+                    cardTopScreenPosition,
                     uiCamera,
                     out Vector2 localPoint))
             {
@@ -175,7 +174,7 @@ namespace DiaBlackJack.GameScene
             cardHoverBadgeText.text = description ?? string.Empty;
 
             bool hasDescription = !string.IsNullOrEmpty(description);
-            PositionCardHoverTooltip(localPoint, hasDescription, showBelow);
+            PositionCardHoverTooltip(localPoint, showBelow);
             cardHoverHeaderBadge.gameObject.SetActive(true);
             cardHoverBadge.gameObject.SetActive(hasDescription);
         }
@@ -510,34 +509,20 @@ namespace DiaBlackJack.GameScene
 
         private void PositionCardHoverTooltip(
             Vector2 localPoint,
-            bool hasDescription,
             bool showBelow)
         {
-            Vector2 anchor = showBelow
-                ? localPoint - cardHoverBadgeScreenOffset
-                : localPoint + cardHoverBadgeScreenOffset;
-            float bodyHeight = hasDescription ? cardHoverBadge.rect.height : 0f;
-            float headerHeight = cardHoverHeaderBadge.rect.height;
-            float spacing = hasDescription ? cardHoverBadgeSpacing : 0f;
-
-            if (showBelow)
-            {
-                cardHoverBadge.pivot = new Vector2(0.5f, 1f);
-                cardHoverHeaderBadge.pivot = new Vector2(0.5f, 1f);
-                cardHoverBadge.localPosition = new Vector3(anchor.x, anchor.y, 0f);
-                cardHoverHeaderBadge.localPosition = new Vector3(
-                    anchor.x,
-                    anchor.y + headerHeight + spacing,
-                    0f);
-                return;
-            }
-
-            cardHoverBadge.pivot = new Vector2(0.5f, 0f);
-            cardHoverHeaderBadge.pivot = new Vector2(0.5f, 0f);
-            cardHoverBadge.localPosition = new Vector3(anchor.x, anchor.y, 0f);
-            cardHoverHeaderBadge.localPosition = new Vector3(
-                anchor.x,
-                anchor.y + bodyHeight + spacing,
+            Vector2 screenOffset = new Vector2(
+                cardHoverBadgeScreenOffset.x,
+                showBelow
+                    ? -cardHoverBadgeScreenOffset.y
+                    : cardHoverBadgeScreenOffset.y);
+            cardHoverTooltipRoot.pivot = new Vector2(
+                cardHoverTooltipRoot.pivot.x,
+                showBelow ? 1f : 0f);
+            Vector2 tooltipPosition = localPoint + screenOffset;
+            cardHoverTooltipRoot.localPosition = new Vector3(
+                tooltipPosition.x,
+                tooltipPosition.y,
                 0f);
         }
 

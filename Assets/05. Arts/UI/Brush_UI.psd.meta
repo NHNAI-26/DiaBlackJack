@@ -132,7 +132,7 @@ TextureImporter:
         height: 117
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
-      border: {x: 127, y: 37, z: 138, w: 49}
+      border: {x: 225, y: 47, z: 222, w: 49}
       customData: 
       outline: []
       physicsShape: []
@@ -176,7 +176,7 @@ TextureImporter:
         height: 82
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
-      border: {x: 59, y: 26, z: 149, w: 30}
+      border: {x: 218, y: 26, z: 216, w: 30}
       customData: 
       outline: []
       physicsShape: []
@@ -237,12 +237,12 @@ TextureImporter:
       rect:
         serializedVersion: 2
         x: 284
-        y: 684
+        y: 689
         width: 223
-        height: 74
+        height: 56
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
-      border: {x: 0, y: 0, z: 0, w: 0}
+      border: {x: 103, y: 20, z: 104, w: 20}
       customData: 
       outline: []
       physicsShape: []
@@ -304,11 +304,11 @@ TextureImporter:
         serializedVersion: 2
         x: 536
         y: 521
-        width: 460
+        width: 454
         height: 136
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
-      border: {x: 76, y: 51, z: 69, w: 56}
+      border: {x: 214, y: 56, z: 213, w: 55}
       customData: 
       outline: []
       physicsShape: []
@@ -368,10 +368,10 @@ TextureImporter:
       name: Brush_UI_11
       rect:
         serializedVersion: 2
-        x: 538
-        y: 327
-        width: 306
-        height: 70
+        x: 541
+        y: 335
+        width: 298
+        height: 53
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
