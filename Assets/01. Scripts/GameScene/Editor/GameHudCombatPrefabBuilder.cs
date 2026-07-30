@@ -199,10 +199,7 @@ namespace DiaBlackJack.GameScene.Editor
 
             RectTransform viewport = CreateRect("Viewport", scrollRoot);
             Stretch(viewport, 14f);
-            Image viewportImage = viewport.gameObject.AddComponent<Image>();
-            viewportImage.color = Color.clear;
-            Mask mask = viewport.gameObject.AddComponent<Mask>();
-            mask.showMaskGraphic = false;
+            viewport.gameObject.AddComponent<RectMask2D>();
 
             RectTransform content = CreateRect("Content", viewport);
             content.anchorMin = new Vector2(0f, 1f);
@@ -223,7 +220,7 @@ namespace DiaBlackJack.GameScene.Editor
             slots = new GameHudChoiceButton[OptionSlotCount];
             for (int i = 0; i < slots.Length; i++)
             {
-                slots[i] = CreateOptionSlot($"OptionSlot_{i + 1:000}", content, font, panelBrush);
+                slots[i] = CreateOptionSlot($"OptionSlot_{i + 1:000}", content, font);
             }
 
             scroll.viewport = viewport;
@@ -234,17 +231,17 @@ namespace DiaBlackJack.GameScene.Editor
         private static GameHudChoiceButton CreateOptionSlot(
             string name,
             RectTransform parent,
-            TMP_FontAsset font,
-            Sprite panelBrush)
+            TMP_FontAsset font)
         {
-            RectTransform root = CreatePanel(
-                name, parent, panelBrush, new Color(0.24f, 0.17f, 0.2f, 0.98f));
+            RectTransform root = CreateRect(name, parent);
+            Image image = root.gameObject.AddComponent<Image>();
+            image.color = new Color(0.28f, 0.12f, 0.14f, 1f);
             LayoutElement layout = root.gameObject.AddComponent<LayoutElement>();
-            layout.preferredHeight = 58f;
+            layout.preferredHeight = 78f;
             Button button = root.gameObject.AddComponent<Button>();
-            button.targetGraphic = root.GetComponent<Image>();
-            TMP_Text label = CreateText("Label", root, font, 19f, TextAlignmentOptions.Center);
-            Stretch(label.rectTransform, 10f);
+            button.targetGraphic = image;
+            TMP_Text label = CreateText("Label", root, font, 21f, TextAlignmentOptions.Center);
+            Stretch(label.rectTransform, 12f);
             GameHudChoiceButton choice = root.gameObject.AddComponent<GameHudChoiceButton>();
             AssignChoiceButtonReferences(choice, button, label, null, null, null, null);
             return choice;

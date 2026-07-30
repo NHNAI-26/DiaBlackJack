@@ -245,46 +245,27 @@ namespace DiaBlackJack.GameScene
             DemonContractPanelViewModel contract = core.DemonContract;
             if (contract.IsResolving)
             {
-                if (contract.UsesContractCandidateLayout &&
-                    contract.Choices.Count <= 2)
-                {
-                    var candidates =
-                        new List<GameSceneCombatHudContractCandidateViewModel>();
-                    foreach (DemonContractChoiceViewModel choice in contract.Choices)
-                    {
-                        candidates.Add(new GameSceneCombatHudContractCandidateViewModel(
-                            new GameSceneCombatHudCommand(
-                                GameSceneCombatHudCommandKind.ResolveDemonContractChoice,
-                                choice.OptionId,
-                                contract.InteractionId ?? -1),
-                            choice.DefinitionKey,
-                            choice.Title,
-                            choice.Ability,
-                            choice.Cost,
-                            choice.CanSelect && !inputLocked,
-                            choice.CanSelect ? "SELECT" : choice.DisabledReason));
-                    }
-
-                    return new GameSceneCombatHudViewModel(
-                        GameSceneCombatHudMode.ContractCandidates,
-                        BuildContractPrompt(contract),
-                        Array.Empty<GameSceneCombatHudActionViewModel>(),
-                        Array.Empty<GameSceneCombatHudActionViewModel>(),
-                        candidates,
-                        automaticCardResult);
-                }
-
                 var options = new List<GameSceneCombatHudActionViewModel>();
                 foreach (DemonContractChoiceViewModel choice in contract.Choices)
                 {
+                    string label = choice.Title;
+                    if (!string.IsNullOrEmpty(choice.Cost))
+                    {
+                        label += "\n" + choice.Cost;
+                    }
+
+                    if (!choice.CanSelect &&
+                        !string.IsNullOrEmpty(choice.DisabledReason))
+                    {
+                        label += "\n" + choice.DisabledReason;
+                    }
+
                     options.Add(new GameSceneCombatHudActionViewModel(
                         new GameSceneCombatHudCommand(
                             GameSceneCombatHudCommandKind.ResolveDemonContractChoice,
                             choice.OptionId,
                             contract.InteractionId ?? -1),
-                        choice.CanSelect
-                            ? choice.Title
-                            : choice.Title + "\n" + choice.DisabledReason,
+                        label,
                         choice.CanSelect && !inputLocked));
                 }
 

@@ -87,10 +87,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             GameSceneCombatHudViewModel candidates =
                 GameSceneCombatHudPresenter.Create(resolving, false, false, false, false);
 
-            Assert.That(candidates.Mode, Is.EqualTo(GameSceneCombatHudMode.ContractCandidates));
-            Assert.That(candidates.ContractCandidates.Select(candidate => candidate.Command.OptionId),
+            Assert.That(candidates.Mode, Is.EqualTo(GameSceneCombatHudMode.Options));
+            Assert.That(candidates.OptionActions.Select(candidate => candidate.Command.OptionId),
                 Is.EqualTo(resolving.DemonContract.Choices.Select(choice => choice.OptionId)));
-            Assert.That(candidates.ContractCandidates.All(candidate =>
+            Assert.That(candidates.OptionActions.All(candidate =>
                 candidate.Command.InteractionId == resolving.DemonContract.InteractionId), Is.True);
         }
 

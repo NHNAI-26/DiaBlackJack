@@ -396,6 +396,11 @@ namespace DiaBlackJack.GameScene
                 }
             }
 
+            if (optionScrollRect != null && optionScrollRect.content != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(optionScrollRect.content);
+            }
+
             ResetOptionScroll();
         }
 
