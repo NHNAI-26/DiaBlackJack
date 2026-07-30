@@ -593,6 +593,14 @@ Controller가 `_stageSession.Battle`을 직접 조작하는 경로를 추가하�
 - `GameManager`의 타임라인은 첫 실패 연출 시간을 기다린 뒤 재준비한다. 두 번째 결과에는 일반 리볼버와 같은 성공·실패 연출과 기존 최종 숨김을 적용한다.
 - 라운드·원본 카드 ID·행위자·단계를 포함한 단서 키로 첫 실패, 재준비, 최종 결과를 서로 다른 사건으로 취급한다.
 
+### 13.11 CU-M09 — 무기별 표정 이벤트 경계
+
+- `GameScenePresentation.IsAttackEffect`에서 `ThreatHammer`를 제외한다. 대상 표시와 해머 애니메이션은 유지하되 `AttackThreatened`·`Attacked`를 만들지 않는다.
+- 성공 리볼버 단서를 받은 `GameManager`는 대상의 즉시 `Attacked` 투영을 `AttackThreatened`로 가린다.
+- 플레이어·적 성공 애니메이션 클립은 기존 `gun-fire` VFX와 같은 시간에 `NotifyShotImpact` 이벤트를 호출한다.
+- `RevolverAnimationEventReceiver`가 타격 이벤트를 전달하면 해당 대상만 `Attacked`로 다시 렌더링한다. 실패·재예측 준비·숨김에서는 보류 타격 상태를 제거한다.
+- 회귀는 해머 표정 무변경, 피격 전 긴장 상태, 이벤트 전달, 양쪽 성공 클립의 총구 화염·피격 이벤트 시간 일치를 검증한다.
+
 ## 14. 수동 검증
 
 `CoreLoopTest`에서 다음을 실제 화면 입력으로 확인한다.
@@ -641,6 +649,7 @@ Docs/
 
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
+| 2026-07-30 | 이천서 | CU-M09 해머 표정 무반응과 리볼버 실제 사격 프레임 피격 전환 경계를 명세하고 대상 6/6 검증 반영 |
 | 2026-07-30 | 이천서 | `ForceOpponentDrawFaceUp` 직후 `Stepped` 공개 스냅샷을 발행하고 최종 폐기 스냅샷과 분리한다. `CardHand`는 물리 카드 ID로 제거 대상을 찾고 이동·축소 후 파괴해 다른 위치의 카드를 잘못 폐기하지 않도록 명세 |
 | 2026-07-29 | 이천서 | CU-M07 첫 성공 종료·첫 실패 후 재예측·두 번째 성공 무비용·두 번째 실패 영혼 1과 `Ready/ResolvedWithRetry/Resolved` 연출 상태를 명세하고 대상 4/4·CoreLoop 442/442·전체 631/631 검증 반영 |
 | 2026-07-29 | 이천서 | CU-M06 `Ready/Resolved` 표시 단서와 `PlayerTurnStart → PlayerSuccess/PlayerFail` Animator 연결, 대상 2/2·CoreLoop 438/438·전체 627/627·실제 준비/성공/실패 상태 검증 반영 |

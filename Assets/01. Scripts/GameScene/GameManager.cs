@@ -94,6 +94,9 @@ namespace DiaBlackJack.GameScene
         private int _revolverReadySourceCardId;
         private CombatantSide _revolverReadyActorSide;
         private Coroutine _revolverHideRoutine;
+        private RevolverAnimationEventReceiver _revolverEventReceiver;
+        private bool _revolverImpactPending;
+        private CombatantSide _revolverImpactTargetSide;
         private bool _hammerSwitchInputLocked;
         private bool _deckPreviewSwitchInputLocked;
         private bool _returnCameraToCurrentAfterHammer;
@@ -175,8 +178,15 @@ namespace DiaBlackJack.GameScene
             RefreshView();
         }
 
+        private void OnEnable()
+        {
+            BindRevolverImpactEvent();
+        }
+
         private void OnDisable()
         {
+            UnbindRevolverImpactEvent();
+            ClearPendingRevolverImpact();
             CloseDeckPreview();
         }
 
@@ -1430,7 +1440,9 @@ namespace DiaBlackJack.GameScene
 
             if (enemyCharacter != null)
             {
-                enemyCharacter.Render(vm.EnemyVisual, vm.EnemyActionLabel);
+                enemyCharacter.Render(
+                    ResolveRevolverTimedVisual(CombatantSide.Enemy, vm.EnemyVisual),
+                    vm.EnemyActionLabel);
             }
 
             if (totals != null)
@@ -1541,6 +1553,7 @@ namespace DiaBlackJack.GameScene
 
             if (cue.Phase == GameSceneRevolverAnimationPhase.Ready)
             {
+                ClearPendingRevolverImpact();
                 ResetRevolverAnimatorToBase();
                 revolverAnimator.SetTrigger(playerReadyTrigger);
                 RememberActiveRevolverReady(cue);
@@ -1552,6 +1565,17 @@ namespace DiaBlackJack.GameScene
             {
                 ResetRevolverAnimatorToBase();
                 revolverAnimator.SetTrigger(playerReadyTrigger);
+            }
+
+            if (cue.Succeeded)
+            {
+                _revolverImpactPending = true;
+                _revolverImpactTargetSide = Opposite(cue.ActorSide);
+                BindRevolverImpactEvent();
+            }
+            else
+            {
+                ClearPendingRevolverImpact();
             }
 
             revolverAnimator.SetTrigger(ResolveRevolverTrigger(cue));
@@ -1869,6 +1893,7 @@ namespace DiaBlackJack.GameScene
             _lastRevolverAnimationActorSide = CombatantSide.Player;
             _lastRevolverAnimationPhase = GameSceneRevolverAnimationPhase.Ready;
             _lastRevolverAnimationSucceeded = false;
+            ClearPendingRevolverImpact();
             ClearActiveRevolverReady();
             HideRevolverAnimation();
         }
@@ -1886,6 +1911,7 @@ namespace DiaBlackJack.GameScene
             }
 
             ClearActiveRevolverReady();
+            ClearPendingRevolverImpact();
         }
 
         private IEnumerator PrepareRevolverRetryAfterDelay(
@@ -1898,6 +1924,7 @@ namespace DiaBlackJack.GameScene
 
         private void PrepareRevolverRetry(GameSceneRevolverAnimationCue cue)
         {
+            ClearPendingRevolverImpact();
             GameObject root = ResolveRevolverRoot();
             if (root != null && !root.activeSelf)
             {
@@ -1924,6 +1951,7 @@ namespace DiaBlackJack.GameScene
         private void HideRevolverAnimation()
         {
             StopRevolverHideRoutine();
+            ClearPendingRevolverImpact();
             ResetRevolverAnimatorToBase();
 
             GameObject root = ResolveRevolverRoot();
@@ -1933,6 +1961,99 @@ namespace DiaBlackJack.GameScene
             }
 
             ClearActiveRevolverReady();
+        }
+
+        internal static CharacterVisualState ResolveRevolverTimedVisual(
+            CombatantSide side,
+            CharacterVisualState visual,
+            bool impactPending,
+            CombatantSide impactTargetSide)
+        {
+            return impactPending &&
+                side == impactTargetSide &&
+                visual == CharacterVisualState.Attacked
+                    ? CharacterVisualState.AttackThreatened
+                    : visual;
+        }
+
+        private CharacterVisualState ResolveRevolverTimedVisual(
+            CombatantSide side,
+            CharacterVisualState visual)
+        {
+            return ResolveRevolverTimedVisual(
+                side,
+                visual,
+                _revolverImpactPending,
+                _revolverImpactTargetSide);
+        }
+
+        private void BindRevolverImpactEvent()
+        {
+            RevolverAnimationEventReceiver receiver = ResolveRevolverEventReceiver();
+            if (receiver == null)
+            {
+                return;
+            }
+
+            receiver.ShotImpact -= HandleRevolverShotImpact;
+            receiver.ShotImpact += HandleRevolverShotImpact;
+        }
+
+        private void UnbindRevolverImpactEvent()
+        {
+            if (_revolverEventReceiver == null)
+            {
+                return;
+            }
+
+            _revolverEventReceiver.ShotImpact -= HandleRevolverShotImpact;
+        }
+
+        private RevolverAnimationEventReceiver ResolveRevolverEventReceiver()
+        {
+            if (_revolverEventReceiver != null)
+            {
+                return _revolverEventReceiver;
+            }
+
+            if (revolverAnimator == null)
+            {
+                return null;
+            }
+
+            _revolverEventReceiver =
+                revolverAnimator.GetComponent<RevolverAnimationEventReceiver>() ??
+                revolverAnimator.GetComponentInParent<RevolverAnimationEventReceiver>(true) ??
+                revolverAnimator.GetComponentInChildren<RevolverAnimationEventReceiver>(true);
+            return _revolverEventReceiver;
+        }
+
+        private void HandleRevolverShotImpact()
+        {
+            if (!_revolverImpactPending)
+            {
+                return;
+            }
+
+            if (_revolverImpactTargetSide == CombatantSide.Enemy)
+            {
+                enemyCharacter?.Render(CharacterVisualState.Attacked, "HIT!");
+            }
+
+            ClearPendingRevolverImpact();
+        }
+
+        private void ClearPendingRevolverImpact()
+        {
+            _revolverImpactPending = false;
+            _revolverImpactTargetSide = CombatantSide.Player;
+        }
+
+        private static CombatantSide Opposite(CombatantSide side)
+        {
+            return side == CombatantSide.Player
+                ? CombatantSide.Enemy
+                : CombatantSide.Player;
         }
 
         private void StopRevolverHideRoutine()

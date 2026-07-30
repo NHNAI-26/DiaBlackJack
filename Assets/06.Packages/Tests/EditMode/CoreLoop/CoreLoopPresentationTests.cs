@@ -535,7 +535,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 card => card.CardId == sourceCard.Id);
             Assert.That(
                 model.EnemyVisual,
-                Is.EqualTo(CharacterVisualState.AttackThreatened));
+                Is.EqualTo(CharacterVisualState.UseCard));
             Assert.That(model.EnemyActionLabel, Is.EqualTo("DISCARD"));
             Assert.That(
                 sourceModel.AbilityDescription,
@@ -604,7 +604,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(cue.TargetCardId, Is.EqualTo(targetCard.Id));
             Assert.That(
                 targetVisual,
-                Is.EqualTo(CharacterVisualState.Attacked));
+                Is.EqualTo(CharacterVisualState.UseCard));
         }
 
         [Test]
