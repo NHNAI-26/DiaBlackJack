@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: 06_plain
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
   key: threat-hammer-6
-  displayName: 위협용 해머
-  description: 적 공개 카드 1장 제거; 스탠드면 비공개 교체
+  displayName: "\uC704\uD611\uC6A9 \uD574\uBA38"
+  description: "\uC801 \uACF5\uAC1C \uCE74\uB4DC 1\uC7A5 \uC81C\uAC70; \uC2A4\uD0E0\uB4DC\uBA74
+    \uBE44\uACF5\uAC1C \uAD50\uCCB4"
   basePurchasePrice: 3
   shopWeight: 1
   rank: 6
