@@ -12,7 +12,7 @@ namespace DiaBlackJack.GameScene
 {
     /// <summary>
     /// Owns and drives a CoreLoop battle for the GameScene. The single coordinator: it
-    /// holds the <see cref="CoreLoopSession"/>, takes input (temporary IMGUI buttons — the project is
+    /// holds the <see cref="CoreLoopSession"/>, takes input (temporary IMGUI buttons ? the project is
     /// new-Input-System-only, so legacy OnMouseDown / Input.GetKey do not fire), and on every action
     /// re-presents through <see cref="GameScenePresenter"/> into the HUD and the two hands. Rendering
     /// lives in <see cref="GameHudView"/> and <see cref="CardHand"/>; this type only orchestrates.
@@ -40,7 +40,7 @@ namespace DiaBlackJack.GameScene
         [Header("Shop (MVP)")]
         [SerializeField] private ShopController shop;
 
-        [Tooltip("Font for the temporary IMGUI buttons/panels. Leave empty to use Unity's default.")]
+        [Tooltip("Font for the remaining shop/lighter IMGUI panels. Leave empty to use Unity's default.")]
         [SerializeField] private Font uiFont;
 
         [Header("Presentation pacing")]
@@ -78,10 +78,6 @@ namespace DiaBlackJack.GameScene
         private string _activeEnemyProfileKey;
         private GUIStyle _buttonStyle;
         private GUIStyle _labelStyle;
-        private GUIStyle _automaticCardPanelStyle;
-        private GUIStyle _contractTitleStyle;
-        private GUIStyle _contractBodyStyle;
-        private GUIStyle _contractCostStyle;
         private GUIStyle _shopPanelStyle;
         private GUIStyle _shopCardButtonStyle;
         private Vector2 _lighterRemovalScroll;
@@ -113,6 +109,7 @@ namespace DiaBlackJack.GameScene
             ? _stageSession.Battle
             : _session?.Battle;
 
+
         private void Awake()
         {
             HideRevolverAnimation();
@@ -141,6 +138,11 @@ namespace DiaBlackJack.GameScene
                 enemyCharacter.TrySetEnemyProfile(_activeEnemyProfileKey);
             }
             EnsureDeckPreview();
+
+            if (hud != null)
+            {
+                hud.CombatCommandRequested += HandleCombatCommand;
+            }
         }
 
         private void Start()
@@ -153,9 +155,17 @@ namespace DiaBlackJack.GameScene
             CloseDeckPreview();
         }
 
+        private void OnDestroy()
+        {
+            if (hud != null)
+            {
+                hud.CombatCommandRequested -= HandleCombatCommand;
+            }
+        }
+
         // Diegetic input: hover any card to enlarge it (usable cards also show a HUD badge), and
-        // click a usable card to activate its effect. New Input System — legacy OnMouseDown does not
-        // fire, so we raycast the pointer ourselves. Hit/Stand/Change and the choices stay as OnGUI.
+        // click a usable card to activate its effect. New Input System ? legacy OnMouseDown does not
+        // fire, so we raycast the pointer ourselves. Other combat input comes from GameHudView.
         private void Update()
         {
             if (_deckPreviewSwitchInputLocked &&
@@ -165,6 +175,7 @@ namespace DiaBlackJack.GameScene
             }
 
             if (_core == null)
+
             {
                 return;
             }
@@ -857,7 +868,9 @@ namespace DiaBlackJack.GameScene
 
         private void OnGUI()
         {
-            if (_core == null)
+            if (_core == null ||
+                shop == null ||
+                !shop.IsOpen)
             {
                 return;
             }
@@ -877,9 +890,7 @@ namespace DiaBlackJack.GameScene
                 normal = { textColor = Color.white }
             };
 
-            DrawAutomaticCardStatusPanel();
-
-            if (shop != null && shop.IsOpen && _choosingLighterRemoval)
+            if (_choosingLighterRemoval)
             {
                 DrawLighterRemovalPanel();
                 return;
@@ -887,91 +898,8 @@ namespace DiaBlackJack.GameScene
 
             if (_core.State == CoreLoopState.BattleEnded)
             {
-                if (IsStageBattle)
-                {
-                    DrawHeading("RETURNING TO RUN");
-                }
-                else if (shop != null && shop.IsOpen)
-                {
-                    DrawShopControls();
-                }
-                else
-                {
-                    DrawButtonRow(
-                        new[] { "RESTART" },
-                        new[] { _core.CanRestart },
-                        new Func<bool>[] { RestartRun });
-                }
-
-                return;
+                DrawShopControls();
             }
-
-            if (_core.IsChoosingChangeCard)
-            {
-                DrawChangeCandidates();
-                return;
-            }
-
-            if (_core.IsResolvingAutomaticCardEffect)
-            {
-                DrawAutomaticCardChoices();
-                return;
-            }
-
-            if (_core.IsResolvingCardEffect)
-            {
-                DrawCardEffectChoices();
-                return;
-            }
-
-            if (_core.DemonContract.IsResolving)
-            {
-                DrawDemonContractChoices();
-                return;
-            }
-
-            if (_showDemonContractConfirmation)
-            {
-                DrawDemonContractConfirmation();
-                return;
-            }
-
-            DrawHeading(
-                _core.ChangeActionText + "  ·  " +
-                _core.DemonContract.ActionText);
-            var labels = new List<string>
-            {
-                "HIT", "STAND", "CHANGE", "CONTRACT"
-            };
-            var enabled = new List<bool>
-            {
-                _core.CanHit,
-                _core.CanStand,
-                _core.CanChange,
-                _core.DemonContract.CanBegin
-            };
-            var actions = new List<Func<bool>>
-            {
-                TryPlayerHit,
-                TryPlayerStand,
-                TryBeginPlayerChange,
-                BeginDemonContractConfirmation
-            };
-            foreach (ActiveDemonContractActionViewModel action in
-                _core.DemonContract.ActiveActions)
-            {
-                int sourceCardId = action.SourceCardId;
-                labels.Add(action.Label);
-                enabled.Add(true);
-                actions.Add(() =>
-                    TryBeginPlayerActiveDemonContractAction(
-                        sourceCardId));
-            }
-
-            DrawButtonRow(
-                labels.ToArray(),
-                enabled.ToArray(),
-                actions.ToArray());
         }
 
         private void DrawShopControls()
@@ -984,7 +912,7 @@ namespace DiaBlackJack.GameScene
 
             DrawHeading("SHOP - hover goods and click to buy");
             DrawButtonRow(
-                new[] { "나가기" },
+                new[] { "������" },
                 new[] { true },
                 new Func<bool>[] { LeaveShop });
         }
@@ -1077,7 +1005,7 @@ namespace DiaBlackJack.GameScene
                         panelRect.yMax - 52f,
                         footerButtonWidth,
                         38f),
-                    "나가기",
+                    "������",
                     _buttonStyle))
                 {
                     ProcessInput(LeaveShop);
@@ -1102,280 +1030,6 @@ namespace DiaBlackJack.GameScene
                 fontStyle = FontStyle.Bold,
                 alignment = TextAnchor.MiddleCenter,
                 wordWrap = true
-            };
-        }
-
-        private void DrawChangeCandidates()
-        {
-            var candidates = _core.ChangeCandidates;
-            int count = candidates.Count;
-            var labels = new string[count];
-            var enabled = new bool[count];
-            var actions = new Func<bool>[count];
-            for (int i = 0; i < count; i++)
-            {
-                int index = i;
-                labels[i] = $"[ {candidates[i]} ]";
-                enabled[i] = true;
-                actions[i] = () => TrySelectChangedCard(index);
-            }
-
-            DrawHeading("CHOOSE A NEW HIDDEN CARD");
-            DrawButtonRow(labels, enabled, actions);
-        }
-
-        private void DrawCardEffectChoices()
-        {
-            var choices = _core.CardEffectChoices;
-            int count = choices.Count;
-            var labels = new string[count];
-            var enabled = new bool[count];
-            var actions = new Func<bool>[count];
-            for (int i = 0; i < count; i++)
-            {
-                CardEffectChoiceViewModel choice = choices[i];
-                labels[i] = choice.Label;
-                enabled[i] = true;
-                actions[i] = () => TryResolvePlayerCardChoice(choice.OptionId);
-            }
-
-            DrawHeading(_core.CardEffectPrompt);
-            DrawButtonRow(labels, enabled, actions);
-        }
-
-        private void DrawAutomaticCardChoices()
-        {
-            AutomaticCardInteractionViewModel interaction =
-                _core.AutomaticCardInteraction;
-            if (interaction == null)
-            {
-                DrawHeading("ENEMY AUTOMATIC DECISION");
-                return;
-            }
-
-            int count = interaction.Choices.Count;
-            var labels = new string[count];
-            var enabled = new bool[count];
-            var actions = new Func<bool>[count];
-            for (int i = 0; i < count; i++)
-            {
-                AutomaticCardChoiceViewModel choice =
-                    interaction.Choices[i];
-                int interactionId = interaction.InteractionId;
-                int optionId = choice.OptionId;
-                labels[i] = choice.Label;
-                enabled[i] = true;
-                actions[i] = () =>
-                    TryResolvePlayerAutomaticCardChoice(
-                        interactionId,
-                        optionId);
-            }
-
-            DrawHeading(
-                $"{interaction.SourceDisplayName}  |  {interaction.Prompt}");
-            DrawButtonRow(labels, enabled, actions);
-        }
-
-        private void DrawDemonContractConfirmation()
-        {
-            DemonContractPanelViewModel contract = _core.DemonContract;
-            DrawHeading(
-                $"영혼 {contract.SoulCost} 지불 · 계약 후 {contract.SoulAfterCost} · " +
-                "지불 뒤 후보 하나 필수 선택");
-            DrawButtonRow(
-                new[] { "CONFIRM CONTRACT", "CANCEL" },
-                new[] { contract.CanBegin, true },
-                new Func<bool>[] { ConfirmDemonContract, CancelDemonContract });
-        }
-
-        private void DrawDemonContractChoices()
-        {
-            DemonContractPanelViewModel contract = _core.DemonContract;
-            int count = contract.Choices.Count;
-            string heading = contract.Prompt;
-            if (!string.IsNullOrEmpty(contract.OwnerPreview))
-            {
-                heading += "  |  " + contract.OwnerPreview;
-            }
-
-            if (!contract.UsesContractCandidateLayout)
-            {
-                var labels = new string[count];
-                var enabled = new bool[count];
-                var actions = new Func<bool>[count];
-                for (int i = 0; i < count; i++)
-                {
-                    DemonContractChoiceViewModel choice = contract.Choices[i];
-                    labels[i] = choice.Title;
-                    enabled[i] = choice.CanSelect;
-                    actions[i] = () => contract.InteractionId.HasValue &&
-                        TryResolvePlayerDemonContract(
-                            contract.InteractionId.Value,
-                            choice.OptionId);
-                }
-
-                const float optionHeight = 64f;
-                DrawHeading(heading, optionHeight);
-                DrawButtonRow(labels, enabled, actions, optionHeight, maxWidth: 300f);
-                return;
-            }
-
-            bool compact = Screen.height <= 720;
-            float rowHeight = compact ? 166f : 204f;
-            DrawHeading(heading, rowHeight);
-            DrawDemonContractCandidateCards(contract, rowHeight, compact);
-        }
-
-        private void DrawDemonContractCandidateCards(
-            DemonContractPanelViewModel contract,
-            float height,
-            bool compact)
-        {
-            EnsureDemonContractStyles(compact);
-            int count = contract.Choices.Count;
-            const float gap = 12f;
-            float width = Mathf.Min(
-                380f,
-                (Screen.width - 40f - (count - 1) * gap) / count);
-            float totalWidth = count * width + (count - 1) * gap;
-            float x = (Screen.width - totalWidth) * 0.5f;
-            float y = Screen.height - height - 24f;
-
-            for (int i = 0; i < count; i++)
-            {
-                DemonContractChoiceViewModel choice = contract.Choices[i];
-                var cardRect = new Rect(x + i * (width + gap), y, width, height);
-                GUI.Box(cardRect, string.Empty);
-                float inset = compact ? 10f : 14f;
-                float titleHeight = compact ? 24f : 30f;
-                float buttonHeight = compact ? 30f : 38f;
-                float contentWidth = width - inset * 2f;
-                Sprite faceSprite = shop == null
-                    ? null
-                    : shop.GetDemonCardFaceSprite(choice.DefinitionKey);
-                float textX = cardRect.x + inset;
-                float textWidth = contentWidth;
-                if (faceSprite != null)
-                {
-                    float artHeight = height - buttonHeight - (compact ? 22f : 26f);
-                    float artWidth = Mathf.Min(
-                        artHeight * faceSprite.rect.width / faceSprite.rect.height,
-                        contentWidth * 0.32f);
-                    var artRect = new Rect(
-                        cardRect.x + inset,
-                        cardRect.y + 7f,
-                        artWidth,
-                        artHeight);
-                    DrawSprite(faceSprite, artRect);
-                    textX = artRect.xMax + inset;
-                    textWidth = cardRect.xMax - inset - textX;
-                }
-
-                GUI.Label(
-                    new Rect(textX, cardRect.y + 6f, textWidth, titleHeight),
-                    choice.Title,
-                    _contractTitleStyle);
-                GUI.Label(
-                    new Rect(
-                        textX,
-                        cardRect.y + titleHeight + 8f,
-                        textWidth,
-                        compact ? 55f : 74f),
-                    choice.Ability,
-                    _contractBodyStyle);
-                GUI.Label(
-                    new Rect(
-                        textX,
-                        cardRect.y + (compact ? 88f : 116f),
-                        textWidth,
-                        compact ? 38f : 48f),
-                    choice.Cost,
-                    _contractCostStyle);
-
-                using (new GUIEnabledScope(!_inputLocked && choice.CanSelect))
-                {
-                    string buttonLabel = choice.CanSelect
-                        ? "SELECT"
-                        : choice.DisabledReason;
-                    if (GUI.Button(
-                        new Rect(
-                            cardRect.x + inset,
-                            cardRect.yMax - buttonHeight - 8f,
-                            contentWidth,
-                            buttonHeight),
-                        buttonLabel,
-                        _buttonStyle) &&
-                        contract.InteractionId.HasValue)
-                    {
-                        int interactionId = contract.InteractionId.Value;
-                        int optionId = choice.OptionId;
-                        ProcessInput(() => TryResolvePlayerDemonContract(
-                            interactionId,
-                            optionId));
-                    }
-                }
-            }
-        }
-
-        private static void DrawSprite(Sprite sprite, Rect destination)
-        {
-            if (sprite == null || sprite.texture == null)
-            {
-                return;
-            }
-
-            Texture2D texture = sprite.texture;
-            Vector2[] uvs = sprite.uv;
-            if (uvs == null || uvs.Length == 0)
-            {
-                GUI.DrawTexture(destination, texture, ScaleMode.ScaleToFit, true);
-                return;
-            }
-
-            Vector2 minimum = uvs[0];
-            Vector2 maximum = uvs[0];
-            for (int i = 1; i < uvs.Length; i++)
-            {
-                minimum = Vector2.Min(minimum, uvs[i]);
-                maximum = Vector2.Max(maximum, uvs[i]);
-            }
-
-            var coordinates = new Rect(
-                minimum.x,
-                minimum.y,
-                maximum.x - minimum.x,
-                maximum.y - minimum.y);
-            GUI.DrawTextureWithTexCoords(destination, texture, coordinates, true);
-        }
-
-        private void EnsureDemonContractStyles(bool compact)
-        {
-            int titleSize = compact ? 18 : 22;
-            if (_contractTitleStyle != null &&
-                _contractTitleStyle.fontSize == titleSize)
-            {
-                return;
-            }
-
-            _contractTitleStyle = new GUIStyle(GUI.skin.label)
-            {
-                fontSize = titleSize,
-                fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.MiddleCenter,
-                normal = { textColor = Color.white }
-            };
-            _contractBodyStyle = new GUIStyle(GUI.skin.label)
-            {
-                fontSize = compact ? 13 : 16,
-                alignment = TextAnchor.UpperLeft,
-                wordWrap = true,
-                normal = { textColor = new Color(0.92f, 0.92f, 0.92f) }
-            };
-            _contractCostStyle = new GUIStyle(_contractBodyStyle)
-            {
-                fontSize = compact ? 12 : 15,
-                fontStyle = FontStyle.Bold,
-                normal = { textColor = new Color(1f, 0.72f, 0.3f) }
             };
         }
 
@@ -1439,48 +1093,6 @@ namespace DiaBlackJack.GameScene
             }
         }
 
-        private void DrawAutomaticCardStatusPanel()
-        {
-            AutomaticCardResultViewModel result =
-                _core.AutomaticCardResult;
-            if (result == null)
-            {
-                return;
-            }
-
-            _automaticCardPanelStyle ??=
-                new GUIStyle(GUI.skin.box)
-                {
-                    font = uiFont,
-                    fontSize = Screen.height <= 720 ? 14 : 16,
-                    fontStyle = FontStyle.Bold,
-                    alignment = TextAnchor.MiddleCenter,
-                    wordWrap = true,
-                    padding = new RectOffset(12, 12, 10, 10),
-                    normal = { textColor = Color.white }
-                };
-
-            string content = "AUTOMATIC CARD\n" +
-                result.PublicSummary;
-            if (!string.IsNullOrEmpty(result.PrivateSummary))
-            {
-                content += "\n" + result.PrivateSummary;
-            }
-
-            float width = Mathf.Min(720f, Screen.width - 40f);
-            float height = string.IsNullOrEmpty(result.PrivateSummary)
-                ? 104f
-                : 128f;
-            GUI.Box(
-                new Rect(
-                    (Screen.width - width) * 0.5f,
-                    88f,
-                    width,
-                    height),
-                content,
-                _automaticCardPanelStyle);
-        }
-
         private void DrawHeading(string text, float rowHeight = 48f)
         {
             if (string.IsNullOrEmpty(text))
@@ -1491,6 +1103,54 @@ namespace DiaBlackJack.GameScene
             const float h = 30f;
             float y = Screen.height - rowHeight - 24f - h - 6f;
             GUI.Label(new Rect(0f, y, Screen.width, h), text, _labelStyle);
+        }
+
+        private void HandleCombatCommand(GameSceneCombatHudCommand command)
+        {
+            switch (command.Kind)
+            {
+                case GameSceneCombatHudCommandKind.Hit:
+                    ProcessInput(TryPlayerHit);
+                    break;
+                case GameSceneCombatHudCommandKind.Stand:
+                    ProcessInput(TryPlayerStand);
+                    break;
+                case GameSceneCombatHudCommandKind.BeginChange:
+                    ProcessInput(TryBeginPlayerChange);
+                    break;
+                case GameSceneCombatHudCommandKind.SelectChangedCard:
+                    ProcessInput(() => TrySelectChangedCard(command.OptionId));
+                    break;
+                case GameSceneCombatHudCommandKind.BeginContractConfirmation:
+                    ProcessInput(BeginDemonContractConfirmation);
+                    break;
+                case GameSceneCombatHudCommandKind.ConfirmContract:
+                    ProcessInput(ConfirmDemonContract);
+                    break;
+                case GameSceneCombatHudCommandKind.CancelContract:
+                    ProcessInput(CancelDemonContract);
+                    break;
+                case GameSceneCombatHudCommandKind.ResolveCardEffectChoice:
+                    ProcessInput(() => TryResolvePlayerCardChoice(command.OptionId));
+                    break;
+                case GameSceneCombatHudCommandKind.ResolveAutomaticCardChoice:
+                    ProcessInput(() => TryResolvePlayerAutomaticCardChoice(
+                        command.InteractionId,
+                        command.OptionId));
+                    break;
+                case GameSceneCombatHudCommandKind.ResolveDemonContractChoice:
+                    ProcessInput(() => TryResolvePlayerDemonContract(
+                        command.InteractionId,
+                        command.OptionId));
+                    break;
+                case GameSceneCombatHudCommandKind.BeginActiveDemonContractAction:
+                    ProcessInput(() => TryBeginPlayerActiveDemonContractAction(
+                        command.OptionId));
+                    break;
+                case GameSceneCombatHudCommandKind.Restart:
+                    ProcessInput(RestartRun);
+                    break;
+            }
         }
 
         private void ProcessInput(Func<bool> action)
@@ -1524,8 +1184,8 @@ namespace DiaBlackJack.GameScene
             }
             else
             {
-                RefreshView();
                 UnlockInput();
+                RefreshView();
                 ReturnToProgressionIfStageBattleEnded();
             }
         }
@@ -1669,9 +1329,9 @@ namespace DiaBlackJack.GameScene
                 }
             }
 
-            // Land on the true current state — e.g. BattleEnded, which is not itself a step.
-            RefreshView();
+            // Land on the true current state ? e.g. BattleEnded, which is not itself a step.
             UnlockInput();
+            RefreshView();
             ReturnToProgressionIfStageBattleEnded();
         }
 
@@ -1692,7 +1352,15 @@ namespace DiaBlackJack.GameScene
 
             if (hud != null)
             {
-                hud.Render(vm.Core);
+                bool isShopOpen = shop != null && shop.IsOpen;
+                hud.Render(
+                    vm.Core,
+                    GameSceneCombatHudPresenter.Create(
+                        vm.Core,
+                        _showDemonContractConfirmation,
+                        IsStageBattle,
+                        isShopOpen,
+                        _inputLocked));
                 int gold = IsStageBattle
                     ? _stageSession.Progress.Player.CurrentGold
                     : shop != null ? shop.Gold : 0;
@@ -2345,7 +2013,7 @@ namespace DiaBlackJack.GameScene
             shop.Open();
         }
 
-        // Leave the shop and start the next battle. Gold is KEPT by ShopController — it accumulates
+        // Leave the shop and start the next battle. Gold is KEPT by ShopController ? it accumulates
         // across the run's battles; only a defeat restart resets it. TryRestart swaps in a fresh battle
         // and emits no Stepped events, so ProcessInput re-presents immediately via RefreshView.
         private bool LeaveShop()

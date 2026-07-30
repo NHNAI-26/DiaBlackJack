@@ -193,6 +193,14 @@
 - 열린 동안 전투 입력과 `W`·`S` 카메라 전환을 차단한다. 카드 호버는 검사창 상단 이름·효과 설명을 갱신하고, 배경 클릭·`ESC`·닫기 버튼으로 닫는다.
 - 검증: 전용 `GameSceneDeckPreviewTests` 3/3, 전체 EditMode 749/749 통과. GameScene Play Mode에서 단일 `UIDeckPreview`가 뽑을 카드 18장으로 활성화되고 카메라 입력 잠금 수가 1이 되는지, 직접 닫은 뒤 오브젝트가 비활성화되고 다음 프레임 잠금 수가 0으로 복구되는지 확인했다. Console Error/Warning 0.
 
+## 10.1 GSH-01 전투 HUD
+
+- `HUD.prefab`의 `CombatControls`는 하단 중앙 고정 `Hit`·`Stand`·`Change`·`Contract` 행, 행동 툴팁, 선택 모달, 계약 후보 2칸, 자동 카드 결과 패널로 구성한다. 버튼 이미지는 각각 `Brush_UI_4`·`Brush_UI_5`·`Brush_UI_9`·`Brush_UI_10`을 사용한다.
+- 툴팁은 카드 호버 배지와 분리한다. 행동 의미와 `ChangeActionText`·계약 행동 문자열의 현재 영혼 비용/불가 사유를 함께 표시한다.
+- 선택 모달은 프리팹에 미리 배치한 스크롤 가능 슬롯 100개를 재사용한다. 계약 후보의 앞면은 HUD가 `CardContentCatalogSO`를 직접 참조해 표시하며, 런타임 전용 UI 오브젝트를 생성하지 않는다.
+- `GameManager`는 HUD 명령을 기존 `ProcessInput`과 `Try*` API로 전달한다. 전투용 `OnGUI`·즉시형 그리기는 제거했고, 상점·라이터 선택 패널만 `OnGUI`로 유지한다.
+- 검증: `GameSceneCombatHudPresentationTests` 6/6, 전체 EditMode 767/767 통과. GameScene 1280×720 및 1920×1080 캡처에서 하단 4버튼과 툴팁의 버튼 겹침이 없음을 확인했고 Console Error/Warning 0.
+
 ## 11. 완료 기준
 
 - 2.5D 테이블에서 양측 카드·덱·버린 카드 더미의 위치가 겹치지 않는다.
@@ -213,6 +221,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-30 | HONG | GSH-01 전투 입력을 `HUD.prefab` uGUI로 이관했다. 하단 4개 Brush 버튼, 카드 호버와 분리된 행동 툴팁, 100개 고정 선택 슬롯, 계약 후보 2칸과 자동 결과 패널을 추가했으며, 전투 `OnGUI`는 제거하고 상점·라이터 선택만 남겼다. 전용 6/6, 전체 EditMode 767/767 및 1280×720·1920×1080 HUD 캡처, Console Error/Warning 0을 확인했다. |
 | 2026-07-30 | HONG | 전투 행동 표시는 플레이어 텍스트·상태 연출을 제거하고, 적 행동 텍스트·공격 반응 스프라이트만 유지하도록 단순화했다. 전투 색조·크기 변화는 제거했으며 상점 상인 색조·축소와 퇴장 뒤 기본값 복원은 유지한다. EditMode 신규 검증 1/1, 전체 761/761 통과 및 GameScene 누락 참조 0건을 확인했다. |
 | 2026-07-30 | HONG | GSV-03 씬 구성을 단일 `UIDeckPreview`의 Active/Inactive 재사용 방식으로 정리하고 에디터 자동 설치를 제거했다. 검사창이 열린 동안 `W`·`S` 카메라 전환도 잠그도록 입력 경계를 보강했다. 전용 EditMode 3/3, 전체 EditMode 749/749 및 GameScene 활성화·잠금·직접 닫기·잠금 복구를 확인했다. |
 | 2026-07-30 | HONG | GSV-03 검사창을 `DeckPreviewOverlay.prefab` 기반 uGUI 5열 연속 스크롤로 교체했다. `Card.prefab` 앞면 스프라이트, 프리팹 내 사전 배치 슬롯 100개, 안정 정렬·모달 입력 차단·호버 설명·닫기 동작을 확정했다. 전용 EditMode 5/5, 전체 EditMode 735/735 및 GameScene 18장 스크롤·닫기 확인. |
