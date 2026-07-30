@@ -1,102 +1,218 @@
-using UnityEngine;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using Border.Core;
 using Border.Events;
-using Border.UI;
-using Border.Localization;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Border.Settings
 {
-    /// <summary>
-    /// 씬 시작 시 저장된 설정값을 적용하고 관련 이벤트를 브로드캐스트하는 시스템이다.
-    /// </summary>
-    public class SettingsSystem : MonoBehaviour
+    [DefaultExecutionOrder(-200)]
+    [DisallowMultipleComponent]
+    public sealed class SettingsSystem : MonoBehaviour
     {
-        [SerializeField] private SettingsSO currentSettings;
-
-        [Tooltip("ISettingsRepository를 구현한 컴포넌트(게임이 제공). 비우면 저장/로드는 비활성.")]
-        [SerializeField] private MonoBehaviour settingsRepositoryBehaviour;
-        private ISettingsRepository settingsRepository;
-
-        [Header("Listening on")]
-        [SerializeField] private VoidEventChannelSO saveSettingsEvent;
+        [SerializeField] private GameSettingsDefaultsSO defaults;
 
         [Header("Broadcasting on")]
         [SerializeField] private FloatEventChannelSO changeMasterVolumeEvent;
         [SerializeField] private FloatEventChannelSO changeMusicVolumeEvent;
         [SerializeField] private FloatEventChannelSO changeSfxVolumeEvent;
-        [SerializeField] private IntEventChannelSO changeResolutionEvent;
-        [SerializeField] private BoolEventChannelSO changeHudOnEvent;
-        [SerializeField] private BoolEventChannelSO changeCameraShakeEvent;
-        [SerializeField] private StringEventChannelSO changeLanguageEvent;
 
-        /// <summary>
-        /// 저장된 프로필 데이터를 설정 SO에 로드한다.
-        /// </summary>
+        private ISettingsRepository _repository;
+        private Coroutine _displayVerification;
+        private GameSettingsSnapshot _snapshot;
+        private static SettingsSystem _current;
+
+        public static SettingsSystem Current
+        {
+            get
+            {
+                if (_current == null && Application.isPlaying)
+                {
+                    _current = FindFirstObjectByType<SettingsSystem>();
+                }
+
+                return _current;
+            }
+            private set => _current = value;
+        }
+        public GameSettingsSnapshot Snapshot => _snapshot;
+        public event Action<GameSettingsSnapshot> Changed;
+
+        [RuntimeInitializeOnLoadMethod(
+            RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            _current = null;
+        }
+
         private void Awake()
         {
-            settingsRepository = settingsRepositoryBehaviour as ISettingsRepository;
-            if (settingsRepositoryBehaviour != null && settingsRepository == null)
+            if (_current != null && _current != this)
             {
-                Log.W($"[SettingsSystem] 할당된 {settingsRepositoryBehaviour.GetType().Name} 는 ISettingsRepository 를 구현하지 않습니다.");
+                Destroy(gameObject);
+                return;
             }
 
-            settingsRepository?.Load(currentSettings);
+            _current = this;
+            DontDestroyOnLoad(gameObject);
+            _repository = new PlayerPrefsSettingsRepository();
+
+            Resolution native = Screen.currentResolution;
+            GameSettingsSnapshot fallback = defaults != null
+                ? defaults.CreateSnapshot(native.width, native.height)
+                : new GameSettingsSnapshot(
+                    native.width,
+                    native.height,
+                    GameWindowMode.BorderlessFullscreen,
+                    1f,
+                    0.8f,
+                    1f);
+            _snapshot = _repository.TryLoad(
+                out GameSettingsSnapshot loaded)
+                ? Validate(loaded, fallback)
+                : fallback;
+            SettingsGraphicsUtility.Apply(_snapshot);
         }
 
-        /// <summary>
-        /// 설정 저장 이벤트를 구독한다.
-        /// </summary>
         private void OnEnable()
         {
-            if (saveSettingsEvent != null)
-            {
-                saveSettingsEvent.OnEventRaised += SaveSettings;
-            }
+            SceneManager.sceneLoaded += HandleSceneLoaded;
         }
 
-        /// <summary>
-        /// 설정 저장 이벤트 구독을 해제한다.
-        /// </summary>
-        private void OnDisable()
-        {
-            if (saveSettingsEvent != null)
-            {
-                saveSettingsEvent.OnEventRaised -= SaveSettings;
-            }
-        }
-
-        /// <summary>
-        /// 씬 시작 시 현재 설정값을 다시 로드하고 각 시스템에 이벤트로 전파한다.
-        /// </summary>
         private void Start()
         {
-            // 디스크 로드 시점이 게임 측 초기화에 의존하므로 Start에서 최종 동기화한다.
-            settingsRepository?.Load(currentSettings);
-            SetCurrentSettings();
+            BroadcastAudio();
         }
 
-        /// <summary>
-        /// 현재 설정값을 각 이벤트 채널로 브로드캐스트한다.
-        /// </summary>
-        private void SetCurrentSettings()
+        private void OnDisable()
         {
-            SettingsGraphicsUtility.ApplyGraphicsSettings(currentSettings.ResolutionIndex, currentSettings.WindowModeIndex);
-            changeMasterVolumeEvent?.RaiseEvent(currentSettings.MasterVolume);
-            changeMusicVolumeEvent?.RaiseEvent(currentSettings.MusicVolume);
-            changeSfxVolumeEvent?.RaiseEvent(currentSettings.SfxVolume);
-            changeResolutionEvent?.RaiseEvent(currentSettings.ResolutionIndex);
-            changeHudOnEvent?.RaiseEvent(currentSettings.IsHudOn);
-            changeCameraShakeEvent?.RaiseEvent(currentSettings.IsCameraShakeOn);
-            changeLanguageEvent?.RaiseEvent(currentSettings.LanguageCode);
+            SceneManager.sceneLoaded -= HandleSceneLoaded;
         }
 
-        /// <summary>
-        /// 현재 설정 SO 값을 프로필 저장 데이터로 반영하고 디스크에 저장한다.
-        /// </summary>
-        private void SaveSettings()
+        private void OnDestroy()
         {
-            settingsRepository?.Save(currentSettings);
+            if (_current == this)
+            {
+                _current = null;
+            }
+        }
+
+        public void PreviewDisplay(
+            int width,
+            int height,
+            GameWindowMode mode)
+        {
+            List<DisplayResolutionOption> options =
+                SettingsGraphicsUtility.GetResolutionOptions();
+            DisplayResolutionOption selected =
+                SettingsGraphicsUtility.ValidateResolution(
+                    options,
+                    width,
+                    height);
+            GameSettingsSnapshot previous = _snapshot;
+            _snapshot = _snapshot.WithDisplay(
+                selected.Width,
+                selected.Height,
+                mode);
+            SettingsGraphicsUtility.Apply(_snapshot);
+            Changed?.Invoke(_snapshot);
+
+            if (_displayVerification != null)
+            {
+                StopCoroutine(_displayVerification);
+            }
+            _displayVerification = StartCoroutine(
+                VerifyDisplayChange(previous, _snapshot));
+        }
+
+        public void PreviewAudio(
+            float masterVolume,
+            float bgmVolume,
+            float sfxVolume)
+        {
+            _snapshot = _snapshot.WithAudio(
+                masterVolume,
+                bgmVolume,
+                sfxVolume);
+            BroadcastAudio();
+            Changed?.Invoke(_snapshot);
+        }
+
+        public bool Save()
+        {
+            bool saved = _repository != null &&
+                _repository.TrySave(_snapshot);
+            if (!saved)
+            {
+                Log.W("[SettingsSystem] Failed to save settings.", this);
+            }
+
+            return saved;
+        }
+
+        private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            BroadcastAudio();
+        }
+
+        private void BroadcastAudio()
+        {
+            changeMasterVolumeEvent?.RaiseEvent(_snapshot.MasterVolume);
+            changeMusicVolumeEvent?.RaiseEvent(_snapshot.BgmVolume);
+            changeSfxVolumeEvent?.RaiseEvent(_snapshot.SfxVolume);
+        }
+
+        private IEnumerator VerifyDisplayChange(
+            GameSettingsSnapshot previous,
+            GameSettingsSnapshot requested)
+        {
+            yield return null;
+            yield return null;
+
+            if (Application.isEditor ||
+                requested.WindowMode ==
+                GameWindowMode.BorderlessFullscreen ||
+                (Screen.width == requested.ResolutionWidth &&
+                 Screen.height == requested.ResolutionHeight))
+            {
+                _displayVerification = null;
+                yield break;
+            }
+
+            Log.W(
+                $"[SettingsSystem] Display change failed: " +
+                $"{requested.ResolutionWidth}x{requested.ResolutionHeight}.",
+                this);
+            _snapshot = previous;
+            SettingsGraphicsUtility.Apply(_snapshot);
+            Changed?.Invoke(_snapshot);
+            _displayVerification = null;
+        }
+
+        private static GameSettingsSnapshot Validate(
+            GameSettingsSnapshot loaded,
+            GameSettingsSnapshot fallback)
+        {
+            List<DisplayResolutionOption> options =
+                SettingsGraphicsUtility.GetResolutionOptions();
+            DisplayResolutionOption resolution =
+                SettingsGraphicsUtility.ValidateResolution(
+                    options,
+                    loaded.ResolutionWidth,
+                    loaded.ResolutionHeight);
+            GameWindowMode mode =
+                GameSettingsSnapshot.IsValidWindowMode(loaded.WindowMode)
+                    ? loaded.WindowMode
+                    : fallback.WindowMode;
+            return new GameSettingsSnapshot(
+                resolution.Width,
+                resolution.Height,
+                mode,
+                loaded.MasterVolume,
+                loaded.BgmVolume,
+                loaded.SfxVolume);
         }
     }
-
 }

@@ -73,6 +73,7 @@ namespace DiaBlackJack.GameScene
         private DemonCardView _hoveredDemonCard;
         private ShopUtilityItemView _hoveredShopUtilityItem;
         private bool _inputLocked;
+        private bool _pauseInputBlocked;
         private bool _choosingLighterRemoval;
         private int _battleIndex;
         private string _activeEnemyProfileKey;
@@ -109,6 +110,30 @@ namespace DiaBlackJack.GameScene
             ? _stageSession.Battle
             : _session?.Battle;
 
+        public void SetPauseInputBlocked(bool blocked)
+        {
+            _pauseInputBlocked = blocked;
+            if (!blocked)
+            {
+                return;
+            }
+
+            UpdateHover(null);
+            UpdateDemonCardHover(null);
+            UpdateShopUtilityItemHover(null);
+            hud?.HideCardHoverBadge();
+        }
+
+        public bool TryCloseTransientOverlay()
+        {
+            if (deckPreview == null || !deckPreview.IsOpen)
+            {
+                return false;
+            }
+
+            CloseDeckPreview();
+            return true;
+        }
 
         private void Awake()
         {
@@ -174,8 +199,12 @@ namespace DiaBlackJack.GameScene
                 EndDeckPreviewSwitchInputLock();
             }
 
-            if (_core == null)
+            if (_pauseInputBlocked)
+            {
+                return;
+            }
 
+            if (_core == null)
             {
                 return;
             }
@@ -202,11 +231,6 @@ namespace DiaBlackJack.GameScene
                 UpdateDemonCardHover(null);
                 UpdateShopUtilityItemHover(null);
                 hud?.HideCardHoverBadge();
-
-                if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-                {
-                    CloseDeckPreview();
-                }
 
                 return;
             }
@@ -868,7 +892,8 @@ namespace DiaBlackJack.GameScene
 
         private void OnGUI()
         {
-            if (_core == null ||
+            if (_pauseInputBlocked ||
+                _core == null ||
                 shop == null ||
                 !shop.IsOpen)
             {
@@ -1107,6 +1132,11 @@ namespace DiaBlackJack.GameScene
 
         private void HandleCombatCommand(GameSceneCombatHudCommand command)
         {
+            if (_pauseInputBlocked)
+            {
+                return;
+            }
+
             switch (command.Kind)
             {
                 case GameSceneCombatHudCommandKind.Hit:
@@ -1155,7 +1185,7 @@ namespace DiaBlackJack.GameScene
 
         private void ProcessInput(Func<bool> action)
         {
-            if (_inputLocked || action == null)
+            if (_pauseInputBlocked || _inputLocked || action == null)
             {
                 return;
             }
