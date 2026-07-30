@@ -1,4 +1,5 @@
 using Border.Audio;
+using DiaBlackJack.Content;
 using UnityEngine;
 
 namespace DiaBlackJack.GameScene
@@ -8,8 +9,7 @@ namespace DiaBlackJack.GameScene
     {
         [SerializeField] private GameObject front;
         [SerializeField] private GameObject back;
-        [SerializeField] private Sprite[] faceSpritesByIndex = new Sprite[13];
-        [SerializeField] private int defaultFaceSpriteIndex = 1;
+        [SerializeField] private CardContentCatalogSO cardContentCatalog;
 
         [Header("Hover badge anchor")]
         [Tooltip("World-space anchor projected to the HUD while this demon card is hovered.")]
@@ -69,7 +69,7 @@ namespace DiaBlackJack.GameScene
 
             if (_showingFrontFace)
             {
-                ApplyFaceSprite(card.FaceSpriteIndex);
+                ApplyFaceSprite(card.DefinitionKey);
             }
 
             if (back != null)
@@ -98,8 +98,9 @@ namespace DiaBlackJack.GameScene
 
         public Sprite GetFaceSprite(string definitionKey)
         {
-            return SpriteForIndex(
-                GameSceneCardVisualCatalog.DemonCardSpriteIndexFor(definitionKey));
+            return cardContentCatalog == null
+                ? null
+                : cardContentCatalog.GetDemonFaceSprite(definitionKey);
         }
 
         public bool TryGetHoverBadgeScreenPosition(Camera camera, out Vector2 screenPosition)
@@ -136,10 +137,10 @@ namespace DiaBlackJack.GameScene
             return text;
         }
 
-        private void ApplyFaceSprite(int index)
+        private void ApplyFaceSprite(string definitionKey)
         {
             SpriteRenderer renderer = FrontSpriteRenderer();
-            Sprite sprite = SpriteForIndex(index) ?? SpriteForIndex(defaultFaceSpriteIndex);
+            Sprite sprite = GetFaceSprite(definitionKey);
             if (renderer != null && sprite != null)
             {
                 renderer.sprite = sprite;
@@ -154,16 +155,6 @@ namespace DiaBlackJack.GameScene
             }
 
             SoundManager.Current?.PlaySfx(hoverSfxId);
-        }
-
-        private Sprite SpriteForIndex(int index)
-        {
-            if (index < 1 || faceSpritesByIndex == null || index >= faceSpritesByIndex.Length)
-            {
-                return null;
-            }
-
-            return faceSpritesByIndex[index];
         }
 
         private SpriteRenderer FrontSpriteRenderer()

@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d658a77d998e43f1b3fa1f8d0a110002, type: 3}
+  m_Name: beelzebub
+  m_EditorClassIdentifier: Border::DiaBlackJack.Content.DemonCardDefinitionSO
+  key: beelzebub
+  displayName: 바알제붑
+  activeEffectDescription: 버스트를 영혼과 소유자가 고른 양측 공개 카드로 대신한다.
+  costDescription: 계약 시 영혼 1, 공개 카드 3장 이하일 때 스탠드 불가
+  baseSoulCost: 1
+  basePurchasePrice: 3
+  shopWeight: 1
+  kind: 4
+  faceSprite: {fileID: 21300000, guid: 962df06e8e89faa4ab27724338a8599c, type: 3}

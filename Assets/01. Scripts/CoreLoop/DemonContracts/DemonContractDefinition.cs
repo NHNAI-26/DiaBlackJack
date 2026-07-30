@@ -10,7 +10,9 @@ namespace DiaBlackJack.CoreLoop
             DemonContractKind kind,
             int baseSoulCost,
             string summary,
-            string costSummary)
+            string costSummary,
+            int basePurchasePrice = 3,
+            int shopWeight = 1)
         {
             if (string.IsNullOrWhiteSpace(key))
             {
@@ -52,15 +54,29 @@ namespace DiaBlackJack.CoreLoop
                     nameof(summary));
             }
 
+            if (basePurchasePrice < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(basePurchasePrice));
+            }
+
+            if (shopWeight <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(shopWeight));
+            }
+
             Key = key.Trim();
             DisplayName = displayName.Trim();
             Kind = kind;
             BaseSoulCost = baseSoulCost;
             Summary = summary.Trim();
             CostSummary = costSummary.Trim();
+            BasePurchasePrice = basePurchasePrice;
+            ShopWeight = shopWeight;
         }
 
         public int BaseSoulCost { get; }
+
+        public int BasePurchasePrice { get; }
 
         public string CostSummary { get; }
 
@@ -71,5 +87,7 @@ namespace DiaBlackJack.CoreLoop
         public DemonContractKind Kind { get; }
 
         public string Summary { get; }
+
+        public int ShopWeight { get; }
     }
 }

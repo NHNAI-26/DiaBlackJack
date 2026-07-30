@@ -7,18 +7,15 @@ namespace DiaBlackJack.StageProgression
 {
     public sealed class ShopOfferGenerator
     {
-        public const int DefaultNormalCardPrice = 3;
-        public const int DefaultDemonCardPrice = 3;
         public const int DefaultLighterPrice = 2;
         public const int DefaultWhiskeyPrice = 2;
         public const int DefaultUtilityPriceIncrease = 1;
         public const int DefaultWhiskeyRecovery = 2;
 
+        private readonly CardContentCatalog _cardContentCatalog;
         private readonly DeterministicRng _random = new DeterministicRng();
         private readonly IReadOnlyList<string> _normalDefinitionKeys;
         private readonly IReadOnlyList<string> _demonDefinitionKeys;
-        private readonly int _normalCardPrice;
-        private readonly int _demonCardPrice;
         private readonly int _lighterBasePrice;
         private readonly int _whiskeyBasePrice;
         private readonly int _utilityPriceIncrease;
@@ -28,15 +25,30 @@ namespace DiaBlackJack.StageProgression
 
         public ShopOfferGenerator(
             int seed,
-            int normalCardPrice = DefaultNormalCardPrice,
-            int demonCardPrice = DefaultDemonCardPrice,
+            int lighterBasePrice = DefaultLighterPrice,
+            int whiskeyBasePrice = DefaultWhiskeyPrice,
+            int utilityPriceIncrease = DefaultUtilityPriceIncrease,
+            int whiskeyRecovery = DefaultWhiskeyRecovery)
+            : this(
+                CreateLegacyCatalog(),
+                seed,
+                lighterBasePrice,
+                whiskeyBasePrice,
+                utilityPriceIncrease,
+                whiskeyRecovery)
+        {
+        }
+
+        public ShopOfferGenerator(
+            CardContentCatalog cardContentCatalog,
+            int seed,
             int lighterBasePrice = DefaultLighterPrice,
             int whiskeyBasePrice = DefaultWhiskeyPrice,
             int utilityPriceIncrease = DefaultUtilityPriceIncrease,
             int whiskeyRecovery = DefaultWhiskeyRecovery)
         {
-            ValidateNonNegative(normalCardPrice, nameof(normalCardPrice));
-            ValidateNonNegative(demonCardPrice, nameof(demonCardPrice));
+            _cardContentCatalog = cardContentCatalog ??
+                throw new ArgumentNullException(nameof(cardContentCatalog));
             ValidateNonNegative(lighterBasePrice, nameof(lighterBasePrice));
             ValidateNonNegative(whiskeyBasePrice, nameof(whiskeyBasePrice));
             ValidateNonNegative(utilityPriceIncrease, nameof(utilityPriceIncrease));
@@ -45,10 +57,8 @@ namespace DiaBlackJack.StageProgression
                 throw new ArgumentOutOfRangeException(nameof(whiskeyRecovery));
             }
 
-            _normalDefinitionKeys = CreateNormalPool();
-            _demonDefinitionKeys = CreateDemonPool();
-            _normalCardPrice = normalCardPrice;
-            _demonCardPrice = demonCardPrice;
+            _normalDefinitionKeys = CreateNormalPool(_cardContentCatalog);
+            _demonDefinitionKeys = CreateDemonPool(_cardContentCatalog);
             _lighterBasePrice = lighterBasePrice;
             _whiskeyBasePrice = whiskeyBasePrice;
             _utilityPriceIncrease = utilityPriceIncrease;
@@ -62,9 +72,8 @@ namespace DiaBlackJack.StageProgression
         internal ShopOfferGenerator CreateFresh()
         {
             return new ShopOfferGenerator(
+                _cardContentCatalog,
                 _seed,
-                _normalCardPrice,
-                _demonCardPrice,
                 _lighterBasePrice,
                 _whiskeyBasePrice,
                 _utilityPriceIncrease,
@@ -129,7 +138,7 @@ namespace DiaBlackJack.StageProgression
                     optionId,
                     ShopCardDeckKind.Normal,
                     selectedKey,
-                    _normalCardPrice));
+                    _cardContentCatalog.GetNormalByKey(selectedKey).BasePurchasePrice));
             }
         }
 
@@ -138,14 +147,14 @@ namespace DiaBlackJack.StageProgression
             var remainingKeys = new List<string>(_demonDefinitionKeys);
             for (int optionId = 3; optionId < 5; optionId++)
             {
-                int selectedIndex = _random.Next(remainingKeys.Count);
+                int selectedIndex = SelectDemonIndex(remainingKeys);
                 string selectedKey = remainingKeys[selectedIndex];
                 remainingKeys.RemoveAt(selectedIndex);
                 options.Add(new ShopCardOption(
                     optionId,
                     ShopCardDeckKind.Demon,
                     selectedKey,
-                    _demonCardPrice));
+                    _cardContentCatalog.GetDemonByKey(selectedKey).BasePurchasePrice));
             }
         }
 
@@ -153,21 +162,18 @@ namespace DiaBlackJack.StageProgression
             IReadOnlyList<string> remainingKeys,
             bool followsEliteVictory)
         {
-            if (!followsEliteVictory)
-            {
-                return _random.Next(remainingKeys.Count);
-            }
-
             int totalWeight = 0;
             for (int index = 0; index < remainingKeys.Count; index++)
             {
-                totalWeight += IsHighGrade(remainingKeys[index]) ? 2 : 1;
+                CardDefinition definition = _cardContentCatalog.GetNormalByKey(remainingKeys[index]);
+                totalWeight += GetNormalShopWeight(definition, followsEliteVictory);
             }
 
             int selectedWeight = _random.Next(totalWeight);
             for (int index = 0; index < remainingKeys.Count; index++)
             {
-                selectedWeight -= IsHighGrade(remainingKeys[index]) ? 2 : 1;
+                CardDefinition definition = _cardContentCatalog.GetNormalByKey(remainingKeys[index]);
+                selectedWeight -= GetNormalShopWeight(definition, followsEliteVictory);
                 if (selectedWeight < 0)
                 {
                     return index;
@@ -175,6 +181,14 @@ namespace DiaBlackJack.StageProgression
             }
 
             throw new InvalidOperationException("Weighted shop selection failed.");
+        }
+
+        private static int GetNormalShopWeight(
+            CardDefinition definition,
+            bool followsEliteVictory)
+        {
+            return definition.ShopWeight *
+                (followsEliteVictory && IsHighGrade(definition) ? 2 : 1);
         }
 
         private int CalculateUtilityPrice(int basePrice, int utilityPriceLevel)
@@ -188,15 +202,48 @@ namespace DiaBlackJack.StageProgression
             return basePrice + utilityPriceLevel * _utilityPriceIncrease;
         }
 
-        private static bool IsHighGrade(string definitionKey)
+        private int SelectDemonIndex(IReadOnlyList<string> remainingKeys)
         {
-            return CardDefinitionCatalog.GetByKey(definitionKey).Rank >= 5;
+            int totalWeight = 0;
+            for (int index = 0; index < remainingKeys.Count; index++)
+            {
+                totalWeight += _cardContentCatalog
+                    .GetDemonByKey(remainingKeys[index])
+                    .ShopWeight;
+            }
+
+            int selectedWeight = _random.Next(totalWeight);
+            for (int index = 0; index < remainingKeys.Count; index++)
+            {
+                selectedWeight -= _cardContentCatalog
+                    .GetDemonByKey(remainingKeys[index])
+                    .ShopWeight;
+                if (selectedWeight < 0)
+                {
+                    return index;
+                }
+            }
+
+            throw new InvalidOperationException("Weighted demon shop selection failed.");
         }
 
-        private static IReadOnlyList<string> CreateNormalPool()
+        private static bool IsHighGrade(CardDefinition definition)
         {
-            var keys = new List<string>(CardDefinitionCatalog.All.Count);
-            foreach (CardDefinition definition in CardDefinitionCatalog.All)
+            return definition.Rank >= 5;
+        }
+
+        private static CardContentCatalog CreateLegacyCatalog()
+        {
+            return new CardContentCatalog(
+                CardDefinitionCatalog.All,
+                DemonContractCatalog.Default.Definitions);
+        }
+
+        private static IReadOnlyList<string> CreateNormalPool(
+            CardContentCatalog cardContentCatalog)
+        {
+            var keys = new List<string>(cardContentCatalog.NormalDefinitions.Count);
+            foreach (CardDefinition definition in cardContentCatalog.NormalDefinitions)
             {
                 keys.Add(definition.Key);
             }
@@ -204,11 +251,12 @@ namespace DiaBlackJack.StageProgression
             return keys.AsReadOnly();
         }
 
-        private static IReadOnlyList<string> CreateDemonPool()
+        private static IReadOnlyList<string> CreateDemonPool(
+            CardContentCatalog cardContentCatalog)
         {
-            var keys = new List<string>(DemonContractCatalog.Default.Definitions.Count);
+            var keys = new List<string>(cardContentCatalog.DemonDefinitions.Count);
             foreach (DemonContractDefinition definition in
-                     DemonContractCatalog.Default.Definitions)
+                     cardContentCatalog.DemonDefinitions)
             {
                 keys.Add(definition.Key);
             }

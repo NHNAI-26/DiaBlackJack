@@ -96,7 +96,6 @@ namespace DiaBlackJack.CoreLoop.Tests
             SetPrivateField("normalCardHolder", holderObject.transform);
             SetPrivateField("normalCardPrefab", prefab);
             SetPrivateField("normalCardOfferCount", 3);
-            SetPrivateField("normalCardPrice", 3);
 
             _shop.Open();
             CardView[] offers = holderObject.GetComponentsInChildren<CardView>(true);
@@ -227,7 +226,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             SetPrivateField(
                 "demonCardOfferCount",
                 DemonContractCatalog.Default.Definitions.Count);
-            SetPrivateField("demonCardPrice", 0);
+            SetPrivateField("goldPerWin", 40);
 
             _shop.Open();
             DemonCardView[] offers =

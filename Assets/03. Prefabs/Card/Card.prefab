@@ -448,6 +448,7 @@ MonoBehaviour:
   front: {fileID: 7366520915214099447}
   back: {fileID: 7359149338926229531}
   rankText: {fileID: 0}
+  cardContentCatalog: {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a140001, type: 2}
   faceSpritesByRank:
   - {fileID: 0}
   - {fileID: 21300000, guid: f54c421f5f46de9488f1d0a27ddd149a, type: 3}

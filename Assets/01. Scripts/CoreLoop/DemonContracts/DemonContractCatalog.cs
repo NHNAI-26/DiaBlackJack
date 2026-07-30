@@ -29,7 +29,7 @@ namespace DiaBlackJack.CoreLoop
                     MammonKey
                 }.AsReadOnly();
 
-        private static readonly DemonContractCatalog DefaultCatalog =
+        private static DemonContractCatalog DefaultCatalog =
             new DemonContractCatalog(CreateDefaultDefinitions());
 
         private readonly Dictionary<string, DemonContractDefinition> _definitionsByKey;
@@ -75,6 +75,20 @@ namespace DiaBlackJack.CoreLoop
         }
 
         public static DemonContractCatalog Default => DefaultCatalog;
+
+        /// <summary>
+        /// Replaces prototype data with content converted from Unity authoring assets. The facade
+        /// remains pure C# so CoreLoop never acquires a UnityEngine dependency.
+        /// </summary>
+        public static void Install(CardContentCatalog catalog)
+        {
+            if (catalog == null)
+            {
+                throw new ArgumentNullException(nameof(catalog));
+            }
+
+            DefaultCatalog = new DemonContractCatalog(catalog.DemonDefinitions);
+        }
 
         public static IReadOnlyList<string> PlayerDefaultDemonDeckKeys =>
             PlayerDefaultDemonDeckDefinitionKeys;

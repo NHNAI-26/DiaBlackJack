@@ -114,65 +114,6 @@ namespace DiaBlackJack.GameScene
         public int CardCount => Cards.Count;
     }
 
-    /// <summary>
-    /// Maps stable rule definition keys to the numbered source artwork stored in the Unity prefabs.
-    /// The authored file order is intentionally not the same as rank or catalog order.
-    /// </summary>
-    public static class GameSceneCardVisualCatalog
-    {
-        public static int AutomaticCardSpriteIndexFor(string definitionKey)
-        {
-            switch (definitionKey)
-            {
-                case CardDefinitionCatalog.ResurrectionHerbKey:
-                    return 1;
-                case CardDefinitionCatalog.PoisonKey:
-                    return 2;
-                case CardDefinitionCatalog.PocketWatchKey:
-                    return 3;
-                case CardDefinitionCatalog.LieDetectorKey:
-                    return 4;
-                case CardDefinitionCatalog.FlamethrowerKey:
-                    return 5;
-                default:
-                    return 0;
-            }
-        }
-
-        public static int DemonCardSpriteIndexFor(string definitionKey)
-        {
-            switch (definitionKey)
-            {
-                case DemonContractCatalog.SatanKey:
-                    return 1;
-                case DemonContractCatalog.MammonKey:
-                    return 2;
-                case DemonContractCatalog.LeviathanKey:
-                    return 3;
-                case DemonContractCatalog.BelphegorKey:
-                    return 4;
-                case DemonContractCatalog.BeelzebubKey:
-                    return 5;
-                case DemonContractCatalog.LuciferKey:
-                    return 6;
-                case DemonContractCatalog.AsmodeusKey:
-                    return 7;
-                case DemonContractCatalog.PaimonKey:
-                    return 8;
-                case DemonContractCatalog.BelialKey:
-                    return 9;
-                case DemonContractCatalog.AzazelKey:
-                    return 10;
-                case DemonContractCatalog.BaphometKey:
-                    return 11;
-                case DemonContractCatalog.MephistophelesKey:
-                    return 12;
-                default:
-                    return 0;
-            }
-        }
-    }
-
     public enum GameSceneRevolverAnimationPhase
     {
         Ready,
@@ -400,7 +341,7 @@ namespace DiaBlackJack.GameScene
                     revealRank: true,
                     canUse: false,
                     card.DisplayName,
-                    abilityDescription: ResolveAbilityDescription(card.Effect),
+                    abilityDescription: CardDefinitionCatalog.GetByKey(card.DefinitionKey).Description,
                     suit: card.Suit,
                     showHoverBadgeWhenUnavailable: true,
                     definitionKey: card.DefinitionKey));
@@ -745,22 +686,6 @@ namespace DiaBlackJack.GameScene
             return EffectActionLabel(kind);
         }
 
-        // One-line Korean effect text for the hover badge. There is no such text anywhere in the
-        // model, so it is authored here in the view layer.
-        private static readonly Dictionary<CardEffectKind, string> EffectDescriptions =
-            new Dictionary<CardEffectKind, string>
-            {
-                { CardEffectKind.CrystalOrb, "덱 맨 위 2장 훔쳐보고 1장 가져오기" },
-                { CardEffectKind.ThreatHammer, "적 공개 카드 1장 제거; 스탠드면 비공개 교체" },
-                { CardEffectKind.AutoPistol, "적 비공개 숫자 맞히면 적 즉사" },
-                { CardEffectKind.MilitaryKnife, "적에게 공개카드 1장 강제로 뽑게 함" },
-                { CardEffectKind.Poison, "즉시 스탠드 또는 영혼 3 지불; 지불 후 승리 시 영혼 5 회복" },
-                { CardEffectKind.ResurrectionHerb, "양측 영혼 1 지불 후 승패 없이 라운드 재시작" },
-                { CardEffectKind.LieDetector, "숫자를 선언해 상대 비공개 카드의 이상·미만 확인" },
-                { CardEffectKind.Flamethrower, "양측이 공개 카드 1장씩 선택해 버림" },
-                { CardEffectKind.PocketWatch, "사용 완료 수동 카드 1장을 재활성화" },
-            };
-
         private static IReadOnlyList<GameSceneCardViewModel> CreatePlayerCards(
             CoreLoopViewModel core,
             CoreLoopBattle battle)
@@ -803,16 +728,7 @@ namespace DiaBlackJack.GameScene
 
         private static string ResolveAbilityDescription(BlackjackCard card)
         {
-            return card == null
-                ? string.Empty
-                : ResolveAbilityDescription(card.Definition.Effect);
-        }
-
-        private static string ResolveAbilityDescription(CardEffectKind effect)
-        {
-            return EffectDescriptions.TryGetValue(effect, out string description)
-                ? description
-                : string.Empty;
+            return card?.Definition.Description ?? string.Empty;
         }
 
         private static BlackjackCard FindCardById(IReadOnlyList<BlackjackCard> cards, int cardId)

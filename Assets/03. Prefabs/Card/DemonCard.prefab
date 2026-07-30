@@ -84,6 +84,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.DemonCardView
   front: {fileID: 808001931684033171}
   back: {fileID: 805380802697689471}
+  cardContentCatalog: {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a140001, type: 2}
   faceSpritesByIndex:
   - {fileID: 0}
   - {fileID: 21300000, guid: 73d4ed70685d38e448dcdbf7ea443be3, type: 3}

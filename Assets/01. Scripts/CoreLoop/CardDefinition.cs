@@ -9,7 +9,11 @@ namespace DiaBlackJack.CoreLoop
             string displayName,
             int rank,
             CardActivationKind activation,
-            CardEffectKind effect)
+            CardEffectKind effect,
+            string description = "",
+            int basePurchasePrice = 3,
+            int shopWeight = 1,
+            bool isStandardDeckDefault = false)
         {
             if (string.IsNullOrWhiteSpace(key))
             {
@@ -36,14 +40,37 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentOutOfRangeException(nameof(effect));
             }
 
+            if (description == null)
+            {
+                throw new ArgumentNullException(nameof(description));
+            }
+
+            if (basePurchasePrice < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(basePurchasePrice));
+            }
+
+            if (shopWeight <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(shopWeight));
+            }
+
             Key = key;
             DisplayName = displayName;
             Rank = rank;
             Activation = activation;
             Effect = effect;
+            Description = description.Trim();
+            BasePurchasePrice = basePurchasePrice;
+            ShopWeight = shopWeight;
+            IsStandardDeckDefault = isStandardDeckDefault;
         }
 
         public CardActivationKind Activation { get; }
+
+        public int BasePurchasePrice { get; }
+
+        public string Description { get; }
 
         public string DisplayName { get; }
 
@@ -52,5 +79,9 @@ namespace DiaBlackJack.CoreLoop
         public string Key { get; }
 
         public int Rank { get; }
+
+        public bool IsStandardDeckDefault { get; }
+
+        public int ShopWeight { get; }
     }
 }

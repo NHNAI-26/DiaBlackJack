@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d658a77d998e43f1b3fa1f8d0a110002, type: 3}
+  m_Name: mephistopheles
+  m_EditorClassIdentifier: Border::DiaBlackJack.Content.DemonCardDefinitionSO
+  key: mephistopheles
+  displayName: 메피스토펠레스
+  activeEffectDescription: 보위 나이프의 공개 합 버스트 판정을 강화한다.
+  costDescription: 계약 시 영혼 1, 비버스트 시 자신의 비공개 카드 공개
+  baseSoulCost: 1
+  basePurchasePrice: 3
+  shopWeight: 1
+  kind: 5
+  faceSprite: {fileID: 21300000, guid: 266f614f5e42ce545bbc93cb58fea2bd, type: 3}

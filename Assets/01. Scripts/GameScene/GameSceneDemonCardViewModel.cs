@@ -6,7 +6,7 @@ namespace DiaBlackJack.GameScene
     {
         public GameSceneDemonCardViewModel(
             int cardId,
-            int faceSpriteIndex,
+            string definitionKey,
             bool isFaceUp,
             bool canUse,
             string displayName,
@@ -19,15 +19,15 @@ namespace DiaBlackJack.GameScene
                 throw new ArgumentOutOfRangeException(nameof(cardId), "Card id cannot be negative.");
             }
 
-            if (faceSpriteIndex < 1)
+            if (string.IsNullOrWhiteSpace(definitionKey))
             {
-                throw new ArgumentOutOfRangeException(
-                    nameof(faceSpriteIndex),
-                    "Demon card sprite index must be one or greater.");
+                throw new ArgumentException(
+                    "Demon card definition key cannot be empty.",
+                    nameof(definitionKey));
             }
 
             CardId = cardId;
-            FaceSpriteIndex = faceSpriteIndex;
+            DefinitionKey = definitionKey;
             IsFaceUp = isFaceUp;
             CanUse = canUse;
             DisplayName = displayName ?? string.Empty;
@@ -44,7 +44,7 @@ namespace DiaBlackJack.GameScene
 
         public string DisplayName { get; }
 
-        public int FaceSpriteIndex { get; }
+        public string DefinitionKey { get; }
 
         public bool IsFaceUp { get; }
 

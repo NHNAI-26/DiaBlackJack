@@ -33,10 +33,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameObject[] combatTableObjects;
         [Tooltip("Gold granted once per battle victory.")]
         [SerializeField] private int goldPerWin = 3;
-        [SerializeField] private int demonCardPrice = 3;
         [SerializeField] private int demonCardOfferCount = 3;
         [SerializeField] private float demonCardSpacing = 1.1f;
-        [SerializeField] private int normalCardPrice = 3;
         [SerializeField] private int normalCardOfferCount = 3;
         [SerializeField] private float normalCardSpacing = 1.1f;
         [SerializeField] private int lighterPrice = 2;
@@ -351,8 +349,7 @@ namespace DiaBlackJack.GameScene
                 var offer = new DemonCardOffer(
                     _nextOfferId++,
                     definition,
-                    GameSceneCardVisualCatalog.DemonCardSpriteIndexFor(definition.Key),
-                    demonCardPrice,
+                    definition.BasePurchasePrice,
                     view);
                 _demonOffers.Add(offer);
                 BindOfferView(offer);
@@ -383,7 +380,7 @@ namespace DiaBlackJack.GameScene
                     _nextOfferId++,
                     candidate.Definition,
                     candidate.Suit,
-                    normalCardPrice,
+                    candidate.Definition.BasePurchasePrice,
                     view);
                 _normalOffers.Add(offer);
                 BindOfferView(offer);
@@ -458,7 +455,7 @@ namespace DiaBlackJack.GameScene
 
             offer.View.Bind(new GameSceneDemonCardViewModel(
                 offer.OfferId,
-                offer.FaceSpriteIndex,
+                definition.Key,
                 isFaceUp: true,
                 canUse: Gold >= offer.Price,
                 definition.DisplayName,
@@ -634,7 +631,7 @@ namespace DiaBlackJack.GameScene
             int price)
         {
             string text = "PRICE " + price + " GOLD";
-            string effect = FormatCardEffect(definition.Effect);
+            string effect = definition.Description;
             if (!string.IsNullOrEmpty(effect))
             {
                 text += "\n" + effect;
@@ -643,35 +640,16 @@ namespace DiaBlackJack.GameScene
             return text;
         }
 
-        private static string FormatCardEffect(CardEffectKind effect)
-        {
-            switch (effect)
-            {
-                case CardEffectKind.CrystalOrb:
-                    return "덱 맨 위 2장 훔쳐보고 1장 가져오기";
-                case CardEffectKind.ThreatHammer:
-                    return "적 공개 카드 1장 제거";
-                case CardEffectKind.AutoPistol:
-                    return "적 비공개 숫자 맞히면 적 즉사";
-                case CardEffectKind.MilitaryKnife:
-                    return "적에게 공개카드 1장 강제로 뽑게 함";
-                default:
-                    return string.Empty;
-            }
-        }
-
         private sealed class DemonCardOffer
         {
             public DemonCardOffer(
                 int offerId,
                 DemonContractDefinition definition,
-                int faceSpriteIndex,
                 int price,
                 DemonCardView view)
             {
                 OfferId = offerId;
                 Definition = definition ?? throw new ArgumentNullException(nameof(definition));
-                FaceSpriteIndex = faceSpriteIndex;
                 Price = price;
                 View = view;
             }
@@ -679,8 +657,6 @@ namespace DiaBlackJack.GameScene
             public DemonContractDefinition Definition { get; }
 
             public string DefinitionKey => Definition.Key;
-
-            public int FaceSpriteIndex { get; }
 
             public int OfferId { get; }
 

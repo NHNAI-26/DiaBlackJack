@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d658a77d998e43f1b3fa1f8d0a110001, type: 3}
+  m_Name: lie-detector-3
+  m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
+  key: lie-detector-3
+  displayName: 거짓말 탐지기
+  description: 숫자를 선언해 상대 비공개 카드의 이상·미만 확인
+  basePurchasePrice: 3
+  shopWeight: 1
+  rank: 3
+  activation: 3
+  effect: 8
+  isStandardDeckDefault: 0
+  spadeFaceSprite: {fileID: 21300000, guid: 08a8a36231d3ca1459e4d5080236463c, type: 3}
+  cloverFaceSprite: {fileID: 21300000, guid: 08a8a36231d3ca1459e4d5080236463c, type: 3}

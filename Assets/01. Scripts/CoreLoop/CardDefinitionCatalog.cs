@@ -12,9 +12,9 @@ namespace DiaBlackJack.CoreLoop
         public const string FlamethrowerKey = "flamethrower-4";
         public const string PocketWatchKey = "pocket-watch-5";
 
-        private static readonly ReadOnlyCollection<CardDefinition> Definitions;
-        private static readonly Dictionary<string, CardDefinition> DefinitionsByKey;
-        private static readonly CardDefinition[] DefaultDefinitionsByRank;
+        private static ReadOnlyCollection<CardDefinition> Definitions;
+        private static Dictionary<string, CardDefinition> DefinitionsByKey;
+        private static CardDefinition[] DefaultDefinitionsByRank;
 
         static CardDefinitionCatalog()
         {
@@ -25,91 +25,116 @@ namespace DiaBlackJack.CoreLoop
                     "에이스",
                     1,
                     CardActivationKind.Passive,
-                    CardEffectKind.None),
+                    CardEffectKind.None,
+                    "기본 카드",
+                    isStandardDeckDefault: true),
                 new CardDefinition(
                     "standard-plain-2",
                     "기본 카드",
                     2,
                     CardActivationKind.None,
-                    CardEffectKind.None),
+                    CardEffectKind.None,
+                    "기본 카드",
+                    isStandardDeckDefault: true),
                 new CardDefinition(
                     "standard-plain-3",
                     "기본 카드",
                     3,
                     CardActivationKind.None,
-                    CardEffectKind.None),
+                    CardEffectKind.None,
+                    "기본 카드",
+                    isStandardDeckDefault: true),
                 new CardDefinition(
                     "standard-plain-4",
                     "기본 카드",
                     4,
                     CardActivationKind.None,
-                    CardEffectKind.None),
+                    CardEffectKind.None,
+                    "기본 카드",
+                    isStandardDeckDefault: true),
                 new CardDefinition(
                     "crystal-orb-5",
                     "수정 구슬",
                     5,
                     CardActivationKind.Manual,
-                    CardEffectKind.CrystalOrb),
+                    CardEffectKind.CrystalOrb,
+                    "덱 맨 위 2장 훔쳐보고 1장 가져오기",
+                    isStandardDeckDefault: true),
                 new CardDefinition(
                     "threat-hammer-6",
                     "위협용 해머",
                     6,
                     CardActivationKind.Manual,
-                    CardEffectKind.ThreatHammer),
+                    CardEffectKind.ThreatHammer,
+                    "적 공개 카드 1장 제거; 스탠드면 비공개 교체",
+                    isStandardDeckDefault: true),
                 new CardDefinition(
                     "auto-pistol-7",
                     "리볼버",
                     7,
                     CardActivationKind.Manual,
-                    CardEffectKind.AutoPistol),
+                    CardEffectKind.AutoPistol,
+                    "적 비공개 숫자 맞히면 적 즉사",
+                    isStandardDeckDefault: true),
                 new CardDefinition(
                     "auto-pistol-8",
                     "리볼버",
                     8,
                     CardActivationKind.Manual,
-                    CardEffectKind.AutoPistol),
+                    CardEffectKind.AutoPistol,
+                    "적 비공개 숫자 맞히면 적 즉사",
+                    isStandardDeckDefault: true),
                 new CardDefinition(
                     "military-knife-9",
                     "보위 나이프",
                     9,
                     CardActivationKind.Manual,
-                    CardEffectKind.MilitaryKnife),
+                    CardEffectKind.MilitaryKnife,
+                    "적에게 공개카드 1장 강제로 뽑게 함",
+                    isStandardDeckDefault: true),
                 new CardDefinition(
                     "military-knife-10",
                     "보위 나이프",
                     10,
                     CardActivationKind.Manual,
-                    CardEffectKind.MilitaryKnife),
+                    CardEffectKind.MilitaryKnife,
+                    "적에게 공개카드 1장 강제로 뽑게 함",
+                    isStandardDeckDefault: true),
                 new CardDefinition(
                     PoisonKey,
                     "독극물",
                     1,
                     CardActivationKind.Automatic,
-                    CardEffectKind.Poison),
+                    CardEffectKind.Poison,
+                    "즉시 스탠드 또는 영혼 3 지불; 지불 후 승리 시 영혼 5 회복"),
                 new CardDefinition(
                     ResurrectionHerbKey,
                     "부활초",
                     2,
                     CardActivationKind.Automatic,
-                    CardEffectKind.ResurrectionHerb),
+                    CardEffectKind.ResurrectionHerb,
+                    "양측 영혼 1 지불 후 승패 없이 라운드 재시작"),
                 new CardDefinition(
                     LieDetectorKey,
                     "거짓말 탐지기",
                     3,
                     CardActivationKind.Automatic,
-                    CardEffectKind.LieDetector),
+                    CardEffectKind.LieDetector,
+                    "숫자를 선언해 상대 비공개 카드의 이상·미만 확인"),
                 new CardDefinition(
                     FlamethrowerKey,
                     "화염 방사기",
                     4,
                     CardActivationKind.Automatic,
-                    CardEffectKind.Flamethrower),
+                    CardEffectKind.Flamethrower,
+                    "양측이 공개 카드 1장씩 선택해 버림"),
                 new CardDefinition(
                     PocketWatchKey,
                     "회중시계",
                     5,
                     CardActivationKind.Automatic,
-                    CardEffectKind.PocketWatch)
+                    CardEffectKind.PocketWatch,
+                    "사용 완료 수동 카드 1장을 재활성화")
             };
 
             Definitions = Array.AsReadOnly(definitions);
@@ -129,6 +154,33 @@ namespace DiaBlackJack.CoreLoop
         }
 
         public static IReadOnlyList<CardDefinition> All => Definitions;
+
+        /// <summary>
+        /// Installs Unity-authored content after it has been converted to the pure catalog. The
+        /// static facade exists temporarily for legacy rule callers; it never references Unity.
+        /// </summary>
+        public static void Install(CardContentCatalog catalog)
+        {
+            if (catalog == null)
+            {
+                throw new ArgumentNullException(nameof(catalog));
+            }
+
+            Definitions = Array.AsReadOnly(catalog.NormalDefinitions is CardDefinition[] array
+                ? array
+                : new List<CardDefinition>(catalog.NormalDefinitions).ToArray());
+            DefinitionsByKey = new Dictionary<string, CardDefinition>(StringComparer.Ordinal);
+            DefaultDefinitionsByRank = new CardDefinition[11];
+
+            foreach (CardDefinition definition in Definitions)
+            {
+                DefinitionsByKey.Add(definition.Key, definition);
+                if (definition.IsStandardDeckDefault)
+                {
+                    DefaultDefinitionsByRank[definition.Rank] = definition;
+                }
+            }
+        }
 
         public static CardDefinition GetByKey(string key)
         {
@@ -152,7 +204,8 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentOutOfRangeException(nameof(rank), "Card rank must be between 1 and 10.");
             }
 
-            return DefaultDefinitionsByRank[rank];
+            return DefaultDefinitionsByRank[rank] ?? throw new InvalidOperationException(
+                $"Card rank {rank} has no standard-deck definition.");
         }
     }
 }

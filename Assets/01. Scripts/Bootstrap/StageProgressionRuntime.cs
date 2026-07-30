@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DiaBlackJack.Bootstrap;
 using Border.SaveLoad;
 using DiaBlackJack.CoreLoop;
 using UnityEngine;
@@ -35,7 +36,7 @@ namespace DiaBlackJack.StageProgression.UI
                     _formalCombatSession = session;
                     _formalSession = new FormalRunSession(
                         session,
-                        new ShopOfferGenerator(unchecked(seed + 2)));
+                        CreateShopOfferGenerator(unchecked(seed + 2)));
                 }
 
                 _formalSession.SynchronizeExternalState();
@@ -107,6 +108,14 @@ namespace DiaBlackJack.StageProgression.UI
                     EnemyCombatProfileCatalog.Default,
                     rootSeed),
                 usesBattleRewards: false);
+        }
+
+        private ShopOfferGenerator CreateShopOfferGenerator(int shopSeed)
+        {
+            CardContentCatalog catalog = CardContentBootstrap.Instance?.RuntimeCatalog;
+            return catalog == null
+                ? new ShopOfferGenerator(shopSeed)
+                : new ShopOfferGenerator(catalog, shopSeed);
         }
 
         private static PlayerRunState CreatePrototypePlayer()

@@ -1,7 +1,13 @@
 using DiaBlackJack.GameScene;
+using DiaBlackJack.Content;
+using DiaBlackJack.Bootstrap;
 using NUnit.Framework;
+using System.Collections.Generic;
+using System.Reflection;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace DiaBlackJack.CoreLoop.Tests
 {
@@ -17,23 +23,174 @@ namespace DiaBlackJack.CoreLoop.Tests
         private const string CardPrefabPath = "Assets/03. Prefabs/Card/Card.prefab";
         private const string DemonCardPrefabPath =
             "Assets/03. Prefabs/Card/DemonCard.prefab";
-        private const string AutomaticArtRoot =
-            "Assets/05. Arts/Texture/CardSprite/AutoCard/AutoCard_";
-        private const string DemonArtRoot =
-            "Assets/05. Arts/Texture/CardSprite/DevilCard/DevilCard_";
+        private const string CatalogPath =
+            "Assets/02. ScriptableObjects/Cards/CardContentCatalog.asset";
+
+        [Test]
+        public void CC_U06_CardContentAssetBuildsAllDefinitions()
+        {
+            CardContentCatalog catalog = LoadCatalog().BuildRuntimeCatalog();
+
+            Assert.That(catalog.NormalDefinitions, Has.Count.EqualTo(15));
+            Assert.That(catalog.DemonDefinitions, Has.Count.EqualTo(12));
+            foreach (CardDefinition definition in catalog.NormalDefinitions)
+            {
+                Assert.That(definition.DisplayName, Is.Not.Empty, definition.Key);
+                Assert.That(definition.Description, Is.Not.Empty, definition.Key);
+                Assert.That(definition.BasePurchasePrice, Is.EqualTo(3), definition.Key);
+                Assert.That(definition.ShopWeight, Is.EqualTo(1), definition.Key);
+            }
+
+            for (int rank = 1; rank <= 10; rank++)
+            {
+                Assert.That(
+                    catalog.GetStandardDeckDefault(rank).Rank,
+                    Is.EqualTo(rank));
+            }
+
+            foreach (DemonContractDefinition definition in catalog.DemonDefinitions)
+            {
+                Assert.That(definition.DisplayName, Is.Not.Empty, definition.Key);
+                Assert.That(definition.Summary, Is.Not.Empty, definition.Key);
+                Assert.That(definition.CostSummary, Is.Not.Empty, definition.Key);
+                Assert.That(definition.BasePurchasePrice, Is.EqualTo(3), definition.Key);
+                Assert.That(definition.ShopWeight, Is.EqualTo(1), definition.Key);
+            }
+        }
+
+        [Test]
+        public void CC_U07_NormalCardContentRejectsInvalidFields()
+        {
+            System.Action<NormalCardDefinitionSO>[] mutations =
+            {
+                card => SetPrivateField(card, "displayName", string.Empty),
+                card => SetPrivateField(card, "basePurchasePrice", -1),
+                card => SetPrivateField(card, "rank", 0),
+                card => SetPrivateField(card, "effect", (CardEffectKind)999),
+                card => SetPrivateField(card, "spadeFaceSprite", null),
+            };
+
+            foreach (System.Action<NormalCardDefinitionSO> mutate in mutations)
+            {
+                CardContentCatalogSO catalog = CloneCatalog();
+                NormalCardDefinitionSO card = ReplaceNormalCard(catalog, 0);
+                try
+                {
+                    mutate(card);
+                    Assert.That(
+                        () => catalog.BuildRuntimeCatalog(),
+                        Throws.TypeOf<System.InvalidOperationException>());
+                }
+                finally
+                {
+                    Object.DestroyImmediate(card);
+                    Object.DestroyImmediate(catalog);
+                }
+            }
+        }
+
+        [Test]
+        public void CC_U08_DemonCardContentRejectsInvalidFields()
+        {
+            System.Action<DemonCardDefinitionSO>[] mutations =
+            {
+                card => SetPrivateField(card, "displayName", string.Empty),
+                card => SetPrivateField(card, "baseSoulCost", -1),
+                card => SetPrivateField(card, "basePurchasePrice", -1),
+                card => SetPrivateField(card, "kind", (DemonContractKind)999),
+                card => SetPrivateField(card, "faceSprite", null),
+            };
+
+            foreach (System.Action<DemonCardDefinitionSO> mutate in mutations)
+            {
+                CardContentCatalogSO catalog = CloneCatalog();
+                DemonCardDefinitionSO card = ReplaceDemonCard(catalog, 0);
+                try
+                {
+                    mutate(card);
+                    Assert.That(
+                        () => catalog.BuildRuntimeCatalog(),
+                        Throws.TypeOf<System.InvalidOperationException>());
+                }
+                finally
+                {
+                    Object.DestroyImmediate(card);
+                    Object.DestroyImmediate(catalog);
+                }
+            }
+        }
+
+        [Test]
+        public void CC_U09_CardContentRejectsDuplicateAndMissingStandardDefaults()
+        {
+            CardContentCatalogSO duplicateCatalog = CloneCatalog();
+            NormalCardDefinitionSO duplicateCard = ReplaceNormalCard(duplicateCatalog, 0);
+            try
+            {
+                SetPrivateField(duplicateCard, "key", "standard-plain-2");
+                Assert.That(
+                    () => duplicateCatalog.BuildRuntimeCatalog(),
+                    Throws.TypeOf<System.ArgumentException>());
+            }
+            finally
+            {
+                Object.DestroyImmediate(duplicateCard);
+                Object.DestroyImmediate(duplicateCatalog);
+            }
+
+            CardContentCatalogSO missingDefaultCatalog = CloneCatalog();
+            NormalCardDefinitionSO missingDefaultCard = ReplaceNormalCard(missingDefaultCatalog, 0);
+            try
+            {
+                SetPrivateField(missingDefaultCard, "isStandardDeckDefault", false);
+                Assert.That(
+                    () => missingDefaultCatalog.BuildRuntimeCatalog(),
+                    Throws.TypeOf<System.ArgumentException>());
+            }
+            finally
+            {
+                Object.DestroyImmediate(missingDefaultCard);
+                Object.DestroyImmediate(missingDefaultCatalog);
+            }
+        }
+
+        [TestCase("Assets/00. Scenes/StageTest.unity")]
+        [TestCase("Assets/00. Scenes/CoreLoopTest.unity")]
+        [TestCase("Assets/00. Scenes/GameScene.unity")]
+        public void CC_U10_EntrySceneContainsValidCardContentBootstrap(string scenePath)
+        {
+            Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
+            try
+            {
+                CardContentBootstrap bootstrap = FindCardContentBootstrap(scene);
+                Assert.That(bootstrap, Is.Not.Null, scenePath);
+
+                SerializedObject serialized = new SerializedObject(bootstrap);
+                CardContentCatalogSO catalog = serialized.FindProperty("catalog")
+                    .objectReferenceValue as CardContentCatalogSO;
+                Assert.That(catalog, Is.Not.Null, scenePath);
+                Assert.That(catalog.BuildRuntimeCatalog().NormalDefinitions, Has.Count.EqualTo(15));
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
 
         [TestCase(CardDefinitionCatalog.ResurrectionHerbKey, 1)]
         [TestCase(CardDefinitionCatalog.PoisonKey, 2)]
         [TestCase(CardDefinitionCatalog.PocketWatchKey, 3)]
         [TestCase(CardDefinitionCatalog.LieDetectorKey, 4)]
         [TestCase(CardDefinitionCatalog.FlamethrowerKey, 5)]
-        public void GSV02_U01_AutomaticDefinitionsUseAuthoredArtOrder(
+        public void CC_U04_AutomaticDefinitionsResolveSpriteFromContentCatalog(
             string definitionKey,
             int expectedIndex)
         {
+            CardContentCatalogSO catalog = LoadCatalog();
             Assert.That(
-                GameSceneCardVisualCatalog.AutomaticCardSpriteIndexFor(definitionKey),
-                Is.EqualTo(expectedIndex));
+                catalog.GetNormalFaceSprite(definitionKey, CardSuit.Spade),
+                Is.Not.Null,
+                definitionKey);
         }
 
         [TestCase(DemonContractCatalog.SatanKey, 1)]
@@ -48,13 +205,15 @@ namespace DiaBlackJack.CoreLoop.Tests
         [TestCase(DemonContractCatalog.AzazelKey, 10)]
         [TestCase(DemonContractCatalog.BaphometKey, 11)]
         [TestCase(DemonContractCatalog.MephistophelesKey, 12)]
-        public void GSV02_U02_DemonDefinitionsUseAuthoredArtOrder(
+        public void CC_U05_DemonDefinitionsResolveSpriteFromContentCatalog(
             string definitionKey,
             int expectedIndex)
         {
+            CardContentCatalogSO catalog = LoadCatalog();
             Assert.That(
-                GameSceneCardVisualCatalog.DemonCardSpriteIndexFor(definitionKey),
-                Is.EqualTo(expectedIndex));
+                catalog.GetDemonFaceSprite(definitionKey),
+                Is.Not.Null,
+                definitionKey);
         }
 
         [Test]
@@ -81,13 +240,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                 foreach (string key in keys)
                 {
                     CardDefinition definition = CardDefinitionCatalog.GetByKey(key);
-                    int artIndex =
-                        GameSceneCardVisualCatalog.AutomaticCardSpriteIndexFor(key);
-                    Sprite expected = LoadAutomaticSprite(artIndex);
+                    Sprite expected = LoadCatalog().GetNormalFaceSprite(
+                        key,
+                        CardSuit.Spade);
                     Assert.That(expected, Is.Not.Null, key);
 
                     view.Bind(new GameSceneCardViewModel(
-                        cardId: artIndex,
+                        cardId: definition.Rank,
                         rank: definition.Rank,
                         isFaceUp: true,
                         revealRank: true,
@@ -118,11 +277,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 foreach (DemonContractDefinition definition in
                     DemonContractCatalog.Default.Definitions)
                 {
-                    int artIndex = GameSceneCardVisualCatalog.DemonCardSpriteIndexFor(
-                        definition.Key);
-                    Sprite expected = LoadDemonSprite(artIndex);
+                    Sprite expected = LoadCatalog().GetDemonFaceSprite(definition.Key);
 
-                    Assert.That(artIndex, Is.InRange(1, 12), definition.Key);
                     Assert.That(expected, Is.Not.Null, definition.Key);
                     Assert.That(
                         view.GetFaceSprite(definition.Key),
@@ -156,7 +312,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                     isFaceUp: false,
                     revealRank: true,
                     canUse: false,
-                    displayName: "Ace"));
+                    displayName: "Ace",
+                    definitionKey: "standard-ace-1"));
 
                 MaterialPropertyBlock properties = new MaterialPropertyBlock();
                 backRenderer.GetPropertyBlock(properties);
@@ -206,7 +363,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                     isFaceUp: false,
                     revealRank: true,
                     canUse: false,
-                    displayName: "Ace"));
+                    displayName: "Ace",
+                    definitionKey: "standard-ace-1"));
                 view.Bind(new GameSceneCardViewModel(
                     cardId: 2,
                     rank: 0,
@@ -226,7 +384,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                     isFaceUp: true,
                     revealRank: true,
                     canUse: false,
-                    displayName: "Three"));
+                    displayName: "Three",
+                    definitionKey: "standard-plain-3"));
 
                 backRenderer.GetPropertyBlock(properties);
                 Assert.That(frontRenderer.gameObject.activeSelf, Is.True);
@@ -260,16 +419,72 @@ namespace DiaBlackJack.CoreLoop.Tests
             return renderer;
         }
 
-        private static Sprite LoadAutomaticSprite(int index)
+        private static CardContentCatalogSO LoadCatalog()
         {
-            return AssetDatabase.LoadAssetAtPath<Sprite>(
-                AutomaticArtRoot + index.ToString("00") + ".png");
+            CardContentCatalogSO catalog =
+                AssetDatabase.LoadAssetAtPath<CardContentCatalogSO>(CatalogPath);
+            Assert.That(catalog, Is.Not.Null);
+            return catalog;
         }
 
-        private static Sprite LoadDemonSprite(int index)
+        private static CardContentBootstrap FindCardContentBootstrap(Scene scene)
         {
-            return AssetDatabase.LoadAssetAtPath<Sprite>(
-                DemonArtRoot + index.ToString("00") + ".png");
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                CardContentBootstrap bootstrap = root.GetComponentInChildren<
+                    CardContentBootstrap>(true);
+                if (bootstrap != null)
+                {
+                    return bootstrap;
+                }
+            }
+
+            return null;
+        }
+
+        private static CardContentCatalogSO CloneCatalog()
+        {
+            return Object.Instantiate(LoadCatalog());
+        }
+
+        private static NormalCardDefinitionSO ReplaceNormalCard(
+            CardContentCatalogSO catalog,
+            int index)
+        {
+            List<NormalCardDefinitionSO> cards = GetPrivateField<
+                List<NormalCardDefinitionSO>>(catalog, "normalCards");
+            NormalCardDefinitionSO clone = Object.Instantiate(cards[index]);
+            cards[index] = clone;
+            return clone;
+        }
+
+        private static DemonCardDefinitionSO ReplaceDemonCard(
+            CardContentCatalogSO catalog,
+            int index)
+        {
+            List<DemonCardDefinitionSO> cards = GetPrivateField<
+                List<DemonCardDefinitionSO>>(catalog, "demonCards");
+            DemonCardDefinitionSO clone = Object.Instantiate(cards[index]);
+            cards[index] = clone;
+            return clone;
+        }
+
+        private static T GetPrivateField<T>(object target, string fieldName)
+        {
+            FieldInfo field = target.GetType().GetField(
+                fieldName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, fieldName);
+            return (T)field.GetValue(target);
+        }
+
+        private static void SetPrivateField(object target, string fieldName, object value)
+        {
+            FieldInfo field = target.GetType().GetField(
+                fieldName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, fieldName);
+            field.SetValue(target, value);
         }
 
         private static Vector4 GetSpriteUvRect(Sprite sprite)

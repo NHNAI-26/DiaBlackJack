@@ -1,6 +1,7 @@
 using DG.Tweening;
 using TMPro;
 using Border.Audio;
+using DiaBlackJack.Content;
 using DiaBlackJack.CoreLoop;
 using UnityEngine;
 
@@ -21,9 +22,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameObject front;
         [SerializeField] private GameObject back;
         [SerializeField] private TMP_Text rankText;
-        [SerializeField] private Sprite[] faceSpritesByRank = new Sprite[11];
-        [SerializeField] private Sprite[] cloverFaceSpritesByRank = new Sprite[11];
-        [SerializeField] private Sprite[] automaticFaceSpritesByIndex = new Sprite[6];
+        [SerializeField] private CardContentCatalogSO cardContentCatalog;
 
         [Header("Hover badge anchor")]
         [Tooltip("World-space anchor projected to the HUD while this card is hovered.")]
@@ -383,28 +382,9 @@ namespace DiaBlackJack.GameScene
 
         private Sprite SpriteForCard(string definitionKey, int rank, CardSuit suit)
         {
-            int automaticIndex =
-                GameSceneCardVisualCatalog.AutomaticCardSpriteIndexFor(definitionKey);
-            if (automaticIndex > 0 &&
-                automaticFaceSpritesByIndex != null &&
-                automaticIndex < automaticFaceSpritesByIndex.Length)
-            {
-                Sprite automaticSprite = automaticFaceSpritesByIndex[automaticIndex];
-                if (automaticSprite != null)
-                {
-                    return automaticSprite;
-                }
-            }
-
-            Sprite[] sprites = suit == CardSuit.Clover
-                ? cloverFaceSpritesByRank
-                : faceSpritesByRank;
-            if (rank < 1 || sprites == null || rank >= sprites.Length)
-            {
-                return null;
-            }
-
-            return sprites[rank];
+            return cardContentCatalog == null || string.IsNullOrWhiteSpace(definitionKey)
+                ? null
+                : cardContentCatalog.GetNormalFaceSprite(definitionKey, suit);
         }
 
         private void RefreshSpriteUvRects()
