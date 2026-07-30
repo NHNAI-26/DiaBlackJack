@@ -210,14 +210,13 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            float uiScale = CalculateDemonContractDetailScale(
+                Screen.width,
+                Screen.height);
             if (contractCandidatePromptText != null)
             {
-                contractCandidatePromptText.text = candidate.Title;
-                RectTransform promptRect =
-                    contractCandidatePromptText.rectTransform;
-                promptRect.anchoredPosition = new Vector2(-250f, -325f);
-                promptRect.sizeDelta = new Vector2(300f, 50f);
-                contractCandidatePromptText.fontSize = 24f;
+                contractCandidatePromptText.text = string.Empty;
+                contractCandidatePromptText.gameObject.SetActive(false);
             }
 
             GameHudChoiceButton detailSlot = contractCandidateSlots[0];
@@ -226,7 +225,10 @@ namespace DiaBlackJack.GameScene
             {
                 detailRect.SetSizeWithCurrentAnchors(
                     RectTransform.Axis.Horizontal,
-                    920f);
+                    920f * uiScale);
+                detailRect.SetSizeWithCurrentAnchors(
+                    RectTransform.Axis.Vertical,
+                    420f * uiScale);
             }
 
             detailSlot.RenderContractDetail(
@@ -234,7 +236,8 @@ namespace DiaBlackJack.GameScene
                 cardContentCatalog == null
                     ? null
                     : cardContentCatalog.GetDemonFaceSprite(
-                        candidate.DefinitionKey));
+                        candidate.DefinitionKey),
+                uiScale);
 
             for (int i = 1; i < contractCandidateSlots.Length; i++)
             {
@@ -245,6 +248,20 @@ namespace DiaBlackJack.GameScene
             }
 
             contractCandidatePanel.SetActive(true);
+        }
+
+        internal static float CalculateDemonContractDetailScale(
+            int screenWidth,
+            int screenHeight)
+        {
+            if (screenWidth <= 0 || screenHeight <= 0)
+            {
+                return 1f;
+            }
+
+            float widthScale = screenWidth / 1280f;
+            float heightScale = screenHeight / 720f;
+            return Mathf.Clamp(Mathf.Min(widthScale, heightScale), 0.85f, 1.5f);
         }
 
         public void HideDemonContractDetail()

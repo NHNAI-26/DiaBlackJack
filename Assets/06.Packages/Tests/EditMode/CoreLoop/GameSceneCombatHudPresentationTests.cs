@@ -307,6 +307,26 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(GetBrushName(actionRow, "Contract"), Is.EqualTo("Brush_UI_10"));
         }
 
+        [Test]
+        public void GSH01_U07_ContractDetailScaleTracksResolutionWithinReadableBounds()
+        {
+            Assert.That(
+                GameHudView.CalculateDemonContractDetailScale(1280, 720),
+                Is.EqualTo(1f));
+            Assert.That(
+                GameHudView.CalculateDemonContractDetailScale(1920, 1080),
+                Is.EqualTo(1.5f));
+            Assert.That(
+                GameHudView.CalculateDemonContractDetailScale(1024, 768),
+                Is.EqualTo(0.85f));
+            Assert.That(
+                GameHudView.CalculateDemonContractDetailScale(2560, 1080),
+                Is.EqualTo(1.5f));
+            Assert.That(
+                GameHudView.CalculateDemonContractDetailScale(0, 0),
+                Is.EqualTo(1f));
+        }
+
         private static CoreLoopBattle CreateStartedBattle(params int[] playerRanks)
         {
             var battle = new CoreLoopBattle(
