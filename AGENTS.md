@@ -14,13 +14,47 @@ Documentation is written in Korean; **code, identifiers, and comments are Englis
 
 Unity Editor lives at `F:\Unity\Hub\Editor\6000.3.10f1\Editor\Unity.exe`.
 
+### Mandatory Unity MCP preflight
+
+This is a **hard gate before every task in this repository**. Do not inspect implementation files, edit files, run tests, or begin the requested work until this check passes.
+
+1. Read the Unity MCP resources `mcpforunity://instances`, `mcpforunity://project/info`, and `mcpforunity://editor/state`.
+2. Continue only when all of the following are true:
+   - exactly one intended instance is selected (if several exist, call `set_active_instance` with the exact `Name@hash`);
+   - its project root is `F:/Unity Project/DiaBlackJack`;
+   - its Unity version is `6000.3.10f1`;
+   - `data.advice.ready_for_tools` is `true`.
+3. If no DiaBlackJack instance is connected, repair the connection before doing any project work:
+   - confirm `com.coplaydev.unity-mcp` is still present in `Packages/manifest.json`;
+   - start this project in the Unity Editor if it is not already open:
+
+     ```powershell
+     Start-Process `
+       -FilePath "F:\Unity\Hub\Editor\6000.3.10f1\Editor\Unity.exe" `
+       -ArgumentList @("-projectPath", '"F:\Unity Project\DiaBlackJack"')
+     ```
+
+   - wait for package import and script compilation, then re-read `mcpforunity://instances` and `mcpforunity://editor/state`;
+   - if the MCP client or `mcp__unityMCP` tools are missing, run `codex mcp list`, then use Unity's **Window → MCP for Unity → Configure All Detected Clients**. Restart/reload the Codex client if tool discovery does not refresh, and repeat the resource checks;
+   - `unity-mcp status` may be used as an additional local diagnostic, but successful reads of the three MCP resources above are the acceptance gate.
+4. If connection recovery still fails, stop and report the exact failed check and attempted recovery. **Do not silently substitute batch mode and do not begin the requested project work.**
+
+### Concurrent session safety
+
+Assume the Unity Editor and working tree may be shared with other Codex sessions or teammates.
+
+- Before using Unity, inspect `editor/state`. If the Editor is already in Play Mode, entering or leaving Play Mode, running tests, compiling, importing, or otherwise busy, assume another session owns that activity unless proven otherwise. **Never stop Play Mode, cancel tests, kill Unity, or force an idle state.** Wait and poll until that activity finishes naturally before starting work that could interfere.
+- Before editing, capture `git status --short` and inspect diffs for every target file. Treat all pre-existing changes and any changes that appear during the task as user/other-session work. Do not revert, reset, overwrite, delete, clean, stash, or reformat them merely because this session did not create them.
+- Re-read each target immediately before applying a patch. If another session changed the same file, identify the overlapping intent from the diff and current task context. Preserve both changes with a minimal merged patch whenever they are compatible. If ownership or compatibility remains unclear and a wrong merge could lose work, pause and ask rather than guessing.
+- Keep this session's changes narrowly scoped and avoid concurrent scene/prefab edits. When an unexpected generated file or modification is not active work, preserve a recoverable copy or patch before any cleanup, then report what was preserved and where. Never silently discard unexpected work.
+
 There is no CI, no build script, and no test runner script. Tests are Unity **EditMode** tests run one of two ways:
 
 **1. MCP for Unity (primary — use this).** The `com.coplaydev.unity-mcp` package is in `Packages/manifest.json`. It runs tests **inside the already-running Editor** via the Test Runner API, compiles, reads Console, and validates scenes — **nothing needs to be closed.** This is how every `job <id>` cited in the progress logs was produced. The Editor exposes its bridge on `127.0.0.1:6400` while open. (`Docs/project-structure-and-mcp-reference.md` says HTTP `8080/mcp`; that port is closed — the doc is stale.)
 
 The MCP *client* is registered **per-developer, not in the repo** — there is deliberately no `.mcp.json`, so each person configures their own and nobody's setup disturbs the team. If `mcp__*` Unity tools are missing from your tool surface, the client just isn't registered on this machine; check with `Codex mcp list`. The progress logs record several sessions where they were unavailable (§7.14), so verify rather than assume.
 
-**2. Unity batch mode (fallback only — when MCP is unavailable).**
+**2. Unity batch mode (exceptional fallback only — after the user explicitly approves bypassing the mandatory MCP gate).**
 
 ```powershell
 & "F:\Unity\Hub\Editor\6000.3.10f1\Editor\Unity.exe" -runTests -batchmode `

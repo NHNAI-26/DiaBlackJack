@@ -12,7 +12,7 @@ namespace DiaBlackJack.GameScene
 {
     /// <summary>
     /// Owns and drives a CoreLoop battle for the GameScene. The single coordinator: it
-    /// holds the <see cref="CoreLoopSession"/>, takes input (temporary IMGUI buttons ? the project is
+    /// holds the <see cref="CoreLoopSession"/>, takes input (temporary IMGUI buttons â€” the project is
     /// new-Input-System-only, so legacy OnMouseDown / Input.GetKey do not fire), and on every action
     /// re-presents through <see cref="GameScenePresenter"/> into the HUD and the two hands. Rendering
     /// lives in <see cref="GameHudView"/> and <see cref="CardHand"/>; this type only orchestrates.
@@ -189,7 +189,7 @@ namespace DiaBlackJack.GameScene
         }
 
         // Diegetic input: hover any card to enlarge it (usable cards also show a HUD badge), and
-        // click a usable card to activate its effect. New Input System ? legacy OnMouseDown does not
+        // click a usable card to activate its effect. New Input System â€” legacy OnMouseDown does not
         // fire, so we raycast the pointer ourselves. Other combat input comes from GameHudView.
         private void Update()
         {
@@ -937,7 +937,7 @@ namespace DiaBlackJack.GameScene
 
             DrawHeading("SHOP - hover goods and click to buy");
             DrawButtonRow(
-                new[] { "³ª°¡±â" },
+                new[] { "ë‚˜ê°€ê¸°" },
                 new[] { true },
                 new Func<bool>[] { LeaveShop });
         }
@@ -1030,7 +1030,7 @@ namespace DiaBlackJack.GameScene
                         panelRect.yMax - 52f,
                         footerButtonWidth,
                         38f),
-                    "³ª°¡±â",
+                    "ë‚˜ê°€ê¸°",
                     _buttonStyle))
                 {
                     ProcessInput(LeaveShop);
@@ -1359,7 +1359,7 @@ namespace DiaBlackJack.GameScene
                 }
             }
 
-            // Land on the true current state ? e.g. BattleEnded, which is not itself a step.
+            // Land on the true current state â€” e.g. BattleEnded, which is not itself a step.
             UnlockInput();
             RefreshView();
             ReturnToProgressionIfStageBattleEnded();
@@ -2043,7 +2043,7 @@ namespace DiaBlackJack.GameScene
             shop.Open();
         }
 
-        // Leave the shop and start the next battle. Gold is KEPT by ShopController ? it accumulates
+        // Leave the shop and start the next battle. Gold is KEPT by ShopController â€” it accumulates
         // across the run's battles; only a defeat restart resets it. TryRestart swaps in a fresh battle
         // and emits no Stepped events, so ProcessInput re-presents immediately via RefreshView.
         private bool LeaveShop()
