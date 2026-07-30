@@ -149,7 +149,8 @@ namespace DiaBlackJack.GameScene
             bool showDemonContractConfirmation,
             bool isStageBattle,
             bool isShopOpen,
-            bool inputLocked)
+            bool inputLocked,
+            bool usesDiegeticCardEffectSelection = false)
         {
             if (core == null || isShopOpen)
             {
@@ -228,6 +229,14 @@ namespace DiaBlackJack.GameScene
 
             if (core.IsResolvingCardEffect)
             {
+                if (usesDiegeticCardEffectSelection)
+                {
+                    return CreateOptions(
+                        core.CardEffectPrompt,
+                        Array.Empty<GameSceneCombatHudActionViewModel>(),
+                        automaticCardResult);
+                }
+
                 var options = new List<GameSceneCombatHudActionViewModel>();
                 foreach (CardEffectChoiceViewModel choice in core.CardEffectChoices)
                 {

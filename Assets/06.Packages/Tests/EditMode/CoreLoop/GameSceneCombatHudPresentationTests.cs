@@ -153,6 +153,122 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CUM09_U01_HammerProjectsOnlyLegalEnemyCardsAsDiegeticTargets()
+        {
+            CoreLoopBattle battle = CreateStartedHammerBattle();
+            BlackjackCard revealedHiddenCard = battle.Enemy.Hand.Cards[1];
+            revealedHiddenCard.Reveal();
+            battle.Enemy.Draw(faceUp: true);
+            BlackjackCard hammer = battle.Player.Draw(faceUp: true);
+            Assert.That(battle.TryBeginPlayerCardUse(hammer.Id), Is.True);
+
+            GameSceneViewModel model = GameScenePresenter.Create(battle);
+            PendingCardEffect pending = battle.PendingPlayerCardEffect;
+
+            Assert.That(model.UsesDiegeticCardEffectSelection, Is.True);
+            Assert.That(
+                model.EnemyCards
+                    .Where(card => card.CardEffectChoiceOptionId.HasValue)
+                    .Select(card => card.CardId),
+                Is.EqualTo(pending.Options.Select(option => option.CardId.Value)));
+            foreach (CardEffectChoiceOption option in pending.Options)
+            {
+                GameSceneCardViewModel target = model.EnemyCards.Single(
+                    card => card.CardId == option.CardId.Value);
+                Assert.That(target.CardEffectChoiceOptionId, Is.EqualTo(option.Id));
+            }
+
+            GameSceneCardViewModel hiddenRoleCard = model.EnemyCards.Single(
+                card => card.CardId == revealedHiddenCard.Id);
+            Assert.That(hiddenRoleCard.RevealRank, Is.True);
+            Assert.That(hiddenRoleCard.CardEffectChoiceOptionId, Is.Null);
+        }
+
+        [Test]
+        public void CUM09_U02_HammerKeepsPromptButRemovesHudChoiceButtons()
+        {
+            CoreLoopBattle battle = CreateStartedHammerBattle();
+            BlackjackCard hammer = battle.Player.Draw(faceUp: true);
+            Assert.That(battle.TryBeginPlayerCardUse(hammer.Id), Is.True);
+            GameSceneViewModel scene = GameScenePresenter.Create(battle);
+
+            GameSceneCombatHudViewModel hud = GameSceneCombatHudPresenter.Create(
+                scene.Core,
+                showDemonContractConfirmation: false,
+                isStageBattle: false,
+                isShopOpen: false,
+                inputLocked: false,
+                usesDiegeticCardEffectSelection:
+                    scene.UsesDiegeticCardEffectSelection);
+
+            Assert.That(hud.Mode, Is.EqualTo(GameSceneCombatHudMode.Options));
+            Assert.That(hud.Prompt, Is.EqualTo(scene.Core.CardEffectPrompt));
+            Assert.That(hud.OptionActions, Is.Empty);
+        }
+
+        [Test]
+        public void CUM09_U03_CardViewRetainsProjectedCardEffectChoiceOption()
+        {
+            GameObject cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/03. Prefabs/Card/Card.prefab");
+            Assert.That(cardPrefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(cardPrefab);
+
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                Assert.That(view, Is.Not.Null);
+                view.Bind(new GameSceneCardViewModel(
+                    cardId: 21,
+                    rank: 10,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    displayName: "Target",
+                    cardEffectChoiceOptionId: 42));
+
+                Assert.That(view.CanUse, Is.False);
+                Assert.That(view.CardEffectChoiceOptionId, Is.EqualTo(42));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void CUM09_U04_NonHammerManualChoicesRemainHudButtons()
+        {
+            CardDefinition revolver = CardDefinitionCatalog.GetDefaultForRank(7);
+            var battle = new CoreLoopBattle(
+                BlackjackDeck.CreateInDrawOrder(CreateCards(0, 2, revolver, 3)),
+                BlackjackDeck.CreateInDrawOrder(CreateCards(100, 10, 7, 5)),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 4,
+                enemyPolicy: new StandPolicy());
+            Assert.That(battle.Start(), Is.True);
+            BlackjackCard source = battle.Player.Hand.Cards.Single(
+                card => card.Definition.Effect == CardEffectKind.AutoPistol);
+            Assert.That(battle.TryBeginPlayerCardUse(source.Id), Is.True);
+            GameSceneViewModel scene = GameScenePresenter.Create(battle);
+
+            GameSceneCombatHudViewModel hud = GameSceneCombatHudPresenter.Create(
+                scene.Core,
+                showDemonContractConfirmation: false,
+                isStageBattle: false,
+                isShopOpen: false,
+                inputLocked: false,
+                usesDiegeticCardEffectSelection:
+                    scene.UsesDiegeticCardEffectSelection);
+
+            Assert.That(scene.UsesDiegeticCardEffectSelection, Is.False);
+            Assert.That(hud.OptionActions, Has.Count.EqualTo(10));
+            Assert.That(hud.OptionActions.All(action =>
+                action.Command.Kind ==
+                    GameSceneCombatHudCommandKind.ResolveCardEffectChoice), Is.True);
+        }
+
+        [Test]
         public void GSH01_U06_HudPrefabAuthorsFixedButtonsSlotsTooltipAndCandidateCatalog()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
@@ -179,6 +295,19 @@ namespace DiaBlackJack.CoreLoop.Tests
             var battle = new CoreLoopBattle(
                 BlackjackDeck.CreateInDrawOrder(CreateRankCards(0, playerRanks)),
                 BlackjackDeck.CreateInDrawOrder(CreateCards(100, 10, 7, 5)),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 4,
+                enemyPolicy: new StandPolicy());
+            Assert.That(battle.Start(), Is.True);
+            return battle;
+        }
+
+        private static CoreLoopBattle CreateStartedHammerBattle()
+        {
+            CardDefinition hammer = CardDefinitionCatalog.GetDefaultForRank(6);
+            var battle = new CoreLoopBattle(
+                BlackjackDeck.CreateInDrawOrder(CreateCards(0, 2, 3, hammer, 4)),
+                BlackjackDeck.CreateInDrawOrder(CreateCards(100, 10, 7, 5, 4)),
                 playerMaximumSoul: 12,
                 enemyMaximumSoul: 4,
                 enemyPolicy: new StandPolicy());

@@ -43,7 +43,8 @@ namespace DiaBlackJack.GameScene
             CardSuit suit = CardSuit.Spade,
             bool showHoverBadgeWhenUnavailable = false,
             string definitionKey = "",
-            bool showHoverBadgeBelow = false)
+            bool showHoverBadgeBelow = false,
+            int? cardEffectChoiceOptionId = null)
         {
             CardId = cardId;
             Rank = rank;
@@ -56,6 +57,7 @@ namespace DiaBlackJack.GameScene
             ShowHoverBadgeWhenUnavailable = showHoverBadgeWhenUnavailable;
             DefinitionKey = definitionKey ?? string.Empty;
             ShowHoverBadgeBelow = showHoverBadgeBelow;
+            CardEffectChoiceOptionId = cardEffectChoiceOptionId;
         }
 
         public int CardId { get; }
@@ -89,6 +91,13 @@ namespace DiaBlackJack.GameScene
         /// information stays inside the screen instead of being clipped above the table.
         /// </summary>
         public bool ShowHoverBadgeBelow { get; }
+
+        /// <summary>
+        /// Current card-effect option routed by clicking this world-space card. Null when the card
+        /// is not a legal target; kept separate from <see cref="CanUse"/> because enemy cards are
+        /// selected as targets rather than activated by the player.
+        /// </summary>
+        public int? CardEffectChoiceOptionId { get; }
 
         /// <summary>
         /// Stable card archetype key used only to select authored visuals. It remains empty for an
@@ -262,7 +271,8 @@ namespace DiaBlackJack.GameScene
             CharacterVisualState enemyVisual,
             string enemyActionLabel,
             GameSceneRevolverAnimationCue revolverAnimationCue = null,
-            GameSceneHammerAnimationCue hammerAnimationCue = null)
+            GameSceneHammerAnimationCue hammerAnimationCue = null,
+            bool usesDiegeticCardEffectSelection = false)
         {
             Core = core ?? throw new ArgumentNullException(nameof(core));
             PlayerCards = playerCards ?? throw new ArgumentNullException(nameof(playerCards));
@@ -271,6 +281,7 @@ namespace DiaBlackJack.GameScene
             EnemyActionLabel = enemyActionLabel ?? string.Empty;
             RevolverAnimationCue = revolverAnimationCue;
             HammerAnimationCue = hammerAnimationCue;
+            UsesDiegeticCardEffectSelection = usesDiegeticCardEffectSelection;
         }
 
         public CoreLoopViewModel Core { get; }
@@ -287,6 +298,8 @@ namespace DiaBlackJack.GameScene
         public GameSceneRevolverAnimationCue RevolverAnimationCue { get; }
 
         public GameSceneHammerAnimationCue HammerAnimationCue { get; }
+
+        public bool UsesDiegeticCardEffectSelection { get; }
     }
 
     public static class GameScenePresenter
@@ -308,7 +321,8 @@ namespace DiaBlackJack.GameScene
                 enemyVisual,
                 enemyLabel,
                 CreateRevolverAnimationCue(battle),
-                CreateHammerAnimationCue(battle));
+                CreateHammerAnimationCue(battle),
+                UsesDiegeticCardEffectSelection(battle.PendingPlayerCardEffect));
         }
 
         /// <summary>
@@ -808,6 +822,7 @@ namespace DiaBlackJack.GameScene
         private static IReadOnlyList<GameSceneCardViewModel> CreateEnemyCards(CoreLoopBattle battle)
         {
             IReadOnlyList<BlackjackCard> hand = battle.Enemy.Hand.Cards;
+            PendingCardEffect pendingEffect = battle.PendingPlayerCardEffect;
             var cards = new List<GameSceneCardViewModel>(hand.Count);
             int hiddenCardCount = 0;
             foreach (BlackjackCard card in hand)
@@ -828,7 +843,9 @@ namespace DiaBlackJack.GameScene
                     suit: card.Suit,
                     showHoverBadgeWhenUnavailable: faceUp,
                     definitionKey: faceUp ? card.DefinitionKey : string.Empty,
-                    showHoverBadgeBelow: faceUp);
+                    showHoverBadgeBelow: faceUp,
+                    cardEffectChoiceOptionId:
+                        FindCardEffectChoiceOptionId(pendingEffect, card.Id));
 
                 // Both sides' hidden cards sit on the screen LEFT (each player's own right, mirrored
                 // across the table). The camera mirrors local X, so screen-left = highest index →
@@ -845,6 +862,33 @@ namespace DiaBlackJack.GameScene
             }
 
             return cards.AsReadOnly();
+        }
+
+        private static bool UsesDiegeticCardEffectSelection(PendingCardEffect pendingEffect)
+        {
+            return pendingEffect != null &&
+                pendingEffect.ChoiceKind ==
+                    CardEffectChoiceKind.DiscardOpponentFaceUpCard;
+        }
+
+        private static int? FindCardEffectChoiceOptionId(
+            PendingCardEffect pendingEffect,
+            int cardId)
+        {
+            if (!UsesDiegeticCardEffectSelection(pendingEffect))
+            {
+                return null;
+            }
+
+            foreach (CardEffectChoiceOption option in pendingEffect.Options)
+            {
+                if (option.CardId == cardId)
+                {
+                    return option.Id;
+                }
+            }
+
+            return null;
         }
     }
 }

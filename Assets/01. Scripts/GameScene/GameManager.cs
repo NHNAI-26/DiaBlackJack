@@ -188,9 +188,10 @@ namespace DiaBlackJack.GameScene
             }
         }
 
-        // Diegetic input: hover any card to enlarge it (usable cards also show a HUD badge), and
-        // click a usable card to activate its effect. New Input System — legacy OnMouseDown does not
-        // fire, so we raycast the pointer ourselves. Other combat input comes from GameHudView.
+        // Diegetic input: hover any card to enlarge it (usable cards also show a HUD badge), click a
+        // legal card-effect target to resolve that choice, or click a usable player card to activate
+        // its effect. New Input System — legacy OnMouseDown does not fire, so we raycast the pointer
+        // ourselves. Other combat input comes from GameHudView.
         private void Update()
         {
             if (_deckPreviewSwitchInputLocked &&
@@ -258,6 +259,14 @@ namespace DiaBlackJack.GameScene
             if (pointedDeck != null)
             {
                 OpenDeckPreview(pointedDeck.Kind);
+                return;
+            }
+
+            if (pointedBattleCard != null &&
+                pointedBattleCard.CardEffectChoiceOptionId.HasValue)
+            {
+                int optionId = pointedBattleCard.CardEffectChoiceOptionId.Value;
+                ProcessInput(() => TryResolvePlayerCardChoice(optionId));
                 return;
             }
 
@@ -1390,7 +1399,8 @@ namespace DiaBlackJack.GameScene
                         _showDemonContractConfirmation,
                         IsStageBattle,
                         isShopOpen,
-                        _inputLocked));
+                        _inputLocked,
+                        vm.UsesDiegeticCardEffectSelection));
                 int gold = IsStageBattle
                     ? _stageSession.Progress.Player.CurrentGold
                     : shop != null ? shop.Gold : 0;

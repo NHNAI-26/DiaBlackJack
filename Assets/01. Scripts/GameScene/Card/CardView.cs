@@ -81,6 +81,9 @@ namespace DiaBlackJack.GameScene
         /// <summary>Whether this card's manual effect can be activated right now (player, usable only).</summary>
         public bool CanUse { get; private set; }
 
+        /// <summary>Current card-effect option selected by clicking this world-space card.</summary>
+        public int? CardEffectChoiceOptionId { get; private set; }
+
         /// <summary>Title displayed by the shared HUD tooltip while this card is hovered.</summary>
         public string HoverBadgeTitle { get; private set; } = string.Empty;
 
@@ -137,6 +140,7 @@ namespace DiaBlackJack.GameScene
 
             CardId = card.CardId;
             CanUse = card.CanUse;
+            CardEffectChoiceOptionId = card.CardEffectChoiceOptionId;
             bool showPlayerHiddenBlend = card.RevealRank && !card.IsFaceUp;
             _showingFrontFace = card.RevealRank && !showPlayerHiddenBlend;
             _usesHoverCardBlend = showPlayerHiddenBlend;
