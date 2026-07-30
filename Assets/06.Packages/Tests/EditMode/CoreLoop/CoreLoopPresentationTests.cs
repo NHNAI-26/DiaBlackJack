@@ -215,12 +215,14 @@ namespace DiaBlackJack.CoreLoop.Tests
                 visibleCardModel.AbilityDescription,
                 Is.EqualTo("적 비공개 숫자 맞히면 적 즉사"));
             Assert.That(visibleCardModel.ShowHoverBadgeWhenUnavailable, Is.True);
+            Assert.That(visibleCardModel.ShowHoverBadgeBelow, Is.True);
             Assert.That(hiddenCardModel.RevealRank, Is.False);
             Assert.That(hiddenCardModel.Rank, Is.Zero);
             Assert.That(hiddenCardModel.DefinitionKey, Is.Empty);
             Assert.That(hiddenCardModel.DisplayName, Is.Empty);
             Assert.That(hiddenCardModel.AbilityDescription, Is.Empty);
             Assert.That(hiddenCardModel.ShowHoverBadgeWhenUnavailable, Is.False);
+            Assert.That(hiddenCardModel.ShowHoverBadgeBelow, Is.False);
 
             hiddenCard.Reveal();
             GameSceneCardViewModel revealedHiddenCardModel =
@@ -233,6 +235,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 revealedHiddenCardModel.AbilityDescription,
                 Is.EqualTo("적 공개 카드 1장 제거; 스탠드면 비공개 교체"));
             Assert.That(revealedHiddenCardModel.ShowHoverBadgeWhenUnavailable, Is.True);
+            Assert.That(revealedHiddenCardModel.ShowHoverBadgeBelow, Is.True);
         }
 
         [Test]
@@ -258,6 +261,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                 cardView.SetHovered(true);
 
                 Assert.That(cardView.ShouldShowHoverBadge, Is.True);
+                Assert.That(
+                    cardView.HoverBadgeTitle,
+                    Is.EqualTo($"{visibleCardModel.Rank}. {visibleCardModel.DisplayName}"));
+                Assert.That(
+                    cardView.HoverBadgeDescription,
+                    Is.EqualTo(visibleCardModel.AbilityDescription));
+                Assert.That(cardView.ShowHoverBadgeBelow, Is.True);
                 Assert.That(
                     cardView.HoverBadgeText,
                     Is.EqualTo("7 리볼버\n적 비공개 숫자 맞히면 적 즉사"));

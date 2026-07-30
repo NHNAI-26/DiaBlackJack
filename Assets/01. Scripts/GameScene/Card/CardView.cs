@@ -27,6 +27,8 @@ namespace DiaBlackJack.GameScene
         [Header("Hover badge anchor")]
         [Tooltip("World-space anchor projected to the HUD while this card is hovered.")]
         [SerializeField] private Transform topPosition;
+        [Tooltip("World-space anchor projected to the HUD when this card's tooltip extends below it.")]
+        [SerializeField] private Transform bottomPosition;
 
         [Header("Hover feel")]
         [SerializeField] private float hoverScale = 1.15f;
@@ -78,12 +80,21 @@ namespace DiaBlackJack.GameScene
         /// <summary>Whether this card's manual effect can be activated right now (player, usable only).</summary>
         public bool CanUse { get; private set; }
 
-        /// <summary>Text displayed by the shared HUD badge while this card is hovered.</summary>
+        /// <summary>Title displayed by the shared HUD tooltip while this card is hovered.</summary>
+        public string HoverBadgeTitle { get; private set; } = string.Empty;
+
+        /// <summary>Description displayed beneath the shared HUD tooltip title.</summary>
+        public string HoverBadgeDescription { get; private set; } = string.Empty;
+
+        /// <summary>Legacy combined tooltip text, retained for presentation tests.</summary>
         public string HoverBadgeText { get; private set; } = string.Empty;
+
+        /// <summary>Whether the shared HUD tooltip should extend below this card.</summary>
+        public bool ShowHoverBadgeBelow { get; private set; }
 
         /// <summary>Whether the shared HUD badge should currently be visible for this card.</summary>
         public bool ShouldShowHoverBadge =>
-            _hovered && _showBadgeOnHover && !string.IsNullOrEmpty(HoverBadgeText);
+            _hovered && _showBadgeOnHover && !string.IsNullOrEmpty(HoverBadgeTitle);
 
         /// <summary>Returns the authored front sprite used for an already-projected card model.</summary>
         internal Sprite GetFaceSprite(GameSceneCardViewModel card)
@@ -129,6 +140,7 @@ namespace DiaBlackJack.GameScene
             _showingFrontFace = card.RevealRank && !showPlayerHiddenBlend;
             _usesHoverCardBlend = showPlayerHiddenBlend;
             _showBadgeOnHover = CanUse || card.ShowHoverBadgeWhenUnavailable;
+            ShowHoverBadgeBelow = card.ShowHoverBadgeBelow;
 
             Sprite faceSprite = null;
             if (card.RevealRank)
@@ -152,6 +164,12 @@ namespace DiaBlackJack.GameScene
 
             HideRankText();
 
+            HoverBadgeTitle = !card.RevealRank
+                ? string.Empty
+                : $"{card.Rank}. {card.DisplayName}";
+            HoverBadgeDescription = !card.RevealRank
+                ? string.Empty
+                : card.AbilityDescription;
             HoverBadgeText = !card.RevealRank
                 ? string.Empty
                 : string.IsNullOrEmpty(card.AbilityDescription)
@@ -194,15 +212,19 @@ namespace DiaBlackJack.GameScene
         /// <summary>
         /// Projects the authored top-position anchor into screen space.
         /// </summary>
-        public bool TryGetHoverBadgeScreenPosition(Camera camera, out Vector2 screenPosition)
+        public bool TryGetHoverBadgeScreenPosition(
+            Camera camera,
+            bool useBottomAnchor,
+            out Vector2 screenPosition)
         {
             screenPosition = default;
-            if (camera == null || topPosition == null)
+            Transform anchor = useBottomAnchor ? bottomPosition : topPosition;
+            if (camera == null || anchor == null)
             {
                 return false;
             }
 
-            Vector3 projected = camera.WorldToScreenPoint(topPosition.position);
+            Vector3 projected = camera.WorldToScreenPoint(anchor.position);
             if (projected.z <= 0f)
             {
                 return false;

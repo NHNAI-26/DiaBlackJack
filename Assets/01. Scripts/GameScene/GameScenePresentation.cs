@@ -42,7 +42,8 @@ namespace DiaBlackJack.GameScene
             string abilityDescription = "",
             CardSuit suit = CardSuit.Spade,
             bool showHoverBadgeWhenUnavailable = false,
-            string definitionKey = "")
+            string definitionKey = "",
+            bool showHoverBadgeBelow = false)
         {
             CardId = cardId;
             Rank = rank;
@@ -54,6 +55,7 @@ namespace DiaBlackJack.GameScene
             AbilityDescription = abilityDescription ?? string.Empty;
             ShowHoverBadgeWhenUnavailable = showHoverBadgeWhenUnavailable;
             DefinitionKey = definitionKey ?? string.Empty;
+            ShowHoverBadgeBelow = showHoverBadgeBelow;
         }
 
         public int CardId { get; }
@@ -81,6 +83,12 @@ namespace DiaBlackJack.GameScene
         public string AbilityDescription { get; }
 
         public bool ShowHoverBadgeWhenUnavailable { get; }
+
+        /// <summary>
+        /// Whether the hover tooltip extends below this card. Enemy cards use this so their public
+        /// information stays inside the screen instead of being clipped above the table.
+        /// </summary>
+        public bool ShowHoverBadgeBelow { get; }
 
         /// <summary>
         /// Stable card archetype key used only to select authored visuals. It remains empty for an
@@ -819,7 +827,8 @@ namespace DiaBlackJack.GameScene
                         : string.Empty,
                     suit: card.Suit,
                     showHoverBadgeWhenUnavailable: faceUp,
-                    definitionKey: faceUp ? card.DefinitionKey : string.Empty);
+                    definitionKey: faceUp ? card.DefinitionKey : string.Empty,
+                    showHoverBadgeBelow: faceUp);
 
                 // Both sides' hidden cards sit on the screen LEFT (each player's own right, mirrored
                 // across the table). The camera mirrors local X, so screen-left = highest index →

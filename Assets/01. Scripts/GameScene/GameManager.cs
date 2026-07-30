@@ -379,6 +379,7 @@ namespace DiaBlackJack.GameScene
                 !_hoveredCard.ShouldShowHoverBadge ||
                 !_hoveredCard.TryGetHoverBadgeScreenPosition(
                     _camera,
+                    _hoveredCard.ShowHoverBadgeBelow,
                     out Vector2 screenPosition))
             {
                 UpdateDemonCardHoverBadge();
@@ -386,9 +387,11 @@ namespace DiaBlackJack.GameScene
             }
 
             hud.ShowCardHoverBadge(
-                _hoveredCard.HoverBadgeText,
+                _hoveredCard.HoverBadgeTitle,
+                _hoveredCard.HoverBadgeDescription,
                 screenPosition,
-                _camera);
+                _camera,
+                _hoveredCard.ShowHoverBadgeBelow);
         }
 
         private void UpdateDemonCardHoverBadge()
@@ -414,9 +417,11 @@ namespace DiaBlackJack.GameScene
             }
 
             hud.ShowCardHoverBadge(
-                _hoveredDemonCard.HoverBadgeText,
+                _hoveredDemonCard.HoverBadgeTitle,
+                _hoveredDemonCard.HoverBadgeDescription,
                 screenPosition,
-                _camera);
+                _camera,
+                showBelow: false);
         }
 
         private void UpdateDemonCardHover(DemonCardView pointed)

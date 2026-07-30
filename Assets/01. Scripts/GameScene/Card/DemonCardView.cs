@@ -30,10 +30,16 @@ namespace DiaBlackJack.GameScene
 
         public bool CanUse { get; private set; }
 
-        public string HoverBadgeText { get; private set; } = string.Empty;
+        public string HoverBadgeTitle { get; private set; } = string.Empty;
+
+        public string HoverBadgeDescription { get; private set; } = string.Empty;
+
+        public string HoverBadgeText => string.IsNullOrEmpty(HoverBadgeDescription)
+            ? HoverBadgeTitle
+            : $"{HoverBadgeTitle}\n{HoverBadgeDescription}";
 
         public bool ShouldShowHoverBadge =>
-            _hovered && _showBadgeOnHover && !string.IsNullOrEmpty(HoverBadgeText);
+            _hovered && _showBadgeOnHover && !string.IsNullOrEmpty(HoverBadgeTitle);
 
         private void Awake()
         {
@@ -77,7 +83,10 @@ namespace DiaBlackJack.GameScene
                 back.SetActive(!_showingFrontFace);
             }
 
-            HoverBadgeText = !card.IsFaceUp ? string.Empty : FormatBadgeText(card);
+            HoverBadgeTitle = !card.IsFaceUp ? string.Empty : card.DisplayName;
+            HoverBadgeDescription = !card.IsFaceUp
+                ? string.Empty
+                : FormatBadgeDescription(card);
 
             _hovered = false;
             transform.localScale = _baseScale;
@@ -121,17 +130,19 @@ namespace DiaBlackJack.GameScene
             return true;
         }
 
-        private static string FormatBadgeText(GameSceneDemonCardViewModel card)
+        private static string FormatBadgeDescription(GameSceneDemonCardViewModel card)
         {
-            string text = card.DisplayName;
+            string text = string.Empty;
             if (!string.IsNullOrEmpty(card.Summary))
             {
-                text += "\n" + card.Summary;
+                text = card.Summary;
             }
 
             if (!string.IsNullOrEmpty(card.CostSummary))
             {
-                text += "\n" + card.CostSummary;
+                text = string.IsNullOrEmpty(text)
+                    ? card.CostSummary
+                    : text + "\n" + card.CostSummary;
             }
 
             return text;
