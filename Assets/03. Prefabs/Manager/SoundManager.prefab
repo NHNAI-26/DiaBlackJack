@@ -131,6 +131,31 @@ MonoBehaviour:
     volume: 0.2
     pitch: 1
     loop: 0
+  - id: lighterOpen
+    clip: {fileID: 8300000, guid: 1567622a02a4276419e3a284f1c939c5, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
+  - id: lighterClose
+    clip: {fileID: 8300000, guid: 1e5f62f88bc4658449009a901a585077, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
+  - id: lighterSpark
+    clip: {fileID: 8300000, guid: f2830c1c3dc382241af4edd8e94f3217, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
+  - id: lighterFireOn
+    clip: {fileID: 8300000, guid: ee4f6dd11445e2648994a9b4cf8f281f, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: lighterFireLoop
+    clip: {fileID: 8300000, guid: 8d0f3aa557095ac48a541253489ab823, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1
