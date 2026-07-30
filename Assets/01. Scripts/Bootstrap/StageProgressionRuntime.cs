@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using DiaBlackJack.Bootstrap;
 using Border.SaveLoad;
@@ -54,26 +53,6 @@ namespace DiaBlackJack.StageProgression.UI
         private StageProgressionSession _injectedSession;
         private FormalRunSession _formalSession;
         private StageProgressionSession _formalCombatSession;
-        private bool _usesFormalGameEntry;
-
-        internal static StageProgressionRuntime CreateForGameScene()
-        {
-            if (Instance != null)
-            {
-                return Instance;
-            }
-
-            GameObject runtimeObject = new GameObject("FormalRunRuntime");
-            runtimeObject.SetActive(false);
-            StageProgressionRuntime runtime =
-                runtimeObject.AddComponent<StageProgressionRuntime>();
-            runtime._usesFormalGameEntry = true;
-            runtime.progressionSceneName = "GameScene";
-            runtime.battleSceneName = "GameScene";
-            runtimeObject.SetActive(true);
-            return runtime;
-        }
-
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -84,10 +63,6 @@ namespace DiaBlackJack.StageProgression.UI
 
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            Func<int, StageProgressionSession> sessionFactory =
-                _usesFormalGameEntry
-                    ? CreateFormalGameSession
-                    : CreatePrototypeSession;
             IRunSaveFileStore fileStore = new SystemRunSaveFileStore();
             SaveFlow = new RunSaveFlow(
                 new RunSaveRepository(fileStore, CreatePrototypeStages(seed)),
@@ -95,7 +70,7 @@ namespace DiaBlackJack.StageProgression.UI
                     fileStore,
                     DemonContractCatalog.Default),
                 CreatePrototypeStages,
-                sessionFactory,
+                CreatePrototypeSession,
                 seed,
                 usesBattleRewards: false);
             _ = FormalSession;
@@ -134,25 +109,6 @@ namespace DiaBlackJack.StageProgression.UI
                 usesBattleRewards: false);
         }
 
-        internal static StageProgressionSession CreateFormalGameSession(int rootSeed)
-        {
-            return new StageProgressionSession(
-                new RunProgress(
-                    CreatePrototypeStages(rootSeed),
-                    CreateFormalGamePlayer()),
-                rewardGenerator: new BattleRewardGenerator(
-                    BattleRewardCatalog.CreateDefault(),
-                    unchecked(rootSeed + 1)),
-                opponentSelectionGenerator: new OpponentSelectionGenerator(
-                    EnemyCombatProfileCatalog.Default,
-                    rootSeed),
-                startingDemonSelectionGenerator:
-                    new StartingDemonSelectionGenerator(
-                        DemonContractCatalog.Default,
-                        unchecked(rootSeed + 3)),
-                usesBattleRewards: false);
-        }
-
         private ShopOfferGenerator CreateShopOfferGenerator(int shopSeed)
         {
             CardContentCatalog catalog = CardContentBootstrap.Instance?.RuntimeCatalog;
@@ -175,16 +131,6 @@ namespace DiaBlackJack.StageProgression.UI
                 12,
                 12,
                 cards);
-        }
-
-        private static PlayerRunState CreateFormalGamePlayer()
-        {
-            PlayerRunState prototype = CreatePrototypePlayer();
-            return new PlayerRunState(
-                prototype.MaximumSoul,
-                prototype.CurrentSoul,
-                prototype.Deck,
-                demonDeck: new RunDemonDefinition[0]);
         }
 
         private static IReadOnlyList<StageDefinition> CreatePrototypeStages(

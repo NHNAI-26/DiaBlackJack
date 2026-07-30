@@ -37,9 +37,6 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private string enemyProfileKey =
             EnemyCombatProfileCatalog.GunslingerKey;
 
-        [Tooltip("Allow GameScene to create a fixed standalone battle instead of entering the formal run.")]
-        [SerializeField] private bool allowStandaloneBattleForDebug;
-
         [Header("Shop (MVP)")]
         [SerializeField] private ShopController shop;
 
@@ -103,7 +100,6 @@ namespace DiaBlackJack.GameScene
         private bool _hammerSwitchInputLocked;
         private bool _deckPreviewSwitchInputLocked;
         private bool _returnCameraToCurrentAfterHammer;
-        private bool _showingFormalRun;
         private HammerAnimationController _hammerCameraLockController;
         private HammerAnimationController _playedHammerAnimationController;
         private readonly List<GameSceneViewModel> _timeline = new List<GameSceneViewModel>();
@@ -153,17 +149,6 @@ namespace DiaBlackJack.GameScene
             bool hasActiveFormalBattle = runtimeSession != null &&
                 runtimeSession.Progress.State == StageProgressionState.InBattle &&
                 runtimeSession.Battle != null;
-            if (ShouldShowFormalRun(
-                    Application.isPlaying,
-                    allowStandaloneBattleForDebug,
-                    hasActiveFormalBattle))
-            {
-                _stageRuntime ??= StageProgressionRuntime.CreateForGameScene();
-                _showingFormalRun = true;
-                EnsureFormalRunPresentation();
-                return;
-            }
-
             if (hasActiveFormalBattle)
             {
                 _stageSession = runtimeSession;
@@ -191,47 +176,12 @@ namespace DiaBlackJack.GameScene
 
         private void Start()
         {
-            if (_showingFormalRun)
-            {
-                return;
-            }
-
             RefreshView();
         }
 
         private void OnEnable()
         {
-            if (_showingFormalRun)
-            {
-                return;
-            }
-
             BindRevolverImpactEvent();
-        }
-
-        internal static bool ShouldShowFormalRun(
-            bool isPlaying,
-            bool allowStandaloneBattle,
-            bool hasActiveFormalBattle)
-        {
-            return isPlaying &&
-                !allowStandaloneBattle &&
-                !hasActiveFormalBattle;
-        }
-
-        private static void EnsureFormalRunPresentation()
-        {
-            if (FindFirstObjectByType<StageProgressionController>() != null)
-            {
-                return;
-            }
-
-            GameObject presentationObject =
-                new GameObject("FormalRunPresentation");
-            presentationObject.SetActive(false);
-            presentationObject.AddComponent<StageProgressionView>();
-            presentationObject.AddComponent<StageProgressionController>();
-            presentationObject.SetActive(true);
         }
 
         private void OnDisable()
