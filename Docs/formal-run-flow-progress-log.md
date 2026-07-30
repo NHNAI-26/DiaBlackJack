@@ -220,11 +220,11 @@ AI는 저장소 검색, 규칙 변경 감지, 현재 구조 대조와 문서 초
 - 작업자: 이천서(AI 구조 대조·구현·검증·기록 보조)
 - 날짜: 2026-07-30
 - 변경 파일: `StageProgressionRuntime.cs`, `GameManager.cs`, `FormalRunSystemValidationTests.cs`, 정식 런 문서와 공통 기록
-- 구현 내용: 프로토타입 플레이어의 기본 악마 4장을 제거하고 무작위 후보 2장 중 1장을 선택하게 했다. 선택 저장 뒤 첫 일반 스테이지의 상대 후보 2명을 제시한다. 활성 정식 전투 없이 GameScene을 실행하면 StageTest로 이동한다.
+- 구현 내용: StageTest의 기본 악마 덱·기존 시작 흐름은 복원했다. GameScene 직접 실행에서만 빈 악마 덱의 무작위 후보 2장 중 1장을 선택하고, 저장 뒤 상대 후보 2명을 제시한다. 상대 확정 시 같은 GameScene을 다시 불러 선택 상대 전투를 시작한다.
 - 디버그 경계: 고정 총잡이·독립 상점 반복은 `allowStandaloneBattleForDebug`를 켠 경우에만 유지한다.
-- 대상 테스트: `FormalRunSystemValidationTests` 13/13. 신규 RFM02는 매개변수 사례 포함 5/5.
-- 회귀: StageProgression 전체 247/247. 두 어셈블리 778건 중 776건 통과; 기존 `DC08_I02` 바알제붑 선택 한도 정체와 `GSH01_U06` HUD 브러시 기대값 불일치 2건은 이번 변경과 무관한 별도 결함으로 재현했다.
-- 실제 씬: Unity 6000.3.10f1에서 GameScene 직접 Play 시 StageTest로 전환됨. 전환 전후 Console Error 0.
+- 대상 테스트: `FormalRunSystemValidationTests` 14/14. RFM02는 매개변수 사례와 StageTest 분리 사례를 포함한다.
+- 회귀: StageProgression 전체 248/248. 이전 두 어셈블리 회귀에서 재현한 `DC08_I02` 바알제붑 선택 한도 정체와 `GSH01_U06` HUD 브러시 기대값 불일치 2건은 이번 변경과 무관한 별도 결함이다.
+- 실제 씬: GameScene 직접 Play 뒤 씬 이름을 유지하며 정식 Runtime·Controller·메뉴를 생성했다. 메모리 주입한 시작 악마·상대 선택 완료 세션으로 같은 GameScene을 다시 불러 `InBattle`·`PlayerTurn`·선택 UI 제거를 확인했다. StageTest 직접 Play는 `progressionSceneName=StageTest`, GameScene 전투 목적지와 기존 Controller를 유지했다. Console Error 0.
 - 외부 변경: 씬·프리팹·외부 에셋·오픈소스·패키지 추가 없음.
 - 이천서 통합 검토: 실제 진입 연결 완료. 시작 악마는 2장을 모두 받는 방식이 아니라 기존 확정 규칙대로 2장 중 1장을 선택한다.
 
@@ -284,7 +284,8 @@ AI는 저장소 검색, 규칙 변경 감지, 현재 구조 대조와 문서 초
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
-| 2026-07-30 | 이천서 | RFM02에서 시작 악마 2장 중 1장 선택과 일반전 상대 2명 중 1명 선택을 실제 Runtime에 연결하고, GameScene 직접 실행을 StageTest 정식 런으로 전환했다. 대상 13/13·StageProgression 247/247·실제 씬 전환·Console 0을 확인했다. |
+| 2026-07-30 | 이천서 | RFM02 실화면 재검증에서 상대 확정 후 런 세션은 `InBattle`이고 전투도 존재하지만 `GameManager`가 사라지는 문제를 재현했다. 원인은 루트 `CardContentBootstrap`과 GameManager 프리팹의 중복 부트스트랩이 새 GameManager 오브젝트 전체를 삭제한 것이었다. 중복 시 컴포넌트만 제거하고 루트 부트스트랩만 영속화하도록 수정했으며, 같은 GameScene 재진입 3초 뒤 GameManager·Battle 생존과 `PlayerTurn`, 관련 EditMode 42/42, Console 오류 0을 확인했다. 외부 에셋·패키지·씬·프리팹 변경은 없다. |
+| 2026-07-30 | 이천서 | RFM02를 재교체해 StageTest 기존 흐름을 복원하고 GameScene 직접 실행에서만 시작 악마·상대 선택·같은 씬 전투를 진행하도록 했다. 대상 14/14·StageProgression 248/248·상대 선택 뒤 PlayerTurn·StageTest 분리·Console 0을 확인했다. |
 | 2026-07-30 | 이천서 | RF-05 반복 검증 8건을 추가해 전체 승리·상점 행동·오래된 입력·세 위치 패배·네 일반 적 골드와 두 씬 직렬화를 검증했다. RF 대상 49/49·전체 EditMode 744/744 통과, 라이브 두 해상도는 MCP handshake 장애로 분리 기록했다. |
 | 2026-07-30 | 이천서 | RF-04 후속으로 정식 전투 목적지를 GameScene으로 전환하고 GameManager의 진행 세션 행동·프로필·골드·복귀 경계를 연결했다. 컴파일과 RF 비Unity 42/42를 재확인했으며 라이브 씬 왕복은 MCP 연결 문제로 남겼다. |
 | 2026-07-30 | 이천서 | RF-04 정식 Runtime 재결합과 진행 Presenter·IMGUI View·Controller·CoreLoop 씬 연결을 구현했다. RF04 6건 컴파일·비Unity 5건·누적 42/42와 기존 씬 직렬화를 확인했지만 Unity MCP가 닫힌 8080을 가리켜 실제 EditMode·두 해상도·씬 왕복은 미실행으로 남겼다. |

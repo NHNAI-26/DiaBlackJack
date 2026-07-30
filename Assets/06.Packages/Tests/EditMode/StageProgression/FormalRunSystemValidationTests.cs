@@ -211,7 +211,7 @@ namespace DiaBlackJack.StageProgression.Tests
         public void RFM02_U01_PrototypeRunOffersTwoDemonsThenTwoOpponents()
         {
             StageProgressionSession session =
-                StageProgressionRuntime.CreatePrototypeSession(20260730);
+                StageProgressionRuntime.CreateFormalGameSession(20260730);
 
             Assert.That(session.TryStartRun(), Is.True);
             StartingDemonSelectionOffer demonOffer =
@@ -242,18 +242,35 @@ namespace DiaBlackJack.StageProgression.Tests
         [TestCase(true, false, true, false)]
         [TestCase(true, true, false, false)]
         [TestCase(false, false, false, false)]
-        public void RFM02_U02_GameSceneRedirectsUnlessFormalBattleOrDebugIsActive(
+        public void RFM02_U02_GameSceneShowsFormalRunUnlessBattleOrDebugIsActive(
             bool isPlaying,
             bool allowStandaloneBattle,
             bool hasActiveFormalBattle,
             bool expected)
         {
             Assert.That(
-                GameManager.ShouldRedirectToFormalRun(
+                GameManager.ShouldShowFormalRun(
                     isPlaying,
                     allowStandaloneBattle,
                     hasActiveFormalBattle),
                 Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void RFM02_U03_StageTestPrototypeKeepsItsExistingStartFlow()
+        {
+            StageProgressionSession session =
+                StageProgressionRuntime.CreatePrototypeSession(20260730);
+
+            Assert.That(session.TryStartRun(), Is.True);
+            Assert.That(session.PendingStartingDemonSelection, Is.Null);
+            Assert.That(
+                session.Progress.State,
+                Is.EqualTo(StageProgressionState.OpponentSelection));
+            Assert.That(session.PendingOpponentSelection, Is.Not.Null);
+            Assert.That(
+                session.PendingOpponentSelection.Candidates.Count,
+                Is.EqualTo(2));
         }
 
         private static FormalRunSession CreateRunOfferingProfile(

@@ -54,9 +54,9 @@
 | [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI 이력과 새 적 정보 연결 계획 | RF-04 코드 이관·화면 검증 대기 v0.4 |
 | [enemy-selection-combat-ui-progress-log.md](./enemy-selection-combat-ui-progress-log.md) | 상대 선택·적 전투 정보 UI 결정·구현·검증 누적 기록 | RF-04 예상 골드 코드 연결·화면 검증 대기 v0.4 |
 | [formal-run-flow-design.md](./formal-run-flow-design.md) | 골드·상점과 `전투→이벤트→전투→이벤트→보스` 정식 진행 규칙 | RFM02 실제 시작·상대 선택 연결 v1.4 |
-| [formal-run-flow-development-spec.md](./formal-run-flow-development-spec.md) | 골드 정산·상점 거래·정식 런 조정 API와 테스트 명세 | RFM02 Runtime·진입 계약 완료 v1.1 |
+| [formal-run-flow-development-spec.md](./formal-run-flow-development-spec.md) | 골드 정산·상점 거래·정식 런 조정 API와 테스트 명세 | RFM02 GameScene 전용 Runtime·StageTest 분리 v1.1 |
 | [formal-run-flow-implementation-plan.md](./formal-run-flow-implementation-plan.md) | RF-00~RF-05·RFM02 작업 순서와 검증 게이트 | RFM02 완료 v0.9 |
-| [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | RFM02 대상 13/13·StageProgression 247/247 v1.1 |
+| [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | RFM02 대상 14/14·StageProgression 248/248 v1.1 |
 | [settings-design.md](./settings-design.md) | 설정·일시정지 메뉴 목표와 사용자 흐름 | SET-00~SET-05 v1.0 |
 | [settings-development-spec.md](./settings-development-spec.md) | 설정 데이터·저장·화면 모드·UI 연결 명세 | 구현 기준 v1.0 |
 | [settings-implementation-plan.md](./settings-implementation-plan.md) | SET-00~SET-05 작업 순서와 검증 게이트 | SET-05 수동 확인 진행 중 v1.0 |
@@ -81,7 +81,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
-| 2026-07-30 | 이천서 | RFM02에서 새 런의 시작 악마 후보 2장 중 1장 선택과 일반전 상대 후보 2명 중 1명 확정을 실제 Runtime에 연결했다. GameScene 직접 실행은 StageTest로 이동하며 대상 13/13·StageProgression 247/247·실제 씬 전환·Console 0을 확인했다. |
+| 2026-07-30 | 이천서 | RFM02를 재교체해 StageTest는 기존 테스트 흐름으로 복원하고 GameScene 직접 실행에서만 시작 악마·상대 선택 뒤 같은 씬의 전투를 시작하도록 했다. 대상 14/14·StageProgression 248/248·상대 선택 뒤 PlayerTurn·Console 0을 확인했다. |
 | 2026-07-30 | 이천서 | 새 런별 신규 루트 시드와 저장 보존, 보위 나이프 강제 드로우·ID 기반 폐기 연출, 광신도 수동 카드 우선 점수를 구현했다. 3개 어셈블리 직접 컴파일과 순수 대상 2건 통과; 저장 대상·전체 Unity 회귀·GameScene 육안 검증은 MCP 미노출로 미실행 |
 | 2026-07-30 | 이천서 | RF-04에서 저장 세션과 정식 런 Runtime을 결합하고 StageTest IMGUI에 골드·예상 지급·상점 5장·라이터·위스키·나가기를 연결했다. RF04 6건 컴파일·비Unity 5건·누적 42/42와 두 씬 직렬화를 확인했으며 Unity 실화면·씬 왕복은 MCP 연결 복구 뒤 검증한다. |
 | 2026-07-30 | 이천서 | RF-03에서 기존 RW 회귀를 보존하는 정식 런 전용 완료 정책과 `FormalRunSession`을 구현해 두 상점·고정 보스·승패·재시작을 연결했다. RF03 12건·RF-01~03 누적 37/37·두 어셈블리 컴파일을 확인했으며 RF-04 화면 연결이 다음 작업이다. |

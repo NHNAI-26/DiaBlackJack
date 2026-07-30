@@ -7,7 +7,6 @@ using DiaBlackJack.StageProgression;
 using DiaBlackJack.StageProgression.UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 
 namespace DiaBlackJack.GameScene
 {
@@ -19,13 +18,11 @@ namespace DiaBlackJack.GameScene
     /// lives in <see cref="GameHudView"/> and <see cref="CardHand"/>; this type only orchestrates.
     /// During a formal run, actions are forwarded through <see cref="StageProgressionSession"/> so
     /// battle completion, gold, and the next shop remain authoritative there. When opened directly,
-    /// it enters the formal run by default; the standalone shop MVP is an explicit debug mode.
+    /// the same scene hosts formal-run selection screens before reloading itself for battle.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class GameManager : MonoBehaviour
     {
-        private const string FormalRunEntrySceneName = "StageTest";
-
         [SerializeField] private int seed = 20260719;
         [SerializeField] private GameHudView hud;
         [SerializeField] private CardHand playerHand;
@@ -106,7 +103,7 @@ namespace DiaBlackJack.GameScene
         private bool _hammerSwitchInputLocked;
         private bool _deckPreviewSwitchInputLocked;
         private bool _returnCameraToCurrentAfterHammer;
-        private bool _redirectingToFormalRun;
+        private bool _showingFormalRun;
         private HammerAnimationController _hammerCameraLockController;
         private HammerAnimationController _playedHammerAnimationController;
         private readonly List<GameSceneViewModel> _timeline = new List<GameSceneViewModel>();
@@ -156,13 +153,14 @@ namespace DiaBlackJack.GameScene
             bool hasActiveFormalBattle = runtimeSession != null &&
                 runtimeSession.Progress.State == StageProgressionState.InBattle &&
                 runtimeSession.Battle != null;
-            if (ShouldRedirectToFormalRun(
+            if (ShouldShowFormalRun(
                     Application.isPlaying,
                     allowStandaloneBattleForDebug,
                     hasActiveFormalBattle))
             {
-                _redirectingToFormalRun = true;
-                SceneManager.LoadScene(FormalRunEntrySceneName);
+                _stageRuntime ??= StageProgressionRuntime.CreateForGameScene();
+                _showingFormalRun = true;
+                EnsureFormalRunPresentation();
                 return;
             }
 
@@ -193,7 +191,7 @@ namespace DiaBlackJack.GameScene
 
         private void Start()
         {
-            if (_redirectingToFormalRun)
+            if (_showingFormalRun)
             {
                 return;
             }
@@ -203,7 +201,7 @@ namespace DiaBlackJack.GameScene
 
         private void OnEnable()
         {
-            if (_redirectingToFormalRun)
+            if (_showingFormalRun)
             {
                 return;
             }
@@ -211,7 +209,7 @@ namespace DiaBlackJack.GameScene
             BindRevolverImpactEvent();
         }
 
-        internal static bool ShouldRedirectToFormalRun(
+        internal static bool ShouldShowFormalRun(
             bool isPlaying,
             bool allowStandaloneBattle,
             bool hasActiveFormalBattle)
@@ -219,6 +217,21 @@ namespace DiaBlackJack.GameScene
             return isPlaying &&
                 !allowStandaloneBattle &&
                 !hasActiveFormalBattle;
+        }
+
+        private static void EnsureFormalRunPresentation()
+        {
+            if (FindFirstObjectByType<StageProgressionController>() != null)
+            {
+                return;
+            }
+
+            GameObject presentationObject =
+                new GameObject("FormalRunPresentation");
+            presentationObject.SetActive(false);
+            presentationObject.AddComponent<StageProgressionView>();
+            presentationObject.AddComponent<StageProgressionController>();
+            presentationObject.SetActive(true);
         }
 
         private void OnDisable()

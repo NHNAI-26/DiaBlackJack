@@ -233,20 +233,20 @@ RF-04 GameScene 후속 결과: `GameManager`가 Runtime의 실제 전투를 채�
 
 ## 11.1 RFM02 — 실제 게임 시작·선택 흐름 연결
 
-1. 프로토타입 플레이어의 시작 악마 덱을 비운다.
-2. Runtime 세션 팩터리에 루트 시드 기반 `StartingDemonSelectionGenerator`를 주입한다.
-3. `GameScene` 직접 실행은 활성 정식 전투가 없으면 `StageTest`로 이동시킨다.
-4. 독립 총잡이·임시 상점 반복은 Inspector 디버그 옵션으로만 남긴다.
-5. `악마 후보 2장 → 상대 후보 2명` 순서와 리다이렉트 조건을 EditMode 테스트로 고정한다.
-6. Unity Play Mode에서 `GameScene → StageTest` 전환과 Console 오류 0을 확인한다.
+1. `StageTest` 프로토타입 세션의 기존 기본 악마 덱·상대 선택 시작을 복원한다.
+2. `GameScene` 직접 실행 전용 Runtime 팩터리에만 빈 악마 덱과 루트 시드 기반 `StartingDemonSelectionGenerator`를 주입한다.
+3. 활성 전투가 없으면 같은 GameScene에 진행 View·Controller를 동적으로 생성한다.
+4. 상대 확정 시 같은 GameScene을 다시 불러 선택 UI를 제거하고 Runtime의 실제 전투를 채택한다.
+5. 독립 총잡이·임시 상점 반복은 Inspector 디버그 옵션으로만 남긴다.
+6. `악마 후보 2장 → 상대 후보 2명 → PlayerTurn` 순서와 StageTest 분리를 자동·실제 Play로 고정한다.
 
-검증 게이트: RFM02 대상 5/5, StageProgression 247/247, 직접 GameScene 실행 시 StageTest 진입, Console Error 0. 전체 두 어셈블리의 기존 광신도 자동전투 정체와 HUD 브러시 직렬화 실패는 별도 결함으로 분리한다.
+검증 게이트: RFM02 포함 대상 14/14, StageProgression 248/248, GameScene 유지·정식 UI 생성·상대 선택 후 `PlayerTurn`, StageTest 고유 Runtime/씬 이름 유지, Console Error 0. 전체 두 어셈블리의 기존 광신도 자동전투 정체와 HUD 브러시 직렬화 실패는 별도 결함으로 분리한다.
 
 ## 12. 변경 기록
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
-| 2026-07-30 | 이천서 | RFM02 실제 진입 연결 6단계와 검증 게이트를 완료했다. 시작 악마 2장 제안 뒤 상대 2명 선택을 순서대로 준비하고 GameScene 직접 실행을 정식 런으로 보낸다. |
+| 2026-07-30 | 이천서 | RFM02를 GameScene 내부 정식 런 방식으로 재교체했다. StageTest 기존 흐름을 복원하고 GameScene에서 시작 악마·상대 선택 뒤 같은 씬의 실제 전투를 시작하도록 6단계와 검증 게이트를 갱신했다. |
 | 2026-07-30 | 이천서 | RF-05 반복 회귀 8건과 씬 직렬화 검증을 추가해 RF 대상 49/49·전체 EditMode 744/744를 통과했다. 두 해상도 Play Mode는 MCP handshake 장애로 완료 게이트에서 분리 기록했다. |
 | 2026-07-30 | 이천서 | RF-04 후속으로 `StageTest → GameScene → StageTest` 정식 왕복 경로와 GameManager의 진행 세션 입력·프로필·골드 연결을 구현했다. 런타임·테스트 어셈블리 컴파일과 RF 비Unity 42/42를 재확인하고 실제 Play Mode 왕복은 미검증으로 유지했다. |
 | 2026-07-30 | 이천서 | RF-04 Runtime·Presenter·View·Controller와 기존 두 씬의 코드 연결을 구현했다. RF04 6건 컴파일·비Unity 5건 실행·누적 42/42를 확인했으며 Unity 실화면·씬 왕복 검증을 남겨 RF-05 착수 전 게이트로 기록했다. |
