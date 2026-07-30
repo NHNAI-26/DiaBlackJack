@@ -1094,10 +1094,22 @@ Test Framework 준비·결과 저장·정리 안내였으며 컴파일·게임 �
 | 라이브 한계 | Unity MCP 8080 initialize handshake 실패로 `StageTest ↔ GameScene` Play Mode와 720p·1080p 시각 검증 미실행 |
 | 변경 보호 | 외부 에셋·외부 코드·오픈소스·Packages·새 의존성 무변경 |
 
+### 7.59 RFM02 실제 런 시작·상대 선택 진입 연결
+
+| 항목 | 현재 구조 |
+| --- | --- |
+| 새 런 생성 | `RunSaveFlow`가 새 루트 시드를 발급하고 `StageProgressionRuntime.CreatePrototypeSession`이 빈 악마 덱·시드 기반 시작 후보 생성기를 구성한다. |
+| 시작 선택 | 서로 다른 악마 후보 2장 중 1장 선택과 체크포인트 완료 뒤 `StageProgressionSession`이 첫 상대 제안을 준비한다. |
+| 상대 선택 | 일반 스테이지마다 후보 2명 중 확정한 프로필 키로 실제 전투를 생성하며 최종 보스는 고정이다. |
+| GameScene 직접 실행 | 활성 정식 전투가 없으면 `StageTest`를 로드한다. `allowStandaloneBattleForDebug`가 true인 경우에만 고정 독립 전투를 만든다. |
+| 검증 | RFM02 포함 `FormalRunSystemValidationTests` 13/13, StageProgression 247/247, GameScene Play→StageTest 전환, Console Error 0 |
+| 보호 범위 | 씬·프리팹·Build Settings·외부 에셋·오픈소스·Packages 무변경 |
+
 ## 8. 변경 기록
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-30 | 이천서 | RFM02에서 Runtime의 빈 시작 악마 덱·후보 생성기와 GameScene 기본 정식 런 리다이렉트를 구조 기록에 추가했다. 대상 13/13·StageProgression 247/247·실제 GameScene→StageTest·Console 0을 확인했다. |
 | 2026-07-30 | 이천서 | RF-05 신규 8/8·RF 대상 49/49·전체 EditMode 744/744와 두 씬 정적 검증 결과를 추가하고 라이브 두 해상도 미검증을 분리 기록했다. |
 | 2026-07-30 | 이천서 | RF-04 정식 런의 전투 화면을 GameScene으로 연결하고 진행 세션 위임·실제 프로필·런 골드·종료 복귀 경계와 Build Settings 등록을 구조 기록에 추가했다. |
 | 2026-07-30 | 이천서 | RF 카드 성장을 상점으로 통합하는 현행 결정, 기존 RW 보존·정식 경로 우회, 자동 카드 상점 후보, 엘리트 가중치와 승리 골드 저장 경계를 구조 기록에 추가; 현행 코드 차이와 문서 전용 작업을 분리 기록 |

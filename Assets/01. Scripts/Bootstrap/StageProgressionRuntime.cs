@@ -95,7 +95,7 @@ namespace DiaBlackJack.StageProgression.UI
             SceneManager.LoadScene(progressionSceneName);
         }
 
-        private StageProgressionSession CreatePrototypeSession(int rootSeed)
+        internal static StageProgressionSession CreatePrototypeSession(int rootSeed)
         {
             return new StageProgressionSession(
                 new RunProgress(
@@ -107,6 +107,10 @@ namespace DiaBlackJack.StageProgression.UI
                 opponentSelectionGenerator: new OpponentSelectionGenerator(
                     EnemyCombatProfileCatalog.Default,
                     rootSeed),
+                startingDemonSelectionGenerator:
+                    new StartingDemonSelectionGenerator(
+                        DemonContractCatalog.Default,
+                        unchecked(rootSeed + 3)),
                 usesBattleRewards: false);
         }
 
@@ -131,10 +135,11 @@ namespace DiaBlackJack.StageProgression.UI
             return new PlayerRunState(
                 12,
                 12,
-                cards);
+                cards,
+                demonDeck: new RunDemonDefinition[0]);
         }
 
-        private IReadOnlyList<StageDefinition> CreatePrototypeStages(
+        private static IReadOnlyList<StageDefinition> CreatePrototypeStages(
             int rootSeed)
         {
             return new[]

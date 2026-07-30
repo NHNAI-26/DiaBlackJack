@@ -27,6 +27,7 @@
 
 | 날짜 | 영역 | 실제 수행 내용 | 관련 파일/산출물 | 검증/비고 |
 | --- | --- | --- | --- | --- |
+| 2026-07-30 | 정식 런 진입 RFM02 | 새 런 시작 악마 후보 2장 중 1장 선택과 일반전 상대 후보 2명 중 1명 확정을 실제 Runtime 순서에 연결하고, GameScene 직접 실행을 정식 런 시작 화면으로 전환했다. | `StageProgressionRuntime.cs`, `GameManager.cs`, `FormalRunSystemValidationTests.cs`, 정식 런 4종·AI 활용 기록 | 이천서 기획·구현·검증 책임, AI 누락 경로 분석·코드·테스트·문서화 보조; 대상 13/13·StageProgression 247/247·GameScene→StageTest Play Mode·Console 0. 기존 CoreLoop 결함 2건 분리, 외부 에셋·패키지 없음 |
 | 2026-07-30 | 무기 피격 표정 CU-M09 | 해머의 상대 표정 반응을 제거하고, 리볼버 성공 시 실제 총구 화염 프레임 전까지 공격 위기 표정을 유지한 뒤 피격 표정으로 전환하도록 구현했다. | GameScene 표시·조정자·리볼버 이벤트 수신기, 성공 애니메이션 클립 2개, CUM09 테스트와 카드 사용·씬 문서 | 이천서 기획·구현·검증 책임, AI 원인 추적·코드·테스트·문서화 보조; 대상 6/6·컴파일·게임 코드 오류 0. 전체 766건 중 기존 광신도 자동전투 실패 1건은 별도 후속, 새 외부 에셋·패키지 없음 |
 | 2026-07-30 | 저장·카드 연출·적 AI 보정 | 새 런별 루트 시드 발급과 저장 보존, 보위 나이프 강제 드로우/폐기 프레임, 광신도 수동 카드 우선 평가를 구현했다. | `RunSaveFlow.cs`, 카드 효과/`CardHand.cs`, `CultistEnemyPolicy.cs`, SV05·CUM08·EPR05 테스트와 관련 문서 | 이천서 기획·구현·검증 책임, AI 구조 대조·코드·테스트·문서화 보조; 3개 어셈블리 직접 컴파일·순수 대상 2건 통과. 저장 대상·전체 Unity 회귀·GameScene 육안 검증은 MCP 미노출로 미실행, 외부 에셋·새 패키지 없음 |
 | 2026-07-30 | 정식 런 화면 RF-04 | 저장 세션 재결합, 신규/복원 RW 우회, CoreLoop 전투 연결과 진행 IMGUI의 골드·상점 구매·카드 제거·회복·나가기 입력을 구현했다. | Runtime·SaveFlow·Restore, 진행 Presenter/View/Controller, `CoreLoopController.cs`, `FormalRunPresentationTests.cs`, RF·공통 문서 | 이천서 기획·구현·검증 책임, AI 구조 대조·코드·테스트·문서화 보조; RF04 6건 컴파일·비Unity 5건·누적 42/42·씬 직렬화 확인. MCP가 닫힌 8080을 가리켜 전체 EditMode·두 해상도·씬 왕복 미실행, 외부 에셋·새 패키지 없음 |

@@ -207,6 +207,55 @@ namespace DiaBlackJack.StageProgression.Tests
             AssertSceneHasNoMissingScripts(battleScene);
         }
 
+        [Test]
+        public void RFM02_U01_PrototypeRunOffersTwoDemonsThenTwoOpponents()
+        {
+            StageProgressionSession session =
+                StageProgressionRuntime.CreatePrototypeSession(20260730);
+
+            Assert.That(session.TryStartRun(), Is.True);
+            StartingDemonSelectionOffer demonOffer =
+                session.PendingStartingDemonSelection;
+            Assert.That(demonOffer, Is.Not.Null);
+            Assert.That(demonOffer.Options.Count, Is.EqualTo(2));
+            Assert.That(
+                demonOffer.Options.Select(option => option.DefinitionKey).Distinct().Count(),
+                Is.EqualTo(2));
+            Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.NotStarted));
+
+            Assert.That(
+                session.TrySelectStartingDemon(
+                    demonOffer.OfferId,
+                    demonOffer.Options[0].OptionId),
+                Is.True);
+            Assert.That(session.TryStartRun(), Is.True);
+            Assert.That(
+                session.Progress.State,
+                Is.EqualTo(StageProgressionState.OpponentSelection));
+            Assert.That(session.PendingOpponentSelection, Is.Not.Null);
+            Assert.That(
+                session.PendingOpponentSelection.Candidates.Count,
+                Is.EqualTo(2));
+        }
+
+        [TestCase(true, false, false, true)]
+        [TestCase(true, false, true, false)]
+        [TestCase(true, true, false, false)]
+        [TestCase(false, false, false, false)]
+        public void RFM02_U02_GameSceneRedirectsUnlessFormalBattleOrDebugIsActive(
+            bool isPlaying,
+            bool allowStandaloneBattle,
+            bool hasActiveFormalBattle,
+            bool expected)
+        {
+            Assert.That(
+                GameManager.ShouldRedirectToFormalRun(
+                    isPlaying,
+                    allowStandaloneBattle,
+                    hasActiveFormalBattle),
+                Is.EqualTo(expected));
+        }
+
         private static FormalRunSession CreateRunOfferingProfile(
             string targetProfileKey,
             EnemyCombatProfileCatalog catalog)
