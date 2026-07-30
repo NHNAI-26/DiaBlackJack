@@ -318,40 +318,32 @@ namespace DiaBlackJack.StageProgression.UI
             GUILayout.EndHorizontal();
             GUILayout.Space(10f);
             GUILayout.Label("LIGHTER — REMOVE ONE CARD", _headingStyle);
-            GUILayout.BeginHorizontal();
-            foreach (ShopOwnedCardViewModel card in _model.ShopOwnedCards)
-            {
-                GUI.enabled = !_inputLocked && card.CanRemove;
-                if (GUILayout.Button(
-                        card.DisplayName,
-                        _buttonStyle,
-                        GUILayout.Height(40f)))
-                {
-                    ShopCardRemovalRequested?.Invoke(offerId, card.CardId);
-                }
-            }
-
-            GUILayout.EndHorizontal();
+            DrawShopOwnedCards(offerId);
             GUILayout.Space(8f);
             GUILayout.BeginHorizontal();
             GUI.enabled = !_inputLocked && _model.CanRestAtShop;
             if (GUILayout.Button(
                     _model.WhiskeyLabel,
                     _buttonStyle,
-                    GUILayout.Height(48f)))
+                    GUILayout.Height(48f),
+                    GUILayout.ExpandWidth(true)))
             {
                 ShopRestRequested?.Invoke(offerId);
             }
 
             GUI.enabled = !_inputLocked &&
                 HasRemovableShopCard();
-            GUILayout.Label(_model.LighterLabel, _selectedStyle);
+            GUILayout.Label(
+                _model.LighterLabel,
+                _selectedStyle,
+                GUILayout.ExpandWidth(true));
 
             GUI.enabled = !_inputLocked && _model.CanLeaveShop;
             if (GUILayout.Button(
                     "LEAVE SHOP",
                     _buttonStyle,
-                    GUILayout.Height(48f)))
+                    GUILayout.Height(48f),
+                    GUILayout.ExpandWidth(true)))
             {
                 ShopLeaveRequested?.Invoke(offerId);
             }
@@ -364,6 +356,42 @@ namespace DiaBlackJack.StageProgression.UI
             }
 
             GUILayout.EndScrollView();
+        }
+
+        private void DrawShopOwnedCards(int offerId)
+        {
+            int columns = Screen.height <= 720 ? 4 : 5;
+            int column = 0;
+            foreach (ShopOwnedCardViewModel card in _model.ShopOwnedCards)
+            {
+                if (column == 0)
+                {
+                    GUILayout.BeginHorizontal();
+                }
+
+                GUI.enabled = !_inputLocked && card.CanRemove;
+                if (GUILayout.Button(
+                        card.DisplayName,
+                        _buttonStyle,
+                        GUILayout.Height(Screen.height <= 720 ? 36f : 40f),
+                        GUILayout.ExpandWidth(true)))
+                {
+                    ShopCardRemovalRequested?.Invoke(offerId, card.CardId);
+                }
+
+                column++;
+                if (column == columns)
+                {
+                    GUILayout.EndHorizontal();
+                    column = 0;
+                }
+            }
+
+            if (column > 0)
+            {
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
         }
 
         private bool HasRemovableShopCard()

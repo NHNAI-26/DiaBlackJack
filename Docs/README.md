@@ -53,10 +53,10 @@
 | [enemy-selection-combat-ui-development-spec.md](./enemy-selection-combat-ui-development-spec.md) | 후보 생성·선택 상태·전투 변환·안전 표시 스냅샷과 테스트 명세 | RewardTier 교체 명세 v0.4 |
 | [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI 이력과 새 적 정보 연결 계획 | RF-04 코드 이관·화면 검증 대기 v0.4 |
 | [enemy-selection-combat-ui-progress-log.md](./enemy-selection-combat-ui-progress-log.md) | 상대 선택·적 전투 정보 UI 결정·구현·검증 누적 기록 | RF-04 예상 골드 코드 연결·화면 검증 대기 v0.4 |
-| [formal-run-flow-design.md](./formal-run-flow-design.md) | 골드·상점과 `전투→이벤트→전투→이벤트→보스` 정식 진행 규칙 | RFM02 GameScene 직접 전투 복원 v1.5 |
-| [formal-run-flow-development-spec.md](./formal-run-flow-development-spec.md) | 골드 정산·상점 거래·정식 런 조정 API와 테스트 명세 | RFM02 직접 전투·진행 전투 분리 v1.2 |
-| [formal-run-flow-implementation-plan.md](./formal-run-flow-implementation-plan.md) | RF-00~RF-05·RFM02 작업 순서와 검증 게이트 | RFM02 진입 책임 정정 v1.0 |
-| [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | RFM02 GameScene 직접 전투 복원 v1.2 |
+| [formal-run-flow-design.md](./formal-run-flow-design.md) | 골드·상점과 `전투→이벤트→전투→이벤트→보스` 정식 진행 규칙 | RF-05 실화면 마감 v1.5 |
+| [formal-run-flow-development-spec.md](./formal-run-flow-development-spec.md) | 골드 정산·상점 거래·정식 런 조정 API와 테스트 명세 | RF-05 전체 798/798 v1.2 |
+| [formal-run-flow-implementation-plan.md](./formal-run-flow-implementation-plan.md) | RF-00~RF-05·RFM02 작업 순서와 검증 게이트 | RF-05 완료 v1.2 |
+| [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | RF-05 720p/1080p 검증 v1.2 |
 | [settings-design.md](./settings-design.md) | 설정·일시정지 메뉴 목표와 사용자 흐름 | SET-00~SET-05 v1.0 |
 | [settings-development-spec.md](./settings-development-spec.md) | 설정 데이터·저장·화면 모드·UI 연결 명세 | 구현 기준 v1.0 |
 | [settings-implementation-plan.md](./settings-implementation-plan.md) | SET-00~SET-05 작업 순서와 검증 게이트 | SET-05 수동 확인 진행 중 v1.0 |
@@ -81,6 +81,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-31 | 이천서 | RF-05에서 1280×720 정식 런 전체 왕복과 1920×1080 상대 선택을 확인하고, 720p 상점 보유 카드 가로 넘침을 4열 그리드로 수정했다. 대상 6/6·전체 EditMode 798/798 통과, 게임 코드 오류 0이며 Test Framework 안내 3건만 남았다. `AGENTS.md`의 Unity·프로젝트 경로도 C/F 드라이브 후보와 현재 Git 루트 자동 탐색으로 바꿨다. |
 | 2026-07-31 | 이천서 | SV-06에서 실제 정식 런의 전투 정산·상점 나가기·보스 승패를 저장에 연결하고 완료 상점 수·공통 서비스 가격·루트 시드·상품 순서를 복원했다. 신규 5/5·저장/정식 런 59/59·전체 EditMode 798/798·게임 코드 오류 0을 확인했으며 Test Framework 결과 저장 안내 1건과 사건·실제 앱 재실행·두 해상도는 별도 기록했다. |
 | 2026-07-30 | 이천서 | RFM02 진입 책임을 정정해 GameScene 직접 실행은 시작 악마·상대 선택 메뉴 없이 기존 독립 전투를 즉시 시작하고, 활성 진행 전투가 있을 때만 런 세션을 채택하도록 복원했다. StageTest는 기존 테스트 흐름을 유지한다. |
 | 2026-07-30 | 이천서 | 새 런별 신규 루트 시드와 저장 보존, 보위 나이프 강제 드로우·ID 기반 폐기 연출, 광신도 수동 카드 우선 점수를 구현했다. 3개 어셈블리 직접 컴파일과 순수 대상 2건 통과; 저장 대상·전체 Unity 회귀·GameScene 육안 검증은 MCP 미노출로 미실행 |
