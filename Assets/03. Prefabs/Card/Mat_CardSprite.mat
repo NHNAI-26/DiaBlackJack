@@ -84,6 +84,7 @@ Material:
     - _EmissionIntensity: 1
     - _HeightFadeEnabled: 0
     - _HeightFadeLower: 0
+    - _HeightFadeOffset: 0
     - _HeightFadeUpper: 1
     - _HueShift: 0
     - _LightingMode: 0
@@ -110,6 +111,10 @@ Material:
     - _Surface: 0
     - _SurfaceInputs: 1
     - _SurfaceOptions: 1
+    - _UVAlphaFadeAxis: 0
+    - _UVAlphaFadeControls: 0
+    - _UVAlphaFadeOpaque: 0
+    - _UVAlphaFadeTransparent: 1
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
