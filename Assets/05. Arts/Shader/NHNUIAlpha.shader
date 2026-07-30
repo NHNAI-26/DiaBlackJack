@@ -5,6 +5,8 @@ Shader "Shader/UI Alpha"
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
         _AlphaMultiplier ("Alpha Multiplier", Range(0,1)) = 1
+        [Toggle] _UseRgbOverride ("Use RGB Override", Float) = 0
+        _RgbOverrideColor ("RGB Override Color", Color) = (1,1,1,1)
 
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
@@ -82,6 +84,8 @@ Shader "Shader/UI Alpha"
             fixed4 _TextureSampleAdd;
             float4 _ClipRect;
             float _AlphaMultiplier;
+            float _UseRgbOverride;
+            fixed4 _RgbOverrideColor;
             float _Cutoff;
 
             v2f vert(appdata_t input)
@@ -101,6 +105,11 @@ Shader "Shader/UI Alpha"
             {
                 fixed4 color = (tex2D(_MainTex, input.texcoord) + _TextureSampleAdd) * input.color;
                 color.a *= _AlphaMultiplier;
+
+                if (_UseRgbOverride > 0.5)
+                {
+                    color.rgb = _RgbOverrideColor.rgb;
+                }
 
                 #ifdef UNITY_UI_CLIP_RECT
                 color.a *= UnityGet2DClipping(input.worldPosition.xy, _ClipRect);
