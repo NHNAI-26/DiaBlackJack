@@ -393,6 +393,24 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CUM08_U01_MilitaryKnifePublishesForcedDrawBeforeDiscard()
+        {
+            CoreLoopBattle battle = CreateStartedBattle(
+                playerRanks: new[] { 2, 3, 9 },
+                enemyRanks: new[] { 5, 7, 2, 3 });
+            BlackjackCard sourceCard = battle.Player.Draw(faceUp: true);
+            var enemyHandCounts = new List<int>();
+            battle.Stepped += () =>
+                enemyHandCounts.Add(battle.Enemy.Hand.Cards.Count);
+
+            Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
+
+            Assert.That(enemyHandCounts.First(), Is.EqualTo(3));
+            Assert.That(enemyHandCounts.IndexOf(2), Is.GreaterThan(0));
+            Assert.That(battle.Enemy.Deck.DiscardCount, Is.EqualTo(1));
+        }
+
+        [Test]
         public void CU04_U16_CoreLoopSessionUsesProductionCrystalOrbHandler()
         {
             var session = new CoreLoopSession(() => CreateBattle(

@@ -11,6 +11,7 @@ namespace DiaBlackJack.CoreLoop
 
         private const int PreferredContractScore = 950;
         private const int UsefulLeviathanScore = 960;
+        private const int UsableManualCardScore = 800;
         private const int AvoidContractScore = -1000;
         private const int FatalContractScore = -1100;
 
@@ -83,7 +84,10 @@ namespace DiaBlackJack.CoreLoop
                             : 350,
                         "cultist-delay-safe-stand");
                 case EnemyActionType.UseCard:
-                    return Score(candidate, 500, "cultist-use-implemented-aggression-card");
+                    return Score(
+                        candidate,
+                        UsableManualCardScore,
+                        "cultist-prioritize-usable-manual-card");
                 case EnemyActionType.DemonContract:
                     return EvaluateDemonContract(observation, candidate);
                 case EnemyActionType.Change:

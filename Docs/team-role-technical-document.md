@@ -27,6 +27,7 @@
 
 | 날짜 | 영역 | 실제 수행 내용 | 관련 파일/산출물 | 검증/비고 |
 | --- | --- | --- | --- | --- |
+| 2026-07-30 | 저장·카드 연출·적 AI 보정 | 새 런별 루트 시드 발급과 저장 보존, 보위 나이프 강제 드로우/폐기 프레임, 광신도 수동 카드 우선 평가를 구현했다. | `RunSaveFlow.cs`, 카드 효과/`CardHand.cs`, `CultistEnemyPolicy.cs`, SV05·CUM08·EPR05 테스트와 관련 문서 | 이천서 기획·구현·검증 책임, AI 구조 대조·코드·테스트·문서화 보조; 3개 어셈블리 직접 컴파일·순수 대상 2건 통과. 저장 대상·전체 Unity 회귀·GameScene 육안 검증은 MCP 미노출로 미실행, 외부 에셋·새 패키지 없음 |
 | 2026-07-30 | 정식 런 화면 RF-04 | 저장 세션 재결합, 신규/복원 RW 우회, CoreLoop 전투 연결과 진행 IMGUI의 골드·상점 구매·카드 제거·회복·나가기 입력을 구현했다. | Runtime·SaveFlow·Restore, 진행 Presenter/View/Controller, `CoreLoopController.cs`, `FormalRunPresentationTests.cs`, RF·공통 문서 | 이천서 기획·구현·검증 책임, AI 구조 대조·코드·테스트·문서화 보조; RF04 6건 컴파일·비Unity 5건·누적 42/42·씬 직렬화 확인. MCP가 닫힌 8080을 가리켜 전체 EditMode·두 해상도·씬 왕복 미실행, 외부 에셋·새 패키지 없음 |
 | 2026-07-30 | 정식 런 순서 RF-03 | 기존 RW 기본 경로를 보존하면서 정식 런 전용 무카드보상 완료·전투 결과 동기화·두 상점·고정 보스·승패·재시작을 구현했다. | `RunProgress.cs`, `StageProgressionSession.cs`, `StageProgression/RunFlow`, 상점 생성기·방문, `FormalRunSessionTests.cs`, RF·공통 문서 | 이천서 기획·구현·검증 책임, AI 구조 대조·코드·테스트·문서화 보조; RF03 12건·RF-01~03 누적 37/37·두 어셈블리 컴파일. 전체 EditMode·씬은 MCP 미연결로 미실행, 외부 에셋·새 패키지 없음 |
 | 2026-07-30 | 정식 런 상점 RF-02 | 자동 카드 포함 일반 3장·악마 2장 결정적 제안, 슬롯별 복수 구매, 라이터·위스키 독립 1회, 공통 가격 단계·무료 나가기와 최소 덱 제거를 구현했다. | `StageProgression/Shop`, `PlayerRunState.cs`, `FormalRunShopTests.cs`, RF·저장·자동 카드·공통 문서 | 이천서 기획·구현·검증 책임, AI 구조 대조·코드·테스트·문서화 보조; RF02 11/11·두 어셈블리 컴파일. 전체 EditMode·씬은 MCP 미연결로 미실행, 외부 에셋·새 패키지 없음 |

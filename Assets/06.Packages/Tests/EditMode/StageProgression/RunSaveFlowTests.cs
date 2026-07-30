@@ -257,9 +257,70 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(model.CanStartNewRun, Is.True);
         }
 
+        [Test]
+        public void SV05_U05_EachNewRunUsesFreshRootSeedAndSavePreservesIt()
+        {
+            MemoryRunFileStore files = new MemoryRunFileStore();
+            int[] seeds = { 314159, 271828 };
+            int seedIndex = 0;
+            Func<int> rootSeedFactory = () => seeds[seedIndex++];
+            RunSaveFlow first = CreateFlow(
+                files,
+                "first-run",
+                rootSeedFactory);
+
+            Assert.That(first.TryRequestNewRun(), Is.True);
+            RunReservation firstReservation =
+                new RunReservationRepository(
+                    files,
+                    DemonContractCatalog.Default)
+                    .Load()
+                    .Reservation;
+            Assert.That(firstReservation.RootSeed, Is.EqualTo(seeds[0]));
+
+            StartingDemonSelectionOffer offer =
+                first.Session.PendingStartingDemonSelection;
+            Assert.That(
+                first.TrySelectStartingDemon(
+                    offer.OfferId,
+                    offer.Options[0].OptionId),
+                Is.True);
+            RunSaveLoadResult saved = new RunSaveRepository(
+                files,
+                CreateStages(seeds[0])).Load();
+            Assert.That(saved.Snapshot.RootSeed, Is.EqualTo(seeds[0]));
+
+            RunSaveFlow second = CreateFlow(
+                files,
+                "second-run",
+                rootSeedFactory);
+            Assert.That(second.TryRequestNewRun(), Is.True);
+            Assert.That(second.TryConfirmNewRun(), Is.True);
+            RunReservation secondReservation =
+                new RunReservationRepository(
+                    files,
+                    DemonContractCatalog.Default)
+                    .Load()
+                    .Reservation;
+
+            Assert.That(secondReservation.RootSeed, Is.EqualTo(seeds[1]));
+            Assert.That(
+                secondReservation.RootSeed,
+                Is.Not.EqualTo(firstReservation.RootSeed));
+            Assert.That(seedIndex, Is.EqualTo(2));
+        }
+
         private static RunSaveFlow CreateFlow(
             MemoryRunFileStore files,
             string runId)
+        {
+            return CreateFlow(files, runId, () => RootSeed);
+        }
+
+        private static RunSaveFlow CreateFlow(
+            MemoryRunFileStore files,
+            string runId,
+            Func<int> rootSeedFactory)
         {
             RunSaveRepository saveRepository = new RunSaveRepository(
                 files,
@@ -272,6 +333,7 @@ namespace DiaBlackJack.StageProgression.Tests
                 CreateStages,
                 CreateSession,
                 RootSeed,
+                rootSeedFactory,
                 () => runId,
                 () => CreatedAt);
         }

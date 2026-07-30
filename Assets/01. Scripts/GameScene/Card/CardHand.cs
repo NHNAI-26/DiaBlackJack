@@ -27,6 +27,10 @@ namespace DiaBlackJack.GameScene
             AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
         [SerializeField] private float bodyEntryDistance = 1.2f;
         [SerializeField] private bool invertBodyEntryDirection;
+        [SerializeField] private float discardDuration = 0.22f;
+        [SerializeField] private float discardExitDistance = 1.2f;
+        [SerializeField] private AnimationCurve discardCurve =
+            AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
         private readonly List<CardView> _spawned = new List<CardView>();
         private readonly List<Tween> _moveTweens = new List<Tween>();
@@ -42,8 +46,11 @@ namespace DiaBlackJack.GameScene
             moveDuration = Mathf.Max(0f, moveDuration);
             enterDuration = Mathf.Max(0f, enterDuration);
             bodyEntryDistance = Mathf.Max(0f, bodyEntryDistance);
+            discardDuration = Mathf.Max(0f, discardDuration);
+            discardExitDistance = Mathf.Max(0f, discardExitDistance);
             moveCurve ??= AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
             enterCurve ??= AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+            discardCurve ??= AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
         }
 
         private void OnDisable()
@@ -64,6 +71,22 @@ namespace DiaBlackJack.GameScene
                 _hasRenderedLayout &&
                 cards.Count > previousCount;
 
+            var retainedCardIds = new HashSet<int>();
+            for (int i = 0; i < cards.Count; i++)
+            {
+                retainedCardIds.Add(cards[i].CardId);
+            }
+
+            for (int i = _spawned.Count - 1; i >= 0; i--)
+            {
+                CardView spawnedCard = _spawned[i];
+                if (spawnedCard != null &&
+                    !retainedCardIds.Contains(spawnedCard.CardId))
+                {
+                    RemoveCardAt(i, animateDiscard: true);
+                }
+            }
+
             while (_spawned.Count < cards.Count)
             {
                 _spawned.Add(Instantiate(cardPrefab, transform));
@@ -72,15 +95,7 @@ namespace DiaBlackJack.GameScene
 
             while (_spawned.Count > cards.Count)
             {
-                int last = _spawned.Count - 1;
-                KillMoveTween(last);
-                if (_spawned[last] != null)
-                {
-                    Destroy(_spawned[last].gameObject);
-                }
-
-                _spawned.RemoveAt(last);
-                _moveTweens.RemoveAt(last);
+                RemoveCardAt(_spawned.Count - 1, animateDiscard: true);
             }
 
             float offset = -(cards.Count - 1) * 0.5f * spacing;
@@ -208,6 +223,55 @@ namespace DiaBlackJack.GameScene
             float direction = ResolveBodyEntryDirection();
             targetPosition.y += bodyEntryDistance * direction;
             return targetPosition;
+        }
+
+        private void AnimateDiscard(CardView card)
+        {
+            if (!Application.isPlaying || discardDuration <= 0f)
+            {
+                Destroy(card.gameObject);
+                return;
+            }
+
+            Vector3 targetPosition = card.transform.localPosition;
+            targetPosition.y += discardExitDistance * ResolveBodyEntryDirection();
+            Sequence sequence = DOTween.Sequence()
+                .SetTarget(card)
+                .SetLink(card.gameObject, LinkBehaviour.KillOnDestroy);
+            sequence.Join(
+                card.transform
+                    .DOLocalMove(targetPosition, discardDuration)
+                    .SetEase(discardCurve));
+            sequence.Join(
+                card.transform.DOScale(Vector3.zero, discardDuration));
+            sequence.OnComplete(() =>
+            {
+                if (card != null)
+                {
+                    Destroy(card.gameObject);
+                }
+            });
+        }
+
+        private void RemoveCardAt(int index, bool animateDiscard)
+        {
+            KillMoveTween(index);
+            CardView card = _spawned[index];
+            _spawned.RemoveAt(index);
+            _moveTweens.RemoveAt(index);
+            if (card == null)
+            {
+                return;
+            }
+
+            if (animateDiscard)
+            {
+                AnimateDiscard(card);
+            }
+            else
+            {
+                Destroy(card.gameObject);
+            }
         }
 
         private float ResolveBodyEntryDirection()

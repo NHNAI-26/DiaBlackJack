@@ -5320,6 +5320,11 @@ namespace DiaBlackJack.CoreLoop
             Stepped?.Invoke();
         }
 
+        internal void NotifyCardEffectVisualStep()
+        {
+            RaiseStepped();
+        }
+
         private void RecordPublicAction(
             CombatantSide actorSide,
             PublicCombatActionType actionType,
