@@ -18,7 +18,7 @@
 | [core-loop-development-spec.md](./core-loop-development-spec.md) | 코어 루프 구조·상태·검증 명세 | CL-M01 검증 완료 v0.2 |
 | [core-loop-implementation-plan.md](./core-loop-implementation-plan.md) | 코어 루프 작업 순서·담당·일정·완료 증거 | CL-M01 완료 v0.2 |
 | [core-loop-progress-log.md](./core-loop-progress-log.md) | 단계별 착수·구현·검증·변경 누적 기록 | CL-M01 완료·전체 623/623 v0.2 |
-| [project-structure-and-mcp-reference.md](./project-structure-and-mcp-reference.md) | Unity 구조·어셈블리·MCP 참조 및 연결 확인 | EP-R06 검증 경계 반영 v0.10 |
+| [project-structure-and-mcp-reference.md](./project-structure-and-mcp-reference.md) | Unity 구조·어셈블리·MCP 참조 및 연결 확인 | RFM02 GameScene 직접 전투 분리 v0.12 |
 | [ai-usage-technical-document.md](./ai-usage-technical-document.md) | 개발 AI와 게임 내 AI 활용 기술 기록 | 지속 갱신 |
 | [team-role-technical-document.md](./team-role-technical-document.md) | 팀원별 담당 및 실제 구현 기록 | 지속 갱신 |
 | [stage-progression-design.md](./stage-progression-design.md) | 코어 루프와 분리된 런·스테이지 진행 기획 범위 | 정식 런 RW 우회·RF 연결 대기 v0.4 |
@@ -53,10 +53,10 @@
 | [enemy-selection-combat-ui-development-spec.md](./enemy-selection-combat-ui-development-spec.md) | 후보 생성·선택 상태·전투 변환·안전 표시 스냅샷과 테스트 명세 | RewardTier 교체 명세 v0.4 |
 | [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI 이력과 새 적 정보 연결 계획 | RF-04 코드 이관·화면 검증 대기 v0.4 |
 | [enemy-selection-combat-ui-progress-log.md](./enemy-selection-combat-ui-progress-log.md) | 상대 선택·적 전투 정보 UI 결정·구현·검증 누적 기록 | RF-04 예상 골드 코드 연결·화면 검증 대기 v0.4 |
-| [formal-run-flow-design.md](./formal-run-flow-design.md) | 골드·상점과 `전투→이벤트→전투→이벤트→보스` 정식 진행 규칙 | 악마 7종 상점 필터 이관 대기 v1.3 |
-| [formal-run-flow-development-spec.md](./formal-run-flow-development-spec.md) | 골드 정산·상점 거래·정식 런 조정 API와 테스트 명세 | RF-04 코드 완료·Unity 검증 대기 v1.0 |
-| [formal-run-flow-implementation-plan.md](./formal-run-flow-implementation-plan.md) | RF-00~RF-05 작업 순서와 검증 게이트 | RF-02 대상 11/11 v0.8 |
-| [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | RF-04 화면 코드 연결 v1.0 |
+| [formal-run-flow-design.md](./formal-run-flow-design.md) | 골드·상점과 `전투→이벤트→전투→이벤트→보스` 정식 진행 규칙 | RFM02 GameScene 직접 전투 복원 v1.5 |
+| [formal-run-flow-development-spec.md](./formal-run-flow-development-spec.md) | 골드 정산·상점 거래·정식 런 조정 API와 테스트 명세 | RFM02 직접 전투·진행 전투 분리 v1.2 |
+| [formal-run-flow-implementation-plan.md](./formal-run-flow-implementation-plan.md) | RF-00~RF-05·RFM02 작업 순서와 검증 게이트 | RFM02 진입 책임 정정 v1.0 |
+| [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | RFM02 GameScene 직접 전투 복원 v1.2 |
 | [settings-design.md](./settings-design.md) | 설정·일시정지 메뉴 목표와 사용자 흐름 | SET-00~SET-05 v1.0 |
 | [settings-development-spec.md](./settings-development-spec.md) | 설정 데이터·저장·화면 모드·UI 연결 명세 | 구현 기준 v1.0 |
 | [settings-implementation-plan.md](./settings-implementation-plan.md) | SET-00~SET-05 작업 순서와 검증 게이트 | SET-05 수동 확인 진행 중 v1.0 |
@@ -81,6 +81,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-30 | 이천서 | RFM02 진입 책임을 정정해 GameScene 직접 실행은 시작 악마·상대 선택 메뉴 없이 기존 독립 전투를 즉시 시작하고, 활성 진행 전투가 있을 때만 런 세션을 채택하도록 복원했다. StageTest는 기존 테스트 흐름을 유지한다. |
 | 2026-07-30 | 이천서 | 새 런별 신규 루트 시드와 저장 보존, 보위 나이프 강제 드로우·ID 기반 폐기 연출, 광신도 수동 카드 우선 점수를 구현했다. 3개 어셈블리 직접 컴파일과 순수 대상 2건 통과; 저장 대상·전체 Unity 회귀·GameScene 육안 검증은 MCP 미노출로 미실행 |
 | 2026-07-30 | 이천서 | RF-04에서 저장 세션과 정식 런 Runtime을 결합하고 StageTest IMGUI에 골드·예상 지급·상점 5장·라이터·위스키·나가기를 연결했다. RF04 6건 컴파일·비Unity 5건·누적 42/42와 두 씬 직렬화를 확인했으며 Unity 실화면·씬 왕복은 MCP 연결 복구 뒤 검증한다. |
 | 2026-07-30 | 이천서 | RF-03에서 기존 RW 회귀를 보존하는 정식 런 전용 완료 정책과 `FormalRunSession`을 구현해 두 상점·고정 보스·승패·재시작을 연결했다. RF03 12건·RF-01~03 누적 37/37·두 어셈블리 컴파일을 확인했으며 RF-04 화면 연결이 다음 작업이다. |

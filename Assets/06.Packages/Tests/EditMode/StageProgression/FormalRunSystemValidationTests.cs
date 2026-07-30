@@ -207,6 +207,23 @@ namespace DiaBlackJack.StageProgression.Tests
             AssertSceneHasNoMissingScripts(battleScene);
         }
 
+        [Test]
+        public void RFM02_U01_StageTestPrototypeKeepsItsExistingStartFlow()
+        {
+            StageProgressionSession session =
+                StageProgressionRuntime.CreatePrototypeSession(20260730);
+
+            Assert.That(session.TryStartRun(), Is.True);
+            Assert.That(session.PendingStartingDemonSelection, Is.Null);
+            Assert.That(
+                session.Progress.State,
+                Is.EqualTo(StageProgressionState.OpponentSelection));
+            Assert.That(session.PendingOpponentSelection, Is.Not.Null);
+            Assert.That(
+                session.PendingOpponentSelection.Candidates.Count,
+                Is.EqualTo(2));
+        }
+
         private static FormalRunSession CreateRunOfferingProfile(
             string targetProfileKey,
             EnemyCombatProfileCatalog catalog)

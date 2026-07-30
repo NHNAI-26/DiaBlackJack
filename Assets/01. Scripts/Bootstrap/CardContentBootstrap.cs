@@ -16,9 +16,15 @@ namespace DiaBlackJack.Bootstrap
 
         private void Awake()
         {
+            if (transform.parent != null && HasSceneRootBootstrap())
+            {
+                Destroy(this);
+                return;
+            }
+
             if (Instance != null && Instance != this)
             {
-                Destroy(gameObject);
+                Destroy(this);
                 return;
             }
 
@@ -33,7 +39,28 @@ namespace DiaBlackJack.Bootstrap
             CardDefinitionCatalog.Install(RuntimeCatalog);
             DemonContractCatalog.Install(RuntimeCatalog);
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            if (transform.parent == null)
+            {
+                DontDestroyOnLoad(gameObject);
+            }
+        }
+
+        private bool HasSceneRootBootstrap()
+        {
+            CardContentBootstrap[] bootstraps =
+                FindObjectsByType<CardContentBootstrap>(
+                    FindObjectsInactive.Include,
+                    FindObjectsSortMode.None);
+            for (int index = 0; index < bootstraps.Length; index++)
+            {
+                CardContentBootstrap bootstrap = bootstraps[index];
+                if (bootstrap != this && bootstrap.transform.parent == null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void OnDestroy()

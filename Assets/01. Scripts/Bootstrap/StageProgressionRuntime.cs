@@ -53,7 +53,6 @@ namespace DiaBlackJack.StageProgression.UI
         private StageProgressionSession _injectedSession;
         private FormalRunSession _formalSession;
         private StageProgressionSession _formalCombatSession;
-
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -95,7 +94,7 @@ namespace DiaBlackJack.StageProgression.UI
             SceneManager.LoadScene(progressionSceneName);
         }
 
-        private StageProgressionSession CreatePrototypeSession(int rootSeed)
+        internal static StageProgressionSession CreatePrototypeSession(int rootSeed)
         {
             return new StageProgressionSession(
                 new RunProgress(
@@ -134,7 +133,7 @@ namespace DiaBlackJack.StageProgression.UI
                 cards);
         }
 
-        private IReadOnlyList<StageDefinition> CreatePrototypeStages(
+        private static IReadOnlyList<StageDefinition> CreatePrototypeStages(
             int rootSeed)
         {
             return new[]

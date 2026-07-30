@@ -638,7 +638,6 @@ namespace DiaBlackJack.GameScene
             {
                 case CardEffectKind.AutoPistol:
                 case CardEffectKind.MilitaryKnife:
-                case CardEffectKind.ThreatHammer:
                     return true;
                 default:
                     return false;

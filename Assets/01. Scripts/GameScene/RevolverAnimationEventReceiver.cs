@@ -10,6 +10,8 @@ namespace DiaBlackJack.GameScene
     [DisallowMultipleComponent]
     public sealed class RevolverAnimationEventReceiver : MonoBehaviour
     {
+        public event Action ShotImpact;
+
         [Serializable]
         private sealed class VfxBinding
         {
@@ -79,6 +81,11 @@ namespace DiaBlackJack.GameScene
                 return;
             }
             SoundManager.Current.PlaySfx(id);
+        }
+
+        public void NotifyShotImpact()
+        {
+            ShotImpact?.Invoke();
         }
 
         public void ShakeCamera(float duration) =>

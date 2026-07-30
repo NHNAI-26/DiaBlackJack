@@ -242,7 +242,7 @@ RF-04 구현에서 `StageProgressionRuntime.FormalSession`은 현재 저장 흐�
 
 `StageProgressionPresenter.Create(FormalRunSession)`은 현재·최근 획득 골드, 상대별 확정 골드, 상점 후보·판매 완료·서비스 가격/이용 여부·최근 거래와 카드 제거 대상을 완성된 문자열·가능 여부로 만든다. View는 계산하지 않고 IMGUI로 렌더링하며 Controller만 정식 세션 거래 API를 호출한다.
 
-`GameManager`는 `StageProgressionRuntime`에 진행 중인 전투가 있으면 독립 `CoreLoopSession`을 만들지 않고 해당 `StageProgressionSession`의 전투를 채택한다. 모든 전투 입력은 진행 세션을 통해 전달하여 승패 동기화와 골드 정산을 한 번만 수행한다. 정식 전투 종료 뒤에는 GameScene-local `ShopController.Open()`을 호출하지 않고 `StageTest`로 복귀한다. Runtime이 없는 단독 `GameScene` 실행만 기존 임시 상점 MVP를 사용한다.
+`GameManager`는 `StageProgressionRuntime`에 진행 중인 전투가 있으면 독립 `CoreLoopSession`을 만들지 않고 해당 `StageProgressionSession`의 전투를 채택한다. 모든 전투 입력은 진행 세션을 통해 전달하여 승패 동기화와 골드 정산을 한 번만 수행한다. `GameScene`에서 생성한 정식 Runtime은 진행·전투 목적지를 모두 `GameScene`으로 두므로 선택 확정과 전투 종료마다 같은 씬을 다시 불러 현재 단계에 맞는 화면을 구성한다. `StageTest`의 씬 작성 Runtime은 기존 `StageTest → GameScene → StageTest` 테스트 경계를 유지한다.
 
 ## 9. 자동 테스트 명세
 
@@ -286,6 +286,17 @@ RF-04 구현에서 `StageProgressionRuntime.FormalSession`은 현재 저장 흐�
 - 1280×720·1920×1080 레이아웃
 - 전체 EditMode, 실제 두 씬 왕복, Console Error·Exception 0
 
+### 9.4 RFM02 실제 게임 진입 계약
+
+- `StageTest`의 씬 작성 Runtime은 기존 기본 악마 덱과 시작 흐름을 유지한다.
+- `GameScene` 직접 실행 시에만 별도 정식 Runtime을 만들고 빈 악마 덱으로 시작한다.
+- 정식 Runtime은 새 런의 결정적 루트 시드에서 서로 다른 악마 후보 2장을 만들고, 1장 선택과 체크포인트 저장이 끝난 뒤 첫 상대 제안을 준비한다.
+- 일반 전투 전 상대 후보는 정확히 2명이며, 선택한 프로필 키만 실제 `CoreLoopBattle` 생성에 사용한다.
+- 활성 정식 전투가 없는 `GameScene`은 씬을 이동하지 않고 코드로 진행 View·Controller를 생성한다.
+- 상대 확정 시 같은 `GameScene`을 다시 불러 선택 UI를 제거하고 생성된 전투를 `PlayerTurn`으로 시작한다.
+- 고정 상대 독립 전투는 `allowStandaloneBattleForDebug`가 켜진 경우에만 허용한다.
+- 저장·이어하기는 기존 루트 시드와 시작 악마 선택을 그대로 복원한다.
+
 ## 10. 외부 에셋·오픈소스
 
 새 외부 에셋·오픈소스·패키지는 필요하지 않다. Unity, NUnit, 현재 프로젝트 코드와 두 씬을 재사용한다. 외부 자료를 추가하게 되면 이름·버전·URL·라이선스·사용 위치를 기록하고 이천서 검토 전에는 병합하지 않는다.
@@ -294,6 +305,7 @@ RF-04 구현에서 `StageProgressionRuntime.FormalSession`은 현재 저장 흐�
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-30 | 이천서 | RFM02 진입 책임을 정정했다. GameScene 직접 실행은 Runtime·진행 선택 UI를 만들지 않고 기존 독립 `CoreLoopSession`을 즉시 시작한다. 외부 진행 세션이 `InBattle`과 Battle을 보유한 경우에만 GameManager가 그 전투를 채택한다. StageTest의 기존 세션 팩터리는 유지한다. |
 | 2026-07-30 | 이천서 | RF-05 반복 검증 8건을 추가했다. 10회 전체 승리·재시작, 상점 네 행동과 중복 거부, 오래된 상대·상점 입력, 세 전투 위치별 10회 패배·재시작, 네 일반 프로필 선택·골드, 두 씬 Build Settings·Runtime 목적지·필수 컴포넌트·누락 스크립트를 검증했다. 전체 EditMode 744/744 통과. |
 | 2026-07-30 | 이천서 | 정식 런의 전투 목적지를 `GameScene`으로 바꾸고 `GameManager`에 진행 세션 입력 위임, 실제 프로필·골드 표시, 종료 후 진행 씬 복귀와 독립 MVP 호환 경계를 추가했다. 런타임·StageProgression 테스트 어셈블리 컴파일 및 RF 비Unity 42/42를 재확인했으며 실제 Play Mode 왕복은 Unity MCP 복구 뒤 검증한다. |
 | 2026-07-30 | 이천서 | RF-04 Runtime 재결합, 신규/복원 세션의 RW 우회, CoreLoop 전투 세션 제공, 정식 Presenter·IMGUI 상점·Controller 거래 입력을 구현했다. RF04 6건은 어셈블리 컴파일, 그중 Unity 비의존 5건은 실행 통과했고 기존 RF 누적 비Unity 42/42를 확인했다. Unity MCP 8080은 TCP 연결되지만 initialize handshake가 실패해 실제 EditMode·720p/1080p·씬 왕복은 미실행으로 남겼다. |

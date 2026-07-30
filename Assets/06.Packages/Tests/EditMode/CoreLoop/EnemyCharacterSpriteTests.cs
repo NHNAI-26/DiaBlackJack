@@ -1,3 +1,4 @@
+using System.Linq;
 using DiaBlackJack.CoreLoop;
 using DiaBlackJack.GameScene;
 using NUnit.Framework;
@@ -122,6 +123,54 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 labelSerialized.FindProperty("m_text").stringValue,
                 Is.EqualTo("USE: REVOLVER"));
+        }
+
+        [Test]
+        public void CUM09_U01_RevolverHitStaysThreatenedUntilImpactEvent()
+        {
+            CharacterVisualState beforeImpact = GameManager.ResolveRevolverTimedVisual(
+                CombatantSide.Enemy,
+                CharacterVisualState.Attacked,
+                impactPending: true,
+                impactTargetSide: CombatantSide.Enemy);
+            CharacterVisualState afterImpact = GameManager.ResolveRevolverTimedVisual(
+                CombatantSide.Enemy,
+                CharacterVisualState.Attacked,
+                impactPending: false,
+                impactTargetSide: CombatantSide.Enemy);
+
+            Assert.That(beforeImpact, Is.EqualTo(CharacterVisualState.AttackThreatened));
+            Assert.That(afterImpact, Is.EqualTo(CharacterVisualState.Attacked));
+        }
+
+        [Test]
+        public void CUM09_U02_RevolverImpactReceiverRaisesOnlyExplicitImpactEvent()
+        {
+            RevolverAnimationEventReceiver receiver =
+                _root.AddComponent<RevolverAnimationEventReceiver>();
+            int impactCount = 0;
+            receiver.ShotImpact += () => impactCount++;
+
+            receiver.NotifyShotImpact();
+
+            Assert.That(impactCount, Is.EqualTo(1));
+        }
+
+        [TestCase(
+            "Assets/05. Arts/Animation/Revolover/Revolver_Shoot_PlayerSuccess.anim")]
+        [TestCase(
+            "Assets/05. Arts/Animation/Revolover/Revolver_ShootEnemySuccess.anim")]
+        public void CUM09_U03_RevolverSuccessImpactMatchesGunFireFrame(string assetPath)
+        {
+            AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(assetPath);
+            AnimationEvent[] events = AnimationUtility.GetAnimationEvents(clip);
+            AnimationEvent impact = events.Single(item =>
+                item.functionName == "NotifyShotImpact");
+            AnimationEvent gunFire = events.Single(item =>
+                item.functionName == "PlayVfx" &&
+                item.stringParameter == "gun-fire");
+
+            Assert.That(impact.time, Is.EqualTo(gunFire.time).Within(0.0001f));
         }
 
         private CharacterView ConfigureView()

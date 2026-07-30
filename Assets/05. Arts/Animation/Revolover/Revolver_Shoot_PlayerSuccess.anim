@@ -35909,6 +35909,13 @@ AnimationClip:
     intParameter: 0
     messageOptions: 0
   - time: 6.233333
+    functionName: NotifyShotImpact
+    data:
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 6.233333
     functionName: ShakeCamera
     data: 
     objectReferenceParameter: {fileID: 0}

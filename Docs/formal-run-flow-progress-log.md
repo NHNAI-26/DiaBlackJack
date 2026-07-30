@@ -213,6 +213,21 @@ AI는 저장소 검색, 규칙 변경 감지, 현재 구조 대조와 문서 초
 - 외부 변경: 외부 에셋·외부 코드·오픈소스·새 패키지·새 의존성 없음
 - 이천서 통합 검토: 자동 회귀 게이트 승인, 라이브 화면 게이트는 미완료로 유지
 
+## 5.11 RFM02 수행 기록
+
+### RFM02 — GameScene 직접 전투와 진행 전투 진입 분리
+
+- 작업자: 이천서(AI 구조 대조·구현·검증·기록 보조)
+- 날짜: 2026-07-30
+- 변경 파일: `StageProgressionRuntime.cs`, `GameManager.cs`, `CardContentBootstrap.cs`, `FormalRunSystemValidationTests.cs`, 정식 런 문서와 공통 기록
+- 구현 내용: GameScene 직접 실행 시 Runtime·진행 선택 UI를 생성하지 않고 기존 독립 전투를 즉시 시작하도록 복원했다. 이미 `InBattle`인 진행 세션이 GameScene을 호출한 경우에만 해당 런 전투를 채택한다. StageTest의 기존 진행 흐름은 유지한다.
+- 수명 경계: 중복 `CardContentBootstrap`은 호스트 GameObject가 아니라 중복 컴포넌트만 제거해 GameManager를 보존한다.
+- 대상 테스트: `FormalRunSystemValidationTests`와 GameScene 카드·씬 검증 대상 37/37 통과.
+- 회귀: StageProgression 전체 248/248. 이전 두 어셈블리 회귀에서 재현한 `DC08_I02` 바알제붑 선택 한도 정체와 `GSH01_U06` HUD 브러시 기대값 불일치 2건은 이번 변경과 무관한 별도 결함이다.
+- 실제 씬: GameScene 직접 Play에서 Runtime 없음·진행 Controller 0개·GameManager Battle 존재·`PlayerTurn`을 확인했다. 진행 세션 재진입의 GameManager 수명 보정은 중복 부트스트랩 수정으로 유지한다. Console Error 0.
+- 외부 변경: 씬·프리팹·외부 에셋·오픈소스·패키지 추가 없음.
+- 이천서 통합 검토: GameScene 직접 실행과 정식 런 진입을 분리한다. 직접 실행에는 시작 악마·상대 선택 화면을 띄우지 않는다.
+
 ## 6. 구현 완료 기록 양식
 
 ```text
@@ -269,6 +284,9 @@ AI는 저장소 검색, 규칙 변경 감지, 현재 구조 대조와 문서 초
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-30 | 이천서 | 사용자 의도에 맞춰 GameScene 직접 실행을 정식 런 선택 메뉴가 아닌 기존 독립 전투 즉시 시작으로 복원했다. 활성 진행 전투가 전달된 경우에만 런 세션을 채택하며 StageTest는 기존 테스트 흐름을 유지한다. |
+| 2026-07-30 | 이천서 | RFM02 실화면 재검증에서 상대 확정 후 런 세션은 `InBattle`이고 전투도 존재하지만 `GameManager`가 사라지는 문제를 재현했다. 원인은 루트 `CardContentBootstrap`과 GameManager 프리팹의 중복 부트스트랩이 새 GameManager 오브젝트 전체를 삭제한 것이었다. 중복 시 컴포넌트만 제거하고 루트 부트스트랩만 영속화하도록 수정했으며, 같은 GameScene 재진입 3초 뒤 GameManager·Battle 생존과 `PlayerTurn`, 관련 EditMode 42/42, Console 오류 0을 확인했다. 외부 에셋·패키지·씬·프리팹 변경은 없다. |
+| 2026-07-30 | 이천서 | RFM02를 재교체해 StageTest 기존 흐름을 복원하고 GameScene 직접 실행에서만 시작 악마·상대 선택·같은 씬 전투를 진행하도록 했다. 대상 14/14·StageProgression 248/248·상대 선택 뒤 PlayerTurn·StageTest 분리·Console 0을 확인했다. |
 | 2026-07-30 | 이천서 | RF-05 반복 검증 8건을 추가해 전체 승리·상점 행동·오래된 입력·세 위치 패배·네 일반 적 골드와 두 씬 직렬화를 검증했다. RF 대상 49/49·전체 EditMode 744/744 통과, 라이브 두 해상도는 MCP handshake 장애로 분리 기록했다. |
 | 2026-07-30 | 이천서 | RF-04 후속으로 정식 전투 목적지를 GameScene으로 전환하고 GameManager의 진행 세션 행동·프로필·골드·복귀 경계를 연결했다. 컴파일과 RF 비Unity 42/42를 재확인했으며 라이브 씬 왕복은 MCP 연결 문제로 남겼다. |
 | 2026-07-30 | 이천서 | RF-04 정식 Runtime 재결합과 진행 Presenter·IMGUI View·Controller·CoreLoop 씬 연결을 구현했다. RF04 6건 컴파일·비Unity 5건·누적 42/42와 기존 씬 직렬화를 확인했지만 Unity MCP가 닫힌 8080을 가리켜 실제 EditMode·두 해상도·씬 왕복은 미실행으로 남겼다. |
