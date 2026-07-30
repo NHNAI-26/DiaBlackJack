@@ -21,9 +21,7 @@ namespace DiaBlackJack.GameScene
         Stand,
         BeginChange,
         SelectChangedCard,
-        BeginContractConfirmation,
-        ConfirmContract,
-        CancelContract,
+        BeginContract,
         ResolveCardEffectChoice,
         ResolveAutomaticCardChoice,
         ResolveDemonContractChoice,
@@ -146,7 +144,6 @@ namespace DiaBlackJack.GameScene
     {
         public static GameSceneCombatHudViewModel Create(
             CoreLoopViewModel core,
-            bool showDemonContractConfirmation,
             bool isStageBattle,
             bool isShopOpen,
             bool inputLocked,
@@ -254,6 +251,38 @@ namespace DiaBlackJack.GameScene
             DemonContractPanelViewModel contract = core.DemonContract;
             if (contract.IsResolving)
             {
+                if (contract.InteractionKind ==
+                        DemonContractInteractionKind.ChooseContract &&
+                    contract.Choices.Count <= 2)
+                {
+                    var candidates =
+                        new List<GameSceneCombatHudContractCandidateViewModel>();
+                    foreach (DemonContractChoiceViewModel choice in contract.Choices)
+                    {
+                        candidates.Add(
+                            new GameSceneCombatHudContractCandidateViewModel(
+                                new GameSceneCombatHudCommand(
+                                    GameSceneCombatHudCommandKind
+                                        .ResolveDemonContractChoice,
+                                    choice.OptionId,
+                                    contract.InteractionId ?? -1),
+                                choice.DefinitionKey,
+                                choice.Title,
+                                choice.Ability,
+                                choice.Cost,
+                                choice.CanSelect && !inputLocked,
+                                choice.ButtonLabel));
+                    }
+
+                    return new GameSceneCombatHudViewModel(
+                        GameSceneCombatHudMode.ContractCandidates,
+                        BuildContractPrompt(contract),
+                        Array.Empty<GameSceneCombatHudActionViewModel>(),
+                        Array.Empty<GameSceneCombatHudActionViewModel>(),
+                        candidates,
+                        automaticCardResult);
+                }
+
                 var options = new List<GameSceneCombatHudActionViewModel>();
                 foreach (DemonContractChoiceViewModel choice in contract.Choices)
                 {
@@ -284,25 +313,6 @@ namespace DiaBlackJack.GameScene
                     automaticCardResult);
             }
 
-            if (showDemonContractConfirmation)
-            {
-                return CreateOptions(
-                    $"PAY {contract.SoulCost} SOUL  |  {contract.SoulAfterCost} LEFT\n" +
-                    "REVEAL CANDIDATES AND CHOOSE ONE CONTRACT",
-                    new[]
-                    {
-                        CreateAction(
-                            GameSceneCombatHudCommandKind.ConfirmContract,
-                            "CONFIRM CONTRACT",
-                            contract.CanBegin && !inputLocked),
-                        CreateAction(
-                            GameSceneCombatHudCommandKind.CancelContract,
-                            "CANCEL",
-                            !inputLocked)
-                    },
-                    automaticCardResult);
-            }
-
             var primaryActions = new List<GameSceneCombatHudActionViewModel>
             {
                 CreateAction(
@@ -322,7 +332,7 @@ namespace DiaBlackJack.GameScene
                     "Reveal and discard hidden card, then choose one of two candidates.\n" +
                     core.ChangeActionText),
                 CreateAction(
-                    GameSceneCombatHudCommandKind.BeginContractConfirmation,
+                    GameSceneCombatHudCommandKind.BeginContract,
                     "CONTRACT",
                     contract.CanBegin && !inputLocked,
                     "Pay soul to reveal up to two candidates and choose one contract.\n" +

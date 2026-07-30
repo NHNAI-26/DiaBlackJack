@@ -32,6 +32,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private DeckStackView remainingDeck;
         [SerializeField] private DeckStackView discardDeck;
         [SerializeField] private DeckPreviewView deckPreview;
+        [SerializeField] private DemonContractSelectionView demonContractSelection;
 
         [Header("Standalone enemy profile")]
         [SerializeField] private string enemyProfileKey =
@@ -82,7 +83,6 @@ namespace DiaBlackJack.GameScene
         private GUIStyle _shopPanelStyle;
         private GUIStyle _shopCardButtonStyle;
         private Vector2 _lighterRemovalScroll;
-        private bool _showDemonContractConfirmation;
         private bool _hasLastRevolverAnimationCue;
         private int _lastRevolverAnimationRoundNumber;
         private int _lastRevolverAnimationSourceCardId;
@@ -120,8 +120,10 @@ namespace DiaBlackJack.GameScene
 
             UpdateHover(null);
             UpdateDemonCardHover(null);
+            demonContractSelection?.SetHovered(null);
             UpdateShopUtilityItemHover(null);
             hud?.HideCardHoverBadge();
+            hud?.HideDemonContractDetail();
         }
 
         public bool TryCloseTransientOverlay()
@@ -163,6 +165,8 @@ namespace DiaBlackJack.GameScene
                 enemyCharacter.TrySetEnemyProfile(_activeEnemyProfileKey);
             }
             EnsureDeckPreview();
+            demonContractSelection ??=
+                GetComponent<DemonContractSelectionView>();
 
             if (hud != null)
             {
@@ -178,6 +182,8 @@ namespace DiaBlackJack.GameScene
         private void OnDisable()
         {
             CloseDeckPreview();
+            demonContractSelection?.Hide();
+            hud?.HideDemonContractDetail();
         }
 
         private void OnDestroy()
@@ -212,6 +218,13 @@ namespace DiaBlackJack.GameScene
 
             bool hasHit = RaycastPointer(out RaycastHit hit);
             bool shopOpen = shop != null && shop.IsOpen;
+            if (demonContractSelection != null &&
+                demonContractSelection.IsOpen)
+            {
+                HandleDemonContractSelectionInput(hasHit, hit);
+                return;
+            }
+
             CardView pointedCard = hasHit
                 ? hit.collider.GetComponentInParent<CardView>()
                 : null;
@@ -311,6 +324,52 @@ namespace DiaBlackJack.GameScene
 
             Ray ray = _camera.ScreenPointToRay(mouse.position.ReadValue());
             return Physics.Raycast(ray, out hit, 200f);
+        }
+
+        private void HandleDemonContractSelectionInput(
+            bool hasHit,
+            RaycastHit hit)
+        {
+            DemonCardView pointed = hasHit
+                ? hit.collider.GetComponentInParent<DemonCardView>()
+                : null;
+            if (pointed != null &&
+                !demonContractSelection.Contains(pointed))
+            {
+                pointed = null;
+            }
+
+            UpdateHover(null);
+            UpdateDemonCardHover(null);
+            UpdateShopUtilityItemHover(null);
+            hud?.HideCardHoverBadge();
+            demonContractSelection.SetHovered(pointed);
+
+            GameSceneCombatHudContractCandidateViewModel candidate =
+                demonContractSelection.GetCandidate(pointed);
+            if (candidate == null)
+            {
+                hud?.HideDemonContractDetail();
+            }
+            else
+            {
+                hud?.ShowDemonContractDetail(candidate);
+            }
+
+            if (_inputLocked || candidate == null)
+            {
+                return;
+            }
+
+            Mouse mouse = Mouse.current;
+            if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
+            {
+                return;
+            }
+
+            ProcessInput(() => TryResolvePlayerDemonContract(
+                candidate.Command.InteractionId,
+                candidate.Command.OptionId));
         }
 
         private void UpdateHover(CardView pointed)
@@ -1067,29 +1126,6 @@ namespace DiaBlackJack.GameScene
             };
         }
 
-        private bool BeginDemonContractConfirmation()
-        {
-            if (!_core.DemonContract.CanBegin)
-            {
-                return false;
-            }
-
-            _showDemonContractConfirmation = true;
-            return true;
-        }
-
-        private bool ConfirmDemonContract()
-        {
-            _showDemonContractConfirmation = false;
-            return TryBeginPlayerDemonContract();
-        }
-
-        private bool CancelDemonContract()
-        {
-            _showDemonContractConfirmation = false;
-            return true;
-        }
-
         // Bottom-anchored, screen-centered row. Width shrinks to always fit one row on screen.
         private void DrawButtonRow(
             string[] labels,
@@ -1160,14 +1196,8 @@ namespace DiaBlackJack.GameScene
                 case GameSceneCombatHudCommandKind.SelectChangedCard:
                     ProcessInput(() => TrySelectChangedCard(command.OptionId));
                     break;
-                case GameSceneCombatHudCommandKind.BeginContractConfirmation:
-                    ProcessInput(BeginDemonContractConfirmation);
-                    break;
-                case GameSceneCombatHudCommandKind.ConfirmContract:
-                    ProcessInput(ConfirmDemonContract);
-                    break;
-                case GameSceneCombatHudCommandKind.CancelContract:
-                    ProcessInput(CancelDemonContract);
+                case GameSceneCombatHudCommandKind.BeginContract:
+                    ProcessInput(TryBeginPlayerDemonContract);
                     break;
                 case GameSceneCombatHudCommandKind.ResolveCardEffectChoice:
                     ProcessInput(() => TryResolvePlayerCardChoice(command.OptionId));
@@ -1388,24 +1418,25 @@ namespace DiaBlackJack.GameScene
             bool deferHammerSmashCardRender = false)
         {
             _core = vm.Core;
+            bool isShopOpen = shop != null && shop.IsOpen;
+            GameSceneCombatHudViewModel combat =
+                GameSceneCombatHudPresenter.Create(
+                    vm.Core,
+                    IsStageBattle,
+                    isShopOpen,
+                    _inputLocked,
+                    vm.UsesDiegeticCardEffectSelection);
 
             if (hud != null)
             {
-                bool isShopOpen = shop != null && shop.IsOpen;
-                hud.Render(
-                    vm.Core,
-                    GameSceneCombatHudPresenter.Create(
-                        vm.Core,
-                        _showDemonContractConfirmation,
-                        IsStageBattle,
-                        isShopOpen,
-                        _inputLocked,
-                        vm.UsesDiegeticCardEffectSelection));
+                hud.Render(vm.Core, combat);
                 int gold = IsStageBattle
                     ? _stageSession.Progress.Player.CurrentGold
                     : shop != null ? shop.Gold : 0;
                 hud.SetGold(gold);
             }
+
+            RenderDemonContractSelection(combat);
 
             RefreshDeckStacks();
             RefreshShopUtilityItems();
@@ -1794,6 +1825,33 @@ namespace DiaBlackJack.GameScene
                 deferredViewModel);
         }
 
+        private void RenderDemonContractSelection(
+            GameSceneCombatHudViewModel combat)
+        {
+            if (demonContractSelection == null)
+            {
+                return;
+            }
+
+            if (combat == null ||
+                combat.Mode != GameSceneCombatHudMode.ContractCandidates)
+            {
+                demonContractSelection.Hide();
+                hud?.HideDemonContractDetail();
+                return;
+            }
+
+            if (_camera == null)
+            {
+                _camera = Camera.main;
+            }
+
+            demonContractSelection.Render(
+                combat.ContractCandidates,
+                _camera);
+            hud?.HideDemonContractDetail();
+        }
+
         private static bool IsHammerSmashCue(GameSceneHammerAnimationCue cue)
         {
             return cue != null &&
@@ -2067,7 +2125,6 @@ namespace DiaBlackJack.GameScene
             bool restarted = _session.TryRestart();
             if (restarted && shop != null)
             {
-                _showDemonContractConfirmation = false;
                 _choosingLighterRemoval = false;
                 UpdateHover(null);
                 UpdateDemonCardHover(null);
@@ -2091,7 +2148,6 @@ namespace DiaBlackJack.GameScene
             bool restarted = _session.TryRestart();
             if (restarted && shop != null)
             {
-                _showDemonContractConfirmation = false;
                 _purchasedNormalCards.Clear();
                 _purchasedDemonContractKeys.Clear();
                 _removedNormalCards.Clear();

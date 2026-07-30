@@ -39,6 +39,11 @@ namespace DiaBlackJack.GameScene
 
         public void Render(GameSceneCombatHudActionViewModel model)
         {
+            if (button != null)
+            {
+                button.enabled = true;
+            }
+
             _command = model == null ? default : model.Command;
             _isInteractable = model != null && model.IsInteractable;
             if (labelText != null)
@@ -56,6 +61,11 @@ namespace DiaBlackJack.GameScene
             GameSceneCombatHudContractCandidateViewModel model,
             Sprite faceSprite)
         {
+            if (button != null)
+            {
+                button.enabled = true;
+            }
+
             _command = model == null ? default : model.Command;
             _isInteractable = model != null && model.IsInteractable;
             if (titleText != null)
@@ -87,6 +97,42 @@ namespace DiaBlackJack.GameScene
             if (button != null)
             {
                 button.interactable = _isInteractable;
+            }
+        }
+
+        public void RenderContractDetail(
+            GameSceneCombatHudContractCandidateViewModel model,
+            Sprite faceSprite)
+        {
+            RenderContractCandidate(model, faceSprite);
+            _isInteractable = false;
+            if (abilityText != null)
+            {
+                abilityText.text = model == null
+                    ? string.Empty
+                    : "ACTIVE\n" + model.Ability;
+            }
+
+            if (costText != null)
+            {
+                costText.text = model == null
+                    ? string.Empty
+                    : "COST\n" + model.Cost;
+            }
+
+            if (labelText != null)
+            {
+                labelText.text = string.Empty;
+            }
+
+            if (titleText != null)
+            {
+                titleText.text = string.Empty;
+            }
+
+            if (button != null)
+            {
+                button.enabled = false;
             }
         }
 

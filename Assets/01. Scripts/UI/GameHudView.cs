@@ -67,10 +67,15 @@ namespace DiaBlackJack.GameScene
 
         public bool HasCombatCandidateContentReference => cardContentCatalog != null;
 
+        public bool IsDemonContractDetailVisible =>
+            contractCandidatePanel != null &&
+            contractCandidatePanel.activeSelf;
+
         private void Awake()
         {
             _canvas = GetComponentInParent<Canvas>();
             HideCardHoverBadge();
+            HideDemonContractDetail();
             BindCombatControls();
             HideCombatControls();
         }
@@ -192,6 +197,61 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        public void ShowDemonContractDetail(
+            GameSceneCombatHudContractCandidateViewModel candidate)
+        {
+            if (candidate == null ||
+                contractCandidatePanel == null ||
+                contractCandidateSlots == null ||
+                contractCandidateSlots.Length == 0 ||
+                contractCandidateSlots[0] == null)
+            {
+                HideDemonContractDetail();
+                return;
+            }
+
+            if (contractCandidatePromptText != null)
+            {
+                contractCandidatePromptText.text = candidate.Title;
+                RectTransform promptRect =
+                    contractCandidatePromptText.rectTransform;
+                promptRect.anchoredPosition = new Vector2(-250f, -325f);
+                promptRect.sizeDelta = new Vector2(300f, 50f);
+                contractCandidatePromptText.fontSize = 24f;
+            }
+
+            GameHudChoiceButton detailSlot = contractCandidateSlots[0];
+            detailSlot.gameObject.SetActive(true);
+            if (detailSlot.transform is RectTransform detailRect)
+            {
+                detailRect.SetSizeWithCurrentAnchors(
+                    RectTransform.Axis.Horizontal,
+                    920f);
+            }
+
+            detailSlot.RenderContractDetail(
+                candidate,
+                cardContentCatalog == null
+                    ? null
+                    : cardContentCatalog.GetDemonFaceSprite(
+                        candidate.DefinitionKey));
+
+            for (int i = 1; i < contractCandidateSlots.Length; i++)
+            {
+                if (contractCandidateSlots[i] != null)
+                {
+                    contractCandidateSlots[i].gameObject.SetActive(false);
+                }
+            }
+
+            contractCandidatePanel.SetActive(true);
+        }
+
+        public void HideDemonContractDetail()
+        {
+            SetActive(contractCandidatePanel, false);
+        }
+
         private void BindCombatControls()
         {
             BindActionButton(hitButton);
@@ -199,7 +259,6 @@ namespace DiaBlackJack.GameScene
             BindActionButton(changeButton);
             BindActionButton(contractButton);
             BindChoiceButtons(optionSlots);
-            BindChoiceButtons(contractCandidateSlots);
         }
 
         private void UnbindCombatControls()
@@ -209,7 +268,6 @@ namespace DiaBlackJack.GameScene
             UnbindActionButton(changeButton);
             UnbindActionButton(contractButton);
             UnbindChoiceButtons(optionSlots);
-            UnbindChoiceButtons(contractCandidateSlots);
         }
 
         private void BindActionButton(GameHudActionButton actionButton)
@@ -313,7 +371,7 @@ namespace DiaBlackJack.GameScene
                  combat.OptionActions.Count > 0));
             SetActive(
                 contractCandidatePanel,
-                combat.Mode == GameSceneCombatHudMode.ContractCandidates);
+                false);
             SetActive(
                 automaticCardResultPanel,
                 !string.IsNullOrEmpty(combat.AutomaticCardResult));
@@ -332,12 +390,7 @@ namespace DiaBlackJack.GameScene
 
             if (combat.Mode == GameSceneCombatHudMode.ContractCandidates)
             {
-                if (contractCandidatePromptText != null)
-                {
-                    contractCandidatePromptText.text = combat.Prompt;
-                }
-
-                RenderContractCandidates(combat.ContractCandidates);
+                RenderPrimaryActions(Array.Empty<GameSceneCombatHudActionViewModel>());
                 return;
             }
 
@@ -402,34 +455,6 @@ namespace DiaBlackJack.GameScene
             }
 
             ResetOptionScroll();
-        }
-
-        private void RenderContractCandidates(
-            System.Collections.Generic.IReadOnlyList<GameSceneCombatHudContractCandidateViewModel> candidates)
-        {
-            int activeCount = candidates == null
-                ? 0
-                : Mathf.Min(candidates.Count, contractCandidateSlots.Length);
-            for (int i = 0; i < contractCandidateSlots.Length; i++)
-            {
-                GameHudChoiceButton slot = contractCandidateSlots[i];
-                if (slot == null)
-                {
-                    continue;
-                }
-
-                bool isActive = i < activeCount;
-                slot.gameObject.SetActive(isActive);
-                if (isActive)
-                {
-                    GameSceneCombatHudContractCandidateViewModel candidate = candidates[i];
-                    slot.RenderContractCandidate(
-                        candidate,
-                        cardContentCatalog == null
-                            ? null
-                            : cardContentCatalog.GetDemonFaceSprite(candidate.DefinitionKey));
-                }
-            }
         }
 
         private void ResetOptionScroll()

@@ -3,8 +3,8 @@
 > 프로젝트: DiaBlackJack  
 > 기획·기록·구현 책임자: 이천서  
 > 작업 식별자: DC-00~DC-08
-> 버전: v1.21
-> 현재 단계: 기존 DC-R06 이력 보존 · 광신도 최신 계약 정책 미구현
+> 버전: v1.22
+> 현재 단계: DC-V01 GameScene 일반 계약 월드 후보 구현·화면 검증 완료
 > 다음 단계: 광신도 2종 전용 풀·공개 카드 2장 선택 조건 이관
 > 최종 갱신: 2026-07-30
 
@@ -24,6 +24,9 @@
 
 > **현행 적 계약 (2026-07-30)**
 > 광신도는 첫 정상 차례부터 성공까지 계약을 재시도하고, 집행자는 악마를 보유하지 않으며, 보스는 전투 시작·영혼 5·2에서 바포메트→아스모데우스→아자젤 단계로 전환한다. 과거 집행자 파이몬 구현은 아래 완료 기록으로만 보존한다.
+
+> **DC-V01 GameScene 월드 후보 (2026-07-30)**
+> 일반 계약 1~2장은 화면 하단 반노출 월드 카드로 표시한다. `CONTRACT`는 확인창 없이 즉시 시작하고, 후보 호버 시 전진·상승·확대와 SO 기반 제목·앞면·`ACTIVE`·`COST` 상세를 표시한다. 후보 선택 중 월드 후보 호버·클릭, 카메라 `W`·`S`, 일시정지 외 입력은 잠근다. 루시퍼 다중 후보는 기존 옵션 UI를 유지한다.
 
 ## 1. 기록 원칙
 
@@ -48,7 +51,7 @@
 | 계약 데이터·덱 | 열두 악마 정의·기본 4장 시작 덱·해금 풀 호환 시작 선택·런 최초/현재 덱·전투 드로우/버림 덱·일반 후보 1~2장·루시퍼 최대 5장 구현 완료 |
 | 계약 공통 행동 | 비용·전투당 횟수·후보 필수 선택·활성/버림·세션 전달 구현 완료 |
 | 계약 개별 효과 | 벨페고르·마몬·레비아탄·사탄·바알제붑·메피스토펠레스·아스모데우스·아자젤·파이몬·벨리알·바포메트·루시퍼 구현 완료 |
-| 계약 UI·적 AI | 플레이어 UI와 광신도 적 계약 완료 |
+| 계약 UI·적 AI | 플레이어 UI와 광신도 적 계약 완료, GameScene 일반 후보 1~2장 월드 카드·호버 상세 연결 |
 | 최근 자동 기준선 | 기본 악마 덱·상점 구매 회귀 대상 29/29·전체 EditMode 660/660 통과 |
 | DC-00 검증 | 문서 전용, Unity 재실행 안 함 |
 
@@ -74,6 +77,27 @@
 | DC-M01 | 이천서(AI 코드 탐색·구현·MCP 검증 보조) | 완료 | CoreLoop 362/362·전체 EditMode 551/551·GameScene 계약 후 화면·Console 0 |
 | CU-M07 | 이천서(AI 규칙 대조·구현·테스트·MCP 검증·기록 보조) | 완료 | 신규 4/4·CoreLoop 442/442·전체 EditMode 631/631·GameScene 재예측 흐름 확인 |
 | DC-R06 | 이천서(AI 구현·테스트·검증·기록 보조) | 완료 | 아스모데우스·광신도·집행자·보스 고정 단계, EP-R06 전용 10/10·전체 665/665 |
+| DC-V01 | HONG(AI 구조 대조·구현·MCP 화면 검증·기록 보조) | 완료 | GameScene HUD/프리팹 대상 10/10, 컴파일 오류 0, 720p·1080p 후보/호버/클릭 확인; 전체 787개 중 기존 광신도 자동전투 1건 실패 별도 기록 |
+
+### 3.1 DC-V01 수행 기록
+
+#### 구현
+
+- `GameSceneCombatHudPresenter`는 일반 `ChooseContract` 후보 1~2장을 `ContractCandidates` 모드로 분리하고, `CONTRACT` 명령을 확인창 없이 바로 시작한다. 루시퍼 최대 5장·건너뛰기와 그 밖의 후속 상호작용은 기존 `Options` 모드를 유지한다.
+- `DemonContractSelectionView`를 새로 추가하고 `GameManager.prefab`에서 기존 `DemonCard.prefab`을 참조했다. 두 후보는 화면 하단에 절반 이하만 보이는 작은 부채꼴로 배치하며 앞면 방향, 거리·크기와 호버 전진·상승·확대·정렬을 실제 Game View에서 조정했다.
+- `GameHudView`와 `GameHudChoiceButton`은 기존 후보 패널을 호버 상세로 재사용해 악마 이름·앞면·`ACTIVE`·`COST`를 표시한다. 제목·능력·대가는 안전 표시 모델, 스프라이트는 기존 `CardContentCatalogSO`에서 읽는다.
+- `GameManager`는 월드 후보가 열린 동안 해당 `DemonCardView`만 raycast 대상으로 인정하고, 표시 모델의 `InteractionId`·`OptionId`를 기존 세션 `Try*` 경계로 전달한다. 다른 카드·덱·상점·전투 입력은 이 모달 분기에서 차단한다.
+- 동시에 진행 중이던 해머 월드 카드 대상 선택 관련 `CardView`·`GameScenePresentation`·`GameManager` 변경과 스테이징된 `GameScene.unity`는 되돌리거나 덮어쓰지 않고 보존했다.
+
+#### 검증
+
+- Unity 6000.3.10f1 컴파일과 최종 Console 컴파일 오류 0을 확인했다.
+- `GameSceneCombatHudPresentationTests` 10/10 통과: job `7072f66a058b45608e746b1e44f8a1ce`.
+- 전체 EditMode job `844e3bf682014123b739475c30561b94`는 787개를 실행했고 `CultistContractBalanceTests.DC08_I02_OneHundredAutoplayBattlesFinishWithoutContractStall` 1건이 `Enemy Beelzebub choices exceeded the resolution limit`로 실패했다. 같은 테스트 단독 job `c15f2aef27c94a86adb874ca3ecb42c8`도 같은 이유로 실패해 재현됐다. DC-V01은 표시·Unity 입력 계층만 변경하며 이 순수 CoreLoop 광신도 정책 경로는 수정하지 않았다.
+- 1280×720과 `Screen.SetResolution(1920, 1080, false)`에서 일반 후보 2장의 반노출·부채꼴 앞면, 호버 카드의 전진·상승·확대, 제목·앞면·`ACTIVE`·`COST` 상세를 확인했다.
+- 후보 `마몬`의 실제 `InteractionId=1`, `OptionId=1` 명령을 전달해 선택 뷰가 닫히는 것을 확인했다.
+- Play Mode 중 `CardContentBootstrap.cs:36`, `SettingsSystem.cs:59`의 기존 `DontDestroyOnLoad only works for root GameObjects` 오류 2건이 재현됐다. DC-V01 신규 컴파일·런타임 오류는 없었고 Play Mode를 종료했다.
+- 검증용 스크린샷과 Unity 생성 `.meta`는 확인 후 모두 삭제했다.
 
 ## 4. DC-00 수행 기록
 

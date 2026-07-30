@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1338413536723086704}
   - component: {fileID: 7870382590175114481}
   - component: {fileID: 1580428981478613470}
+  - component: {fileID: 5993433653127054209}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -43,7 +44,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e3326a4551dba504d859a63138e44f24, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameManager
   seed: 20260719
   hud: {fileID: 0}
@@ -54,6 +55,7 @@ MonoBehaviour:
   remainingDeck: {fileID: 0}
   discardDeck: {fileID: 0}
   deckPreview: {fileID: 0}
+  demonContractSelection: {fileID: 0}
   enemyProfileKey: gunslinger
   shop: {fileID: 0}
   uiFont: {fileID: 12800000, guid: 51ac31f4c09df134780e57e309afafcd, type: 3}
@@ -83,3 +85,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.Bootstrap.CardContentBootstrap
   catalog: {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a140001, type: 2}
+--- !u!114 &5993433653127054209
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656724238517901587}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 385d157232d17e7459faad9769b355d6, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.DemonContractSelectionView
+  candidatePrefab: {fileID: 2245145291204370677, guid: 45d32c4ca972f2243966a587c6684a0c, type: 3}
+  cameraDistance: 1.5
+  viewportCenterY: 0
+  viewportSpacing: 0.11
+  hoverViewportLift: 0.18
+  hoverCameraPull: 0.1
+  fanAngle: 7
+  cardScale: 1
+  poseLerp: 14
+  baseSortingOrder: 80

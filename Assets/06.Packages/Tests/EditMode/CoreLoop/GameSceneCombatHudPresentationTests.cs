@@ -13,6 +13,8 @@ namespace DiaBlackJack.CoreLoop.Tests
     public sealed class GameSceneCombatHudPresentationTests
     {
         private const string HudPrefabPath = "Assets/03. Prefabs/UI/HUD.prefab";
+        private const string ManagerPrefabPath =
+            "Assets/03. Prefabs/Manager/GameManager.prefab";
 
         [Test]
         public void GSH01_U01_PlayerTurnProjectsFourFixedActionsAndDynamicTooltips()
@@ -22,7 +24,6 @@ namespace DiaBlackJack.CoreLoop.Tests
             CoreLoopViewModel core = CoreLoopPresenter.Create(battle);
             GameSceneCombatHudViewModel model = GameSceneCombatHudPresenter.Create(
                 core,
-                showDemonContractConfirmation: false,
                 isStageBattle: false,
                 isShopOpen: false,
                 inputLocked: false);
@@ -33,7 +34,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 GameSceneCombatHudCommandKind.Hit,
                 GameSceneCombatHudCommandKind.Stand,
                 GameSceneCombatHudCommandKind.BeginChange,
-                GameSceneCombatHudCommandKind.BeginContractConfirmation
+                GameSceneCombatHudCommandKind.BeginContract
             }));
             Assert.That(model.PrimaryActions.Take(3).All(action => action.IsInteractable),
                 Is.True);
@@ -52,9 +53,9 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             CoreLoopViewModel core = CoreLoopPresenter.Create(battle);
             GameSceneCombatHudViewModel unlocked = GameSceneCombatHudPresenter.Create(
-                core, false, false, false, false);
+                core, false, false, false);
             GameSceneCombatHudViewModel locked = GameSceneCombatHudPresenter.Create(
-                core, false, false, false, true);
+                core, false, false, true);
 
             Assert.That(unlocked.Mode, Is.EqualTo(GameSceneCombatHudMode.Options));
             Assert.That(unlocked.OptionActions.Select(action => action.Command.OptionId),
@@ -66,32 +67,43 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void GSH01_U03_ContractConfirmationAndCandidateChoicesKeepInteractionIds()
+        public void GSH01_U03_ContractCandidatesUseWorldCardModeAndKeepInteractionIds()
         {
             CoreLoopBattle battle = CreateStartedContractBattle(
                 DemonContractKind.Mammon,
                 DemonContractKind.Belphegor);
-            CoreLoopViewModel before = CoreLoopPresenter.Create(battle);
-
-            GameSceneCombatHudViewModel confirmation =
-                GameSceneCombatHudPresenter.Create(before, true, false, false, false);
-            Assert.That(confirmation.Mode, Is.EqualTo(GameSceneCombatHudMode.Options));
-            Assert.That(confirmation.OptionActions.Select(action => action.Command.Kind), Is.EqualTo(new[]
-            {
-                GameSceneCombatHudCommandKind.ConfirmContract,
-                GameSceneCombatHudCommandKind.CancelContract
-            }));
 
             Assert.That(battle.TryBeginPlayerDemonContract(), Is.True);
             CoreLoopViewModel resolving = CoreLoopPresenter.Create(battle);
             GameSceneCombatHudViewModel candidates =
-                GameSceneCombatHudPresenter.Create(resolving, false, false, false, false);
+                GameSceneCombatHudPresenter.Create(
+                    resolving,
+                    false,
+                    false,
+                    false);
+            GameSceneCombatHudViewModel locked =
+                GameSceneCombatHudPresenter.Create(
+                    resolving,
+                    false,
+                    false,
+                    true);
 
-            Assert.That(candidates.Mode, Is.EqualTo(GameSceneCombatHudMode.Options));
-            Assert.That(candidates.OptionActions.Select(candidate => candidate.Command.OptionId),
+            Assert.That(
+                candidates.Mode,
+                Is.EqualTo(GameSceneCombatHudMode.ContractCandidates));
+            Assert.That(
+                candidates.ContractCandidates.Select(
+                    candidate => candidate.Command.OptionId),
                 Is.EqualTo(resolving.DemonContract.Choices.Select(choice => choice.OptionId)));
-            Assert.That(candidates.OptionActions.All(candidate =>
-                candidate.Command.InteractionId == resolving.DemonContract.InteractionId), Is.True);
+            Assert.That(candidates.ContractCandidates.All(candidate =>
+                candidate.Command.InteractionId ==
+                    resolving.DemonContract.InteractionId), Is.True);
+            Assert.That(candidates.ContractCandidates.All(candidate =>
+                !string.IsNullOrEmpty(candidate.DefinitionKey) &&
+                !string.IsNullOrEmpty(candidate.Ability) &&
+                !string.IsNullOrEmpty(candidate.Cost)), Is.True);
+            Assert.That(locked.ContractCandidates.All(
+                candidate => !candidate.IsInteractable), Is.True);
         }
 
         [Test]
@@ -112,7 +124,7 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             CoreLoopViewModel pending = CoreLoopPresenter.Create(session.Battle);
             GameSceneCombatHudViewModel choices = GameSceneCombatHudPresenter.Create(
-                pending, false, false, false, false);
+                pending, false, false, false);
             AutomaticCardInteractionViewModel interaction = pending.AutomaticCardInteraction;
 
             Assert.That(choices.Mode, Is.EqualTo(GameSceneCombatHudMode.Options));
@@ -124,7 +136,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 interaction.InteractionId,
                 PoisonEffectHandler.PaySoulOptionId), Is.True);
             GameSceneCombatHudViewModel result = GameSceneCombatHudPresenter.Create(
-                CoreLoopPresenter.Create(session.Battle), false, false, false, false);
+                CoreLoopPresenter.Create(session.Battle), false, false, false);
             Assert.That(result.AutomaticCardResult, Does.StartWith("AUTOMATIC CARD"));
         }
 
@@ -141,9 +153,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             CoreLoopViewModel ended = CoreLoopPresenter.Create(session.Battle);
 
             GameSceneCombatHudViewModel standalone = GameSceneCombatHudPresenter.Create(
-                ended, false, false, false, false);
+                ended, false, false, false);
             GameSceneCombatHudViewModel stage = GameSceneCombatHudPresenter.Create(
-                ended, false, true, false, false);
+                ended, true, false, false);
 
             Assert.That(standalone.Mode, Is.EqualTo(GameSceneCombatHudMode.Restart));
             Assert.That(standalone.OptionActions.Single().Command.Kind,
@@ -194,12 +206,10 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             GameSceneCombatHudViewModel hud = GameSceneCombatHudPresenter.Create(
                 scene.Core,
-                showDemonContractConfirmation: false,
                 isStageBattle: false,
                 isShopOpen: false,
                 inputLocked: false,
-                usesDiegeticCardEffectSelection:
-                    scene.UsesDiegeticCardEffectSelection);
+                scene.UsesDiegeticCardEffectSelection);
 
             Assert.That(hud.Mode, Is.EqualTo(GameSceneCombatHudMode.Options));
             Assert.That(hud.Prompt, Is.EqualTo(scene.Core.CardEffectPrompt));
@@ -254,12 +264,10 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             GameSceneCombatHudViewModel hud = GameSceneCombatHudPresenter.Create(
                 scene.Core,
-                showDemonContractConfirmation: false,
                 isStageBattle: false,
                 isShopOpen: false,
                 inputLocked: false,
-                usesDiegeticCardEffectSelection:
-                    scene.UsesDiegeticCardEffectSelection);
+                scene.UsesDiegeticCardEffectSelection);
 
             Assert.That(scene.UsesDiegeticCardEffectSelection, Is.False);
             Assert.That(hud.OptionActions, Has.Count.EqualTo(10));
@@ -283,11 +291,20 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(102));
             Assert.That(prefab.GetComponentInChildren<ScrollRect>(true), Is.Not.Null);
 
+            GameObject managerPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(ManagerPrefabPath);
+            Assert.That(managerPrefab, Is.Not.Null);
+            DemonContractSelectionView selection =
+                managerPrefab.GetComponent<DemonContractSelectionView>();
+            Assert.That(selection, Is.Not.Null);
+            Assert.That(selection.HasCandidatePrefab, Is.True);
+            Assert.That(selection.Capacity, Is.EqualTo(2));
+
             Transform actionRow = prefab.transform.Find("CombatControls/ActionRow");
-            Assert.That(GetBrushName(actionRow, "Hit"), Is.EqualTo("Brush_UI_4"));
-            Assert.That(GetBrushName(actionRow, "Stand"), Is.EqualTo("Brush_UI_5"));
-            Assert.That(GetBrushName(actionRow, "Change"), Is.EqualTo("Brush_UI_9"));
-            Assert.That(GetBrushName(actionRow, "Contract"), Is.EqualTo("Brush_UI_10"));
+            Assert.That(GetBrushName(actionRow, "Hit"), Is.EqualTo("Brush_UI_1"));
+            Assert.That(GetBrushName(actionRow, "Stand"), Is.EqualTo("Brush_UI_1"));
+            Assert.That(GetBrushName(actionRow, "Change"), Is.EqualTo("Brush_UI_1"));
+            Assert.That(GetBrushName(actionRow, "Contract"), Is.EqualTo("Brush_UI_1"));
         }
 
         private static CoreLoopBattle CreateStartedBattle(params int[] playerRanks)

@@ -14,7 +14,6 @@ namespace DiaBlackJack.CoreLoop.UI
         private GUIStyle _buttonStyle;
         private int _styleScreenHeight;
         private bool _inputLocked;
-        private bool _showDemonContractConfirmation;
 
         public event Action HitRequested;
 
@@ -41,11 +40,6 @@ namespace DiaBlackJack.CoreLoop.UI
         public void Render(CoreLoopViewModel model)
         {
             _model = model ?? throw new ArgumentNullException(nameof(model));
-            if (_model.DemonContract.IsResolving ||
-                _model.State == CoreLoopState.BattleEnded)
-            {
-                _showDemonContractConfirmation = false;
-            }
         }
 
         public void SetInputLocked(bool inputLocked)
@@ -225,12 +219,6 @@ namespace DiaBlackJack.CoreLoop.UI
                 return;
             }
 
-            if (_showDemonContractConfirmation)
-            {
-                DrawDemonContractConfirmation();
-                return;
-            }
-
             GUILayout.BeginHorizontal();
             bool wasEnabled = GUI.enabled;
             GUI.enabled = _model.CanHit && !_inputLocked;
@@ -264,7 +252,7 @@ namespace DiaBlackJack.CoreLoop.UI
             GUI.enabled = _model.DemonContract.CanBegin && !_inputLocked;
             if (GUILayout.Button("CONTRACT", _buttonStyle, GUILayout.Height(primaryActionHeight)))
             {
-                _showDemonContractConfirmation = true;
+                DemonContractBeginRequested?.Invoke();
             }
 
             foreach (ActiveDemonContractActionViewModel action in
@@ -449,34 +437,6 @@ namespace DiaBlackJack.CoreLoop.UI
             }
 
             GUI.enabled = wasEnabled;
-        }
-
-        private void DrawDemonContractConfirmation()
-        {
-            DemonContractPanelViewModel contract = _model.DemonContract;
-            GUILayout.Label("CONFIRM DEMON CONTRACT", _headingStyle);
-            GUILayout.Label(
-                $"영혼 {contract.SoulCost} 지불 · 계약 후 {contract.SoulAfterCost}",
-                _bodyStyle);
-            GUILayout.Label("비용 지불 뒤에는 후보 하나를 반드시 선택합니다.", _warningStyle);
-            GUILayout.Space(6f);
-            GUILayout.BeginHorizontal();
-
-            bool wasEnabled = GUI.enabled;
-            GUI.enabled = contract.CanBegin && !_inputLocked;
-            if (GUILayout.Button("CONFIRM", _buttonStyle, GUILayout.Height(48f)))
-            {
-                DemonContractBeginRequested?.Invoke();
-            }
-
-            GUI.enabled = !_inputLocked;
-            if (GUILayout.Button("CANCEL", _buttonStyle, GUILayout.Height(48f)))
-            {
-                _showDemonContractConfirmation = false;
-            }
-
-            GUI.enabled = wasEnabled;
-            GUILayout.EndHorizontal();
         }
 
         private void DrawDemonContractChoices()
