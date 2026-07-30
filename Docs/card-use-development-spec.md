@@ -641,6 +641,7 @@ Docs/
 
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
+| 2026-07-30 | 이천서 | `ForceOpponentDrawFaceUp` 직후 `Stepped` 공개 스냅샷을 발행하고 최종 폐기 스냅샷과 분리한다. `CardHand`는 물리 카드 ID로 제거 대상을 찾고 이동·축소 후 파괴해 다른 위치의 카드를 잘못 폐기하지 않도록 명세 |
 | 2026-07-29 | 이천서 | CU-M07 첫 성공 종료·첫 실패 후 재예측·두 번째 성공 무비용·두 번째 실패 영혼 1과 `Ready/ResolvedWithRetry/Resolved` 연출 상태를 명세하고 대상 4/4·CoreLoop 442/442·전체 631/631 검증 반영 |
 | 2026-07-29 | 이천서 | CU-M06 `Ready/Resolved` 표시 단서와 `PlayerTurnStart → PlayerSuccess/PlayerFail` Animator 연결, 대상 2/2·CoreLoop 438/438·전체 627/627·실제 준비/성공/실패 상태 검증 반영 |
 | 2026-07-29 | 이천서 | CU-M05 적 공개 카드의 수동·자동 효과 호버 설명과 미공개 적 카드의 문자열 차단을 CUM05 3건·전체 EditMode 622/622 기준으로 반영 |

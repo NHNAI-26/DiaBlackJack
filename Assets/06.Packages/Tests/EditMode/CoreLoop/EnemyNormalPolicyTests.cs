@@ -287,7 +287,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void EP03_U05_SameObservationProducesThreeDistinctNormalStrategies()
+        public void EPR05_U13_CultistPrioritizesUsableManualCardOverHit()
         {
             EnemyActionCandidate pistol = CreateCardCandidate(10, "auto-pistol-7");
             EnemyActionCandidate orb = CreateCardCandidate(11, "crystal-orb-5");
@@ -312,7 +312,10 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(gunslinger.ActionType, Is.EqualTo(EnemyActionType.UseCard));
             Assert.That(gunslinger.CardId, Is.EqualTo(pistol.CardId));
-            Assert.That(cultist.ActionType, Is.EqualTo(EnemyActionType.Hit));
+            Assert.That(cultist.ActionType, Is.EqualTo(EnemyActionType.UseCard));
+            Assert.That(
+                cultist.ReasonCode,
+                Is.EqualTo("cultist-prioritize-usable-manual-card"));
             Assert.That(trickster.ActionType, Is.EqualTo(EnemyActionType.UseCard));
             Assert.That(trickster.CardId, Is.EqualTo(orb.CardId));
         }

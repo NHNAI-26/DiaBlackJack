@@ -27,6 +27,7 @@ namespace Border.SaveLoad
     public sealed class RunSaveFlow
     {
         private readonly int _defaultRootSeed;
+        private readonly Func<int> _rootSeedFactory;
         private readonly Func<string> _runIdFactory;
         private readonly RunReservationRepository _reservationRepository;
         private readonly RunSaveRepository _saveRepository;
@@ -49,6 +50,7 @@ namespace Border.SaveLoad
                 stagePathFactory,
                 sessionFactory,
                 defaultRootSeed,
+                CreateRandomRootSeed,
                 () => Guid.NewGuid().ToString("N"),
                 () => DateTimeOffset.UtcNow,
                 usesBattleRewards)
@@ -64,6 +66,29 @@ namespace Border.SaveLoad
             Func<string> runIdFactory,
             Func<DateTimeOffset> utcNowProvider,
             bool usesBattleRewards = true)
+            : this(
+                saveRepository,
+                reservationRepository,
+                stagePathFactory,
+                sessionFactory,
+                defaultRootSeed,
+                () => defaultRootSeed,
+                runIdFactory,
+                utcNowProvider,
+                usesBattleRewards)
+        {
+        }
+
+        internal RunSaveFlow(
+            RunSaveRepository saveRepository,
+            RunReservationRepository reservationRepository,
+            Func<int, IReadOnlyList<StageDefinition>> stagePathFactory,
+            Func<int, StageProgressionSession> sessionFactory,
+            int defaultRootSeed,
+            Func<int> rootSeedFactory,
+            Func<string> runIdFactory,
+            Func<DateTimeOffset> utcNowProvider,
+            bool usesBattleRewards = true)
         {
             _saveRepository = saveRepository ??
                 throw new ArgumentNullException(nameof(saveRepository));
@@ -73,6 +98,8 @@ namespace Border.SaveLoad
                 throw new ArgumentNullException(nameof(stagePathFactory));
             _sessionFactory = sessionFactory ??
                 throw new ArgumentNullException(nameof(sessionFactory));
+            _rootSeedFactory = rootSeedFactory ??
+                throw new ArgumentNullException(nameof(rootSeedFactory));
             _runIdFactory = runIdFactory ??
                 throw new ArgumentNullException(nameof(runIdFactory));
             _utcNowProvider = utcNowProvider ??
@@ -361,8 +388,9 @@ namespace Border.SaveLoad
 
         private bool TryCreateAndActivateReservation()
         {
+            int rootSeed = _rootSeedFactory();
             StageProgressionSession candidate =
-                _sessionFactory(_defaultRootSeed);
+                _sessionFactory(rootSeed);
             if (candidate == null || !candidate.TryStartRun())
             {
                 Notice = RunSaveNotice.ReservationInvalid;
@@ -373,7 +401,7 @@ namespace Border.SaveLoad
                 candidate.PendingStartingDemonSelection;
             if (offer == null)
             {
-                ActivateNewRun(candidate);
+                ActivateNewRun(candidate, rootSeed);
                 Notice = RunSaveNotice.None;
                 return true;
             }
@@ -389,7 +417,7 @@ namespace Border.SaveLoad
             {
                 reservation = new RunReservation(
                     _runIdFactory(),
-                    _defaultRootSeed,
+                    rootSeed,
                     offer.OfferId,
                     new[]
                     {
@@ -473,7 +501,9 @@ namespace Border.SaveLoad
             RequiresNewRunConfirmation = false;
         }
 
-        private void ActivateNewRun(StageProgressionSession session)
+        private void ActivateNewRun(
+            StageProgressionSession session,
+            int rootSeed)
         {
             _reservationRepository.TryDelete();
             Session = session;
@@ -481,7 +511,7 @@ namespace Border.SaveLoad
                 session,
                 _saveRepository,
                 _runIdFactory(),
-                _defaultRootSeed,
+                rootSeed,
                 0,
                 _utcNowProvider);
             IsMenuVisible = false;
@@ -584,6 +614,11 @@ namespace Border.SaveLoad
             return _utcNowProvider()
                 .ToUniversalTime()
                 .ToString("O", CultureInfo.InvariantCulture);
+        }
+
+        private static int CreateRandomRootSeed()
+        {
+            return BitConverter.ToInt32(Guid.NewGuid().ToByteArray(), 0);
         }
     }
 }

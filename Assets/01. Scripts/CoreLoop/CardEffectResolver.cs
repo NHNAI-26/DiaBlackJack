@@ -151,6 +151,7 @@ namespace DiaBlackJack.CoreLoop
             out AutomaticCardResult? immediateAutomaticResult)
         {
             BlackjackCard drawnCard = Opponent.Draw(faceUp: true);
+            _battle.NotifyCardEffectVisualStep();
             var continuation = new CardEffectContinuation(
                 continuationKind,
                 drawnCard.Id);
