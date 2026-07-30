@@ -308,23 +308,37 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void GSH01_U07_ContractDetailScaleTracksResolutionWithinReadableBounds()
+        public void GSH01_U07_ContractDetailLayoutIsAuthoredInHudPrefab()
         {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            Transform row = prefab.transform.Find(
+                "CombatControls/ContractCandidatePanel/CandidateRow");
+            Assert.That(row, Is.Not.Null);
+            RectTransform rowRect = row.GetComponent<RectTransform>();
             Assert.That(
-                GameHudView.CalculateDemonContractDetailScale(1280, 720),
-                Is.EqualTo(1f));
+                rowRect.anchorMin,
+                Is.EqualTo(new Vector2(0.14f, 0.18f)));
             Assert.That(
-                GameHudView.CalculateDemonContractDetailScale(1920, 1080),
-                Is.EqualTo(1.5f));
+                rowRect.anchorMax,
+                Is.EqualTo(new Vector2(0.86f, 0.78f)));
+
+            Transform detailSlot = row.Find("CandidateSlot_1");
+            Transform unusedSlot = row.Find("CandidateSlot_2");
+            Assert.That(detailSlot, Is.Not.Null);
+            Assert.That(unusedSlot, Is.Not.Null);
+            Assert.That(unusedSlot.gameObject.activeSelf, Is.False);
+            RectTransform detailRect = detailSlot.GetComponent<RectTransform>();
             Assert.That(
-                GameHudView.CalculateDemonContractDetailScale(1024, 768),
-                Is.EqualTo(0.85f));
+                detailRect.anchorMin,
+                Is.EqualTo(Vector2.zero));
             Assert.That(
-                GameHudView.CalculateDemonContractDetailScale(2560, 1080),
-                Is.EqualTo(1.5f));
-            Assert.That(
-                GameHudView.CalculateDemonContractDetailScale(0, 0),
-                Is.EqualTo(1f));
+                detailRect.anchorMax,
+                Is.EqualTo(Vector2.one));
+
+            AssertAuthoredTextSize(detailSlot.Find("Title"), 20f, 30f);
+            AssertAuthoredTextSize(detailSlot.Find("Ability"), 20f, 24f);
+            AssertAuthoredTextSize(detailSlot.Find("Cost"), 20f, 24f);
         }
 
         private static CoreLoopBattle CreateStartedBattle(params int[] playerRanks)
@@ -406,6 +420,22 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             Image image = actionRow.Find(actionName).GetComponent<Image>();
             return image.sprite == null ? string.Empty : image.sprite.name;
+        }
+
+        private static void AssertAuthoredTextSize(
+            Transform textTransform,
+            float expectedMinimum,
+            float expectedMaximum)
+        {
+            Component text = textTransform.GetComponent("TMPro.TextMeshProUGUI");
+            Assert.That(text, Is.Not.Null);
+            var serialized = new SerializedObject(text);
+            Assert.That(
+                serialized.FindProperty("m_fontSizeMin").floatValue,
+                Is.EqualTo(expectedMinimum));
+            Assert.That(
+                serialized.FindProperty("m_fontSizeMax").floatValue,
+                Is.EqualTo(expectedMaximum));
         }
 
         private static string GetDefinitionKey(DemonContractKind kind)

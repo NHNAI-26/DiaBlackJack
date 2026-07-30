@@ -210,9 +210,6 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            float uiScale = CalculateDemonContractDetailScale(
-                Screen.width,
-                Screen.height);
             if (contractCandidatePromptText != null)
             {
                 contractCandidatePromptText.text = string.Empty;
@@ -221,23 +218,13 @@ namespace DiaBlackJack.GameScene
 
             GameHudChoiceButton detailSlot = contractCandidateSlots[0];
             detailSlot.gameObject.SetActive(true);
-            if (detailSlot.transform is RectTransform detailRect)
-            {
-                detailRect.SetSizeWithCurrentAnchors(
-                    RectTransform.Axis.Horizontal,
-                    920f * uiScale);
-                detailRect.SetSizeWithCurrentAnchors(
-                    RectTransform.Axis.Vertical,
-                    420f * uiScale);
-            }
 
             detailSlot.RenderContractDetail(
                 candidate,
                 cardContentCatalog == null
                     ? null
                     : cardContentCatalog.GetDemonFaceSprite(
-                        candidate.DefinitionKey),
-                uiScale);
+                        candidate.DefinitionKey));
 
             for (int i = 1; i < contractCandidateSlots.Length; i++)
             {
@@ -248,20 +235,6 @@ namespace DiaBlackJack.GameScene
             }
 
             contractCandidatePanel.SetActive(true);
-        }
-
-        internal static float CalculateDemonContractDetailScale(
-            int screenWidth,
-            int screenHeight)
-        {
-            if (screenWidth <= 0 || screenHeight <= 0)
-            {
-                return 1f;
-            }
-
-            float widthScale = screenWidth / 1280f;
-            float heightScale = screenHeight / 720f;
-            return Mathf.Clamp(Mathf.Min(widthScale, heightScale), 0.85f, 1.5f);
         }
 
         public void HideDemonContractDetail()

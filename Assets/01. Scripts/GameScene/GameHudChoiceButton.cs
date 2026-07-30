@@ -102,33 +102,13 @@ namespace DiaBlackJack.GameScene
 
         public void RenderContractDetail(
             GameSceneCombatHudContractCandidateViewModel model,
-            Sprite faceSprite,
-            float uiScale)
+            Sprite faceSprite)
         {
             RenderContractCandidate(model, faceSprite);
-            float scale = Mathf.Clamp(uiScale, 0.85f, 1.5f);
             _isInteractable = false;
             if (titleText != null)
             {
                 titleText.text = model == null ? string.Empty : model.Title;
-                ConfigureRect(
-                    titleText.rectTransform,
-                    new Vector2(25f, -20f) * scale,
-                    new Vector2(180f, 48f) * scale);
-                titleText.enableAutoSizing = true;
-                titleText.fontSizeMin = Mathf.Max(20f, 20f * scale);
-                titleText.fontSizeMax = 30f * scale;
-                titleText.fontSize = titleText.fontSizeMax;
-                titleText.fontStyle = FontStyles.Bold;
-                titleText.alignment = TextAlignmentOptions.Center;
-            }
-
-            if (faceImage != null)
-            {
-                ConfigureRect(
-                    faceImage.rectTransform,
-                    new Vector2(25f, -75f) * scale,
-                    new Vector2(160f, 320f) * scale);
             }
 
             if (abilityText != null)
@@ -137,11 +117,6 @@ namespace DiaBlackJack.GameScene
                     ? string.Empty
                     : "<color=#D34B3F><b>ACTIVE</b></color>\n" +
                         model.Ability;
-                ConfigureDetailText(
-                    abilityText,
-                    new Vector2(220f, -45f) * scale,
-                    new Vector2(675f, 170f) * scale,
-                    scale);
             }
 
             if (costText != null)
@@ -150,11 +125,6 @@ namespace DiaBlackJack.GameScene
                     ? string.Empty
                     : "<color=#D7A53B><b>COST</b></color>\n" +
                         model.Cost;
-                ConfigureDetailText(
-                    costText,
-                    new Vector2(220f, -240f) * scale,
-                    new Vector2(675f, 150f) * scale,
-                    scale);
             }
 
             if (labelText != null)
@@ -166,33 +136,6 @@ namespace DiaBlackJack.GameScene
             {
                 button.enabled = false;
             }
-        }
-
-        private static void ConfigureDetailText(
-            TMP_Text text,
-            Vector2 anchoredPosition,
-            Vector2 size,
-            float scale)
-        {
-            ConfigureRect(text.rectTransform, anchoredPosition, size);
-            text.enableAutoSizing = true;
-            text.fontSizeMin = Mathf.Max(20f, 20f * scale);
-            text.fontSizeMax = 24f * scale;
-            text.fontSize = text.fontSizeMax;
-            text.fontStyle = FontStyles.Normal;
-            text.alignment = TextAlignmentOptions.TopLeft;
-        }
-
-        private static void ConfigureRect(
-            RectTransform rect,
-            Vector2 anchoredPosition,
-            Vector2 size)
-        {
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(0f, 1f);
-            rect.pivot = new Vector2(0f, 1f);
-            rect.anchoredPosition = anchoredPosition;
-            rect.sizeDelta = size;
         }
 
         private void HandleClick()

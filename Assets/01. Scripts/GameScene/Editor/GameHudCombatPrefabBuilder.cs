@@ -253,23 +253,30 @@ namespace DiaBlackJack.GameScene.Editor
             Sprite panelBrush)
         {
             RectTransform row = CreateRect("CandidateRow", parent);
-            row.anchorMin = new Vector2(0.5f, 0.5f);
-            row.anchorMax = new Vector2(0.5f, 0.5f);
+            row.anchorMin = new Vector2(0.14f, 0.18f);
+            row.anchorMax = new Vector2(0.86f, 0.78f);
             row.pivot = new Vector2(0.5f, 0.5f);
-            row.anchoredPosition = new Vector2(0f, -26f);
-            row.sizeDelta = new Vector2(920f, 410f);
-            HorizontalLayoutGroup layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 20f;
-            layout.childAlignment = TextAnchor.MiddleCenter;
-            layout.childControlWidth = false;
-            layout.childControlHeight = false;
-            layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = false;
+            row.offsetMin = Vector2.zero;
+            row.offsetMax = Vector2.zero;
+
+            GameHudChoiceButton detailSlot = CreateContractCandidate(
+                "CandidateSlot_1",
+                row,
+                font,
+                panelBrush);
+            Stretch((RectTransform)detailSlot.transform);
+            GameHudChoiceButton unusedSlot = CreateContractCandidate(
+                "CandidateSlot_2",
+                row,
+                font,
+                panelBrush);
+            Stretch((RectTransform)unusedSlot.transform);
+            unusedSlot.gameObject.SetActive(false);
 
             return new[]
             {
-                CreateContractCandidate("CandidateSlot_1", row, font, panelBrush),
-                CreateContractCandidate("CandidateSlot_2", row, font, panelBrush)
+                detailSlot,
+                unusedSlot
             };
         }
 
@@ -286,24 +293,56 @@ namespace DiaBlackJack.GameScene.Editor
             button.targetGraphic = root.GetComponent<Image>();
 
             RectTransform face = CreateRect("Face", root);
-            face.anchorMin = new Vector2(0f, 0.5f);
-            face.anchorMax = new Vector2(0f, 0.5f);
-            face.pivot = new Vector2(0f, 0.5f);
-            face.anchoredPosition = new Vector2(18f, 12f);
-            face.sizeDelta = new Vector2(145f, 290f);
+            SetRect(
+                face,
+                new Vector2(0.0272f, 0.0595f),
+                new Vector2(0.2011f, 0.8214f),
+                Vector2.zero,
+                Vector2.zero);
             Image faceImage = face.gameObject.AddComponent<Image>();
             faceImage.preserveAspect = true;
             faceImage.raycastTarget = false;
 
-            TMP_Text title = CreateText("Title", root, font, 23f, TextAlignmentOptions.Left);
-            SetRect(title.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f),
-                new Vector2(178f, -24f), new Vector2(-18f, -52f));
-            TMP_Text ability = CreateText("Ability", root, font, 16f, TextAlignmentOptions.TopLeft);
-            SetRect(ability.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f),
-                new Vector2(178f, -68f), new Vector2(-18f, -188f));
-            TMP_Text cost = CreateText("Cost", root, font, 15f, TextAlignmentOptions.TopLeft);
-            SetRect(cost.rectTransform, new Vector2(0f, 1f), new Vector2(1f, 1f),
-                new Vector2(178f, -196f), new Vector2(-18f, -270f));
+            TMP_Text title = CreateText(
+                "Title",
+                root,
+                font,
+                30f,
+                TextAlignmentOptions.Center);
+            title.fontSizeMin = 20f;
+            title.fontStyle = FontStyles.Bold;
+            SetRect(
+                title.rectTransform,
+                new Vector2(0.0272f, 0.8381f),
+                new Vector2(0.2228f, 0.9524f),
+                Vector2.zero,
+                Vector2.zero);
+            TMP_Text ability = CreateText(
+                "Ability",
+                root,
+                font,
+                24f,
+                TextAlignmentOptions.TopLeft);
+            ability.fontSizeMin = 20f;
+            SetRect(
+                ability.rectTransform,
+                new Vector2(0.2391f, 0.4881f),
+                new Vector2(0.9728f, 0.8929f),
+                Vector2.zero,
+                Vector2.zero);
+            TMP_Text cost = CreateText(
+                "Cost",
+                root,
+                font,
+                24f,
+                TextAlignmentOptions.TopLeft);
+            cost.fontSizeMin = 20f;
+            SetRect(
+                cost.rectTransform,
+                new Vector2(0.2391f, 0.0714f),
+                new Vector2(0.9728f, 0.4286f),
+                Vector2.zero,
+                Vector2.zero);
             TMP_Text label = CreateText("Label", root, font, 17f, TextAlignmentOptions.Center);
             SetRect(label.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 0f),
                 new Vector2(172f, 16f), new Vector2(-18f, 58f));
