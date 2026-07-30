@@ -161,6 +161,36 @@ MonoBehaviour:
     volume: 0.5
     pitch: 1
     loop: 0
+  - id: hammerWind
+    clip: {fileID: 8300000, guid: 8b11122c2ae10624091c5a176541cb67, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
+  - id: hammerSmash
+    clip: {fileID: 8300000, guid: 93afad2aa8ee17f4ea22689ea1d9beb2, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
+  - id: hammerCollisionSound
+    clip: {fileID: 8300000, guid: fef4a9fd2a845464083625800eea49de, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
+  - id: baseImpact
+    clip: {fileID: 8300000, guid: 5c11ab8df20a87d4187cf8f0d4a998a8, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
+  - id: impactSupport
+    clip: {fileID: 8300000, guid: 6b2e5010d8f18ad4399ec7f1a6cafd9c, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: enemyHammerSmash
+    clip: {fileID: 8300000, guid: 2e60979442614084d87d2314661266b8, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1
