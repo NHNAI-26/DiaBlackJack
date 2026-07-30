@@ -4575,17 +4575,6 @@ Transform:
   - {fileID: 3936651455334222895}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &705838958 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 673563953354638258, guid: 816a79bb582b82447acd66e897e0bffc, type: 3}
-  m_PrefabInstance: {fileID: 3812613530239806108}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 54321634db9e77942958378790d13da7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CharacterView
 --- !u!4 &705838960 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8650871468054989331, guid: 816a79bb582b82447acd66e897e0bffc, type: 3}
@@ -6875,10 +6864,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 2591740794005013518, guid: 816a79bb582b82447acd66e897e0bffc, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 816a79bb582b82447acd66e897e0bffc, type: 3}
 --- !u!1001 &3936651455334222894
 PrefabInstance:
@@ -7218,10 +7204,6 @@ PrefabInstance:
       propertyPath: enemyCharacter
       value: 
       objectReference: {fileID: 1152182556}
-    - target: {fileID: 7870382590175114481, guid: 65b3779e515064540b9789c76687ef65, type: 3}
-      propertyPath: playerCharacter
-      value: 
-      objectReference: {fileID: 705838958}
     - target: {fileID: 7870382590175114481, guid: 65b3779e515064540b9789c76687ef65, type: 3}
       propertyPath: revolverAnimator
       value: 

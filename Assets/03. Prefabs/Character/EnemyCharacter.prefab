@@ -132,20 +132,6 @@ MonoBehaviour:
     defaultState: {fileID: 2706189474060104132, guid: 22aa22444d6050045815396b307d8760, type: 3}
     attackThreatened: {fileID: 8305373514700201296, guid: 22aa22444d6050045815396b307d8760, type: 3}
     attacked: {fileID: -9137110423780871092, guid: 22aa22444d6050045815396b307d8760, type: 3}
-  idleColor: {r: 1, g: 1, b: 1, a: 1}
-  activeColor: {r: 1, g: 0.95, b: 0.65, a: 1}
-  standColor: {r: 0.7, g: 0.8, b: 1, a: 1}
-  bustColor: {r: 1, g: 0.42, b: 0.38, a: 1}
-  winColor: {r: 0.55, g: 1, b: 0.6, a: 1}
-  loseColor: {r: 0.5, g: 0.5, b: 0.55, a: 1}
-  useCardColor: {r: 0.65, g: 0.9, b: 1, a: 1}
-  idleScale: 1
-  activeScale: 1.06
-  standScale: 0.97
-  bustScale: 0.85
-  winScale: 1.15
-  loseScale: 0.9
-  useCardScale: 1.08
   merchantSprite: {fileID: -5357205546685973846, guid: 22aa22444d6050045815396b307d8760, type: 3}
   merchantTint: {r: 0.32, g: 0.3, b: 0.36, a: 1}
   merchantScale: 0.8

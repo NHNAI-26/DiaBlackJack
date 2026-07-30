@@ -251,9 +251,7 @@ namespace DiaBlackJack.GameScene
             CoreLoopViewModel core,
             IReadOnlyList<GameSceneCardViewModel> playerCards,
             IReadOnlyList<GameSceneCardViewModel> enemyCards,
-            CharacterVisualState playerVisual,
             CharacterVisualState enemyVisual,
-            string playerActionLabel,
             string enemyActionLabel,
             GameSceneRevolverAnimationCue revolverAnimationCue = null,
             GameSceneHammerAnimationCue hammerAnimationCue = null)
@@ -261,9 +259,7 @@ namespace DiaBlackJack.GameScene
             Core = core ?? throw new ArgumentNullException(nameof(core));
             PlayerCards = playerCards ?? throw new ArgumentNullException(nameof(playerCards));
             EnemyCards = enemyCards ?? throw new ArgumentNullException(nameof(enemyCards));
-            PlayerVisual = playerVisual;
             EnemyVisual = enemyVisual;
-            PlayerActionLabel = playerActionLabel ?? string.Empty;
             EnemyActionLabel = enemyActionLabel ?? string.Empty;
             RevolverAnimationCue = revolverAnimationCue;
             HammerAnimationCue = hammerAnimationCue;
@@ -275,13 +271,9 @@ namespace DiaBlackJack.GameScene
 
         public IReadOnlyList<GameSceneCardViewModel> EnemyCards { get; }
 
-        public CharacterVisualState PlayerVisual { get; }
-
         public CharacterVisualState EnemyVisual { get; }
 
-        /// <summary>Short action token shown above the player character this step ("HIT", "USE: REVOLVER", "BUST"…). Empty = no label.</summary>
-        public string PlayerActionLabel { get; }
-
+        /// <summary>Short action token shown above the enemy character. Empty = no label.</summary>
         public string EnemyActionLabel { get; }
 
         public GameSceneRevolverAnimationCue RevolverAnimationCue { get; }
@@ -299,17 +291,13 @@ namespace DiaBlackJack.GameScene
             }
 
             CoreLoopViewModel core = CoreLoopPresenter.Create(battle, profileKey);
-            (CharacterVisualState playerVisual, string playerLabel) =
-                ResolveSide(battle, CombatantSide.Player);
             (CharacterVisualState enemyVisual, string enemyLabel) =
                 ResolveSide(battle, CombatantSide.Enemy);
             return new GameSceneViewModel(
                 core,
                 CreatePlayerCards(core, battle),
                 CreateEnemyCards(battle),
-                playerVisual,
                 enemyVisual,
-                playerLabel,
                 enemyLabel,
                 CreateRevolverAnimationCue(battle),
                 CreateHammerAnimationCue(battle));

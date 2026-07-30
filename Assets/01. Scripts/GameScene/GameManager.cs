@@ -27,7 +27,6 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameHudView hud;
         [SerializeField] private CardHand playerHand;
         [SerializeField] private CardHand enemyHand;
-        [SerializeField] private CharacterView playerCharacter;
         [SerializeField] private CharacterView enemyCharacter;
         [SerializeField] private TableTotalsView totals;
         [SerializeField] private DeckStackView remainingDeck;
@@ -1724,11 +1723,6 @@ namespace DiaBlackJack.GameScene
             if (!deferredCardRender)
             {
                 RenderHands(vm);
-            }
-
-            if (playerCharacter != null)
-            {
-                playerCharacter.Render(vm.PlayerVisual, vm.PlayerActionLabel);
             }
 
             if (enemyCharacter != null)

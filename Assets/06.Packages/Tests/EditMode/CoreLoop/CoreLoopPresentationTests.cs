@@ -523,8 +523,6 @@ namespace DiaBlackJack.CoreLoop.Tests
             GameSceneViewModel model = GameScenePresenter.Create(battle);
             GameSceneCardViewModel sourceModel = model.PlayerCards.Single(
                 card => card.CardId == sourceCard.Id);
-            Assert.That(model.PlayerVisual, Is.EqualTo(CharacterVisualState.UseCard));
-            Assert.That(model.PlayerActionLabel, Is.EqualTo("USE: THREAT HAMMER"));
             Assert.That(
                 model.EnemyVisual,
                 Is.EqualTo(CharacterVisualState.AttackThreatened));

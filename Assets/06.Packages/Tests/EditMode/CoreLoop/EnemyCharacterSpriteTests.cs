@@ -80,6 +80,8 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             CharacterView view = ConfigureView();
             SpriteRenderer renderer = _root.GetComponent<SpriteRenderer>();
+            Color baseColor = renderer.color;
+            Vector3 baseScale = _root.transform.localScale;
             Assert.That(
                 view.TrySetEnemyProfile(EnemyCombatProfileCatalog.GunslingerKey),
                 Is.True);
@@ -90,6 +92,36 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             view.ExitMerchant();
             Assert.That(renderer.sprite, Is.SameAs(_attackThreatened));
+            Assert.That(renderer.color, Is.EqualTo(baseColor));
+            Assert.That(_root.transform.localScale, Is.EqualTo(baseScale));
+        }
+
+        [Test]
+        public void GSV01_U04_RenderKeepsAuthoredColorAndScaleWhileShowingActionLabel()
+        {
+            CharacterView view = ConfigureView();
+            SpriteRenderer renderer = _root.GetComponent<SpriteRenderer>();
+            Component actionLabel = CreateActionLabel();
+            SerializedObject serialized = new SerializedObject(view);
+            serialized.FindProperty("actionLabel").objectReferenceValue = actionLabel;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            Color authoredColor = new Color(0.25f, 0.45f, 0.75f, 1f);
+            Vector3 authoredScale = new Vector3(1.4f, 0.8f, 1f);
+            renderer.color = authoredColor;
+            _root.transform.localScale = authoredScale;
+
+            view.Render(CharacterVisualState.UseCard, "USE: REVOLVER");
+
+            Assert.That(renderer.color, Is.EqualTo(authoredColor));
+            Assert.That(_root.transform.localScale, Is.EqualTo(authoredScale));
+            Behaviour actionLabelBehaviour = actionLabel as Behaviour;
+            Assert.That(actionLabelBehaviour, Is.Not.Null);
+            Assert.That(actionLabelBehaviour.enabled, Is.True);
+            SerializedObject labelSerialized = new SerializedObject(actionLabel);
+            Assert.That(
+                labelSerialized.FindProperty("m_text").stringValue,
+                Is.EqualTo("USE: REVOLVER"));
         }
 
         private CharacterView ConfigureView()
@@ -118,6 +150,16 @@ namespace DiaBlackJack.CoreLoop.Tests
                 _texture,
                 new Rect(x, 0, 1, 1),
                 new Vector2(0.5f, 0.5f));
+        }
+
+        private Component CreateActionLabel()
+        {
+            GameObject labelObject = new GameObject("ActionLabel");
+            labelObject.transform.SetParent(_root.transform);
+            System.Type textMeshProType = System.Type.GetType(
+                "TMPro.TextMeshPro, Unity.TextMeshPro");
+            Assert.That(textMeshProType, Is.Not.Null);
+            return labelObject.AddComponent(textMeshProType);
         }
     }
 }
