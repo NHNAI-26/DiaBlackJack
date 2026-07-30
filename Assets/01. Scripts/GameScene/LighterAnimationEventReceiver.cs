@@ -105,6 +105,24 @@ namespace DiaBlackJack.GameScene
             SoundManager.Current.PlaySfx(id);
         }
 
+        public void StopSfx(string soundId)
+        {
+            string id = Key(soundId);
+            if (string.IsNullOrEmpty(id))
+            {
+                Log.W("[LighterAnimationEventReceiver] Cannot stop an SFX with an empty sound ID.", this);
+                return;
+            }
+
+            if (SoundManager.Current == null)
+            {
+                Log.W($"[LighterAnimationEventReceiver] SoundManager is unavailable for SFX '{id}'.", this);
+                return;
+            }
+
+            SoundManager.Current.StopSfx(id);
+        }
+
         public void SetFireRevealHeight(float height)
         {
             SetFireReveal(1f, height);

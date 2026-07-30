@@ -37,6 +37,7 @@ namespace Border.Audio
         private sealed class Voice
         {
             public AudioSource Source;
+            public string Id;
             public float BaseVolume, Fade = 1f;
             public ulong Started;
             public uint Generation;
@@ -110,7 +111,7 @@ namespace Border.Audio
                 bgmVoices[activeBgm].Source.isPlaying)
                 return true;
             int target = activeBgm < 0 ? 0 : 1 - activeBgm;
-            Configure(bgmVoices[target], entry, 0f, true);
+            Configure(bgmVoices[target], entry, key, 0f, true);
             bgmVoices[target].Source.Play();
             activeBgm = target;
             currentBgmId = key;
@@ -136,7 +137,7 @@ namespace Border.Audio
             voice.Source.Stop();
             voice.Generation++;
             voice.Started = ++playOrder;
-            Configure(voice, entry, 1f, false);
+            Configure(voice, entry, key, 1f, false);
             voice.Source.Play();
             return new SoundHandle(this, index, voice.Generation);
         }
@@ -148,7 +149,34 @@ namespace Border.Audio
             if (voice.Generation != handle.generation || !voice.Source.isPlaying)
                 return false;
             voice.Source.Stop();
+            voice.Id = null;
             return true;
+        }
+        public bool StopSfx(string id)
+        {
+            string key = Key(id);
+            if (string.IsNullOrEmpty(key))
+            {
+                Log.W("[SoundManager] Cannot stop an SFX with an empty ID.", this);
+                return false;
+            }
+            if (!sfxCatalog.ContainsKey(key))
+            {
+                WarnMissing("SFX", id);
+                return false;
+            }
+            bool stopped = false;
+            for (int i = 0; i < sfxVoices.Length; i++)
+            {
+                Voice voice = sfxVoices[i];
+                if (!voice.Source.isPlaying || voice.Id != key)
+                    continue;
+
+                voice.Source.Stop();
+                voice.Id = null;
+                stopped = true;
+            }
+            return stopped;
         }
         public void SetMasterVolume(float value) { masterVolume = Gain(value); RefreshVolumes(); }
         public void SetMusicVolume(float value) { musicVolume = Gain(value); RefreshVolumes(); }
@@ -179,8 +207,9 @@ namespace Border.Audio
             source.playOnAwake = false;
             return new Voice { Source = source };
         }
-        private void Configure(Voice voice, SoundEntry entry, float fade, bool music)
+        private void Configure(Voice voice, SoundEntry entry, string id, float fade, bool music)
         {
+            voice.Id = id;
             voice.Source.clip = entry.clip;
             voice.Source.pitch = entry.pitch;
             voice.Source.loop = entry.loop;
