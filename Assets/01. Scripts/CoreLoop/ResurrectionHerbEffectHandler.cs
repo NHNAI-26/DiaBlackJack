@@ -7,32 +7,18 @@ namespace DiaBlackJack.CoreLoop
         IAutomaticCardEffectHandler
     {
         internal const int DeclineOptionId = 0;
-        internal const int RestartRoundOptionId = 1;
+        internal const int PaySoulAndRedealOptionId = 1;
 
         public CardEffectKind EffectKind => CardEffectKind.ResurrectionHerb;
 
         public AutomaticCardEffectStep Begin(
             AutomaticCardEffectContext context)
         {
-            var options = new List<AutomaticCardChoiceOption>(2)
-            {
-                new AutomaticCardChoiceOption(
-                    DeclineOptionId,
-                    "Discard resurrection herb")
-            };
-
-            if (context.CanRestartRound)
-            {
-                options.Add(new AutomaticCardChoiceOption(
-                    RestartRoundOptionId,
-                    "Both participants lose 1 soul and restart the round"));
-            }
-
             return AutomaticCardEffectStep.AwaitChoice(
                 context.OwnerSide,
                 AutomaticCardChoiceKind.ResurrectionHerbDecision,
-                "Choose whether to restart the current round.",
-                options);
+                "Choose whether to pay 1 soul and redeal your hand.",
+                CreateDecisionOptions(context, context.OwnerSide));
         }
 
         public AutomaticCardEffectStep ResolveChoice(
@@ -40,34 +26,92 @@ namespace DiaBlackJack.CoreLoop
             PendingAutomaticCardInteraction pendingInteraction,
             AutomaticCardChoiceOption selectedOption)
         {
-            if (pendingInteraction.ChoiceKind !=
+            if (pendingInteraction.ChoiceKind ==
                 AutomaticCardChoiceKind.ResurrectionHerbDecision)
+            {
+                AutomaticCardEffectStep terminal = ResolvePayment(
+                    context,
+                    context.OwnerSide,
+                    selectedOption);
+                if (terminal != null)
+                {
+                    return terminal;
+                }
+
+                return AutomaticCardEffectStep.AwaitChoice(
+                    context.OpponentSide,
+                    AutomaticCardChoiceKind.ResurrectionHerbOpponentDecision,
+                    "Choose whether to pay 1 soul and redeal your hand.",
+                    CreateDecisionOptions(context, context.OpponentSide));
+            }
+
+            if (pendingInteraction.ChoiceKind !=
+                AutomaticCardChoiceKind.ResurrectionHerbOpponentDecision)
             {
                 throw new InvalidOperationException(
                     "Resurrection herb received an invalid choice kind.");
             }
 
-            switch (selectedOption.OptionId)
+            AutomaticCardEffectStep opponentTerminal = ResolvePayment(
+                context,
+                context.OpponentSide,
+                selectedOption);
+            if (opponentTerminal != null)
             {
-                case DeclineOptionId:
-                    return AutomaticCardEffectStep.Complete(
-                        AutomaticCardSourceDisposition.Discard);
-
-                case RestartRoundOptionId:
-                    if (!context.CanRestartRound)
-                    {
-                        throw new InvalidOperationException(
-                            "Both participants must have at least 2 soul to restart the round.");
-                    }
-
-                    return AutomaticCardEffectStep.Complete(
-                        AutomaticCardSourceDisposition.Discard,
-                        AutomaticCardCompletionFlow.RestartRound);
-
-                default:
-                    throw new InvalidOperationException(
-                        "Resurrection herb received an unknown option.");
+                return opponentTerminal;
             }
+
+            return AutomaticCardEffectStep.Complete(
+                AutomaticCardSourceDisposition.Discard,
+                context.DidResurrectionHerbRedeal
+                    ? AutomaticCardCompletionFlow.CancelContinuation
+                    : AutomaticCardCompletionFlow.ResumeContinuation);
+        }
+
+        private static IReadOnlyList<AutomaticCardChoiceOption>
+            CreateDecisionOptions(
+                AutomaticCardEffectContext context,
+                CombatantSide decisionSide)
+        {
+            var options = new List<AutomaticCardChoiceOption>(2)
+            {
+                new AutomaticCardChoiceOption(DeclineOptionId, "Decline")
+            };
+            if (context.CanPayResurrectionHerbSoul(decisionSide))
+            {
+                options.Add(new AutomaticCardChoiceOption(
+                    PaySoulAndRedealOptionId,
+                    "Pay 1 soul and redeal your hand"));
+            }
+
+            return options.AsReadOnly();
+        }
+
+        private static AutomaticCardEffectStep ResolvePayment(
+            AutomaticCardEffectContext context,
+            CombatantSide decisionSide,
+            AutomaticCardChoiceOption selectedOption)
+        {
+            if (selectedOption.OptionId == DeclineOptionId)
+            {
+                return null;
+            }
+
+            if (selectedOption.OptionId != PaySoulAndRedealOptionId ||
+                !context.CanPayResurrectionHerbSoul(decisionSide))
+            {
+                throw new InvalidOperationException(
+                    "Resurrection herb received an invalid payment option.");
+            }
+
+            if (context.PayResurrectionHerbSoulAndRedeal(decisionSide))
+            {
+                return null;
+            }
+
+            return AutomaticCardEffectStep.Complete(
+                AutomaticCardSourceDisposition.Discard,
+                AutomaticCardCompletionFlow.EndBattle);
         }
     }
 }

@@ -301,10 +301,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(selection.Capacity, Is.EqualTo(2));
 
             Transform actionRow = prefab.transform.Find("CombatControls/ActionRow");
-            Assert.That(GetBrushName(actionRow, "Hit"), Is.EqualTo("Brush_UI_1"));
-            Assert.That(GetBrushName(actionRow, "Stand"), Is.EqualTo("Brush_UI_1"));
-            Assert.That(GetBrushName(actionRow, "Change"), Is.EqualTo("Brush_UI_1"));
-            Assert.That(GetBrushName(actionRow, "Contract"), Is.EqualTo("Brush_UI_1"));
+            Assert.That(GetBrushName(actionRow, "Hit"), Is.EqualTo("Brush_UI_4"));
+            Assert.That(GetBrushName(actionRow, "Stand"), Is.EqualTo("Brush_UI_5"));
+            Assert.That(GetBrushName(actionRow, "Change"), Is.EqualTo("Brush_UI_9"));
+            Assert.That(GetBrushName(actionRow, "Contract"), Is.EqualTo("Brush_UI_10"));
         }
 
         private static CoreLoopBattle CreateStartedBattle(params int[] playerRanks)

@@ -178,6 +178,28 @@ namespace DiaBlackJack.CoreLoop
             IsStanding = false;
         }
 
+        internal void RedealRoundHand(int? preservedCardId = null)
+        {
+            List<BlackjackCard> cards = new List<BlackjackCard>(Hand.Cards);
+            foreach (BlackjackCard card in cards)
+            {
+                if (preservedCardId.HasValue && card.Id == preservedCardId.Value)
+                {
+                    continue;
+                }
+
+                if (!TryDiscardCard(card.Id))
+                {
+                    throw new InvalidOperationException(
+                        "Validated resurrection herb card could not be discarded.");
+                }
+            }
+
+            IsStanding = false;
+            Draw(faceUp: true);
+            Draw(faceUp: false);
+        }
+
         private IEnumerable<BlackjackCard> GetVisibleCards()
         {
             foreach (BlackjackCard card in Hand.GetPublicCards())

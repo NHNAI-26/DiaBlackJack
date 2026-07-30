@@ -415,10 +415,6 @@ namespace DiaBlackJack.CoreLoop
 
         internal int InjectedPoisonCardCount => _injectedPoisonCardIds.Count;
 
-        internal bool CanRestartRoundFromResurrectionHerb =>
-            Player.Soul.Current >= 2 &&
-            Enemy.Soul.Current >= 2;
-
         public AutomaticCardResult? LastAutomaticCardResult { get; private set; }
 
         public AutomaticCardDecision? LastEnemyAutomaticCardDecision
@@ -2778,7 +2774,7 @@ namespace DiaBlackJack.CoreLoop
             }
 
             if (step.CompletionFlow ==
-                AutomaticCardCompletionFlow.RestartRound)
+                AutomaticCardCompletionFlow.CancelContinuation)
             {
                 if (continuation.Kind ==
                     AutomaticCardContinuationKind.DemonContract)
@@ -2786,7 +2782,18 @@ namespace DiaBlackJack.CoreLoop
                     NotifyNormalTurnEnded(continuation.ActorSide);
                 }
 
-                RestartRoundFromResurrectionHerb(result);
+                CancelPendingEffectResolutions();
+                if (continuation.ActorSide == CombatantSide.Enemy)
+                {
+                    NotifyNormalTurnEnded(CombatantSide.Enemy);
+                    BeginPlayerTurn();
+                }
+                else
+                {
+                    State = CoreLoopState.PlayerTurn;
+                }
+
+                RaiseStepped();
                 return false;
             }
 
@@ -5503,7 +5510,7 @@ namespace DiaBlackJack.CoreLoop
             _isResolvingEnemyBeelzebubChoice = true;
             try
             {
-                const int maximumChoiceCount = 2;
+                const int maximumChoiceCount = 128;
                 for (int choiceIndex = 0;
                     choiceIndex < maximumChoiceCount;
                     choiceIndex++)
@@ -5752,35 +5759,38 @@ namespace DiaBlackJack.CoreLoop
             RaiseStepped();
         }
 
-        private void RestartRoundFromResurrectionHerb(
-            AutomaticCardResult result)
+        internal bool PayResurrectionHerbSoulAndRedeal(
+            CombatantSide side,
+            BlackjackCard sourceCard)
         {
-            int previousRoundNumber = RoundNumber;
+            BattleParticipant participant = GetParticipant(side);
+            if (participant.Soul.Current <= 0)
+            {
+                throw new InvalidOperationException(
+                    "A depleted participant cannot pay resurrection herb soul.");
+            }
 
-            Player.Soul.ApplyDamage(1);
-            ApplySoulDamage(CombatantSide.Enemy, 1);
+            int? previousHiddenCardId = participant.Hand
+                .TryGetSingleHiddenCard(out BlackjackCard hiddenCard)
+                    ? hiddenCard.Id
+                    : (int?)null;
+            ApplySoulDamage(side, 1);
+            if (participant.Soul.IsDepleted)
+            {
+                return false;
+            }
 
-            _automaticCardBattleState.ClearRoundState();
-            ClearPlayerDemonContractInteraction();
-            ClearEnemyDemonContractInteraction();
-            _demonContractResolver.NotifyRoundEnded(
-                this,
-                _activePlayerDemonContracts);
-            _demonContractResolver.NotifyRoundEnded(
-                this,
-                _activeEnemyDemonContracts);
+            if (previousHiddenCardId.HasValue)
+            {
+                InvalidateHiddenCardKnowledge(side, previousHiddenCardId.Value);
+            }
 
-            CancelPendingEffectResolutions();
-            Player.ClearRound();
-            Enemy.ClearRound();
-
-            LastRoundTransition = new RoundTransition(
-                RoundTransitionCause.ResurrectionHerb,
-                previousRoundNumber,
-                previousRoundNumber + 1,
-                result.SourceCardId,
-                result.OwnerSide);
-            StartRound();
+            int? preservedSourceCardId =
+                side == _activeAutomaticCardEffectContext.OwnerSide
+                    ? sourceCard.Id
+                    : (int?)null;
+            participant.RedealRoundHand(preservedSourceCardId);
+            return true;
         }
 
         private void CancelPendingEffectResolutions()

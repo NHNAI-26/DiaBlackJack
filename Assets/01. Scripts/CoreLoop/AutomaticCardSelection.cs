@@ -7,6 +7,7 @@ namespace DiaBlackJack.CoreLoop
     {
         PoisonDecision,
         ResurrectionHerbDecision,
+        ResurrectionHerbOpponentDecision,
         LieDetectorNumber,
         FlamethrowerOwnerDiscard,
         FlamethrowerOpponentDiscard,

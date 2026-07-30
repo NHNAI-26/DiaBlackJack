@@ -282,6 +282,7 @@ namespace DiaBlackJack.CoreLoop
                 case AutomaticCardChoiceKind.PoisonDecision:
                     return DecidePoison(observation);
                 case AutomaticCardChoiceKind.ResurrectionHerbDecision:
+                case AutomaticCardChoiceKind.ResurrectionHerbOpponentDecision:
                     return DecideResurrectionHerb(observation);
                 case AutomaticCardChoiceKind.LieDetectorNumber:
                     return DecideLieDetector(observation);
@@ -329,12 +330,17 @@ namespace DiaBlackJack.CoreLoop
         private static AutomaticCardDecision DecideResurrectionHerb(
             AutomaticCardDecisionObservation observation)
         {
-            bool isBehind =
-                observation.OwnerPublicTotal > 21 ||
-                observation.OwnerPublicTotal + 2 <
-                    observation.OpponentPublicTotal;
+            int decisionTotal = observation.DecisionPublicTotal;
+            int otherTotal = observation.DecisionSide == CombatantSide.Player
+                ? observation.EnemyPublicTotal
+                : observation.PlayerPublicTotal;
+            int decisionSoul = observation.DecisionSide == CombatantSide.Player
+                ? observation.PlayerSoul
+                : observation.EnemySoul;
+            bool isBehind = decisionSoul > 1 &&
+                (decisionTotal > 21 || decisionTotal + 2 < otherTotal);
             int desiredOptionId = isBehind
-                ? ResurrectionHerbEffectHandler.RestartRoundOptionId
+                ? ResurrectionHerbEffectHandler.PaySoulAndRedealOptionId
                 : ResurrectionHerbEffectHandler.DeclineOptionId;
             if (TryFindOption(
                     observation,
@@ -344,7 +350,7 @@ namespace DiaBlackJack.CoreLoop
                 return new AutomaticCardDecision(
                     selected.OptionId,
                     isBehind
-                        ? "resurrection-herb-restart-while-behind"
+                        ? "resurrection-herb-redeal-while-behind"
                         : "resurrection-herb-decline-while-safe");
             }
 

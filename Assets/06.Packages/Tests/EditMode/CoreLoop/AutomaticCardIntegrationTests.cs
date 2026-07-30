@@ -144,6 +144,7 @@ namespace DiaBlackJack.CoreLoop.Tests
 
         [TestCase(AutomaticCardChoiceKind.PoisonDecision)]
         [TestCase(AutomaticCardChoiceKind.ResurrectionHerbDecision)]
+        [TestCase(AutomaticCardChoiceKind.ResurrectionHerbOpponentDecision)]
         [TestCase(AutomaticCardChoiceKind.LieDetectorNumber)]
         [TestCase(AutomaticCardChoiceKind.FlamethrowerOwnerDiscard)]
         [TestCase(AutomaticCardChoiceKind.FlamethrowerOpponentDiscard)]
@@ -174,7 +175,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void AC06_U07_TenRestartedBattlesKeepCardsAndStateIsolated()
+        public void ACRV03_I01_TenRedealtBattlesKeepCardsAndStateIsolated()
         {
             for (int iteration = 0; iteration < 10; iteration++)
             {
@@ -198,10 +199,10 @@ namespace DiaBlackJack.CoreLoop.Tests
                     battle.TryResolvePlayerAutomaticCardChoice(
                         pending.InteractionId,
                         ResurrectionHerbEffectHandler
-                            .RestartRoundOptionId),
+                            .PaySoulAndRedealOptionId),
                     Is.True);
 
-                Assert.That(battle.RoundNumber, Is.EqualTo(2));
+                Assert.That(battle.RoundNumber, Is.EqualTo(1));
                 Assert.That(battle.PendingAutomaticInteraction, Is.Null);
                 Assert.That(
                     battle.Player.Hand.Count +
@@ -230,6 +231,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                         new AutomaticCardOptionObservation(1, null, null));
                     break;
                 case AutomaticCardChoiceKind.ResurrectionHerbDecision:
+                case AutomaticCardChoiceKind.ResurrectionHerbOpponentDecision:
                     effectKind = CardEffectKind.ResurrectionHerb;
                     options = Options(
                         new AutomaticCardOptionObservation(0, null, null),

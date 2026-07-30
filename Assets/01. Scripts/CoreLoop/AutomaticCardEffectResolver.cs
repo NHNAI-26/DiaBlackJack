@@ -53,8 +53,7 @@ namespace DiaBlackJack.CoreLoop
         public bool CanOwnerStand =>
             Battle.CanOwnerStandForAutomaticCard(OwnerSide);
 
-        public bool CanRestartRound =>
-            Battle.CanRestartRoundFromResurrectionHerb;
+        internal bool DidResurrectionHerbRedeal { get; private set; }
 
         public bool TryStandOwner()
         {
@@ -72,6 +71,20 @@ namespace DiaBlackJack.CoreLoop
                 SourceCard.Id,
                 OwnerSide,
                 healAmount);
+        }
+
+        public bool CanPayResurrectionHerbSoul(CombatantSide side)
+        {
+            return Battle.GetParticipant(side).Soul.Current > 0;
+        }
+
+        public bool PayResurrectionHerbSoulAndRedeal(CombatantSide side)
+        {
+            bool redealt = Battle.PayResurrectionHerbSoulAndRedeal(
+                side,
+                SourceCard);
+            DidResurrectionHerbRedeal |= redealt;
+            return redealt;
         }
 
         public bool TryCompareSingleOpponentHiddenCard(
@@ -245,7 +258,7 @@ namespace DiaBlackJack.CoreLoop
     {
         ResumeContinuation,
         EndBattle,
-        RestartRound
+        CancelContinuation
     }
 
     internal sealed class AutomaticCardEffectStep
