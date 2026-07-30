@@ -12,8 +12,8 @@
 
 | 문서 | 용도 | 상태 |
 | --- | --- | --- |
-| [rule.md](./rule.md) | 게임 원본 규칙 | 프로토타입 악마 7종·시작 후보 풀 4종 확정 v2.0 |
-| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | 악마 7종 범위·시작 2택 1 반영 v0.22 |
+| [rule.md](./rule.md) | 게임 원본 규칙 | 광신도 악마 풀·선택 조건 최신화 v2.2 |
+| [game-design-document.md](./game-design-document.md) | 전체 게임 기획과 임시 기획 결정 | Notion 적 유형 재동기화 v0.24 |
 | [core-loop-design.md](./core-loop-design.md) | 최소 코어 루프 기획 범위 | CL-M01 합계 표시 개정 v0.2 |
 | [core-loop-development-spec.md](./core-loop-development-spec.md) | 코어 루프 구조·상태·검증 명세 | CL-M01 검증 완료 v0.2 |
 | [core-loop-implementation-plan.md](./core-loop-implementation-plan.md) | 코어 루프 작업 순서·담당·일정·완료 증거 | CL-M01 완료 v0.2 |
@@ -29,26 +29,26 @@
 | [combat-action-development-spec.md](./combat-action-development-spec.md) | 행동 상태·카드 이동·UI·진행 연결과 테스트 명세 | 공통 체인지·사기꾼 예외 완료 v0.5 |
 | [combat-action-implementation-plan.md](./combat-action-implementation-plan.md) | BA-00~BA-05 이력과 현행 규칙 이관 결과 | BA-R01 완료 v0.5 |
 | [combat-action-progress-log.md](./combat-action-progress-log.md) | 전투 행동 확장 결정·구현·검증 누적 기록 | BA-R01 구현·전체 655/655 v0.5 |
-| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | 악마 7종 범위 반영 v0.15 |
+| [card-use-design.md](./card-use-design.md) | 플레이어 일반 카드 사용 범위·카드별 규칙·전체 카드 재검토 | 독극물 담보 문구 반영 v0.16 |
 | [card-use-development-spec.md](./card-use-development-spec.md) | 카드 정의·사용 상태·효과 선택·UI·진행 연결과 테스트 명세 | EP-R04 경계 검증 완료 v0.9 |
 | [card-use-implementation-plan.md](./card-use-implementation-plan.md) | CU-00~CU-06·CU-M01~M07 작업 순서와 단계별 검증 게이트 | 아스모데우스 완료·DC-R06 연계 v0.9 |
 | [card-use-progress-log.md](./card-use-progress-log.md) | 카드 사용 결정·구현·검증 누적 기록 | EP-R04 제한·DC-R06 적별 계약 연동 완료 |
-| [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | 효과 완료·상점 획득 이관 대기 v0.8 |
-| [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | RF-02 상점 후보 구현 v0.8 |
-| [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 이력과 AC-RV00~RV02 개정 계획 | AC·RF-02 상점 편입 완료 v0.7 |
-| [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | 기존 증거 유지·상점 후보 미구현 v0.7 |
-| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | 악마 7종·시작 후보 4종 확정 v1.21 |
-| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | 콘텐츠 필터 이관 대기 v1.20 |
-| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC 이력과 현행 콘텐츠 필터 이관 계획 | 악마 7종 필터 대기 v1.20 |
-| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | 기존 증거 보존·악마 7종 변경 미구현 v1.20 |
+| [automatic-card-design.md](./automatic-card-design.md) | 자동 발동 시점·원본 위치·5종 카드 규칙과 임시 기획 결정 | 독극물·부활초 개정 v1.0 |
+| [automatic-card-development-spec.md](./automatic-card-development-spec.md) | 공개 카드 유입·보류 선택·연속 처리·AI·UI·런 연결 명세 | AC-RV03 효과 이관 대기 v1.0 |
+| [automatic-card-implementation-plan.md](./automatic-card-implementation-plan.md) | AC-00~AC-06 이력과 AC-RV00~RV03 개정 계획 | AC-RV03 이관 대기 v0.9 |
+| [automatic-card-progress-log.md](./automatic-card-progress-log.md) | 자동 발동 카드 결정·구현·검증 누적 기록 | 기존 증거 유지·AC-RV03 미구현 v0.9 |
+| [demonic-contract-design.md](./demonic-contract-design.md) | 악마 계약 제공·비용·지속과 개별 악마 최신 규칙 | 광신도 2종 계약 선택 최신화 v1.22 |
+| [demonic-contract-development-spec.md](./demonic-contract-development-spec.md) | 계약 데이터·전투 상태·효과 훅·런 덱·UI·적 AI·테스트 명세 | 광신도 정책·콘텐츠 필터 이관 대기 v1.21 |
+| [demonic-contract-implementation-plan.md](./demonic-contract-implementation-plan.md) | DC 이력과 현행 콘텐츠 필터 이관 계획 | 광신도 정책·악마 7종 필터 대기 v1.21 |
+| [demonic-contract-progress-log.md](./demonic-contract-progress-log.md) | 계약 결정·구현·검증 누적 기록 | 기존 증거 보존·광신도 최신 정책 미구현 v1.21 |
 | [battle-reward-design.md](./battle-reward-design.md) | RW 과거 구현 결정과 향후 무료 사건 재사용 경계 | 정식 런 비활성·코드 이관 대기 v0.4 |
 | [battle-reward-development-spec.md](./battle-reward-development-spec.md) | 기존 보상 생성·상태·세션·UI 기술 계약 | RW 증거 보존·정식 런 우회 v0.4 |
 | [battle-reward-implementation-plan.md](./battle-reward-implementation-plan.md) | RW-00~RW-05 이력과 RF 우회 계획 | RW 완료·RF-03 비활성 연결 v0.4 |
 | [battle-reward-progress-log.md](./battle-reward-progress-log.md) | 전투 보상 결정·구현·검증 누적 기록 | RW-05 증거 유지·정식 런 비활성 미구현 v0.4 |
-| [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 적 6종의 전투 성향·책임 경계 | 제외 악마 참조 재설계 대기 v1.10 |
-| [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | RW 호환·RF 승리 정산 재명세 v1.9 |
-| [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP 이력과 Notion v0.7 이관 계획 | EP·RF-01B·RF-02·RF-03 완료, RF-04 후속 v1.9 |
-| [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | EP 증거 보존·새 보상 미구현 v1.9 |
+| [enemy-combat-profile-design.md](./enemy-combat-profile-design.md) | 적 6종의 전투 성향·책임 경계 | 광신도 2종 계약 선택 최신화 v1.12 |
+| [enemy-combat-profile-development-spec.md](./enemy-combat-profile-development-spec.md) | 적 프로필·공개 관측·정책·카드·전투 변환과 테스트 명세 | 광신도 최신 정책 재이관 대기 v1.10 |
+| [enemy-combat-profile-implementation-plan.md](./enemy-combat-profile-implementation-plan.md) | EP 이력과 Notion 적 유형 이관 계획 | 광신도 2종 정책 코드 이관 대기 v1.10 |
+| [enemy-combat-profile-progress-log.md](./enemy-combat-profile-progress-log.md) | 적 전투 프로필 결정·구현·검증 누적 기록 | EP 증거 보존·광신도 최신 정책 미구현 v1.10 |
 | [enemy-selection-combat-ui-design.md](./enemy-selection-combat-ui-design.md) | 상대 후보 2명 비교·확정과 등급별 전투 정보 표시 규칙 | 예상 골드·상점 품질 UI 개정 v0.5 |
 | [enemy-selection-combat-ui-development-spec.md](./enemy-selection-combat-ui-development-spec.md) | 후보 생성·선택 상태·전투 변환·안전 표시 스냅샷과 테스트 명세 | RewardTier 교체 명세 v0.4 |
 | [enemy-selection-combat-ui-implementation-plan.md](./enemy-selection-combat-ui-implementation-plan.md) | EUI 이력과 새 적 정보 연결 계획 | RF-04 코드 이관·화면 검증 대기 v0.4 |

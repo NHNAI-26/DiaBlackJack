@@ -46,6 +46,7 @@ Shader "Shader/Uber Lit"
         [Main(HeightFade, _HEIGHT_FADE_ON, on)] _HeightFadeEnabled("Height Fade", Float) = 0
         [Sub(HeightFade_HEIGHT_FADE_ON)] _HeightFadeLower("Lower Height", Float) = 0
         [Sub(HeightFade_HEIGHT_FADE_ON)] _HeightFadeUpper("Upper Height", Float) = 1
+        [Sub(HeightFade_HEIGHT_FADE_ON)] _HeightFadeOffset("Offset", Float) = 0
         [Sub(HeightFade_HEIGHT_FADE_ON)] _HeightFadeTint("Lower Tint", Color) = (0.25,0.25,0.25,1)
 
         [Main(GlassGlow, _GLASS_GLOW_ON, on)] _GlassGlowEnabled("Glowing Glass", Float) = 0

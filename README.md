@@ -5,7 +5,8 @@
 | feat    | 새로운 코드 추가                      |
 | fix     | 문제점 수정                           |
 | docs    | README와 같은 문서 수정               |
-| art     | 아트 에셋 추가                       |
+| art     | 아트 에셋 추가, 수정 등                |
+| sound   | 사운드 에셋 추가, 수정 등               |
 | merge   | merge                                 |
 | chore   | 그 외 패키지 추가, 설정 변경 등        |
 

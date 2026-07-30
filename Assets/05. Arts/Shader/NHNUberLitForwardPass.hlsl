@@ -139,8 +139,10 @@ half4 NHNUberLitFragment(NHNForwardVaryings input) : SV_Target
     color.rgb += NHNEvaluateRim(inputData.normalWS, inputData.viewDirectionWS);
 #if defined(NHN_SPRITE_UBER)
     color.rgb *= NHNEvaluateUVHeightFade(input.rawUV);
+    color.a *= NHNEvaluateUVHeightFadeAlpha(input.rawUV);
 #else
     color.rgb *= NHNEvaluateHeightFade(input.positionWS.y);
+    color.a *= NHNEvaluateHeightFadeAlpha(input.positionWS.y);
 #endif
     color.rgb = MixFog(color.rgb, inputData.fogCoord);
     color.a = OutputAlpha(color.a, IsSurfaceTypeTransparent(_Surface));
