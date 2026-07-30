@@ -36,30 +36,6 @@ namespace DiaBlackJack.CoreLoop.UI
         public bool CanSelect { get; }
 
         public string DisabledReason { get; }
-
-        public string ButtonLabel
-        {
-            get
-            {
-                string label = Title;
-                if (!string.IsNullOrEmpty(Ability))
-                {
-                    label += "\n능력 · " + Ability;
-                }
-
-                if (!string.IsNullOrEmpty(Cost))
-                {
-                    label += "\n대가 · " + Cost;
-                }
-
-                if (!CanSelect && !string.IsNullOrEmpty(DisabledReason))
-                {
-                    label += "\n" + DisabledReason;
-                }
-
-                return label;
-            }
-        }
     }
 
     public sealed class ActiveDemonContractActionViewModel

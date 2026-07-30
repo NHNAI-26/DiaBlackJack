@@ -64,7 +64,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _AlphaClip: 1
-    - _AlphaMultiplier: 0.98
+    - _AlphaMultiplier: 0.903
     - _AlphaToMask: 0
     - _Blend: 0
     - _BlendModePreserveSpecular: 0
@@ -75,7 +75,7 @@ Material:
     - _ColorMask: 15
     - _Contrast: 1
     - _Cull: 2
-    - _Cutoff: 0.891
+    - _Cutoff: 0.888
     - _DissolveAmount: 0
     - _DissolveEdgeIntensity: 0.36
     - _DissolveEdgeWidth: 0.137

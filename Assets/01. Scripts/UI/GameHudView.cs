@@ -45,9 +45,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private TMP_Text combatPromptText;
         [SerializeField] private ScrollRect optionScrollRect;
         [SerializeField] private GameHudChoiceButton[] optionSlots = Array.Empty<GameHudChoiceButton>();
-        [SerializeField] private GameObject contractCandidatePanel;
-        [SerializeField] private TMP_Text contractCandidatePromptText;
-        [SerializeField] private GameHudChoiceButton[] contractCandidateSlots = Array.Empty<GameHudChoiceButton>();
+        [SerializeField] private GameObject contractDetailPanel;
+        [SerializeField] private GameHudContractDetailView contractDetailView;
         [SerializeField] private GameObject automaticCardResultPanel;
         [SerializeField] private TMP_Text automaticCardResultText;
         [SerializeField] private CardContentCatalogSO cardContentCatalog;
@@ -59,17 +58,19 @@ namespace DiaBlackJack.GameScene
 
         public int CombatOptionSlotCount => optionSlots == null ? 0 : optionSlots.Length;
 
-        public int CombatContractCandidateSlotCount =>
-            contractCandidateSlots == null ? 0 : contractCandidateSlots.Length;
-
         public bool HasCombatTooltipReference =>
             actionTooltip != null && actionTooltipText != null;
 
         public bool HasCombatCandidateContentReference => cardContentCatalog != null;
 
+        public bool HasCombatContractDetailReference =>
+            contractDetailPanel != null &&
+            contractDetailView != null &&
+            contractDetailView.HasRequiredReferences;
+
         public bool IsDemonContractDetailVisible =>
-            contractCandidatePanel != null &&
-            contractCandidatePanel.activeSelf;
+            contractDetailPanel != null &&
+            contractDetailPanel.activeSelf;
 
         private void Awake()
         {
@@ -201,45 +202,25 @@ namespace DiaBlackJack.GameScene
             GameSceneCombatHudContractCandidateViewModel candidate)
         {
             if (candidate == null ||
-                contractCandidatePanel == null ||
-                contractCandidateSlots == null ||
-                contractCandidateSlots.Length == 0 ||
-                contractCandidateSlots[0] == null)
+                contractDetailPanel == null ||
+                contractDetailView == null)
             {
                 HideDemonContractDetail();
                 return;
             }
 
-            if (contractCandidatePromptText != null)
-            {
-                contractCandidatePromptText.text = string.Empty;
-                contractCandidatePromptText.gameObject.SetActive(false);
-            }
-
-            GameHudChoiceButton detailSlot = contractCandidateSlots[0];
-            detailSlot.gameObject.SetActive(true);
-
-            detailSlot.RenderContractDetail(
+            contractDetailView.Render(
                 candidate,
                 cardContentCatalog == null
                     ? null
                     : cardContentCatalog.GetDemonFaceSprite(
                         candidate.DefinitionKey));
-
-            for (int i = 1; i < contractCandidateSlots.Length; i++)
-            {
-                if (contractCandidateSlots[i] != null)
-                {
-                    contractCandidateSlots[i].gameObject.SetActive(false);
-                }
-            }
-
-            contractCandidatePanel.SetActive(true);
+            contractDetailPanel.SetActive(true);
         }
 
         public void HideDemonContractDetail()
         {
-            SetActive(contractCandidatePanel, false);
+            SetActive(contractDetailPanel, false);
         }
 
         private void BindCombatControls()
@@ -360,7 +341,7 @@ namespace DiaBlackJack.GameScene
                 (combat.Mode == GameSceneCombatHudMode.Actions &&
                  combat.OptionActions.Count > 0));
             SetActive(
-                contractCandidatePanel,
+                contractDetailPanel,
                 false);
             SetActive(
                 automaticCardResultPanel,
@@ -506,7 +487,7 @@ namespace DiaBlackJack.GameScene
             SetActive(combatControlsRoot, false);
             SetActive(actionRow, false);
             SetActive(optionPanel, false);
-            SetActive(contractCandidatePanel, false);
+            SetActive(contractDetailPanel, false);
             SetActive(automaticCardResultPanel, false);
         }
 

@@ -508,8 +508,8 @@ DC-M01에서는 표시 모델과 계약 처리 API를 유지한 채 `CoreLoopVie
 - `DemonContractSelectionView`는 모델의 정의 키·제목·능력·대가와 `DemonCard` 프리팹을 받아 카메라 뷰포트 기준 하단 앵커를 생성한다. 도메인 상태와 난수는 읽거나 변경하지 않는다.
 - 두 후보는 뷰포트 X 간격과 반대 방향 회전으로 작은 호를 만들며, 기본 Y를 화면 아래 경계에 두어 절반만 보이게 한다.
 - 호버 후보는 카메라 쪽으로 당기고 위로 올리며 확대하고, 자식 Renderer의 정렬 순서를 높인다. 호버 해제 시 보간해 기본 포즈로 돌아간다.
-- `GameHudView`는 기존 계약 후보 패널의 첫 슬롯을 큰 상세 패널로 재사용한다. 제목과 카드 앞면, `ACTIVE`, `COST`를 각각 분리하고 `CardContentCatalogSO`에서 정의 키에 맞는 스프라이트를 조회한다.
-- 상세 패널의 화면 비율·제목·카드·능력·대가 `RectTransform`과 TMP 글자 크기는 `HUD.prefab`에 작성한다. 런타임은 텍스트·이미지·활성 상태만 갱신하며 위치·크기·폰트 설정을 덮어쓰지 않는다. `CandidateRow`의 정규화 앵커로 해상도에 대응하고 전역 HUD `CanvasScaler`는 변경하지 않는다.
+- `GameHudView`는 후보 버튼과 분리된 읽기 전용 `GameHudContractDetailView` 하나를 사용한다. 제목과 카드 앞면, `ACTIVE`, `COST`를 각각 표시하고 `CardContentCatalogSO`에서 정의 키에 맞는 스프라이트를 조회한다. 이 상세 뷰에는 클릭 명령, 버튼, 후보 배열, 프롬프트, 라벨을 두지 않으며 `ContractCandidates` HUD 모델의 공용 `Prompt` 값도 비워 둔다.
+- 상세 패널의 화면 비율·제목·카드·능력·대가 `RectTransform`과 TMP 글자 크기는 `HUD.prefab`의 `ContractDetailPanel/DetailLayout/ContractDetail` 아래에 작성한다. 런타임은 텍스트·이미지·활성 상태만 갱신하며 위치·크기·폰트 설정을 덮어쓰지 않는다. `DetailLayout`의 정규화 앵커로 해상도에 대응하고 전역 HUD `CanvasScaler`는 변경하지 않는다.
 - `GameManager`는 월드 후보가 열려 있으면 다른 카드·덱·상점·전투 명령으로 내려가지 않는다. 후보의 `InteractionId`와 `OptionId`를 클릭 시 다시 검증해 `TryResolvePlayerDemonContract`로 한 번 전달한다.
 - 일시정지 입력은 전역 예외다. 일시정지 중 후보 상세만 숨기고 후보 상태와 도메인 상호작용은 유지한다.
 - 후보 모델이 2장을 초과하거나 건너뛰기 옵션을 포함하면 월드 뷰를 열지 않고 기존 `Options` 모드로 렌더링한다.

@@ -91,6 +91,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 candidates.Mode,
                 Is.EqualTo(GameSceneCombatHudMode.ContractCandidates));
+            Assert.That(candidates.Prompt, Is.Empty);
             Assert.That(
                 candidates.ContractCandidates.Select(
                     candidate => candidate.Command.OptionId),
@@ -284,11 +285,11 @@ namespace DiaBlackJack.CoreLoop.Tests
             GameHudView hud = prefab.GetComponent<GameHudView>();
             Assert.That(hud, Is.Not.Null);
             Assert.That(hud.CombatOptionSlotCount, Is.EqualTo(100));
-            Assert.That(hud.CombatContractCandidateSlotCount, Is.EqualTo(2));
             Assert.That(hud.HasCombatTooltipReference, Is.True);
             Assert.That(hud.HasCombatCandidateContentReference, Is.True);
+            Assert.That(hud.HasCombatContractDetailReference, Is.True);
             Assert.That(prefab.GetComponentsInChildren<GameHudChoiceButton>(true).Length,
-                Is.EqualTo(102));
+                Is.EqualTo(100));
             Assert.That(prefab.GetComponentInChildren<ScrollRect>(true), Is.Not.Null);
 
             GameObject managerPrefab =
@@ -312,33 +313,27 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
             Assert.That(prefab, Is.Not.Null);
-            Transform row = prefab.transform.Find(
-                "CombatControls/ContractCandidatePanel/CandidateRow");
-            Assert.That(row, Is.Not.Null);
-            RectTransform rowRect = row.GetComponent<RectTransform>();
-            Assert.That(
-                rowRect.anchorMin,
-                Is.EqualTo(new Vector2(0.14f, 0.18f)));
-            Assert.That(
-                rowRect.anchorMax,
-                Is.EqualTo(new Vector2(0.86f, 0.78f)));
+            Transform panel = prefab.transform.Find(
+                "CombatControls/ContractDetailPanel");
+            Assert.That(panel, Is.Not.Null);
+            Assert.That(panel.Find("Prompt"), Is.Null);
 
-            Transform detailSlot = row.Find("CandidateSlot_1");
-            Transform unusedSlot = row.Find("CandidateSlot_2");
-            Assert.That(detailSlot, Is.Not.Null);
-            Assert.That(unusedSlot, Is.Not.Null);
-            Assert.That(unusedSlot.gameObject.activeSelf, Is.False);
-            RectTransform detailRect = detailSlot.GetComponent<RectTransform>();
-            Assert.That(
-                detailRect.anchorMin,
-                Is.EqualTo(Vector2.zero));
-            Assert.That(
-                detailRect.anchorMax,
-                Is.EqualTo(Vector2.one));
+            Transform layout = panel.Find("DetailLayout");
+            Assert.That(layout, Is.Not.Null);
+            Transform detail = layout.Find("ContractDetail");
+            Assert.That(detail, Is.Not.Null);
+            Assert.That(layout.Find("CandidateSlot_2"), Is.Null);
+            Assert.That(detail.GetComponent<Button>(), Is.Null);
+            Assert.That(detail.GetComponent<GameHudChoiceButton>(), Is.Null);
 
-            AssertAuthoredTextSize(detailSlot.Find("Title"), 20f, 30f);
-            AssertAuthoredTextSize(detailSlot.Find("Ability"), 20f, 24f);
-            AssertAuthoredTextSize(detailSlot.Find("Cost"), 20f, 24f);
+            GameHudContractDetailView detailView =
+                detail.GetComponent<GameHudContractDetailView>();
+            Assert.That(detailView, Is.Not.Null);
+            Assert.That(detailView.HasRequiredReferences, Is.True);
+            Assert.That(detail.Find("Face"), Is.Not.Null);
+            Assert.That(detail.Find("Title/txtTitle"), Is.Not.Null);
+            Assert.That(detail.Find("Ability/txtAbility"), Is.Not.Null);
+            Assert.That(detail.Find("Cost/txtCost"), Is.Not.Null);
         }
 
         private static CoreLoopBattle CreateStartedBattle(params int[] playerRanks)
@@ -420,22 +415,6 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             Image image = actionRow.Find(actionName).GetComponent<Image>();
             return image.sprite == null ? string.Empty : image.sprite.name;
-        }
-
-        private static void AssertAuthoredTextSize(
-            Transform textTransform,
-            float expectedMinimum,
-            float expectedMaximum)
-        {
-            Component text = textTransform.GetComponent("TMPro.TextMeshProUGUI");
-            Assert.That(text, Is.Not.Null);
-            var serialized = new SerializedObject(text);
-            Assert.That(
-                serialized.FindProperty("m_fontSizeMin").floatValue,
-                Is.EqualTo(expectedMinimum));
-            Assert.That(
-                serialized.FindProperty("m_fontSizeMax").floatValue,
-                Is.EqualTo(expectedMaximum));
         }
 
         private static string GetDefinitionKey(DemonContractKind kind)

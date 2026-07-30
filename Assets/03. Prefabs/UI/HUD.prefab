@@ -157,10 +157,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 3974339863660608979}
   labelText: {fileID: 8040733037380450716}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &101530052049749072
 GameObject:
   m_ObjectHideFlags: 0
@@ -592,10 +588,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 286952593796273058}
   labelText: {fileID: 7882681440163568860}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &167575098495366472
 GameObject:
   m_ObjectHideFlags: 0
@@ -753,10 +745,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 6737666442800372293}
   labelText: {fileID: 3833828569623727414}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &226436976866989273
 GameObject:
   m_ObjectHideFlags: 0
@@ -914,10 +902,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 3307004285429664428}
   labelText: {fileID: 6059428103159102873}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &317321941926014840
 GameObject:
   m_ObjectHideFlags: 0
@@ -1075,10 +1059,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 8699933565495750282}
   labelText: {fileID: 2364368314257165138}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &319633632125048737
 GameObject:
   m_ObjectHideFlags: 0
@@ -1373,10 +1353,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 2696551553908562863}
   labelText: {fileID: 306217819462734018}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &380066727231073032
 GameObject:
   m_ObjectHideFlags: 0
@@ -1534,10 +1510,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 2114098179920577647}
   labelText: {fileID: 118206743254331465}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &510557006970834686
 GameObject:
   m_ObjectHideFlags: 0
@@ -1695,10 +1667,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 9014772864279717960}
   labelText: {fileID: 6003232877534467783}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &529383699183355109
 GameObject:
   m_ObjectHideFlags: 0
@@ -1856,10 +1824,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 8992856990154607818}
   labelText: {fileID: 2905987775350499864}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &586024089235555202
 GameObject:
   m_ObjectHideFlags: 0
@@ -2068,10 +2032,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 3411472254249808678}
   labelText: {fileID: 7555136274594181226}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &637143920074598813
 GameObject:
   m_ObjectHideFlags: 0
@@ -2366,10 +2326,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 6723871642455242651}
   labelText: {fileID: 7280363873337567393}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &696302893807426116
 GameObject:
   m_ObjectHideFlags: 0
@@ -2800,10 +2756,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 6042640216972576969}
   labelText: {fileID: 1447748037084030964}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &747930603193625171
 GameObject:
   m_ObjectHideFlags: 0
@@ -3098,10 +3050,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 7426418044855218749}
   labelText: {fileID: 9177020795119657222}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &817157255228894675
 GameObject:
   m_ObjectHideFlags: 0
@@ -3432,7 +3380,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 2100000, guid: 49bbcbb01c49733439dd632e2c31ecf8, type: 2}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -3784,7 +3732,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -4019,10 +3967,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 1405506979266789095}
   labelText: {fileID: 716310935481236610}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &975837796078125172
 GameObject:
   m_ObjectHideFlags: 0
@@ -4180,10 +4124,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 4420170648204617506}
   labelText: {fileID: 8747794000202944802}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &1050306085833210552
 GameObject:
   m_ObjectHideFlags: 0
@@ -4752,10 +4692,82 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 448081874972288208}
   labelText: {fileID: 4396979012126851483}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
+--- !u!1 &1435961251296817259
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8997503491307948048}
+  - component: {fileID: 6328796207784776423}
+  - component: {fileID: 899302897086878063}
+  m_Layer: 0
+  m_Name: Ability
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &8997503491307948048
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1435961251296817259}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8246210531952482233}
+  m_Father: {fileID: 4141726148753457728}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 136, y: 122}
+  m_SizeDelta: {x: 972.3116, y: 259.4246}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &6328796207784776423
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1435961251296817259}
+  m_CullTransparentMesh: 1
+--- !u!114 &899302897086878063
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1435961251296817259}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 2100000, guid: 49bbcbb01c49733439dd632e2c31ecf8, type: 2}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 1480838002, guid: 6607580154879c94eb60426857989066, type: 3}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &1448711226818911907
 GameObject:
   m_ObjectHideFlags: 0
@@ -4952,7 +4964,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.28, g: 0.12, b: 0.14, a: 1}
@@ -4982,7 +4994,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
   m_MinWidth: -1
@@ -5002,7 +5014,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
     m_Mode: 3
@@ -5046,151 +5058,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3c7cf7c4c3f6bd54289f001041b41885, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 1038186838110988344}
   labelText: {fileID: 3189661295561723130}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
---- !u!1 &1579016172150015242
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2635950801025231652}
-  - component: {fileID: 9216390211136625138}
-  - component: {fileID: 289278147371907486}
-  m_Layer: 0
-  m_Name: Ability
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &2635950801025231652
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1579016172150015242}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6634749241411624921}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 80, y: -128}
-  m_SizeDelta: {x: -196, y: -120}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &9216390211136625138
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1579016172150015242}
-  m_CullTransparentMesh: 1
---- !u!114 &289278147371907486
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1579016172150015242}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_text: 
-  m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
-  m_sharedMaterial: {fileID: -5411658563534415177, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
-  m_fontSharedMaterials: []
-  m_fontMaterial: {fileID: 0}
-  m_fontMaterials: []
-  m_fontColor32:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
-  m_enableVertexGradient: 0
-  m_colorMode: 3
-  m_fontColorGradient:
-    topLeft: {r: 1, g: 1, b: 1, a: 1}
-    topRight: {r: 1, g: 1, b: 1, a: 1}
-    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
-    bottomRight: {r: 1, g: 1, b: 1, a: 1}
-  m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
-  m_tintAllSprites: 0
-  m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: -1183493901
-  m_overrideHtmlColors: 0
-  m_faceColor:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontSize: 16
-  m_fontSizeBase: 16
-  m_fontWeight: 400
-  m_enableAutoSizing: 1
-  m_fontSizeMin: 10
-  m_fontSizeMax: 16
-  m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
-  m_textAlignment: 65535
-  m_characterSpacing: 0
-  m_characterHorizontalScale: 1
-  m_wordSpacing: 0
-  m_lineSpacing: 0
-  m_lineSpacingMax: 0
-  m_paragraphSpacing: 0
-  m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
-  m_wordWrappingRatios: 0.4
-  m_overflowMode: 0
-  m_linkedTextComponent: {fileID: 0}
-  parentLinkedComponent: {fileID: 0}
-  m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
-  m_enableExtraPadding: 0
-  checkPaddingRequired: 0
-  m_isRichText: 1
-  m_EmojiFallbackSupport: 1
-  m_parseCtrlCharacters: 1
-  m_isOrthographic: 1
-  m_isCullingEnabled: 0
-  m_horizontalMapping: 0
-  m_verticalMapping: 0
-  m_uvLineOffset: 0
-  m_geometrySortingOrder: 0
-  m_IsTextObjectScaleStatic: 0
-  m_VertexBufferAutoSizeReduction: 0
-  m_useMaxVisibleDescender: 1
-  m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
-  m_isUsingLegacyAnimationComponent: 0
-  m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
-  m_baseMaterial: {fileID: 0}
-  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &1581245104143600854
 GameObject:
   m_ObjectHideFlags: 0
@@ -5348,10 +5219,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 1762658575640049456}
   labelText: {fileID: 1852458163920773606}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &1611492096124173852
 GameObject:
   m_ObjectHideFlags: 0
@@ -5509,10 +5376,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 3006166359456517936}
   labelText: {fileID: 5982245814958907222}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &1627864214060096118
 GameObject:
   m_ObjectHideFlags: 0
@@ -5806,10 +5669,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 8690039655911663359}
   labelText: {fileID: 7009820323865103046}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &1703199116002617574
 GameObject:
   m_ObjectHideFlags: 0
@@ -6829,154 +6688,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 2186752994143654245}
   labelText: {fileID: 4799027324743104323}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
---- !u!1 &1858262772172035524
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 6634749241411624921}
-  - component: {fileID: 774571515269770134}
-  - component: {fileID: 3635954499345469402}
-  - component: {fileID: 1447358768645362414}
-  - component: {fileID: 3262412153484899964}
-  m_Layer: 0
-  m_Name: CandidateSlot_2
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!224 &6634749241411624921
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1858262772172035524}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 4363124083177664071}
-  - {fileID: 1051468179386874632}
-  - {fileID: 2635950801025231652}
-  - {fileID: 1915263153035318581}
-  - {fileID: 522967615150095788}
-  m_Father: {fileID: 9205848135980885164}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &774571515269770134
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1858262772172035524}
-  m_CullTransparentMesh: 1
---- !u!114 &3635954499345469402
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1858262772172035524}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.15, g: 0.1, b: 0.12, a: 0.99}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 1480838002, guid: 6607580154879c94eb60426857989066, type: 3}
-  m_Type: 1
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!114 &1447358768645362414
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1858262772172035524}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
-  m_Navigation:
-    m_Mode: 3
-    m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
-  m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
-    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
-    m_ColorMultiplier: 1
-    m_FadeDuration: 0.1
-  m_SpriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_SelectedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
-  m_AnimationTriggers:
-    m_NormalTrigger: Normal
-    m_HighlightedTrigger: Highlighted
-    m_PressedTrigger: Pressed
-    m_SelectedTrigger: Selected
-    m_DisabledTrigger: Disabled
-  m_Interactable: 1
-  m_TargetGraphic: {fileID: 3635954499345469402}
-  m_OnClick:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!114 &3262412153484899964
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1858262772172035524}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3c7cf7c4c3f6bd54289f001041b41885, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
-  button: {fileID: 1447358768645362414}
-  labelText: {fileID: 3364405438250331148}
-  faceImage: {fileID: 4225105250987320402}
-  titleText: {fileID: 5218544139463671616}
-  abilityText: {fileID: 289278147371907486}
-  costText: {fileID: 2643947490771775650}
 --- !u!1 &1858651141149369369
 GameObject:
   m_ObjectHideFlags: 0
@@ -7134,10 +6845,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 6051082122140657567}
   labelText: {fileID: 5287351530956724195}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &1914854776569954361
 GameObject:
   m_ObjectHideFlags: 0
@@ -7432,10 +7139,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 5517535882675018277}
   labelText: {fileID: 201039408170512126}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &2293872969986566982
 GameObject:
   m_ObjectHideFlags: 0
@@ -8141,10 +7844,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 3568760943572259328}
   labelText: {fileID: 7370683205834522403}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &2485119449953808001
 GameObject:
   m_ObjectHideFlags: 0
@@ -8302,10 +8001,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 8578580331709996207}
   labelText: {fileID: 4362523522861462383}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &2491420336917674735
 GameObject:
   m_ObjectHideFlags: 0
@@ -8737,10 +8432,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 2093301811312341690}
   labelText: {fileID: 844487195659307670}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &2919274634744206188
 GameObject:
   m_ObjectHideFlags: 0
@@ -9101,10 +8792,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 8706360607710030852}
   labelText: {fileID: 4376014526482309004}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &2966586521210102892
 GameObject:
   m_ObjectHideFlags: 0
@@ -9536,10 +9223,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 5344131182782117580}
   labelText: {fileID: 7165115658242353440}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &3039329258302717977
 GameObject:
   m_ObjectHideFlags: 0
@@ -9814,81 +9497,6 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!1 &3114553276813548063
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4363124083177664071}
-  - component: {fileID: 4861305217888844229}
-  - component: {fileID: 4225105250987320402}
-  m_Layer: 0
-  m_Name: Face
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &4363124083177664071
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3114553276813548063}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6634749241411624921}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 18, y: 12}
-  m_SizeDelta: {x: 145, y: 290}
-  m_Pivot: {x: 0, y: 0.5}
---- !u!222 &4861305217888844229
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3114553276813548063}
-  m_CullTransparentMesh: 1
---- !u!114 &4225105250987320402
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3114553276813548063}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 0
-  m_PreserveAspect: 1
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &3169068309057514978
 GameObject:
   m_ObjectHideFlags: 0
@@ -10183,10 +9791,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 772929756147625861}
   labelText: {fileID: 2275582636724115291}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &3242859600440381320
 GameObject:
   m_ObjectHideFlags: 0
@@ -10759,10 +10363,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 4378626335057160062}
   labelText: {fileID: 5928092423565037050}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &3416440880599691381
 GameObject:
   m_ObjectHideFlags: 0
@@ -10920,10 +10520,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 1897938950725654576}
   labelText: {fileID: 1699230064345131662}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &3470212097590003348
 GameObject:
   m_ObjectHideFlags: 0
@@ -11081,10 +10677,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 9160439749668766800}
   labelText: {fileID: 204209626151281838}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &3497717545216666128
 GameObject:
   m_ObjectHideFlags: 0
@@ -11379,10 +10971,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 8428259335968790885}
   labelText: {fileID: 1225506558045752754}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &3621408816092444289
 GameObject:
   m_ObjectHideFlags: 0
@@ -11677,10 +11265,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 6000052055874025606}
   labelText: {fileID: 1102838447332104116}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &3699019524037891813
 GameObject:
   m_ObjectHideFlags: 0
@@ -11708,15 +11292,15 @@ RectTransform:
   m_GameObject: {fileID: 3699019524037891813}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4141726148753457728}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.0272, y: 0.0595}
-  m_AnchorMax: {x: 0.2011, y: 0.8214}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMax: {x: 0.0272, y: 0.0595}
+  m_AnchoredPosition: {x: 14, y: 271}
+  m_SizeDelta: {x: 126, y: 190}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &6639441321677380011
 CanvasRenderer:
@@ -11746,7 +11330,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 73d4ed70685d38e448dcdbf7ea443be3, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -12294,10 +11878,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 4352497984121355982}
   labelText: {fileID: 1736341170468789355}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &3842926010010991941
 GameObject:
   m_ObjectHideFlags: 0
@@ -12592,10 +12172,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 3024183788815339929}
   labelText: {fileID: 3686226451728031101}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &3867712721745877057
 GameObject:
   m_ObjectHideFlags: 0
@@ -13027,10 +12603,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 4345002787362656052}
   labelText: {fileID: 3227299107332865144}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &3971660331762609164
 GameObject:
   m_ObjectHideFlags: 0
@@ -13188,10 +12760,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 4503568252760660776}
   labelText: {fileID: 5522631559949792862}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &3972859830592247351
 GameObject:
   m_ObjectHideFlags: 0
@@ -13425,10 +12993,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 5006784042395014864}
   labelText: {fileID: 3809815640148132607}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &4114615899705818746
 GameObject:
   m_ObjectHideFlags: 0
@@ -13586,10 +13150,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 7111213221393508046}
   labelText: {fileID: 4349761871631032025}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &4157483936780015445
 GameObject:
   m_ObjectHideFlags: 0
@@ -13884,10 +13444,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 5254481953661675759}
   labelText: {fileID: 2379744631103904815}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &4229920789451990490
 GameObject:
   m_ObjectHideFlags: 0
@@ -14319,10 +13875,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 2502650112766995368}
   labelText: {fileID: 2421443999989615237}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &4304911772312679181
 GameObject:
   m_ObjectHideFlags: 0
@@ -14480,10 +14032,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 2688486104687044286}
   labelText: {fileID: 6384570962395078212}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &4305617080133940584
 GameObject:
   m_ObjectHideFlags: 0
@@ -14778,10 +14326,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 4322887146397335153}
   labelText: {fileID: 8661524238274701023}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &4310997014266312460
 GameObject:
   m_ObjectHideFlags: 0
@@ -15213,147 +14757,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 3934002613888285904}
   labelText: {fileID: 6268783676365491001}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
---- !u!1 &4396774020387443185
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 522967615150095788}
-  - component: {fileID: 7800850633956517810}
-  - component: {fileID: 3364405438250331148}
-  m_Layer: 0
-  m_Name: Label
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &522967615150095788
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4396774020387443185}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6634749241411624921}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 77, y: 37}
-  m_SizeDelta: {x: -190, y: 42}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &7800850633956517810
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4396774020387443185}
-  m_CullTransparentMesh: 1
---- !u!114 &3364405438250331148
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4396774020387443185}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_text: 
-  m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
-  m_sharedMaterial: {fileID: -5411658563534415177, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
-  m_fontSharedMaterials: []
-  m_fontMaterial: {fileID: 0}
-  m_fontMaterials: []
-  m_fontColor32:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
-  m_enableVertexGradient: 0
-  m_colorMode: 3
-  m_fontColorGradient:
-    topLeft: {r: 1, g: 1, b: 1, a: 1}
-    topRight: {r: 1, g: 1, b: 1, a: 1}
-    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
-    bottomRight: {r: 1, g: 1, b: 1, a: 1}
-  m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
-  m_tintAllSprites: 0
-  m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: -1183493901
-  m_overrideHtmlColors: 0
-  m_faceColor:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontSize: 17
-  m_fontSizeBase: 17
-  m_fontWeight: 400
-  m_enableAutoSizing: 1
-  m_fontSizeMin: 10
-  m_fontSizeMax: 17
-  m_fontStyle: 0
-  m_HorizontalAlignment: 2
-  m_VerticalAlignment: 512
-  m_textAlignment: 65535
-  m_characterSpacing: 0
-  m_characterHorizontalScale: 1
-  m_wordSpacing: 0
-  m_lineSpacing: 0
-  m_lineSpacingMax: 0
-  m_paragraphSpacing: 0
-  m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
-  m_wordWrappingRatios: 0.4
-  m_overflowMode: 0
-  m_linkedTextComponent: {fileID: 0}
-  parentLinkedComponent: {fileID: 0}
-  m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
-  m_enableExtraPadding: 0
-  checkPaddingRequired: 0
-  m_isRichText: 1
-  m_EmojiFallbackSupport: 1
-  m_parseCtrlCharacters: 1
-  m_isOrthographic: 1
-  m_isCullingEnabled: 0
-  m_horizontalMapping: 0
-  m_verticalMapping: 0
-  m_uvLineOffset: 0
-  m_geometrySortingOrder: 0
-  m_IsTextObjectScaleStatic: 0
-  m_VertexBufferAutoSizeReduction: 0
-  m_useMaxVisibleDescender: 1
-  m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
-  m_isUsingLegacyAnimationComponent: 0
-  m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
-  m_baseMaterial: {fileID: 0}
-  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &4568028954162354028
 GameObject:
   m_ObjectHideFlags: 0
@@ -15550,7 +14953,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 0.28, g: 0.12, b: 0.14, a: 1}
@@ -15580,7 +14983,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
   m_IgnoreLayout: 0
   m_MinWidth: -1
@@ -15600,7 +15003,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
   m_Navigation:
     m_Mode: 3
@@ -15644,14 +15047,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3c7cf7c4c3f6bd54289f001041b41885, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 6036152349743253013}
   labelText: {fileID: 3962229154990343377}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &4699008820223344651
 GameObject:
   m_ObjectHideFlags: 0
@@ -15717,7 +15116,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 
+  m_text:
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
   m_sharedMaterial: {fileID: -5411658563534415177, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
@@ -15854,7 +15253,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 
+  m_text:
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
   m_sharedMaterial: {fileID: -5411658563534415177, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
@@ -16494,10 +15893,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 2537858805527164770}
   labelText: {fileID: 8758898637613345300}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &4946662850698827385
 GameObject:
   m_ObjectHideFlags: 0
@@ -16655,10 +16050,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 5955076824276850388}
   labelText: {fileID: 2482458863640619}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &4952203838880147122
 GameObject:
   m_ObjectHideFlags: 0
@@ -16669,7 +16060,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9205848135980885164}
   m_Layer: 0
-  m_Name: CandidateRow
+  m_Name: DetailLayout
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -16688,7 +16079,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4141726148753457728}
-  - {fileID: 6634749241411624921}
   m_Father: {fileID: 866391821971718210}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.14, y: 0.18}
@@ -16853,10 +16243,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 3651234213503735146}
   labelText: {fileID: 618314930803988719}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &5004857446310110802
 GameObject:
   m_ObjectHideFlags: 0
@@ -16955,143 +16341,6 @@ MonoBehaviour:
   m_enableAutoSizing: 1
   m_fontSizeMin: 10
   m_fontSizeMax: 21
-  m_fontStyle: 0
-  m_HorizontalAlignment: 2
-  m_VerticalAlignment: 512
-  m_textAlignment: 65535
-  m_characterSpacing: 0
-  m_characterHorizontalScale: 1
-  m_wordSpacing: 0
-  m_lineSpacing: 0
-  m_lineSpacingMax: 0
-  m_paragraphSpacing: 0
-  m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
-  m_wordWrappingRatios: 0.4
-  m_overflowMode: 0
-  m_linkedTextComponent: {fileID: 0}
-  parentLinkedComponent: {fileID: 0}
-  m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
-  m_enableExtraPadding: 0
-  checkPaddingRequired: 0
-  m_isRichText: 1
-  m_EmojiFallbackSupport: 1
-  m_parseCtrlCharacters: 1
-  m_isOrthographic: 1
-  m_isCullingEnabled: 0
-  m_horizontalMapping: 0
-  m_verticalMapping: 0
-  m_uvLineOffset: 0
-  m_geometrySortingOrder: 0
-  m_IsTextObjectScaleStatic: 0
-  m_VertexBufferAutoSizeReduction: 0
-  m_useMaxVisibleDescender: 1
-  m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
-  m_isUsingLegacyAnimationComponent: 0
-  m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
-  m_baseMaterial: {fileID: 0}
-  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
---- !u!1 &5018967340806629660
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 764232563181032882}
-  - component: {fileID: 7224992147419371913}
-  - component: {fileID: 4713555920526502712}
-  m_Layer: 0
-  m_Name: Label
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &764232563181032882
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5018967340806629660}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4141726148753457728}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 77, y: 37}
-  m_SizeDelta: {x: -190, y: 42}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &7224992147419371913
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5018967340806629660}
-  m_CullTransparentMesh: 1
---- !u!114 &4713555920526502712
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5018967340806629660}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_text: 
-  m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
-  m_sharedMaterial: {fileID: -5411658563534415177, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
-  m_fontSharedMaterials: []
-  m_fontMaterial: {fileID: 0}
-  m_fontMaterials: []
-  m_fontColor32:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
-  m_enableVertexGradient: 0
-  m_colorMode: 3
-  m_fontColorGradient:
-    topLeft: {r: 1, g: 1, b: 1, a: 1}
-    topRight: {r: 1, g: 1, b: 1, a: 1}
-    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
-    bottomRight: {r: 1, g: 1, b: 1, a: 1}
-  m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
-  m_tintAllSprites: 0
-  m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: -1183493901
-  m_overrideHtmlColors: 0
-  m_faceColor:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontSize: 17
-  m_fontSizeBase: 17
-  m_fontWeight: 400
-  m_enableAutoSizing: 1
-  m_fontSizeMin: 10
-  m_fontSizeMax: 17
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -17429,10 +16678,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 8036815873849094526}
   labelText: {fileID: 3923439742361866829}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &5083165347561420413
 GameObject:
   m_ObjectHideFlags: 0
@@ -17867,10 +17112,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 2203756932788793394}
   labelText: {fileID: 3986851147369823095}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &5133922543306217124
 GameObject:
   m_ObjectHideFlags: 0
@@ -18028,10 +17269,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 8914113827354665219}
   labelText: {fileID: 1954376400118657540}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &5168284018816900118
 GameObject:
   m_ObjectHideFlags: 0
@@ -18189,10 +17426,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 6384542796234452740}
   labelText: {fileID: 7683573644311559796}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &5204189200723071119
 GameObject:
   m_ObjectHideFlags: 0
@@ -19035,10 +18268,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 7666661185113063083}
   labelText: {fileID: 6070327939342349704}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &5359881706557342937
 GameObject:
   m_ObjectHideFlags: 0
@@ -19196,10 +18425,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 4026942626117890280}
   labelText: {fileID: 620798336126088524}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &5384378450137829836
 GameObject:
   m_ObjectHideFlags: 0
@@ -19212,7 +18437,7 @@ GameObject:
   - component: {fileID: 6853088651413848143}
   - component: {fileID: 5201558181699129912}
   m_Layer: 0
-  m_Name: Ability
+  m_Name: txtAbility
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -19225,17 +18450,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5384378450137829836}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 4141726148753457728}
+  m_Father: {fileID: 8997503491307948048}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.2391, y: 0.4881}
-  m_AnchorMax: {x: 0.9728, y: 0.8929}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: -80, y: -60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6853088651413848143
 CanvasRenderer:
@@ -19708,10 +18933,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 8789419049095496248}
   labelText: {fileID: 8106020780940752441}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &5611887794493989749
 GameObject:
   m_ObjectHideFlags: 0
@@ -19869,10 +19090,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 2987325907505535714}
   labelText: {fileID: 4335716205169043731}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &5692821676543939437
 GameObject:
   m_ObjectHideFlags: 0
@@ -19885,7 +19102,7 @@ GameObject:
   - component: {fileID: 7847849674849210296}
   - component: {fileID: 655400367579217737}
   m_Layer: 0
-  m_Name: Title
+  m_Name: txtTitle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -19898,17 +19115,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5692821676543939437}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 4141726148753457728}
+  m_Father: {fileID: 1706584586118162510}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.0272, y: 0.8381}
-  m_AnchorMax: {x: 0.2228, y: 0.9524}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: -3.8}
+  m_SizeDelta: {x: -60, y: -50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7847849674849210296
 CanvasRenderer:
@@ -19938,7 +19155,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 
+  m_text: "\uC0AC\uD0C4 "
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
   m_sharedMaterial: {fileID: -5411658563534415177, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
@@ -19965,12 +19182,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 23
+  m_fontSize: 28
   m_fontSizeBase: 23
   m_fontWeight: 400
   m_enableAutoSizing: 1
   m_fontSizeMin: 20
-  m_fontSizeMax: 30
+  m_fontSizeMax: 28
   m_fontStyle: 1
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -20441,10 +19658,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 7603042739871825296}
   labelText: {fileID: 1033456923151632765}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &5911077044563512750
 GameObject:
   m_ObjectHideFlags: 0
@@ -21013,10 +20226,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 5354977347610386750}
   labelText: {fileID: 8582719445622700491}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &6056544866024358741
 GameObject:
   m_ObjectHideFlags: 0
@@ -21585,10 +20794,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 4506194895234493210}
   labelText: {fileID: 6272022617537669276}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &6117482159215853074
 GameObject:
   m_ObjectHideFlags: 0
@@ -22020,10 +21225,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 3361269703110120698}
   labelText: {fileID: 5769413307050243075}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &6299261882298778735
 GameObject:
   m_ObjectHideFlags: 0
@@ -22181,10 +21382,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 4390790369710297822}
   labelText: {fileID: 5528028038075585507}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &6332181987991964059
 GameObject:
   m_ObjectHideFlags: 0
@@ -22342,10 +21539,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 8084381413420626954}
   labelText: {fileID: 1674647662390028539}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &6358522834202890593
 GameObject:
   m_ObjectHideFlags: 0
@@ -22503,10 +21696,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 4597790192105171545}
   labelText: {fileID: 2720111839858387358}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &6367042837974420794
 GameObject:
   m_ObjectHideFlags: 0
@@ -22938,10 +22127,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 7081420701610732178}
   labelText: {fileID: 1949462485843953439}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &6631383682448066991
 GameObject:
   m_ObjectHideFlags: 0
@@ -23184,11 +22369,8 @@ MonoBehaviour:
   - {fileID: 1874280633208440296}
   - {fileID: 8783548676864722109}
   - {fileID: 7649015052920852353}
-  contractCandidatePanel: {fileID: 6641784563364183991}
-  contractCandidatePromptText: {fileID: 470298739575363537}
-  contractCandidateSlots:
-  - {fileID: 5374064524779994859}
-  - {fileID: 3262412153484899964}
+  contractDetailPanel: {fileID: 6641784563364183991}
+  contractDetailView: {fileID: 2937835813175515318}
   automaticCardResultPanel: {fileID: 7230282143691267097}
   automaticCardResultText: {fileID: 6772337253486883553}
   cardContentCatalog: {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a140001, type: 2}
@@ -23204,7 +22386,7 @@ GameObject:
   - component: {fileID: 3324161384416205406}
   - component: {fileID: 170784390187438310}
   m_Layer: 0
-  m_Name: ContractCandidatePanel
+  m_Name: ContractDetailPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -23222,7 +22404,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 112328081721863164}
   - {fileID: 9205848135980885164}
   m_Father: {fileID: 8808571148854300473}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -23639,10 +22820,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 3913109278325892907}
   labelText: {fileID: 7324598605325434183}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &6748909529508750481
 GameObject:
   m_ObjectHideFlags: 0
@@ -23800,10 +22977,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 5096585314715567012}
   labelText: {fileID: 3846402329584360275}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &6764031067734298552
 GameObject:
   m_ObjectHideFlags: 0
@@ -23961,10 +23134,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 3142469809690254611}
   labelText: {fileID: 5700650849302693086}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &6773879654309306418
 GameObject:
   m_ObjectHideFlags: 0
@@ -24122,147 +23291,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 637976883044191554}
   labelText: {fileID: 4417824415367147541}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
---- !u!1 &6815420264530963768
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 112328081721863164}
-  - component: {fileID: 7373382721692664155}
-  - component: {fileID: 470298739575363537}
-  m_Layer: 0
-  m_Name: Prompt
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &112328081721863164
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6815420264530963768}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 866391821971718210}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 1}
-  m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -86}
-  m_SizeDelta: {x: 860, y: 70}
-  m_Pivot: {x: 0.5, y: 1}
---- !u!222 &7373382721692664155
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6815420264530963768}
-  m_CullTransparentMesh: 1
---- !u!114 &470298739575363537
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6815420264530963768}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_text: 
-  m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
-  m_sharedMaterial: {fileID: -5411658563534415177, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
-  m_fontSharedMaterials: []
-  m_fontMaterial: {fileID: 0}
-  m_fontMaterials: []
-  m_fontColor32:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
-  m_enableVertexGradient: 0
-  m_colorMode: 3
-  m_fontColorGradient:
-    topLeft: {r: 1, g: 1, b: 1, a: 1}
-    topRight: {r: 1, g: 1, b: 1, a: 1}
-    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
-    bottomRight: {r: 1, g: 1, b: 1, a: 1}
-  m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
-  m_tintAllSprites: 0
-  m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: -1183493901
-  m_overrideHtmlColors: 0
-  m_faceColor:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontSize: 21
-  m_fontSizeBase: 21
-  m_fontWeight: 400
-  m_enableAutoSizing: 1
-  m_fontSizeMin: 10
-  m_fontSizeMax: 21
-  m_fontStyle: 0
-  m_HorizontalAlignment: 2
-  m_VerticalAlignment: 512
-  m_textAlignment: 65535
-  m_characterSpacing: 0
-  m_characterHorizontalScale: 1
-  m_wordSpacing: 0
-  m_lineSpacing: 0
-  m_lineSpacingMax: 0
-  m_paragraphSpacing: 0
-  m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
-  m_wordWrappingRatios: 0.4
-  m_overflowMode: 0
-  m_linkedTextComponent: {fileID: 0}
-  parentLinkedComponent: {fileID: 0}
-  m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
-  m_enableExtraPadding: 0
-  checkPaddingRequired: 0
-  m_isRichText: 1
-  m_EmojiFallbackSupport: 1
-  m_parseCtrlCharacters: 1
-  m_isOrthographic: 1
-  m_isCullingEnabled: 0
-  m_horizontalMapping: 0
-  m_verticalMapping: 0
-  m_uvLineOffset: 0
-  m_geometrySortingOrder: 0
-  m_IsTextObjectScaleStatic: 0
-  m_VertexBufferAutoSizeReduction: 0
-  m_useMaxVisibleDescender: 1
-  m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
-  m_isUsingLegacyAnimationComponent: 0
-  m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
-  m_baseMaterial: {fileID: 0}
-  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &6852914882504739467
 GameObject:
   m_ObjectHideFlags: 0
@@ -24685,10 +23713,9 @@ GameObject:
   - component: {fileID: 4141726148753457728}
   - component: {fileID: 5888999093926277069}
   - component: {fileID: 8064995888595629880}
-  - component: {fileID: 5797990567603022007}
-  - component: {fileID: 5374064524779994859}
+  - component: {fileID: 2937835813175515318}
   m_Layer: 0
-  m_Name: CandidateSlot_1
+  m_Name: ContractDetail
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -24707,10 +23734,9 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5035303179451625121}
-  - {fileID: 9123698194551167960}
-  - {fileID: 8246210531952482233}
-  - {fileID: 4420192667877531023}
-  - {fileID: 764232563181032882}
+  - {fileID: 1706584586118162510}
+  - {fileID: 8997503491307948048}
+  - {fileID: 8308365537585412824}
   m_Father: {fileID: 9205848135980885164}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -24738,8 +23764,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 0.15, g: 0.1, b: 0.12, a: 0.99}
+  m_Material: {fileID: 2100000, guid: 49bbcbb01c49733439dd632e2c31ecf8, type: 2}
+  m_Color: {r: 0.3018868, g: 0.12779959, b: 0.12388752, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -24756,7 +23782,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &5797990567603022007
+--- !u!114 &2937835813175515318
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -24765,196 +23791,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 7041297732267380261}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Script: {fileID: 11500000, guid: b7e6720d8b6a47f79a5c0f4db2d29e36, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
-  m_Navigation:
-    m_Mode: 3
-    m_WrapAround: 0
-    m_SelectOnUp: {fileID: 0}
-    m_SelectOnDown: {fileID: 0}
-    m_SelectOnLeft: {fileID: 0}
-    m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
-  m_Colors:
-    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
-    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
-    m_ColorMultiplier: 1
-    m_FadeDuration: 0.1
-  m_SpriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_SelectedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
-  m_AnimationTriggers:
-    m_NormalTrigger: Normal
-    m_HighlightedTrigger: Highlighted
-    m_PressedTrigger: Pressed
-    m_SelectedTrigger: Selected
-    m_DisabledTrigger: Disabled
-  m_Interactable: 1
-  m_TargetGraphic: {fileID: 8064995888595629880}
-  m_OnClick:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!114 &5374064524779994859
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7041297732267380261}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3c7cf7c4c3f6bd54289f001041b41885, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
-  button: {fileID: 5797990567603022007}
-  labelText: {fileID: 4713555920526502712}
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudContractDetailView
   faceImage: {fileID: 3454021163542194248}
   titleText: {fileID: 655400367579217737}
   abilityText: {fileID: 5201558181699129912}
   costText: {fileID: 3101361004050338733}
---- !u!1 &7072104490994613824
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1051468179386874632}
-  - component: {fileID: 4024499180067853227}
-  - component: {fileID: 5218544139463671616}
-  m_Layer: 0
-  m_Name: Title
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1051468179386874632
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7072104490994613824}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6634749241411624921}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 80, y: -38}
-  m_SizeDelta: {x: -196, y: -28}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &4024499180067853227
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7072104490994613824}
-  m_CullTransparentMesh: 1
---- !u!114 &5218544139463671616
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7072104490994613824}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_text: 
-  m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
-  m_sharedMaterial: {fileID: -5411658563534415177, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
-  m_fontSharedMaterials: []
-  m_fontMaterial: {fileID: 0}
-  m_fontMaterials: []
-  m_fontColor32:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
-  m_enableVertexGradient: 0
-  m_colorMode: 3
-  m_fontColorGradient:
-    topLeft: {r: 1, g: 1, b: 1, a: 1}
-    topRight: {r: 1, g: 1, b: 1, a: 1}
-    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
-    bottomRight: {r: 1, g: 1, b: 1, a: 1}
-  m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
-  m_tintAllSprites: 0
-  m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: -1183493901
-  m_overrideHtmlColors: 0
-  m_faceColor:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontSize: 23
-  m_fontSizeBase: 23
-  m_fontWeight: 400
-  m_enableAutoSizing: 1
-  m_fontSizeMin: 10
-  m_fontSizeMax: 23
-  m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 512
-  m_textAlignment: 65535
-  m_characterSpacing: 0
-  m_characterHorizontalScale: 1
-  m_wordSpacing: 0
-  m_lineSpacing: 0
-  m_lineSpacingMax: 0
-  m_paragraphSpacing: 0
-  m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
-  m_wordWrappingRatios: 0.4
-  m_overflowMode: 0
-  m_linkedTextComponent: {fileID: 0}
-  parentLinkedComponent: {fileID: 0}
-  m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
-  m_enableExtraPadding: 0
-  checkPaddingRequired: 0
-  m_isRichText: 1
-  m_EmojiFallbackSupport: 1
-  m_parseCtrlCharacters: 1
-  m_isOrthographic: 1
-  m_isCullingEnabled: 0
-  m_horizontalMapping: 0
-  m_verticalMapping: 0
-  m_uvLineOffset: 0
-  m_geometrySortingOrder: 0
-  m_IsTextObjectScaleStatic: 0
-  m_VertexBufferAutoSizeReduction: 0
-  m_useMaxVisibleDescender: 1
-  m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
-  m_isUsingLegacyAnimationComponent: 0
-  m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
-  m_baseMaterial: {fileID: 0}
-  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &7205608131352269383
 GameObject:
   m_ObjectHideFlags: 0
@@ -25599,10 +24442,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 9201933549451930152}
   labelText: {fileID: 1912539646364989904}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &7340239901918760390
 GameObject:
   m_ObjectHideFlags: 0
@@ -25760,10 +24599,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 1573781994223172575}
   labelText: {fileID: 9086374401660648745}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &7414875914847288874
 GameObject:
   m_ObjectHideFlags: 0
@@ -26332,10 +25167,158 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 952531430851611665}
   labelText: {fileID: 5608003096775569640}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
+--- !u!1 &7533212579980203607
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1706584586118162510}
+  - component: {fileID: 1172203382824429429}
+  - component: {fileID: 8254921608964219376}
+  m_Layer: 0
+  m_Name: Title
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1706584586118162510
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7533212579980203607}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 9123698194551167960}
+  m_Father: {fileID: 4141726148753457728}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -518.4, y: 215.27}
+  m_SizeDelta: {x: 256.4, y: 78.6489}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &1172203382824429429
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7533212579980203607}
+  m_CullTransparentMesh: 1
+--- !u!114 &8254921608964219376
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7533212579980203607}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 437358803, guid: 6607580154879c94eb60426857989066, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!1 &7546821387455564282
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8308365537585412824}
+  - component: {fileID: 7385394932009351011}
+  - component: {fileID: 3659133218057289788}
+  m_Layer: 0
+  m_Name: Cost
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &8308365537585412824
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7546821387455564282}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4420192667877531023}
+  m_Father: {fileID: 4141726148753457728}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 136, y: -108.80565}
+  m_SizeDelta: {x: 972.31, y: 180.9958}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &7385394932009351011
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7546821387455564282}
+  m_CullTransparentMesh: 1
+--- !u!114 &3659133218057289788
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7546821387455564282}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 2100000, guid: 49bbcbb01c49733439dd632e2c31ecf8, type: 2}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 1480838002, guid: 6607580154879c94eb60426857989066, type: 3}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &7584202867025582426
 GameObject:
   m_ObjectHideFlags: 0
@@ -26630,10 +25613,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 847088780569748025}
   labelText: {fileID: 4697362206912897284}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &7645565321104099629
 GameObject:
   m_ObjectHideFlags: 0
@@ -26928,10 +25907,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 4258141868499519318}
   labelText: {fileID: 2771307351874610670}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &7691365640993999004
 GameObject:
   m_ObjectHideFlags: 0
@@ -27126,10 +26101,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 3345086348408838743}
   labelText: {fileID: 7826710461837046686}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &7765317272746616383
 GameObject:
   m_ObjectHideFlags: 0
@@ -27287,10 +26258,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 5951745683539793363}
   labelText: {fileID: 8510720465285931832}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &7769028332601640436
 GameObject:
   m_ObjectHideFlags: 0
@@ -28406,10 +27373,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 1128311143898494381}
   labelText: {fileID: 3327211223805888136}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8074267607754651579
 GameObject:
   m_ObjectHideFlags: 0
@@ -28567,10 +27530,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 2476003142859353459}
   labelText: {fileID: 7482976837656845999}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8093818958489217492
 GameObject:
   m_ObjectHideFlags: 0
@@ -28728,10 +27687,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 2802078780644969299}
   labelText: {fileID: 4160177486325870469}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8096184369697000085
 GameObject:
   m_ObjectHideFlags: 0
@@ -28889,10 +27844,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 1517012762142874453}
   labelText: {fileID: 7309772452132612420}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8127574762966400374
 GameObject:
   m_ObjectHideFlags: 0
@@ -29050,10 +28001,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 1436015488617534503}
   labelText: {fileID: 8760082320378045691}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8196371764340716169
 GameObject:
   m_ObjectHideFlags: 0
@@ -29211,10 +28158,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 3017455902992986183}
   labelText: {fileID: 2192890498793035336}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8206141560232737786
 GameObject:
   m_ObjectHideFlags: 0
@@ -29646,10 +28589,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 5533692662119402413}
   labelText: {fileID: 6595735402821927940}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8357584292503625986
 GameObject:
   m_ObjectHideFlags: 0
@@ -29944,10 +28883,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 5125963132818443176}
   labelText: {fileID: 4827675515128748716}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8392988257174868220
 GameObject:
   m_ObjectHideFlags: 0
@@ -30379,10 +29314,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 4138774490563792092}
   labelText: {fileID: 8959815067504169898}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8455224867046937125
 GameObject:
   m_ObjectHideFlags: 0
@@ -30395,7 +29326,7 @@ GameObject:
   - component: {fileID: 3262252638874617354}
   - component: {fileID: 3101361004050338733}
   m_Layer: 0
-  m_Name: Cost
+  m_Name: txtCost
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -30408,17 +29339,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8455224867046937125}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 4141726148753457728}
+  m_Father: {fileID: 8308365537585412824}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.2391, y: 0.0714}
-  m_AnchorMax: {x: 0.9728, y: 0.4286}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: -80, y: -50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3262252638874617354
 CanvasRenderer:
@@ -30677,10 +29608,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 9071588566692376156}
   labelText: {fileID: 2531387614677608585}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8579341419715153675
 GameObject:
   m_ObjectHideFlags: 0
@@ -31112,10 +30039,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 3946676696811271497}
   labelText: {fileID: 5562048085689069933}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8618505629271024153
 GameObject:
   m_ObjectHideFlags: 0
@@ -31410,10 +30333,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 4731649322670056327}
   labelText: {fileID: 2989425722413551903}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8703771244660744904
 GameObject:
   m_ObjectHideFlags: 0
@@ -31571,10 +30490,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 302222352978046916}
   labelText: {fileID: 7012762234281267004}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8704275094407159650
 GameObject:
   m_ObjectHideFlags: 0
@@ -32006,147 +30921,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 2087095815016017430}
   labelText: {fileID: 1708492831631128710}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
---- !u!1 &8742458677564904712
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1915263153035318581}
-  - component: {fileID: 5926725380551560143}
-  - component: {fileID: 2643947490771775650}
-  m_Layer: 0
-  m_Name: Cost
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1915263153035318581
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8742458677564904712}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6634749241411624921}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 80, y: -233}
-  m_SizeDelta: {x: -196, y: -74}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!222 &5926725380551560143
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8742458677564904712}
-  m_CullTransparentMesh: 1
---- !u!114 &2643947490771775650
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8742458677564904712}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_text: 
-  m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
-  m_sharedMaterial: {fileID: -5411658563534415177, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
-  m_fontSharedMaterials: []
-  m_fontMaterial: {fileID: 0}
-  m_fontMaterials: []
-  m_fontColor32:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
-  m_enableVertexGradient: 0
-  m_colorMode: 3
-  m_fontColorGradient:
-    topLeft: {r: 1, g: 1, b: 1, a: 1}
-    topRight: {r: 1, g: 1, b: 1, a: 1}
-    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
-    bottomRight: {r: 1, g: 1, b: 1, a: 1}
-  m_fontColorGradientPreset: {fileID: 0}
-  m_spriteAsset: {fileID: 0}
-  m_tintAllSprites: 0
-  m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: -1183493901
-  m_overrideHtmlColors: 0
-  m_faceColor:
-    serializedVersion: 2
-    rgba: 4294967295
-  m_fontSize: 15
-  m_fontSizeBase: 15
-  m_fontWeight: 400
-  m_enableAutoSizing: 1
-  m_fontSizeMin: 10
-  m_fontSizeMax: 15
-  m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
-  m_textAlignment: 65535
-  m_characterSpacing: 0
-  m_characterHorizontalScale: 1
-  m_wordSpacing: 0
-  m_lineSpacing: 0
-  m_lineSpacingMax: 0
-  m_paragraphSpacing: 0
-  m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
-  m_wordWrappingRatios: 0.4
-  m_overflowMode: 0
-  m_linkedTextComponent: {fileID: 0}
-  parentLinkedComponent: {fileID: 0}
-  m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
-  m_enableExtraPadding: 0
-  checkPaddingRequired: 0
-  m_isRichText: 1
-  m_EmojiFallbackSupport: 1
-  m_parseCtrlCharacters: 1
-  m_isOrthographic: 1
-  m_isCullingEnabled: 0
-  m_horizontalMapping: 0
-  m_verticalMapping: 0
-  m_uvLineOffset: 0
-  m_geometrySortingOrder: 0
-  m_IsTextObjectScaleStatic: 0
-  m_VertexBufferAutoSizeReduction: 0
-  m_useMaxVisibleDescender: 1
-  m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
-  m_isUsingLegacyAnimationComponent: 0
-  m_isVolumetricText: 0
-  m_hasFontAssetChanged: 0
-  m_baseMaterial: {fileID: 0}
-  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &8753429852469117289
 GameObject:
   m_ObjectHideFlags: 0
@@ -32715,10 +31489,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 2564657177618048208}
   labelText: {fileID: 3413892241172597364}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8846920554240295490
 GameObject:
   m_ObjectHideFlags: 0
@@ -32876,10 +31646,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 7454680518441701938}
   labelText: {fileID: 1629812473479889390}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8852635315450230261
 GameObject:
   m_ObjectHideFlags: 0
@@ -33037,10 +31803,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 7543654225202329725}
   labelText: {fileID: 8906432040759210487}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8879972228365563191
 GameObject:
   m_ObjectHideFlags: 0
@@ -33198,10 +31960,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 3688410308275857634}
   labelText: {fileID: 2296479478990451338}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8890204111915563784
 GameObject:
   m_ObjectHideFlags: 0
@@ -33359,10 +32117,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 8363602369818186354}
   labelText: {fileID: 5794573599910640907}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &8954935332162024253
 GameObject:
   m_ObjectHideFlags: 0
@@ -33794,10 +32548,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 797166463077142134}
   labelText: {fileID: 1608142867852933794}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &9016322693984261640
 GameObject:
   m_ObjectHideFlags: 0
@@ -34229,10 +32979,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 2875471971716903852}
   labelText: {fileID: 5256012508706548780}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &9083118015124741743
 GameObject:
   m_ObjectHideFlags: 0
@@ -34390,10 +33136,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 2484732564707776177}
   labelText: {fileID: 8662436470335573194}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &9087819185148983293
 GameObject:
   m_ObjectHideFlags: 0
@@ -34865,10 +33607,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 7980044835190542378}
   labelText: {fileID: 5470410556186257933}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}
 --- !u!1 &9189944089235464698
 GameObject:
   m_ObjectHideFlags: 0
@@ -35026,7 +33764,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudChoiceButton
   button: {fileID: 3249067973659371475}
   labelText: {fileID: 4576589409795758697}
-  faceImage: {fileID: 0}
-  titleText: {fileID: 0}
-  abilityText: {fileID: 0}
-  costText: {fileID: 0}

@@ -80,8 +80,7 @@ namespace DiaBlackJack.GameScene
             string title,
             string ability,
             string cost,
-            bool isInteractable,
-            string buttonLabel)
+            bool isInteractable)
         {
             Command = command;
             DefinitionKey = definitionKey ?? string.Empty;
@@ -89,7 +88,6 @@ namespace DiaBlackJack.GameScene
             Ability = ability ?? string.Empty;
             Cost = cost ?? string.Empty;
             IsInteractable = isInteractable;
-            ButtonLabel = buttonLabel ?? string.Empty;
         }
 
         public GameSceneCombatHudCommand Command { get; }
@@ -103,8 +101,6 @@ namespace DiaBlackJack.GameScene
         public string Cost { get; }
 
         public bool IsInteractable { get; }
-
-        public string ButtonLabel { get; }
     }
 
     /// <summary>Pure projection of current battle input into scene HUD controls.</summary>
@@ -270,13 +266,12 @@ namespace DiaBlackJack.GameScene
                                 choice.Title,
                                 choice.Ability,
                                 choice.Cost,
-                                choice.CanSelect && !inputLocked,
-                                choice.ButtonLabel));
+                                choice.CanSelect && !inputLocked));
                     }
 
                     return new GameSceneCombatHudViewModel(
                         GameSceneCombatHudMode.ContractCandidates,
-                        BuildContractPrompt(contract),
+                        string.Empty,
                         Array.Empty<GameSceneCombatHudActionViewModel>(),
                         Array.Empty<GameSceneCombatHudActionViewModel>(),
                         candidates,

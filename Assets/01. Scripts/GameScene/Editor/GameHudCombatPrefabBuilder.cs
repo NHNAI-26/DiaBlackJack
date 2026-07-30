@@ -109,16 +109,11 @@ namespace DiaBlackJack.GameScene.Editor
                     panelBrush,
                     out GameHudChoiceButton[] optionSlots);
 
-                RectTransform candidatePanel = CreateOverlay("ContractCandidatePanel", controls);
-                TMP_Text candidatePrompt = CreateText(
-                    "Prompt", candidatePanel, font, 21f, TextAlignmentOptions.Center);
-                candidatePrompt.rectTransform.anchorMin = new Vector2(0.5f, 1f);
-                candidatePrompt.rectTransform.anchorMax = new Vector2(0.5f, 1f);
-                candidatePrompt.rectTransform.pivot = new Vector2(0.5f, 1f);
-                candidatePrompt.rectTransform.anchoredPosition = new Vector2(0f, -86f);
-                candidatePrompt.rectTransform.sizeDelta = new Vector2(860f, 70f);
-                GameHudChoiceButton[] candidateSlots = CreateContractCandidates(
-                    candidatePanel,
+                RectTransform contractDetailPanel = CreateOverlay(
+                    "ContractDetailPanel",
+                    controls);
+                GameHudContractDetailView contractDetail = CreateContractDetail(
+                    contractDetailPanel,
                     font,
                     panelBrush);
 
@@ -143,9 +138,8 @@ namespace DiaBlackJack.GameScene.Editor
                     optionPrompt,
                     optionScroll,
                     optionSlots,
-                    candidatePanel.gameObject,
-                    candidatePrompt,
-                    candidateSlots,
+                    contractDetailPanel.gameObject,
+                    contractDetail,
                     automaticResult.gameObject,
                     automaticResultText,
                     contentCatalog);
@@ -243,54 +237,29 @@ namespace DiaBlackJack.GameScene.Editor
             TMP_Text label = CreateText("Label", root, font, 21f, TextAlignmentOptions.Center);
             Stretch(label.rectTransform, 12f);
             GameHudChoiceButton choice = root.gameObject.AddComponent<GameHudChoiceButton>();
-            AssignChoiceButtonReferences(choice, button, label, null, null, null, null);
+            AssignChoiceButtonReferences(choice, button, label);
             return choice;
         }
 
-        private static GameHudChoiceButton[] CreateContractCandidates(
+        private static GameHudContractDetailView CreateContractDetail(
             RectTransform parent,
             TMP_FontAsset font,
             Sprite panelBrush)
         {
-            RectTransform row = CreateRect("CandidateRow", parent);
-            row.anchorMin = new Vector2(0.14f, 0.18f);
-            row.anchorMax = new Vector2(0.86f, 0.78f);
-            row.pivot = new Vector2(0.5f, 0.5f);
-            row.offsetMin = Vector2.zero;
-            row.offsetMax = Vector2.zero;
+            RectTransform layout = CreateRect("DetailLayout", parent);
+            layout.anchorMin = new Vector2(0.14f, 0.18f);
+            layout.anchorMax = new Vector2(0.86f, 0.78f);
+            layout.pivot = new Vector2(0.5f, 0.5f);
+            layout.offsetMin = Vector2.zero;
+            layout.offsetMax = Vector2.zero;
 
-            GameHudChoiceButton detailSlot = CreateContractCandidate(
-                "CandidateSlot_1",
-                row,
-                font,
-                panelBrush);
-            Stretch((RectTransform)detailSlot.transform);
-            GameHudChoiceButton unusedSlot = CreateContractCandidate(
-                "CandidateSlot_2",
-                row,
-                font,
-                panelBrush);
-            Stretch((RectTransform)unusedSlot.transform);
-            unusedSlot.gameObject.SetActive(false);
-
-            return new[]
-            {
-                detailSlot,
-                unusedSlot
-            };
-        }
-
-        private static GameHudChoiceButton CreateContractCandidate(
-            string name,
-            RectTransform parent,
-            TMP_FontAsset font,
-            Sprite panelBrush)
-        {
             RectTransform root = CreatePanel(
-                name, parent, panelBrush, new Color(0.15f, 0.1f, 0.12f, 0.99f));
+                "ContractDetail",
+                layout,
+                panelBrush,
+                new Color(0.15f, 0.1f, 0.12f, 0.99f));
             root.sizeDelta = new Vector2(440f, 390f);
-            Button button = root.gameObject.AddComponent<Button>();
-            button.targetGraphic = root.GetComponent<Image>();
+            Stretch(root);
 
             RectTransform face = CreateRect("Face", root);
             SetRect(
@@ -303,53 +272,62 @@ namespace DiaBlackJack.GameScene.Editor
             faceImage.preserveAspect = true;
             faceImage.raycastTarget = false;
 
+            RectTransform titlePanel = CreatePanel(
+                "Title", root, panelBrush, new Color(0.07f, 0.05f, 0.06f, 0.94f));
+            SetRect(
+                titlePanel,
+                new Vector2(0.0272f, 0.8381f),
+                new Vector2(0.2228f, 0.9524f),
+                Vector2.zero,
+                Vector2.zero);
             TMP_Text title = CreateText(
-                "Title",
-                root,
+                "txtTitle",
+                titlePanel,
                 font,
                 30f,
                 TextAlignmentOptions.Center);
             title.fontSizeMin = 20f;
             title.fontStyle = FontStyles.Bold;
+            Stretch(title.rectTransform, 8f);
+
+            RectTransform abilityPanel = CreatePanel(
+                "Ability", root, panelBrush, new Color(0.07f, 0.05f, 0.06f, 0.94f));
             SetRect(
-                title.rectTransform,
-                new Vector2(0.0272f, 0.8381f),
-                new Vector2(0.2228f, 0.9524f),
-                Vector2.zero,
-                Vector2.zero);
-            TMP_Text ability = CreateText(
-                "Ability",
-                root,
-                font,
-                24f,
-                TextAlignmentOptions.TopLeft);
-            ability.fontSizeMin = 20f;
-            SetRect(
-                ability.rectTransform,
+                abilityPanel,
                 new Vector2(0.2391f, 0.4881f),
                 new Vector2(0.9728f, 0.8929f),
                 Vector2.zero,
                 Vector2.zero);
-            TMP_Text cost = CreateText(
-                "Cost",
-                root,
+            TMP_Text ability = CreateText(
+                "txtAbility",
+                abilityPanel,
                 font,
                 24f,
                 TextAlignmentOptions.TopLeft);
-            cost.fontSizeMin = 20f;
+            ability.fontSizeMin = 20f;
+            Stretch(ability.rectTransform, 12f);
+
+            RectTransform costPanel = CreatePanel(
+                "Cost", root, panelBrush, new Color(0.07f, 0.05f, 0.06f, 0.94f));
             SetRect(
-                cost.rectTransform,
+                costPanel,
                 new Vector2(0.2391f, 0.0714f),
                 new Vector2(0.9728f, 0.4286f),
                 Vector2.zero,
                 Vector2.zero);
-            TMP_Text label = CreateText("Label", root, font, 17f, TextAlignmentOptions.Center);
-            SetRect(label.rectTransform, new Vector2(0f, 0f), new Vector2(1f, 0f),
-                new Vector2(172f, 16f), new Vector2(-18f, 58f));
+            TMP_Text cost = CreateText(
+                "txtCost",
+                costPanel,
+                font,
+                24f,
+                TextAlignmentOptions.TopLeft);
+            cost.fontSizeMin = 20f;
+            Stretch(cost.rectTransform, 12f);
 
-            GameHudChoiceButton choice = root.gameObject.AddComponent<GameHudChoiceButton>();
-            AssignChoiceButtonReferences(choice, button, label, faceImage, title, ability, cost);
-            return choice;
+            GameHudContractDetailView detail =
+                root.gameObject.AddComponent<GameHudContractDetailView>();
+            AssignContractDetailReferences(detail, faceImage, title, ability, cost);
+            return detail;
         }
 
         private static RectTransform CreateOverlay(string name, RectTransform parent)
@@ -431,9 +409,8 @@ namespace DiaBlackJack.GameScene.Editor
             TMP_Text optionPrompt,
             ScrollRect optionScroll,
             GameHudChoiceButton[] optionSlots,
-            GameObject candidatePanel,
-            TMP_Text candidatePrompt,
-            GameHudChoiceButton[] candidateSlots,
+            GameObject contractDetailPanel,
+            GameHudContractDetailView contractDetail,
             GameObject automaticResult,
             TMP_Text automaticResultText,
             CardContentCatalogSO cardContentCatalog)
@@ -451,9 +428,9 @@ namespace DiaBlackJack.GameScene.Editor
             serialized.FindProperty("combatPromptText").objectReferenceValue = optionPrompt;
             serialized.FindProperty("optionScrollRect").objectReferenceValue = optionScroll;
             AssignArray(serialized.FindProperty("optionSlots"), optionSlots);
-            serialized.FindProperty("contractCandidatePanel").objectReferenceValue = candidatePanel;
-            serialized.FindProperty("contractCandidatePromptText").objectReferenceValue = candidatePrompt;
-            AssignArray(serialized.FindProperty("contractCandidateSlots"), candidateSlots);
+            serialized.FindProperty("contractDetailPanel").objectReferenceValue =
+                contractDetailPanel;
+            serialized.FindProperty("contractDetailView").objectReferenceValue = contractDetail;
             serialized.FindProperty("automaticCardResultPanel").objectReferenceValue = automaticResult;
             serialized.FindProperty("automaticCardResultText").objectReferenceValue = automaticResultText;
             serialized.FindProperty("cardContentCatalog").objectReferenceValue = cardContentCatalog;
@@ -474,15 +451,22 @@ namespace DiaBlackJack.GameScene.Editor
         private static void AssignChoiceButtonReferences(
             GameHudChoiceButton choice,
             Button button,
-            TMP_Text label,
+            TMP_Text label)
+        {
+            SerializedObject serialized = new SerializedObject(choice);
+            serialized.FindProperty("button").objectReferenceValue = button;
+            serialized.FindProperty("labelText").objectReferenceValue = label;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void AssignContractDetailReferences(
+            GameHudContractDetailView detail,
             Image face,
             TMP_Text title,
             TMP_Text ability,
             TMP_Text cost)
         {
-            SerializedObject serialized = new SerializedObject(choice);
-            serialized.FindProperty("button").objectReferenceValue = button;
-            serialized.FindProperty("labelText").objectReferenceValue = label;
+            SerializedObject serialized = new SerializedObject(detail);
             serialized.FindProperty("faceImage").objectReferenceValue = face;
             serialized.FindProperty("titleText").objectReferenceValue = title;
             serialized.FindProperty("abilityText").objectReferenceValue = ability;
