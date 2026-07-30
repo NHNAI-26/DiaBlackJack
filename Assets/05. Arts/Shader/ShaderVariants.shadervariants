@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!200 &20000000
+ShaderVariantCollection:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ShaderVariants
+  m_Shaders:
+  - first: {fileID: 4800000, guid: 70016fb08aac4c0b96a824528187bc59, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP2
+        passType: 13
+      - keywords: FOG_EXP2 _ALPHATEST_ON _METALLICMAP _NORMALMAP _SMOOTHNESSMAP
+        passType: 13
+      - keywords: FOG_EXP2 _DISSOLVE_ON
+        passType: 13
+      - keywords: FOG_EXP2 _DISSOLVE_ON _METALLICMAP _NORMALMAP _SMOOTHNESSMAP
+        passType: 13
+      - keywords: FOG_EXP2 _DISSOLVE_ON _NORMALMAP _SMOOTHNESSMAP
+        passType: 13
+      - keywords: FOG_EXP2 _GLASS_GLOW_ON _SMOOTHNESSMAP
+        passType: 13
+      - keywords: FOG_EXP2 _HEIGHT_FADE_ON _METALLICMAP _NORMALMAP _SMOOTHNESSMAP
+        passType: 13
+      - keywords: FOG_EXP2 _HEIGHT_FADE_ON _SMOOTHNESSMAP
+        passType: 13
+      - keywords: FOG_EXP2 _METALLICMAP _SMOOTHNESSMAP
+        passType: 13
+      - keywords: FOG_EXP2 _NORMALMAP _SMOOTHNESSMAP
+        passType: 13
+      - keywords: FOG_EXP2 _SMOOTHNESSMAP
+        passType: 13
+  - first: {fileID: 4800000, guid: a41d39dce1704d7b814385168207f452, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: 1543c6b3b166a7e40870fb76fdb47b77, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP2 _ALPHATEST_ON _DISSOLVE_ON
+        passType: 13
+      - keywords: FOG_EXP2 _ALPHATEST_ON _PIXEL_OUTLINE_ON
+        passType: 13
+      - keywords: FOG_EXP2 _HEIGHT_FADE_ON _SURFACE_TYPE_TRANSPARENT
+        passType: 13
+  - first: {fileID: 4800000, guid: 00aff53038424977af3648db4bc34211, type: 3}
+    second:
+      variants:
+      - keywords: _COLOR_QUANTIZATION_ON _COLOR_SCREEN_BLEND_ON _ORDERED_DITHER_ON
+        passType: 0
+  - first: {fileID: 4800000, guid: a226acbd5f55fa043b8e9a5409783bb8, type: 3}
+    second:
+      variants:
+      - keywords: UNITY_UI_ALPHACLIP
+        passType: 0
+  - first: {fileID: 4800000, guid: 4c7801bf8d604856b445066abed3bfc3, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 13
+  - first: {fileID: 4800000, guid: 3e955dc6d92c48ebbc11d7cfa921eba6, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP2
+        passType: 13
