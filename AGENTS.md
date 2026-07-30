@@ -12,7 +12,18 @@ Documentation is written in Korean; **code, identifiers, and comments are Englis
 
 ## Commands
 
-Unity Editor lives at `C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Unity.exe`.
+Unity Editor and repository locations differ by developer. **Never hardcode one
+developer's absolute path as the only valid path.** Resolve the repository from
+the current checkout and select the first installed Unity executable from these
+known locations:
+
+- `C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Unity.exe`
+- `F:\Unity\Hub\Editor\6000.3.10f1\Editor\Unity.exe`
+
+Known repository examples are
+`C:\Users\이천서\Documents\GitHub\DiaBlackJack` and
+`F:\Unity Project\DiaBlackJack`, but commands must use the active checkout
+returned by `git rev-parse --show-toplevel`.
 
 ### Mandatory Unity MCP preflight
 
@@ -21,7 +32,8 @@ This is a **hard gate before every task in this repository**. Do not inspect imp
 1. Read the Unity MCP resources `mcpforunity://instances`, `mcpforunity://project/info`, and `mcpforunity://editor/state`.
 2. Continue only when all of the following are true:
    - exactly one intended instance is selected (if several exist, call `set_active_instance` with the exact `Name@hash`);
-   - its project root is `C:/Users/이천서/Documents/GitHub/DiaBlackJack`;
+   - after normalizing slash direction and case, its project root equals the
+     active checkout returned by `git rev-parse --show-toplevel`;
    - its Unity version is `6000.3.10f1`;
    - `data.advice.ready_for_tools` is `true`.
 3. If no DiaBlackJack instance is connected, repair the connection before doing any project work:
@@ -29,9 +41,19 @@ This is a **hard gate before every task in this repository**. Do not inspect imp
    - start this project in the Unity Editor if it is not already open:
 
      ```powershell
-     Start-Process `
-       -FilePath "C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Unity.exe" `
-       -ArgumentList @("-projectPath", '"C:\Users\이천서\Documents\GitHub\DiaBlackJack"')
+     $projectRoot = (git rev-parse --show-toplevel).Trim()
+     $unityCandidates = @(
+       "C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Unity.exe",
+       "F:\Unity\Hub\Editor\6000.3.10f1\Editor\Unity.exe"
+     )
+     $unityEditor = $unityCandidates |
+       Where-Object { Test-Path -LiteralPath $_ } |
+       Select-Object -First 1
+     if (-not $unityEditor) {
+       throw "Unity 6000.3.10f1 Editor was not found in a known location."
+     }
+     Start-Process -FilePath $unityEditor -WindowStyle Hidden `
+       -ArgumentList @("-projectPath", $projectRoot)
      ```
 
    - wait for package import and script compilation, then re-read `mcpforunity://instances` and `mcpforunity://editor/state`;
@@ -57,8 +79,19 @@ The MCP *client* is registered **per-developer, not in the repo** — there is d
 **2. Unity batch mode (exceptional fallback only — after the user explicitly approves bypassing the mandatory MCP gate).**
 
 ```powershell
-& "C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Unity.exe" -runTests -batchmode `
-  -projectPath "C:\Users\이천서\Documents\GitHub\DiaBlackJack" `
+$projectRoot = (git rev-parse --show-toplevel).Trim()
+$unityCandidates = @(
+  "C:\Program Files\Unity\Hub\Editor\6000.3.10f1\Editor\Unity.exe",
+  "F:\Unity\Hub\Editor\6000.3.10f1\Editor\Unity.exe"
+)
+$unityEditor = $unityCandidates |
+  Where-Object { Test-Path -LiteralPath $_ } |
+  Select-Object -First 1
+if (-not $unityEditor) {
+  throw "Unity 6000.3.10f1 Editor was not found in a known location."
+}
+& $unityEditor -runTests -batchmode `
+  -projectPath $projectRoot `
   -testPlatform EditMode `
   -testResults "$env:TEMP\dbj-results.xml" `
   -logFile "$env:TEMP\dbj-unity.log"
