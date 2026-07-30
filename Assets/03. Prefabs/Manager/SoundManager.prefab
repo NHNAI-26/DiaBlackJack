@@ -156,6 +156,11 @@ MonoBehaviour:
     volume: 1
     pitch: 1
     loop: 0
+  - id: cardDraw
+    clip: {fileID: 8300000, guid: c42ced142b7572540895e032be1feafb, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1
