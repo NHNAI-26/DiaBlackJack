@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Border.Audio;
 using UnityEngine;
 
 namespace DiaBlackJack.GameScene
@@ -17,6 +18,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float cardAnimationSeconds = 0.55f;
         [SerializeField] private string drawTrigger = "Draw";
         [SerializeField] private string insertTrigger = "Insert";
+        [SerializeField] private string drawSfxId = "cardDraw";
 
         private Vector3 _baseLocalScale;
         private Vector3 _baseLocalPosition;
@@ -128,6 +130,7 @@ namespace DiaBlackJack.GameScene
                 {
                     _displayedCardCount = Mathf.Max(0, _displayedCardCount - 1);
                     ApplyStackCount(_displayedCardCount);
+                    PlayDrawSfx();
                     PlayCardAnimation(drawTrigger, null);
                 }
                 else
@@ -152,6 +155,16 @@ namespace DiaBlackJack.GameScene
         {
             _displayedCardCount = Mathf.Min(_targetCardCount, _displayedCardCount + 1);
             ApplyStackCount(_displayedCardCount);
+        }
+
+        private void PlayDrawSfx()
+        {
+            if (string.IsNullOrWhiteSpace(drawSfxId))
+            {
+                return;
+            }
+
+            SoundManager.Current?.PlaySfx(drawSfxId);
         }
 
         private void PlayCardAnimation(string triggerName, System.Action onCompleted)

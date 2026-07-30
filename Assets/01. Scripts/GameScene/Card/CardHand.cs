@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 namespace DiaBlackJack.GameScene
@@ -15,12 +16,40 @@ namespace DiaBlackJack.GameScene
     {
         [SerializeField] private CardView cardPrefab;
         [SerializeField] private float spacing = 1.1f;
-        [SerializeField] private float surfaceLift = 0.06f;
         [SerializeField] private float depthStagger = 0.01f;
+        [SerializeField] private int sortingOrderBase;
+        [SerializeField] private int sortingOrderStep = 1;
+        [SerializeField] private float moveDuration = 0.16f;
+        [SerializeField] private AnimationCurve moveCurve =
+            AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+        [SerializeField] private float enterDuration = 0.22f;
+        [SerializeField] private AnimationCurve enterCurve =
+            AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+        [SerializeField] private float bodyEntryDistance = 1.2f;
+        [SerializeField] private bool invertBodyEntryDirection;
 
         private readonly List<CardView> _spawned = new List<CardView>();
+        private readonly List<Tween> _moveTweens = new List<Tween>();
+        private bool _hasRenderedLayout;
 
         internal CardView CardPrefab => cardPrefab;
+
+        private void OnValidate()
+        {
+            spacing = Mathf.Max(0f, spacing);
+            depthStagger = Mathf.Max(0f, depthStagger);
+            sortingOrderStep = Mathf.Max(1, sortingOrderStep);
+            moveDuration = Mathf.Max(0f, moveDuration);
+            enterDuration = Mathf.Max(0f, enterDuration);
+            bodyEntryDistance = Mathf.Max(0f, bodyEntryDistance);
+            moveCurve ??= AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+            enterCurve ??= AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+        }
+
+        private void OnDisable()
+        {
+            KillAllMoveTweens();
+        }
 
         public void Render(IReadOnlyList<GameSceneCardViewModel> cards)
         {
@@ -30,33 +59,45 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            int previousCount = _spawned.Count;
+            bool animateIncrease = Application.isPlaying &&
+                _hasRenderedLayout &&
+                cards.Count > previousCount;
+
             while (_spawned.Count < cards.Count)
             {
                 _spawned.Add(Instantiate(cardPrefab, transform));
+                _moveTweens.Add(null);
             }
 
             while (_spawned.Count > cards.Count)
             {
                 int last = _spawned.Count - 1;
+                KillMoveTween(last);
                 if (_spawned[last] != null)
                 {
                     Destroy(_spawned[last].gameObject);
                 }
 
                 _spawned.RemoveAt(last);
+                _moveTweens.RemoveAt(last);
             }
 
             float offset = -(cards.Count - 1) * 0.5f * spacing;
             for (int i = 0; i < cards.Count; i++)
             {
                 CardView card = _spawned[i];
-                card.transform.localPosition = new Vector3(
+                Vector3 targetPosition = new Vector3(
                     offset + i * spacing,
                     0f,
-                    surfaceLift + i * depthStagger);
+                    i * depthStagger);
                 card.transform.localRotation = Quaternion.identity;
+                card.SetSortingOrder(sortingOrderBase + i * sortingOrderStep);
                 card.Bind(cards[i]);
+                MoveCardToLayoutPosition(card, i, targetPosition, animateIncrease, i >= previousCount);
             }
+
+            _hasRenderedLayout = true;
         }
 
         public bool TryGetCardWorldPosition(int cardId, out Vector3 position)
@@ -116,6 +157,8 @@ namespace DiaBlackJack.GameScene
 
         private void ClearAll()
         {
+            KillAllMoveTweens();
+
             foreach (CardView card in _spawned)
             {
                 if (card != null)
@@ -125,6 +168,87 @@ namespace DiaBlackJack.GameScene
             }
 
             _spawned.Clear();
+            _moveTweens.Clear();
+            _hasRenderedLayout = false;
+        }
+
+        private void MoveCardToLayoutPosition(
+            CardView card,
+            int index,
+            Vector3 targetPosition,
+            bool animate,
+            bool isNewCard)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            KillMoveTween(index);
+
+            if (!animate)
+            {
+                card.transform.localPosition = targetPosition;
+                return;
+            }
+
+            if (isNewCard)
+            {
+                card.transform.localPosition = GetBodyEntryPosition(targetPosition);
+            }
+
+            _moveTweens[index] = card.transform
+                .DOLocalMove(targetPosition, isNewCard ? enterDuration : moveDuration)
+                .SetEase(isNewCard ? enterCurve : moveCurve)
+                .SetTarget(card);
+        }
+
+        private Vector3 GetBodyEntryPosition(Vector3 targetPosition)
+        {
+            float direction = ResolveBodyEntryDirection();
+            targetPosition.y += bodyEntryDistance * direction;
+            return targetPosition;
+        }
+
+        private float ResolveBodyEntryDirection()
+        {
+            float direction;
+            if (name.Contains("Enemy"))
+            {
+                direction = 1f;
+            }
+            else if (name.Contains("Player"))
+            {
+                direction = -1f;
+            }
+            else
+            {
+                direction = transform.position.z < 16f ? 1f : -1f;
+            }
+
+            return invertBodyEntryDirection ? -direction : direction;
+        }
+
+        private void KillMoveTween(int index)
+        {
+            if (index < 0 || index >= _moveTweens.Count)
+            {
+                return;
+            }
+
+            if (_moveTweens[index] != null)
+            {
+                _moveTweens[index].Kill();
+                _moveTweens[index] = null;
+            }
+        }
+
+        private void KillAllMoveTweens()
+        {
+            for (int i = 0; i < _moveTweens.Count; i++)
+            {
+                KillMoveTween(i);
+            }
         }
     }
 }

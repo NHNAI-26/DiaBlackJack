@@ -59,7 +59,8 @@ namespace DiaBlackJack.GameScene
         private static readonly int PixelOutlineVisibilityId = Shader.PropertyToID("_PixelOutlineVisibility");
         private const string PixelOutlineKeyword = "_PIXEL_OUTLINE_ON";
 
-        private MaterialPropertyBlock _propertyBlock;
+        private MaterialPropertyBlock _frontPropertyBlock;
+        private MaterialPropertyBlock _backPropertyBlock;
         private SpriteRenderer _frontSpriteRenderer;
         private SpriteRenderer _backSpriteRenderer;
         private Renderer _backRenderer;
@@ -136,6 +137,8 @@ namespace DiaBlackJack.GameScene
                 faceSprite = ApplyFaceSprite(card.DefinitionKey, card.Rank, card.Suit);
             }
 
+            ResetCardBlend(FrontSpriteRenderer());
+
             if (front != null)
             {
                 front.SetActive(_showingFrontFace);
@@ -189,6 +192,21 @@ namespace DiaBlackJack.GameScene
             _baseScale = baseScale;
             StopScaleTween();
             transform.localScale = _baseScale;
+        }
+
+        internal void SetSortingOrder(int sortingOrder)
+        {
+            SpriteRenderer frontRenderer = FrontSpriteRenderer();
+            if (frontRenderer != null)
+            {
+                frontRenderer.sortingOrder = sortingOrder;
+            }
+
+            SpriteRenderer backRenderer = BackSpriteRenderer();
+            if (backRenderer != null)
+            {
+                backRenderer.sortingOrder = sortingOrder;
+            }
         }
 
         /// <summary>
@@ -264,15 +282,15 @@ namespace DiaBlackJack.GameScene
                 outlineColor.a = 1f;
             }
 
-            _propertyBlock ??= new MaterialPropertyBlock();
-            renderer.GetPropertyBlock(_propertyBlock);
-            _propertyBlock.SetColor(PixelOutlineColorId, outlineColor);
-            _propertyBlock.SetFloat(PixelOutlineWidthId, ResolveOutlineWidth(renderer));
-            _propertyBlock.SetFloat(
+            MaterialPropertyBlock propertyBlock = PropertyBlockFor(renderer);
+            renderer.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetColor(PixelOutlineColorId, outlineColor);
+            propertyBlock.SetFloat(PixelOutlineWidthId, ResolveOutlineWidth(renderer));
+            propertyBlock.SetFloat(
                 PixelOutlineAlphaThresholdId,
                 ResolveOutlineAlphaThreshold(renderer));
-            _propertyBlock.SetFloat(PixelOutlineVisibilityId, visible ? 1f : 0f);
-            renderer.SetPropertyBlock(_propertyBlock);
+            propertyBlock.SetFloat(PixelOutlineVisibilityId, visible ? 1f : 0f);
+            renderer.SetPropertyBlock(propertyBlock);
         }
 
         private Color ResolveOutlineColor(Renderer renderer)
@@ -354,16 +372,30 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            _propertyBlock ??= new MaterialPropertyBlock();
-            renderer.GetPropertyBlock(_propertyBlock);
+            MaterialPropertyBlock propertyBlock = PropertyBlockFor(renderer);
+            renderer.GetPropertyBlock(propertyBlock);
             if (sprite != null)
             {
-                _propertyBlock.SetTexture(CardBlendTextureId, sprite.texture);
+                propertyBlock.SetTexture(CardBlendTextureId, sprite.texture);
             }
 
-            _propertyBlock.SetVector(CardBlendUvRectId, GetSpriteUvRect(sprite));
-            _propertyBlock.SetFloat(CardBlendAmountId, Mathf.Clamp01(amount));
-            renderer.SetPropertyBlock(_propertyBlock);
+            propertyBlock.SetVector(CardBlendUvRectId, GetSpriteUvRect(sprite));
+            propertyBlock.SetFloat(CardBlendAmountId, Mathf.Clamp01(amount));
+            renderer.SetPropertyBlock(propertyBlock);
+        }
+
+        private void ResetCardBlend(Renderer renderer)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            MaterialPropertyBlock propertyBlock = PropertyBlockFor(renderer);
+            renderer.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetVector(CardBlendUvRectId, GetSpriteUvRect(null));
+            propertyBlock.SetFloat(CardBlendAmountId, 0f);
+            renderer.SetPropertyBlock(propertyBlock);
         }
 
         private void SetCardBlendAmount(float amount)
@@ -374,10 +406,10 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            _propertyBlock ??= new MaterialPropertyBlock();
-            renderer.GetPropertyBlock(_propertyBlock);
-            _propertyBlock.SetFloat(CardBlendAmountId, Mathf.Clamp01(amount));
-            renderer.SetPropertyBlock(_propertyBlock);
+            MaterialPropertyBlock propertyBlock = PropertyBlockFor(renderer);
+            renderer.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetFloat(CardBlendAmountId, Mathf.Clamp01(amount));
+            renderer.SetPropertyBlock(propertyBlock);
         }
 
         private Sprite SpriteForCard(string definitionKey, int rank, CardSuit suit)
@@ -403,10 +435,22 @@ namespace DiaBlackJack.GameScene
             trackedSprite = renderer.sprite;
             Vector4 uvRect = GetSpriteUvRect(trackedSprite);
 
-            _propertyBlock ??= new MaterialPropertyBlock();
-            renderer.GetPropertyBlock(_propertyBlock);
-            _propertyBlock.SetVector(BaseSpriteUvRectId, uvRect);
-            renderer.SetPropertyBlock(_propertyBlock);
+            MaterialPropertyBlock propertyBlock = PropertyBlockFor(renderer);
+            renderer.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetVector(BaseSpriteUvRectId, uvRect);
+            renderer.SetPropertyBlock(propertyBlock);
+        }
+
+        private MaterialPropertyBlock PropertyBlockFor(Renderer renderer)
+        {
+            if (renderer == _frontSpriteRenderer)
+            {
+                _frontPropertyBlock ??= new MaterialPropertyBlock();
+                return _frontPropertyBlock;
+            }
+
+            _backPropertyBlock ??= new MaterialPropertyBlock();
+            return _backPropertyBlock;
         }
 
         private static Vector4 GetSpriteUvRect(Sprite sprite)
