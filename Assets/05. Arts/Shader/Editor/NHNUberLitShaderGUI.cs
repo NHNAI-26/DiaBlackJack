@@ -10,6 +10,7 @@ public class NHNUberLitShaderGUI : LWGUI.LWGUI
         SeedKeyword(properties, "_EmissionEnabled", "_EMISSION");
         SeedKeyword(properties, "_RimEnabled", "_RIM_ON");
         SeedKeyword(properties, "_PixelOutlineEnabled", "_PIXEL_OUTLINE_ON");
+        SeedEnumKeyword(properties, "_UVAlphaFadeAxis", "_UV_ALPHA_FADE_U", "_UV_ALPHA_FADE_V");
         SeedKeyword(properties, "_HeightFadeEnabled", "_HEIGHT_FADE_ON");
         SeedKeyword(properties, "_GlassGlowEnabled", "_GLASS_GLOW_ON");
         SeedKeyword(properties, "_DissolveEnabled", "_DISSOLVE_ON");
@@ -23,6 +24,7 @@ public class NHNUberLitShaderGUI : LWGUI.LWGUI
 
             bool usesDirectRenderQueue = material.HasProperty("_BaseSpriteUVRect");
             int renderQueue = material.rawRenderQueue;
+            bool preserveExplicitRenderQueue = usesDirectRenderQueue && renderQueue >= 0;
 
             // Sprite/UI transparency must fade the complete source color. URP's preserve-specular
             // mode switches Alpha blending to Src=One and relies on the lit BRDF to premultiply only
@@ -32,13 +34,14 @@ public class NHNUberLitShaderGUI : LWGUI.LWGUI
 
             UnityEditor.BaseShaderGUI.SetMaterialKeywords(material);
 
-            if (usesDirectRenderQueue)
+            if (preserveExplicitRenderQueue)
                 material.renderQueue = renderQueue;
 
             RestoreKeyword(material, "_LightingMode", "_UNLIT_ON");
             RestoreKeyword(material, "_NormalMapEnabled", "_NORMALMAP");
             RestoreKeyword(material, "_EmissionEnabled", "_EMISSION");
             RestoreKeyword(material, "_PixelOutlineEnabled", "_PIXEL_OUTLINE_ON");
+            RestoreEnumKeyword(material, "_UVAlphaFadeAxis", "_UV_ALPHA_FADE_U", "_UV_ALPHA_FADE_V");
         }
     }
 
@@ -61,5 +64,38 @@ public class NHNUberLitShaderGUI : LWGUI.LWGUI
             material.EnableKeyword(keyword);
         else
             material.DisableKeyword(keyword);
+    }
+
+    private static void SeedEnumKeyword(MaterialProperty[] properties, string propertyName,
+        string firstKeyword, string secondKeyword)
+    {
+        foreach (MaterialProperty property in properties)
+        {
+            if (property.name != propertyName)
+                continue;
+
+            int selected = Mathf.RoundToInt(property.floatValue);
+            LWGUI.GUIData.keyWord[firstKeyword] = selected == 1;
+            LWGUI.GUIData.keyWord[secondKeyword] = selected == 2;
+            return;
+        }
+    }
+
+    private static void RestoreEnumKeyword(Material material, string propertyName,
+        string firstKeyword, string secondKeyword)
+    {
+        int selected = material.HasProperty(propertyName)
+            ? Mathf.RoundToInt(material.GetFloat(propertyName))
+            : 0;
+
+        if (selected == 1)
+            material.EnableKeyword(firstKeyword);
+        else
+            material.DisableKeyword(firstKeyword);
+
+        if (selected == 2)
+            material.EnableKeyword(secondKeyword);
+        else
+            material.DisableKeyword(secondKeyword);
     }
 }

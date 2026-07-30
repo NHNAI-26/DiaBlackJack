@@ -15,6 +15,7 @@ namespace DiaBlackJack.GameScene
     {
         [SerializeField] private CardView cardPrefab;
         [SerializeField] private float spacing = 1.1f;
+        [SerializeField] private float surfaceLift = 0.06f;
         [SerializeField] private float depthStagger = 0.01f;
 
         private readonly List<CardView> _spawned = new List<CardView>();
@@ -49,7 +50,10 @@ namespace DiaBlackJack.GameScene
             for (int i = 0; i < cards.Count; i++)
             {
                 CardView card = _spawned[i];
-                card.transform.localPosition = new Vector3(offset + i * spacing, 0f, i * depthStagger);
+                card.transform.localPosition = new Vector3(
+                    offset + i * spacing,
+                    0f,
+                    surfaceLift + i * depthStagger);
                 card.transform.localRotation = Quaternion.identity;
                 card.Bind(cards[i]);
             }

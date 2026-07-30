@@ -48,6 +48,11 @@ Shader "Shader/Sprite Uber Lit"
         [Sub(PixelOutline)] _PixelOutlineAlphaThreshold("Outline Alpha Threshold", Range(0,1)) = 0.5
         [HideInInspector] _PixelOutlineVisibility("Outline Visibility", Range(0,1)) = 0
 
+        [Main(UVAlphaFade, _, on, off)] _UVAlphaFadeControls("UV Alpha Fade", Float) = 0
+        [KWEnum(UVAlphaFade, Off, _, U, _UV_ALPHA_FADE_U, V, _UV_ALPHA_FADE_V)] _UVAlphaFadeAxis("Axis", Float) = 0
+        [Sub(UVAlphaFade)] _UVAlphaFadeOpaque("Opaque UV", Range(0,1)) = 0
+        [Sub(UVAlphaFade)] _UVAlphaFadeTransparent("Transparent UV", Range(0,1)) = 1
+
         [Main(Emission, _EMISSION, on)] _EmissionEnabled("Emission", Float) = 0
         [Tex(Emission_EMISSION, _EmissionColor)] [NoScaleOffset] _EmissionMap("Emission Map", 2D) = "white" {}
         [HideInInspector] [HDR] _EmissionColor("Emission Color", Color) = (0,0,0,1)
@@ -61,6 +66,7 @@ Shader "Shader/Sprite Uber Lit"
         [Main(HeightFade, _HEIGHT_FADE_ON, on)] _HeightFadeEnabled("UV Height Fade", Float) = 0
         [Sub(HeightFade_HEIGHT_FADE_ON)] _HeightFadeLower("Lower UV", Range(0,1)) = 0
         [Sub(HeightFade_HEIGHT_FADE_ON)] _HeightFadeUpper("Upper UV", Range(0,1)) = 1
+        [Sub(HeightFade_HEIGHT_FADE_ON)] _HeightFadeOffset("Offset", Range(-1,1)) = 0
         [Sub(HeightFade_HEIGHT_FADE_ON)] _HeightFadeTint("Lower Tint", Color) = (0.25,0.25,0.25,1)
 
         [Main(Dissolve, _DISSOLVE_ON, on)] _DissolveEnabled("Dissolve", Float) = 0
@@ -111,6 +117,7 @@ Shader "Shader/Sprite Uber Lit"
             #pragma shader_feature_local_fragment _HEIGHT_FADE_ON
             #pragma shader_feature_local_fragment _DISSOLVE_ON
             #pragma shader_feature_local _PIXEL_OUTLINE_ON
+            #pragma shader_feature_local_fragment _ _UV_ALPHA_FADE_U _UV_ALPHA_FADE_V
             #pragma shader_feature_local_fragment _ALPHATEST_ON
             #pragma shader_feature_local_fragment _SURFACE_TYPE_TRANSPARENT
             #pragma shader_feature_local_fragment _ _ALPHAPREMULTIPLY_ON _ALPHAMODULATE_ON
@@ -152,6 +159,7 @@ Shader "Shader/Sprite Uber Lit"
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma shader_feature_local _DISSOLVE_ON
             #pragma shader_feature_local _PIXEL_OUTLINE_ON
+            #pragma shader_feature_local_fragment _ _UV_ALPHA_FADE_U _UV_ALPHA_FADE_V
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
@@ -174,6 +182,7 @@ Shader "Shader/Sprite Uber Lit"
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma shader_feature_local _DISSOLVE_ON
             #pragma shader_feature_local _PIXEL_OUTLINE_ON
+            #pragma shader_feature_local_fragment _ _UV_ALPHA_FADE_U _UV_ALPHA_FADE_V
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
             #include "NHNUberLitDepthPasses.hlsl"
@@ -195,6 +204,7 @@ Shader "Shader/Sprite Uber Lit"
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma shader_feature_local _DISSOLVE_ON
             #pragma shader_feature_local _PIXEL_OUTLINE_ON
+            #pragma shader_feature_local_fragment _ _UV_ALPHA_FADE_U _UV_ALPHA_FADE_V
             #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"

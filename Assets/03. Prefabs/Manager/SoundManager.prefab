@@ -128,7 +128,7 @@ MonoBehaviour:
     loop: 0
   - id: cardHover
     clip: {fileID: 8300000, guid: a0f677470ba5feb4aa67718d7e3d9189, type: 3}
-    volume: 0.2
+    volume: 0.1
     pitch: 1
     loop: 0
   - id: lighterOpen

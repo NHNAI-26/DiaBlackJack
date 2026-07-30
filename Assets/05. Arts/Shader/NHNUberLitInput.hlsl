@@ -32,6 +32,8 @@ CBUFFER_START(UnityPerMaterial)
     half _PixelOutlineWidth;
     half _PixelOutlineAlphaThreshold;
     half _PixelOutlineVisibility;
+    half _UVAlphaFadeOpaque;
+    half _UVAlphaFadeTransparent;
 #endif
     half _Cutoff;
     half _Metallic;
@@ -43,6 +45,7 @@ CBUFFER_START(UnityPerMaterial)
     half _RimIntensity;
     float _HeightFadeLower;
     float _HeightFadeUpper;
+    float _HeightFadeOffset;
     half _GlassGlowOffset;
     half _DissolveAmount;
     half _DissolveMinOffset;
@@ -188,6 +191,25 @@ inline half NHNGetPixelOutlineAlpha(float2 rawUV, half baseAlpha)
 {
     return NHNGetPixelOutlineMask(rawUV, baseAlpha) * _PixelOutlineColor.a;
 }
+
+inline half NHNEvaluateUVAlphaFade(float2 rawUV)
+{
+#if defined(_UV_ALPHA_FADE_U) || defined(_UV_ALPHA_FADE_V)
+    float2 baseSpriteUV = NHNGetBaseSpriteUV(rawUV);
+#if defined(_UV_ALPHA_FADE_U)
+    float coordinate = baseSpriteUV.x;
+#else
+    float coordinate = baseSpriteUV.y;
+#endif
+    float range = _UVAlphaFadeOpaque - _UVAlphaFadeTransparent;
+    float safeRange = abs(range) < 0.0001
+        ? (range < 0.0 ? -0.0001 : 0.0001)
+        : range;
+    return saturate((coordinate - _UVAlphaFadeTransparent) / safeRange);
+#else
+    return 1.0h;
+#endif
+}
 #endif
 
 inline half3 NHNAdjustBaseColor(half3 color)
@@ -243,6 +265,9 @@ inline half NHNApplySurfaceClipping(float2 rawUV, half baseAlpha, half vertexAlp
     baseAlpha = max(baseAlpha, NHNGetPixelOutlineAlpha(rawUV, baseAlpha));
 #endif
     half alpha = baseAlpha * _BaseColor.a * vertexAlpha;
+#if defined(NHN_SPRITE_UBER)
+    alpha *= NHNEvaluateUVAlphaFade(rawUV);
+#endif
 
 #if defined(_ALPHATEST_ON)
     clip(alpha - _Cutoff);
@@ -288,14 +313,33 @@ inline half3 NHNEvaluateRim(half3 normalWS, half3 viewDirectionWS)
 #endif
 }
 
+inline half NHNEvaluateHeightFadeFactor(float coordinate)
+{
+#if defined(_HEIGHT_FADE_ON)
+    float shiftedCoordinate = coordinate - _HeightFadeOffset;
+    return saturate((shiftedCoordinate - _HeightFadeLower) /
+        max(_HeightFadeUpper - _HeightFadeLower, 0.0001));
+#else
+    return 1.0h;
+#endif
+}
+
 inline half3 NHNEvaluateHeightFade(float worldY)
 {
 #if defined(_HEIGHT_FADE_ON)
-    float heightFactor = saturate((worldY - _HeightFadeLower) /
-        max(_HeightFadeUpper - _HeightFadeLower, 0.0001));
-    return lerp(_HeightFadeTint.rgb, half3(1.0h, 1.0h, 1.0h), heightFactor);
+    return lerp(_HeightFadeTint.rgb, half3(1.0h, 1.0h, 1.0h),
+        NHNEvaluateHeightFadeFactor(worldY));
 #else
     return half3(1.0h, 1.0h, 1.0h);
+#endif
+}
+
+inline half NHNEvaluateHeightFadeAlpha(float worldY)
+{
+#if defined(_HEIGHT_FADE_ON)
+    return lerp(_HeightFadeTint.a, 1.0h, NHNEvaluateHeightFadeFactor(worldY));
+#else
+    return 1.0h;
 #endif
 }
 
@@ -303,6 +347,11 @@ inline half3 NHNEvaluateHeightFade(float worldY)
 inline half3 NHNEvaluateUVHeightFade(float2 rawUV)
 {
     return NHNEvaluateHeightFade(NHNGetBaseSpriteUV(rawUV).y);
+}
+
+inline half NHNEvaluateUVHeightFadeAlpha(float2 rawUV)
+{
+    return NHNEvaluateHeightFadeAlpha(NHNGetBaseSpriteUV(rawUV).y);
 }
 #endif
 
