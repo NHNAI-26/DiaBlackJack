@@ -20,6 +20,15 @@ namespace DiaBlackJack.StageProgression
         public FormalRunSession(
             StageProgressionSession combatSession,
             ShopOfferGenerator shopOfferGenerator)
+            : this(combatSession, shopOfferGenerator, 0, 0)
+        {
+        }
+
+        internal FormalRunSession(
+            StageProgressionSession combatSession,
+            ShopOfferGenerator shopOfferGenerator,
+            int completedShopCount,
+            int utilityPriceLevel)
         {
             CombatSession = combatSession ?? throw new ArgumentNullException(
                 nameof(combatSession));
@@ -32,7 +41,19 @@ namespace DiaBlackJack.StageProgression
 
             _shopOfferGenerator = shopOfferGenerator ?? throw new ArgumentNullException(
                 nameof(shopOfferGenerator));
+            if (completedShopCount < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(completedShopCount));
+            }
+
+            if (utilityPriceLevel < 0 || utilityPriceLevel > completedShopCount)
+            {
+                throw new ArgumentOutOfRangeException(nameof(utilityPriceLevel));
+            }
+
             CombatSession.BattleResultSynchronized += HandleBattleResultSynchronized;
+            CompletedShopCount = completedShopCount;
+            UtilityPriceLevel = utilityPriceLevel;
             Phase = FormalRunPhase.NotStarted;
         }
 
@@ -47,6 +68,12 @@ namespace DiaBlackJack.StageProgression
         public FormalRunPhase Phase { get; private set; }
 
         public int UtilityPriceLevel { get; private set; }
+
+        internal event Action CombatSettlementCompleted;
+
+        internal event Action RunEnded;
+
+        internal event Action ShopExited;
 
         public bool TryStartRun()
         {
@@ -118,8 +145,7 @@ namespace DiaBlackJack.StageProgression
             ShopVisit shop = ActiveShop;
             if (Phase != FormalRunPhase.Shop ||
                 shop == null ||
-                !shop.CanClose(offerId) ||
-                !CombatSession.TryAdvanceToNextStage())
+                !shop.CanClose(offerId))
             {
                 return false;
             }
@@ -136,6 +162,13 @@ namespace DiaBlackJack.StageProgression
             }
 
             CompletedShopCount++;
+            ShopExited?.Invoke();
+            if (!CombatSession.TryAdvanceToNextStage())
+            {
+                throw new InvalidOperationException(
+                    "A saved shop exit could not advance to the next stage.");
+            }
+
             ActiveShop = null;
             LastGoldReward = 0;
             _goldBeforeCurrentBattle = CombatSession.Progress.Player.CurrentGold;
@@ -176,6 +209,7 @@ namespace DiaBlackJack.StageProgression
                     return;
                 case StageProgressionState.OpponentSelection:
                 case StageProgressionState.InBattle:
+                    ReplayCompletedShopOffers();
                     _goldBeforeCurrentBattle =
                         CombatSession.Progress.Player.CurrentGold;
                     Phase = FormalRunPhase.Combat;
@@ -223,15 +257,18 @@ namespace DiaBlackJack.StageProgression
                         UtilityPriceLevel,
                         followsEliteVictory));
                     Phase = FormalRunPhase.Shop;
+                    CombatSettlementCompleted?.Invoke();
                     break;
                 case StageProgressionState.RunVictory:
                     ActiveShop = null;
                     Phase = FormalRunPhase.RunVictory;
+                    RunEnded?.Invoke();
                     break;
                 case StageProgressionState.RunDefeat:
                     LastGoldReward = 0;
                     ActiveShop = null;
                     Phase = FormalRunPhase.RunDefeat;
+                    RunEnded?.Invoke();
                     break;
                 default:
                     throw new InvalidOperationException(
@@ -248,26 +285,51 @@ namespace DiaBlackJack.StageProgression
                     "Only the two normal stages can restore a formal shop.");
             }
 
-            for (int skippedVisit = 0; skippedVisit < visitIndex; skippedVisit++)
+            if (CompletedShopCount != visitIndex)
             {
-                _shopOfferGenerator.Generate(skippedVisit, 0, false);
+                throw new InvalidOperationException(
+                    "Restored shop count does not match the stable stage.");
             }
+
+            ReplayCompletedShopOffers();
 
             StageDefinition completedStage = CombatSession.ActiveStage ??
                 CombatSession.Progress.CurrentStage;
-            bool followsEliteVictory = completedStage.BattleProfileKey != null &&
-                EnemyCombatProfileCatalog.Default
-                    .GetPreviewByKey(completedStage.BattleProfileKey)
-                    .Grade == EnemyGrade.Elite;
+            bool followsEliteVictory = FollowsEliteVictory(completedStage);
             ActiveShop = new ShopVisit(_shopOfferGenerator.Generate(
-                visitIndex,
-                0,
+                CompletedShopCount,
+                UtilityPriceLevel,
                 followsEliteVictory));
-            CompletedShopCount = visitIndex;
             LastGoldReward = 0;
-            UtilityPriceLevel = 0;
             _goldBeforeCurrentBattle = CombatSession.Progress.Player.CurrentGold;
             Phase = FormalRunPhase.Shop;
+        }
+
+        private static bool FollowsEliteVictory(StageDefinition stage)
+        {
+            return stage.BattleProfileKey != null &&
+                EnemyCombatProfileCatalog.Default
+                    .GetPreviewByKey(stage.BattleProfileKey)
+                    .Grade == EnemyGrade.Elite;
+        }
+
+        private void ReplayCompletedShopOffers()
+        {
+            if (_shopOfferGenerator.NextOfferOrdinal != 0)
+            {
+                return;
+            }
+
+            for (int skippedVisit = 0;
+                 skippedVisit < CompletedShopCount;
+                 skippedVisit++)
+            {
+                _shopOfferGenerator.Generate(
+                    skippedVisit,
+                    0,
+                    FollowsEliteVictory(
+                        CombatSession.Progress.Stages[skippedVisit]));
+            }
         }
     }
 }

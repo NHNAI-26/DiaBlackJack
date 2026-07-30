@@ -86,13 +86,15 @@ namespace DiaBlackJack.StageProgression
             int battleRewardOrdinal,
             int shopOfferOrdinal,
             int eventOrdinal,
-            string reservedNextOfferId)
+            string reservedNextOfferId,
+            int utilityPriceLevel = 0)
         {
             OpponentOfferOrdinal = opponentOfferOrdinal;
             BattleRewardOrdinal = battleRewardOrdinal;
             ShopOfferOrdinal = shopOfferOrdinal;
             EventOrdinal = eventOrdinal;
             ReservedNextOfferId = reservedNextOfferId;
+            UtilityPriceLevel = utilityPriceLevel;
         }
 
         public int OpponentOfferOrdinal { get; }
@@ -104,6 +106,8 @@ namespace DiaBlackJack.StageProgression
         public int EventOrdinal { get; }
 
         public string ReservedNextOfferId { get; }
+
+        public int UtilityPriceLevel { get; }
     }
 
     public sealed class RunSaveSnapshot

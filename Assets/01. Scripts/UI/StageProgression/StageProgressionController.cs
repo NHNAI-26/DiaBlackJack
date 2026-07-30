@@ -55,7 +55,18 @@ namespace DiaBlackJack.StageProgression.UI
             _view.ShopRestRequested += RequestRestAtShop;
             _view.ShopLeaveRequested += RequestLeaveShop;
 
-            _runtime.SaveFlow?.TryCheckpointRunEnd();
+            _formalSession = _runtime.FormalSession;
+            if (_formalSession == null)
+            {
+                _runtime.SaveFlow?.TryCheckpointRunEnd();
+            }
+            else if (_formalSession.Phase == FormalRunPhase.RunVictory ||
+                     _formalSession.Phase == FormalRunPhase.RunDefeat)
+            {
+                _runtime.SaveFlow?.TryCheckpointFormalRunEnd(
+                    _formalSession.CompletedShopCount,
+                    _formalSession.UtilityPriceLevel);
+            }
             RefreshView();
         }
 
@@ -164,6 +175,7 @@ namespace DiaBlackJack.StageProgression.UI
         {
             ProcessShopInput(() =>
                 _formalSession != null &&
+                !HasPendingCheckpoint &&
                 _formalSession.TryBuyShopCard(offerId, optionId));
         }
 
@@ -171,6 +183,7 @@ namespace DiaBlackJack.StageProgression.UI
         {
             ProcessShopInput(() =>
                 _formalSession != null &&
+                !HasPendingCheckpoint &&
                 _formalSession.TryRemoveShopCard(offerId, cardId));
         }
 
@@ -178,6 +191,7 @@ namespace DiaBlackJack.StageProgression.UI
         {
             ProcessShopInput(() =>
                 _formalSession != null &&
+                !HasPendingCheckpoint &&
                 _formalSession.TryRestAtShop(offerId));
         }
 
@@ -185,6 +199,7 @@ namespace DiaBlackJack.StageProgression.UI
         {
             ProcessInput(() =>
                 _formalSession != null &&
+                !HasPendingCheckpoint &&
                 _formalSession.TryLeaveShop(offerId));
         }
 
@@ -436,6 +451,10 @@ namespace DiaBlackJack.StageProgression.UI
 
         private StageProgressionSession ActiveSession =>
             _formalSession?.CombatSession ?? _runtime.Session;
+
+        private bool HasPendingCheckpoint =>
+            _runtime.SaveFlow != null &&
+            _runtime.SaveFlow.HasPendingCheckpoint;
 
         private static RunSaveViewModel CreateStandaloneSaveViewModel()
         {

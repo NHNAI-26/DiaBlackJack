@@ -26,9 +26,13 @@ namespace DiaBlackJack.StageProgression
             NextContentKind = source.NextContentKind;
             StartingDemonDefinitionKey =
                 source.Player.StartingDemonDefinitionKey;
+            CompletedShopCount = source.Random.ShopOfferOrdinal;
+            UtilityPriceLevel = source.Random.UtilityPriceLevel;
         }
 
         internal BattleRewardGenerator BattleRewardGenerator { get; }
+
+        internal int CompletedShopCount { get; }
 
         internal string NextContentKind { get; }
 
@@ -39,6 +43,8 @@ namespace DiaBlackJack.StageProgression
         internal StageProgressionSession Session { get; }
 
         internal string StartingDemonDefinitionKey { get; }
+
+        internal int UtilityPriceLevel { get; }
     }
 
     internal sealed class RunRestoreFactory
@@ -138,6 +144,13 @@ namespace DiaBlackJack.StageProgression
                     rewardGenerator: rewardGenerator,
                     opponentSelectionGenerator: opponentGenerator,
                     usesBattleRewards: _usesBattleRewards);
+                if (snapshot.CheckpointKind == RunCheckpointKind.ShopExited &&
+                    !session.TryAdvanceToNextStage())
+                {
+                    validation = RunSaveValidationResult.Invalid(
+                        RunSaveValidationError.UnstableState);
+                    return false;
+                }
 
                 result = new RunRestoreResult(
                     session,
@@ -285,6 +298,13 @@ namespace DiaBlackJack.StageProgression
 
             if (snapshot.CheckpointKind ==
                     RunCheckpointKind.CombatSettlementCompleted &&
+                snapshot.Status == RunSaveStatus.InProgress)
+            {
+                state = StageProgressionState.StageCleared;
+                return true;
+            }
+
+            if (snapshot.CheckpointKind == RunCheckpointKind.ShopExited &&
                 snapshot.Status == RunSaveStatus.InProgress)
             {
                 state = StageProgressionState.StageCleared;

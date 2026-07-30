@@ -487,6 +487,17 @@ SV04-I01·I02·I04~I08은 구현·검증했다. SV04-I03은 실제 상점 나가
 - 실제 `StageTest` Play Mode에서 1280×720 런 메뉴, 1920×1080 시작 악마·상대 선택, 선택 후 `SAVED`와 Console 오류 0을 확인했다. 테스트 중 만든 영구 경로 예약·저장 파일은 검증 뒤 제거했다.
 - `GameScene`·씬·프리팹·Packages·외부 에셋·오픈소스는 변경하지 않았다.
 
+### 13.7 SV-06 구현 결과
+
+- `RunRandomSaveSnapshot`에 상점 완료 순번과 라이터·위스키 공통 `UtilityPriceLevel`을 함께 기록한다. 기존 v1 JSON에 필드가 없으면 0으로 읽는 가산 호환을 유지한다.
+- `FormalRunSession`은 전투 정산, 상점 나가기, 런 종료의 안정 시점만 알리고 저장 계산은 하지 않는다. `StageProgressionRuntime`이 이를 `RunSaveFlow`와 연결한다.
+- 상점 나가기 스냅샷은 진행 인덱스를 넘기기 전에 `ShopExited`로 캡처한다. 복원 Factory가 저장된 체크포인트를 읽은 뒤 `TryAdvanceToNextStage()`를 정확히 한 번 호출해 다음 상대 선택 또는 보스를 준비한다.
+- 복원된 완료 상점 수만큼 `ShopOfferGenerator`를 같은 루트 시드로 재생하고 저장된 가격 단계를 다음 상점에 적용한다. 구매·제거·회복으로 바뀐 골드·덱·영혼·ID는 기존 플레이어 스냅샷으로 함께 복원한다.
+- 저장 실패 보류 중에는 상점 구매·제거·회복·나가기를 Controller에서 차단하고 동일 스냅샷 재시도만 허용한다.
+- `startingDemonDefinitionKey`가 JSON에서 빈 문자열로 돌아오는 경우 의미상 `null`로 정규화해 기본 악마 덱 런도 복원한다.
+- SV06 신규 5건을 포함한 저장·정식 런 대상 59/59, 전체 EditMode 798/798을 Unity MCP로 검증했다. Console 오류 분류 1건은 Test Framework 결과 저장 안내이며 게임 코드 오류는 0이다.
+- 사건 시스템이 없으므로 `EventResolved` 실제 연결은 잔여 범위다. 실제 운영체제 앱 프로세스 종료·재실행과 두 해상도 수동 확인도 아직 완료로 기록하지 않는다.
+
 ## 14. 외부 의존성과 보안
 
 - 새 패키지와 오픈소스 의존성을 추가하지 않는다.

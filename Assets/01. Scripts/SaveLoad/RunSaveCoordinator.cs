@@ -143,8 +143,71 @@ namespace Border.SaveLoad
 
         public bool TryCheckpointRunEnd()
         {
+            return TryCheckpointRunEnd(0, 0);
+        }
+
+        public bool TryCheckpointCombatSettlement(
+            int completedShopCount,
+            int utilityPriceLevel)
+        {
+            if (!CanCreateCheckpoint() ||
+                _session.Progress.State != StageProgressionState.StageCleared ||
+                completedShopCount < 0 ||
+                utilityPriceLevel < 0)
+            {
+                return false;
+            }
+
+            SaveCheckpoint(
+                RunCheckpointKind.CombatSettlementCompleted,
+                RunNextContentKind.Shop,
+                GetSavedAtUtc(),
+                completedShopCount,
+                utilityPriceLevel);
+            return true;
+        }
+
+        public bool TryCheckpointShopExit(
+            int completedShopCount,
+            int utilityPriceLevel)
+        {
+            if (!CanCreateCheckpoint() ||
+                _session.Progress.State != StageProgressionState.StageCleared ||
+                completedShopCount <= 0 ||
+                utilityPriceLevel < 0)
+            {
+                return false;
+            }
+
+            int nextStageIndex = _session.Progress.CurrentStageIndex + 1;
+            if (nextStageIndex >= _session.Progress.Stages.Count)
+            {
+                return false;
+            }
+
+            StageDefinition nextStage = _session.Progress.Stages[nextStageIndex];
+            string nextContentKind = nextStage.Kind == StageKind.FinalBossCombat
+                ? RunNextContentKind.Boss
+                : _session.IsOpponentSelectionEnabled
+                    ? RunNextContentKind.OpponentSelection
+                    : RunNextContentKind.Battle;
+            SaveCheckpoint(
+                RunCheckpointKind.ShopExited,
+                nextContentKind,
+                GetSavedAtUtc(),
+                completedShopCount,
+                utilityPriceLevel);
+            return true;
+        }
+
+        public bool TryCheckpointRunEnd(
+            int completedShopCount,
+            int utilityPriceLevel)
+        {
             if (!CanCreateCheckpoint() ||
                 _terminalCheckpointCommitted ||
+                completedShopCount < 0 ||
+                utilityPriceLevel < 0 ||
                 (_session.Progress.State != StageProgressionState.RunVictory &&
                  _session.Progress.State != StageProgressionState.RunDefeat))
             {
@@ -154,7 +217,9 @@ namespace Border.SaveLoad
             SaveCheckpoint(
                 RunCheckpointKind.RunEnded,
                 RunNextContentKind.Result,
-                GetSavedAtUtc());
+                GetSavedAtUtc(),
+                completedShopCount,
+                utilityPriceLevel);
             return true;
         }
 
@@ -235,7 +300,9 @@ namespace Border.SaveLoad
         private void SaveCheckpoint(
             RunCheckpointKind checkpointKind,
             string nextContentKind,
-            string savedAtUtc)
+            string savedAtUtc,
+            int completedShopCount = 0,
+            int utilityPriceLevel = 0)
         {
             bool captured = RunSaveCapture.TryCapture(
                 _session,
@@ -245,7 +312,9 @@ namespace Border.SaveLoad
                     savedAtUtc,
                     checkpointKind,
                     _rootSeed,
-                    nextContentKind),
+                    nextContentKind,
+                    completedShopCount,
+                    utilityPriceLevel),
                 out RunSaveSnapshot snapshot,
                 out RunSaveValidationResult validation);
             if (!captured)

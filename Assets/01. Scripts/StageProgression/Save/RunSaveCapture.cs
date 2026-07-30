@@ -11,7 +11,9 @@ namespace DiaBlackJack.StageProgression
             string savedAtUtc,
             RunCheckpointKind checkpointKind,
             int rootSeed,
-            string nextContentKind)
+            string nextContentKind,
+            int completedShopCount = 0,
+            int utilityPriceLevel = 0)
         {
             SaveSequence = saveSequence;
             RunId = runId;
@@ -19,6 +21,8 @@ namespace DiaBlackJack.StageProgression
             CheckpointKind = checkpointKind;
             RootSeed = rootSeed;
             NextContentKind = nextContentKind;
+            CompletedShopCount = completedShopCount;
+            UtilityPriceLevel = utilityPriceLevel;
         }
 
         internal long SaveSequence { get; }
@@ -32,6 +36,10 @@ namespace DiaBlackJack.StageProgression
         internal int RootSeed { get; }
 
         internal string NextContentKind { get; }
+
+        internal int CompletedShopCount { get; }
+
+        internal int UtilityPriceLevel { get; }
     }
 
     internal static class RunSaveCapture
@@ -70,9 +78,10 @@ namespace DiaBlackJack.StageProgression
                 new RunRandomSaveSnapshot(
                     session.OpponentOfferOrdinal,
                     session.BattleRewardOrdinal,
+                    context.CompletedShopCount,
                     0,
-                    0,
-                    null),
+                    null,
+                    context.UtilityPriceLevel),
                 out snapshot,
                 out validation);
         }
@@ -186,7 +195,8 @@ namespace DiaBlackJack.StageProgression
             }
 
             if (state == StageProgressionState.StageCleared &&
-                checkpointKind == RunCheckpointKind.CombatSettlementCompleted)
+                (checkpointKind == RunCheckpointKind.CombatSettlementCompleted ||
+                 checkpointKind == RunCheckpointKind.ShopExited))
             {
                 status = RunSaveStatus.InProgress;
                 return true;

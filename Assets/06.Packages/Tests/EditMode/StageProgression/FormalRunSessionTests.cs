@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DiaBlackJack.CoreLoop;
 using NUnit.Framework;
 
@@ -233,6 +234,86 @@ namespace DiaBlackJack.StageProgression.Tests
 
             Assert.That(session.Progress.PendingReward, Is.Not.Null);
             Assert.That(session.UsesBattleRewards, Is.True);
+        }
+
+        [Test]
+        public void SV06_I04_RestoredUtilityLevelRebuildsSameSecondShop()
+        {
+            FormalRunSession live = CreateFormalRun();
+            Assert.That(live.TryStartRun(), Is.True);
+            WinCurrentBattle(live.CombatSession);
+            ShopOffer firstOffer = live.ActiveShop.Offer;
+            live.CombatSession.Progress.Player.AddGold(10);
+            Assert.That(
+                live.TryRemoveShopCard(
+                    firstOffer.OfferId,
+                    live.CombatSession.Progress.Player.Deck[0].Id),
+                Is.True);
+            Assert.That(live.TryLeaveShop(firstOffer.OfferId), Is.True);
+            WinCurrentBattle(live.CombatSession);
+            ShopOffer expected = live.ActiveShop.Offer;
+
+            PlayerRunState restoredPlayer = live.CombatSession.Progress.Player;
+            RunProgress restoredProgress = RunProgress.Restore(
+                CreateProgress(restoredPlayer).Stages,
+                restoredPlayer,
+                1,
+                StageProgressionState.StageCleared);
+            StageProgressionSession restoredCombat = CreateCombatSession(
+                restoredProgress,
+                CreateVictoryBattle,
+                usesBattleRewards: false);
+            FormalRunSession restored = new FormalRunSession(
+                restoredCombat,
+                new ShopOfferGenerator(20260730),
+                1,
+                1);
+
+            restored.SynchronizeExternalState();
+
+            Assert.That(restored.Phase, Is.EqualTo(FormalRunPhase.Shop));
+            Assert.That(restored.ActiveShop.Offer.OfferId, Is.EqualTo(expected.OfferId));
+            Assert.That(restored.ActiveShop.Offer.LighterPrice, Is.EqualTo(3));
+            Assert.That(restored.ActiveShop.Offer.WhiskeyPrice, Is.EqualTo(3));
+            Assert.That(
+                restored.ActiveShop.Offer.CardOptions
+                    .Select(option => option.DefinitionKey),
+                Is.EqualTo(
+                    expected.CardOptions.Select(option => option.DefinitionKey)));
+        }
+
+        [Test]
+        public void SV06_U01_CheckpointSignalsExposeOnlyStableFormalStates()
+        {
+            FormalRunSession run = CreateFormalRun();
+            int settlementSignals = 0;
+            int exitSignals = 0;
+            run.CombatSettlementCompleted += () =>
+            {
+                settlementSignals++;
+                Assert.That(run.Phase, Is.EqualTo(FormalRunPhase.Shop));
+                Assert.That(
+                    run.CombatSession.Progress.State,
+                    Is.EqualTo(StageProgressionState.StageCleared));
+            };
+            run.ShopExited += () =>
+            {
+                exitSignals++;
+                Assert.That(run.CompletedShopCount, Is.EqualTo(1));
+                Assert.That(
+                    run.CombatSession.Progress.State,
+                    Is.EqualTo(StageProgressionState.StageCleared));
+            };
+
+            Assert.That(run.TryStartRun(), Is.True);
+            WinCurrentBattle(run.CombatSession);
+            Assert.That(run.TryLeaveShop(run.ActiveShop.Offer.OfferId), Is.True);
+
+            Assert.That(settlementSignals, Is.EqualTo(1));
+            Assert.That(exitSignals, Is.EqualTo(1));
+            Assert.That(
+                run.CombatSession.Progress.State,
+                Is.EqualTo(StageProgressionState.InBattle));
         }
 
         private static FormalRunSession AdvanceToSecondShop()

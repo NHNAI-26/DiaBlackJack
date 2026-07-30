@@ -291,6 +291,8 @@ namespace DiaBlackJack.StageProgression
                 random.BattleRewardOrdinal < 0 ||
                 random.ShopOfferOrdinal < 0 ||
                 random.EventOrdinal < 0 ||
+                random.UtilityPriceLevel < 0 ||
+                random.UtilityPriceLevel > random.ShopOfferOrdinal ||
                 (random.ReservedNextOfferId != null &&
                  string.IsNullOrWhiteSpace(random.ReservedNextOfferId)))
             {
@@ -340,6 +342,7 @@ namespace DiaBlackJack.StageProgression
                         snapshot.Random.OpponentOfferOrdinal == 0 &&
                         snapshot.Random.BattleRewardOrdinal == 0 &&
                         snapshot.Random.ShopOfferOrdinal == 0 &&
+                        snapshot.Random.UtilityPriceLevel == 0 &&
                         snapshot.Random.EventOrdinal == 0 &&
                         snapshot.CompletedShopIds.Count == 0 &&
                         snapshot.CompletedEventIds.Count == 0 &&
@@ -356,6 +359,15 @@ namespace DiaBlackJack.StageProgression
                             RunNextContentKind.Event);
                     break;
                 case RunCheckpointKind.ShopExited:
+                    valid = snapshot.Status == RunSaveStatus.InProgress &&
+                        snapshot.Random.ShopOfferOrdinal ==
+                            snapshot.CurrentStageIndex + 1 &&
+                        IsNext(
+                            snapshot.NextContentKind,
+                            RunNextContentKind.OpponentSelection,
+                            RunNextContentKind.Battle,
+                            RunNextContentKind.Boss);
+                    break;
                 case RunCheckpointKind.EventResolved:
                     valid = snapshot.Status == RunSaveStatus.InProgress &&
                         IsNext(

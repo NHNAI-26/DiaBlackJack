@@ -36,7 +36,14 @@ namespace DiaBlackJack.StageProgression.UI
                     _formalCombatSession = session;
                     _formalSession = new FormalRunSession(
                         session,
-                        CreateShopOfferGenerator(unchecked(seed + 2)));
+                        CreateShopOfferGenerator(unchecked(
+                            (SaveFlow?.ActiveRootSeed ?? seed) + 2)),
+                        SaveFlow?.RestoredCompletedShopCount ?? 0,
+                        SaveFlow?.RestoredUtilityPriceLevel ?? 0);
+                    _formalSession.CombatSettlementCompleted +=
+                        HandleFormalCombatSettlementCompleted;
+                    _formalSession.ShopExited += HandleFormalShopExited;
+                    _formalSession.RunEnded += HandleFormalRunEnded;
                 }
 
                 _formalSession.SynchronizeExternalState();
@@ -53,6 +60,27 @@ namespace DiaBlackJack.StageProgression.UI
         private StageProgressionSession _injectedSession;
         private FormalRunSession _formalSession;
         private StageProgressionSession _formalCombatSession;
+
+        private void HandleFormalCombatSettlementCompleted()
+        {
+            SaveFlow?.TryCheckpointCombatSettlement(
+                _formalSession.CompletedShopCount,
+                _formalSession.UtilityPriceLevel);
+        }
+
+        private void HandleFormalShopExited()
+        {
+            SaveFlow?.TryCheckpointShopExit(
+                _formalSession.CompletedShopCount,
+                _formalSession.UtilityPriceLevel);
+        }
+
+        private void HandleFormalRunEnded()
+        {
+            SaveFlow?.TryCheckpointFormalRunEnd(
+                _formalSession.CompletedShopCount,
+                _formalSession.UtilityPriceLevel);
+        }
         private void Awake()
         {
             if (Instance != null && Instance != this)

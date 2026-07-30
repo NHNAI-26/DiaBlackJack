@@ -310,6 +310,40 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(seedIndex, Is.EqualTo(2));
         }
 
+        [Test]
+        public void SV06_I03_TenFreshFlowsRestoreSameShopExitCheckpoint()
+        {
+            MemoryRunFileStore files = new MemoryRunFileStore();
+            StageProgressionSession settled = CreateFormalSession(RootSeed);
+            Assert.That(settled.Progress.StartRun(), Is.True);
+            Assert.That(settled.Progress.TryCompleteBattleWithoutReward(), Is.True);
+            RunSaveCoordinator coordinator = new RunSaveCoordinator(
+                settled,
+                new RunSaveRepository(files, CreateStages(RootSeed)),
+                "sv06-run",
+                RootSeed,
+                0,
+                () => CreatedAt);
+            Assert.That(coordinator.TryCheckpointShopExit(1, 1), Is.True);
+
+            for (int iteration = 0; iteration < 10; iteration++)
+            {
+                RunSaveFlow restored = CreateFormalFlow(files);
+
+                Assert.That(restored.TryContinueRun(), Is.True, $"Cycle {iteration}");
+                Assert.That(restored.ActiveRootSeed, Is.EqualTo(RootSeed));
+                Assert.That(restored.RestoredCompletedShopCount, Is.EqualTo(1));
+                Assert.That(restored.RestoredUtilityPriceLevel, Is.EqualTo(1));
+                Assert.That(restored.Session.Progress.CurrentStageIndex, Is.EqualTo(1));
+                Assert.That(
+                    restored.Session.Progress.State,
+                    Is.EqualTo(StageProgressionState.InBattle));
+                Assert.That(
+                    restored.Session.Progress.Player.Deck.Select(card => card.Id),
+                    Is.EqualTo(settled.Progress.Player.Deck.Select(card => card.Id)));
+            }
+        }
+
         private static RunSaveFlow CreateFlow(
             MemoryRunFileStore files,
             string runId)
@@ -355,6 +389,19 @@ namespace DiaBlackJack.StageProgression.Tests
                 RootSeed,
                 () => runId,
                 () => CreatedAt);
+        }
+
+        private static RunSaveFlow CreateFormalFlow(MemoryRunFileStore files)
+        {
+            return new RunSaveFlow(
+                new RunSaveRepository(files, CreateStages(RootSeed)),
+                new RunReservationRepository(files, DemonContractCatalog.Default),
+                CreateStages,
+                CreateFormalSession,
+                RootSeed,
+                () => "unused",
+                () => CreatedAt,
+                usesBattleRewards: false);
         }
 
         private static StageProgressionSession CreateSession(int seed)
@@ -404,6 +451,17 @@ namespace DiaBlackJack.StageProgression.Tests
                 opponentSelectionGenerator: new OpponentSelectionGenerator(
                     EnemyCombatProfileCatalog.Default,
                     seed));
+        }
+
+        private static StageProgressionSession CreateFormalSession(int seed)
+        {
+            StageProgressionSession session = CreateDirectSession(seed);
+            return new StageProgressionSession(
+                session.Progress,
+                opponentSelectionGenerator: new OpponentSelectionGenerator(
+                    EnemyCombatProfileCatalog.Default,
+                    seed),
+                usesBattleRewards: false);
         }
 
         private static IReadOnlyList<StageDefinition> CreateStages(int seed)

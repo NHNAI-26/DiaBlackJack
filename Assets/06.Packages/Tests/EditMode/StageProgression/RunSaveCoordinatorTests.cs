@@ -254,6 +254,64 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(loaded.Snapshot.Status, Is.EqualTo(RunSaveStatus.Victory));
         }
 
+        [Test]
+        public void SV06_I01_FormalSettlementAndShopExitPersistShopState()
+        {
+            CoordinatorHarness settlement = CreateFormalSettlementHarness();
+
+            Assert.That(
+                settlement.Coordinator.TryCheckpointCombatSettlement(0, 0),
+                Is.True);
+            RunSaveSnapshot settlementSnapshot =
+                settlement.Repository.Load().Snapshot;
+            Assert.That(
+                settlementSnapshot.CheckpointKind,
+                Is.EqualTo(RunCheckpointKind.CombatSettlementCompleted));
+            Assert.That(settlementSnapshot.Random.ShopOfferOrdinal, Is.Zero);
+            Assert.That(settlementSnapshot.Random.UtilityPriceLevel, Is.Zero);
+
+            CoordinatorHarness shopExit = CreateFormalSettlementHarness();
+            Assert.That(
+                shopExit.Coordinator.TryCheckpointShopExit(1, 1),
+                Is.True);
+            RunSaveSnapshot exitSnapshot = shopExit.Repository.Load().Snapshot;
+            Assert.That(
+                exitSnapshot.CheckpointKind,
+                Is.EqualTo(RunCheckpointKind.ShopExited));
+            Assert.That(
+                exitSnapshot.NextContentKind,
+                Is.EqualTo(RunNextContentKind.OpponentSelection));
+            Assert.That(exitSnapshot.Random.ShopOfferOrdinal, Is.EqualTo(1));
+            Assert.That(exitSnapshot.Random.UtilityPriceLevel, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void SV06_I02_ShopExitRestoreAdvancesExactlyOnceToNextContent()
+        {
+            CoordinatorHarness harness = CreateFormalSettlementHarness();
+            Assert.That(harness.Coordinator.TryCheckpointShopExit(1, 1), Is.True);
+            RunSaveSnapshot snapshot = harness.Repository.Load().Snapshot;
+            RunRestoreFactory factory = new RunRestoreFactory(
+                CreateFormalStages,
+                usesBattleRewards: false);
+
+            Assert.That(
+                factory.TryRestore(
+                    snapshot,
+                    out RunRestoreResult restored,
+                    out RunSaveValidationResult validation),
+                Is.True,
+                validation.Error.ToString());
+            Assert.That(validation.IsValid, Is.True);
+            Assert.That(restored.CompletedShopCount, Is.EqualTo(1));
+            Assert.That(restored.UtilityPriceLevel, Is.EqualTo(1));
+            Assert.That(restored.Session.Progress.CurrentStageIndex, Is.EqualTo(1));
+            Assert.That(
+                restored.Session.Progress.State,
+                Is.EqualTo(StageProgressionState.OpponentSelection));
+            Assert.That(restored.Session.TryAdvanceToNextStage(), Is.False);
+        }
+
         private static CoordinatorHarness CreateStartingHarness()
         {
             PlayerRunState player = new PlayerRunState(
@@ -294,6 +352,59 @@ namespace DiaBlackJack.StageProgression.Tests
             return CreateHarness(
                 new StageProgressionSession(
                     new RunProgress(CreateStages(RootSeed), player)));
+        }
+
+        private static CoordinatorHarness CreateFormalSettlementHarness()
+        {
+            PlayerRunState player = new PlayerRunState(
+                12,
+                12,
+                new[]
+                {
+                    new RunCardDefinition(0, 1),
+                    new RunCardDefinition(1, 2),
+                    new RunCardDefinition(2, 3),
+                    new RunCardDefinition(3, 4)
+                });
+            IReadOnlyList<StageDefinition> stages = CreateFormalStages(RootSeed);
+            RunProgress progress = new RunProgress(stages, player);
+            Assert.That(progress.StartRun(), Is.True);
+            Assert.That(progress.TryCompleteBattleWithoutReward(), Is.True);
+            StageProgressionSession session = new StageProgressionSession(
+                progress,
+                opponentSelectionGenerator: new OpponentSelectionGenerator(
+                    EnemyCombatProfileCatalog.Default,
+                    RootSeed),
+                usesBattleRewards: false);
+            CountingRunSaveFileStore files = new CountingRunSaveFileStore();
+            RunSaveRepository repository = new RunSaveRepository(files, stages);
+            RunSaveCoordinator coordinator = new RunSaveCoordinator(
+                session,
+                repository,
+                RunId,
+                RootSeed,
+                4,
+                () => SavedAt);
+            return new CoordinatorHarness(session, repository, coordinator, files);
+        }
+
+        private static IReadOnlyList<StageDefinition> CreateFormalStages(int seed)
+        {
+            return new[]
+            {
+                StageDefinition.CreateForEnemyProfile(
+                    "normal-1", "Normal", StageKind.NormalCombat,
+                    EnemyCombatProfileCatalog.GunslingerKey,
+                    seed, unchecked(seed + 1)),
+                StageDefinition.CreateForEnemyProfile(
+                    "normal-2", "Elite", StageKind.NormalCombat,
+                    EnemyCombatProfileCatalog.EnforcerKey,
+                    unchecked(seed + 2), unchecked(seed + 3)),
+                StageDefinition.CreateForEnemyProfile(
+                    "boss", "Boss", StageKind.FinalBossCombat,
+                    EnemyCombatProfileCatalog.FinalBossKey,
+                    unchecked(seed + 4), unchecked(seed + 5))
+            };
         }
 
         private static CoordinatorHarness CreateHarness(

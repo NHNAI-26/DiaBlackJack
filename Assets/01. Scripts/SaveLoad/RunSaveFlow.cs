@@ -106,6 +106,7 @@ namespace Border.SaveLoad
                 throw new ArgumentNullException(nameof(utcNowProvider));
             _defaultRootSeed = defaultRootSeed;
             _usesBattleRewards = usesBattleRewards;
+            ActiveRootSeed = defaultRootSeed;
 
             Session = _sessionFactory(defaultRootSeed) ??
                 throw new InvalidOperationException(
@@ -119,6 +120,8 @@ namespace Border.SaveLoad
             !_reservationBlocksSavedRun &&
             LastLoadResult != null &&
             LastLoadResult.CanContinue;
+
+        public int ActiveRootSeed { get; private set; }
 
         public bool CanResumeReservation =>
             IsMenuVisible &&
@@ -148,6 +151,10 @@ namespace Border.SaveLoad
         }
 
         public RunSaveNotice Notice { get; private set; }
+
+        public int RestoredCompletedShopCount { get; private set; }
+
+        public int RestoredUtilityPriceLevel { get; private set; }
 
         public bool RequiresNewRunConfirmation { get; private set; }
 
@@ -253,6 +260,9 @@ namespace Border.SaveLoad
 
             Session = restored.Session;
             Coordinator = coordinator;
+            RestoredCompletedShopCount = restored.CompletedShopCount;
+            RestoredUtilityPriceLevel = restored.UtilityPriceLevel;
+            ActiveRootSeed = snapshot.RootSeed;
             IsMenuVisible = false;
             RequiresNewRunConfirmation = false;
             Notice = LastLoadResult.Status == RunSaveLoadStatus.SuccessBackup
@@ -358,6 +368,57 @@ namespace Border.SaveLoad
             if (IsMenuVisible ||
                 Coordinator == null ||
                 !Coordinator.TryCheckpointRunEnd())
+            {
+                return false;
+            }
+
+            UpdateCheckpointNotice();
+            return true;
+        }
+
+        public bool TryCheckpointCombatSettlement(
+            int completedShopCount,
+            int utilityPriceLevel)
+        {
+            if (IsMenuVisible ||
+                Coordinator == null ||
+                !Coordinator.TryCheckpointCombatSettlement(
+                    completedShopCount,
+                    utilityPriceLevel))
+            {
+                return false;
+            }
+
+            UpdateCheckpointNotice();
+            return true;
+        }
+
+        public bool TryCheckpointShopExit(
+            int completedShopCount,
+            int utilityPriceLevel)
+        {
+            if (IsMenuVisible ||
+                Coordinator == null ||
+                !Coordinator.TryCheckpointShopExit(
+                    completedShopCount,
+                    utilityPriceLevel))
+            {
+                return false;
+            }
+
+            UpdateCheckpointNotice();
+            return true;
+        }
+
+        public bool TryCheckpointFormalRunEnd(
+            int completedShopCount,
+            int utilityPriceLevel)
+        {
+            if (IsMenuVisible ||
+                Coordinator == null ||
+                !Coordinator.TryCheckpointRunEnd(
+                    completedShopCount,
+                    utilityPriceLevel))
             {
                 return false;
             }
@@ -499,6 +560,9 @@ namespace Border.SaveLoad
                 _utcNowProvider);
             IsMenuVisible = false;
             RequiresNewRunConfirmation = false;
+            RestoredCompletedShopCount = 0;
+            RestoredUtilityPriceLevel = 0;
+            ActiveRootSeed = reservation.RootSeed;
         }
 
         private void ActivateNewRun(
@@ -516,6 +580,9 @@ namespace Border.SaveLoad
                 _utcNowProvider);
             IsMenuVisible = false;
             RequiresNewRunConfirmation = false;
+            RestoredCompletedShopCount = 0;
+            RestoredUtilityPriceLevel = 0;
+            ActiveRootSeed = rootSeed;
         }
 
         private void CompleteStartingCheckpoint()

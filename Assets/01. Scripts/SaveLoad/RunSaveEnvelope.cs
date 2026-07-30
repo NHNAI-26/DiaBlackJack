@@ -58,5 +58,6 @@ namespace Border.SaveLoad
         public int shopOfferOrdinal;
         public int eventOrdinal;
         public string reservedNextOfferId;
+        public int utilityPriceLevel;
     }
 }

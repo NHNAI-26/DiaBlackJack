@@ -105,7 +105,8 @@ namespace Border.SaveLoad
                     envelope.random.eventOrdinal,
                     string.IsNullOrEmpty(envelope.random.reservedNextOfferId)
                         ? null
-                        : envelope.random.reservedNextOfferId);
+                        : envelope.random.reservedNextOfferId,
+                    envelope.random.utilityPriceLevel);
 
             snapshot = new RunSaveSnapshot(
                 envelope.schemaVersion,
@@ -182,7 +183,8 @@ namespace Border.SaveLoad
                 battleRewardOrdinal = random.BattleRewardOrdinal,
                 shopOfferOrdinal = random.ShopOfferOrdinal,
                 eventOrdinal = random.EventOrdinal,
-                reservedNextOfferId = random.ReservedNextOfferId
+                reservedNextOfferId = random.ReservedNextOfferId,
+                utilityPriceLevel = random.UtilityPriceLevel
             };
         }
 
@@ -269,7 +271,9 @@ namespace Border.SaveLoad
                 envelope.currentGold,
                 envelope.lastIssuedCardId,
                 envelope.lastIssuedDemonCardId,
-                envelope.startingDemonDefinitionKey,
+                string.IsNullOrEmpty(envelope.startingDemonDefinitionKey)
+                    ? null
+                    : envelope.startingDemonDefinitionKey,
                 cards,
                 demonCards);
             return true;

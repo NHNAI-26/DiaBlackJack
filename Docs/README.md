@@ -61,10 +61,10 @@
 | [settings-development-spec.md](./settings-development-spec.md) | 설정 데이터·저장·화면 모드·UI 연결 명세 | 구현 기준 v1.0 |
 | [settings-implementation-plan.md](./settings-implementation-plan.md) | SET-00~SET-05 작업 순서와 검증 게이트 | SET-05 수동 확인 진행 중 v1.0 |
 | [settings-progress-log.md](./settings-progress-log.md) | 설정 기능 구현·테스트·잔여 검증 기록 | 전체 EditMode 781/781 v1.0 |
-| [save-system-design.md](./save-system-design.md) | 안정 체크포인트·이어하기·재추첨 방지·단일 슬롯·파일 복구 기획 | RF-01A 골드 저장 활성 v1.1 |
-| [save-system-development-spec.md](./save-system-development-spec.md) | 순수 스냅샷·버전 JSON·원자 저장·백업·복원·RF 연결 명세 | 양수 골드 캡처·복원 v1.1 |
-| [save-system-implementation-plan.md](./save-system-implementation-plan.md) | SV-00~SV-06 구현 순서와 검증 게이트 | RF-03 완료·RF-04/05 뒤 SV-06 대기 v1.1 |
-| [save-system-progress-log.md](./save-system-progress-log.md) | 저장 시스템 결정·구현·파일·재실행 검증 기록 | RF-01A 저장 왕복 완료 v1.1 |
+| [save-system-design.md](./save-system-design.md) | 안정 체크포인트·이어하기·재추첨 방지·단일 슬롯·파일 복구 기획 | SV-06 상점 통합 완료·사건 잔여 v1.2 |
+| [save-system-development-spec.md](./save-system-development-spec.md) | 순수 스냅샷·버전 JSON·원자 저장·백업·복원·RF 연결 명세 | 정식 런 상점·가격 복원 v1.2 |
+| [save-system-implementation-plan.md](./save-system-implementation-plan.md) | SV-00~SV-06 구현 순서와 검증 게이트 | SV-06 상점 통합 완료·실제 앱 재실행 잔여 v1.2 |
+| [save-system-progress-log.md](./save-system-progress-log.md) | 저장 시스템 결정·구현·파일·재실행 검증 기록 | SV-06 신규 5/5·전체 798/798 v1.2 |
 | [scene-presentation-design.md](./scene-presentation-design.md) | 2.5D 술집 테이블의 씬 흐름·월드 오브젝트·UI·상점 전환 기획 | 프로토타입 악마 7종 표시 범위 v1.3 |
 | `기획서.docx`, `기획서_개정본.docx` | 초기 제출용 보관본 | 2026-07-20 보관본·현행 기준 아님 |
 
@@ -81,6 +81,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-31 | 이천서 | SV-06에서 실제 정식 런의 전투 정산·상점 나가기·보스 승패를 저장에 연결하고 완료 상점 수·공통 서비스 가격·루트 시드·상품 순서를 복원했다. 신규 5/5·저장/정식 런 59/59·전체 EditMode 798/798·게임 코드 오류 0을 확인했으며 Test Framework 결과 저장 안내 1건과 사건·실제 앱 재실행·두 해상도는 별도 기록했다. |
 | 2026-07-30 | 이천서 | RFM02 진입 책임을 정정해 GameScene 직접 실행은 시작 악마·상대 선택 메뉴 없이 기존 독립 전투를 즉시 시작하고, 활성 진행 전투가 있을 때만 런 세션을 채택하도록 복원했다. StageTest는 기존 테스트 흐름을 유지한다. |
 | 2026-07-30 | 이천서 | 새 런별 신규 루트 시드와 저장 보존, 보위 나이프 강제 드로우·ID 기반 폐기 연출, 광신도 수동 카드 우선 점수를 구현했다. 3개 어셈블리 직접 컴파일과 순수 대상 2건 통과; 저장 대상·전체 Unity 회귀·GameScene 육안 검증은 MCP 미노출로 미실행 |
 | 2026-07-30 | 이천서 | RF-04에서 저장 세션과 정식 런 Runtime을 결합하고 StageTest IMGUI에 골드·예상 지급·상점 5장·라이터·위스키·나가기를 연결했다. RF04 6건 컴파일·비Unity 5건·누적 42/42와 두 씬 직렬화를 확인했으며 Unity 실화면·씬 왕복은 MCP 연결 복구 뒤 검증한다. |
