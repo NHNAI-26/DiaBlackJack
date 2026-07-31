@@ -103,7 +103,7 @@ Shader "Shader/Uber Lit"
             #pragma shader_feature_local_fragment _EMISSION
             #pragma shader_feature_local_fragment _RIM_ON
             #pragma shader_feature_local_fragment _DISSOLVE_ON
-            #pragma shader_feature_local_fragment _DISSOLVE_OBJECT_SPACE
+            #pragma shader_feature_local _DISSOLVE_OBJECT_SPACE
             #pragma multi_compile_local_fragment _ _HEIGHT_FADE_ON
             #pragma multi_compile_local_fragment _ _GLASS_GLOW_ON
             #pragma shader_feature_local_fragment _ALPHATEST_ON
