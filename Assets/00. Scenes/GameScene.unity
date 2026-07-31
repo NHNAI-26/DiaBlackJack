@@ -299,7 +299,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 01614664b831546d2ae94a42149d80ac, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.UI.InputSystemUIInputModule
   m_SendPointerHoverToParent: 1
   m_MoveRepeatDelay: 0.5
@@ -330,7 +330,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventSystem
   m_FirstSelected: {fileID: 0}
   m_sendNavigationEvents: 1
@@ -356,7 +356,7 @@ PhysicsMaterial:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: 
+  m_Name:
   serializedVersion: 2
   m_DynamicFriction: 0.6
   m_StaticFriction: 0.6
@@ -655,7 +655,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9d1460e7844649c0baccc950541bf585, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ShopUtilityItemView
 --- !u!21 &365861506
 Material:
@@ -9657,6 +9657,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6656724238517901587, guid: 65b3779e515064540b9789c76687ef65, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6163863410494494793}
+    - targetCorrespondingSourceObject: {fileID: 6656724238517901587, guid: 65b3779e515064540b9789c76687ef65, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6163863410494494795}
+    - targetCorrespondingSourceObject: {fileID: 6656724238517901587, guid: 65b3779e515064540b9789c76687ef65, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6163863410494494794}
   m_SourcePrefab: {fileID: 100100000, guid: 65b3779e515064540b9789c76687ef65, type: 3}
 --- !u!1 &6163863410494494792 stripped
 GameObject:
@@ -9676,6 +9682,46 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameFlowController
   gameManager: {fileID: 0}
+  startingDemonReveal: {fileID: 0}
+  opponentSelection: {fileID: 0}
+  hudRoot: {fileID: 0}
+  charactersRoot: {fileID: 0}
+  enemyCharacter: {fileID: 0}
+--- !u!114 &6163863410494494794
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6163863410494494792}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7bec68913132c1c40852e2c5dd0d4e8d, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.OpponentSelectionView
+  font: {fileID: 0}
+--- !u!114 &6163863410494494795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6163863410494494792}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 552f539df60a8fd418c6d57f2d71642f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.StartingDemonRevealView
+  demonCardPrefab: {fileID: 88746123954579456, guid: 45d32c4ca972f2243966a587c6684a0c, type: 3}
+  deckPosition: {x: 1.5, y: 3.58, z: 16.44}
+  firstCardPosition: {x: -0.62, y: 3.6, z: 16.3}
+  secondCardPosition: {x: 0.62, y: 3.6, z: 16.3}
+  cardEulerAngles: {x: 270, y: 0, z: 0}
+  deckVisualCardCount: 3
+  dealDuration: 0.55
+  faceDownHoldDuration: 0.35
+  flipDuration: 0.3
+  revealedHoldDuration: 1.2
 --- !u!1001 &6219715712046308512
 PrefabInstance:
   m_ObjectHideFlags: 0

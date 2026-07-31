@@ -309,6 +309,31 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GF03_U01_EnemyStatusVisibilityCanBeHiddenBeforeCombat()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                GameHudView hud = instance.GetComponent<GameHudView>();
+                Transform enemyStatus = instance
+                    .GetComponentsInChildren<Transform>(true)
+                    .Single(child => child.name == "EnemySoul");
+
+                hud.SetEnemyStatusVisible(false);
+                Assert.That(enemyStatus.gameObject.activeSelf, Is.False);
+
+                hud.SetEnemyStatusVisible(true);
+                Assert.That(enemyStatus.gameObject.activeSelf, Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
         public void GSH01_U07_ContractDetailLayoutIsAuthoredInHudPrefab()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);

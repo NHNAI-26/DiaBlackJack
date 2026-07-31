@@ -1563,3 +1563,9 @@ AI는 순수 `GameFlowScreenResolver`와 Unity `GameFlowController`를 추가했
 
 Unity MCP로 신규 흐름 판정 2/2, GF 누적 7/7, 전체 EditMode 805/805와 `GameScene` validate 문제 0, Console 오류 0을 확인했다. Unity 저장 과정에서 발생한 무관한 RenderTexture 직렬화 변경은 결과물에서 제외하고 `GameFlowController` 추가분만 유지했다. GF-03의 시작 악마·상대 선택 실제 월드 UI는 아직 구현하지 않았다. 외부 에셋·외부 코드·오픈소스·패키지·새 의존성은 추가하지 않았다.
 
+## 2026-07-31 GF-03 시작 화면 상대 HUD 조정 기록
+
+이천서는 시작 악마 공개 화면에서 상대 표기가 노출되지 않도록 지시했다. AI에는 건너편 상인 연출은 유지하고, 상대 캐릭터나 전투 규칙을 변경하지 않으며, 씬 로드 직후 `Start()` 전 프레임부터 상대 영혼 HUD만 숨기라는 지시를 적용했다. 최종 기획·코드·화면 승인 책임자는 이천서다.
+
+AI는 `GameHudView.SetEnemyStatusVisible`을 추가하고 `GameFlowController.Awake()`에서 상대 HUD를 선제적으로 숨겼다. 통합 화면 갱신에서는 전투 화면에 진입한 경우에만 다시 표시한다. 신규 회귀 테스트 1/1과 HUD 관련 EditMode 12/12가 통과했고 컴파일 오류는 0이었다. 외부 에셋·외부 코드·오픈소스·패키지·새 의존성은 추가하지 않았다.
+

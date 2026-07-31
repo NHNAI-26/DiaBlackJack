@@ -147,13 +147,14 @@ namespace DiaBlackJack.GameScene
 
         public void UnbindBattle()
         {
-            if (_stageSession == null)
+            if (_stageSession == null && _session == null)
             {
                 return;
             }
 
             ResetBattlePresentation();
             _stageSession = null;
+            _session = null;
             _completedStageSession = null;
         }
 

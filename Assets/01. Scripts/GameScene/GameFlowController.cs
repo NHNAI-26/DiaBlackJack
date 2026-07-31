@@ -13,6 +13,12 @@ namespace DiaBlackJack.GameScene
     public sealed class GameFlowController : MonoBehaviour
     {
         [SerializeField] private GameManager gameManager;
+        [SerializeField] private StartingDemonRevealView startingDemonReveal;
+        [SerializeField] private OpponentSelectionView opponentSelection;
+        [SerializeField] private GameObject hudRoot;
+        [SerializeField] private GameHudView hud;
+        [SerializeField] private GameObject charactersRoot;
+        [SerializeField] private CharacterView enemyCharacter;
 
         private StageProgressionRuntime _runtime;
         private FormalRunSession _session;
@@ -31,6 +37,23 @@ namespace DiaBlackJack.GameScene
         private void Awake()
         {
             gameManager ??= GetComponent<GameManager>();
+            startingDemonReveal ??= GetComponent<StartingDemonRevealView>();
+            opponentSelection ??= GetComponent<OpponentSelectionView>();
+            hudRoot ??= GameObject.Find("UIHUD");
+            hud ??= hudRoot == null
+                ? null
+                : hudRoot.GetComponentInChildren<GameHudView>(true);
+            hud?.SetEnemyStatusVisible(false);
+            charactersRoot ??= GameObject.Find("Characters");
+            if (enemyCharacter == null && charactersRoot != null)
+            {
+                Transform enemy = charactersRoot.transform.Find(
+                    "EnemyCharacter");
+                enemyCharacter = enemy == null
+                    ? null
+                    : enemy.GetComponent<CharacterView>();
+            }
+
             _runtime = StageProgressionRuntime.Instance;
         }
 
@@ -39,6 +62,20 @@ namespace DiaBlackJack.GameScene
             if (gameManager != null)
             {
                 gameManager.FormalBattleCompleted += HandleBattleCompleted;
+            }
+
+            if (startingDemonReveal != null)
+            {
+                startingDemonReveal.RevealCompleted +=
+                    HandleStartingDemonRevealCompleted;
+            }
+
+            if (opponentSelection != null)
+            {
+                opponentSelection.OpponentFocused +=
+                    HandleOpponentFocused;
+                opponentSelection.OpponentConfirmed +=
+                    HandleOpponentConfirmed;
             }
         }
 
@@ -57,6 +94,20 @@ namespace DiaBlackJack.GameScene
             if (gameManager != null)
             {
                 gameManager.FormalBattleCompleted -= HandleBattleCompleted;
+            }
+
+            if (startingDemonReveal != null)
+            {
+                startingDemonReveal.RevealCompleted -=
+                    HandleStartingDemonRevealCompleted;
+            }
+
+            if (opponentSelection != null)
+            {
+                opponentSelection.OpponentFocused -=
+                    HandleOpponentFocused;
+                opponentSelection.OpponentConfirmed -=
+                    HandleOpponentConfirmed;
             }
         }
 
@@ -181,6 +232,22 @@ namespace DiaBlackJack.GameScene
             RefreshFlow();
         }
 
+        private void HandleStartingDemonRevealCompleted()
+        {
+            RequestCompleteStartingDemonReveal();
+        }
+
+        private void HandleOpponentFocused(string profileKey)
+        {
+            RequestFocusOpponent(profileKey);
+            opponentSelection?.Render(CurrentViewModel);
+        }
+
+        private void HandleOpponentConfirmed()
+        {
+            RequestConfirmOpponent();
+        }
+
         private void RefreshFlow()
         {
             if (_session == null && !TryAdoptFormalRun())
@@ -211,7 +278,64 @@ namespace DiaBlackJack.GameScene
                 gameManager.enabled = false;
             }
 
+            RenderFlowScreen();
             ScreenChanged?.Invoke(CurrentScreen, CurrentViewModel);
+        }
+
+        private void RenderFlowScreen()
+        {
+            bool isStartingReveal =
+                CurrentScreen == GameFlowScreen.StartingDemonReveal;
+            bool isOpponentSelection =
+                CurrentScreen == GameFlowScreen.OpponentSelection;
+            bool isCombat = CurrentScreen == GameFlowScreen.Combat;
+            hud?.SetEnemyStatusVisible(isCombat);
+
+            if (isStartingReveal &&
+                CurrentViewModel.StartingDemonGrantId.HasValue)
+            {
+                startingDemonReveal?.Render(
+                    CurrentViewModel.StartingDemonGrantId.Value,
+                    CurrentViewModel.StartingDemonGrantCards);
+            }
+            else
+            {
+                startingDemonReveal?.Hide();
+            }
+
+            if (isOpponentSelection)
+            {
+                opponentSelection?.Render(CurrentViewModel);
+            }
+            else
+            {
+                opponentSelection?.Hide();
+            }
+
+            if (hudRoot != null)
+            {
+                hudRoot.SetActive(isCombat);
+            }
+
+            if (charactersRoot != null)
+            {
+                charactersRoot.SetActive(
+                    isCombat || isStartingReveal ||
+                    CurrentScreen == GameFlowScreen.Shop);
+            }
+
+            if (enemyCharacter != null)
+            {
+                if (isStartingReveal ||
+                    CurrentScreen == GameFlowScreen.Shop)
+                {
+                    enemyCharacter.EnterMerchant();
+                }
+                else if (isCombat)
+                {
+                    enemyCharacter.ExitMerchant();
+                }
+            }
         }
 
         private void SynchronizeFocusedOpponent()
