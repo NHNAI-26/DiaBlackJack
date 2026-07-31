@@ -101,11 +101,11 @@ namespace DiaBlackJack.StageProgression
                 return false;
             }
 
-            if (context.CheckpointKind == RunCheckpointKind.StartingDemonSelected &&
-                progress.Player.StartingDemonDefinitionKey == null)
+            if (context.CheckpointKind == RunCheckpointKind.StartingDemonGranted &&
+                !progress.Player.StartingDemonGrantCompleted)
             {
                 validation = RunSaveValidationResult.Invalid(
-                    RunSaveValidationError.StartingDemonMissing);
+                    RunSaveValidationError.StartingDemonGrantMissing);
                 return false;
             }
 
@@ -177,7 +177,7 @@ namespace DiaBlackJack.StageProgression
                 player.CurrentGold,
                 player.LastIssuedCardId,
                 player.LastIssuedDemonCardId,
-                player.StartingDemonDefinitionKey,
+                player.StartingDemonGrantCompleted,
                 cards,
                 demonCards);
         }
@@ -188,7 +188,7 @@ namespace DiaBlackJack.StageProgression
             out RunSaveStatus status)
         {
             if (state == StageProgressionState.NotStarted &&
-                checkpointKind == RunCheckpointKind.StartingDemonSelected)
+                checkpointKind == RunCheckpointKind.StartingDemonGranted)
             {
                 status = RunSaveStatus.InProgress;
                 return true;

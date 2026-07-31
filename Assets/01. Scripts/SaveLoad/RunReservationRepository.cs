@@ -172,7 +172,7 @@ namespace Border.SaveLoad
                 reservation = new RunReservation(
                     envelope.runId,
                     envelope.rootSeed,
-                    envelope.startingDemonOfferId,
+                    envelope.startingDemonGrantId,
                     envelope.startingDemonDefinitionKeys,
                     envelope.createdAtUtc);
             }
@@ -231,7 +231,7 @@ namespace Border.SaveLoad
                 left.Version == right.Version &&
                 string.Equals(left.RunId, right.RunId, StringComparison.Ordinal) &&
                 left.RootSeed == right.RootSeed &&
-                left.StartingDemonOfferId == right.StartingDemonOfferId &&
+                left.StartingDemonGrantId == right.StartingDemonGrantId &&
                 string.Equals(
                     left.StartingDemonDefinitionKeys[0],
                     right.StartingDemonDefinitionKeys[0],
@@ -254,7 +254,7 @@ namespace Border.SaveLoad
                 reservationVersion = reservation.Version,
                 runId = reservation.RunId,
                 rootSeed = reservation.RootSeed,
-                startingDemonOfferId = reservation.StartingDemonOfferId,
+                startingDemonGrantId = reservation.StartingDemonGrantId,
                 startingDemonDefinitionKeys = new[]
                 {
                     reservation.StartingDemonDefinitionKeys[0],
@@ -277,7 +277,7 @@ namespace Border.SaveLoad
             public int reservationVersion;
             public string runId;
             public int rootSeed;
-            public int startingDemonOfferId;
+            public int startingDemonGrantId;
             public string[] startingDemonDefinitionKeys;
             public string createdAtUtc;
         }

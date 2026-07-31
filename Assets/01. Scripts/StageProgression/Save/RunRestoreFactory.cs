@@ -24,8 +24,6 @@ namespace DiaBlackJack.StageProgression
 
             RootSeed = source.RootSeed;
             NextContentKind = source.NextContentKind;
-            StartingDemonDefinitionKey =
-                source.Player.StartingDemonDefinitionKey;
             CompletedShopCount = source.Random.ShopOfferOrdinal;
             UtilityPriceLevel = source.Random.UtilityPriceLevel;
         }
@@ -41,8 +39,6 @@ namespace DiaBlackJack.StageProgression
         internal int RootSeed { get; }
 
         internal StageProgressionSession Session { get; }
-
-        internal string StartingDemonDefinitionKey { get; }
 
         internal int UtilityPriceLevel { get; }
     }
@@ -224,7 +220,7 @@ namespace DiaBlackJack.StageProgression
                 demonCards,
                 snapshot.LastIssuedCardId,
                 snapshot.LastIssuedDemonCardId,
-                snapshot.StartingDemonDefinitionKey);
+                snapshot.StartingDemonGrantCompleted);
         }
 
         private OpponentSelectionGenerator RestoreOpponentGenerator(
@@ -289,7 +285,7 @@ namespace DiaBlackJack.StageProgression
             RunSaveSnapshot snapshot,
             out StageProgressionState state)
         {
-            if (snapshot.CheckpointKind == RunCheckpointKind.StartingDemonSelected &&
+            if (snapshot.CheckpointKind == RunCheckpointKind.StartingDemonGranted &&
                 snapshot.Status == RunSaveStatus.InProgress)
             {
                 state = StageProgressionState.NotStarted;

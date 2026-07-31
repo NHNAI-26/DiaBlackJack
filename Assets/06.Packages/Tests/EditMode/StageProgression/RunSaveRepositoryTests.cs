@@ -11,7 +11,7 @@ namespace DiaBlackJack.StageProgression.Tests
         private const string SavedAtUtc = "2026-07-26T00:00:00.0000000+00:00";
 
         [Test]
-        public void SV02_U01_VersionOneJsonRoundTripPreservesEveryField()
+        public void SV02_U01_CurrentJsonRoundTripPreservesEveryField()
         {
             RunSaveSnapshot source = CreateSnapshot();
 
@@ -140,8 +140,8 @@ namespace DiaBlackJack.StageProgression.Tests
             futureFiles.Set(
                 RunSaveRepository.PrimaryFileName,
                 validJson.Replace(
-                    "\"schemaVersion\":1",
-                    "\"schemaVersion\":2"));
+                    "\"schemaVersion\":2",
+                    "\"schemaVersion\":3"));
             MemoryRunSaveFileStore mismatchedFiles = new MemoryRunSaveFileStore();
             mismatchedFiles.Set(
                 RunSaveRepository.PrimaryFileName,
@@ -184,8 +184,8 @@ namespace DiaBlackJack.StageProgression.Tests
                 8,
                 5,
                 7,
-                4,
-                DemonContractCatalog.SatanKey,
+                5,
+                true,
                 new[]
                 {
                     new RunSaveCardSnapshot(
@@ -201,7 +201,10 @@ namespace DiaBlackJack.StageProgression.Tests
                 {
                     new RunSaveDemonSnapshot(
                         4,
-                        DemonContractCatalog.SatanKey)
+                        DemonContractCatalog.SatanKey),
+                    new RunSaveDemonSnapshot(
+                        5,
+                        DemonContractCatalog.MammonKey)
                 });
             return new RunSaveSnapshot(
                 RunSaveSnapshot.CurrentSchemaVersion,
@@ -223,8 +226,12 @@ namespace DiaBlackJack.StageProgression.Tests
 
         private static void AssertSnapshot(RunSaveSnapshot snapshot)
         {
-            Assert.That(snapshot.SchemaVersion, Is.EqualTo(1));
-            Assert.That(snapshot.ContentRevision, Is.EqualTo("prototype-v2"));
+            Assert.That(
+                snapshot.SchemaVersion,
+                Is.EqualTo(RunSaveSnapshot.CurrentSchemaVersion));
+            Assert.That(
+                snapshot.ContentRevision,
+                Is.EqualTo(RunSaveSnapshot.CurrentContentRevision));
             Assert.That(snapshot.SaveSequence, Is.EqualTo(9));
             Assert.That(snapshot.RunId, Is.EqualTo("run-001"));
             Assert.That(snapshot.SavedAtUtc, Is.EqualTo(SavedAtUtc));
@@ -240,16 +247,14 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(snapshot.Player.CurrentSoul, Is.EqualTo(8));
             Assert.That(snapshot.Player.CurrentGold, Is.EqualTo(5));
             Assert.That(snapshot.Player.LastIssuedCardId, Is.EqualTo(7));
-            Assert.That(snapshot.Player.LastIssuedDemonCardId, Is.EqualTo(4));
-            Assert.That(
-                snapshot.Player.StartingDemonDefinitionKey,
-                Is.EqualTo(DemonContractCatalog.SatanKey));
+            Assert.That(snapshot.Player.LastIssuedDemonCardId, Is.EqualTo(5));
+            Assert.That(snapshot.Player.StartingDemonGrantCompleted, Is.True);
             Assert.That(snapshot.Player.Cards.Count, Is.EqualTo(2));
             Assert.That(snapshot.Player.Cards[0].Id, Is.EqualTo(2));
             Assert.That(snapshot.Player.Cards[0].Suit, Is.EqualTo(CardSuit.Spade));
             Assert.That(snapshot.Player.Cards[1].Id, Is.EqualTo(7));
             Assert.That(snapshot.Player.Cards[1].Suit, Is.EqualTo(CardSuit.Clover));
-            Assert.That(snapshot.Player.DemonCards.Count, Is.EqualTo(1));
+            Assert.That(snapshot.Player.DemonCards.Count, Is.EqualTo(2));
             Assert.That(snapshot.Player.DemonCards[0].Id, Is.EqualTo(4));
             Assert.That(snapshot.Random.OpponentOfferOrdinal, Is.EqualTo(1));
             Assert.That(snapshot.Random.BattleRewardOrdinal, Is.EqualTo(2));

@@ -145,19 +145,19 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
-        public void DCR01_I07_DefaultDemonDeckStartsRunWithoutStartingSelection()
+        public void DCR01_I07_PreconfiguredDemonDeckSkipsStartingGrant()
         {
             PlayerRunState player = CreatePlayer();
             StageProgressionSession session = new StageProgressionSession(
                 new RunProgress(CreateRunStages(97), player),
-                startingDemonSelectionGenerator:
-                    new StartingDemonSelectionGenerator(
+                startingDemonGrantGenerator:
+                    new StartingDemonGrantGenerator(
                         DemonContractCatalog.Default,
                         101));
 
             Assert.That(session.TryStartRun(), Is.True);
 
-            Assert.That(session.PendingStartingDemonSelection, Is.Null);
+            Assert.That(session.PendingStartingDemonGrant, Is.Null);
             Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.InBattle));
             Assert.That(session.Battle.PlayerDemonDeck.TotalCardCount, Is.EqualTo(4));
             IReadOnlyList<DemonContractCard> candidates =

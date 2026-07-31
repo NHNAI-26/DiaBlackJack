@@ -6,23 +6,15 @@ using DiaBlackJack.CoreLoop;
 
 namespace DiaBlackJack.StageProgression
 {
-    public sealed class StartingDemonSelectionOption
+    public sealed class StartingDemonGrantCard
     {
-        internal StartingDemonSelectionOption(
-            int optionId,
-            DemonContractDefinition definition)
+        internal StartingDemonGrantCard(DemonContractDefinition definition)
         {
-            if (optionId < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(optionId));
-            }
-
             if (definition == null)
             {
                 throw new ArgumentNullException(nameof(definition));
             }
 
-            OptionId = optionId;
             DefinitionKey = definition.Key;
             DisplayName = definition.DisplayName;
             Summary = definition.Summary;
@@ -35,89 +27,68 @@ namespace DiaBlackJack.StageProgression
 
         public string DisplayName { get; }
 
-        public int OptionId { get; }
-
         public string Summary { get; }
     }
 
-    public sealed class StartingDemonSelectionOffer
+    public sealed class StartingDemonGrant
     {
-        private readonly ReadOnlyCollection<StartingDemonSelectionOption> _options;
+        private readonly ReadOnlyCollection<StartingDemonGrantCard> _cards;
 
-        internal StartingDemonSelectionOffer(
-            int offerId,
-            IEnumerable<StartingDemonSelectionOption> options)
+        internal StartingDemonGrant(
+            int grantId,
+            IEnumerable<StartingDemonGrantCard> cards)
         {
-            if (offerId < 0)
+            if (grantId < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(offerId));
+                throw new ArgumentOutOfRangeException(nameof(grantId));
             }
 
-            if (options == null)
+            if (cards == null)
             {
-                throw new ArgumentNullException(nameof(options));
+                throw new ArgumentNullException(nameof(cards));
             }
 
-            List<StartingDemonSelectionOption> copiedOptions =
-                new List<StartingDemonSelectionOption>();
-            HashSet<int> optionIds = new HashSet<int>();
+            List<StartingDemonGrantCard> copiedCards =
+                new List<StartingDemonGrantCard>();
             HashSet<string> definitionKeys =
                 new HashSet<string>(StringComparer.Ordinal);
-            foreach (StartingDemonSelectionOption option in options)
+            foreach (StartingDemonGrantCard card in cards)
             {
-                if (option == null ||
-                    !optionIds.Add(option.OptionId) ||
-                    !definitionKeys.Add(option.DefinitionKey))
+                if (card == null ||
+                    !definitionKeys.Add(card.DefinitionKey))
                 {
                     throw new ArgumentException(
-                        "Starting demon options must be non-null and distinct.",
-                        nameof(options));
+                        "Starting demon grant cards must be non-null and distinct.",
+                        nameof(cards));
                 }
 
-                copiedOptions.Add(option);
+                copiedCards.Add(card);
             }
 
-            if (copiedOptions.Count != 2)
+            if (copiedCards.Count != 2)
             {
                 throw new ArgumentException(
-                    "Starting demon selection requires exactly two options.",
-                    nameof(options));
+                    "Starting demon grant requires exactly two cards.",
+                    nameof(cards));
             }
 
-            OfferId = offerId;
-            _options = copiedOptions.AsReadOnly();
+            GrantId = grantId;
+            _cards = copiedCards.AsReadOnly();
         }
 
-        public int OfferId { get; }
+        public IReadOnlyList<StartingDemonGrantCard> Cards => _cards;
 
-        public IReadOnlyList<StartingDemonSelectionOption> Options => _options;
-
-        internal bool TryGetOption(
-            int optionId,
-            out StartingDemonSelectionOption option)
-        {
-            for (int i = 0; i < _options.Count; i++)
-            {
-                if (_options[i].OptionId == optionId)
-                {
-                    option = _options[i];
-                    return true;
-                }
-            }
-
-            option = null;
-            return false;
-        }
+        public int GrantId { get; }
     }
 
-    public sealed class StartingDemonSelectionGenerator
+    public sealed class StartingDemonGrantGenerator
     {
         private readonly ReadOnlyCollection<DemonContractDefinition>
             _candidateDefinitions;
         private readonly DeterministicRng _random = new DeterministicRng();
-        private int _nextOfferId;
+        private int _nextGrantId;
 
-        public StartingDemonSelectionGenerator(
+        public StartingDemonGrantGenerator(
             DemonContractCatalog catalog,
             int seed)
             : this(
@@ -127,7 +98,7 @@ namespace DiaBlackJack.StageProgression
         {
         }
 
-        public StartingDemonSelectionGenerator(
+        public StartingDemonGrantGenerator(
             DemonContractCatalog catalog,
             int seed,
             IEnumerable<string> candidateDefinitionKeys)
@@ -163,7 +134,7 @@ namespace DiaBlackJack.StageProgression
             if (candidates.Count < 2)
             {
                 throw new ArgumentException(
-                    "Starting demon selection requires at least two unlocked definitions.",
+                    "Starting demon grant requires at least two unlocked definitions.",
                     nameof(candidateDefinitionKeys));
             }
 
@@ -171,12 +142,12 @@ namespace DiaBlackJack.StageProgression
             _random.Reseed(seed);
         }
 
-        public StartingDemonSelectionOffer Generate()
+        public StartingDemonGrant Generate()
         {
-            if (_nextOfferId == int.MaxValue)
+            if (_nextGrantId == int.MaxValue)
             {
                 throw new InvalidOperationException(
-                    "Starting demon selection offer ids are exhausted.");
+                    "Starting demon grant ids are exhausted.");
             }
 
             int firstIndex = _random.Next(_candidateDefinitions.Count);
@@ -186,16 +157,14 @@ namespace DiaBlackJack.StageProgression
                 secondIndex++;
             }
 
-            int offerId = _nextOfferId++;
-            return new StartingDemonSelectionOffer(
-                offerId,
+            int grantId = _nextGrantId++;
+            return new StartingDemonGrant(
+                grantId,
                 new[]
                 {
-                    new StartingDemonSelectionOption(
-                        0,
+                    new StartingDemonGrantCard(
                         _candidateDefinitions[firstIndex]),
-                    new StartingDemonSelectionOption(
-                        1,
+                    new StartingDemonGrantCard(
                         _candidateDefinitions[secondIndex])
                 });
         }

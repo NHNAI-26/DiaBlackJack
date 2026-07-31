@@ -134,6 +134,9 @@ namespace DiaBlackJack.StageProgression.UI
                 opponentSelectionGenerator: new OpponentSelectionGenerator(
                     EnemyCombatProfileCatalog.Default,
                     rootSeed),
+                startingDemonGrantGenerator: new StartingDemonGrantGenerator(
+                    DemonContractCatalog.Default,
+                    unchecked(rootSeed + 3)),
                 usesBattleRewards: false);
         }
 
@@ -158,7 +161,8 @@ namespace DiaBlackJack.StageProgression.UI
             return new PlayerRunState(
                 12,
                 12,
-                cards);
+                cards,
+                demonDeck: new List<RunDemonDefinition>());
         }
 
         private static IReadOnlyList<StageDefinition> CreatePrototypeStages(

@@ -58,8 +58,8 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(player.LastIssuedCardId, Is.EqualTo(11));
             Assert.That(player.LastIssuedDemonCardId, Is.EqualTo(12));
             Assert.That(
-                result.StartingDemonDefinitionKey,
-                Is.EqualTo(DemonContractCatalog.SatanKey));
+                player.StartingDemonGrantCompleted,
+                Is.True);
         }
 
         [Test]
@@ -73,7 +73,8 @@ namespace DiaBlackJack.StageProgression.Tests
                 },
                 demonCards: new[]
                 {
-                    new RunSaveDemonSnapshot(2, DemonContractCatalog.SatanKey)
+                    new RunSaveDemonSnapshot(2, DemonContractCatalog.SatanKey),
+                    new RunSaveDemonSnapshot(3, DemonContractCatalog.MammonKey)
                 },
                 lastIssuedCardId: 9,
                 lastIssuedDemonCardId: 6);
@@ -268,7 +269,7 @@ namespace DiaBlackJack.StageProgression.Tests
                 currentGold,
                 lastIssuedCardId,
                 lastIssuedDemonCardId,
-                DemonContractCatalog.SatanKey,
+                true,
                 cards ?? new[]
                 {
                     new RunSaveCardSnapshot(2, "standard-ace-1", CardSuit.Spade),
@@ -276,6 +277,7 @@ namespace DiaBlackJack.StageProgression.Tests
                 },
                 demonCards ?? new[]
                 {
+                    new RunSaveDemonSnapshot(3, DemonContractCatalog.MammonKey),
                     new RunSaveDemonSnapshot(4, DemonContractCatalog.SatanKey)
                 });
             return new RunSaveSnapshot(
@@ -341,7 +343,8 @@ namespace DiaBlackJack.StageProgression.Tests
                 },
                 new[]
                 {
-                    new RunDemonDefinition(0, DemonContractCatalog.SatanKey)
+                    new RunDemonDefinition(0, DemonContractCatalog.SatanKey),
+                    new RunDemonDefinition(1, DemonContractCatalog.MammonKey)
                 });
         }
 

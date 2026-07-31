@@ -76,7 +76,7 @@ namespace DiaBlackJack.StageProgression.Tests
         {
             Assert.That(
                 RunSaveSnapshot.CurrentContentRevision,
-                Is.EqualTo("prototype-v2"));
+                Is.EqualTo("prototype-v3"));
             RunSaveSnapshot legacy = new RunSaveSnapshot(
                 RunSaveSnapshot.CurrentSchemaVersion,
                 "prototype-v1",
@@ -95,7 +95,7 @@ namespace DiaBlackJack.StageProgression.Tests
                     0,
                     0,
                     0,
-                    DemonContractCatalog.SatanKey,
+                    true,
                     new[]
                     {
                         new RunSaveCardSnapshot(
@@ -107,7 +107,10 @@ namespace DiaBlackJack.StageProgression.Tests
                     {
                         new RunSaveDemonSnapshot(
                             0,
-                            DemonContractCatalog.SatanKey)
+                            DemonContractCatalog.SatanKey),
+                        new RunSaveDemonSnapshot(
+                            1,
+                            DemonContractCatalog.MammonKey)
                     }),
                 new RunRandomSaveSnapshot(0, 0, 0, 0, null),
                 new string[0],

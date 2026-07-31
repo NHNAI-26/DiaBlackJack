@@ -4,13 +4,13 @@
 > 기획·개발 책임자: 이천서
 > 작업 식별자: SV-00~SV-06
 > 버전: v1.2
-> 상태: 시작 악마 2장 자동 지급 저장 재명세 · 기존 선택 체크포인트 이관 대기
+> 상태: 시작 악마 2장 자동 지급 저장·복원 이관 완료
 > 최종 갱신: 2026-07-31
 
 > **정식 런 카드 보상 제거 영향(2026-07-30)**
 > 아래 SV-04의 카드 보상 콜백과 테스트 결과는 현행 구현 증거로 보존한다. SV-06은 RF-03에서 제공할 승리 골드 정산 완료 이벤트를 일반전 체크포인트로, 보스 즉시 승리 이벤트를 터미널 체크포인트로 사용하며 `RewardSelection`을 새 저장 조건으로 사용하지 않는다.
 
-> **시작 악마 지급 변경(2026-07-31):** 새 첫 체크포인트는 시작 악마 2장 자동 지급 완료다. 두 카드 키·물리 ID·런 시드를 함께 검증하고 저장한다. 기존 `StartingDemonSelected` 종류와 선택 API는 과거 구현이며, 체크포인트 이름·스키마 호환 정책을 정한 뒤 이관한다.
+> **시작 악마 지급 구현(2026-07-31):** 첫 체크포인트는 `StartingDemonGranted`다. 두 카드 키·물리 ID·지급 완료 여부·런 시드를 함께 검증하고 저장한다. 스키마는 2, 콘텐츠 리비전은 `prototype-v3`이며 기존 스키마 1은 자동 변환하지 않고 지원하지 않는 버전으로 분류한다.
 
 ## 1. 기술 목표
 
@@ -21,7 +21,7 @@ StageProgression / RunFlow 상태
         ↓ Capture
 RunSaveSnapshot (순수 C#)
         ↓ Validate
-RunSaveEnvelope v1
+RunSaveEnvelope v2
         ↓ Serialize
 temporary → backup → primary
 
@@ -44,10 +44,10 @@ StageProgressionRuntime.Session
 | `Border.SaveLoad.Save` | 직렬화할 필드가 없는 빈 클래스 | 런 저장 전용 DTO와 분리 또는 교체 |
 | `SaveLoadSystem` | ScriptableObject가 `SaveData`를 직접 보유 | 저장소·직렬화·조정 책임 분리 |
 | `FileManager` | 기본 파일에 `WriteAllText` 직접 수행 | 경로 검증, 임시/백업, 원자 교체, 명시적 결과 |
-| `PlayerRunState` | 영혼·골드·일반/악마 덱·마지막 발급 ID·시작 악마 키를 보유하고 검증된 새 객체 생성 | RF-01B 정산 이벤트 연결 완료 |
-| 시작 악마 지급 | Runtime 새 런 경로가 빈 악마 덱에 서로 다른 2장을 자동 발급하고 첫 체크포인트를 수행 | 기존 선택 API·스키마 이관 대기 |
+| `PlayerRunState` | 영혼·골드·일반/악마 덱·마지막 발급 ID·시작 악마 지급 완료 여부를 보유하고 검증된 새 객체 생성 | 구현 완료 |
+| 시작 악마 지급 | Runtime 새 런 경로가 빈 악마 덱에 서로 다른 2장을 원자 발급하고 공개 완료 뒤 첫 체크포인트 수행 | 구현 완료 |
 | `RunProgress` | `StageCleared`·`RunVictory`·`RunDefeat`의 스테이지 위치와 안정 상태를 새 객체로 복원 | 시작 악마·상점·사건 체크포인트 연결 |
-| `StageProgression/Save` | 스키마 1 스냅샷·검증·세션 순번 캡처·검증된 `RunRestoreFactory` 구현 | SV-06 RF 안정 상태 확장 |
+| `StageProgression/Save` | 스키마 2 스냅샷·지급 완료 검증·세션 순번 캡처·검증된 `RunRestoreFactory` 구현 | 완료 |
 | `SaveLoad/RunSave*` | 파일 저장소·복원·체크포인트 조정·런 예약·응용 흐름·표시 모델 구현 | SV-06 RF 완료 전이 연결 |
 | `StageProgressionSession` | 상대·보상 제안 생성 순번을 저장 캡처에 제공 | 안정 전이 후 자동 저장 조정 |
 | `StageProgressionRuntime` | `RunSaveFlow`를 소유하고 저장·예약·이어하기 세션을 `DontDestroyOnLoad`로 유지 | RF 화면 라우팅 연동 |
@@ -127,7 +127,7 @@ public sealed class PlayerRunSaveSnapshot
     public int CurrentGold { get; }
     public int LastIssuedCardId { get; }
     public int LastIssuedDemonCardId { get; }
-    public string StartingDemonDefinitionKey { get; }
+    public bool StartingDemonGrantCompleted { get; }
     public IReadOnlyList<RunSaveCardSnapshot> Cards { get; }
     public IReadOnlyList<RunSaveDemonSnapshot> DemonCards { get; }
 }
@@ -195,7 +195,7 @@ Enum은 C# 선언 순서에 종속된 정수 대신 안정적인 문자열 코�
 
 ### 5.2 버전
 
-- 최초 스키마는 1이다.
+- 현행 스키마는 2다.
 - `schemaVersion <= 0`은 손상으로 거부한다.
 - 현재보다 높은 버전은 `UnsupportedNewerVersion`으로 거부한다.
 - 과거 버전은 등록된 명시적 Migration이 있을 때만 순차 변환한다.
@@ -217,7 +217,7 @@ v1에서는 마이그레이션 프레임워크를 과도하게 만들지 않고 
 8. 일반 카드 ID와 악마 카드 ID는 각 집합에서 중복되지 않는다.
 9. 모든 정의 키와 무늬가 현재 카탈로그에 존재한다.
 10. 마지막 발급 ID는 현재 해당 덱의 최대 ID 이상이다.
-11. 시작 악마 키가 있으면 악마 덱에 같은 정의가 최소 1장 존재한다.
+11. 시작 악마 지급 완료가 참이고 악마 덱에 서로 다른 시작 악마가 최소 2장 존재한다.
 12. 스테이지 인덱스와 ID가 현재 경로에 일치한다.
 13. 체크포인트 종류와 다음 콘텐츠 종류의 조합이 허용된다.
 14. 완료한 상점·사건 ID는 비어 있거나 중복되지 않는다.
@@ -233,7 +233,7 @@ v1에서는 마이그레이션 프레임워크를 과도하게 만들지 않고 
 ```csharp
 public enum RunCheckpointKind
 {
-    StartingDemonSelected,
+    StartingDemonGranted,
     CombatSettlementCompleted,
     ShopExited,
     EventResolved,
@@ -375,7 +375,7 @@ createdAtUtc
 SV-04의 구현 API는 다음과 같다.
 
 - `TryStartRun()`·`TryAdvanceToNextStage()`는 저장 실패로 보류된 체크포인트가 있으면 다음 콘텐츠 진입을 거부한다.
-- `TrySelectStartingDemon(...)`은 성공한 선택을 `StartingDemonSelected`로 한 번 기록한다.
+- `TryCompleteStartingDemonReveal()`은 두 장 지급과 공개 연출 완료 뒤 `StartingDemonGranted`를 한 번 기록한다.
 - `TrySelectBattleReward(...)`·`TrySkipBattleReward(...)`은 일반전 정산을 `CombatSettlementCompleted`, 최종 보스 보상을 `RunEnded`로 기록한다.
 - `TryCheckpointRunEnd()`은 승리·패배 터미널 상태를 한 번만 기록한다.
 - `TryRetryPendingCheckpoint()`는 실패 당시의 저장 순번·UTC 시각·스냅샷을 그대로 다시 쓴다.

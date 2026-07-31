@@ -34,7 +34,7 @@ namespace DiaBlackJack.StageProgression
                 0,
                 null,
                 null,
-                null)
+                demonDeck == null)
         {
         }
 
@@ -53,7 +53,7 @@ namespace DiaBlackJack.StageProgression
                 initialGold,
                 null,
                 null,
-                null)
+                demonDeck == null)
         {
         }
 
@@ -66,7 +66,7 @@ namespace DiaBlackJack.StageProgression
             int currentGold,
             int? lastIssuedCardId,
             int? lastIssuedDemonCardId,
-            string startingDemonDefinitionKey)
+            bool startingDemonGrantCompleted)
         {
             if (maximumSoul <= 0)
             {
@@ -137,8 +137,8 @@ namespace DiaBlackJack.StageProgression
 
             List<RunDemonDefinition> demonCards = ValidateAndCopyDemonDeck(
                 demonDeck ?? CreatePrototypeDemonDeck());
-            StartingDemonDefinitionKey = ValidateStartingDemonDefinitionKey(
-                startingDemonDefinitionKey,
+            StartingDemonGrantCompleted = ValidateStartingDemonGrantCompleted(
+                startingDemonGrantCompleted,
                 demonCards);
             _initialDemonCards = new List<RunDemonDefinition>(demonCards);
             _initialDemonDeck = _initialDemonCards.AsReadOnly();
@@ -164,10 +164,10 @@ namespace DiaBlackJack.StageProgression
 
         public IReadOnlyList<RunDemonDefinition> DemonDeck => _demonDeck;
 
-        public string StartingDemonDefinitionKey { get; private set; }
+        public bool StartingDemonGrantCompleted { get; private set; }
 
-        internal bool CanSelectStartingDemon =>
-            StartingDemonDefinitionKey == null && _currentDemonDeck.Count == 0;
+        internal bool CanReceiveStartingDemonGrant =>
+            !StartingDemonGrantCompleted && _currentDemonDeck.Count == 0;
 
         internal int LastIssuedCardId => _lastIssuedCardId;
 
@@ -185,7 +185,7 @@ namespace DiaBlackJack.StageProgression
             IEnumerable<RunDemonDefinition> demonDeck,
             int lastIssuedCardId,
             int lastIssuedDemonCardId,
-            string startingDemonDefinitionKey = null)
+            bool startingDemonGrantCompleted = false)
         {
             return new PlayerRunState(
                 maximumSoul,
@@ -196,7 +196,7 @@ namespace DiaBlackJack.StageProgression
                 currentGold,
                 lastIssuedCardId,
                 lastIssuedDemonCardId,
-                startingDemonDefinitionKey);
+                startingDemonGrantCompleted);
         }
 
         public void SetCurrentSoul(int currentSoul)
@@ -304,22 +304,37 @@ namespace DiaBlackJack.StageProgression
             return demonCard;
         }
 
-        internal bool TrySelectStartingDemon(string definitionKey)
+        internal bool TryGrantStartingDemons(
+            IReadOnlyList<string> definitionKeys)
         {
-            if (!CanSelectStartingDemon ||
-                _lastIssuedDemonCardId == int.MaxValue ||
-                !ContainsDemonDefinition(definitionKey))
+            if (!CanReceiveStartingDemonGrant ||
+                definitionKeys == null ||
+                definitionKeys.Count != 2 ||
+                _lastIssuedDemonCardId > int.MaxValue - 2)
             {
                 return false;
             }
 
-            int nextCardId = _lastIssuedDemonCardId + 1;
-            var selected = new RunDemonDefinition(nextCardId, definitionKey);
-            _initialDemonCards.Add(selected);
-            _currentDemonDeck.Add(selected);
-            _initialLastDemonCardId = nextCardId;
-            _lastIssuedDemonCardId = nextCardId;
-            StartingDemonDefinitionKey = selected.DefinitionKey;
+            string firstKey = definitionKeys[0];
+            string secondKey = definitionKeys[1];
+            if (!ContainsDemonDefinition(firstKey) ||
+                !ContainsDemonDefinition(secondKey) ||
+                string.Equals(firstKey, secondKey, StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            int firstId = _lastIssuedDemonCardId + 1;
+            int secondId = firstId + 1;
+            var first = new RunDemonDefinition(firstId, firstKey);
+            var second = new RunDemonDefinition(secondId, secondKey);
+            _initialDemonCards.Add(first);
+            _initialDemonCards.Add(second);
+            _currentDemonDeck.Add(first);
+            _currentDemonDeck.Add(second);
+            _initialLastDemonCardId = secondId;
+            _lastIssuedDemonCardId = secondId;
+            StartingDemonGrantCompleted = true;
             return true;
         }
 
@@ -422,36 +437,18 @@ namespace DiaBlackJack.StageProgression
             return resolvedId;
         }
 
-        private static string ValidateStartingDemonDefinitionKey(
-            string definitionKey,
+        private static bool ValidateStartingDemonGrantCompleted(
+            bool completed,
             IReadOnlyList<RunDemonDefinition> demonCards)
         {
-            if (definitionKey == null)
-            {
-                return null;
-            }
-
-            if (string.IsNullOrWhiteSpace(definitionKey))
+            if (completed && demonCards.Count < 2)
             {
                 throw new ArgumentException(
-                    "Starting demon definition key cannot be empty.",
-                    nameof(definitionKey));
+                    "A completed starting demon grant requires at least two demon cards.",
+                    nameof(completed));
             }
 
-            for (int i = 0; i < demonCards.Count; i++)
-            {
-                if (string.Equals(
-                    demonCards[i].DefinitionKey,
-                    definitionKey,
-                    StringComparison.Ordinal))
-                {
-                    return demonCards[i].DefinitionKey;
-                }
-            }
-
-            throw new ArgumentException(
-                "Starting demon must exist in the current run demon deck.",
-                nameof(definitionKey));
+            return completed || demonCards.Count >= 2;
         }
 
         private static bool ContainsDemonDefinition(string definitionKey)

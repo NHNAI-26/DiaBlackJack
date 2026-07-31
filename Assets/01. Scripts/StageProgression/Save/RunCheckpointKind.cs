@@ -2,7 +2,7 @@ namespace DiaBlackJack.StageProgression
 {
     public enum RunCheckpointKind
     {
-        StartingDemonSelected,
+        StartingDemonGranted,
         CombatSettlementCompleted,
         ShopExited,
         EventResolved,

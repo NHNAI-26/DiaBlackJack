@@ -251,7 +251,7 @@ namespace Border.SaveLoad
                 snapshot.SaveSequence + 1,
                 _utcNowProvider);
             if (snapshot.CheckpointKind ==
-                    RunCheckpointKind.StartingDemonSelected &&
+                    RunCheckpointKind.StartingDemonGranted &&
                 !coordinator.TryStartRun())
             {
                 Notice = RunSaveNotice.ContinueFailed;
@@ -301,11 +301,11 @@ namespace Border.SaveLoad
                 Coordinator.TryAdvanceToNextStage();
         }
 
-        public bool TrySelectStartingDemon(int offerId, int optionId)
+        public bool TryCompleteStartingDemonReveal()
         {
             if (IsMenuVisible ||
                 Coordinator == null ||
-                !Coordinator.TrySelectStartingDemon(offerId, optionId))
+                !Coordinator.TryCompleteStartingDemonReveal())
             {
                 return false;
             }
@@ -439,7 +439,8 @@ namespace Border.SaveLoad
 
             Notice = RunSaveNotice.CheckpointSaved;
             if (Session.Progress.State == StageProgressionState.NotStarted &&
-                Session.Progress.Player.StartingDemonDefinitionKey != null)
+                Session.Progress.Player.StartingDemonGrantCompleted &&
+                Session.PendingStartingDemonGrant == null)
             {
                 CompleteStartingCheckpoint();
             }
@@ -458,16 +459,16 @@ namespace Border.SaveLoad
                 return false;
             }
 
-            StartingDemonSelectionOffer offer =
-                candidate.PendingStartingDemonSelection;
-            if (offer == null)
+            StartingDemonGrant grant =
+                candidate.PendingStartingDemonGrant;
+            if (grant == null)
             {
                 ActivateNewRun(candidate, rootSeed);
                 Notice = RunSaveNotice.None;
                 return true;
             }
 
-            if (offer.Options.Count != 2)
+            if (grant.Cards.Count != 2)
             {
                 Notice = RunSaveNotice.ReservationInvalid;
                 return false;
@@ -479,11 +480,11 @@ namespace Border.SaveLoad
                 reservation = new RunReservation(
                     _runIdFactory(),
                     rootSeed,
-                    offer.OfferId,
+                    grant.GrantId,
                     new[]
                     {
-                        offer.Options[0].DefinitionKey,
-                        offer.Options[1].DefinitionKey
+                        grant.Cards[0].DefinitionKey,
+                        grant.Cards[1].DefinitionKey
                     },
                     GetCreatedAtUtc());
             }
@@ -525,17 +526,17 @@ namespace Border.SaveLoad
                 return false;
             }
 
-            StartingDemonSelectionOffer offer =
-                candidate.PendingStartingDemonSelection;
-            if (offer == null ||
-                offer.OfferId != reservation.StartingDemonOfferId ||
-                offer.Options.Count != 2 ||
+            StartingDemonGrant grant =
+                candidate.PendingStartingDemonGrant;
+            if (grant == null ||
+                grant.GrantId != reservation.StartingDemonGrantId ||
+                grant.Cards.Count != 2 ||
                 !string.Equals(
-                    offer.Options[0].DefinitionKey,
+                    grant.Cards[0].DefinitionKey,
                     reservation.StartingDemonDefinitionKeys[0],
                     StringComparison.Ordinal) ||
                 !string.Equals(
-                    offer.Options[1].DefinitionKey,
+                    grant.Cards[1].DefinitionKey,
                     reservation.StartingDemonDefinitionKeys[1],
                     StringComparison.Ordinal))
             {
@@ -591,7 +592,7 @@ namespace Border.SaveLoad
             if (!Coordinator.TryStartRun())
             {
                 throw new InvalidOperationException(
-                    "A saved starting selection could not prepare the first stage.");
+                    "A saved starting demon grant could not prepare the first stage.");
             }
         }
 

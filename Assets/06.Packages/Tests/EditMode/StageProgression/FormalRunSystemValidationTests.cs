@@ -208,13 +208,21 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
-        public void RFM02_U01_StageTestPrototypeKeepsItsExistingStartFlow()
+        public void RFM02_U01_StageTestPrototypeGrantsTwoDemonsBeforeOpponentSelection()
         {
             StageProgressionSession session =
                 StageProgressionRuntime.CreatePrototypeSession(20260730);
 
             Assert.That(session.TryStartRun(), Is.True);
-            Assert.That(session.PendingStartingDemonSelection, Is.Null);
+            Assert.That(session.PendingStartingDemonGrant, Is.Not.Null);
+            Assert.That(session.Progress.Player.DemonDeck.Count, Is.EqualTo(2));
+            Assert.That(
+                session.Progress.State,
+                Is.EqualTo(StageProgressionState.NotStarted));
+            Assert.That(
+                session.TryCompleteStartingDemonReveal(),
+                Is.True);
+            Assert.That(session.TryStartRun(), Is.True);
             Assert.That(
                 session.Progress.State,
                 Is.EqualTo(StageProgressionState.OpponentSelection));

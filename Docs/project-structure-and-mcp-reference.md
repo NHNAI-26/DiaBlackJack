@@ -900,7 +900,7 @@ Unity MCP 활성 인스턴스는 `DiaBlackJack@5635a4cdcfecc8dd`, Unity는
 
 | 경계 | 확인 결과 |
 | --- | --- |
-| 런 예약 | `RunReservationRepository`가 `run-reservation.tmp` 검증 뒤 `run-reservation.json`으로 교체하고 시작 악마 제안 ID·후보 키 2장을 보존 |
+| 런 예약 | `RunReservationRepository`가 `run-reservation.tmp` 검증 뒤 `run-reservation.json`으로 교체하고 시작 악마 지급 ID·확정 키 2장을 보존해 재접속 재추첨을 막음 |
 | 응용 흐름 | `RunSaveFlow`가 새 런 확인·취소, 예약 재개, 체크포인트 이어하기, 세션 교체, 저장 실패 보류·재시도를 소유 |
 | Runtime | `StageProgressionRuntime`이 `SystemRunSaveFileStore`·저장/예약 저장소·세션 Factory를 조립하고, 현재 저장 세션을 `FormalRunSession`으로 재결합해 `DontDestroyOnLoad`로 노출 |
 | 화면 | 기존 StageTest IMGUI Controller/View에 런 메뉴·시작 악마 2장·백업/손상/버전 안내·`SAVED`·실패 재시도 연결 |

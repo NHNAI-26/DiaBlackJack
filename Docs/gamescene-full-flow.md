@@ -50,8 +50,8 @@ Notion `게임 플로우` 추가 기준:
   근거: `Assets/01. Scripts/StageProgression/RunFlow/FormalRunSession.cs:6-12`, `:78-179`, `:234-270`
 - 골드, 상점 상품, 제거, 회복, 저장/복원도 정식 런 도메인에 존재한다.  
   근거: `FormalRunSession.cs:116-165`, `Assets/01. Scripts/Bootstrap/StageProgressionRuntime.cs:22-61`
-- 시작 악마 후보 2장 생성과 1장 선택용 도메인·저장·Presenter·기존 StageProgression UI는 존재하지만 최신 규칙과 다르다. 최신 규칙은 서로 다른 2장을 모두 자동 지급하고 선택 화면을 제공하지 않는 방식이다.
-  이관 대상: `StartingDemonSelectionGenerator`, `PendingStartingDemonSelection`, `TrySelectStartingDemon`, 단일 `StartingDemonDefinitionKey` 저장 구조
+- 시작 악마 도메인·저장·기존 StageProgression UI는 최신 자동 지급 규칙으로 이관됐다. `StartingDemonGrantGenerator`가 서로 다른 2장을 한 번 추첨해 모두 지급하고, `PendingStartingDemonGrant`는 선택 입력 없이 동시 공개 연출에만 사용된다. `PlayerRunState.StartingDemonGrantCompleted`와 악마 카드 2장이 스키마 v2에 저장되며 재접속 시 재추첨하지 않는다.
+  GameScene 전체화의 잔여는 이 도메인을 월드 카드 배치·뒤집기 연출에 연결하는 표시 작업이다.
 - 정식 런 회귀 기록은 `StageTest ↔ GameScene` 왕복 기준 완료 상태다.  
   근거: `Docs/formal-run-flow-implementation-plan.md:30-37`, `:164-168`, `:251-254`
 
@@ -59,7 +59,7 @@ Notion `게임 플로우` 추가 기준:
 
 - `StageProgressionRuntime`은 `StageTest`와 `GameScene` 이름을 직렬화하고 `SceneManager.LoadScene`으로 왕복한다.  
   근거: `Assets/01. Scripts/Bootstrap/StageProgressionRuntime.cs:12-14`, `:115-123`
-- `StageProgressionController`가 시작, 기존 시작 악마 선택, 상대 선택, 정식 상점, 씬 전환 입력을 소유한다. 시작 악마 선택 입력은 최신 규칙 이관 시 제거 대상이다.
+- `StageProgressionController`가 시작, 시작 악마 공개 완료, 상대 선택, 정식 상점, 씬 전환 입력을 소유한다. 시작 악마 선택 입력은 제거됐고 공개 타이머 종료 뒤 상대 선택으로 자동 전환한다.
   근거: `Assets/01. Scripts/UI/StageProgression/StageProgressionController.cs:102-203`, `:333-355`
 - `GameManager`는 진행 세션이 `InBattle`일 때만 정식 전투를 채택한다. 아니면 독립 `CoreLoopSession`을 만든다.  
   근거: `Assets/01. Scripts/GameScene/GameManager.cs:143-164`
