@@ -10,6 +10,7 @@ namespace DiaBlackJack.GameScene
         Hidden,
         Actions,
         Options,
+        DiegeticSelection,
         ContractCandidates,
         ReturningToRun,
         Restart
@@ -143,9 +144,10 @@ namespace DiaBlackJack.GameScene
             bool isStageBattle,
             bool isShopOpen,
             bool inputLocked,
-            bool usesDiegeticCardEffectSelection = false)
+            bool usesDiegeticCardEffectSelection = false,
+            bool hideForPresentation = false)
         {
-            if (core == null || isShopOpen)
+            if (core == null || isShopOpen || hideForPresentation)
             {
                 return CreateHidden();
             }
@@ -224,9 +226,12 @@ namespace DiaBlackJack.GameScene
             {
                 if (usesDiegeticCardEffectSelection)
                 {
-                    return CreateOptions(
+                    return new GameSceneCombatHudViewModel(
+                        GameSceneCombatHudMode.DiegeticSelection,
                         core.CardEffectPrompt,
                         Array.Empty<GameSceneCombatHudActionViewModel>(),
+                        Array.Empty<GameSceneCombatHudActionViewModel>(),
+                        Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
                         automaticCardResult);
                 }
 

@@ -115,6 +115,14 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            if (!isActiveAndEnabled)
+            {
+                StopAnimationQueue();
+                _displayedCardCount = _targetCardCount;
+                ApplyStackCount(_displayedCardCount);
+                return;
+            }
+
             CardStackAnimationKind kind = delta < 0
                 ? CardStackAnimationKind.Draw
                 : CardStackAnimationKind.Insert;

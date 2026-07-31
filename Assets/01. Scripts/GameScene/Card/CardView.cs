@@ -70,6 +70,8 @@ namespace DiaBlackJack.GameScene
 
         private MaterialPropertyBlock _frontPropertyBlock;
         private MaterialPropertyBlock _backPropertyBlock;
+        private Material _shopFrontMaterial;
+        private Material _shopBackMaterial;
         private SpriteRenderer _frontSpriteRenderer;
         private SpriteRenderer _backSpriteRenderer;
         private Renderer _backRenderer;
@@ -149,6 +151,12 @@ namespace DiaBlackJack.GameScene
             ApplyHoverOutline(false);
             ApplyHoverCardBlend(false);
             ShowUsedMarkInstant(_isUsed);
+        }
+
+        private void OnDestroy()
+        {
+            DestroyMaterialInstance(_shopFrontMaterial);
+            DestroyMaterialInstance(_shopBackMaterial);
         }
 
         public void Bind(GameSceneCardViewModel card)
@@ -245,6 +253,17 @@ namespace DiaBlackJack.GameScene
             _baseScale = baseScale;
             StopScaleTween();
             transform.localScale = _baseScale;
+        }
+
+        internal void SetShopPresentation()
+        {
+            CreateMaterialInstance(
+                FrontSpriteRenderer(),
+                ref _shopFrontMaterial);
+            CreateMaterialInstance(
+                BackSpriteRenderer(),
+                ref _shopBackMaterial);
+            ApplyHoverOutline(false);
         }
 
         internal void SetSortingOrder(int sortingOrder)
@@ -536,6 +555,45 @@ namespace DiaBlackJack.GameScene
             if (material != null && !material.IsKeywordEnabled(PixelOutlineKeyword))
             {
                 material.EnableKeyword(PixelOutlineKeyword);
+            }
+        }
+
+        private static void CreateMaterialInstance(
+            Renderer renderer,
+            ref Material materialInstance)
+        {
+            if (renderer == null || materialInstance != null)
+            {
+                return;
+            }
+
+            Material source = renderer.sharedMaterial;
+            if (source == null)
+            {
+                return;
+            }
+
+            materialInstance = new Material(source)
+            {
+                name = source.name + " (Shop Card Instance)"
+            };
+            renderer.sharedMaterial = materialInstance;
+        }
+
+        private static void DestroyMaterialInstance(Material material)
+        {
+            if (material == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(material);
+            }
+            else
+            {
+                DestroyImmediate(material);
             }
         }
 

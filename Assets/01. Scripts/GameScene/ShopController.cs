@@ -418,6 +418,7 @@ namespace DiaBlackJack.GameScene
 
             DemonCardView view = Instantiate(demonCardPrefab, demonCardHolder);
             view.transform.localRotation = Quaternion.identity;
+            view.SetShopPresentation();
             view.Bind(new GameSceneDemonCardViewModel(
                 option.OptionId,
                 option.DefinitionKey,
@@ -441,6 +442,7 @@ namespace DiaBlackJack.GameScene
                 option.DefinitionKey);
             CardView view = Instantiate(normalCardPrefab, normalCardHolder);
             view.transform.localRotation = Quaternion.identity;
+            view.SetShopPresentation();
             string description = option.IsSold
                 ? "SOLD OUT"
                 : option.Price + "\n" + option.Summary;
@@ -603,6 +605,7 @@ namespace DiaBlackJack.GameScene
                 DemonContractDefinition definition = definitions[i];
                 DemonCardView view = Instantiate(demonCardPrefab, demonCardHolder);
                 view.transform.localRotation = Quaternion.identity;
+                view.SetShopPresentation();
 
                 var offer = new DemonCardOffer(
                     _nextOfferId++,
@@ -633,6 +636,7 @@ namespace DiaBlackJack.GameScene
                 NormalCardOfferData candidate = candidates[i];
                 CardView view = Instantiate(normalCardPrefab, normalCardHolder);
                 view.transform.localRotation = Quaternion.identity;
+                view.SetShopPresentation();
 
                 var offer = new NormalCardOffer(
                     _nextOfferId++,

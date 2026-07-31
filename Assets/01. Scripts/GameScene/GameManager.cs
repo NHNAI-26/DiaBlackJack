@@ -391,6 +391,17 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            if (_inputLocked)
+            {
+                UpdateHover(null);
+                UpdateDemonCardHover(null);
+                UpdateShopUtilityItemHover(null);
+                demonContractSelection?.SetHovered(null);
+                hud?.HideCardHoverBadge();
+                hud?.HideDemonContractDetail();
+                return;
+            }
+
             bool hasHit = RaycastPointer(out RaycastHit hit);
             if (demonContractSelection != null &&
                 demonContractSelection.IsOpen)
@@ -1717,13 +1728,18 @@ namespace DiaBlackJack.GameScene
         {
             _core = vm.Core;
             bool isShopOpen = shop != null && shop.IsOpen;
+            bool hideCombatHudForPresentation =
+                _inputLocked &&
+                (vm.HammerAnimationCue != null ||
+                 vm.RevolverAnimationCue != null);
             GameSceneCombatHudViewModel combat =
                 GameSceneCombatHudPresenter.Create(
                     vm.Core,
                     IsStageBattle,
                     isShopOpen,
                     _inputLocked,
-                    vm.UsesDiegeticCardEffectSelection);
+                    vm.UsesDiegeticCardEffectSelection,
+                    hideForPresentation: hideCombatHudForPresentation);
 
             if (hud != null)
             {

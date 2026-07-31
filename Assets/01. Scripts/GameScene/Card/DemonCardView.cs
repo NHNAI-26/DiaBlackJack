@@ -21,7 +21,17 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float hoverScale = 1.15f;
         [SerializeField] private float scaleLerp = 12f;
         [SerializeField] private string hoverSfxId = "cardHover";
+        private static readonly int LightingModeId =
+            Shader.PropertyToID("_LightingMode");
+        private static readonly int BrightnessId =
+            Shader.PropertyToID("_Brightness");
+        private static readonly int PixelOutlineVisibilityId =
+            Shader.PropertyToID("_PixelOutlineVisibility");
+        private const string UnlitKeyword = "_UNLIT_ON";
+        private const string PixelOutlineKeyword = "_PIXEL_OUTLINE_ON";
+
         private SpriteRenderer _frontSpriteRenderer;
+        private Material _shopMaterial;
         private Vector3 _baseScale = Vector3.one;
         private Vector3 _targetScale = Vector3.one;
         private bool _showingFrontFace = true;
@@ -55,6 +65,23 @@ namespace DiaBlackJack.GameScene
             if ((current - _targetScale).sqrMagnitude > 0.0000001f)
             {
                 transform.localScale = Vector3.Lerp(current, _targetScale, Time.deltaTime * scaleLerp);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (_shopMaterial == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(_shopMaterial);
+            }
+            else
+            {
+                DestroyImmediate(_shopMaterial);
             }
         }
 
@@ -112,6 +139,41 @@ namespace DiaBlackJack.GameScene
             _hovered = hovered;
             PlayHoverSfx(hovered);
             _targetScale = hovered ? _baseScale * hoverScale : _baseScale;
+        }
+
+        internal void SetShopPresentation()
+        {
+            SpriteRenderer renderer = FrontSpriteRenderer();
+            if (renderer == null)
+            {
+                return;
+            }
+
+            if (_shopMaterial == null)
+            {
+                Material source = renderer.sharedMaterial;
+                if (source == null)
+                {
+                    return;
+                }
+
+                _shopMaterial = new Material(source)
+                {
+                    name = source.name + " (Shop Demon Instance)"
+                };
+                renderer.sharedMaterial = _shopMaterial;
+            }
+
+            _shopMaterial.SetFloat(LightingModeId, 1f);
+            _shopMaterial.SetFloat(BrightnessId, 1f);
+            _shopMaterial.EnableKeyword(UnlitKeyword);
+            _shopMaterial.DisableKeyword(PixelOutlineKeyword);
+            renderer.color = Color.white;
+
+            var properties = new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(properties);
+            properties.SetFloat(PixelOutlineVisibilityId, 0f);
+            renderer.SetPropertyBlock(properties);
         }
 
         public Sprite GetFaceSprite(string definitionKey)
