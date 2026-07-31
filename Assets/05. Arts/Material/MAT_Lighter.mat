@@ -30,6 +30,7 @@ Material:
   - _DISSOLVE_ON
   - _METALLICMAP
   - _NORMALMAP
+  - _RIM_ON
   - _SMOOTHNESSMAP
   m_InvalidKeywords: []
   m_LightmapFlags: 4
@@ -164,9 +165,9 @@ Material:
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _RimEnabled: 0
-    - _RimIntensity: 1
-    - _RimPower: 4
+    - _RimEnabled: 1
+    - _RimIntensity: 0
+    - _RimPower: 5.2
     - _Saturation: 1
     - _Smoothness: 0.71
     - _SmoothnessMapEnabled: 1
@@ -189,7 +190,7 @@ Material:
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _GlassGlowColor: {r: 1, g: 1, b: 1, a: 1}
     - _HeightFadeTint: {r: 0.24999997, g: 0.24999997, b: 0.24999997, a: 1}
-    - _RimColor: {r: 1, g: 1, b: 1, a: 1}
+    - _RimColor: {r: 4, g: 2.2675543, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -406,6 +406,17 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            if (LighterDragTriggerController.BlocksBackgroundInteraction)
+            {
+                UpdateHover(null);
+                UpdateDemonCardHover(null);
+                UpdateShopUtilityItemHover(null);
+                demonContractSelection?.SetHovered(null);
+                hud?.HideCardHoverBadge();
+                hud?.HideDemonContractDetail();
+                return;
+            }
+
             bool hasHit = RaycastPointer(out RaycastHit hit);
             if (demonContractSelection != null &&
                 demonContractSelection.IsOpen)

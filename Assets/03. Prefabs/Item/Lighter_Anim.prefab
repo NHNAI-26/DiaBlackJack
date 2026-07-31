@@ -555,6 +555,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 832a3fa51d0b5854ea1399b4504c7e69, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6685911201381833562}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 832a3fa51d0b5854ea1399b4504c7e69, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2024457997681496487}
   m_SourcePrefab: {fileID: 100100000, guid: 832a3fa51d0b5854ea1399b4504c7e69, type: 3}
 --- !u!137 &932891126895747371 stripped
 SkinnedMeshRenderer:
@@ -564,6 +567,11 @@ SkinnedMeshRenderer:
 --- !u!4 &3101994361123630588 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6282701392548375771, guid: 832a3fa51d0b5854ea1399b4504c7e69, type: 3}
+  m_PrefabInstance: {fileID: 8952272939491475751}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &3193309635506650950 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 5795067291386248801, guid: 832a3fa51d0b5854ea1399b4504c7e69, type: 3}
   m_PrefabInstance: {fileID: 8952272939491475751}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &8141862847424920694 stripped
@@ -614,6 +622,42 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &2024457997681496487
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8141862847424920694}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a08e5c071278934f8e0688bab1a1268, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.LighterDragTriggerController
+  animator: {fileID: 6685911201381833562}
+  animationEvents: {fileID: 2142734665557226431}
+  coverRenderer: {fileID: 8406800826632311186}
+  wheelRenderer: {fileID: 3193309635506650950}
+  coverRendererName: cover
+  wheelRendererName: wheel
+  baseLayerIndex: 0
+  startLayerIndex: 1
+  startStateName: Lighter_Start
+  readyStateName: Lighter_Loop
+  coverCloseStateName: Lighter_CoverClose
+  coverOpenTrigger: CoverOpen
+  fireOnTrigger: FireOn
+  dragThresholdPixels: 45
+  screenBoundsPaddingPixels: 16
+  verticalBias: 1.2
+  fresnelIntensityProperty: _RimIntensity
+  hoverFresnelIntensity: 10
+  idleFresnelIntensity: 0
+--- !u!137 &8406800826632311186 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 618725984146444469, guid: 832a3fa51d0b5854ea1399b4504c7e69, type: 3}
+  m_PrefabInstance: {fileID: 8952272939491475751}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &8914424335457199820 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 832a3fa51d0b5854ea1399b4504c7e69, type: 3}
