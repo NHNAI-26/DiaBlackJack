@@ -29,8 +29,6 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private TMP_Text cardHoverBadgeText;
         [SerializeField] private RectTransform cardHoverHeaderBadge;
         [SerializeField] private TMP_Text cardHoverHeaderText;
-        [Tooltip("Pixel offset from the hovered card's screen-space anchor.")]
-        [SerializeField] private Vector2 cardHoverBadgeScreenOffset = new Vector2(0f, 24f);
 
         [Header("Combat controls")]
         [SerializeField] private GameObject combatControlsRoot;
@@ -520,18 +518,12 @@ namespace DiaBlackJack.GameScene
             Vector2 localPoint,
             bool showBelow)
         {
-            Vector2 screenOffset = new Vector2(
-                cardHoverBadgeScreenOffset.x,
-                showBelow
-                    ? -cardHoverBadgeScreenOffset.y
-                    : cardHoverBadgeScreenOffset.y);
             cardHoverTooltipRoot.pivot = new Vector2(
                 cardHoverTooltipRoot.pivot.x,
                 showBelow ? 1f : 0f);
-            Vector2 tooltipPosition = localPoint + screenOffset;
             cardHoverTooltipRoot.localPosition = new Vector3(
-                tooltipPosition.x,
-                tooltipPosition.y,
+                localPoint.x,
+                localPoint.y,
                 0f);
         }
 

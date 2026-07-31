@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using DiaBlackJack.CoreLoop;
 using DiaBlackJack.CoreLoop.UI;
 using DiaBlackJack.GameScene;
@@ -13,6 +14,8 @@ namespace DiaBlackJack.CoreLoop.Tests
     public sealed class GameSceneCombatHudPresentationTests
     {
         private const string HudPrefabPath = "Assets/03. Prefabs/UI/HUD.prefab";
+        private const string CardHoverTooltipPrefabPath =
+            "Assets/03. Prefabs/UI/CardHoverTooltip.prefab";
         private const string ManagerPrefabPath =
             "Assets/03. Prefabs/Manager/GameManager.prefab";
 
@@ -359,6 +362,88 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(detail.Find("Title/txtTitle"), Is.Not.Null);
             Assert.That(detail.Find("Ability/txtAbility"), Is.Not.Null);
             Assert.That(detail.Find("Cost/txtCost"), Is.Not.Null);
+        }
+
+        [Test]
+        public void GSH01_U08_HudUsesSharedCardHoverTooltipPrefab()
+        {
+            GameObject tooltipPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(CardHoverTooltipPrefabPath);
+            Assert.That(tooltipPrefab, Is.Not.Null);
+            Assert.That(tooltipPrefab.transform.Find("CardHoverHeader/Title"), Is.Not.Null);
+            Assert.That(tooltipPrefab.transform.Find("CardHoverBadge/Text"), Is.Not.Null);
+
+            GameObject hudPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
+            Assert.That(hudPrefab, Is.Not.Null);
+            Transform tooltipInstance = hudPrefab.transform.Find("CardHoverTooltipRoot");
+            Assert.That(tooltipInstance, Is.Not.Null);
+            Assert.That(
+                PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(
+                    tooltipInstance.gameObject),
+                Is.EqualTo(CardHoverTooltipPrefabPath));
+
+            GameHudView hud = hudPrefab.GetComponent<GameHudView>();
+            Assert.That(hud, Is.Not.Null);
+            SerializedObject serialized = new SerializedObject(hud);
+            Assert.That(
+                serialized.FindProperty("cardHoverTooltipRoot").objectReferenceValue,
+                Is.Not.Null);
+            Assert.That(
+                serialized.FindProperty("cardHoverBadge").objectReferenceValue,
+                Is.Not.Null);
+            Assert.That(
+                serialized.FindProperty("cardHoverBadgeText").objectReferenceValue,
+                Is.Not.Null);
+            Assert.That(
+                serialized.FindProperty("cardHoverHeaderBadge").objectReferenceValue,
+                Is.Not.Null);
+            Assert.That(
+                serialized.FindProperty("cardHoverHeaderText").objectReferenceValue,
+                Is.Not.Null);
+        }
+
+        [Test]
+        public void GSH01_U09_HoverTooltipUsesExactCardAnchorWithoutOffset()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                GameHudView hud = instance.GetComponent<GameHudView>();
+                Assert.That(hud, Is.Not.Null);
+                SerializedObject serialized = new SerializedObject(hud);
+                RectTransform tooltipRoot = serialized
+                    .FindProperty("cardHoverTooltipRoot")
+                    .objectReferenceValue as RectTransform;
+                Assert.That(tooltipRoot, Is.Not.Null);
+                Assert.That(
+                    serialized.FindProperty("cardHoverBadgeScreenOffset"),
+                    Is.Null);
+
+                MethodInfo positionMethod = typeof(GameHudView).GetMethod(
+                    "PositionCardHoverTooltip",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(positionMethod, Is.Not.Null);
+                Vector2 anchorPoint = new Vector2(123f, -45f);
+
+                positionMethod.Invoke(hud, new object[] { anchorPoint, false });
+                Assert.That(
+                    tooltipRoot.localPosition,
+                    Is.EqualTo(new Vector3(anchorPoint.x, anchorPoint.y, 0f)));
+                Assert.That(tooltipRoot.pivot.y, Is.EqualTo(0f));
+
+                positionMethod.Invoke(hud, new object[] { anchorPoint, true });
+                Assert.That(
+                    tooltipRoot.localPosition,
+                    Is.EqualTo(new Vector3(anchorPoint.x, anchorPoint.y, 0f)));
+                Assert.That(tooltipRoot.pivot.y, Is.EqualTo(1f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
         }
 
         private static CoreLoopBattle CreateStartedBattle(params int[] playerRanks)

@@ -200,6 +200,7 @@
 - 툴팁은 카드 호버 배지와 분리한다. 행동 의미와 `ChangeActionText`·계약 행동 문자열의 현재 영혼 비용/불가 사유를 함께 표시한다.
 - 선택 모달은 프리팹에 미리 배치한 스크롤 가능 슬롯 100개를 재사용한다. 현재 체인지 후보와 계약 후보는 모두 불투명 텍스트 버튼으로 선택하며, 런타임 전용 UI 오브젝트를 생성하지 않는다.
 - `GameManager`는 HUD 명령을 기존 `ProcessInput`과 `Try*` API로 전달한다. 전투용 `OnGUI`·즉시형 그리기는 제거했고, 상점·라이터 선택 패널만 `OnGUI`로 유지한다.
+- 카드 호버 툴팁의 헤더·본문·스타일은 독립 `CardHoverTooltip.prefab`이 소유하고 `HUD.prefab`은 이를 중첩 프리팹으로 1개만 재사용한다. 일반·악마 카드 프리팹의 기존 상단/하단 Anchor를 화면 좌표로 투영하며 추가 Screen Offset 없이 해당 Anchor에 툴팁 피벗을 정확히 맞춘다. 카드마다 UI 인스턴스를 만들지 않으며, Card/DemonCard 프리팹 루트를 선택하면 Scene View에서 TOP은 청록색, BOTTOM은 주황색 Gizmo로 생성 위치를 미리 본다.
 - 검증: `GameSceneCombatHudPresentationTests` 6/6, 전체 EditMode 767/767 통과. GameScene 1280×720 및 1920×1080 캡처에서 하단 4버튼과 툴팁의 버튼 겹침이 없음을 확인했고 Console Error/Warning 0.
 
 ## 11. 완료 기준
@@ -222,6 +223,8 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-31 | HONG | GSH-01 후속으로 `cardHoverBadgeScreenOffset`을 제거하고 툴팁 피벗을 카드 TOP/BOTTOM Anchor 좌표에 직접 배치했다. Card/DemonCard 프리팹용 Editor Anchor Gizmo를 추가했으며 전용 EditMode 2/2, 현재 전체 EditMode 811/811 및 GameScene validation 0 issues를 확인했다. 기존 셰이더 property drawer Console 오류는 별도 잔존한다. |
+| 2026-07-31 | HONG | GSH-01 카드 호버 툴팁 계층을 `CardHoverTooltip.prefab`으로 분리하고 `HUD.prefab`에 중첩 연결했다. 기존 `GameHudView` 직렬화 참조 5개와 카드 Anchor 추적은 유지했으며, 신규 프리팹 구조 검증 포함 전체 EditMode 822/822 및 GameScene validation 0 issues를 확인했다. 기존 셰이더 property drawer Console 오류는 별도 잔존한다. |
 | 2026-07-30 | 이천서 | RFM02 화면 책임을 정정했다. GameScene 직접 실행은 별도 진행·선택 오버레이 없이 기존 월드 전투 화면을 즉시 표시한다. 이미 활성화된 진행 전투를 전달받은 경우에만 선택 상대 전투와 런 HUD를 사용한다. StageTest는 기존 테스트 진행 화면으로 유지한다. |
 | 2026-07-30 | HONG | GSH-01 선택 모달의 스텐실 마스크 때문에 체인지 후보 버튼이 보이지 않던 문제를 `RectMask2D`로 교체해 수정했다. 체인지와 계약 후보를 같은 불투명 텍스트 버튼 목록으로 통일했으며 전용 EditMode 6/6, 체인지 후보 1280×720 표시, Console Error 0을 확인했다. |
 | 2026-07-30 | HONG | GSH-01 전투 입력을 `HUD.prefab` uGUI로 이관했다. 하단 4개 Brush 버튼, 카드 호버와 분리된 행동 툴팁, 100개 고정 선택 슬롯, 계약 후보 2칸과 자동 결과 패널을 추가했으며, 전투 `OnGUI`는 제거하고 상점·라이터 선택만 남겼다. 전용 6/6, 전체 EditMode 767/767 및 1280×720·1920×1080 HUD 캡처, Console Error/Warning 0을 확인했다. |
