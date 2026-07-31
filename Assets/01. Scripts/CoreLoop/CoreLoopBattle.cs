@@ -651,6 +651,12 @@ namespace DiaBlackJack.CoreLoop
                         selectedOption);
                 case DemonContractInteractionKind.BelphegorTopCard:
                     return TryResolveBelphegorTopCard(pending, selectedOption);
+                case DemonContractInteractionKind.MammonReroll:
+                    return TryResolveMammonTurnStartChoice(
+                        CombatantSide.Player,
+                        pending,
+                        selectedOption,
+                        out _);
                 case DemonContractInteractionKind.MammonApplyDie:
                     return TryResolveMammonFinalChoice(pending, selectedOption);
                 case DemonContractInteractionKind.SatanDeclareFirstNumber:
@@ -744,6 +750,12 @@ namespace DiaBlackJack.CoreLoop
                 case DemonContractInteractionKind.BelphegorTopCard:
                     completedOwnerAction = true;
                     return TryResolveEnemyBelphegorTopCard(pending, selectedOption);
+                case DemonContractInteractionKind.MammonReroll:
+                    return TryResolveMammonTurnStartChoice(
+                        CombatantSide.Enemy,
+                        pending,
+                        selectedOption,
+                        out completedOwnerAction);
                 case DemonContractInteractionKind.MammonApplyDie:
                     return TryResolveEnemyMammonFinalChoice(pending, selectedOption);
                 case DemonContractInteractionKind.SatanDeclareFirstNumber:
@@ -2830,10 +2842,6 @@ namespace DiaBlackJack.CoreLoop
 
                 switch (activeContract.Kind)
                 {
-                    case DemonContractKind.Mammon:
-                        return _demonContractResolver.CanOwnerRerollMammon(
-                            this,
-                            activeContract);
                     case DemonContractKind.Satan:
                         if (!(activeContract.RuntimeState is SatanRuntimeState
                             satanState))
@@ -2870,8 +2878,6 @@ namespace DiaBlackJack.CoreLoop
 
                 switch (activeContract.Kind)
                 {
-                    case DemonContractKind.Mammon:
-                        return TryBeginPlayerMammonReroll(sourceContractCardId);
                     case DemonContractKind.Satan:
                         return TryBeginPlayerSatanContractAction(
                             sourceContractCardId);
@@ -3093,6 +3099,11 @@ namespace DiaBlackJack.CoreLoop
             PendingDemonContractInteraction pending;
             switch (activeContract.Kind)
             {
+                case DemonContractKind.Mammon:
+                    pending = CreateMammonRerollInteraction(
+                        TakeNextDemonContractInteractionId(),
+                        activeContract);
+                    break;
                 case DemonContractKind.Asmodeus:
                     pending = CreateAsmodeusTurnStartInteraction(
                         TakeNextDemonContractInteractionId(),
@@ -5791,6 +5802,79 @@ namespace DiaBlackJack.CoreLoop
                     : (int?)null;
             participant.RedealRoundHand(preservedSourceCardId);
             return true;
+        }
+
+        private bool TryResolveMammonTurnStartChoice(
+            CombatantSide ownerSide,
+            PendingDemonContractInteraction pending,
+            DemonContractOption selectedOption,
+            out bool completedOwnerAction)
+        {
+            completedOwnerAction = false;
+            if (pending.Kind != DemonContractInteractionKind.MammonReroll ||
+                pending.ContractKind != DemonContractKind.Mammon ||
+                !pending.SourceContractCardId.HasValue ||
+                !TryGetActiveDemonContract(
+                    ownerSide,
+                    pending.SourceContractCardId.Value,
+                    DemonContractKind.Mammon,
+                    out ActiveDemonContract activeContract))
+            {
+                return false;
+            }
+
+            if (selectedOption.OptionId ==
+                MammonDemonContractHandler.KeepDieOptionId)
+            {
+                _demonContractResolver.KeepOwnerMammonDie(
+                    this,
+                    activeContract);
+                SetPendingDemonContractInteraction(ownerSide, pending: null);
+                ResumeOwnerTurnAfterTurnStartChoice(ownerSide);
+                return true;
+            }
+
+            if (selectedOption.OptionId !=
+                MammonDemonContractHandler.RerollDieOptionId)
+            {
+                return false;
+            }
+
+            SetPendingDemonContractInteraction(ownerSide, pending: null);
+            State = ownerSide == CombatantSide.Player
+                ? CoreLoopState.PlayerTurn
+                : CoreLoopState.EnemyTurn;
+            completedOwnerAction = true;
+            return TryBeginMammonReroll(
+                ownerSide,
+                activeContract.SourceCardId);
+        }
+
+        private static PendingDemonContractInteraction CreateMammonRerollInteraction(
+            int interactionId,
+            ActiveDemonContract activeContract)
+        {
+            var options = new[]
+            {
+                new DemonContractOption(
+                    MammonDemonContractHandler.KeepDieOptionId,
+                    contractCardId: null,
+                    numericValue: null,
+                    "현재 주사위 유지 · 정상 차례 진행"),
+                new DemonContractOption(
+                    MammonDemonContractHandler.RerollDieOptionId,
+                    contractCardId: null,
+                    numericValue: null,
+                    "주사위 다시 굴리기 · 턴 종료")
+            };
+
+            return new PendingDemonContractInteraction(
+                interactionId,
+                DemonContractInteractionKind.MammonReroll,
+                DemonContractKind.Mammon,
+                options,
+                "현재 값을 유지하고 행동하거나, 다시 굴리고 턴을 종료하십시오.",
+                activeContract.SourceCardId);
         }
 
         private void CancelPendingEffectResolutions()

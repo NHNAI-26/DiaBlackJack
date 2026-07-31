@@ -38,7 +38,7 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
-        public void GF01_U02_RevealCompletionAutomaticallyOpensOpponentSelection()
+        public void GF01_U02_RevealConfirmationOpensOpponentSelection()
         {
             FormalRunSession run = CreateRun();
             Assert.That(run.TryStartRun(), Is.True);

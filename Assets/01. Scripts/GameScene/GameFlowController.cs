@@ -64,8 +64,8 @@ namespace DiaBlackJack.GameScene
 
             if (startingDemonReveal != null)
             {
-                startingDemonReveal.RevealCompleted +=
-                    HandleStartingDemonRevealCompleted;
+                startingDemonReveal.ConfirmationRequested +=
+                    HandleStartingDemonConfirmationRequested;
             }
 
             if (opponentSelection != null)
@@ -112,8 +112,8 @@ namespace DiaBlackJack.GameScene
 
             if (startingDemonReveal != null)
             {
-                startingDemonReveal.RevealCompleted -=
-                    HandleStartingDemonRevealCompleted;
+                startingDemonReveal.ConfirmationRequested -=
+                    HandleStartingDemonConfirmationRequested;
             }
 
             if (opponentSelection != null)
@@ -309,7 +309,7 @@ namespace DiaBlackJack.GameScene
             RefreshFlow();
         }
 
-        private void HandleStartingDemonRevealCompleted()
+        private void HandleStartingDemonConfirmationRequested()
         {
             RequestCompleteStartingDemonReveal();
         }

@@ -29,10 +29,12 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float revealedHoldDuration = 1.2f;
 
         private readonly List<GameObject> _instances = new List<GameObject>();
+        private GUIStyle _buttonStyle;
         private Coroutine _revealRoutine;
         private int? _activeGrantId;
+        private bool _canConfirm;
 
-        public event Action RevealCompleted;
+        public event Action ConfirmationRequested;
 
         public bool IsVisible { get; private set; }
 
@@ -74,12 +76,40 @@ namespace DiaBlackJack.GameScene
 
             _instances.Clear();
             _activeGrantId = null;
+            _canConfirm = false;
             IsVisible = false;
         }
 
         private void OnDisable()
         {
             Hide();
+        }
+
+        private void OnGUI()
+        {
+            if (!IsVisible || !_canConfirm)
+            {
+                return;
+            }
+
+            _buttonStyle ??= new GUIStyle(GUI.skin.button)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = Screen.height <= 720 ? 18 : 22,
+                fontStyle = FontStyle.Bold
+            };
+            float width = Mathf.Min(420f, Screen.width * 0.4f);
+            float height = Screen.height <= 720 ? 50f : 60f;
+            Rect buttonRect = new Rect(
+                (Screen.width - width) * 0.5f,
+                Screen.height - height - 38f,
+                width,
+                height);
+            if (GUI.Button(buttonRect, "CONFIRM DEMONS", _buttonStyle))
+            {
+                _canConfirm = false;
+                ConfirmationRequested?.Invoke();
+            }
         }
 
         private IEnumerator Reveal(
@@ -122,7 +152,7 @@ namespace DiaBlackJack.GameScene
             yield return WaitUnscaled(revealedHoldDuration);
 
             _revealRoutine = null;
-            RevealCompleted?.Invoke();
+            _canConfirm = true;
         }
 
         private GameObject CreateCard(

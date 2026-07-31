@@ -178,20 +178,6 @@ namespace DiaBlackJack.CoreLoop
                                 activeContract.SourceCardId));
                     }
                 }
-                else if (activeContract.Kind == DemonContractKind.Mammon &&
-                    activeContract.RuntimeState is MammonRuntimeState mammonState &&
-                    mammonState.CanRerollThisTurn)
-                {
-                    candidates.Add(new EnemyActionCandidate(
-                        EnemyActionType.DemonContract,
-                        demonContractKind: DemonContractKind.Mammon,
-                        demonContractDefinitionKey:
-                            activeContract.Definition.Key,
-                        demonContractOptionNumericValue:
-                            mammonState.CurrentDieValue,
-                        demonContractSourceCardId:
-                            activeContract.SourceCardId));
-                }
             }
 
             if (battle.Enemy.Deck.CanDraw(1))
@@ -253,7 +239,8 @@ namespace DiaBlackJack.CoreLoop
                 privateNumericValue = preview.Rank;
                 definitionKey = DemonContractCatalog.BelphegorKey;
             }
-            else if (pending.Kind == DemonContractInteractionKind.MammonApplyDie)
+            else if (pending.Kind == DemonContractInteractionKind.MammonReroll ||
+                pending.Kind == DemonContractInteractionKind.MammonApplyDie)
             {
                 ActiveDemonContract activeContract = FindActiveEnemyContract(
                     battle,

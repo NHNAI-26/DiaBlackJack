@@ -521,6 +521,10 @@ namespace DiaBlackJack.CoreLoop.Tests
                         (option.DemonContractInteractionKind ==
                                 DemonContractInteractionKind.ChooseContract ||
                             (option.DemonContractInteractionKind ==
+                                    DemonContractInteractionKind.MammonReroll &&
+                                option.DemonContractOptionId ==
+                                    MammonDemonContractHandler.KeepDieOptionId) ||
+                            (option.DemonContractInteractionKind ==
                                     DemonContractInteractionKind.MammonApplyDie &&
                                 option.DemonContractOptionId ==
                                     MammonDemonContractHandler.ApplyDieOptionId)))

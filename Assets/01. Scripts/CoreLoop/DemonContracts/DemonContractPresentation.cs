@@ -271,7 +271,7 @@ namespace DiaBlackJack.CoreLoop.UI
                 {
                     status = $"주사위 {mammon.CurrentDieValue}" +
                         (mammon.CanRerollThisTurn
-                            ? " · 재굴림 행동 가능"
+                            ? " · 턴 시작 선택 대기"
                             : string.Empty);
                 }
                 else if (contract.RuntimeState is SatanRuntimeState satan)
@@ -339,11 +339,6 @@ namespace DiaBlackJack.CoreLoop.UI
                 string actionLabel;
                 switch (contract.Kind)
                 {
-                    case DemonContractKind.Mammon:
-                        MammonRuntimeState mammon =
-                            (MammonRuntimeState)contract.RuntimeState;
-                        actionLabel = $"MAMMON REROLL ({mammon.CurrentDieValue})";
-                        break;
                     case DemonContractKind.Satan:
                         SatanRuntimeState satan =
                             (SatanRuntimeState)contract.RuntimeState;

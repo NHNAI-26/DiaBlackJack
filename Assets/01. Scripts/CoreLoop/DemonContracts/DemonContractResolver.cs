@@ -841,6 +841,17 @@ namespace DiaBlackJack.CoreLoop
                 new DemonContractContext(battle, activeContract));
         }
 
+        public void KeepOwnerMammonDie(
+            CoreLoopBattle battle,
+            ActiveDemonContract activeContract)
+        {
+            IDemonContractMammonRerollHandler handler =
+                GetSpecializedHandler<IDemonContractMammonRerollHandler>(
+                    activeContract);
+            handler.KeepCurrentValue(
+                new DemonContractContext(battle, activeContract));
+        }
+
         public bool TryGetPlayerFinalChoiceContract(
             CoreLoopBattle battle,
             IReadOnlyList<ActiveDemonContract> activeContracts,

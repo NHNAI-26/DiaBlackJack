@@ -119,8 +119,6 @@ namespace DiaBlackJack.CoreLoop
                             candidate,
                             980,
                             "cultist-use-active-satan-contract");
-                    case DemonContractKind.Mammon:
-                        return EvaluateActiveMammonReroll(candidate);
                     default:
                         throw new InvalidOperationException(
                             "Cultist received an unsupported active contract action.");
@@ -145,6 +143,8 @@ namespace DiaBlackJack.CoreLoop
                             "cultist-skip-unhelpful-lucifer-contract");
                 case DemonContractInteractionKind.BelphegorTopCard:
                     return EvaluateBelphegorChoice(observation, candidate);
+                case DemonContractInteractionKind.MammonReroll:
+                    return EvaluateMammonReroll(candidate);
                 case DemonContractInteractionKind.MammonApplyDie:
                     return EvaluateMammonFinalChoice(observation, candidate);
                 case DemonContractInteractionKind.SatanDeclareFirstNumber:
@@ -371,19 +371,23 @@ namespace DiaBlackJack.CoreLoop
                     : "cultist-reject-belphegor-option");
         }
 
-        private static EnemyActionScore EvaluateActiveMammonReroll(
+        private static EnemyActionScore EvaluateMammonReroll(
             EnemyActionCandidate candidate)
         {
             int dieValue = candidate.DemonContractOptionNumericValue ??
                 throw new InvalidOperationException(
-                    "Cultist active Mammon action requires the current die value.");
+                    "Cultist Mammon turn choice requires the current die value.");
             bool shouldReroll = dieValue <= MammonRerollCeiling;
+            bool isReroll = candidate.DemonContractOptionId ==
+                MammonDemonContractHandler.RerollDieOptionId;
             return Score(
                 candidate,
-                shouldReroll ? 1100 : 0,
-                shouldReroll
-                    ? "cultist-use-mammon-reroll-action"
-                    : "cultist-skip-mammon-reroll-action");
+                shouldReroll == isReroll ? 1500 : 0,
+                shouldReroll == isReroll
+                    ? (isReroll
+                        ? "cultist-reroll-low-mammon-die"
+                        : "cultist-keep-mammon-die")
+                    : "cultist-reject-mammon-turn-option");
         }
 
         private static EnemyActionScore EvaluateMammonFinalChoice(

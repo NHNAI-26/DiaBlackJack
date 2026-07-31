@@ -20,6 +20,7 @@ namespace DiaBlackJack.CoreLoop
     {
         ChooseContract,
         BelphegorTopCard,
+        MammonReroll,
         MammonApplyDie,
         SatanDeclareFirstNumber,
         SatanDeclareSecondNumber,
@@ -310,7 +311,8 @@ namespace DiaBlackJack.CoreLoop
                     }
                 }
             }
-            else if (kind == DemonContractInteractionKind.MammonApplyDie)
+            else if (kind == DemonContractInteractionKind.MammonReroll ||
+                kind == DemonContractInteractionKind.MammonApplyDie)
             {
                 if (contractKind != DemonContractKind.Mammon ||
                     !sourceContractCardId.HasValue ||

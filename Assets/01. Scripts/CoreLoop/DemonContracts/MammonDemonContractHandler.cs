@@ -41,6 +41,17 @@ namespace DiaBlackJack.CoreLoop
             CanRerollThisTurn = true;
         }
 
+        internal void KeepCurrentValue()
+        {
+            if (!CanRerollThisTurn)
+            {
+                throw new InvalidOperationException(
+                    "Mammon die choice was already resolved for this turn.");
+            }
+
+            CanRerollThisTurn = false;
+        }
+
         internal int Reroll(IDemonDieRoller dieRoller)
         {
             if (dieRoller == null)
@@ -105,6 +116,8 @@ namespace DiaBlackJack.CoreLoop
     {
         bool CanReroll(DemonContractContext context);
 
+        void KeepCurrentValue(DemonContractContext context);
+
         MammonRerollResult Reroll(DemonContractContext context);
     }
 
@@ -118,9 +131,12 @@ namespace DiaBlackJack.CoreLoop
     internal sealed class MammonDemonContractHandler :
         IDemonContractHandler,
         IDemonContractOwnerTurnHandler,
+        IDemonContractOwnerTurnStartChoiceHandler,
         IDemonContractMammonRerollHandler,
         IDemonContractFinalChoiceHandler
     {
+        internal const int KeepDieOptionId = 0;
+        internal const int RerollDieOptionId = 1;
         internal const int DoNotApplyDieOptionId = 0;
         internal const int ApplyDieOptionId = 1;
 
@@ -148,6 +164,11 @@ namespace DiaBlackJack.CoreLoop
             return false;
         }
 
+        public bool CanOfferOwnerTurnStartChoice(DemonContractContext context)
+        {
+            return CanReroll(context);
+        }
+
         public void OnRoundEnded(DemonContractContext context)
         {
             GetState(context).ResetRound();
@@ -156,6 +177,17 @@ namespace DiaBlackJack.CoreLoop
         public bool CanReroll(DemonContractContext context)
         {
             return !context.OwnerIsStanding && GetState(context).CanRerollThisTurn;
+        }
+
+        public void KeepCurrentValue(DemonContractContext context)
+        {
+            if (!CanReroll(context))
+            {
+                throw new InvalidOperationException(
+                    "Mammon cannot keep its die outside an available owner turn.");
+            }
+
+            GetState(context).KeepCurrentValue();
         }
 
         public MammonRerollResult Reroll(DemonContractContext context)

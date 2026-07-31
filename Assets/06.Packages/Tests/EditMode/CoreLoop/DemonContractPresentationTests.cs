@@ -152,38 +152,23 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR05_U01_MammonActiveActionUsesPhysicalContractCardId()
+        public void DCR05_U01_MammonUsesMandatoryTurnStartChoiceNotActiveAction()
         {
             CoreLoopBattle battle = CreateStartedBattle(DemonContractKind.Mammon);
             SelectContract(battle, DemonContractKind.Mammon);
             ActiveDemonContract activeContract =
                 battle.ActivePlayerDemonContracts.Single();
 
-            DemonContractPanelViewModel before =
+            DemonContractPanelViewModel model =
                 DemonContractPresenter.Create(battle);
-            ActiveDemonContractActionViewModel action =
-                before.ActiveActions.Single();
-            int playerContractActionsBefore = battle.PublicActionHistory.Count(
-                entry =>
-                    entry.ActorSide == CombatantSide.Player &&
-                    entry.ActionType == PublicCombatActionType.DemonContract);
 
-            Assert.That(action.SourceCardId, Is.EqualTo(activeContract.SourceCardId));
-            Assert.That(action.Kind, Is.EqualTo(DemonContractKind.Mammon));
-            Assert.That(action.Label, Does.Contain("MAMMON REROLL"));
-            Assert.That(
-                battle.TryBeginPlayerActiveDemonContractAction(
-                    action.SourceCardId),
-                Is.True);
-            Assert.That(
-                battle.PublicActionHistory.Count(entry =>
-                    entry.ActorSide == CombatantSide.Player &&
-                    entry.ActionType == PublicCombatActionType.DemonContract),
-                Is.EqualTo(playerContractActionsBefore + 1));
-            Assert.That(
-                DemonContractPresenter.Create(battle).ActiveActions.Single()
-                    .SourceCardId,
-                Is.EqualTo(activeContract.SourceCardId));
+            Assert.That(model.InteractionKind,
+                Is.EqualTo(DemonContractInteractionKind.MammonReroll));
+            Assert.That(model.ActiveActions, Is.Empty);
+            Assert.That(battle.PendingPlayerDemonContractInteraction
+                .SourceContractCardId, Is.EqualTo(activeContract.SourceCardId));
+            Assert.That(battle.TryBeginPlayerActiveDemonContractAction(
+                activeContract.SourceCardId), Is.False);
         }
 
         [Test]
@@ -210,7 +195,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR05_U03_ControllerForwardsActiveContractCardInput()
+        public void DCR05_U03_ControllerForwardsMammonTurnStartChoice()
         {
             GameObject gameObject = new GameObject("DCR05 Controller Test");
             gameObject.AddComponent<CoreLoopView>();
@@ -235,16 +220,19 @@ namespace DiaBlackJack.CoreLoop.Tests
                 controller.RequestResolveDemonContract(
                     pending.InteractionId,
                     pending.Options.Single().OptionId);
-                ActiveDemonContractActionViewModel action =
-                    controller.CurrentViewModel.DemonContract.ActiveActions.Single();
+                PendingDemonContractInteraction mammonChoice =
+                    controller.Battle.PendingPlayerDemonContractInteraction;
+                Assert.That(mammonChoice.Kind,
+                    Is.EqualTo(DemonContractInteractionKind.MammonReroll));
                 int playerContractActionsBefore =
                     controller.Battle.PublicActionHistory.Count(entry =>
                         entry.ActorSide == CombatantSide.Player &&
                         entry.ActionType ==
                             PublicCombatActionType.DemonContract);
 
-                controller.RequestBeginActiveDemonContractAction(
-                    action.SourceCardId);
+                controller.RequestResolveDemonContract(
+                    mammonChoice.InteractionId,
+                    MammonDemonContractHandler.RerollDieOptionId);
 
                 Assert.That(
                     controller.Battle.PublicActionHistory.Count(entry =>

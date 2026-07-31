@@ -34,7 +34,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR03_U02_MammonRerollIsANormalActionAndSixBusts()
+        public void DCR03_U02_MammonTurnStartRerollConsumesTurnAndSixBusts()
         {
             var enemyPolicy = new SequenceEnemyPolicy(EnemyActionType.Stand);
             CoreLoopBattle battle = CreateMammonBattle(
@@ -44,12 +44,17 @@ namespace DiaBlackJack.CoreLoop.Tests
                 dieValues: new[] { 2, 6 });
             ActivateFirstContract(battle);
             ActiveDemonContract mammon = battle.ActivePlayerDemonContracts.Single();
-            Assert.That(battle.PendingPlayerDemonContractInteraction, Is.Null);
+            PendingDemonContractInteraction pending =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(pending.Kind,
+                Is.EqualTo(DemonContractInteractionKind.MammonReroll));
             Assert.That(((MammonRuntimeState)mammon.RuntimeState).CurrentDieValue,
                 Is.EqualTo(2));
 
             Assert.That(
-                battle.TryBeginPlayerMammonReroll(mammon.SourceCardId),
+                battle.TryResolvePlayerDemonContract(
+                    pending.InteractionId,
+                    MammonDemonContractHandler.RerollDieOptionId),
                 Is.True);
 
             Assert.That(battle.LastResolution.Value.Cause,
@@ -60,7 +65,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR03_U03_MammonNoLongerBlocksTurnStartWithKeepChoice()
+        public void DCR03_U03_MammonKeepChoiceContinuesNormalTurn()
         {
             CoreLoopBattle battle = CreateMammonBattle(
                 playerRanks: new[] { 5, 5, 2, 3, 4, 5 },
@@ -69,8 +74,16 @@ namespace DiaBlackJack.CoreLoop.Tests
                 dieValues: new[] { 3 });
             ActivateFirstContract(battle);
 
+            PendingDemonContractInteraction pending =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(battle.State,
+                Is.EqualTo(CoreLoopState.PlayerResolvingDemonContract));
+            Assert.That(pending.Kind,
+                Is.EqualTo(DemonContractInteractionKind.MammonReroll));
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                pending.InteractionId,
+                MammonDemonContractHandler.KeepDieOptionId), Is.True);
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
-            Assert.That(battle.PendingPlayerDemonContractInteraction, Is.Null);
             Assert.That(battle.TryPlayerHit(), Is.True);
             Assert.That(
                 ((MammonRuntimeState)battle.ActivePlayerDemonContracts.Single()
@@ -92,6 +105,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 new SequenceEnemyPolicy(EnemyActionType.Stand),
                 dieValues: new[] { 3 });
             ActivateFirstContract(battle);
+            KeepMammonAndContinue(battle);
 
             Assert.That(battle.TryPlayerStand(), Is.True);
             PendingDemonContractInteraction pending =
@@ -121,6 +135,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 new SequenceEnemyPolicy(EnemyActionType.Stand),
                 dieValues: new[] { 3 });
             ActivateFirstContract(battle);
+            KeepMammonAndContinue(battle);
             Assert.That(battle.TryPlayerStand(), Is.True);
             PendingDemonContractInteraction pending =
                 battle.PendingPlayerDemonContractInteraction;
@@ -374,7 +389,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR03_U12_PresentationShowsRerollActionAndConditionalPistolRetry()
+        public void DCR03_U12_PresentationShowsMammonTurnChoiceAndConditionalPistolRetry()
         {
             CoreLoopBattle mammonBattle = CreateMammonBattle(
                 playerRanks: new[] { 5, 5, 2, 3 },
@@ -394,13 +409,21 @@ namespace DiaBlackJack.CoreLoop.Tests
                 DemonContractPresenter.Create(leviathanBattle);
 
             Assert.That(mammonModel.ActiveContracts.Single(),
-                Does.Contain("재굴림 행동 가능"));
+                Does.Contain("턴 시작 선택 대기"));
+            Assert.That(mammonModel.InteractionKind,
+                Is.EqualTo(DemonContractInteractionKind.MammonReroll));
+            Assert.That(mammonModel.Choices.Select(option => option.Title),
+                Is.EquivalentTo(new[]
+                {
+                    "현재 주사위 유지 · 정상 차례 진행",
+                    "주사위 다시 굴리기 · 턴 종료"
+                }));
             Assert.That(leviathanModel.ActiveContracts.Single(),
                 Does.Contain("리볼버 첫 실패 시 재예측"));
         }
 
         [Test]
-        public void DCR03_U13_InvalidMammonSourceLeavesTurnAndDieUnchanged()
+        public void DCR03_U13_InvalidMammonPromptChoiceLeavesTurnAndDieUnchanged()
         {
             CoreLoopBattle battle = CreateMammonBattle(
                 playerRanks: new[] { 5, 5, 2, 3 },
@@ -408,20 +431,60 @@ namespace DiaBlackJack.CoreLoop.Tests
                 new SequenceEnemyPolicy(EnemyActionType.Stand),
                 dieValues: new[] { 2, 4 });
             ActivateFirstContract(battle);
-            ActiveDemonContract mammon = battle.ActivePlayerDemonContracts.Single();
-            MammonRuntimeState state = (MammonRuntimeState)mammon.RuntimeState;
+            MammonRuntimeState state = (MammonRuntimeState)battle
+                .ActivePlayerDemonContracts.Single().RuntimeState;
+            PendingDemonContractInteraction pending =
+                battle.PendingPlayerDemonContractInteraction;
 
             Assert.That(
-                battle.TryBeginPlayerMammonReroll(mammon.SourceCardId + 1000),
+                battle.TryResolvePlayerDemonContract(
+                    pending.InteractionId,
+                    optionId: 99),
                 Is.False);
-            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+            Assert.That(battle.State,
+                Is.EqualTo(CoreLoopState.PlayerResolvingDemonContract));
+            Assert.That(battle.PendingPlayerDemonContractInteraction,
+                Is.SameAs(pending));
             Assert.That(state.CurrentDieValue, Is.EqualTo(2));
             Assert.That(state.CanRerollThisTurn, Is.True);
 
             Assert.That(
-                battle.TryBeginPlayerMammonReroll(mammon.SourceCardId),
+                battle.TryResolvePlayerDemonContract(
+                    pending.InteractionId,
+                    MammonDemonContractHandler.RerollDieOptionId),
                 Is.True);
             Assert.That(state.CurrentDieValue, Is.EqualTo(4));
+        }
+
+        [Test]
+        public void DCR03_U14_MammonOffersRerollAgainOnEveryOwnerTurn()
+        {
+            CoreLoopBattle battle = CreateMammonBattle(
+                playerRanks: new[] { 5, 5, 2, 3, 4, 5 },
+                enemyRanks: new[] { 10, 7, 2, 3, 4, 5 },
+                new SequenceEnemyPolicy(EnemyActionType.Stand),
+                dieValues: new[] { 2, 4, 5 });
+            ActivateFirstContract(battle);
+            ActiveDemonContract mammon = battle.ActivePlayerDemonContracts.Single();
+            MammonRuntimeState state = (MammonRuntimeState)mammon.RuntimeState;
+
+            PendingDemonContractInteraction first =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                first.InteractionId,
+                MammonDemonContractHandler.RerollDieOptionId), Is.True);
+            Assert.That(state.CurrentDieValue, Is.EqualTo(4));
+            PendingDemonContractInteraction second =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(second.Kind,
+                Is.EqualTo(DemonContractInteractionKind.MammonReroll));
+            Assert.That(second.InteractionId, Is.Not.EqualTo(first.InteractionId));
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                second.InteractionId,
+                MammonDemonContractHandler.KeepDieOptionId), Is.True);
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+            Assert.That(state.CurrentDieValue, Is.EqualTo(4));
+            Assert.That(state.CanRerollThisTurn, Is.False);
         }
 
         private static CoreLoopBattle CreateMammonBattle(
@@ -484,6 +547,17 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.TryResolvePlayerDemonContract(
                 pending.InteractionId,
                 pending.Options[0].OptionId), Is.True);
+        }
+
+        private static void KeepMammonAndContinue(CoreLoopBattle battle)
+        {
+            PendingDemonContractInteraction pending =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(pending.Kind,
+                Is.EqualTo(DemonContractInteractionKind.MammonReroll));
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                pending.InteractionId,
+                MammonDemonContractHandler.KeepDieOptionId), Is.True);
         }
 
         private static void UseAutoPistolWithGuess(CoreLoopBattle battle, int guess)

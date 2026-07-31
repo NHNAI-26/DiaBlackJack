@@ -8,7 +8,6 @@ namespace DiaBlackJack.StageProgression.UI
     public sealed class StageProgressionView : MonoBehaviour
     {
         private const float StartingDemonFaceDownDuration = 0.75f;
-        private const float StartingDemonRevealDuration = 1.5f;
 
         private StageProgressionViewModel _model;
         private RunSaveViewModel _saveModel;
@@ -74,28 +73,6 @@ namespace DiaBlackJack.StageProgression.UI
         public void SetInputLocked(bool inputLocked)
         {
             _inputLocked = inputLocked;
-        }
-
-        private void Update()
-        {
-            if (_model == null ||
-                _saveModel == null ||
-                !_model.IsStartingDemonReveal ||
-                !_model.StartingDemonGrantId.HasValue ||
-                _startingDemonRevealCompletionRaised)
-            {
-                return;
-            }
-
-            float elapsed = Time.unscaledTime - _startingDemonRevealStartedAt;
-            if (elapsed <
-                StartingDemonFaceDownDuration + StartingDemonRevealDuration)
-            {
-                return;
-            }
-
-            _startingDemonRevealCompletionRaised = true;
-            StartingDemonRevealCompleted?.Invoke();
         }
 
         private void OnGUI()
@@ -473,6 +450,21 @@ namespace DiaBlackJack.StageProgression.UI
             }
 
             GUILayout.EndHorizontal();
+            if (isRevealed)
+            {
+                GUILayout.Space(16f);
+                GUI.enabled = !_inputLocked &&
+                    !_saveModel.BlocksProgressionInput &&
+                    !_startingDemonRevealCompletionRaised;
+                if (GUILayout.Button(
+                        "CONFIRM DEMONS",
+                        _buttonStyle,
+                        GUILayout.Height(56f)))
+                {
+                    _startingDemonRevealCompletionRaised = true;
+                    StartingDemonRevealCompleted?.Invoke();
+                }
+            }
         }
 
         private void SynchronizeStartingDemonReveal()
