@@ -6,11 +6,11 @@
 
 ## CC-01: Unity 저작 데이터
 
-`NormalCardDefinitionSO`, `DemonCardDefinitionSO`, `CardContentCatalogSO`를 `Assets/01. Scripts/Content/`에 둔다. 카탈로그 SO는 모든 카드 SO를 참조하고 런타임 순수 카탈로그로 변환한다. 잘못된 문자열, 비용, enum, Sprite는 검증 실패다.
+`NormalCardDefinitionSO`, `DemonCardDefinitionSO`, `CardContentCatalogSO`를 `Assets/01. Scripts/Content/`에 둔다. 카탈로그 SO는 모든 카드 SO를 참조하고 런타임 순수 카탈로그로 변환한다. 악마 SO는 도감 서사도 함께 소유한다. 잘못된 문자열, 비용, enum, Sprite, 빈 도감 서사는 검증 실패다.
 
 ## CC-02: 실행 경로 연결
 
-`CardContentBootstrap`은 각 진입 씬에서 카탈로그 SO를 변환하고 기존 순수 Catalog facade에 설치한다. CoreLoop와 StageProgression은 UnityEngine을 참조하지 않는다.
+`CardContentBootstrap`은 각 진입 씬에서 카드 카탈로그 SO를 먼저 변환·설치하고, 적 콘텐츠 SO가 생성한 적·골드 카탈로그도 순수 Catalog facade에 설치한다. CoreLoop와 StageProgression은 UnityEngine을 참조하지 않는다.
 
 ## CC-03: 상점·표시 전환
 

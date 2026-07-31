@@ -13,6 +13,8 @@ namespace DiaBlackJack.Content
         [SerializeField] private string activeEffectDescription;
         [TextArea(1, 3)]
         [SerializeField] private string costDescription;
+        [TextArea(2, 5)]
+        [SerializeField] private string codexLoreDescription;
         [Min(0)]
         [SerializeField] private int baseSoulCost = 1;
         [Min(0)]
@@ -23,6 +25,8 @@ namespace DiaBlackJack.Content
         [SerializeField] private Sprite faceSprite;
 
         public string Key => key;
+
+        public string CodexLoreDescription => codexLoreDescription;
 
         internal DemonContractDefinition CreateRuntimeDefinition()
         {
@@ -46,6 +50,7 @@ namespace DiaBlackJack.Content
                 string.IsNullOrWhiteSpace(displayName) ||
                 string.IsNullOrWhiteSpace(activeEffectDescription) ||
                 string.IsNullOrWhiteSpace(costDescription) ||
+                string.IsNullOrWhiteSpace(codexLoreDescription) ||
                 baseSoulCost < 0 ||
                 basePurchasePrice < 0 ||
                 shopWeight <= 0 ||

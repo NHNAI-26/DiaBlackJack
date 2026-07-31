@@ -55,7 +55,7 @@ namespace DiaBlackJack.GameScene
         private readonly List<CodexCardThumbnailView> _deckItems =
             new List<CodexCardThumbnailView>();
         private CardContentCatalogSO _cardContentCatalog;
-        private CodexContentCatalogSO _codexContentCatalog;
+        private EnemyContentCatalogSO _enemyContentCatalog;
         private CardContentCatalog _runtimeCardCatalog;
         private bool _controlsBound;
 
@@ -79,14 +79,14 @@ namespace DiaBlackJack.GameScene
 
         public void Configure(
             CardContentCatalogSO cardContentCatalog,
-            CodexContentCatalogSO codexContentCatalog)
+            EnemyContentCatalogSO enemyContentCatalog)
         {
             _cardContentCatalog = cardContentCatalog ??
                 throw new ArgumentNullException(nameof(cardContentCatalog));
-            _codexContentCatalog = codexContentCatalog ??
-                throw new ArgumentNullException(nameof(codexContentCatalog));
+            _enemyContentCatalog = enemyContentCatalog ??
+                throw new ArgumentNullException(nameof(enemyContentCatalog));
             _runtimeCardCatalog = _cardContentCatalog.BuildRuntimeCatalog();
-            _codexContentCatalog.ValidateOrThrow(_runtimeCardCatalog);
+            _enemyContentCatalog.ValidateOrThrow();
         }
 
         public void Open(CodexBookViewModel model)
@@ -182,7 +182,7 @@ namespace DiaBlackJack.GameScene
             if (enemyPortraitImage != null)
             {
                 enemyPortraitImage.sprite =
-                    _codexContentCatalog.GetEnemyPortrait(page.ProfileKey);
+                    _enemyContentCatalog.GetPortrait(page.ProfileKey);
                 enemyPortraitImage.enabled =
                     enemyPortraitImage.sprite != null;
             }
@@ -321,7 +321,7 @@ namespace DiaBlackJack.GameScene
         private void EnsureConfigured()
         {
             if (_cardContentCatalog == null ||
-                _codexContentCatalog == null ||
+                _enemyContentCatalog == null ||
                 _runtimeCardCatalog == null)
             {
                 throw new InvalidOperationException(

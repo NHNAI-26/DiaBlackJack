@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: 레비아탄
   activeEffectDescription: 리볼버 첫 예측 실패 시 한 번 더 예측한다.
   costDescription: 계약 시 영혼 1, 두 예측 모두 실패 시 영혼 1
+  codexLoreDescription: 실패한 예측마저 집요하게 삼키는 심연의 악마. 두 번째 기회 뒤에는 반드시 대가가 남는다.
   baseSoulCost: 1
   basePurchasePrice: 3
   shopWeight: 1

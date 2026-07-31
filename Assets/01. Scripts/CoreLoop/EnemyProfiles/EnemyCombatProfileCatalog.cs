@@ -13,7 +13,7 @@ namespace DiaBlackJack.CoreLoop
         public const string EnforcerKey = "enforcer";
         public const string FinalBossKey = "final-boss";
 
-        private static readonly EnemyCombatProfileCatalog DefaultCatalog =
+        private static EnemyCombatProfileCatalog DefaultCatalog =
             new EnemyCombatProfileCatalog(CreateDefaultProfiles());
 
         private readonly Dictionary<string, EnemyCombatProfile> _profilesByKey;
@@ -63,6 +63,12 @@ namespace DiaBlackJack.CoreLoop
         }
 
         public static EnemyCombatProfileCatalog Default => DefaultCatalog;
+
+        public static void Install(EnemyCombatProfileCatalog catalog)
+        {
+            DefaultCatalog = catalog ??
+                throw new ArgumentNullException(nameof(catalog));
+        }
 
         public IReadOnlyList<EnemyCombatProfile> Profiles { get; }
 

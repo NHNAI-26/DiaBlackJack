@@ -2,7 +2,9 @@
 
 ## DX-00: 콘텐츠 계약
 
-`CodexContentCatalogSO`는 적 프로필 key별 초상화와 악마 정의 key별 서사 설명을 소유한다. 현재 적 프로필과 카드 카탈로그를 기준으로 누락 key, 중복 key, 빈 설명, 빈 Sprite를 거부한다.
+`EnemyCombatProfileDefinitionSO`는 적 이름·초상화·등급·최대 영혼·처치 골드·행동 정책 key·시작 덱·설명·계약 악마·보스 고정 단계를 소유한다. `EnemyContentCatalogSO`는 적 SO 6개를 순서대로 참조하고 순수 `EnemyCombatProfileCatalog`과 `GoldRewardCatalog`을 생성한다.
+
+`DemonCardDefinitionSO`는 기존 이름·앞면·가격·효과·대가와 함께 도감 서사 `codexLoreDescription`을 소유한다. `CardContentCatalogSO`가 악마별 서사 사전을 생성한다. 별도 도감 콘텐츠 SO는 사용하지 않는다.
 
 ## DX-01: 순수 표시 모델
 
@@ -13,7 +15,7 @@
 - `CodexDeckCardViewModel`: 정의 key, 숫자, 표시 이름, suit.
 - `CodexNavigationState`: 카테고리별 현재 인덱스와 경계 이동.
 
-적 정보는 `EnemyCombatProfileCatalog`, `GoldRewardCatalog`, `CardContentCatalog`을 읽는다. 악마 정보는 `CardContentCatalog`과 도감 서사 카탈로그를 읽는다.
+적 정보는 `EnemyContentCatalogSO`가 생성한 `EnemyCombatProfileCatalog`, `GoldRewardCatalog`과 `CardContentCatalog`을 읽는다. 악마 정보는 `DemonCardDefinitionSO`에서 생성한 카드 정의와 서사 사전을 읽는다.
 
 ## DX-02: uGUI와 씬 연결
 
@@ -38,3 +40,4 @@
 - 페이지 경계와 카테고리별 마지막 페이지 복원이 보장된다.
 - 프리팹 필수 버튼, ScrollRect, 두 카드 템플릿과 테이블 책 Collider가 존재한다.
 - GameScene missing script 0, Console Error 0, 전체 EditMode 실패 0을 유지한다.
+- `CardContentBootstrap`은 카드 SO를 먼저 설치한 뒤 적 SO에서 순수 적·골드 카탈로그를 생성하고 설치한다. 순수 계층의 기본 카탈로그는 EditMode 테스트 호환 fallback으로만 유지한다.

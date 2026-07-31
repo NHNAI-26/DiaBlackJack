@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46ea67521afe0bf47b3335c2e066b974, type: 3}
+  m_Name: EnemyContentCatalog
+  m_EditorClassIdentifier: Border::DiaBlackJack.Content.EnemyContentCatalogSO
+  enemies:
+  - {fileID: 11400000, guid: 582bfec182894790ae29c46b2d0defbf, type: 2}
+  - {fileID: 11400000, guid: b97dd61a31cc4f00b5d3e4d76747164a, type: 2}
+  - {fileID: 11400000, guid: dca91ebba4044242ba2633865cfe649a, type: 2}
+  - {fileID: 11400000, guid: 48f8dcb3c42c4d1f85fdb63f29e1c000, type: 2}
+  - {fileID: 11400000, guid: 375e784506ce45b388bf0b87c61ceb68, type: 2}
+  - {fileID: 11400000, guid: cf6ee306f01e4d309b5c506cbc079b68, type: 2}

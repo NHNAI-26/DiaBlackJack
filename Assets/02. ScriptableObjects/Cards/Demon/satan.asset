@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: 사탄
   activeEffectDescription: 스탠드와 버스트를 거부하고 종말 카운터를 진행한다.
   costDescription: 계약 시 영혼 1, 개별 대가 영혼 2
+  codexLoreDescription: 종말의 문턱에서 패배라는 말조차 거부하는 지옥의 왕. 그의 계약은 승부가 끝날 순간을 억지로 뒤로 미룬다.
   baseSoulCost: 1
   basePurchasePrice: 3
   shopWeight: 1

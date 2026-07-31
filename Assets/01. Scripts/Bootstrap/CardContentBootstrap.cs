@@ -1,5 +1,6 @@
 using DiaBlackJack.Content;
 using DiaBlackJack.CoreLoop;
+using DiaBlackJack.StageProgression;
 using UnityEngine;
 
 namespace DiaBlackJack.Bootstrap
@@ -9,10 +10,15 @@ namespace DiaBlackJack.Bootstrap
     public sealed class CardContentBootstrap : MonoBehaviour
     {
         [SerializeField] private CardContentCatalogSO catalog;
+        [SerializeField] private EnemyContentCatalogSO enemyCatalog;
 
         public static CardContentBootstrap Instance { get; private set; }
 
         public CardContentCatalog RuntimeCatalog { get; private set; }
+
+        public EnemyCombatProfileCatalog RuntimeEnemyCatalog { get; private set; }
+
+        public GoldRewardCatalog RuntimeGoldRewardCatalog { get; private set; }
 
         private void Awake()
         {
@@ -35,9 +41,22 @@ namespace DiaBlackJack.Bootstrap
                 return;
             }
 
+            if (enemyCatalog == null)
+            {
+                Debug.LogError(
+                    "CardContentBootstrap requires an EnemyContentCatalogSO.",
+                    this);
+                enabled = false;
+                return;
+            }
+
             RuntimeCatalog = catalog.BuildRuntimeCatalog();
             CardDefinitionCatalog.Install(RuntimeCatalog);
             DemonContractCatalog.Install(RuntimeCatalog);
+            RuntimeEnemyCatalog = enemyCatalog.BuildRuntimeCatalog();
+            RuntimeGoldRewardCatalog = enemyCatalog.BuildGoldRewardCatalog();
+            EnemyCombatProfileCatalog.Install(RuntimeEnemyCatalog);
+            GoldRewardCatalog.Install(RuntimeGoldRewardCatalog);
             Instance = this;
             if (transform.parent == null)
             {

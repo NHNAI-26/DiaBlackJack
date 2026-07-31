@@ -2,7 +2,7 @@
 
 | 작업 | 상태 | 결과 |
 | --- | --- | --- |
-| DX-00 | 완료 | 적 초상화·악마 서사 `CodexContentCatalogSO`와 펼친 책 1536×1024, 닫힌 책·책갈피 1024×1024 투명 PNG를 추가했다. |
+| DX-00 | 완료 | 적 6종을 개별 `EnemyCombatProfileDefinitionSO`로 이전하고 악마 서사를 각 `DemonCardDefinitionSO`에 통합했다. 별도 `CodexContentCatalogSO`는 제거했다. 펼친 책 1536×1024, 닫힌 책·책갈피 1024×1024 투명 PNG를 사용한다. |
 | DX-01 | 완료 | 순수 Presenter와 navigation을 구현했다. 적 6종·악마 12종, 가격·설명·덱·경계 테스트가 통과했다. |
 | DX-02 | 완료 | 도감·테이블 책 프리팹을 생성하고 GameScene에 설치했다. 1920×1080과 1280×720에서 적/악마 페이지와 테이블 책을 캡처해 잘림 없는 배치를 확인했다. |
 | DX-03 | 완료 | GameManager 입력 차단, 덱 미리보기 상호 배제, Escape 우선 닫기, GameFlow 화면별 가용성, 강제 닫기·정리를 연결했다. |
@@ -17,3 +17,4 @@
 - Play Mode에서 `Time.timeScale == 1`을 유지한 채 적/악마 페이지를 열었고, 6개·12개 경계 순회와 닫힌 책 숨김을 확인했다.
 - 임시 화면 캡처와 중복 생성본은 검증 후 제거했다. 실제 사용 아트는 `Assets/05. Arts/Texture/Codex/`에 보존했다.
 - 오류 정리 후 도감 EditMode job `13c3795a09be4a9d96947350d478031f` 14/14 통과. GameScene validate issue 0, 최종 Console Error 0을 확인했다.
+- SO 소유권 정규화 후 도감 job `b3a461ef6984439da873a38515d2d0e1` 14/14, 전체 EditMode job `61923d5755144c44b61620298ebe917f` 842/842 통과. GameScene validate issue 0, missing script 0, broken prefab 0, 최종 Console Error 0을 확인했다.

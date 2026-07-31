@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: 벨페고르
   activeEffectDescription: 히트 전에 다음 카드를 보고 진행 여부를 결정한다.
   costDescription: 계약 시 영혼 1, 상대 스탠드 이후 강제 스탠드
+  codexLoreDescription: 불길한 예지 속에서 가장 편안한 길만 고르는 나태의 악마. 그는 다음 패를 엿보게 하지만 결단의 자유까지 보장하지 않는다.
   baseSoulCost: 1
   basePurchasePrice: 3
   shopWeight: 1

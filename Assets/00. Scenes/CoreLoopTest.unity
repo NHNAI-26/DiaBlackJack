@@ -396,6 +396,7 @@ MonoBehaviour:
   m_Name: CardContentBootstrap
   m_EditorClassIdentifier: Border::DiaBlackJack.Bootstrap.CardContentBootstrap
   catalog: {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a140001, type: 2}
+  enemyCatalog: {fileID: 11400000, guid: 35def8069acda204cb9c406b148add0f, type: 2}
 --- !u!4 &1987654333
 Transform:
   m_ObjectHideFlags: 0

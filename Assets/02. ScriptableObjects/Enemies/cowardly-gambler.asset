@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 004fa77ad26641e1b08e32c9fdd14190, type: 3}
+  m_Name: cowardly-gambler
+  m_EditorClassIdentifier: Border::DiaBlackJack.Content.EnemyCombatProfileDefinitionSO
+  key: cowardly-gambler
+  displayName: 겁쟁이 도박사
+  portrait: {fileID: -6519568242785216333, guid: 22aa22444d6050045815396b307d8760, type: 3}
+  grade: 0
+  maximumSoul: 3
+  defeatGold: 3
+  behaviorPolicyKey: cowardly-gambler-low-risk
+  startingDeck:
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120001, type: 2}
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120002, type: 2}
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120002, type: 2}
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120002, type: 2}
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120003, type: 2}
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120003, type: 2}
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120003, type: 2}
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120004, type: 2}
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120004, type: 2}
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120004, type: 2}
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120005, type: 2}
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120005, type: 2}
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120005, type: 2}
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120006, type: 2}
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120007, type: 2}
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120008, type: 2}
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120009, type: 2}
+  - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a12000a, type: 2}
+  description: 낮은 숫자 중심의 덱으로 공개 합 15부터 빠르게 스탠드한다.
+  playerInformationMode: 0
+  changeCostMode: 0
+  contractableDemons: []
+  demonContractCandidateCount: 2
+  injectsPoisonIntoPlayerDeckEachRound: 0
+  fixedDemonContractPhases: []

@@ -2999,7 +2999,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CodexController
   view: {fileID: 81412217}
   cardContentCatalog: {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a140001, type: 2}
-  codexContentCatalog: {fileID: 11400000, guid: 35def8069acda204cb9c406b148add0f, type: 2}
+  enemyContentCatalog: {fileID: 11400000, guid: 35def8069acda204cb9c406b148add0f, type: 2}
   tableBookRoot: {fileID: 1267139983}
 --- !u!1001 &6219715712046308512
 PrefabInstance:

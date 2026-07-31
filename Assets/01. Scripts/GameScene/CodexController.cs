@@ -13,7 +13,7 @@ namespace DiaBlackJack.GameScene
     {
         [SerializeField] private CodexOverlayView view;
         [SerializeField] private CardContentCatalogSO cardContentCatalog;
-        [SerializeField] private CodexContentCatalogSO codexContentCatalog;
+        [SerializeField] private EnemyContentCatalogSO enemyContentCatalog;
         [SerializeField] private GameObject tableBookRoot;
 
         private IReadOnlyList<EnemyCodexPageViewModel> _enemyPages;
@@ -161,10 +161,10 @@ namespace DiaBlackJack.GameScene
                     "CodexController requires CardContentCatalogSO.");
             }
 
-            if (codexContentCatalog == null)
+            if (enemyContentCatalog == null)
             {
                 throw new MissingReferenceException(
-                    "CodexController requires CodexContentCatalogSO.");
+                    "CodexController requires EnemyContentCatalogSO.");
             }
 
             if (view == null)
@@ -176,10 +176,14 @@ namespace DiaBlackJack.GameScene
             CardContentCatalog runtimeCards =
                 cardContentCatalog.BuildRuntimeCatalog();
             IReadOnlyDictionary<string, string> lore =
-                codexContentCatalog.BuildDemonLoreCatalog(runtimeCards);
+                cardContentCatalog.BuildDemonLoreCatalog();
+            EnemyCombatProfileCatalog runtimeEnemies =
+                enemyContentCatalog.BuildRuntimeCatalog();
+            GoldRewardCatalog runtimeGold =
+                enemyContentCatalog.BuildGoldRewardCatalog();
             _enemyPages = CodexPresenter.CreateEnemyPages(
-                EnemyCombatProfileCatalog.Default,
-                GoldRewardCatalog.CreatePrototype(),
+                runtimeEnemies,
+                runtimeGold,
                 runtimeCards);
             _demonPages = CodexPresenter.CreateDemonPages(
                 runtimeCards,
@@ -199,7 +203,7 @@ namespace DiaBlackJack.GameScene
             view ??= FindFirstObjectByType<CodexOverlayView>(
                 FindObjectsInactive.Include);
             BuildModels();
-            view.Configure(cardContentCatalog, codexContentCatalog);
+            view.Configure(cardContentCatalog, enemyContentCatalog);
         }
 
         private CodexBookViewModel CreateCurrentBook()

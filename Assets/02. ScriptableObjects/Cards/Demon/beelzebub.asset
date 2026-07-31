@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: 바알제붑
   activeEffectDescription: 버스트를 영혼과 소유자가 고른 양측 공개 카드로 대신한다.
   costDescription: 계약 시 영혼 1, 공개 카드 3장 이하일 때 스탠드 불가
+  codexLoreDescription: 썩은 승부 위에 군림하는 파리의 군주. 패배의 순간조차 제물로 바꾸어 다시 판을 이어 간다.
   baseSoulCost: 1
   basePurchasePrice: 3
   shopWeight: 1

@@ -16,6 +16,7 @@ MonoBehaviour:
   displayName: 아스모데우스
   activeEffectDescription: 차례 시작에 스탠드하지 않은 상대를 히트시킬 수 있다.
   costDescription: 계약 시 영혼 1, 숫자 7 이하 카드 사용 불가
+  codexLoreDescription: 욕망과 조급함을 부추기는 악마. 상대가 멈추기 전에 한 장 더 손을 뻗게 만든다.
   baseSoulCost: 1
   basePurchasePrice: 3
   shopWeight: 1

@@ -172,6 +172,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                     .objectReferenceValue as CardContentCatalogSO;
                 Assert.That(catalog, Is.Not.Null, scenePath);
                 Assert.That(catalog.BuildRuntimeCatalog().NormalDefinitions, Has.Count.EqualTo(15));
+                EnemyContentCatalogSO enemyCatalog = serialized
+                    .FindProperty("enemyCatalog")
+                    .objectReferenceValue as EnemyContentCatalogSO;
+                Assert.That(enemyCatalog, Is.Not.Null, scenePath);
+                Assert.That(
+                    enemyCatalog.BuildRuntimeCatalog().Profiles,
+                    Has.Count.EqualTo(6));
             }
             finally
             {

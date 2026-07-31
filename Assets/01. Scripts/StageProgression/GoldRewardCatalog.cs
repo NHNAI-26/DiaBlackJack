@@ -6,6 +6,9 @@ namespace DiaBlackJack.StageProgression
 {
     public sealed class GoldRewardCatalog
     {
+        private static GoldRewardCatalog PrototypeCatalog =
+            CreateFallbackPrototype();
+
         private readonly Dictionary<string, int> _amountsByProfileKey;
 
         public GoldRewardCatalog(IEnumerable<KeyValuePair<string, int>> rewards)
@@ -49,6 +52,17 @@ namespace DiaBlackJack.StageProgression
         }
 
         public static GoldRewardCatalog CreatePrototype()
+        {
+            return PrototypeCatalog;
+        }
+
+        public static void Install(GoldRewardCatalog catalog)
+        {
+            PrototypeCatalog = catalog ??
+                throw new ArgumentNullException(nameof(catalog));
+        }
+
+        private static GoldRewardCatalog CreateFallbackPrototype()
         {
             return new GoldRewardCatalog(new[]
             {

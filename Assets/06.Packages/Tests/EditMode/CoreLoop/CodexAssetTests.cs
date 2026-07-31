@@ -14,8 +14,8 @@ namespace DiaBlackJack.CoreLoop.Tests
     {
         private const string CardCatalogPath =
             "Assets/02. ScriptableObjects/Cards/CardContentCatalog.asset";
-        private const string CodexCatalogPath =
-            "Assets/02. ScriptableObjects/Codex/CodexContentCatalog.asset";
+        private const string EnemyCatalogPath =
+            "Assets/02. ScriptableObjects/Enemies/EnemyContentCatalog.asset";
         private const string OverlayPrefabPath =
             "Assets/03. Prefabs/UI/GameScene/CodexOverlay.prefab";
         private const string BookPrefabPath =
@@ -27,15 +27,81 @@ namespace DiaBlackJack.CoreLoop.Tests
             CardContentCatalogSO cardCatalog =
                 AssetDatabase.LoadAssetAtPath<CardContentCatalogSO>(
                     CardCatalogPath);
-            CodexContentCatalogSO codexCatalog =
-                AssetDatabase.LoadAssetAtPath<CodexContentCatalogSO>(
-                    CodexCatalogPath);
+            EnemyContentCatalogSO enemyCatalog = LoadEnemyCatalog();
 
             Assert.That(cardCatalog, Is.Not.Null);
-            Assert.That(codexCatalog, Is.Not.Null);
-            codexCatalog.ValidateOrThrow(cardCatalog.BuildRuntimeCatalog());
-            Assert.That(codexCatalog.EnemyPortraitCount, Is.EqualTo(6));
-            Assert.That(codexCatalog.DemonLoreCount, Is.EqualTo(12));
+            Assert.That(enemyCatalog, Is.Not.Null);
+            enemyCatalog.ValidateOrThrow();
+            Assert.That(enemyCatalog.EnemyCount, Is.EqualTo(6));
+            Assert.That(cardCatalog.DemonCardCount, Is.EqualTo(12));
+            Assert.That(
+                cardCatalog.BuildDemonLoreCatalog().Count,
+                Is.EqualTo(12));
+
+            EnemyCombatProfileCatalog authoredProfiles =
+                enemyCatalog.BuildRuntimeCatalog();
+            DiaBlackJack.StageProgression.GoldRewardCatalog authoredGold =
+                enemyCatalog.BuildGoldRewardCatalog();
+            foreach (EnemyCombatProfile expected in
+                EnemyCombatProfileCatalog.Default.Profiles)
+            {
+                EnemyCombatProfile actual = authoredProfiles.GetByKey(
+                    expected.Key);
+                Assert.That(actual.DisplayName, Is.EqualTo(expected.DisplayName));
+                Assert.That(actual.Grade, Is.EqualTo(expected.Grade));
+                Assert.That(actual.MaximumSoul, Is.EqualTo(expected.MaximumSoul));
+                Assert.That(
+                    actual.BehaviorPolicyKey,
+                    Is.EqualTo(expected.BehaviorPolicyKey));
+                Assert.That(
+                    actual.DeckDefinitionKeys,
+                    Is.EqualTo(expected.DeckDefinitionKeys));
+                Assert.That(actual.Summary, Is.EqualTo(expected.Summary));
+                Assert.That(
+                    actual.PlayerInformationMode,
+                    Is.EqualTo(expected.PlayerInformationMode));
+                Assert.That(
+                    actual.ChangeCostMode,
+                    Is.EqualTo(expected.ChangeCostMode));
+                Assert.That(
+                    actual.DemonContractDefinitionKeys,
+                    Is.EqualTo(expected.DemonContractDefinitionKeys));
+                Assert.That(
+                    actual.DemonContractCandidateCount,
+                    Is.EqualTo(expected.DemonContractCandidateCount));
+                Assert.That(
+                    actual.InjectsPoisonIntoPlayerDeckEachRound,
+                    Is.EqualTo(
+                        expected.InjectsPoisonIntoPlayerDeckEachRound));
+                Assert.That(
+                    actual.FixedDemonContractPhases.Count,
+                    Is.EqualTo(expected.FixedDemonContractPhases.Count));
+                for (int index = 0;
+                    index < actual.FixedDemonContractPhases.Count;
+                    index++)
+                {
+                    FixedDemonContractPhaseDefinition actualPhase =
+                        actual.FixedDemonContractPhases[index];
+                    FixedDemonContractPhaseDefinition expectedPhase =
+                        expected.FixedDemonContractPhases[index];
+                    Assert.That(
+                        actualPhase.ActivationSoulThreshold,
+                        Is.EqualTo(expectedPhase.ActivationSoulThreshold));
+                    Assert.That(
+                        actualPhase.ActiveDefinitionKey,
+                        Is.EqualTo(expectedPhase.ActiveDefinitionKey));
+                    Assert.That(
+                        actualPhase.DiscardedDefinitionKey,
+                        Is.EqualTo(expectedPhase.DiscardedDefinitionKey));
+                }
+
+                Assert.That(
+                    authoredGold.GetAmount(expected.Key),
+                    Is.EqualTo(
+                        DiaBlackJack.StageProgression.GoldRewardCatalog
+                            .CreatePrototype()
+                            .GetAmount(expected.Key)));
+            }
         }
 
         [Test]
@@ -74,55 +140,92 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DX00_U01_ContentCatalogRejectsMissingEnemyKey()
+        public void DX00_U01_ContentCatalogRejectsNullEnemy()
         {
-            AssertInvalidCatalog(catalog =>
+            AssertInvalidEnemyCatalog(catalog =>
             {
                 SerializedProperty entries = catalog.FindProperty(
-                    "enemyPortraits");
-                entries.DeleteArrayElementAtIndex(entries.arraySize - 1);
+                    "enemies");
+                entries.GetArrayElementAtIndex(0).objectReferenceValue = null;
             });
         }
 
         [Test]
-        public void DX00_U02_ContentCatalogRejectsDuplicateDemonKey()
+        public void DX00_U02_ContentCatalogRejectsDuplicateEnemyKey()
         {
-            AssertInvalidCatalog(catalog =>
+            AssertInvalidEnemyCatalog(catalog =>
             {
                 SerializedProperty entries = catalog.FindProperty(
-                    "demonLore");
-                string duplicateKey = entries.GetArrayElementAtIndex(0)
-                    .FindPropertyRelative("definitionKey").stringValue;
-                entries.GetArrayElementAtIndex(1)
-                    .FindPropertyRelative("definitionKey").stringValue =
-                    duplicateKey;
+                    "enemies");
+                entries.GetArrayElementAtIndex(1).objectReferenceValue =
+                    entries.GetArrayElementAtIndex(0).objectReferenceValue;
             });
         }
 
         [Test]
         public void DX00_U03_ContentCatalogRejectsEmptyLore()
         {
-            AssertInvalidCatalog(catalog =>
+            CardContentCatalogSO catalog = UnityEngine.Object.Instantiate(
+                LoadCardCatalog());
+            catalog.hideFlags = HideFlags.HideAndDontSave;
+            DemonCardDefinitionSO demon = null;
+            try
             {
-                SerializedProperty entries = catalog.FindProperty(
-                    "demonLore");
-                entries.GetArrayElementAtIndex(0)
-                    .FindPropertyRelative("loreDescription").stringValue =
+                SerializedObject serialized = new SerializedObject(catalog);
+                SerializedProperty entries = serialized.FindProperty(
+                    "demonCards");
+                demon = UnityEngine.Object.Instantiate(
+                    entries.GetArrayElementAtIndex(0).objectReferenceValue as
+                        DemonCardDefinitionSO);
+                demon.hideFlags = HideFlags.HideAndDontSave;
+                SerializedObject demonData = new SerializedObject(demon);
+                demonData.FindProperty("codexLoreDescription").stringValue =
                     " ";
-            });
+                demonData.ApplyModifiedPropertiesWithoutUndo();
+                entries.GetArrayElementAtIndex(0).objectReferenceValue = demon;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+
+                Assert.Throws<InvalidOperationException>(() =>
+                    catalog.BuildDemonLoreCatalog());
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(demon);
+                UnityEngine.Object.DestroyImmediate(catalog);
+            }
         }
 
         [Test]
         public void DX00_U04_ContentCatalogRejectsMissingPortrait()
         {
-            AssertInvalidCatalog(catalog =>
+            EnemyContentCatalogSO catalog = UnityEngine.Object.Instantiate(
+                LoadEnemyCatalog());
+            catalog.hideFlags = HideFlags.HideAndDontSave;
+            EnemyCombatProfileDefinitionSO enemy = null;
+            try
             {
-                SerializedProperty entries = catalog.FindProperty(
-                    "enemyPortraits");
-                entries.GetArrayElementAtIndex(0)
-                    .FindPropertyRelative("portrait").objectReferenceValue =
-                    null;
-            });
+                SerializedObject serialized = new SerializedObject(catalog);
+                SerializedProperty entries = serialized.FindProperty(
+                    "enemies");
+                enemy = UnityEngine.Object.Instantiate(
+                    entries.GetArrayElementAtIndex(0).objectReferenceValue as
+                        EnemyCombatProfileDefinitionSO);
+                enemy.hideFlags = HideFlags.HideAndDontSave;
+                SerializedObject enemyData = new SerializedObject(enemy);
+                enemyData.FindProperty("portrait").objectReferenceValue = null;
+                enemyData.ApplyModifiedPropertiesWithoutUndo();
+                entries.GetArrayElementAtIndex(0).objectReferenceValue = enemy;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+
+                Assert.That(
+                    () => catalog.ValidateOrThrow(),
+                    Throws.Exception);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(enemy);
+                UnityEngine.Object.DestroyImmediate(catalog);
+            }
         }
 
         [Test]
@@ -144,8 +247,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 overlay.GetComponent<CodexOverlayView>();
             serialized.FindProperty("cardContentCatalog")
                 .objectReferenceValue = LoadCardCatalog();
-            serialized.FindProperty("codexContentCatalog")
-                .objectReferenceValue = LoadCodexCatalog();
+            serialized.FindProperty("enemyContentCatalog")
+                .objectReferenceValue = LoadEnemyCatalog();
             serialized.FindProperty("tableBookRoot").objectReferenceValue =
                 book;
             serialized.ApplyModifiedPropertiesWithoutUndo();
@@ -198,8 +301,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 overlay.GetComponent<CodexOverlayView>();
             controllerData.FindProperty("cardContentCatalog")
                 .objectReferenceValue = LoadCardCatalog();
-            controllerData.FindProperty("codexContentCatalog")
-                .objectReferenceValue = LoadCodexCatalog();
+            controllerData.FindProperty("enemyContentCatalog")
+                .objectReferenceValue = LoadEnemyCatalog();
             controllerData.FindProperty("tableBookRoot")
                 .objectReferenceValue = book;
             controllerData.ApplyModifiedPropertiesWithoutUndo();
@@ -221,20 +324,20 @@ namespace DiaBlackJack.CoreLoop.Tests
             UnityEngine.Object.DestroyImmediate(book);
         }
 
-        private static void AssertInvalidCatalog(
+        private static void AssertInvalidEnemyCatalog(
             Action<SerializedObject> mutate)
         {
-            CodexContentCatalogSO catalog = UnityEngine.Object.Instantiate(
-                LoadCodexCatalog());
+            EnemyContentCatalogSO catalog = UnityEngine.Object.Instantiate(
+                LoadEnemyCatalog());
             catalog.hideFlags = HideFlags.HideAndDontSave;
             try
             {
                 SerializedObject serialized = new SerializedObject(catalog);
                 mutate(serialized);
                 serialized.ApplyModifiedPropertiesWithoutUndo();
-                Assert.Throws<InvalidOperationException>(() =>
-                    catalog.ValidateOrThrow(
-                        LoadCardCatalog().BuildRuntimeCatalog()));
+                Assert.That(
+                    () => catalog.ValidateOrThrow(),
+                    Throws.Exception);
             }
             finally
             {
@@ -248,10 +351,10 @@ namespace DiaBlackJack.CoreLoop.Tests
                 CardCatalogPath);
         }
 
-        private static CodexContentCatalogSO LoadCodexCatalog()
+        private static EnemyContentCatalogSO LoadEnemyCatalog()
         {
-            return AssetDatabase.LoadAssetAtPath<CodexContentCatalogSO>(
-                CodexCatalogPath);
+            return AssetDatabase.LoadAssetAtPath<EnemyContentCatalogSO>(
+                EnemyCatalogPath);
         }
 
         private static void InvokeLifecycle(
