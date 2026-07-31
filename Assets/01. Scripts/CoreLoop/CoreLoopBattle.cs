@@ -70,6 +70,8 @@ namespace DiaBlackJack.CoreLoop
         private bool _isResolvingEnemyPaimonChoice;
         private BelialForcedCardEffectContinuation
             _belialForcedCardEffectContinuation;
+        private AzazelCardEffectSequence _activeAzazelCardEffectSequence;
+        private bool _pendingFixedEnemyAzazelActivation;
         private readonly HashSet<int> _resolvedPlayerTurnStartContractIds =
             new HashSet<int>();
         private readonly HashSet<int> _resolvedEnemyTurnStartContractIds =
@@ -155,6 +157,30 @@ namespace DiaBlackJack.CoreLoop
             public int SourceContractCardId { get; }
 
             public int TransferredCardId { get; }
+        }
+
+        private sealed class AzazelCardEffectSequence
+        {
+            public AzazelCardEffectSequence(
+                CombatantSide ownerSide,
+                IReadOnlyList<int> cardIds,
+                Action complete)
+            {
+                OwnerSide = ownerSide;
+                CardIds = cardIds ??
+                    throw new ArgumentNullException(nameof(cardIds));
+                Complete = complete ??
+                    throw new ArgumentNullException(nameof(complete));
+            }
+
+            public IReadOnlyList<int> CardIds { get; }
+
+            public Action Complete { get; }
+
+            public int NextIndex { get; set; }
+
+            public CombatantSide OwnerSide { get; }
+
         }
 
         public CoreLoopBattle(
@@ -899,6 +925,13 @@ namespace DiaBlackJack.CoreLoop
                 return true;
             }
 
+            if (TryBeginAzazelCardEffectSequence(
+                    activeContract,
+                    CompleteEnemyActionAfterAzazelSequence))
+            {
+                return true;
+            }
+
             if (TryBeginLuciferAdditionalContractChoice(activeContract))
             {
                 return true;
@@ -968,10 +1001,7 @@ namespace DiaBlackJack.CoreLoop
                         OwnerBustHandlingResult azazelHandling = HandleEnemyBust(() =>
                         {
                             State = CoreLoopState.EnemyTurn;
-                            _demonContractResolver.NotifyOwnerHit(
-                                this,
-                                _activeEnemyDemonContracts,
-                                CombatantSide.Enemy);
+                            CompleteEnemyHitAction();
                             RaiseStepped();
                         });
                         if (azazelHandling == OwnerBustHandlingResult.NotHandled)
@@ -1006,10 +1036,7 @@ namespace DiaBlackJack.CoreLoop
                         OwnerBustHandlingResult handling = HandleEnemyBust(() =>
                         {
                             State = CoreLoopState.EnemyTurn;
-                            _demonContractResolver.NotifyOwnerHit(
-                                this,
-                                _activeEnemyDemonContracts,
-                                CombatantSide.Enemy);
+                            CompleteEnemyHitAction();
                             RaiseStepped();
                         });
                         if (handling == OwnerBustHandlingResult.NotHandled)
@@ -1027,10 +1054,7 @@ namespace DiaBlackJack.CoreLoop
                         }
                     }
 
-                    _demonContractResolver.NotifyOwnerHit(
-                        this,
-                        _activeEnemyDemonContracts,
-                        CombatantSide.Enemy);
+                    CompleteEnemyHitAction();
                     return true;
 
                 case BelphegorDemonContractHandler.MoveTopCardToBottomOptionId:
@@ -1166,6 +1190,13 @@ namespace DiaBlackJack.CoreLoop
             if (playerDepleted)
             {
                 EndBattleWithoutRound();
+                return true;
+            }
+
+            if (TryBeginAzazelCardEffectSequence(
+                    activeContract,
+                    CompletePlayerActionAfterAzazelSequence))
+            {
                 return true;
             }
 
@@ -1316,6 +1347,13 @@ namespace DiaBlackJack.CoreLoop
                 return true;
             }
 
+            if (TryBeginAzazelCardEffectSequence(
+                    activeContract,
+                    CompletePlayerActionAfterAzazelSequence))
+            {
+                return true;
+            }
+
             if (TryBeginLuciferAdditionalContractChoice(activeContract))
             {
                 return true;
@@ -1413,6 +1451,13 @@ namespace DiaBlackJack.CoreLoop
             if (Enemy.Soul.IsDepleted)
             {
                 EndBattleWithoutRound();
+                return true;
+            }
+
+            if (TryBeginAzazelCardEffectSequence(
+                    activeContract,
+                    CompleteEnemyActionAfterAzazelSequence))
+            {
                 return true;
             }
 
@@ -1607,10 +1652,14 @@ namespace DiaBlackJack.CoreLoop
 
         private void CompletePlayerHitAction()
         {
-            _demonContractResolver.NotifyOwnerHit(
-                this,
-                _activePlayerDemonContracts,
-                CombatantSide.Player);
+            if (TryBeginAzazelCardEffectSequence(
+                    _activePlayerDemonContracts,
+                    CombatantSide.Player,
+                    CompletePlayerActionAndRunEnemyTurn))
+            {
+                return;
+            }
+
             CompletePlayerActionAndRunEnemyTurn();
         }
 
@@ -2491,6 +2540,10 @@ namespace DiaBlackJack.CoreLoop
                     _demonContractResolver.Activate(this, activeContract));
                 _activeFixedEnemyDemonContract = activeContract;
                 _fixedEnemyDemonContractPhaseIndex = nextPhaseIndex;
+                if (activeContract.Kind == DemonContractKind.Azazel)
+                {
+                    _pendingFixedEnemyAzazelActivation = true;
+                }
                 RecordPublicAction(
                     CombatantSide.Enemy,
                     PublicCombatActionType.DemonContract,
@@ -4384,7 +4437,13 @@ namespace DiaBlackJack.CoreLoop
                 _pendingCardEffect,
                 selectedOption);
             CardEffectApplicationResult applicationResult = ApplyCardEffectStep(step);
-            if (actorSide == CombatantSide.Player &&
+            if (applicationResult == CardEffectApplicationResult.Completed &&
+                (_activeAzazelCardEffectSequence != null ||
+                    _belialForcedCardEffectContinuation != null))
+            {
+                CompleteCardEffectOwnerAction(actorSide);
+            }
+            else if (actorSide == CombatantSide.Player &&
                 applicationResult == CardEffectApplicationResult.Completed)
             {
                 CompletePlayerActionAndRunEnemyTurn();
@@ -4790,6 +4849,20 @@ namespace DiaBlackJack.CoreLoop
 
         private void CompleteCardEffectOwnerAction(CombatantSide actorSide)
         {
+            AzazelCardEffectSequence azazelSequence =
+                _activeAzazelCardEffectSequence;
+            if (azazelSequence != null)
+            {
+                if (azazelSequence.OwnerSide != actorSide)
+                {
+                    throw new InvalidOperationException(
+                        "Azazel card sequence lost its owner.");
+                }
+
+                ContinueAzazelCardEffectSequence(azazelSequence);
+                return;
+            }
+
             BelialForcedCardEffectContinuation belialContinuation =
                 _belialForcedCardEffectContinuation;
             if (belialContinuation != null)
@@ -4820,6 +4893,143 @@ namespace DiaBlackJack.CoreLoop
             {
                 CompleteEnemyAction();
             }
+        }
+
+        private bool TryBeginAzazelCardEffectSequence(
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            CombatantSide ownerSide,
+            Action complete)
+        {
+            ActiveDemonContract azazelContract = null;
+            foreach (ActiveDemonContract activeContract in activeContracts)
+            {
+                if (activeContract.Kind == DemonContractKind.Azazel)
+                {
+                    azazelContract = activeContract;
+                    break;
+                }
+            }
+
+            return azazelContract != null && TryBeginAzazelCardEffectSequence(
+                azazelContract,
+                complete);
+        }
+
+        private bool TryBeginAzazelCardEffectSequence(
+            ActiveDemonContract activeContract,
+            Action complete)
+        {
+            if (activeContract == null ||
+                activeContract.Kind != DemonContractKind.Azazel ||
+                State == CoreLoopState.BattleEnded)
+            {
+                return false;
+            }
+
+            if (_activeAzazelCardEffectSequence != null)
+            {
+                throw new InvalidOperationException(
+                    "Only one Azazel card sequence can resolve at a time.");
+            }
+
+            BattleParticipant owner = GetParticipant(activeContract.OwnerSide);
+            var cardIds = new List<int>();
+            foreach (BlackjackCard card in owner.Hand.GetPublicCards())
+            {
+                if (card.Definition.Activation == CardActivationKind.Manual &&
+                    card.Definition.Effect != CardEffectKind.None &&
+                    (card.UseState == CardUseState.Available ||
+                        card.UseState == CardUseState.Used))
+                {
+                    cardIds.Add(card.Id);
+                }
+            }
+
+            if (cardIds.Count == 0)
+            {
+                return false;
+            }
+
+            var sequence = new AzazelCardEffectSequence(
+                activeContract.OwnerSide,
+                cardIds.AsReadOnly(),
+                complete);
+            _activeAzazelCardEffectSequence = sequence;
+            ContinueAzazelCardEffectSequence(sequence);
+            return true;
+        }
+
+        private void CompletePlayerActionAfterAzazelSequence()
+        {
+            State = CoreLoopState.PlayerTurn;
+            RaiseStepped();
+            CompletePlayerActionAndRunEnemyTurn();
+        }
+
+        private void CompleteEnemyActionAfterAzazelSequence()
+        {
+            State = CoreLoopState.EnemyTurn;
+            RaiseStepped();
+            CompleteEnemyAction();
+        }
+
+        private void ContinueAzazelCardEffectSequence(
+            AzazelCardEffectSequence sequence)
+        {
+            if (!ReferenceEquals(_activeAzazelCardEffectSequence, sequence) ||
+                State == CoreLoopState.BattleEnded)
+            {
+                return;
+            }
+
+            BattleParticipant owner = GetParticipant(sequence.OwnerSide);
+            while (sequence.NextIndex < sequence.CardIds.Count)
+            {
+                int cardId = sequence.CardIds[sequence.NextIndex++];
+                if (!owner.Hand.TryGetCard(cardId, out BlackjackCard card) ||
+                    owner.Hand.IsHiddenCard(cardId) ||
+                    !card.IsFaceUp ||
+                    card.Definition.Activation != CardActivationKind.Manual ||
+                    card.Definition.Effect == CardEffectKind.None)
+                {
+                    continue;
+                }
+
+                if (card.UseState == CardUseState.Used && !card.TryReactivate())
+                {
+                    throw new InvalidOperationException(
+                        "Azazel could not reactivate a queued public card.");
+                }
+
+                if (card.UseState != CardUseState.Available)
+                {
+                    continue;
+                }
+
+                if (!card.TryBeginUse())
+                {
+                    throw new InvalidOperationException(
+                        "Azazel could not begin a queued public card effect.");
+                }
+
+                var context = new CardEffectContext(this, sequence.OwnerSide, card);
+                _activeCardEffectContext = context;
+                _activeCardEffectActorSide = sequence.OwnerSide;
+                RecordPublicAction(
+                    sequence.OwnerSide,
+                    PublicCombatActionType.UseCard,
+                    card.DefinitionKey);
+                CardEffectApplicationResult applicationResult =
+                    ApplyCardEffectStep(_cardEffectResolver.Begin(context));
+                if (applicationResult != CardEffectApplicationResult.Completed ||
+                    !ReferenceEquals(_activeAzazelCardEffectSequence, sequence))
+                {
+                    return;
+                }
+            }
+
+            _activeAzazelCardEffectSequence = null;
+            sequence.Complete();
         }
 
         private OwnerBustHandlingResult HandleRoundBust(
@@ -4884,6 +5094,7 @@ namespace DiaBlackJack.CoreLoop
             _pendingBeelzebubBustResolution = null;
             _pendingPaimonExileResolution = null;
             _belialForcedCardEffectContinuation = null;
+            _activeAzazelCardEffectSequence = null;
             _resolvedPaimonOpponentBustContractIds.Clear();
             _playerAzazelBustPending = false;
             _enemyAzazelBustPending = false;
@@ -4919,6 +5130,28 @@ namespace DiaBlackJack.CoreLoop
 
         private void CompleteStartingRoundAfterDeal()
         {
+            if (_pendingFixedEnemyAzazelActivation &&
+                _activeFixedEnemyDemonContract != null &&
+                _activeFixedEnemyDemonContract.Kind == DemonContractKind.Azazel)
+            {
+                _pendingFixedEnemyAzazelActivation = false;
+                if (TryBeginAzazelCardEffectSequence(
+                        _activeFixedEnemyDemonContract,
+                        () =>
+                        {
+                            BeginPlayerTurn();
+                            RaiseStepped();
+                        }))
+                {
+                    if (State == CoreLoopState.EnemyTurn)
+                    {
+                        RunEnemyTurn();
+                    }
+
+                    return;
+                }
+            }
+
             BeginPlayerTurn();
             RaiseStepped();
         }
@@ -5278,10 +5511,14 @@ namespace DiaBlackJack.CoreLoop
 
         private void CompleteEnemyHitAction()
         {
-            _demonContractResolver.NotifyOwnerHit(
-                this,
-                _activeEnemyDemonContracts,
-                CombatantSide.Enemy);
+            if (TryBeginAzazelCardEffectSequence(
+                    _activeEnemyDemonContracts,
+                    CombatantSide.Enemy,
+                    CompleteEnemyAction))
+            {
+                return;
+            }
+
             CompleteEnemyAction();
         }
 
@@ -5767,6 +6004,8 @@ namespace DiaBlackJack.CoreLoop
             ClearPlayerDemonContractInteraction();
             ClearEnemyDemonContractInteraction();
             _pendingBeelzebubBustResolution = null;
+            _activeAzazelCardEffectSequence = null;
+            _pendingFixedEnemyAzazelActivation = false;
             _playerAzazelBustPending = false;
             _enemyAzazelBustPending = false;
             _demonContractResolver.NotifyRoundEnded(
@@ -6340,6 +6579,7 @@ namespace DiaBlackJack.CoreLoop
             ClearPlayerDemonContractInteraction();
             ClearEnemyDemonContractInteraction();
             _pendingBeelzebubBustResolution = null;
+            _activeAzazelCardEffectSequence = null;
             _playerAzazelBustPending = false;
             _enemyAzazelBustPending = false;
             _demonContractResolver.NotifyRoundEnded(

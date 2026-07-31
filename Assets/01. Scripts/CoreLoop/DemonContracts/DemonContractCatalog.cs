@@ -188,7 +188,7 @@ namespace DiaBlackJack.CoreLoop
                     "아자젤",
                     DemonContractKind.Azazel,
                     baseSoulCost,
-                    "사용 완료 공개 카드를 계약 시와 히트 뒤 재사용 가능하게 한다.",
+                    "계약 시와 히트 뒤 공개 수동 카드 효과를 왼쪽부터 한 번씩 사용한다.",
                     "계약 시 영혼 1, 같은 숫자 공개 카드 유입 시 버스트"),
                 new DemonContractDefinition(
                     PaimonKey,

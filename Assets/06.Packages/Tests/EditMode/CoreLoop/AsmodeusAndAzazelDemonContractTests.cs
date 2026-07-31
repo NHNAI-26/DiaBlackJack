@@ -93,38 +93,59 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR04_U13_AzazelActivationReactivatesUsedFaceUpCards()
+        public void DCR04_U13_AzazelActivationUsesPublicCardsFromLeftToRight()
         {
             CoreLoopBattle battle = CreateBattle(
-                DefinitionDeck("military-knife-9", new[] { 2, 3, 4, 5, 6 }),
-                PlainDeck(new[] { 2, 2, 2, 2, 2, 2 }, 100),
+                DefinitionSequenceDeck(
+                    "crystal-orb-5",
+                    "standard-plain-2",
+                    "auto-pistol-7",
+                    "standard-plain-3",
+                    "standard-plain-4",
+                    "standard-plain-4"),
+                PlainDeck(new[] { 2, 3, 4, 5, 6, 7 }, 100),
                 new StandPolicy(),
                 DemonContractKind.Azazel);
-            BlackjackCard knife = battle.Player.Hand.GetFaceUpCards().Single();
-            Assert.That(battle.TryBeginPlayerCardUse(knife.Id), Is.True);
-            Assert.That(knife.UseState, Is.EqualTo(CardUseState.Used));
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            BlackjackCard orb = battle.Player.Hand.GetPublicCards()[0];
+            BlackjackCard revolver = battle.Player.Hand.GetPublicCards()[1];
 
             ActivateFirstContract(battle);
 
-            Assert.That(knife.UseState, Is.EqualTo(CardUseState.Available));
+            Assert.That(battle.PendingPlayerCardEffect.EffectKind,
+                Is.EqualTo(CardEffectKind.CrystalOrb));
+            Assert.That(orb.UseState, Is.EqualTo(CardUseState.Resolving));
+            Assert.That(revolver.UseState, Is.EqualTo(CardUseState.Available));
+
+            Assert.That(battle.TryResolvePlayerCardChoice(
+                battle.PendingPlayerCardEffect.Options[0].Id), Is.True);
+
+            Assert.That(orb.UseState, Is.EqualTo(CardUseState.Used));
+            Assert.That(battle.PendingPlayerCardEffect.EffectKind,
+                Is.EqualTo(CardEffectKind.AutoPistol));
+            Assert.That(revolver.UseState, Is.EqualTo(CardUseState.Resolving));
         }
 
         [Test]
-        public void DCR04_U14_AzazelOwnerHitReactivatesUsedFaceUpCardsAgain()
+        public void DCR04_U14_AzazelOwnerHitUsesPublicCardEffectsAgain()
         {
             CoreLoopBattle battle = CreateBattle(
-                DefinitionDeck("military-knife-9", new[] { 2, 3, 4, 5, 6, 7 }),
-                PlainDeck(new[] { 2, 2, 2, 2, 2, 2, 2 }, 100),
+                DefinitionDeck("auto-pistol-7", new[] { 2, 3, 4, 5, 6, 7 }),
+                PlainDeck(new[] { 2, 3, 4, 5, 6, 7, 8 }, 100),
                 new StandPolicy(),
                 DemonContractKind.Azazel);
-            BlackjackCard knife = battle.Player.Hand.GetFaceUpCards().Single();
+            BlackjackCard revolver = battle.Player.Hand.GetFaceUpCards().Single();
             ActivateFirstContract(battle);
-            Assert.That(battle.TryBeginPlayerCardUse(knife.Id), Is.True);
-            Assert.That(knife.UseState, Is.EqualTo(CardUseState.Used));
+            Assert.That(battle.PendingPlayerCardEffect.EffectKind,
+                Is.EqualTo(CardEffectKind.AutoPistol));
+            Assert.That(battle.TryResolvePlayerCardChoice(10), Is.True);
+            Assert.That(revolver.UseState, Is.EqualTo(CardUseState.Used));
 
             Assert.That(battle.TryPlayerHit(), Is.True);
 
-            Assert.That(knife.UseState, Is.EqualTo(CardUseState.Available));
+            Assert.That(battle.PendingPlayerCardEffect.EffectKind,
+                Is.EqualTo(CardEffectKind.AutoPistol));
+            Assert.That(revolver.UseState, Is.EqualTo(CardUseState.Resolving));
             Assert.That(battle.LastResolution, Is.Null);
         }
 
@@ -132,7 +153,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         public void DCR04_U15_AzazelDuplicateFaceUpRankImmediatelyBustsOwner()
         {
             CoreLoopBattle battle = CreateBattle(
-                PlainDeck(new[] { 5, 2, 5, 3, 4, 6 }),
+                PlainDeck(new[] { 4, 2, 4, 3, 4, 6 }),
                 PlainDeck(new[] { 2, 2, 2, 2, 2, 2 }, 100),
                 new StandPolicy(),
                 DemonContractKind.Azazel);
@@ -200,7 +221,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             CoreLoopBattle battle = CreateEnemyContractBattle(
                 PlainDeck(new[] { 2, 2, 2, 2, 2, 2, 2, 2 }),
-                PlainDeck(new[] { 5, 2, 5, 3, 4, 6 }, 100),
+                PlainDeck(new[] { 4, 2, 4, 3, 4, 6 }, 100),
                 DemonContractKind.Azazel,
                 new EnemyContractPolicy(EnemyActionType.Hit));
             Assert.That(battle.TryPlayerHit(), Is.True);
@@ -289,6 +310,15 @@ namespace DiaBlackJack.CoreLoop.Tests
             cards.AddRange(remainingRanks.Select(
                 (rank, index) => new BlackjackCard(index + 1, rank)));
             return BlackjackDeck.CreateInDrawOrder(cards);
+        }
+
+        private static BlackjackDeck DefinitionSequenceDeck(
+            params string[] definitionKeys)
+        {
+            return BlackjackDeck.CreateInDrawOrder(definitionKeys.Select(
+                (key, index) => new BlackjackCard(
+                    index,
+                    CardDefinitionCatalog.GetByKey(key))));
         }
 
         private static BlackjackDeck PlainDeck(

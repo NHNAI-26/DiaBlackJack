@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.DemonCardDefinitionSO
   key: azazel
   displayName: 아자젤
-  activeEffectDescription: 계약 시와 히트 후, 자신의 공개 카드 효과를 왼쪽부터 오른쪽 순서로 각각 한 번씩 발동합니다.
+  activeEffectDescription: 계약 시와 히트 후, 자신의 공개 수동 카드 효과를 왼쪽부터 오른쪽 순서로 각각 한 번씩 발동합니다.
   costDescription: 같은 숫자의 공개 카드가 추가되면 버스트합니다.
-  codexLoreDescription: 이미 끝난 도구에 다시 불을 붙이는 타락한 장인. 되살린 힘은 같은 숫자의 저주를 불러온다.
+  codexLoreDescription: 늘어선 도구를 차례로 깨우는 타락한 장인. 같은 숫자는 저주가 되어 돌아온다.
   baseSoulCost: 1
   basePurchasePrice: 3
   shopWeight: 1

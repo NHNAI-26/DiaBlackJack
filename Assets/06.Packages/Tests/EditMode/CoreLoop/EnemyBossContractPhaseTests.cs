@@ -238,7 +238,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 DemonContractPresenter.Create(battle).ActiveContracts.Single(),
                 Is.EqualTo(
-                    "상대 · 아자젤 · 중복 공개 숫자 버스트 · 수동 카드 재활성"));
+                    "상대 · 아자젤 · 중복 공개 숫자 버스트 · 공개 효과 순차 사용"));
         }
 
         [Test]
@@ -273,7 +273,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             };
             CoreLoopBattle battle = new CoreLoopBattle(
                 CreateDeck(10, 9, 4, 4),
-                CreateDeck(10, 6, 2, 4, 4),
+                CreateDeck(10, 6, 2, 5, 3, 4, 4),
                 enemyMaximumSoul: 6,
                 enemyDemonDeck: new DemonContractDeck(demonCards, seed: 107),
                 fixedEnemyDemonContractPhases: phases);
@@ -288,6 +288,12 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 battle.ActiveEnemyDemonContracts.Single().Kind,
                 Is.EqualTo(DemonContractKind.Azazel));
+            BlackjackCard crystalOrb = battle.Enemy.Hand.GetPublicCards()
+                .Single(card =>
+                    card.Definition.Effect == CardEffectKind.CrystalOrb);
+            Assert.That(crystalOrb.UseState, Is.EqualTo(CardUseState.Used));
+            Assert.That(battle.PendingEnemyCardEffect, Is.Null);
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
         }
 
         private static CoreLoopBattle CreateBossBattle()

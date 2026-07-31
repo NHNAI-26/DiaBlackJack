@@ -309,7 +309,7 @@ namespace DiaBlackJack.CoreLoop.UI
                 }
                 else if (contract.Kind == DemonContractKind.Azazel)
                 {
-                    status = "중복 공개 숫자 버스트 · 수동 카드 재활성";
+                    status = "중복 공개 숫자 버스트 · 공개 효과 순차 사용";
                 }
                 else
                 {

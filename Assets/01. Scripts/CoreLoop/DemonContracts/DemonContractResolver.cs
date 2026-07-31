@@ -70,11 +70,6 @@ namespace DiaBlackJack.CoreLoop
         void OnRoundStarted(DemonContractContext context);
     }
 
-    internal interface IDemonContractOwnerHitHandler
-    {
-        void OnOwnerHit(DemonContractContext context);
-    }
-
     internal interface IDemonContractFaceUpCardAddedBustHandler
     {
         bool BustsOwnerAfterFaceUpCardAdded(
@@ -234,23 +229,6 @@ namespace DiaBlackJack.CoreLoop
 
             hiddenCard.Reveal();
             return true;
-        }
-
-        public int ReactivateOwnerUsedFaceUpManualCards()
-        {
-            int reactivatedCount = 0;
-            foreach (BlackjackCard card in Owner.Hand.GetPublicCards())
-            {
-                if (card.Definition.Activation != CardActivationKind.Manual ||
-                    !card.TryReactivate())
-                {
-                    continue;
-                }
-
-                reactivatedCount++;
-            }
-
-            return reactivatedCount;
         }
 
         public void CreateBaphometPentagrams()
@@ -496,18 +474,6 @@ namespace DiaBlackJack.CoreLoop
                 activeContracts,
                 ownerSide,
                 (handler, context) => handler.OnRoundStarted(context));
-        }
-
-        public void NotifyOwnerHit(
-            CoreLoopBattle battle,
-            IReadOnlyList<ActiveDemonContract> activeContracts,
-            CombatantSide ownerSide)
-        {
-            VisitOwnerHandlers<IDemonContractOwnerHitHandler>(
-                battle,
-                activeContracts,
-                ownerSide,
-                (handler, context) => handler.OnOwnerHit(context));
         }
 
         public bool BustsOwnerAfterFaceUpCardAdded(
