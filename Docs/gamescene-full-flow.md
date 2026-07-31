@@ -8,7 +8,7 @@
 제품은 `MainMenuScene`에서 시작한다. 메뉴에서 새 게임 또는 이어하기를 선택하면 `GameScene`으로 이동하고, 이후 정식 런은 다른 진행 씬으로 왕복하지 않고 GameScene 안에서 끝까지 진행한다.
 
 1. `MainMenuScene`: 새 게임/이어하기/설정/종료
-2. `GameScene`: 시작 악마 선택
+2. `GameScene`: 시작 악마 2장 자동 지급·공개
 3. 상대 선택
 4. 전투
 5. 승리 골드 정산
@@ -31,7 +31,9 @@
 Notion `게임 플로우` 추가 기준:
 
 - 새 게임은 새 무작위 루트 시드를 생성
-- 시작 악마 후보는 좌측 악마 덱에서 뒷면 2장으로 나온 뒤 동시에 공개
+- 시작 악마 풀 4종에서 서로 다른 2장을 동일 가중치로 무작위 추첨해 모두 지급
+- 지급된 2장은 좌측 악마 덱에서 뒷면으로 나온 뒤 동시에 공개하며 선택 입력은 제공하지 않음
+- 지급 결과는 첫 진행 전에 저장하고 이어하기에서는 재추첨하지 않음
 - 일반 적 포스터 글자는 검정, 엘리트는 보라색
 - 보스는 빨간색 정보의 포스터 1장을 중앙에 표시
 - 영혼·골드는 아이콘과 숫자를 함께 표시
@@ -42,14 +44,14 @@ Notion `게임 플로우` 추가 기준:
 
 ## 2. 현재 상태 분석
 
-### 이미 완료된 도메인
+### 현재 존재하는 도메인과 이관 대상
 
 - `FormalRunSession`이 `Combat`, `Shop`, `RunVictory`, `RunDefeat`를 소유한다. 일반전 승리 뒤 상점, 상점 퇴장 뒤 다음 스테이지, 보스 승리까지 이미 구현됨.  
   근거: `Assets/01. Scripts/StageProgression/RunFlow/FormalRunSession.cs:6-12`, `:78-179`, `:234-270`
 - 골드, 상점 상품, 제거, 회복, 저장/복원도 정식 런 도메인에 존재한다.  
   근거: `FormalRunSession.cs:116-165`, `Assets/01. Scripts/Bootstrap/StageProgressionRuntime.cs:22-61`
-- 시작 악마 선택은 도메인, 저장, Presenter, 기존 StageProgression UI에 이미 존재한다.  
-  근거: `Assets/01. Scripts/StageProgression/StageProgressionPresentation.cs:329-359`, `Assets/01. Scripts/UI/StageProgression/StageProgressionController.cs:161-164`, `:445-449`
+- 시작 악마 후보 2장 생성과 1장 선택용 도메인·저장·Presenter·기존 StageProgression UI는 존재하지만 최신 규칙과 다르다. 최신 규칙은 서로 다른 2장을 모두 자동 지급하고 선택 화면을 제공하지 않는 방식이다.
+  이관 대상: `StartingDemonSelectionGenerator`, `PendingStartingDemonSelection`, `TrySelectStartingDemon`, 단일 `StartingDemonDefinitionKey` 저장 구조
 - 정식 런 회귀 기록은 `StageTest ↔ GameScene` 왕복 기준 완료 상태다.  
   근거: `Docs/formal-run-flow-implementation-plan.md:30-37`, `:164-168`, `:251-254`
 
@@ -57,7 +59,7 @@ Notion `게임 플로우` 추가 기준:
 
 - `StageProgressionRuntime`은 `StageTest`와 `GameScene` 이름을 직렬화하고 `SceneManager.LoadScene`으로 왕복한다.  
   근거: `Assets/01. Scripts/Bootstrap/StageProgressionRuntime.cs:12-14`, `:115-123`
-- `StageProgressionController`가 시작, 시작 악마, 상대 선택, 정식 상점, 씬 전환 입력을 소유한다.  
+- `StageProgressionController`가 시작, 기존 시작 악마 선택, 상대 선택, 정식 상점, 씬 전환 입력을 소유한다. 시작 악마 선택 입력은 최신 규칙 이관 시 제거 대상이다.
   근거: `Assets/01. Scripts/UI/StageProgression/StageProgressionController.cs:102-203`, `:333-355`
 - `GameManager`는 진행 세션이 `InBattle`일 때만 정식 전투를 채택한다. 아니면 독립 `CoreLoopSession`을 만든다.  
   근거: `Assets/01. Scripts/GameScene/GameManager.cs:143-164`
@@ -86,7 +88,7 @@ Notion `게임 플로우` 추가 기준:
 새 `GameFlowController`를 `GameScene`의 최상위 흐름 소유자로 둔다.
 
 - 소유: `StageProgressionRuntime`, `FormalRunSession`, 현재 화면 모드
-- 라우팅: 시작 악마, 상대 선택, 전투, 상점, 결과
+- 라우팅: 시작 악마 자동 지급·공개, 상대 선택, 전투, 상점, 결과
 - 화면 전환: GameObject root 활성화/비활성화
 - 저장 체크포인트 호출은 기존 `StageProgressionRuntime`/`RunSaveFlow` 경계 유지
 - 전투 규칙은 계속 `GameManager → StageProgressionSession`
@@ -96,7 +98,7 @@ Notion `게임 플로우` 추가 기준:
 
 ```text
 Boot
-StartingDemonSelection
+StartingDemonReveal
 OpponentSelection
 Combat
 CombatSettlement
@@ -125,7 +127,7 @@ RunDefeat
 MainMenuScene
   ├─ 새 게임 ─┐
   └─ 이어하기 ┴─> GameScene
-                    ├─ 시작 악마
+                    ├─ 시작 악마 2장 자동 지급·공개
                     ├─ 상대 선택
                     ├─ 전투/상점 반복
                     ├─ RunVictory/RunDefeat
@@ -135,7 +137,7 @@ MainMenuScene
 
 ### 뷰 분리
 
-- `StartingDemonSelectionView`: 시작 악마 후보 2장
+- `StartingDemonRevealView`: 자동 지급된 시작 악마 2장의 뒷면 배치·동시 공개 연출
 - `OpponentSelectionView`: 현상수배 포스터 2장
 - `FormalShopView`: 정식 `ShopVisit` 렌더링
 - `RunResultView`: 승리/패배/재시작
@@ -179,7 +181,8 @@ Presenter는 기존 `StageProgressionPresentation`을 재사용하거나 GameSce
 - 앱 시작 씬은 `MainMenuScene`, 실제 런 목적지는 `GameScene`
 - 새 게임은 새 무작위 루트 시드를 만들고, 이어하기는 저장된 루트 시드를 복원
 - `StageTest`는 테스트 전용으로 보존
-- 시작 악마 선택이 “2장 중 1장”인지 최신 커밋 `fe64a7a`의 확정 규칙 반영
+- 시작 악마 풀은 사탄·벨페고르·바알제붑·마몬 4종이며 서로 다른 2장을 동일 가중치로 추첨해 모두 지급
+- 시작 악마 선택 입력은 제공하지 않고, 지급 결과를 첫 진행 전에 저장해 이어하기 재추첨을 차단
 - 상대 선택 이미지의 영혼/골드 수치가 현재 카탈로그와 일치하도록 Presenter 데이터 사용
 
 완료 기준:
@@ -203,8 +206,10 @@ Presenter는 기존 `StageProgressionPresentation`을 재사용하거나 GameSce
 - 저장 없음: 이어하기 비활성
 - 새 게임: 이전 완료/실패 런 상태를 재사용하지 않고 새 GameScene 런 생성
 - 이어하기: 마지막 안정 체크포인트 복원
-- 새 런 → 시작 악마 → 상대 → 전투
-- 시작 악마 후보 2장이 뒷면 이동 → 동시 공개 → 1장 확정 순서를 지킴
+- 새 런 → 시작 악마 2장 자동 지급·공개 → 상대 → 전투
+- 시작 악마 2장이 중복 없이 결정되고 둘 다 플레이어 악마 덱에 추가됨
+- 지급된 2장이 뒷면 이동 → 동시 공개 → 자동 진행 순서를 지키며 선택·확정 입력을 요구하지 않음
+- 동일 런의 중복 초기화와 저장 복원에서 시작 악마를 다시 추첨하거나 중복 지급하지 않음
 - 상대 선택에서 일반/엘리트 색상과 보스 단일 포스터 규칙을 지킴
 - 일반전 승리 → 골드 1회 → 상점
 - 상점 구매/제거/회복 → 다음 전투 덱·영혼·골드 반영
@@ -212,8 +217,8 @@ Presenter는 기존 `StageProgressionPresentation`을 재사용하거나 GameSce
 - 보스 승리 → 상점 없이 RunVictory
 - 각 전투 패배 → RunDefeat
 - 재시작 → 골드/상점 가격/구매 상태 초기화
-- 저장 복원: 시작 악마 완료, 전투 정산 완료, 상점 퇴장 완료
-- 오래된 offer ID/중복 클릭/화면 전환 중 입력은 무변경 거부
+- 저장 복원: 시작 악마 2장 지급 완료, 전투 정산 완료, 상점 퇴장 완료
+- 상대·상점의 오래된 offer ID/중복 클릭과 화면 전환 중 입력은 무변경 거부
 
 완료 기준:
 
@@ -236,7 +241,7 @@ Presenter는 기존 `StageProgressionPresentation`을 재사용하거나 GameSce
 작업:
 
 1. Runtime이 GameScene에서 새 런/이어하기 세션을 제공하게 함.
-2. `GameFlowController`가 `FormalSession.Phase`, `PendingStartingDemonSelection`, `StageProgressionState`를 읽어 화면 결정.
+2. `GameFlowController`가 `FormalSession.Phase`, 시작 악마 지급 완료 여부, `StageProgressionState`를 읽어 화면 결정.
 3. 상대 확정 뒤 씬 재로드 없이 현재 `GameManager`에 전투 세션을 바인딩.
 4. 전투 종료 이벤트 뒤 `GameManager`가 `LoadProgressionScene()` 대신 controller에 완료 알림.
 5. `GameManager`의 `Awake` 단발 세션 결정 구조를 `BindBattle(StageProgressionSession)` 가능한 생명주기로 변경.
@@ -255,35 +260,38 @@ Presenter는 기존 `StageProgressionPresentation`을 재사용하거나 GameSce
 - 첫 전투 종료 뒤 GameManager 전투 입력 완전 잠금
 - 다음 전투 시작 시 이전 카드/애니메이션/hover 상태 잔존 0
 
-### 단계 3 — 시작 악마와 상대 선택을 GameScene 뷰로 구현
+### 단계 3 — 시작 악마 자동 지급·공개와 상대 선택을 GameScene 뷰로 구현
 
 신규 권장:
 
-- `GameScene/StartingDemonSelectionView.cs`
+- `GameScene/StartingDemonRevealView.cs`
 - `GameScene/OpponentSelectionView.cs`
-- 선택 카드/포스터 prefab
+- 시작 악마 공개 카드/상대 선택 포스터 prefab
 - GameScene 전용 presentation adapter가 필요하면 순수 C# 파일
 
 재사용:
 
 - `StageProgressionPresentation`
-- `StartingDemonOptionViewModel`
+- 시작 악마 2장 지급 결과를 표현하는 전용 view model
 - 상대 preview/예상 골드/영혼/등급 데이터
 - `CharacterView` 또는 기존 적 sprite catalog
 
 씬:
 
-- `FlowScreens/StartingDemonSelection`
+- `FlowScreens/StartingDemonReveal`
 - `FlowScreens/OpponentSelection`
 - 카메라 또는 overlay 전환
 
 입력:
 
 - New Input System `EventSystem` 기반 UI 또는 현재 raycast 패턴 중 하나로 통일
-- 선택 강조와 확정 분리
-- 중복 클릭 방지
-- 유효한 선택 성공 후만 다음 화면
-- 시작 악마 후보는 좌측 덱에서 뒷면 2장으로 이동한 뒤 동시에 공개
+- 시작 악마 화면에는 선택·확정 입력을 제공하지 않음
+- 시작 악마 풀에서 서로 다른 2장을 동일 가중치로 추첨하고 둘 다 플레이어 악마 덱에 원자적으로 지급
+- 지급된 시작 악마 2장은 좌측 덱에서 뒷면으로 이동한 뒤 동시에 공개
+- 공개 연출 완료 뒤 상대 선택 화면으로 자동 전환
+- 지급 중 재호출·중복 초기화·저장 복원은 재추첨과 중복 지급 없이 기존 결과를 사용
+- 상대 선택은 선택 강조와 확정을 분리하고 중복 클릭을 방지
+- 상대 선택이 유효하게 성공한 뒤에만 다음 화면으로 전환
 - 보스는 선택 입력 없이 빨간색 정보의 중앙 포스터 1장만 표시
 
 완료 기준:
@@ -292,7 +300,8 @@ Presenter는 기존 `StageProgressionPresentation`을 재사용하거나 GameSce
 - 일반 적 글자 검정, 엘리트 보라색
 - 보스 빨간색 중앙 단일 포스터
 - 선택 후보 이름, 영혼, 예상 골드가 도메인과 일치
-- 시작 악마/상대 선택 실패 시 상태와 화면 그대로
+- 시작 악마 지급이 실패하면 악마 덱을 부분 변경하지 않고 진행을 중단
+- 상대 선택 실패 시 상태와 화면 그대로
 - 1280×720, 1920×1080에서 잘림 없음
 
 ### 단계 4 — 정식 상점을 GameScene 자산에 바인딩
@@ -374,7 +383,7 @@ Presenter는 기존 `StageProgressionPresentation`을 재사용하거나 GameSce
 - MainMenuScene 새 게임/이어하기/설정/종료
 - 1280×720 전체 런
 - 1920×1080 전체 런
-- 시작 악마 2후보
+- 시작 악마 2장 자동 지급·동시 공개
 - 상대 후보 2명과 선택 강조
 - 전투 HUD
 - 영혼·골드 아이콘과 숫자
@@ -396,6 +405,9 @@ Presenter는 기존 `StageProgressionPresentation`을 재사용하거나 GameSce
 - `MainMenuScene`은 런 도메인 상태를 직접 소유하지 않음.
 - 유효한 저장이 없으면 이어하기 비활성.
 - 새 게임마다 새 루트 시드 생성. 이어하기는 저장된 루트 시드 보존.
+- 새 런 시작 악마는 풀 4종에서 서로 다른 2장을 동일 가중치로 추첨해 모두 지급.
+- 시작 악마 화면은 선택 입력 없이 뒷면 배치·동시 공개 후 상대 선택으로 자동 전환.
+- 저장 복원과 중복 초기화에서 시작 악마 재추첨·중복 지급 0.
 - `GameScene` 한 씬에서 목표 순서 완료.
 - 런 경제 상태 소유자는 `PlayerRunState`/`FormalRunSession` 하나뿐.
 - 상점 offer 생성자는 정식 `ShopOfferGenerator` 하나뿐.
@@ -434,10 +446,10 @@ Presenter는 기존 `StageProgressionPresentation`을 재사용하거나 GameSce
 위험: YAML 충돌, serialized reference 손실.  
 대응: 한 명이 GameScene/prefab 소유. 코드 먼저, 씬 wiring 마지막. 변경 전후 hierarchy와 missing refs 검증.
 
-### 최신 시작 악마 규칙 변동
+### 최신 시작 악마 자동 지급 규칙
 
-위험: `fe64a7a` 문서 결정과 오래된 RFM02 철회 기록 충돌.  
-대응: 단계 0에서 최신 기획을 기준으로 새 후속 문서에 명시. 과거 RF 기록은 수정하지 않음.
+위험: 현행 코드의 2장 중 1장 선택 구조와 권위 규칙 문서의 2장 모두 자동 지급 구조가 충돌.
+대응: 단계 0에서 자동 지급을 후속 문서의 기준으로 명시하고, 선택용 API와 단일 시작 악마 저장 필드를 이관한다. 과거 RF 기록은 수정하지 않는다.
 
 ## 7. 권장 작업 분할
 
@@ -445,7 +457,7 @@ Presenter는 기존 `StageProgressionPresentation`을 재사용하거나 GameSce
 
 1. 도메인/테스트 계약
 2. GameFlowController와 GameManager 재바인딩
-3. 시작 악마/상대 선택 뷰
+3. 시작 악마 자동 지급·공개/상대 선택 뷰
 4. 정식 상점 adapter
 5. 씬 wiring
 6. 전체 QA
@@ -479,18 +491,17 @@ Presenter는 기존 `StageProgressionPresentation`을 재사용하거나 GameSce
 ### 구현 전 함께 수정할 현재 기준 문서
 
 - `Docs/rule.md`
-  - 현재 새 런에서 후보 2장을 모두 지급하고 선택 화면을 제공하지 않는다고 기록되어 있다.
-  - 최신 게임 플로우의 `2장 제시 → 1장 필수 선택`과 직접 충돌한다.
-  - 권위 규칙 문서이므로 구현 전에 선택 규칙으로 확정·수정해야 한다.
+  - 새 런에서 서로 다른 시작 악마 2장을 모두 지급하고 선택 화면을 제공하지 않는 현행 권위 규칙을 유지한다.
+  - 구현과 후속 문서는 이 규칙을 따라야 한다.
 - `Docs/stage-progression-design.md`
   - 시작 악마 2장을 모두 지급한다고 기록되어 있다.
-  - `rule.md` 결정과 함께 1장 선택 방식으로 맞춰야 한다.
+  - `rule.md`와 같은 자동 지급 방식으로 유지하고, 코드 이관 범위를 추가한다.
 - `Docs/scene-presentation-design.md`
   - 제품 흐름을 `StageTest ↔ GameScene` 왕복으로 기록한다.
   - 상점 배치도 상단 일반 카드 3장·악마 카드 2장으로 기록한다.
   - `MainMenuScene → GameScene 단일 런`과 상단 서비스·중단 일반·하단 악마 배치로 갱신해야 한다.
 - `Docs/game-design-document.md`
-  - 메인 메뉴, 단일 GameScene 런, 시작 악마 선택, 도감, 게임 오버, 최신 상점 배치를 요약 기준에 반영한다.
+  - 메인 메뉴, 단일 GameScene 런, 시작 악마 2장 자동 지급·공개, 도감, 게임 오버, 최신 상점 배치를 요약 기준에 반영한다.
 
 ### 새 후속 작업 링크만 추가할 문서
 
