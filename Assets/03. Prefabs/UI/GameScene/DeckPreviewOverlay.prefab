@@ -451,7 +451,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5247538829222470831
 RectTransform:
   m_ObjectHideFlags: 0
@@ -491,7 +491,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
   m_SortingOrder: 100
@@ -1300,6 +1300,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_99
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1310,27 +1314,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1413,6 +1417,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_56
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1423,27 +1431,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1526,6 +1534,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_05
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1536,27 +1548,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1639,6 +1651,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_97
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1649,27 +1665,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1752,6 +1768,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_43
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1762,27 +1782,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1865,6 +1885,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_04
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1875,27 +1899,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -1978,6 +2002,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_06
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1988,27 +2016,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2091,6 +2119,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_53
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2101,27 +2133,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2204,6 +2236,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_60
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2214,27 +2250,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2317,6 +2353,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_75
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2327,27 +2367,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2430,6 +2470,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_22
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2440,27 +2484,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2543,6 +2587,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_14
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2553,27 +2601,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2656,6 +2704,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_12
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2666,27 +2718,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2769,6 +2821,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_69
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2779,27 +2835,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2882,6 +2938,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_02
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2892,27 +2952,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2995,6 +3055,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_47
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -3005,27 +3069,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3108,6 +3172,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_77
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -3118,27 +3186,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3221,6 +3289,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_74
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -3231,27 +3303,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3334,6 +3406,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_24
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -3344,27 +3420,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3447,6 +3523,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_93
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -3457,27 +3537,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3560,6 +3640,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_29
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -3570,27 +3654,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3673,6 +3757,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_98
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -3683,27 +3771,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3786,6 +3874,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_57
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -3796,27 +3888,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -3899,6 +3991,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_88
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -3909,27 +4005,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4012,6 +4108,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_20
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -4022,27 +4122,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4125,6 +4225,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_62
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -4135,27 +4239,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4238,6 +4342,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_25
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -4248,27 +4356,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4351,6 +4459,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_39
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -4361,27 +4473,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4464,6 +4576,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_67
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -4474,27 +4590,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4577,6 +4693,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_09
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -4587,27 +4707,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4690,6 +4810,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_38
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -4700,27 +4824,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4803,6 +4927,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_63
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -4813,27 +4941,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4916,6 +5044,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_87
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -4926,27 +5058,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -5029,6 +5161,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_61
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -5039,27 +5175,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -5142,6 +5278,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_51
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -5152,27 +5292,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -5255,6 +5395,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_11
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -5265,27 +5409,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -5368,6 +5512,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_96
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -5378,27 +5526,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -5481,6 +5629,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_17
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -5491,27 +5643,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -5594,6 +5746,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_35
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -5604,27 +5760,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -5707,6 +5863,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_28
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -5717,27 +5877,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -5820,6 +5980,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_92
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -5830,27 +5994,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -5933,6 +6097,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_78
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -5943,27 +6111,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -6046,6 +6214,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_27
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -6056,27 +6228,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -6159,6 +6331,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_81
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -6169,27 +6345,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -6272,6 +6448,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_03
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -6282,27 +6462,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -6385,6 +6565,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_32
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -6395,27 +6579,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -6498,6 +6682,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_85
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -6508,27 +6696,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -6611,6 +6799,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_55
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -6621,27 +6813,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -6724,6 +6916,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_79
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -6734,27 +6930,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -6837,6 +7033,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_82
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -6847,27 +7047,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -6950,6 +7150,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_10
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -6960,27 +7164,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -7063,6 +7267,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_45
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -7073,27 +7281,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -7176,6 +7384,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_68
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -7186,27 +7398,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -7289,6 +7501,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_58
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -7299,27 +7515,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -7402,6 +7618,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_66
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -7412,27 +7632,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -7515,6 +7735,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_76
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -7525,27 +7749,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -7628,6 +7852,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_13
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -7638,27 +7866,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -7741,6 +7969,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_83
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -7751,27 +7983,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -7854,6 +8086,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_73
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -7864,27 +8100,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -7967,6 +8203,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_95
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -7977,27 +8217,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -8080,6 +8320,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_65
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -8090,27 +8334,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -8193,6 +8437,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_01
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -8203,27 +8451,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -8306,6 +8554,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_89
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -8316,27 +8568,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -8419,6 +8671,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_80
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -8429,27 +8685,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -8532,6 +8788,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_30
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -8542,27 +8802,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -8645,6 +8905,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_46
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -8655,27 +8919,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -8758,6 +9022,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_86
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -8768,27 +9036,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -8871,6 +9139,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_26
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -8881,27 +9153,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -8984,6 +9256,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_08
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -8994,27 +9270,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -9097,6 +9373,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_21
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -9107,27 +9387,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -9210,6 +9490,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_84
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -9220,27 +9504,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -9323,6 +9607,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_70
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -9333,27 +9621,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -9436,6 +9724,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_52
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -9446,27 +9738,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -9549,6 +9841,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_34
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -9559,27 +9855,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -9662,6 +9958,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_44
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -9672,27 +9972,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -9775,6 +10075,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_71
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -9785,27 +10089,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -9888,6 +10192,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_31
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -9898,27 +10206,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -10001,6 +10309,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_90
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -10011,27 +10323,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -10114,6 +10426,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_15
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -10124,27 +10440,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -10227,6 +10543,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_16
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -10237,27 +10557,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -10340,6 +10660,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_91
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -10350,27 +10674,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -10453,6 +10777,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_18
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -10463,27 +10791,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -10566,6 +10894,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_41
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -10576,27 +10908,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -10679,6 +11011,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_07
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -10689,27 +11025,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -10792,6 +11128,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_72
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -10802,27 +11142,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -10905,6 +11245,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_40
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -10915,27 +11259,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -11018,6 +11362,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_49
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -11028,27 +11376,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -11131,6 +11479,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_19
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -11141,27 +11493,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -11244,6 +11596,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_36
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -11254,27 +11610,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -11357,6 +11713,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_54
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -11367,27 +11727,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -11470,6 +11830,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_42
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -11480,27 +11844,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -11583,6 +11947,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_48
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -11593,27 +11961,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -11696,6 +12064,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_59
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -11706,27 +12078,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -11809,6 +12181,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_64
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -11819,27 +12195,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -11922,6 +12298,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_33
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -11932,27 +12312,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -12035,6 +12415,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_23
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -12045,27 +12429,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -12148,6 +12532,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_50
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -12158,27 +12546,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -12261,6 +12649,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_37
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -12271,27 +12663,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -12374,6 +12766,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_100
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -12384,27 +12780,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
@@ -12487,6 +12883,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CardSlot_94
       objectReference: {fileID: 0}
+    - target: {fileID: 4464092978475943403, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_TextStyleHashCode
+      value: -1183493901
+      objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -12497,27 +12897,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 220
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 318
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4569325367132532610, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_LocalPosition.x
