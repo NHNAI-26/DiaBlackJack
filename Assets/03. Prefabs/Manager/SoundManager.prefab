@@ -156,6 +156,16 @@ MonoBehaviour:
     volume: 1
     pitch: 1
     loop: 0
+  - id: lighterStart
+    clip: {fileID: 8300000, guid: b29409c5af1a02544bfe87cee747e155, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
+  - id: lighterCardFire
+    clip: {fileID: 8300000, guid: 71de89b8021c3ca4ea21cfafbd563c6f, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
   - id: cardDraw
     clip: {fileID: 8300000, guid: c42ced142b7572540895e032be1feafb, type: 3}
     volume: 0.5

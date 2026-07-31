@@ -134,10 +134,10 @@ namespace DiaBlackJack.GameScene
             TweenChromaticAberration(1f, riseSpeed);
         }
 
-        public void StopChromaticAberration()
+        public void StopChromaticAberration(float returnSpeed = 0f)
         {
             if (chromaticVolume != null)
-                TweenChromaticAberration(0f, chromaticReturnSpeed);
+                TweenChromaticAberration(0f, ResolveReturnSpeed(returnSpeed, chromaticReturnSpeed));
         }
 
         public void StartFieldOfViewIncrease(float riseSpeed)
@@ -161,12 +161,15 @@ namespace DiaBlackJack.GameScene
             TweenFieldOfView(fieldOfViewTarget, riseSpeed, clearOriginalOnComplete: false);
         }
 
-        public void StopFieldOfViewIncrease()
+        public void StopFieldOfViewIncrease(float returnSpeed = 0f)
         {
             if (activeFieldOfViewCamera == null || originalFieldOfView < 0f)
                 return;
 
-            TweenFieldOfView(originalFieldOfView, fieldOfViewReturnSpeed, clearOriginalOnComplete: true);
+            TweenFieldOfView(
+                originalFieldOfView,
+                ResolveReturnSpeed(returnSpeed, fieldOfViewReturnSpeed),
+                clearOriginalOnComplete: true);
         }
 
         public void StartColorScreenBlend(float fadeOutSpeed)
@@ -352,6 +355,14 @@ namespace DiaBlackJack.GameScene
         private static void SetFieldOfView(CinemachineCamera camera, float value)
         {
             camera.Lens.FieldOfView = Mathf.Clamp(value, 1f, 179f);
+        }
+
+        private static float ResolveReturnSpeed(float returnSpeed, float defaultSpeed)
+        {
+            if (returnSpeed > 0f && !float.IsNaN(returnSpeed) && !float.IsInfinity(returnSpeed))
+                return returnSpeed;
+
+            return defaultSpeed;
         }
 
         private bool EnsureColorScreenBlendMaterial()

@@ -27,11 +27,11 @@ Material:
     m_Ints: []
     m_Floats:
     - _Alpha: 0.164
-    - _BlueHeight: 0.384
+    - _BlueHeight: 1
     - _CoreAlpha: 0.28
-    - _CorePower: 5.12
+    - _CorePower: 8
     - _CoreUVCenter: 0.5
-    - _CoreWidth: 1
+    - _CoreWidth: 0.262
     - _EdgeAlpha: 0.18
     - _FresnelIntensity: 1.47
     - _FresnelPower: 2.05
@@ -41,9 +41,9 @@ Material:
     - _IgnitionRevealFeather: 0.18
     - _IgnitionRevealHeight: 0
     m_Colors:
-    - _BlueColor: {r: 0.75294125, g: 2.3305194, b: 23.968628, a: 1}
-    - _CoreColor: {r: 55.70156, g: 31.076294, b: 13.399903, a: 1}
-    - _FresnelColor: {r: 38.075047, g: 6.9771028, b: 0, a: 1}
+    - _BlueColor: {r: 0.37647063, g: 1.1652597, b: 11.984314, a: 1}
+    - _CoreColor: {r: 695.5472, g: 329.39706, b: 101.70737, a: 1}
+    - _FresnelColor: {r: 101.666405, g: 20.674398, b: 0.53228587, a: 1}
     - _OrangeColor: {r: 1.7937297, g: 0.33985853, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
