@@ -705,6 +705,74 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CUM10_U01_PlayerUsedCardProjectsUsedMarkState()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 7, 2 },
+                enemyRanks: new[] { 5, 7, 5 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            Assert.That(battle.Start(), Is.True);
+            BlackjackCard sourceCard = battle.Player.Hand.Cards[0];
+
+            Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
+            Assert.That(battle.TryResolvePlayerCardChoice(6), Is.True);
+
+            GameSceneViewModel model = GameScenePresenter.Create(battle);
+            Assert.That(
+                model.PlayerCards.Single(card => card.CardId == sourceCard.Id).IsUsed,
+                Is.True);
+            Assert.That(
+                model.PlayerCards.Where(card => card.CardId != sourceCard.Id)
+                    .All(card => !card.IsUsed),
+                Is.True);
+        }
+
+        [Test]
+        public void CUM10_U02_EnemyUsedMarkRequiresPublicFaceUpCard()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 2, 2 },
+                enemyRanks: new[] { 7, 7 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            Assert.That(battle.Start(), Is.True);
+            BlackjackCard faceUpCard = battle.Enemy.Hand.Cards[0];
+            BlackjackCard hiddenCard = battle.Enemy.Hand.Cards[1];
+            Assert.That(faceUpCard.TryBeginUse(), Is.True);
+            Assert.That(faceUpCard.TryCompleteUse(), Is.True);
+            Assert.That(hiddenCard.TryBeginUse(), Is.True);
+            Assert.That(hiddenCard.TryCompleteUse(), Is.True);
+
+            GameSceneViewModel model = GameScenePresenter.Create(battle);
+            Assert.That(
+                model.EnemyCards.Single(card => card.CardId == faceUpCard.Id).IsUsed,
+                Is.True);
+            Assert.That(
+                model.EnemyCards.Single(card => card.CardId == hiddenCard.Id).IsUsed,
+                Is.False);
+        }
+
+        [Test]
+        public void CUM10_U03_NonUsedCardStatesDoNotProjectUsedMark()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 7, 2 },
+                enemyRanks: new[] { 5, 7, 5 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            Assert.That(battle.Start(), Is.True);
+            BlackjackCard sourceCard = battle.Player.Hand.Cards[0];
+
+            GameSceneViewModel availableModel = GameScenePresenter.Create(battle);
+            Assert.That(availableModel.PlayerCards.All(card => !card.IsUsed), Is.True);
+
+            Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
+            GameSceneViewModel resolvingModel = GameScenePresenter.Create(battle);
+            Assert.That(resolvingModel.PlayerCards.All(card => !card.IsUsed), Is.True);
+        }
+
+        [Test]
         public void CUM06_U01_GameSceneCreatesPlayerRevolverReadyCueWhileChoosingNumber()
         {
             CoreLoopBattle battle = CreateBattle(

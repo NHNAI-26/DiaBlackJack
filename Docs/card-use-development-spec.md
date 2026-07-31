@@ -611,6 +611,16 @@ Controller가 `_stageSession.Battle`을 직접 조작하는 경로를 추가하�
 - 해머 HUD는 안내 문구를 유지하고 버튼 목록은 비우며, 다른 수동 선택 효과의 버튼은 유지한다.
 - 유효 대상 클릭만 `TryResolvePlayerCardChoice`로 전달하고 비대상 클릭은 상태를 바꾸지 않는다.
 
+### 13.12 CU-M10 — 사용 완료 카드 연필 X 표시
+
+- `GameSceneCardViewModel.IsUsed`는 플레이어 `Used` 카드와 앞면 공개된 적 `Used` 카드에만 true다.
+- 상점·덱 검사 모델은 생성자 기본값 false를 사용한다. 미공개 적 카드도 항상 false다.
+- `CardView`는 같은 카드 ID의 false→true 전환만 DOTween Sequence로 재생하고, 두 획을 각각 0.175초 Linear로 확장한다.
+- 최초 바인딩·다른 카드 ID 재바인딩은 완성 상태로 스냅하고 true→false는 즉시 숨긴다.
+- 바인딩과 `OnDisable`은 진행 중 Sequence를 종료해 풀링 뒤 획·Tween 잔류를 막는다.
+- X의 두 SpriteRenderer는 카드 정렬 순서보다 1 높고 충돌체가 없어 호버·클릭을 가로채지 않는다.
+- 흑연 획 텍스처는 Single Sprite, PPU 1024, 왼쪽 중앙 피벗, alpha transparency, mipmap 비활성으로 import한다.
+
 ## 14. 수동 검증
 
 `CoreLoopTest`에서 다음을 실제 화면 입력으로 확인한다.
@@ -622,6 +632,7 @@ Controller가 `_stageSession.Battle`을 직접 조작하는 경로를 추가하�
 5. 나이프 강제 히트와 버스트
 6. 사용 완료 카드의 재사용 방지
 7. 적 공개 카드 호버의 숫자·이름·효과와 적 비공개 카드의 정보 미표시
+8. 양측 공개 Used 카드의 0.35초 X 그리기, 재활성화 제거와 호버·클릭 비간섭
 
 `StageTest`에서 다음을 확인한다.
 
@@ -659,6 +670,7 @@ Docs/
 
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
+| 2026-07-31 | HONG | CU-M10 `IsUsed` 공개 투영, 풀 안전 CardView 전환, 두 획 0.35초 Sequence, 흑연 Sprite import와 CUM10 5건 검증 기준을 명세 |
 | 2026-07-30 | HONG | CU-M09에서 해머 선택 옵션의 카드 ID→옵션 ID 투영, `CardView` 보존, 카드 클릭 우선 처리, 해머 HUD 버튼 제거와 다른 선택 효과 회귀 기준을 명세 |
 | 2026-07-30 | 이천서 | `ForceOpponentDrawFaceUp` 직후 `Stepped` 공개 스냅샷을 발행하고 최종 폐기 스냅샷과 분리한다. `CardHand`는 물리 카드 ID로 제거 대상을 찾고 이동·축소 후 파괴해 다른 위치의 카드를 잘못 폐기하지 않도록 명세 |
 | 2026-07-29 | 이천서 | CU-M07 첫 성공 종료·첫 실패 후 재예측·두 번째 성공 무비용·두 번째 실패 영혼 1과 `Ready/ResolvedWithRetry/Resolved` 연출 상태를 명세하고 대상 4/4·CoreLoop 442/442·전체 631/631 검증 반영 |

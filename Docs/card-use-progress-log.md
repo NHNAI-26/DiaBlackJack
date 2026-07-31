@@ -492,6 +492,23 @@ MCP가 Unity 창의 포커스를 가져가지 않은 상태에서는 게임 프�
 
 `fix : 해머 대상을 테이블에서 직접 고르다`
 
+### 6.10 CU-M10 — 사용 완료 카드 연필 X 표시
+
+- `GameSceneCardViewModel.IsUsed`를 추가하고 플레이어 `Used` 카드와 앞면 공개된 적 `Used` 카드만 투영했다. 미공개 적 카드와 상점·덱 미리보기의 기본값은 false로 유지했다.
+- imagegen으로 만든 수평 흑연 한 획에서 크로마키를 제거하고 1024×128 RGBA Sprite로 저장했다. import는 Single Sprite·PPU 1024·왼쪽 중앙 피벗·alpha transparency·mipmap 비활성으로 고정했다.
+- `Card.prefab`에 충돌체 없는 두 대각선 획을 추가했다. `CardView`는 같은 카드 ID의 미사용→Used 전환에서만 0.175초씩 순차 확장하고, 최초 바인딩·다른 카드 ID 재사용은 완성 상태로 표시하며 Used→Available·비활성화·재바인딩에는 Sequence를 종료하고 상태를 즉시 정리한다.
+- 대상 5/5(job `0c335e2d09414ed4979891e883c25f2c`), CoreLoop 559/559(job `4bfd3c5fb38e46d9951d347426e1c666`), StageProgression 260/260(job `a6e6cab9e6a7489890661265bd47aa68`), 전체 EditMode 833/833(job `cdabf1cd08714e058931c4220f17973e`)이 실패·건너뜀 0으로 통과했다.
+- GameScene Play Mode 런타임에서 양측 앞면 카드의 완성 X를 실제 Game View로 확인했다. Sequence는 0.10초에 첫 획 0.434·둘째 0, 0.22초에 첫 획 0.760·둘째 0.195, 0.35초에 양쪽 0.760으로 진행했고, 완료 표시 지속과 양측 재활성화 제거를 확인했다.
+- 후속 실화면 확인에서 한 획만 보인다는 피드백을 반영해 둘째 획을 첫 획 완료 전까지 비활성화하고 완료 콜백에서만 켜도록 강화했다. 자연 재생은 0.10초 첫 획 0.492·둘째 비활성, 0.22초 첫 획 0.760·둘째 0.262, 0.40초 양쪽 0.760을 확인했다. 대상 5/5(job `f26c5310af994a4a82368c6bc2781471`)와 현재 전체 EditMode 836/836(job `53cf860c773a4443a2c15fdb88a78b6f`)이 통과했다.
+- 첨부 실화면에서 둘째 획이 카드 밖으로 밀린 원인은 왼쪽 피벗 Sprite에 적용한 `flipX`였다. 둘째 획의 `flipX`를 제거하고 두 획의 위치·두께·교차 각도·진한 흑연색을 대칭으로 고정했다. 실제 해머 사용 화면에서 카드 중앙 X를 확인했고, 대상 5/5(job `198fde94a72d4bc3a87ee9a51d2ef458`)와 전체 EditMode 836/836(job `99342af539d44f6f9a43bdad04657b83`)이 통과했다.
+- 카드 중앙 포인터 레이캐스트는 기존 `Card(Clone)` Collider에 적중했고 X 하위 Collider는 0개였다. 따라서 X는 호버·클릭 판정을 가로채지 않는다.
+- Play Mode Console에는 변경 범위 밖의 `ShopControllerEditor` null SerializedObject, `SettingsSystem`의 비루트 `DontDestroyOnLoad`, URP `_DissolveObjectAxis` property drawer 오류가 각 1건 재현돼 Console Error 0 게이트는 미충족으로 기록한다.
+- 공유 작업 중이던 `GameScene.unity`, `GameManager`, Codex 관련 파일은 수정·복구·덮어쓰지 않고 보존했다.
+
+#### 권장 커밋 제목
+
+`feat : 사용한 카드에 연필 X 표시를 그리다`
+
 ## 7. 미해결 사항
 
 - 해머의 적 대상 우선순위는 프로토타입 임시 결정이다. 나이프 비버스트 카드는 선택 없이 강제 폐기하는 현행 규칙으로 확정했다.
@@ -504,6 +521,7 @@ MCP가 Unity 창의 포커스를 가져가지 않은 상태에서는 게임 프�
 
 | 날짜 | 작성자 | 변경 |
 | --- | --- | --- |
+| 2026-07-31 | HONG | CU-M10 양측 공개 Used 카드의 흑연 X와 0.35초 두 획 연출을 구현하고 둘째 획의 피벗 뒤집힘을 제거해 카드 중앙에 교차하도록 수정했다. 대상 5/5·전체 836/836·실제 해머 사용 화면을 검증하고 비관련 Console 오류 3건을 실제 결과로 기록 |
 | 2026-07-30 | HONG | CU-M09 해머 대상의 상대 카드 직접 선택과 HUD 버튼 제거를 구현하고 대상 4/4·Play Mode 통과, 전체 786/787과 비관련 기존 실패·Play Mode 기존 오류를 실제 결과로 기록 |
 | 2026-07-30 | 이천서 | CU-M08 보위 나이프 강제 드로우와 즉시 폐기를 서로 다른 `Stepped` 프레임으로 분리하고 `CardHand`에 ID 기반 이동·축소 폐기 연출을 추가했다. 대상 규칙 회귀 CUM08_U01 직접 실행 통과·관련 어셈블리 컴파일 성공; Unity Test Runner 전체와 GameScene 육안 검증은 MCP 미노출로 미실행 |
 | 2026-07-29 | 이천서 | CU-M07 레비아탄의 조건부 재예측·두 번 실패 영혼 대가와 첫 실패→재준비→최종 결과 GameScene 연출을 구현하고 대상 4/4·CoreLoop 442/442·전체 631/631로 검증 기록 |

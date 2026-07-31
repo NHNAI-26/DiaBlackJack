@@ -25,6 +25,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/Card/DemonCard.prefab";
         private const string CatalogPath =
             "Assets/02. ScriptableObjects/Cards/CardContentCatalog.asset";
+        private const string UsedMarkTexturePath =
+            "Assets/05. Arts/Texture/CardSprite/Overlay/UsedCardPencilStroke.png";
 
         [Test]
         public void CC_U06_CardContentAssetBuildsAllDefinitions()
@@ -448,6 +450,114 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
         }
 
+        [Test]
+        public void CUM10_U04_CardViewClearsUsedMarkAcrossRebindAndReactivation()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                Assert.That(view, Is.Not.Null);
+
+                view.Bind(CreateUsedMarkCard(cardId: 1, isUsed: false));
+                Assert.That(view.IsUsedMarkVisible, Is.False);
+
+                view.Bind(CreateUsedMarkCard(cardId: 1, isUsed: true));
+                Assert.That(view.IsUsedMarkVisible, Is.True);
+                Assert.That(GetPrivateField<object>(view, "_usedMarkSequence"), Is.Null);
+
+                view.Bind(CreateUsedMarkCard(cardId: 1, isUsed: false));
+                Assert.That(view.IsUsedMarkVisible, Is.False);
+                Assert.That(GetUsedMarkStroke(view, "usedMarkFirstStroke")
+                    .transform.localScale.x, Is.Zero);
+                Assert.That(GetUsedMarkStroke(view, "usedMarkSecondStroke")
+                    .transform.localScale.x, Is.Zero);
+
+                view.Bind(CreateUsedMarkCard(cardId: 2, isUsed: true));
+                Assert.That(view.IsUsedMarkVisible, Is.True);
+                Assert.That(GetPrivateField<object>(view, "_usedMarkSequence"), Is.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void CUM10_U05_UsedMarkAssetAndPrefabAreAuthoredForDrawing()
+        {
+            TextureImporter importer = AssetImporter.GetAtPath(UsedMarkTexturePath) as
+                TextureImporter;
+            Assert.That(importer, Is.Not.Null);
+            Assert.That(importer.textureType, Is.EqualTo(TextureImporterType.Sprite));
+            Assert.That(importer.spriteImportMode, Is.EqualTo(SpriteImportMode.Single));
+            Assert.That(importer.alphaIsTransparency, Is.True);
+            Assert.That(importer.mipmapEnabled, Is.False);
+            Assert.That(importer.spritePixelsPerUnit, Is.EqualTo(1024f));
+            Assert.That(importer.spritePivot, Is.EqualTo(new Vector2(0f, 0.5f)));
+
+            Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(UsedMarkTexturePath);
+            Assert.That(texture, Is.Not.Null);
+            Assert.That(texture.width, Is.EqualTo(1024));
+            Assert.That(texture.height, Is.EqualTo(128));
+
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                Assert.That(view, Is.Not.Null);
+                SerializedObject serialized = new SerializedObject(view);
+                GameObject usedMark = serialized.FindProperty("usedMark")
+                    .objectReferenceValue as GameObject;
+                SpriteRenderer firstStroke = GetUsedMarkStroke(
+                    view,
+                    "usedMarkFirstStroke");
+                SpriteRenderer secondStroke = GetUsedMarkStroke(
+                    view,
+                    "usedMarkSecondStroke");
+
+                Assert.That(usedMark, Is.Not.Null);
+                Assert.That(usedMark.transform.localPosition.z, Is.GreaterThan(0f));
+                Assert.That(usedMark.GetComponentsInChildren<Collider>(true), Is.Empty);
+                Assert.That(firstStroke.sprite, Is.Not.Null);
+                Assert.That(secondStroke.sprite, Is.SameAs(firstStroke.sprite));
+                Assert.That(firstStroke.flipX, Is.False);
+                Assert.That(secondStroke.flipX, Is.False);
+                Assert.That(secondStroke.transform.localPosition.x,
+                    Is.EqualTo(firstStroke.transform.localPosition.x));
+                Assert.That(secondStroke.transform.localPosition.y,
+                    Is.EqualTo(-firstStroke.transform.localPosition.y));
+                Assert.That(firstStroke.color.r, Is.LessThanOrEqualTo(0.1f));
+                Assert.That(secondStroke.color.r, Is.LessThanOrEqualTo(0.1f));
+                Assert.That(firstStroke.transform.localScale.x,
+                    Is.GreaterThanOrEqualTo(0.8f));
+                Assert.That(firstStroke.transform.localScale.y,
+                    Is.GreaterThanOrEqualTo(0.45f));
+                Assert.That(secondStroke.transform.localScale,
+                    Is.EqualTo(firstStroke.transform.localScale));
+                Assert.That(
+                    Mathf.Abs(Mathf.DeltaAngle(
+                        firstStroke.transform.localEulerAngles.z,
+                        secondStroke.transform.localEulerAngles.z)),
+                    Is.GreaterThanOrEqualTo(100f));
+                Assert.That(serialized.FindProperty("usedMarkStrokeDuration").floatValue,
+                    Is.EqualTo(0.175f));
+
+                view.SetSortingOrder(9);
+                Assert.That(firstStroke.sortingOrder, Is.EqualTo(10));
+                Assert.That(secondStroke.sortingOrder, Is.EqualTo(10));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
         private static SpriteRenderer GetFrontRenderer(CardView view)
         {
             return GetRenderer(view, "front");
@@ -456,6 +566,30 @@ namespace DiaBlackJack.CoreLoop.Tests
         private static SpriteRenderer GetBackRenderer(CardView view)
         {
             return GetRenderer(view, "back");
+        }
+
+        private static SpriteRenderer GetUsedMarkStroke(
+            CardView view,
+            string propertyName)
+        {
+            SerializedObject serialized = new SerializedObject(view);
+            SpriteRenderer renderer = serialized.FindProperty(propertyName)
+                .objectReferenceValue as SpriteRenderer;
+            Assert.That(renderer, Is.Not.Null, propertyName);
+            return renderer;
+        }
+
+        private static GameSceneCardViewModel CreateUsedMarkCard(int cardId, bool isUsed)
+        {
+            return new GameSceneCardViewModel(
+                cardId,
+                rank: 7,
+                isFaceUp: true,
+                revealRank: true,
+                canUse: !isUsed,
+                displayName: "Revolver",
+                definitionKey: CardDefinitionCatalog.GetDefaultForRank(7).Key,
+                isUsed: isUsed);
         }
 
         private static SpriteRenderer GetRenderer(CardView view, string propertyName)

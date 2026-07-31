@@ -44,7 +44,8 @@ namespace DiaBlackJack.GameScene
             bool showHoverBadgeWhenUnavailable = false,
             string definitionKey = "",
             bool showHoverBadgeBelow = false,
-            int? cardEffectChoiceOptionId = null)
+            int? cardEffectChoiceOptionId = null,
+            bool isUsed = false)
         {
             CardId = cardId;
             Rank = rank;
@@ -58,6 +59,7 @@ namespace DiaBlackJack.GameScene
             DefinitionKey = definitionKey ?? string.Empty;
             ShowHoverBadgeBelow = showHoverBadgeBelow;
             CardEffectChoiceOptionId = cardEffectChoiceOptionId;
+            IsUsed = isUsed;
         }
 
         public int CardId { get; }
@@ -98,6 +100,12 @@ namespace DiaBlackJack.GameScene
         /// selected as targets rather than activated by the player.
         /// </summary>
         public int? CardEffectChoiceOptionId { get; }
+
+        /// <summary>
+        /// Whether a public card has completed its effect and should show the used-card mark.
+        /// Hidden enemy state is never projected here.
+        /// </summary>
+        public bool IsUsed { get; }
 
         /// <summary>
         /// Stable card archetype key used only to select authored visuals. It remains empty for an
@@ -716,7 +724,8 @@ namespace DiaBlackJack.GameScene
                     card.DisplayName,
                     abilityDescription: ResolveAbilityDescription(sourceCard),
                     suit: sourceCard == null ? CardSuit.Spade : sourceCard.Suit,
-                    definitionKey: sourceCard?.DefinitionKey);
+                    definitionKey: sourceCard?.DefinitionKey,
+                    isUsed: card.UseState == CardUseState.Used);
 
                 // PlayerHand's world orientation makes the highest index land at screen-left.
                 // Keep hidden cards last and prepend face-up cards so new draws appear at
@@ -844,7 +853,8 @@ namespace DiaBlackJack.GameScene
                     definitionKey: faceUp ? card.DefinitionKey : string.Empty,
                     showHoverBadgeBelow: faceUp,
                     cardEffectChoiceOptionId:
-                        FindCardEffectChoiceOptionId(pendingEffect, card.Id));
+                        FindCardEffectChoiceOptionId(pendingEffect, card.Id),
+                    isUsed: faceUp && card.UseState == CardUseState.Used);
 
                 // Both sides' hidden cards sit on the screen LEFT (each player's own right, mirrored
                 // across the table). The camera mirrors local X, so screen-left = highest index →

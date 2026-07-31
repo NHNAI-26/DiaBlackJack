@@ -51,6 +51,13 @@ namespace DiaBlackJack.GameScene
         [Range(0f, 1f)]
         [SerializeField] private float hiddenCardBlendAmount = 0.5f;
 
+        [Header("Used card mark")]
+        [SerializeField] private GameObject usedMark;
+        [SerializeField] private SpriteRenderer usedMarkFirstStroke;
+        [SerializeField] private SpriteRenderer usedMarkSecondStroke;
+        [Min(0f)]
+        [SerializeField] private float usedMarkStrokeDuration = 0.175f;
+
         private static readonly int BaseSpriteUvRectId = Shader.PropertyToID("_BaseSpriteUVRect");
         private static readonly int CardBlendTextureId = Shader.PropertyToID("_CardBlendTex");
         private static readonly int CardBlendAmountId = Shader.PropertyToID("_CardBlendAmount");
@@ -69,11 +76,16 @@ namespace DiaBlackJack.GameScene
         private Sprite _frontUvSprite;
         private Sprite _backUvSprite;
         private Tween _scaleTween;
+        private Sequence _usedMarkSequence;
         private Vector3 _baseScale = Vector3.one;
+        private Vector3 _usedMarkFirstStrokeScale = Vector3.one;
+        private Vector3 _usedMarkSecondStrokeScale = Vector3.one;
         private bool _showingFrontFace = true;
         private bool _usesHoverCardBlend;
         private bool _showBadgeOnHover;
         private bool _hovered;
+        private bool _hasBoundCard;
+        private bool _isUsed;
 
         /// <summary>Run card id of the bound card, for pointer routing. -1 when unbound.</summary>
         public int CardId { get; private set; } = -1;
@@ -82,6 +94,8 @@ namespace DiaBlackJack.GameScene
         public bool CanUse { get; private set; }
 
         internal string DefinitionKey { get; private set; } = string.Empty;
+
+        internal bool IsUsedMarkVisible => usedMark != null && usedMark.activeSelf;
 
         /// <summary>Current card-effect option selected by clicking this world-space card.</summary>
         public int? CardEffectChoiceOptionId { get; private set; }
@@ -113,10 +127,12 @@ namespace DiaBlackJack.GameScene
         private void Awake()
         {
             _baseScale = transform.localScale;
+            CaptureUsedMarkScales();
 
             HideRankText();
             RefreshSpriteUvRects();
             ApplyHoverOutline(false);
+            ShowUsedMarkInstant(false);
         }
 
         private void Update()
@@ -127,10 +143,12 @@ namespace DiaBlackJack.GameScene
         private void OnDisable()
         {
             StopScaleTween();
+            StopUsedMarkSequence();
             transform.localScale = _baseScale;
             _hovered = false;
             ApplyHoverOutline(false);
             ApplyHoverCardBlend(false);
+            ShowUsedMarkInstant(_isUsed);
         }
 
         public void Bind(GameSceneCardViewModel card)
@@ -140,10 +158,19 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            bool animateUsedMark =
+                Application.isPlaying &&
+                _hasBoundCard &&
+                CardId == card.CardId &&
+                !_isUsed &&
+                card.IsUsed;
+
             CardId = card.CardId;
             DefinitionKey = card.DefinitionKey;
             CanUse = card.CanUse;
             CardEffectChoiceOptionId = card.CardEffectChoiceOptionId;
+            _isUsed = card.IsUsed;
+            _hasBoundCard = true;
             bool showPlayerHiddenBlend = card.RevealRank && !card.IsFaceUp;
             _showingFrontFace = card.RevealRank && !showPlayerHiddenBlend;
             _usesHoverCardBlend = showPlayerHiddenBlend;
@@ -191,6 +218,7 @@ namespace DiaBlackJack.GameScene
             StopScaleTween();
             transform.localScale = _baseScale;
             ApplyHoverOutline(false);
+            ApplyUsedMark(animateUsedMark);
         }
 
         /// <summary>Called by the pointer raycast when this card gains/loses hover.</summary>
@@ -232,6 +260,147 @@ namespace DiaBlackJack.GameScene
             {
                 backRenderer.sortingOrder = sortingOrder;
             }
+
+            int usedMarkSortingOrder = sortingOrder + 1;
+            if (usedMarkFirstStroke != null)
+            {
+                usedMarkFirstStroke.sortingOrder = usedMarkSortingOrder;
+            }
+
+            if (usedMarkSecondStroke != null)
+            {
+                usedMarkSecondStroke.sortingOrder = usedMarkSortingOrder;
+            }
+        }
+
+        private void CaptureUsedMarkScales()
+        {
+            if (usedMarkFirstStroke != null)
+            {
+                _usedMarkFirstStrokeScale = usedMarkFirstStroke.transform.localScale;
+            }
+
+            if (usedMarkSecondStroke != null)
+            {
+                _usedMarkSecondStrokeScale = usedMarkSecondStroke.transform.localScale;
+            }
+        }
+
+        private void ApplyUsedMark(bool animate)
+        {
+            StopUsedMarkSequence();
+            if (!_isUsed)
+            {
+                ShowUsedMarkInstant(false);
+                return;
+            }
+
+            if (!animate ||
+                usedMark == null ||
+                usedMarkFirstStroke == null ||
+                usedMarkSecondStroke == null ||
+                usedMarkStrokeDuration <= 0f)
+            {
+                ShowUsedMarkInstant(true);
+                return;
+            }
+
+            usedMark.SetActive(true);
+            usedMarkFirstStroke.gameObject.SetActive(true);
+            usedMarkSecondStroke.gameObject.SetActive(false);
+            SetStrokeScale(usedMarkFirstStroke, _usedMarkFirstStrokeScale, 0f);
+            SetStrokeScale(usedMarkSecondStroke, _usedMarkSecondStrokeScale, 0f);
+
+            Sequence sequence = DOTween.Sequence()
+                .SetTarget(this);
+            sequence.Append(
+                usedMarkFirstStroke.transform
+                    .DOScaleX(_usedMarkFirstStrokeScale.x, usedMarkStrokeDuration)
+                    .SetEase(Ease.Linear));
+            sequence.AppendCallback(() =>
+            {
+                usedMarkSecondStroke.gameObject.SetActive(true);
+                SetStrokeScale(
+                    usedMarkSecondStroke,
+                    _usedMarkSecondStrokeScale,
+                    0f);
+            });
+            sequence.Append(
+                usedMarkSecondStroke.transform
+                    .DOScaleX(_usedMarkSecondStrokeScale.x, usedMarkStrokeDuration)
+                    .SetEase(Ease.Linear));
+            sequence.OnComplete(() =>
+            {
+                SetStrokeScale(
+                    usedMarkFirstStroke,
+                    _usedMarkFirstStrokeScale,
+                    1f);
+                SetStrokeScale(
+                    usedMarkSecondStroke,
+                    _usedMarkSecondStrokeScale,
+                    1f);
+            });
+            sequence.OnKill(() =>
+            {
+                if (_usedMarkSequence == sequence)
+                {
+                    _usedMarkSequence = null;
+                }
+            });
+            _usedMarkSequence = sequence;
+        }
+
+        private void ShowUsedMarkInstant(bool visible)
+        {
+            if (usedMarkFirstStroke != null)
+            {
+                usedMarkFirstStroke.gameObject.SetActive(true);
+            }
+
+            if (usedMarkSecondStroke != null)
+            {
+                usedMarkSecondStroke.gameObject.SetActive(true);
+            }
+
+            if (usedMark != null)
+            {
+                usedMark.SetActive(visible);
+            }
+
+            SetStrokeScale(
+                usedMarkFirstStroke,
+                _usedMarkFirstStrokeScale,
+                visible ? 1f : 0f);
+            SetStrokeScale(
+                usedMarkSecondStroke,
+                _usedMarkSecondStrokeScale,
+                visible ? 1f : 0f);
+        }
+
+        private static void SetStrokeScale(
+            SpriteRenderer stroke,
+            Vector3 fullScale,
+            float progress)
+        {
+            if (stroke == null)
+            {
+                return;
+            }
+
+            Vector3 scale = fullScale;
+            scale.x *= Mathf.Clamp01(progress);
+            stroke.transform.localScale = scale;
+        }
+
+        private void StopUsedMarkSequence()
+        {
+            if (_usedMarkSequence == null)
+            {
+                return;
+            }
+
+            _usedMarkSequence.Kill();
+            _usedMarkSequence = null;
         }
 
         /// <summary>
