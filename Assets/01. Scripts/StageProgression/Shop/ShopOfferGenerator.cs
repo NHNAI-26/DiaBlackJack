@@ -254,11 +254,13 @@ namespace DiaBlackJack.StageProgression
         private static IReadOnlyList<string> CreateDemonPool(
             CardContentCatalog cardContentCatalog)
         {
-            var keys = new List<string>(cardContentCatalog.DemonDefinitions.Count);
-            foreach (DemonContractDefinition definition in
-                     cardContentCatalog.DemonDefinitions)
+            IReadOnlyList<string> prototypeKeys =
+                DemonContractCatalog.PrototypeEnabledDemonKeys;
+            var keys = new List<string>(prototypeKeys.Count);
+            foreach (string definitionKey in prototypeKeys)
             {
-                keys.Add(definition.Key);
+                cardContentCatalog.GetDemonByKey(definitionKey);
+                keys.Add(definitionKey);
             }
 
             return keys.AsReadOnly();

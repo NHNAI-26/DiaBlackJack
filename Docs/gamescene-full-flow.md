@@ -360,6 +360,17 @@ Presenter는 기존 `StageProgressionPresentation`을 재사용하거나 GameSce
 - 한 클릭 한 거래
 - 상점 나가기 뒤 씬 로드 없이 다음 선택 또는 보스 준비
 
+구현 상태(2026-07-31, GF-04):
+
+- `GameFlowController`가 정식 상점 화면에서 카드 구매·라이터 제거·위스키 회복·나가기 입력을 현재 `ShopOfferId`와 함께 `FormalRunSession`으로 전달한다.
+- `ShopController`는 정식 `StageProgressionViewModel`을 월드 상점 자산에 투영하며 일반 카드 3장·악마 카드 2장을 고정 배치한다.
+- 일반 상품은 `DefinitionKey`를 `CardView`까지 전달해 각 정의의 고유 앞면을 사용한다.
+- 악마 상품 생성 풀은 프로토타입 활성 7종(사탄·벨페고르·바알제붑·아스모데우스·마몬·바포메트·아자젤)으로 제한한다.
+- 정식 상점에서는 라이터를 왼쪽, 위스키를 오른쪽에 두고 전투용 상대 영혼 HUD를 숨긴다.
+- 상품·서비스 상태는 거래 뒤 정식 view-model로 다시 생성하며, 별도 GameScene 골드·재고를 정식 흐름의 기준으로 사용하지 않는다.
+- GF-04 전용 2/2, 전체 EditMode 808/808, `GameScene` validate 문제 0, 컴파일·게임 코드 오류 0을 확인했다. Console 1건은 Test Framework 결과 저장 안내다.
+- 1280×720 실화면에서 서로 다른 일반 카드 앞면 3장, 프로토타입 악마 2장, 서비스 좌우 순서와 상대 HUD 비노출을 확인했다. 1920×1080 재촬영은 단계 6 전체 QA에 포함한다.
+
 ### 단계 5 — 결과, 저장, 시작 경로 마감
 
 변경:

@@ -62,6 +62,14 @@ namespace DiaBlackJack.GameScene
             if (gameManager != null)
             {
                 gameManager.FormalBattleCompleted += HandleBattleCompleted;
+                gameManager.FormalShopCardPurchaseRequested +=
+                    HandleFormalShopCardPurchaseRequested;
+                gameManager.FormalShopCardRemovalRequested +=
+                    HandleFormalShopCardRemovalRequested;
+                gameManager.FormalShopRestRequested +=
+                    HandleFormalShopRestRequested;
+                gameManager.FormalShopLeaveRequested +=
+                    HandleFormalShopLeaveRequested;
             }
 
             if (startingDemonReveal != null)
@@ -94,6 +102,14 @@ namespace DiaBlackJack.GameScene
             if (gameManager != null)
             {
                 gameManager.FormalBattleCompleted -= HandleBattleCompleted;
+                gameManager.FormalShopCardPurchaseRequested -=
+                    HandleFormalShopCardPurchaseRequested;
+                gameManager.FormalShopCardRemovalRequested -=
+                    HandleFormalShopCardRemovalRequested;
+                gameManager.FormalShopRestRequested -=
+                    HandleFormalShopRestRequested;
+                gameManager.FormalShopLeaveRequested -=
+                    HandleFormalShopLeaveRequested;
             }
 
             if (startingDemonReveal != null)
@@ -248,6 +264,38 @@ namespace DiaBlackJack.GameScene
             RequestConfirmOpponent();
         }
 
+        private void HandleFormalShopCardPurchaseRequested(int optionId)
+        {
+            if (CurrentViewModel?.ShopOfferId is int offerId)
+            {
+                RequestBuyShopCard(offerId, optionId);
+            }
+        }
+
+        private void HandleFormalShopCardRemovalRequested(int cardId)
+        {
+            if (CurrentViewModel?.ShopOfferId is int offerId)
+            {
+                RequestRemoveShopCard(offerId, cardId);
+            }
+        }
+
+        private void HandleFormalShopRestRequested()
+        {
+            if (CurrentViewModel?.ShopOfferId is int offerId)
+            {
+                RequestRestAtShop(offerId);
+            }
+        }
+
+        private void HandleFormalShopLeaveRequested()
+        {
+            if (CurrentViewModel?.ShopOfferId is int offerId)
+            {
+                RequestLeaveShop(offerId);
+            }
+        }
+
         private void RefreshFlow()
         {
             if (_session == null && !TryAdoptFormalRun())
@@ -265,6 +313,7 @@ namespace DiaBlackJack.GameScene
 
             if (nextScreen == GameFlowScreen.Combat)
             {
+                gameManager.UnbindFormalShop();
                 gameManager.enabled = true;
                 if (!gameManager.BindBattle(_session.CombatSession))
                 {
@@ -272,8 +321,21 @@ namespace DiaBlackJack.GameScene
                         "The active formal battle could not be bound.");
                 }
             }
+            else if (nextScreen == GameFlowScreen.Shop)
+            {
+                gameManager.UnbindBattle();
+                gameManager.enabled = true;
+                if (!gameManager.BindFormalShop(
+                        CurrentViewModel,
+                        _session.CombatSession.Progress.Player.CurrentGold))
+                {
+                    throw new InvalidOperationException(
+                        "The active formal shop could not be bound.");
+                }
+            }
             else
             {
+                gameManager.UnbindFormalShop();
                 gameManager.UnbindBattle();
                 gameManager.enabled = false;
             }
@@ -289,6 +351,7 @@ namespace DiaBlackJack.GameScene
             bool isOpponentSelection =
                 CurrentScreen == GameFlowScreen.OpponentSelection;
             bool isCombat = CurrentScreen == GameFlowScreen.Combat;
+            bool isShop = CurrentScreen == GameFlowScreen.Shop;
             hud?.SetEnemyStatusVisible(isCombat);
 
             if (isStartingReveal &&
@@ -314,7 +377,7 @@ namespace DiaBlackJack.GameScene
 
             if (hudRoot != null)
             {
-                hudRoot.SetActive(isCombat);
+                hudRoot.SetActive(isCombat || isShop);
             }
 
             if (charactersRoot != null)

@@ -267,6 +267,31 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
+        public void GF04_U02_ShopDemonOffersUsePrototypePool()
+        {
+            var observedKeys = new HashSet<string>(StringComparer.Ordinal);
+            for (int seed = 1; seed <= 500; seed++)
+            {
+                ShopOffer offer = new ShopOfferGenerator(seed).Generate(
+                    0,
+                    0,
+                    false);
+                foreach (ShopCardOption option in offer.CardOptions)
+                {
+                    if (option.DeckKind == ShopCardDeckKind.Demon)
+                    {
+                        observedKeys.Add(option.DefinitionKey);
+                    }
+                }
+            }
+
+            Assert.That(
+                observedKeys,
+                Is.EquivalentTo(
+                    DemonContractCatalog.PrototypeEnabledDemonKeys));
+        }
+
+        [Test]
         public void RF02_U10_UsedVisitRaisesBothNextPricesByOneLevelOnly()
         {
             var generator = new ShopOfferGenerator(12008);

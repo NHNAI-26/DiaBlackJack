@@ -81,6 +81,8 @@ namespace DiaBlackJack.GameScene
         /// <summary>Whether this card's manual effect can be activated right now (player, usable only).</summary>
         public bool CanUse { get; private set; }
 
+        internal string DefinitionKey { get; private set; } = string.Empty;
+
         /// <summary>Current card-effect option selected by clicking this world-space card.</summary>
         public int? CardEffectChoiceOptionId { get; private set; }
 
@@ -139,6 +141,7 @@ namespace DiaBlackJack.GameScene
             }
 
             CardId = card.CardId;
+            DefinitionKey = card.DefinitionKey;
             CanUse = card.CanUse;
             CardEffectChoiceOptionId = card.CardEffectChoiceOptionId;
             bool showPlayerHiddenBlend = card.RevealRank && !card.IsFaceUp;

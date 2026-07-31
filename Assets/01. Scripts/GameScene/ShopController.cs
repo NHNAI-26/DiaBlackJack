@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Border.Core;
 using DiaBlackJack.CoreLoop;
+using DiaBlackJack.StageProgression.UI;
 using UnityEngine;
 
 namespace DiaBlackJack.GameScene
@@ -46,6 +47,10 @@ namespace DiaBlackJack.GameScene
 
         private readonly List<DemonCardOffer> _demonOffers = new List<DemonCardOffer>();
         private readonly List<NormalCardOffer> _normalOffers = new List<NormalCardOffer>();
+        private readonly List<DemonCardView> _formalDemonOffers =
+            new List<DemonCardView>();
+        private readonly List<CardView> _formalNormalOffers =
+            new List<CardView>();
         private readonly DeterministicRng _random = new DeterministicRng();
         private int _nextOfferId;
         private int _openCount;
@@ -53,8 +58,17 @@ namespace DiaBlackJack.GameScene
         private bool _lighterPurchasedThisVisit;
         private bool _whiskeyPurchasedThisVisit;
         private bool _utilityPurchasedThisVisit;
+        private bool _formalUtilityLayoutApplied;
+        private Vector3 _lighterOriginalPosition;
+        private Vector3 _whiskeyOriginalPosition;
 
         public bool IsOpen { get; private set; }
+
+        public bool IsFormal { get; private set; }
+
+        public int FormalDemonOfferCount => _formalDemonOffers.Count;
+
+        public int FormalNormalOfferCount => _formalNormalOffers.Count;
 
         public int Gold { get; private set; }
 
@@ -80,6 +94,7 @@ namespace DiaBlackJack.GameScene
             _whiskeyPurchasedThisVisit = false;
             _utilityPurchasedThisVisit = false;
             IsOpen = true;
+            IsFormal = false;
             Gold += goldPerWin;
             int offerSeed = shopRandomSeed + _openCount++;
             GenerateDemonCardOffers(offerSeed);
@@ -98,6 +113,51 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        public void OpenFormal(StageProgressionViewModel model)
+        {
+            if (model == null || !model.IsShop || !model.ShopOfferId.HasValue)
+            {
+                CloseFormal();
+                return;
+            }
+
+            IsOpen = true;
+            IsFormal = true;
+            ClearFormalOffers();
+            CreateFormalCardOffers(model);
+            ApplyFormalUtilityLayout();
+            BindFormalUtilityItems(model);
+
+            merchant?.EnterMerchant();
+            SetCombatTableActive(false);
+            if (itemsRoot != null)
+            {
+                itemsRoot.SetActive(true);
+            }
+        }
+
+        public void CloseFormal()
+        {
+            if (!IsFormal)
+            {
+                return;
+            }
+
+            IsFormal = false;
+            IsOpen = false;
+            ClearFormalOffers();
+            RestoreUtilityLayout();
+            lighterItem?.SetHovered(false);
+            whiskeyItem?.SetHovered(false);
+            merchant?.ExitMerchant();
+            if (itemsRoot != null)
+            {
+                itemsRoot.SetActive(false);
+            }
+
+            SetCombatTableActive(true);
+        }
+
         public void Close()
         {
             if (!IsOpen)
@@ -111,6 +171,7 @@ namespace DiaBlackJack.GameScene
             }
 
             IsOpen = false;
+            IsFormal = false;
 
             if (merchant != null)
             {
@@ -207,6 +268,11 @@ namespace DiaBlackJack.GameScene
             int playerCurrentSoul,
             int playerMaximumSoul)
         {
+            if (IsFormal)
+            {
+                return;
+            }
+
             int currentLighterPrice = CurrentLighterPrice;
             string lighterDescription =
                 "Remove 1 card from your deck.\nPRICE " +
@@ -309,6 +375,184 @@ namespace DiaBlackJack.GameScene
         {
             return Mathf.Max(0, basePrice) +
                 _utilityPriceLevel * Mathf.Max(0, utilityPriceIncreasePerUsedVisit);
+        }
+
+        private void CreateFormalCardOffers(StageProgressionViewModel model)
+        {
+            foreach (ShopCardOptionViewModel option in model.ShopCardOptions)
+            {
+                if (option.Category == "DEMON")
+                {
+                    CreateFormalDemonOffer(option);
+                }
+                else
+                {
+                    CreateFormalNormalOffer(option);
+                }
+            }
+
+            LayoutFormalOffers(_formalNormalOffers, normalCardSpacing);
+            LayoutFormalOffers(_formalDemonOffers, demonCardSpacing);
+        }
+
+        private void CreateFormalDemonOffer(ShopCardOptionViewModel option)
+        {
+            if (demonCardHolder == null || demonCardPrefab == null)
+            {
+                return;
+            }
+
+            DemonCardView view = Instantiate(demonCardPrefab, demonCardHolder);
+            view.transform.localRotation = Quaternion.identity;
+            view.Bind(new GameSceneDemonCardViewModel(
+                option.OptionId,
+                option.DefinitionKey,
+                isFaceUp: true,
+                canUse: option.CanBuy,
+                option.DisplayName,
+                option.Summary,
+                option.IsSold ? "SOLD OUT" : option.Price,
+                showHoverBadgeWhenUnavailable: true));
+            _formalDemonOffers.Add(view);
+        }
+
+        private void CreateFormalNormalOffer(ShopCardOptionViewModel option)
+        {
+            if (normalCardHolder == null || normalCardPrefab == null)
+            {
+                return;
+            }
+
+            CardDefinition definition = CardDefinitionCatalog.GetByKey(
+                option.DefinitionKey);
+            CardView view = Instantiate(normalCardPrefab, normalCardHolder);
+            view.transform.localRotation = Quaternion.identity;
+            string description = option.IsSold
+                ? "SOLD OUT"
+                : option.Price + "\n" + option.Summary;
+            view.Bind(new GameSceneCardViewModel(
+                option.OptionId,
+                definition.Rank,
+                isFaceUp: true,
+                revealRank: true,
+                canUse: option.CanBuy,
+                definition.DisplayName,
+                abilityDescription: description,
+                suit: CardSuit.Spade,
+                definitionKey: option.DefinitionKey,
+                showHoverBadgeWhenUnavailable: true));
+            _formalNormalOffers.Add(view);
+        }
+
+        private void ApplyFormalUtilityLayout()
+        {
+            if (_formalUtilityLayoutApplied ||
+                lighterItem == null ||
+                whiskeyItem == null)
+            {
+                return;
+            }
+
+            Transform lighterTransform = lighterItem.transform;
+            Transform whiskeyTransform = whiskeyItem.transform;
+            _lighterOriginalPosition = lighterTransform.position;
+            _whiskeyOriginalPosition = whiskeyTransform.position;
+            lighterTransform.position = _whiskeyOriginalPosition;
+            whiskeyTransform.position = _lighterOriginalPosition;
+
+            _formalUtilityLayoutApplied = true;
+        }
+
+        private void RestoreUtilityLayout()
+        {
+            if (!_formalUtilityLayoutApplied)
+            {
+                return;
+            }
+
+            if (lighterItem != null)
+            {
+                lighterItem.transform.position = _lighterOriginalPosition;
+            }
+
+            if (whiskeyItem != null)
+            {
+                whiskeyItem.transform.position = _whiskeyOriginalPosition;
+            }
+
+            _formalUtilityLayoutApplied = false;
+        }
+
+        private void BindFormalUtilityItems(StageProgressionViewModel model)
+        {
+            bool canRemove = false;
+            foreach (ShopOwnedCardViewModel card in model.ShopOwnedCards)
+            {
+                if (card.CanRemove)
+                {
+                    canRemove = true;
+                    break;
+                }
+            }
+
+            BindUtilityItem(
+                lighterItem,
+                ShopUtilityItemKind.Lighter,
+                "LIGHTER",
+                model.LighterLabel,
+                canRemove);
+            BindUtilityItem(
+                whiskeyItem,
+                ShopUtilityItemKind.Whiskey,
+                "WHISKEY",
+                model.WhiskeyLabel,
+                model.CanRestAtShop);
+        }
+
+        private void ClearFormalOffers()
+        {
+            foreach (DemonCardView view in _formalDemonOffers)
+            {
+                if (view != null)
+                {
+                    view.gameObject.SetActive(false);
+                    Destroy(view.gameObject);
+                }
+            }
+
+            foreach (CardView view in _formalNormalOffers)
+            {
+                if (view != null)
+                {
+                    view.gameObject.SetActive(false);
+                    Destroy(view.gameObject);
+                }
+            }
+
+            _formalDemonOffers.Clear();
+            _formalNormalOffers.Clear();
+        }
+
+        private static void LayoutFormalOffers<T>(
+            IReadOnlyList<T> views,
+            float spacing)
+            where T : Component
+        {
+            float offset = -(views.Count - 1) * 0.5f * spacing;
+            for (int i = 0; i < views.Count; i++)
+            {
+                T view = views[i];
+                if (view == null)
+                {
+                    continue;
+                }
+
+                view.transform.localPosition = new Vector3(
+                    offset + i * spacing,
+                    0f,
+                    i * 0.01f);
+                view.transform.localRotation = Quaternion.identity;
+            }
         }
 
         private void SetCombatTableActive(bool active)

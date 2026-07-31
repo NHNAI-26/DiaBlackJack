@@ -29,6 +29,19 @@ namespace DiaBlackJack.CoreLoop
                     MammonKey
                 }.AsReadOnly();
 
+        private static readonly ReadOnlyCollection<string>
+            PrototypeEnabledDemonDefinitionKeys =
+                new List<string>
+                {
+                    SatanKey,
+                    BelphegorKey,
+                    BeelzebubKey,
+                    AsmodeusKey,
+                    MammonKey,
+                    BaphometKey,
+                    AzazelKey
+                }.AsReadOnly();
+
         private static DemonContractCatalog DefaultCatalog =
             new DemonContractCatalog(CreateDefaultDefinitions());
 
@@ -92,6 +105,9 @@ namespace DiaBlackJack.CoreLoop
 
         public static IReadOnlyList<string> PlayerDefaultDemonDeckKeys =>
             PlayerDefaultDemonDeckDefinitionKeys;
+
+        public static IReadOnlyList<string> PrototypeEnabledDemonKeys =>
+            PrototypeEnabledDemonDefinitionKeys;
 
         public IReadOnlyList<DemonContractDefinition> Definitions { get; }
 

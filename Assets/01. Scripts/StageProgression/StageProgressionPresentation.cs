@@ -94,6 +94,7 @@ namespace DiaBlackJack.StageProgression.UI
     {
         public ShopCardOptionViewModel(
             int optionId,
+            string definitionKey,
             string displayName,
             string category,
             string summary,
@@ -102,6 +103,7 @@ namespace DiaBlackJack.StageProgression.UI
             bool isSold)
         {
             OptionId = optionId;
+            DefinitionKey = definitionKey;
             DisplayName = displayName;
             Category = category;
             Summary = summary;
@@ -112,6 +114,7 @@ namespace DiaBlackJack.StageProgression.UI
 
         public bool CanBuy { get; }
         public string Category { get; }
+        public string DefinitionKey { get; }
         public string DisplayName { get; }
         public bool IsSold { get; }
         public int OptionId { get; }
@@ -551,6 +554,7 @@ namespace DiaBlackJack.StageProgression.UI
 
                 options.Add(new ShopCardOptionViewModel(
                     option.OptionId,
+                    option.DefinitionKey,
                     displayName,
                     category,
                     summary,

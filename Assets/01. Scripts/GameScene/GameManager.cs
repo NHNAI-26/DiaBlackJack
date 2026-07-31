@@ -109,8 +109,13 @@ namespace DiaBlackJack.GameScene
         private readonly List<RemovedNormalCard> _removedNormalCards =
             new List<RemovedNormalCard>();
         private StageProgressionSession _completedStageSession;
+        private StageProgressionViewModel _formalShopModel;
 
         public event Action FormalBattleCompleted;
+        public event Action<int> FormalShopCardPurchaseRequested;
+        public event Action<int> FormalShopCardRemovalRequested;
+        public event Action FormalShopRestRequested;
+        public event Action FormalShopLeaveRequested;
 
         public CoreLoopBattle Battle => IsStageBattle
             ? _stageSession.Battle
@@ -156,6 +161,45 @@ namespace DiaBlackJack.GameScene
             _stageSession = null;
             _session = null;
             _completedStageSession = null;
+        }
+
+        public bool BindFormalShop(
+            StageProgressionViewModel model,
+            int currentGold)
+        {
+            if (model == null || !model.IsShop || shop == null)
+            {
+                return false;
+            }
+
+            if (_stageSession != null || _session != null)
+            {
+                UnbindBattle();
+            }
+
+            _formalShopModel = model;
+            _inputLocked = false;
+            _choosingLighterRemoval = false;
+            shop.OpenFormal(model);
+            hud?.SetGold(currentGold);
+            hud?.SetEnemyStatusVisible(false);
+            return true;
+        }
+
+        public void UnbindFormalShop()
+        {
+            if (_formalShopModel == null && (shop == null || !shop.IsFormal))
+            {
+                return;
+            }
+
+            _formalShopModel = null;
+            _choosingLighterRemoval = false;
+            UpdateHover(null);
+            UpdateDemonCardHover(null);
+            UpdateShopUtilityItemHover(null);
+            hud?.HideCardHoverBadge();
+            shop?.CloseFormal();
         }
 
         public void SetPauseInputBlocked(bool blocked)
@@ -283,7 +327,17 @@ namespace DiaBlackJack.GameScene
             enemyCharacter?.Render(
                 CharacterVisualState.Idle,
                 string.Empty);
-            shop?.Close();
+            if (shop != null)
+            {
+                if (shop.IsFormal)
+                {
+                    shop.CloseFormal();
+                }
+                else
+                {
+                    shop.Close();
+                }
+            }
         }
 
         // Diegetic input: hover any card to enlarge it (usable cards also show a HUD badge), click a
@@ -303,13 +357,13 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            if (_core == null)
+            bool shopOpen = shop != null && shop.IsOpen;
+            if (_core == null && !shopOpen)
             {
                 return;
             }
 
             bool hasHit = RaycastPointer(out RaycastHit hit);
-            bool shopOpen = shop != null && shop.IsOpen;
             if (demonContractSelection != null &&
                 demonContractSelection.IsOpen)
             {
@@ -775,6 +829,13 @@ namespace DiaBlackJack.GameScene
 
         private void PurchaseShopDemonCard(DemonCardView card)
         {
+            if (_formalShopModel != null && card != null)
+            {
+                FormalShopCardPurchaseRequested?.Invoke(card.CardId);
+                UpdateDemonCardHover(null);
+                return;
+            }
+
             if (shop == null || card == null ||
                 !shop.TryPurchaseDemonCard(card.CardId, out string definitionKey))
             {
@@ -789,6 +850,13 @@ namespace DiaBlackJack.GameScene
 
         private void PurchaseShopNormalCard(CardView card)
         {
+            if (_formalShopModel != null && card != null)
+            {
+                FormalShopCardPurchaseRequested?.Invoke(card.CardId);
+                UpdateHover(null);
+                return;
+            }
+
             if (shop == null || card == null ||
                 !shop.TryPurchaseNormalCard(
                     card.CardId,
@@ -824,7 +892,10 @@ namespace DiaBlackJack.GameScene
 
         private void BeginLighterRemoval()
         {
-            if (shop == null || !shop.IsOpen || BuildRunDeckCardOptions().Count <= 1)
+            int removableCount = _formalShopModel == null
+                ? BuildRunDeckCardOptions().Count
+                : CountFormalRemovableCards();
+            if (shop == null || !shop.IsOpen || removableCount <= 0)
             {
                 return;
             }
@@ -873,6 +944,13 @@ namespace DiaBlackJack.GameScene
 
         private void PurchaseWhiskey()
         {
+            if (_formalShopModel != null)
+            {
+                FormalShopRestRequested?.Invoke();
+                UpdateShopUtilityItemHover(null);
+                return;
+            }
+
             CoreLoopBattle battle = Battle;
             if (shop == null ||
                 battle == null ||
@@ -1053,9 +1131,9 @@ namespace DiaBlackJack.GameScene
         private void OnGUI()
         {
             if (_pauseInputBlocked ||
-                _core == null ||
                 shop == null ||
-                !shop.IsOpen)
+                !shop.IsOpen ||
+                (_core == null && _formalShopModel == null))
             {
                 return;
             }
@@ -1081,7 +1159,8 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            if (_core.State == CoreLoopState.BattleEnded)
+            if (_formalShopModel != null ||
+                _core.State == CoreLoopState.BattleEnded)
             {
                 DrawShopControls();
             }
@@ -1096,6 +1175,30 @@ namespace DiaBlackJack.GameScene
             }
 
             DrawHeading("SHOP - hover goods and click to buy");
+            if (_formalShopModel != null)
+            {
+                const float width = 160f;
+                const float height = 48f;
+                using (new GUIEnabledScope(
+                           !_inputLocked &&
+                           _formalShopModel.CanLeaveShop))
+                {
+                    if (GUI.Button(
+                            new Rect(
+                                (Screen.width - width) * 0.5f,
+                                Screen.height - height - 24f,
+                                width,
+                                height),
+                            "LEAVE",
+                            _buttonStyle))
+                    {
+                        FormalShopLeaveRequested?.Invoke();
+                    }
+                }
+
+                return;
+            }
+
             DrawButtonRow(
                 new[] { "나가기" },
                 new[] { true },
@@ -1104,6 +1207,12 @@ namespace DiaBlackJack.GameScene
 
         private void DrawLighterRemovalPanel()
         {
+            if (_formalShopModel != null)
+            {
+                DrawFormalLighterRemovalPanel();
+                return;
+            }
+
             List<RunDeckCardOption> options = BuildRunDeckCardOptions();
             EnsureShopStyles();
 
@@ -2389,6 +2498,109 @@ namespace DiaBlackJack.GameScene
             }
 
             _stageRuntime?.LoadProgressionScene();
+        }
+
+        private void DrawFormalLighterRemovalPanel()
+        {
+            EnsureShopStyles();
+            IReadOnlyList<ShopOwnedCardViewModel> options =
+                _formalShopModel.ShopOwnedCards;
+            float width = Mathf.Min(760f, Screen.width - 40f);
+            float height = Mathf.Min(520f, Screen.height - 120f);
+            var panelRect = new Rect(
+                (Screen.width - width) * 0.5f,
+                70f,
+                width,
+                height);
+            GUI.Box(panelRect, string.Empty, _shopPanelStyle);
+            GUI.Label(
+                new Rect(panelRect.x + 18f, panelRect.y + 14f, width - 36f, 30f),
+                "LIGHTER - CHOOSE 1 CARD TO REMOVE",
+                _labelStyle);
+
+            int columns = Mathf.Clamp(
+                Mathf.FloorToInt((width - 36f) / 132f),
+                3,
+                5);
+            const float gap = 8f;
+            float cardWidth =
+                (width - 36f - (columns - 1) * gap) / columns;
+            const float cardHeight = 74f;
+            int rows = Mathf.CeilToInt(options.Count / (float)columns);
+            var scrollRect = new Rect(
+                panelRect.x + 18f,
+                panelRect.y + 58f,
+                width - 36f,
+                height - 122f);
+            var contentRect = new Rect(
+                0f,
+                0f,
+                scrollRect.width - 18f,
+                Mathf.Max(scrollRect.height, rows * (cardHeight + gap)));
+            _lighterRemovalScroll = GUI.BeginScrollView(
+                scrollRect,
+                _lighterRemovalScroll,
+                contentRect);
+            for (int i = 0; i < options.Count; i++)
+            {
+                ShopOwnedCardViewModel option = options[i];
+                int row = i / columns;
+                int column = i % columns;
+                var cardRect = new Rect(
+                    column * (cardWidth + gap),
+                    row * (cardHeight + gap),
+                    cardWidth,
+                    cardHeight);
+                using (new GUIEnabledScope(
+                           !_inputLocked && option.CanRemove))
+                {
+                    if (GUI.Button(
+                            cardRect,
+                            option.DisplayName,
+                            _shopCardButtonStyle))
+                    {
+                        _choosingLighterRemoval = false;
+                        FormalShopCardRemovalRequested?.Invoke(option.CardId);
+                    }
+                }
+            }
+
+            GUI.EndScrollView();
+            using (new GUIEnabledScope(!_inputLocked))
+            {
+                const float buttonWidth = 160f;
+                if (GUI.Button(
+                        new Rect(
+                            panelRect.center.x - buttonWidth * 0.5f,
+                            panelRect.yMax - 52f,
+                            buttonWidth,
+                            38f),
+                        "CANCEL",
+                        _buttonStyle))
+                {
+                    CancelLighterRemoval();
+                }
+            }
+        }
+
+        private int CountFormalRemovableCards()
+        {
+            if (_formalShopModel == null)
+            {
+                return 0;
+            }
+
+            int count = 0;
+            foreach (ShopOwnedCardViewModel card in
+                     _formalShopModel.ShopOwnedCards)
+            {
+                if (card.CanRemove)
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         private void UnlockInput()

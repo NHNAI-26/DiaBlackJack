@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using DiaBlackJack.CoreLoop;
+using DiaBlackJack.GameScene;
 using DiaBlackJack.StageProgression.UI;
 using NUnit.Framework;
 using UnityEngine;
@@ -146,6 +147,61 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(model.RewardOptions, Is.Empty);
             Assert.That(model.GoldResult, Is.EqualTo("VICTORY +15 GOLD"));
             Assert.That(model.Message, Is.EqualTo("RUN VICTORY"));
+        }
+
+        [Test]
+        public void GF04_U01_FormalShopRendersThreeNormalAndTwoDemonOptions()
+        {
+            FormalRunSession run = OpenFirstShop();
+            StageProgressionViewModel model =
+                StageProgressionPresenter.Create(run);
+            GameObject root = new GameObject("GF04 Formal Shop Test");
+            try
+            {
+                ShopController shop = root.AddComponent<ShopController>();
+                GameObject normalHolder = new GameObject("Normal Holder");
+                normalHolder.transform.SetParent(root.transform);
+                GameObject demonHolder = new GameObject("Demon Holder");
+                demonHolder.transform.SetParent(root.transform);
+                GameObject normalPrefabObject = new GameObject("Normal Prefab");
+                normalPrefabObject.transform.SetParent(root.transform);
+                CardView normalPrefab =
+                    normalPrefabObject.AddComponent<CardView>();
+                GameObject demonPrefabObject = new GameObject("Demon Prefab");
+                demonPrefabObject.transform.SetParent(root.transform);
+                DemonCardView demonPrefab =
+                    demonPrefabObject.AddComponent<DemonCardView>();
+                SetField(shop, "normalCardHolder", normalHolder.transform);
+                SetField(shop, "demonCardHolder", demonHolder.transform);
+                SetField(shop, "normalCardPrefab", normalPrefab);
+                SetField(shop, "demonCardPrefab", demonPrefab);
+
+                shop.OpenFormal(model);
+
+                Assert.That(shop.IsOpen, Is.True);
+                Assert.That(shop.IsFormal, Is.True);
+                Assert.That(shop.FormalNormalOfferCount, Is.EqualTo(3));
+                Assert.That(shop.FormalDemonOfferCount, Is.EqualTo(2));
+                foreach (ShopCardOptionViewModel option in model.ShopCardOptions)
+                {
+                    Assert.That(option.DefinitionKey, Is.Not.Empty);
+                }
+                Assert.That(
+                    normalHolder.GetComponentsInChildren<CardView>(true),
+                    Has.Length.EqualTo(3));
+                foreach (CardView card in
+                         normalHolder.GetComponentsInChildren<CardView>(true))
+                {
+                    Assert.That(card.DefinitionKey, Is.Not.Empty);
+                }
+                Assert.That(
+                    demonHolder.GetComponentsInChildren<DemonCardView>(true),
+                    Has.Length.EqualTo(2));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
         }
 
         private static StageProgressionController CreateController(
