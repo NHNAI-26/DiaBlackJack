@@ -76,6 +76,20 @@ namespace DiaBlackJack.GameScene
 
         public int CurrentWhiskeyPrice => CalculateUtilityPrice(whiskeyPrice);
 
+        private void Awake()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            SetCombatTableActive(true);
+            if (itemsRoot != null)
+            {
+                itemsRoot.SetActive(false);
+            }
+        }
+
         public Sprite GetDemonCardFaceSprite(string definitionKey)
         {
             return demonCardPrefab == null
