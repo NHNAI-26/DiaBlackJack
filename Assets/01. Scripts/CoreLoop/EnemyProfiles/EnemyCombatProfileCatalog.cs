@@ -199,11 +199,6 @@ namespace DiaBlackJack.CoreLoop
                     },
                     "독극물과 강제 행동으로 장기전의 안전 지대를 무너뜨린다.",
                     EnemyInformationMode.Condensed,
-                    demonContractDefinitionKeys: new[]
-                    {
-                        DemonContractCatalog.PaimonKey
-                    },
-                    demonContractCandidateCount: 1,
                     injectsPoisonIntoPlayerDeckEachRound: true),
                 new EnemyCombatProfile(
                     FinalBossKey,
@@ -232,9 +227,9 @@ namespace DiaBlackJack.CoreLoop
                         DemonContractCatalog.BaphometKey,
                         DemonContractCatalog.MammonKey,
                         DemonContractCatalog.AsmodeusKey,
-                        DemonContractCatalog.LeviathanKey,
+                        DemonContractCatalog.BeelzebubKey,
                         DemonContractCatalog.AzazelKey,
-                        DemonContractCatalog.LuciferKey
+                        DemonContractCatalog.SatanKey
                     },
                     demonContractCandidateCount: 1,
                     fixedDemonContractPhases: new[]
@@ -246,11 +241,11 @@ namespace DiaBlackJack.CoreLoop
                         new FixedDemonContractPhaseDefinition(
                             activationSoulThreshold: 5,
                             DemonContractCatalog.AsmodeusKey,
-                            DemonContractCatalog.LeviathanKey),
+                            DemonContractCatalog.BeelzebubKey),
                         new FixedDemonContractPhaseDefinition(
                             activationSoulThreshold: 2,
                             DemonContractCatalog.AzazelKey,
-                            DemonContractCatalog.LuciferKey)
+                            DemonContractCatalog.SatanKey)
                     })
             };
         }

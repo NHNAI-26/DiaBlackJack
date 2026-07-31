@@ -281,18 +281,43 @@ namespace DiaBlackJack.CoreLoop.Tests
             CoreLoopBattle enforcer = StageBattleFactory.Create(
                 CreateStage(EnemyCombatProfileCatalog.EnforcerKey, 92, 93),
                 player);
-            Assert.That(enforcer.EnemyDemonDeck.TotalCardCount, Is.EqualTo(1));
+            Assert.That(enforcer.EnemyDemonDeck.TotalCardCount, Is.Zero);
         }
 
         [Test]
-        public void DC07_I02_FourEnemyContractsRemainIsolatedAcrossTenBattlesEach()
+        public void DCR07_U01_DefaultEnemyProfilesUseOnlyAllSevenPrototypeDemons()
+        {
+            var configuredKeys = new HashSet<string>(StringComparer.Ordinal);
+            foreach (EnemyCombatProfile profile in
+                EnemyCombatProfileCatalog.Default.Profiles)
+            {
+                foreach (string key in profile.DemonContractDefinitionKeys)
+                {
+                    Assert.That(
+                        DemonContractCatalog.PrototypeEnabledDemonKeys,
+                        Does.Contain(key),
+                        $"profile {profile.Key} contains disabled demon {key}");
+                    configuredKeys.Add(key);
+                }
+            }
+
+            Assert.That(
+                configuredKeys,
+                Is.EquivalentTo(DemonContractCatalog.PrototypeEnabledDemonKeys));
+        }
+
+        [Test]
+        public void DCR07_I01_SevenPrototypeEnemyContractsActivateWithoutStall()
         {
             foreach (DemonContractKind kind in new[]
             {
                 DemonContractKind.Satan,
                 DemonContractKind.Belphegor,
+                DemonContractKind.Beelzebub,
+                DemonContractKind.Asmodeus,
                 DemonContractKind.Mammon,
-                DemonContractKind.Leviathan
+                DemonContractKind.Baphomet,
+                DemonContractKind.Azazel
             })
             {
                 for (int iteration = 0; iteration < 10; iteration++)
@@ -323,8 +348,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                     return new ForcedBelphegorPolicy();
                 case DemonContractKind.Mammon:
                     return new ForcedMammonStandPolicy();
-                case DemonContractKind.Leviathan:
-                    return new ForcedLeviathanPistolPolicy();
+                case DemonContractKind.Beelzebub:
+                case DemonContractKind.Asmodeus:
+                case DemonContractKind.Baphomet:
+                case DemonContractKind.Azazel:
+                    return new CultistEnemyPolicy();
                 default:
                     throw new ArgumentOutOfRangeException(nameof(kind));
             }

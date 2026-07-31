@@ -17,6 +17,17 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentNullException(nameof(observation));
             }
 
+            if (HasDemonContractChoice(observation))
+            {
+                ClearTelegraph();
+                CurrentDisplay = BossCombatDisplayModel.Create(
+                    observation,
+                    BossTelegraphedAction.None);
+                return EnemyPolicyDecisionSelector.Select(
+                    observation,
+                    EvaluateDemonContractChoice);
+            }
+
             FinalBossPhase phase = FinalBossPhaseResolver.Resolve(
                 observation.EnemySoul);
             if (observation.PendingCardEffectKind.HasValue)
@@ -285,6 +296,42 @@ namespace DiaBlackJack.CoreLoop
                     throw new InvalidOperationException(
                         "Final boss policy received an unsupported pending effect.");
             }
+        }
+
+        private static EnemyActionScore EvaluateDemonContractChoice(
+            EnemyObservation observation,
+            EnemyActionCandidate candidate)
+        {
+            if (candidate.ActionType != EnemyActionType.DemonContract ||
+                candidate.DemonContractInteractionKind !=
+                    DemonContractInteractionKind.AsmodeusForceOpponentHit)
+            {
+                throw new InvalidOperationException(
+                    "Final boss received an unsupported demon contract choice.");
+            }
+
+            bool forcesHit = candidate.DemonContractOptionId ==
+                AsmodeusDemonContractHandler.ForceHitOptionId;
+            return Score(
+                candidate,
+                forcesHit ? 3000 : 0,
+                forcesHit
+                    ? "boss-force-opponent-hit-with-asmodeus"
+                    : "boss-skip-asmodeus-forced-hit");
+        }
+
+        private static bool HasDemonContractChoice(
+            EnemyObservation observation)
+        {
+            foreach (EnemyActionCandidate candidate in observation.ActionCandidates)
+            {
+                if (candidate.ActionType == EnemyActionType.DemonContract)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static EnemyActionScore EvaluateBasicAction(

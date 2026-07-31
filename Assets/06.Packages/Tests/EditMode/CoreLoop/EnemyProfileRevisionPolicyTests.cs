@@ -24,9 +24,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 }));
             Assert.That(cultist.DemonContractCandidateCount, Is.EqualTo(2));
             Assert.That(trickster.ChangeCostMode, Is.EqualTo(EnemyChangeCostMode.FixedOne));
-            Assert.That(enforcer.DemonContractDefinitionKeys.Single(),
-                Is.EqualTo(DemonContractCatalog.PaimonKey));
-            Assert.That(enforcer.DemonContractCandidateCount, Is.EqualTo(1));
+            Assert.That(enforcer.DemonContractDefinitionKeys, Is.Empty);
             Assert.That(enforcer.InjectsPoisonIntoPlayerDeckEachRound, Is.True);
         }
 
@@ -145,7 +143,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void EPR05_U07_EnforcerStartsWithPaimonAndInjectsPoisonBeforeDeal()
+        public void DCR07_U02_EnforcerHasNoDemonAndStillInjectsPoisonBeforeDeal()
         {
             CoreLoopBattle battle = CreateProfileBattle(EnemyCombatProfileCatalog.EnforcerKey);
 
@@ -154,10 +152,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.Player.Deck.TotalCardCount, Is.EqualTo(21));
             Assert.That(battle.TryPlayerHit(), Is.True);
 
-            Assert.That(battle.UsedEnemyBaseDemonContractCount, Is.EqualTo(1));
-            Assert.That(
-                battle.ActiveEnemyDemonContracts.Single().Kind,
-                Is.EqualTo(DemonContractKind.Paimon));
+            Assert.That(battle.UsedEnemyBaseDemonContractCount, Is.Zero);
+            Assert.That(battle.ActiveEnemyDemonContracts, Is.Empty);
         }
 
         [Test]
