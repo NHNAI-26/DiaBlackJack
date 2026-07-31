@@ -737,7 +737,8 @@ namespace DiaBlackJack.GameScene
                     enemy.InjectsPoisonIntoPlayerDeckEachRound,
                 enablesEnemyChange: true,
                 fixedEnemyDemonContractPhases:
-                    enemy.FixedDemonContractPhases);
+                    enemy.FixedDemonContractPhases,
+                demonContractSeed: battleSeed ^ unchecked((int)0xA511E9B3u));
         }
 
         private string ResolveEnemyProfileKey()

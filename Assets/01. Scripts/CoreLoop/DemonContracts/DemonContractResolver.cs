@@ -306,6 +306,8 @@ namespace DiaBlackJack.CoreLoop
 
     internal sealed class DemonContractResolver
     {
+        internal const int DefaultDemonDieSeed = 20260722;
+
         private readonly Dictionary<DemonContractKind, IDemonContractHandler> _handlers =
             new Dictionary<DemonContractKind, IDemonContractHandler>();
 
@@ -343,11 +345,16 @@ namespace DiaBlackJack.CoreLoop
 
         public static DemonContractResolver CreateDefault()
         {
+            return CreateDefault(DefaultDemonDieSeed);
+        }
+
+        public static DemonContractResolver CreateDefault(int demonDieSeed)
+        {
             return new DemonContractResolver(
                 new SatanDemonContractHandler(),
                 new BelphegorDemonContractHandler(),
                 new MammonDemonContractHandler(
-                    new DeterministicDemonDieRoller(seed: 20260722)),
+                    new DeterministicDemonDieRoller(demonDieSeed)),
                 new LeviathanDemonContractHandler(),
                 new BeelzebubDemonContractHandler(),
                 new MephistophelesDemonContractHandler(),

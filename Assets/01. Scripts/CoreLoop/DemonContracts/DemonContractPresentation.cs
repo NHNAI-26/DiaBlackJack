@@ -299,6 +299,10 @@ namespace DiaBlackJack.CoreLoop.UI
                 {
                     status = "오망성 덱 적용";
                 }
+                else if (contract.Kind == DemonContractKind.Beelzebub)
+                {
+                    status = "버스트 시 영혼 1 · 양측 공개 카드 선택 폐기";
+                }
                 else if (contract.Kind == DemonContractKind.Asmodeus)
                 {
                     status = "숫자 7 이하 카드 제한 · 강제 히트 선택";

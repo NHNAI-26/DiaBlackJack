@@ -37,7 +37,10 @@ namespace DiaBlackJack.StageProgression
                     player.MaximumSoul,
                     player.CurrentSoul,
                     stage.EnemyMaximumSoul,
-                    playerDemonDeck: playerDemonDeck);
+                    playerDemonDeck: playerDemonDeck,
+                    demonContractSeed: DeriveDemonContractSeed(
+                        stage.PlayerDeckSeed,
+                        stage.EnemyDeckSeed));
             }
 
             EnemyBattleConfiguration enemy = EnemyBattleConfigurationFactory.Create(
@@ -69,7 +72,10 @@ namespace DiaBlackJack.StageProgression
                     enemy.InjectsPoisonIntoPlayerDeckEachRound,
                 enablesEnemyChange: true,
                 fixedEnemyDemonContractPhases:
-                    enemy.FixedDemonContractPhases);
+                    enemy.FixedDemonContractPhases,
+                demonContractSeed: DeriveDemonContractSeed(
+                    stage.PlayerDeckSeed,
+                    stage.EnemyDeckSeed));
         }
 
         private static DemonContractDeck CreateEnemyDemonDeck(
@@ -115,6 +121,17 @@ namespace DiaBlackJack.StageProgression
             unchecked
             {
                 return enemyDeckSeed ^ (int)0x4C957F2Du;
+            }
+        }
+
+        private static int DeriveDemonContractSeed(
+            int playerDeckSeed,
+            int enemyDeckSeed)
+        {
+            unchecked
+            {
+                return playerDeckSeed ^ (enemyDeckSeed * 397) ^
+                    (int)0xA511E9B3u;
             }
         }
     }
