@@ -171,7 +171,6 @@ inline half NHNGetPixelOutlineMask(float2 rawUV, half baseAlpha)
     half threshold = saturate(_PixelOutlineAlphaThreshold);
     half centerOpaque = step(threshold, baseAlpha);
     half neighborAlpha = 0.0h;
-    half neighborOpaque = 1.0h;
     float2 texel = _MainTex_TexelSize.xy;
 
     [unroll]
@@ -181,40 +180,31 @@ inline half NHNGetPixelOutlineMask(float2 rawUV, half baseAlpha)
         float2 offset = texel * (float)i;
         half sampleAlpha = NHNSampleSpriteBaseAlpha(rawUV + float2(offset.x, 0.0));
         neighborAlpha = max(neighborAlpha, sampleAlpha * ringEnabled);
-        neighborOpaque = min(neighborOpaque, lerp(1.0h, step(threshold, sampleAlpha), ringEnabled));
 
         sampleAlpha = NHNSampleSpriteBaseAlpha(rawUV - float2(offset.x, 0.0));
         neighborAlpha = max(neighborAlpha, sampleAlpha * ringEnabled);
-        neighborOpaque = min(neighborOpaque, lerp(1.0h, step(threshold, sampleAlpha), ringEnabled));
 
         sampleAlpha = NHNSampleSpriteBaseAlpha(rawUV + float2(0.0, offset.y));
         neighborAlpha = max(neighborAlpha, sampleAlpha * ringEnabled);
-        neighborOpaque = min(neighborOpaque, lerp(1.0h, step(threshold, sampleAlpha), ringEnabled));
 
         sampleAlpha = NHNSampleSpriteBaseAlpha(rawUV - float2(0.0, offset.y));
         neighborAlpha = max(neighborAlpha, sampleAlpha * ringEnabled);
-        neighborOpaque = min(neighborOpaque, lerp(1.0h, step(threshold, sampleAlpha), ringEnabled));
 
         sampleAlpha = NHNSampleSpriteBaseAlpha(rawUV + offset);
         neighborAlpha = max(neighborAlpha, sampleAlpha * ringEnabled);
-        neighborOpaque = min(neighborOpaque, lerp(1.0h, step(threshold, sampleAlpha), ringEnabled));
 
         sampleAlpha = NHNSampleSpriteBaseAlpha(rawUV - offset);
         neighborAlpha = max(neighborAlpha, sampleAlpha * ringEnabled);
-        neighborOpaque = min(neighborOpaque, lerp(1.0h, step(threshold, sampleAlpha), ringEnabled));
 
         sampleAlpha = NHNSampleSpriteBaseAlpha(rawUV + float2(offset.x, -offset.y));
         neighborAlpha = max(neighborAlpha, sampleAlpha * ringEnabled);
-        neighborOpaque = min(neighborOpaque, lerp(1.0h, step(threshold, sampleAlpha), ringEnabled));
 
         sampleAlpha = NHNSampleSpriteBaseAlpha(rawUV + float2(-offset.x, offset.y));
         neighborAlpha = max(neighborAlpha, sampleAlpha * ringEnabled);
-        neighborOpaque = min(neighborOpaque, lerp(1.0h, step(threshold, sampleAlpha), ringEnabled));
     }
 
     half outsideMask = (1.0h - centerOpaque) * step(threshold, neighborAlpha);
-    half insideMask = centerOpaque * (1.0h - neighborOpaque);
-    return max(outsideMask, insideMask) * visibility;
+    return outsideMask * visibility;
 #else
     return 0.0h;
 #endif
