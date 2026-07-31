@@ -1180,3 +1180,13 @@ Test Framework 준비·결과 저장·정리 안내였으며 컴파일·게임 �
 | 2026-07-21 | 이천서 | 현행 폴드 삭제·체인지 전투 누적 비용 구조와 Unity MCP 전체 EditMode 306/306·컴파일 오류 0 검증 결과를 추가하고 `GameScene` 무변경 확인 |
 | 2026-07-22 | 이천서 | 위협용 해머 상대 공개 카드 제거·적 AI·GameScene 표시 이관과 Unity MCP 전체 EditMode 308/308 검증 결과 추가 |
 | 2026-07-22 | 이천서 | 보위 나이프 비버스트 강제 폐기·공개 합 중간 버스트·전체 합 최종 승부 구조와 영향 13/13·전체 EditMode 309/309·Console 0 검증 결과 추가 |
+
+## 2026-07-31 MainMenuScene 제품 진입점
+
+- `Assets/00. Scenes/MainMenuScene.unity`을 Build Settings 0번으로 등록했다.
+- 빌드 씬 순서는 `MainMenuScene`, `StageTest`, `CoreLoopTest`, `GameScene`, `SampleScene`이다.
+- `MainMenuView`는 새 런, 이어하기, 시작 예약 재개, 종료를 표시한다. 미구현 설정은 `SETTINGS (LATER)` 비활성 버튼으로 명시한다.
+- `MainMenuController`는 기존 `RunSaveFlow`와 `RunSavePresenter`만 사용한다. 런 규칙과 저장 상태를 중복 소유하지 않는다.
+- 새 런·이어하기 성공 후에는 현재 정식 런 호스트인 `StageTest`로 이동한다. `GameScene` 단일 런 이관 뒤 목적지만 교체한다.
+- Unity MCP에서 씬 누락 스크립트·깨진 프리팹 0, 1280×720 Play Mode 화면, Console 컴파일 오류 0을 확인했다.
+- 전체 EditMode 798/798 통과. 외부 에셋·오픈소스·새 패키지·새 의존성 추가 없음.

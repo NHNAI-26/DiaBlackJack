@@ -1,13 +1,15 @@
 # MainMenuScene + GameScene 전체 게임 플로우 통합 계획
 
 작성일: 2026-07-31  
-범위: 제품 시작 화면은 `MainMenuScene`, 실제 런 전체는 `GameScene`에서 진행. 계획만 작성. 구현·씬 수정 미수행.
+범위: 제품 시작 화면은 `MainMenuScene`, 실제 런 전체는 `GameScene`에서 진행.
+
+> 2026-07-31 현재 상태: `MainMenuScene`과 저장 흐름 기반 새 런·이어하기·시작 예약 재개 진입을 구현했다. 아직 `GameScene` 단일 런 통합 전이므로 성공한 메뉴 입력은 현행 정식 런 호스트인 `StageTest`로 이동한다. `StageTest`는 이후 단계에서 테스트 전용으로 축소하고 목적지를 `GameScene`으로 교체한다.
 
 ## 1. 목표
 
 제품은 `MainMenuScene`에서 시작한다. 메뉴에서 새 게임 또는 이어하기를 선택하면 `GameScene`으로 이동하고, 이후 정식 런은 다른 진행 씬으로 왕복하지 않고 GameScene 안에서 끝까지 진행한다.
 
-1. `MainMenuScene`: 새 게임/이어하기/설정/종료
+1. `MainMenuScene`: 새 게임/이어하기/시작 예약 재개/종료. 설정은 후속 구현 자리만 비활성 표시
 2. `GameScene`: 시작 악마 2장 자동 지급·공개
 3. 상대 선택
 4. 전투
