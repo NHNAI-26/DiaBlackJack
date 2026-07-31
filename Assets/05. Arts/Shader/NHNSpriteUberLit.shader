@@ -25,6 +25,8 @@ Shader "Shader/Sprite Uber Lit"
         [Sub(SurfaceInputs)] _CardBlendAmount("Card Blend", Range(0,1)) = 0
         [HideInInspector] [PerRendererData] _BaseSpriteUVRect("Base Sprite UV Rect", Vector) = (0,0,1,1)
         [HideInInspector] [PerRendererData] _CardBlendUVRect("Card Blend UV Rect", Vector) = (0,0,1,1)
+        [SubToggle(SurfaceInputs, _)] _SpriteFlipX("Flip X", Float) = 0
+        [SubToggle(SurfaceInputs, _)] _SpriteFlipY("Flip Y", Float) = 0
         [Sub(SurfaceInputs)] _HueShift("Hue Shift", Range(-180,180)) = 0
         [Sub(SurfaceInputs)] _Saturation("Saturation", Range(0,2)) = 1
         [Sub(SurfaceInputs)] _Brightness("Brightness", Range(0,2)) = 1
@@ -72,9 +74,13 @@ Shader "Shader/Sprite Uber Lit"
         [Main(Dissolve, _DISSOLVE_ON, on)] _DissolveEnabled("Dissolve", Float) = 0
         [Tex(Dissolve_DISSOLVE_ON)] [NoScaleOffset] _DissolveNoiseMap("Noise Map", 2D) = "white" {}
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveTilingOffset("Tiling XY / Offset ZW", Vector) = (1,1,0,0)
+        [KWEnum(Dissolve_DISSOLVE_ON, Noise, _, Radial, _DISSOLVE_RADIAL)] _DissolveMode("Mode", Float) = 0
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveAmount("Amount", Range(0,1)) = 0
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveMinOffset("Minimum Offset", Range(-1,1)) = 0
-        [Sub(Dissolve_DISSOLVE_ON)] _DissolveMaxOffset("Maximum Offset", Range(-1,1)) = 0
+        [Sub(Dissolve_DISSOLVE_ON)] _DissolveMaxOffset("Maximum Offset", Range(-1,5)) = 0
+        [Sub(Dissolve_DISSOLVE_ON)] [Enum(Bottom Right,0,Bottom Left,1,Top Right,2,Top Left,3,Right,4,Left,5,Top,6,Bottom,7,Center,8)] _DissolveRadialOrigin("Radial Origin", Float) = 0
+        [Sub(Dissolve_DISSOLVE_ON)] _DissolveRadialRadius("Radial Radius", Range(0.01,1.5)) = 1.4142
+        [Sub(Dissolve_DISSOLVE_ON)] _DissolveRadialNoiseStrength("Radial Noise Strength", Range(0,1)) = 0.15
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveEdgeWidth("Edge Width", Range(0,1)) = 0.05
         [Sub(Dissolve_DISSOLVE_ON)] [HDR] _DissolveEdgeColor("Edge Color", Color) = (1,0.5,0,1)
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveEdgeIntensity("Edge Intensity", Range(0,16)) = 1
@@ -116,6 +122,7 @@ Shader "Shader/Sprite Uber Lit"
             #pragma shader_feature_local_fragment _RIM_ON
             #pragma shader_feature_local_fragment _HEIGHT_FADE_ON
             #pragma shader_feature_local_fragment _DISSOLVE_ON
+            #pragma shader_feature_local_fragment _DISSOLVE_RADIAL
             #pragma shader_feature_local _PIXEL_OUTLINE_ON
             #pragma shader_feature_local_fragment _ _UV_ALPHA_FADE_U _UV_ALPHA_FADE_V
             #pragma shader_feature_local_fragment _ALPHATEST_ON
@@ -158,6 +165,7 @@ Shader "Shader/Sprite Uber Lit"
             #pragma fragment NHNSilhouetteFragment
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma shader_feature_local _DISSOLVE_ON
+            #pragma shader_feature_local _DISSOLVE_RADIAL
             #pragma shader_feature_local _PIXEL_OUTLINE_ON
             #pragma shader_feature_local_fragment _ _UV_ALPHA_FADE_U _UV_ALPHA_FADE_V
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
@@ -181,6 +189,7 @@ Shader "Shader/Sprite Uber Lit"
             #pragma fragment NHNSilhouetteFragment
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma shader_feature_local _DISSOLVE_ON
+            #pragma shader_feature_local _DISSOLVE_RADIAL
             #pragma shader_feature_local _PIXEL_OUTLINE_ON
             #pragma shader_feature_local_fragment _ _UV_ALPHA_FADE_U _UV_ALPHA_FADE_V
             #pragma multi_compile_instancing
@@ -203,6 +212,7 @@ Shader "Shader/Sprite Uber Lit"
             #pragma shader_feature_local _NORMALMAP
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma shader_feature_local _DISSOLVE_ON
+            #pragma shader_feature_local _DISSOLVE_RADIAL
             #pragma shader_feature_local _PIXEL_OUTLINE_ON
             #pragma shader_feature_local_fragment _ _UV_ALPHA_FADE_U _UV_ALPHA_FADE_V
             #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT

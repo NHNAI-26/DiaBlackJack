@@ -28,6 +28,8 @@ CBUFFER_START(UnityPerMaterial)
 #if defined(NHN_SPRITE_UBER)
     half _AlphaMultiplier;
     half _CardBlendAmount;
+    half _SpriteFlipX;
+    half _SpriteFlipY;
     half4 _PixelOutlineColor;
     half _PixelOutlineWidth;
     half _PixelOutlineAlphaThreshold;
@@ -50,6 +52,14 @@ CBUFFER_START(UnityPerMaterial)
     half _DissolveAmount;
     half _DissolveMinOffset;
     half _DissolveMaxOffset;
+    half _DissolveRadialOrigin;
+    half _DissolveRadialRadius;
+    half _DissolveRadialNoiseStrength;
+    half _DissolveObjectAxis;
+    half _DissolveObjectMin;
+    half _DissolveObjectMax;
+    half _DissolveObjectNoiseScale;
+    half _DissolveObjectNoiseStrength;
     half _DissolveEdgeWidth;
     half _DissolveEdgeIntensity;
     half _Surface;
@@ -73,15 +83,36 @@ SAMPLER(sampler_CardBlendTex);
 #endif
 
 #if defined(NHN_SPRITE_UBER)
-inline float2 NHNGetBaseSpriteUVUnclamped(float2 rawUV)
+inline float2 NHNGetBaseSpriteUVUnclampedNoFlip(float2 rawUV)
 {
     return (rawUV - _BaseSpriteUVRect.xy)
         / max(_BaseSpriteUVRect.zw, float2(0.00001, 0.00001));
 }
 
+inline float2 NHNApplySpriteFlip(float2 baseSpriteUV)
+{
+    half2 flip = step(half2(0.5h, 0.5h), half2(_SpriteFlipX, _SpriteFlipY));
+    return lerp(baseSpriteUV, 1.0 - baseSpriteUV, flip);
+}
+
+inline float2 NHNGetBaseSpriteUVUnclamped(float2 rawUV)
+{
+    return NHNApplySpriteFlip(NHNGetBaseSpriteUVUnclampedNoFlip(rawUV));
+}
+
 inline float2 NHNGetBaseSpriteUV(float2 rawUV)
 {
     return saturate(NHNGetBaseSpriteUVUnclamped(rawUV));
+}
+
+inline float2 NHNGetBaseSpriteAtlasUV(float2 baseSpriteUV)
+{
+    return _BaseSpriteUVRect.xy + baseSpriteUV * _BaseSpriteUVRect.zw;
+}
+
+inline float2 NHNGetCardBlendAtlasUV(float2 baseSpriteUV)
+{
+    return _CardBlendUVRect.xy + baseSpriteUV * _CardBlendUVRect.zw;
 }
 
 inline half NHNGetSpriteUVInside(float2 baseSpriteUV)
@@ -97,10 +128,10 @@ inline half NHNGetSpriteUVInside(float2 baseSpriteUV)
 inline half4 NHNSampleBase(float2 rawUV, out float2 surfaceUV)
 {
 #if defined(NHN_SPRITE_UBER)
-    surfaceUV = rawUV;
-    half4 baseSample = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, rawUV);
     float2 baseSpriteUV = NHNGetBaseSpriteUV(rawUV);
-    float2 blendSpriteUV = _CardBlendUVRect.xy + baseSpriteUV * _CardBlendUVRect.zw;
+    surfaceUV = NHNGetBaseSpriteAtlasUV(baseSpriteUV);
+    half4 baseSample = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, surfaceUV);
+    float2 blendSpriteUV = NHNGetCardBlendAtlasUV(baseSpriteUV);
     half4 blendSample = SAMPLE_TEXTURE2D(_CardBlendTex, sampler_CardBlendTex, blendSpriteUV);
     return lerp(baseSample, blendSample, saturate(_CardBlendAmount));
 #else
@@ -120,9 +151,11 @@ inline half NHNSampleSpriteBaseAlpha(float2 rawUV)
 {
     float2 baseSpriteUV = NHNGetBaseSpriteUVUnclamped(rawUV);
     half inside = NHNGetSpriteUVInside(baseSpriteUV);
-    half mainAlpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, rawUV).a;
+    float2 clampedSpriteUV = saturate(baseSpriteUV);
+    half mainAlpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex,
+        NHNGetBaseSpriteAtlasUV(clampedSpriteUV)).a;
     half blendAlpha = SAMPLE_TEXTURE2D(_CardBlendTex, sampler_CardBlendTex,
-        saturate(baseSpriteUV)).a;
+        NHNGetCardBlendAtlasUV(clampedSpriteUV)).a;
     return lerp(mainAlpha, blendAlpha, saturate(_CardBlendAmount)) * inside;
 }
 
@@ -256,10 +289,119 @@ inline half3 NHNSampleEmission(float2 surfaceUV)
 #endif
 }
 
+inline float2 NHNGetDissolveRadialOrigin()
+{
+    half origin = _DissolveRadialOrigin;
+    if (origin < 0.5h)
+        return float2(1.0, 0.0);
+    if (origin < 1.5h)
+        return float2(0.0, 0.0);
+    if (origin < 2.5h)
+        return float2(1.0, 1.0);
+    if (origin < 3.5h)
+        return float2(0.0, 1.0);
+    if (origin < 4.5h)
+        return float2(1.0, 0.5);
+    if (origin < 5.5h)
+        return float2(0.0, 0.5);
+    if (origin < 6.5h)
+        return float2(0.5, 1.0);
+    if (origin < 7.5h)
+        return float2(0.5, 0.0);
+    return float2(0.5, 0.5);
+}
+
+inline half NHNEvaluateDissolveValue(float2 rawUV, half noise, half amount)
+{
+#if defined(NHN_SPRITE_UBER) && defined(_DISSOLVE_RADIAL)
+    float2 baseSpriteUV = NHNGetBaseSpriteUV(rawUV);
+    half radialDistance = length(baseSpriteUV - NHNGetDissolveRadialOrigin())
+        / max(_DissolveRadialRadius, 0.0001h);
+    half radialNoise = (noise - 0.5h) * saturate(_DissolveRadialNoiseStrength) * amount;
+    return radialDistance + radialNoise;
+#else
+    return noise;
+#endif
+}
+
+inline float NHNSelectDissolveObjectAxis(float3 positionOS)
+{
+    if (_DissolveObjectAxis < 0.5h)
+        return positionOS.x;
+    if (_DissolveObjectAxis < 1.5h)
+        return positionOS.y;
+    return positionOS.z;
+}
+
+inline float NHNNormalizeDissolveObjectCoordinate(float coordinate)
+{
+    float range = _DissolveObjectMax - _DissolveObjectMin;
+    float safeRange = abs(range) < 0.0001
+        ? (range < 0.0 ? -0.0001 : 0.0001)
+        : range;
+    return saturate((coordinate - _DissolveObjectMin) / safeRange);
+}
+
+inline half NHNHashDissolveNoise(float3 p)
+{
+    return frac(sin(dot(p, float3(127.1, 311.7, 74.7))) * 43758.5453);
+}
+
+inline half NHNValueDissolveNoise(float3 p)
+{
+    float3 cell = floor(p);
+    float3 local = frac(p);
+    local = local * local * (3.0 - 2.0 * local);
+
+    half n000 = NHNHashDissolveNoise(cell + float3(0.0, 0.0, 0.0));
+    half n100 = NHNHashDissolveNoise(cell + float3(1.0, 0.0, 0.0));
+    half n010 = NHNHashDissolveNoise(cell + float3(0.0, 1.0, 0.0));
+    half n110 = NHNHashDissolveNoise(cell + float3(1.0, 1.0, 0.0));
+    half n001 = NHNHashDissolveNoise(cell + float3(0.0, 0.0, 1.0));
+    half n101 = NHNHashDissolveNoise(cell + float3(1.0, 0.0, 1.0));
+    half n011 = NHNHashDissolveNoise(cell + float3(0.0, 1.0, 1.0));
+    half n111 = NHNHashDissolveNoise(cell + float3(1.0, 1.0, 1.0));
+
+    half nx00 = lerp(n000, n100, local.x);
+    half nx10 = lerp(n010, n110, local.x);
+    half nx01 = lerp(n001, n101, local.x);
+    half nx11 = lerp(n011, n111, local.x);
+    half nxy0 = lerp(nx00, nx10, local.y);
+    half nxy1 = lerp(nx01, nx11, local.y);
+    return lerp(nxy0, nxy1, local.z);
+}
+
+inline half NHNObjectDissolveNoise(float3 positionOS)
+{
+    float3 p = positionOS * max(_DissolveObjectNoiseScale, 0.0001h);
+    half low = NHNValueDissolveNoise(p);
+    half mid = NHNValueDissolveNoise(p * 2.03 + float3(19.1, 7.7, 3.3));
+    half high = NHNValueDissolveNoise(p * 4.01 + float3(5.2, 23.4, 11.8));
+    return saturate(low * 0.5714h + mid * 0.2857h + high * 0.1429h);
+}
+
+inline float2 NHNGetDissolveUV(float2 rawUV, float3 positionOS)
+{
+    return rawUV * _DissolveTilingOffset.xy + _DissolveTilingOffset.zw;
+}
+
+inline half NHNEvaluateDissolveValue(float2 rawUV, float3 positionOS, half noise, half amount)
+{
+#if !defined(NHN_SPRITE_UBER) && defined(_DISSOLVE_OBJECT_SPACE)
+    float coordinate = NHNSelectDissolveObjectAxis(positionOS);
+    half objectCoordinate = NHNNormalizeDissolveObjectCoordinate(coordinate);
+    half objectNoise = (NHNObjectDissolveNoise(positionOS) - 0.5h)
+        * saturate(_DissolveObjectNoiseStrength) * amount;
+    return objectCoordinate + objectNoise;
+#else
+    return NHNEvaluateDissolveValue(rawUV, noise, amount);
+#endif
+}
+
 // Shared by ForwardLit, ShadowCaster, DepthOnly, and DepthNormals. The caller
 // supplies the already-sampled base alpha so ForwardLit does not sample twice.
-inline half NHNApplySurfaceClipping(float2 rawUV, half baseAlpha, half vertexAlpha,
-    out half dissolveEdge)
+inline half NHNApplySurfaceClipping(float2 rawUV, float3 positionOS, half baseAlpha,
+    half vertexAlpha, out half dissolveEdge)
 {
 #if defined(NHN_SPRITE_UBER)
     baseAlpha = max(baseAlpha, NHNGetPixelOutlineAlpha(rawUV, baseAlpha));
@@ -274,18 +416,31 @@ inline half NHNApplySurfaceClipping(float2 rawUV, half baseAlpha, half vertexAlp
 #endif
 
 #if defined(_DISSOLVE_ON)
-    float2 dissolveUV = rawUV * _DissolveTilingOffset.xy + _DissolveTilingOffset.zw;
+#if !defined(NHN_SPRITE_UBER) && defined(_DISSOLVE_OBJECT_SPACE)
+    half noise = 0.5h;
+#else
+    float2 dissolveUV = NHNGetDissolveUV(rawUV, positionOS);
     dissolveUV += _DissolvePanning.xy * _Time.y;
     half noise = SAMPLE_TEXTURE2D(_DissolveNoiseMap, sampler_DissolveNoiseMap, dissolveUV).r;
+#endif
     half amount = saturate(_DissolveAmount);
+    half dissolveValue = NHNEvaluateDissolveValue(rawUV, positionOS, noise, amount);
     half threshold = lerp(_DissolveMinOffset, 1.0h + _DissolveMaxOffset, amount);
-    clip(noise - threshold);
-    dissolveEdge = 1.0h - saturate((noise - threshold) / max(_DissolveEdgeWidth, 0.0001h));
+    clip(dissolveValue - threshold);
+    dissolveEdge = 1.0h - saturate((dissolveValue - threshold) /
+        max(_DissolveEdgeWidth, 0.0001h));
 #else
     dissolveEdge = 0.0h;
 #endif
 
     return alpha;
+}
+
+inline half NHNApplySurfaceClipping(float2 rawUV, half baseAlpha, half vertexAlpha,
+    out half dissolveEdge)
+{
+    return NHNApplySurfaceClipping(rawUV, float3(0.0, 0.0, 0.0), baseAlpha,
+        vertexAlpha, dissolveEdge);
 }
 
 inline half NHNApplySurfaceClipping(float2 rawUV, half baseAlpha, out half dissolveEdge)
@@ -368,7 +523,7 @@ inline half3 NHNEvaluateGlassGlow(half3 baseColor)
 }
 
 inline void InitializeNHNUberLitSurfaceData(float2 rawUV, half4 vertexColor,
-    out SurfaceData surfaceData, out half dissolveEdge)
+    float3 positionOS, out SurfaceData surfaceData, out half dissolveEdge)
 {
     float2 surfaceUV;
     half4 baseSample = NHNSampleBase(rawUV, surfaceUV);
@@ -378,7 +533,8 @@ inline void InitializeNHNUberLitSurfaceData(float2 rawUV, half4 vertexColor,
     outlineMask = NHNGetPixelOutlineMask(rawUV, baseSample.a);
 #endif
 
-    surfaceData.alpha = NHNApplySurfaceClipping(rawUV, baseSample.a, vertexColor.a, dissolveEdge);
+    surfaceData.alpha = NHNApplySurfaceClipping(rawUV, positionOS, baseSample.a,
+        vertexColor.a, dissolveEdge);
 #if defined(NHN_SPRITE_UBER)
     surfaceData.alpha *= _AlphaMultiplier;
 #endif
@@ -399,6 +555,12 @@ inline void InitializeNHNUberLitSurfaceData(float2 rawUV, half4 vertexColor,
     surfaceData.clearCoatSmoothness = 0.0h;
 }
 
+inline void InitializeNHNUberLitSurfaceData(float2 rawUV, half4 vertexColor,
+    out SurfaceData surfaceData, out half dissolveEdge)
+{
+    InitializeNHNUberLitSurfaceData(rawUV, vertexColor, float3(0.0, 0.0, 0.0),
+        surfaceData, dissolveEdge);
+}
 
 inline void InitializeNHNUberLitSurfaceData(float2 rawUV, out SurfaceData surfaceData,
     out half dissolveEdge)

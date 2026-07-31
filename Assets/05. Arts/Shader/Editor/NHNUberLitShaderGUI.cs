@@ -14,6 +14,8 @@ public class NHNUberLitShaderGUI : LWGUI.LWGUI
         SeedKeyword(properties, "_HeightFadeEnabled", "_HEIGHT_FADE_ON");
         SeedKeyword(properties, "_GlassGlowEnabled", "_GLASS_GLOW_ON");
         SeedKeyword(properties, "_DissolveEnabled", "_DISSOLVE_ON");
+        SeedEnumKeyword(properties, "_DissolveMode", "_DISSOLVE_RADIAL", null);
+        SeedEnumKeyword(properties, "_DissolveSpace", "_DISSOLVE_OBJECT_SPACE", null);
 
         base.OnGUI(materialEditor, properties);
 
@@ -42,6 +44,8 @@ public class NHNUberLitShaderGUI : LWGUI.LWGUI
             RestoreKeyword(material, "_EmissionEnabled", "_EMISSION");
             RestoreKeyword(material, "_PixelOutlineEnabled", "_PIXEL_OUTLINE_ON");
             RestoreEnumKeyword(material, "_UVAlphaFadeAxis", "_UV_ALPHA_FADE_U", "_UV_ALPHA_FADE_V");
+            RestoreEnumKeyword(material, "_DissolveMode", "_DISSOLVE_RADIAL", null);
+            RestoreEnumKeyword(material, "_DissolveSpace", "_DISSOLVE_OBJECT_SPACE", null);
         }
     }
 
@@ -76,7 +80,8 @@ public class NHNUberLitShaderGUI : LWGUI.LWGUI
 
             int selected = Mathf.RoundToInt(property.floatValue);
             LWGUI.GUIData.keyWord[firstKeyword] = selected == 1;
-            LWGUI.GUIData.keyWord[secondKeyword] = selected == 2;
+            if (!string.IsNullOrEmpty(secondKeyword))
+                LWGUI.GUIData.keyWord[secondKeyword] = selected == 2;
             return;
         }
     }
@@ -94,8 +99,14 @@ public class NHNUberLitShaderGUI : LWGUI.LWGUI
             material.DisableKeyword(firstKeyword);
 
         if (selected == 2)
-            material.EnableKeyword(secondKeyword);
+        {
+            if (!string.IsNullOrEmpty(secondKeyword))
+                material.EnableKeyword(secondKeyword);
+        }
         else
-            material.DisableKeyword(secondKeyword);
+        {
+            if (!string.IsNullOrEmpty(secondKeyword))
+                material.DisableKeyword(secondKeyword);
+        }
     }
 }

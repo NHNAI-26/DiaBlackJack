@@ -31,6 +31,9 @@ struct NHNForwardVaryings
 #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
     float4 shadowCoord : TEXCOORD6;
 #endif
+#if defined(_DISSOLVE_OBJECT_SPACE)
+    float3 positionOS : TEXCOORD7;
+#endif
 #if defined(NHN_SPRITE_UBER)
     half4 color : COLOR;
 #endif
@@ -55,6 +58,9 @@ NHNForwardVaryings NHNUberLitVertex(NHNForwardAttributes input)
     VertexNormalInputs normalInputs = GetVertexNormalInputs(input.normalOS, input.tangentOS);
 #endif
     output.rawUV = input.uv;
+#if defined(_DISSOLVE_OBJECT_SPACE)
+    output.positionOS = input.positionOS.xyz;
+#endif
     output.positionWS = positionInputs.positionWS;
     output.positionCS = positionInputs.positionCS;
     output.normalWS = normalInputs.normalWS;
@@ -127,7 +133,12 @@ half4 NHNUberLitFragment(NHNForwardVaryings input) : SV_Target
         input.tangentWS.w *= faceSign;
     #endif
 #else
+#if defined(_DISSOLVE_OBJECT_SPACE)
+    InitializeNHNUberLitSurfaceData(input.rawUV, half4(1.0h, 1.0h, 1.0h, 1.0h),
+        input.positionOS, surfaceData, dissolveEdge);
+#else
     InitializeNHNUberLitSurfaceData(input.rawUV, surfaceData, dissolveEdge);
+#endif
 #endif
     InputData inputData;
     NHNInitializeInputData(input, surfaceData.normalTS, inputData);

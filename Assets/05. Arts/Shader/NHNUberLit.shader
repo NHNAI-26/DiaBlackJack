@@ -56,9 +56,15 @@ Shader "Shader/Uber Lit"
         [Main(Dissolve, _DISSOLVE_ON, on)] _DissolveEnabled("Dissolve", Float) = 0
         [Tex(Dissolve_DISSOLVE_ON)] [NoScaleOffset] _DissolveNoiseMap("Noise Map", 2D) = "white" {}
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveTilingOffset("Tiling XY / Offset ZW", Vector) = (1, 1, 0, 0)
+        [KWEnum(Dissolve_DISSOLVE_ON, UV, _, Object Space, _DISSOLVE_OBJECT_SPACE)] _DissolveSpace("Space", Float) = 0
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveAmount("Amount", Range(0,1)) = 0
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveMinOffset("Minimum Offset", Range(-1,1)) = 0
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveMaxOffset("Maximum Offset", Range(-1,1)) = 0
+        [Sub(Dissolve_DISSOLVE_ON)] [Enum(X,0,Y,1,Z,2)] _DissolveObjectAxis("Object Axis", Float) = 1
+        [Sub(Dissolve_DISSOLVE_ON)] _DissolveObjectMin("Object Min", Float) = 0
+        [Sub(Dissolve_DISSOLVE_ON)] _DissolveObjectMax("Object Max", Float) = 1
+        [Sub(Dissolve_DISSOLVE_ON)] _DissolveObjectNoiseScale("Object 3D Noise Scale", Float) = 1
+        [Sub(Dissolve_DISSOLVE_ON)] _DissolveObjectNoiseStrength("Object 3D Noise Strength", Range(0,1)) = 0.15
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveEdgeWidth("Edge Width", Range(0,1)) = 0.05
         [Sub(Dissolve_DISSOLVE_ON)] [HDR] _DissolveEdgeColor("Edge Color", Color) = (1,0.5,0,1)
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveEdgeIntensity("Edge Intensity", Range(0,16)) = 1
@@ -97,6 +103,7 @@ Shader "Shader/Uber Lit"
             #pragma shader_feature_local_fragment _EMISSION
             #pragma shader_feature_local_fragment _RIM_ON
             #pragma shader_feature_local_fragment _DISSOLVE_ON
+            #pragma shader_feature_local_fragment _DISSOLVE_OBJECT_SPACE
             #pragma multi_compile_local_fragment _ _HEIGHT_FADE_ON
             #pragma multi_compile_local_fragment _ _GLASS_GLOW_ON
             #pragma shader_feature_local_fragment _ALPHATEST_ON
@@ -138,6 +145,7 @@ Shader "Shader/Uber Lit"
             #pragma fragment NHNSilhouetteFragment
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma shader_feature_local _DISSOLVE_ON
+            #pragma shader_feature_local _DISSOLVE_OBJECT_SPACE
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
@@ -158,6 +166,7 @@ Shader "Shader/Uber Lit"
             #pragma fragment NHNSilhouetteFragment
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma shader_feature_local _DISSOLVE_ON
+            #pragma shader_feature_local _DISSOLVE_OBJECT_SPACE
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
             #include "NHNUberLitDepthPasses.hlsl"
@@ -177,6 +186,7 @@ Shader "Shader/Uber Lit"
             #pragma shader_feature_local _NORMALMAP
             #pragma shader_feature_local _ALPHATEST_ON
             #pragma shader_feature_local _DISSOLVE_ON
+            #pragma shader_feature_local _DISSOLVE_OBJECT_SPACE
             #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"

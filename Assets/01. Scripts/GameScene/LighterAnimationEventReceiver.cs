@@ -21,6 +21,9 @@ namespace DiaBlackJack.GameScene
         [Header("VFX")]
         [SerializeField] private List<VfxBinding> vfxBindings = new();
 
+        [Header("Animator")]
+        [SerializeField] private Animator animator;
+
         [Header("Fire Shader")]
         [SerializeField] private Renderer fireRenderer;
 
@@ -34,6 +37,7 @@ namespace DiaBlackJack.GameScene
 
         private void Awake()
         {
+            animator ??= GetComponent<Animator>();
             firePropertyBlock = new MaterialPropertyBlock();
             fireRenderer ??= transform.Find("fire")?.GetComponent<Renderer>();
             BuildVfxCatalog();
@@ -123,6 +127,25 @@ namespace DiaBlackJack.GameScene
             SoundManager.Current.StopSfx(id);
         }
 
+        public void SetAnimatorTrigger(string triggerName)
+        {
+            string id = Key(triggerName);
+            if (string.IsNullOrEmpty(id))
+            {
+                Log.W("[LighterAnimationEventReceiver] Cannot set an Animator trigger with an empty trigger name.", this);
+                return;
+            }
+
+            Animator resolvedAnimator = ResolveAnimator();
+            if (resolvedAnimator == null)
+            {
+                Log.W($"[LighterAnimationEventReceiver] Animator is unavailable for trigger '{id}'.", this);
+                return;
+            }
+
+            resolvedAnimator.SetTrigger(id);
+        }
+
         public void SetFireRevealHeight(float height)
         {
             SetFireReveal(1f, height);
@@ -172,6 +195,15 @@ namespace DiaBlackJack.GameScene
                 Log.W("[LighterAnimationEventReceiver] Fire renderer is not assigned.", this);
 
             return fireRenderer;
+        }
+
+        private Animator ResolveAnimator()
+        {
+            if (animator != null)
+                return animator;
+
+            animator = GetComponent<Animator>();
+            return animator;
         }
 
         private void BuildVfxCatalog()
