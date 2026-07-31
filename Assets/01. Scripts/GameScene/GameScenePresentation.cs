@@ -351,7 +351,7 @@ namespace DiaBlackJack.GameScene
                     revealRank: true,
                     canUse: false,
                     card.DisplayName,
-                    abilityDescription: CardDefinitionCatalog.GetByKey(card.DefinitionKey).Description,
+                    abilityDescription: card.AbilityDescription,
                     suit: card.Suit,
                     showHoverBadgeWhenUnavailable: true,
                     definitionKey: card.DefinitionKey));

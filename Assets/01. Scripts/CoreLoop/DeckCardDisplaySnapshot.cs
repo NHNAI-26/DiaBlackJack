@@ -11,10 +11,13 @@ namespace DiaBlackJack.CoreLoop
             Id = card.Id;
             DefinitionKey = card.DefinitionKey;
             DisplayName = card.Definition.DisplayName;
+            AbilityDescription = card.Definition.Description;
             Rank = card.Rank;
             Suit = card.Suit;
             Effect = card.Definition.Effect;
         }
+
+        public string AbilityDescription { get; }
 
         public int Id { get; }
 

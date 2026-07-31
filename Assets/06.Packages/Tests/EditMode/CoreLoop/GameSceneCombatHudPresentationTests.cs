@@ -43,9 +43,26 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.True);
             Assert.That(model.PrimaryActions[3].IsInteractable,
                 Is.EqualTo(core.DemonContract.CanBegin));
+            Assert.That(model.PrimaryActions[2].Label, Is.EqualTo("CHANGE -0"));
             Assert.That(model.PrimaryActions[2].Tooltip, Does.Contain(core.ChangeActionText));
             Assert.That(model.PrimaryActions[3].Tooltip,
                 Does.Contain(core.DemonContract.ActionText));
+        }
+
+        [Test]
+        public void GF06_U02_ChangeActionLabelShowsCurrentPaidCost()
+        {
+            CoreLoopBattle battle = CreateStartedBattle(10, 2, 4, 9);
+            Assert.That(battle.TryBeginPlayerChange(), Is.True);
+            Assert.That(battle.TrySelectChangedCard(0), Is.True);
+
+            GameSceneCombatHudViewModel model = GameSceneCombatHudPresenter.Create(
+                CoreLoopPresenter.Create(battle),
+                isStageBattle: false,
+                isShopOpen: false,
+                inputLocked: false);
+
+            Assert.That(model.PrimaryActions[2].Label, Is.EqualTo("CHANGE -1"));
         }
 
         [Test]

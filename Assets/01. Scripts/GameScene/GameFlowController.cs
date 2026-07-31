@@ -42,20 +42,7 @@ namespace DiaBlackJack.GameScene
             opponentSelection ??= GetComponent<OpponentSelectionView>();
             resultView ??= GetComponent<RunResultView>();
             resultView ??= gameObject.AddComponent<RunResultView>();
-            hudRoot ??= GameObject.Find("UIHUD");
-            hud ??= hudRoot == null
-                ? null
-                : hudRoot.GetComponentInChildren<GameHudView>(true);
-            hud?.SetEnemyStatusVisible(false);
-            charactersRoot ??= GameObject.Find("Characters");
-            if (enemyCharacter == null && charactersRoot != null)
-            {
-                Transform enemy = charactersRoot.transform.Find(
-                    "EnemyCharacter");
-                enemyCharacter = enemy == null
-                    ? null
-                    : enemy.GetComponent<CharacterView>();
-            }
+            ResolveSceneReferences();
 
             _runtime = StageProgressionRuntime.Instance;
         }
@@ -99,6 +86,7 @@ namespace DiaBlackJack.GameScene
 
         private void Start()
         {
+            ResolveSceneReferences();
             if (!TryAdoptFormalRun())
             {
                 return;
@@ -434,6 +422,7 @@ namespace DiaBlackJack.GameScene
 
         private void RenderFlowScreen()
         {
+            ResolveSceneReferences();
             bool isStartingReveal =
                 CurrentScreen == GameFlowScreen.StartingDemonReveal;
             bool isOpponentSelection =
@@ -501,6 +490,39 @@ namespace DiaBlackJack.GameScene
                 {
                     enemyCharacter.ExitMerchant();
                 }
+            }
+        }
+
+        private void ResolveSceneReferences()
+        {
+            if (hudRoot == null)
+            {
+                hudRoot = GameObject.Find("UIHUD");
+            }
+
+            if (hud == null && hudRoot != null)
+            {
+                hud = hudRoot.GetComponentInChildren<GameHudView>(true);
+            }
+
+            if (hudRoot == null && hud != null)
+            {
+                hudRoot = hud.gameObject;
+            }
+
+            hud?.SetEnemyStatusVisible(false);
+            if (charactersRoot == null)
+            {
+                charactersRoot = GameObject.Find("Characters");
+            }
+
+            if (enemyCharacter == null && charactersRoot != null)
+            {
+                Transform enemy = charactersRoot.transform.Find(
+                    "EnemyCharacter");
+                enemyCharacter = enemy == null
+                    ? null
+                    : enemy.GetComponent<CharacterView>();
             }
         }
 

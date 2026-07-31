@@ -347,6 +347,40 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GF06_U01_DeckPreviewSupportsRuntimeCardDefinitions()
+        {
+            var runtimeDefinition = new CardDefinition(
+                "runtime-card-1",
+                "Runtime Card",
+                1,
+                CardActivationKind.None,
+                CardEffectKind.None,
+                "Runtime description");
+            BlackjackDeck playerDeck = BlackjackDeck.CreateInDrawOrder(
+                new[]
+                {
+                    new BlackjackCard(0, 10),
+                    new BlackjackCard(1, 8),
+                    new BlackjackCard(2, runtimeDefinition),
+                });
+            CoreLoopBattle battle = new CoreLoopBattle(
+                playerDeck,
+                CreateDeck(new[] { 10, 7 }),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            Assert.That(battle.Start(), Is.True);
+
+            GameSceneDeckViewModel preview = GameScenePresenter.CreateDeckPreview(
+                battle,
+                DeckKind.Draw);
+
+            GameSceneCardViewModel runtimeCard = preview.Cards.Single(
+                card => card.DefinitionKey == runtimeDefinition.Key);
+            Assert.That(runtimeCard.DisplayName, Is.EqualTo(runtimeDefinition.DisplayName));
+            Assert.That(runtimeCard.AbilityDescription, Is.EqualTo(runtimeDefinition.Description));
+        }
+
+        [Test]
         public void BA04_PlayerTurnShowsFreeChangeAction()
         {
             CoreLoopBattle battle = CreateBattle(
