@@ -330,13 +330,7 @@ namespace DiaBlackJack.GameScene
                     FormatChangeLabel(core.ChangeActionText),
                     core.CanChange && !inputLocked,
                     "Reveal and discard hidden card, then choose one of two candidates.\n" +
-                    core.ChangeActionText),
-                CreateAction(
-                    GameSceneCombatHudCommandKind.BeginContract,
-                    "CONTRACT",
-                    contract.CanBegin && !inputLocked,
-                    "Pay soul to reveal up to two candidates and choose one contract.\n" +
-                    contract.ActionText)
+                    core.ChangeActionText)
             };
 
             var activeContractActions = new List<GameSceneCombatHudActionViewModel>();

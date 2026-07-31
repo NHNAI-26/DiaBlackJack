@@ -34,6 +34,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private DeckPreviewView deckPreview;
         [SerializeField] private CodexController codex;
         [SerializeField] private DemonContractSelectionView demonContractSelection;
+        [SerializeField] private ContractPaperView contractPapers;
 
         [Header("Standalone enemy profile")]
         [SerializeField] private string enemyProfileKey =
@@ -272,6 +273,8 @@ namespace DiaBlackJack.GameScene
             codex ??= GetComponent<CodexController>();
             demonContractSelection ??=
                 GetComponent<DemonContractSelectionView>();
+            contractPapers ??= FindFirstObjectByType<ContractPaperView>(
+                FindObjectsInactive.Include);
 
             if (hud != null)
             {
@@ -333,6 +336,7 @@ namespace DiaBlackJack.GameScene
             UpdateShopUtilityItemHover(null);
             demonContractSelection?.SetHovered(null);
             demonContractSelection?.Hide();
+            contractPapers?.Render(null);
             hud?.HideCardHoverBadge();
             hud?.HideDemonContractDetail();
             hud?.Render(null);
@@ -458,6 +462,17 @@ namespace DiaBlackJack.GameScene
             {
                 CloseDeckPreview();
                 codex.Open();
+                return;
+            }
+
+            ContractPaperClickable pointedContractPaper = !shopOpen && hasHit
+                ? hit.collider.GetComponentInParent<ContractPaperClickable>()
+                : null;
+            if (pointedContractPaper != null &&
+                pointedContractPaper.IsInteractable)
+            {
+                CloseDeckPreview();
+                ProcessInput(TryBeginPlayerDemonContract);
                 return;
             }
 
@@ -1751,6 +1766,9 @@ namespace DiaBlackJack.GameScene
             }
 
             RenderDemonContractSelection(combat);
+            contractPapers?.Render(ContractPaperPresenter.Create(
+                Battle,
+                isCombatVisible: !isShopOpen));
 
             RefreshDeckStacks();
             RefreshShopUtilityItems();
