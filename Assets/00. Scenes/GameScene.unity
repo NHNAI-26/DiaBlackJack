@@ -176,43 +176,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2369347f84f7d8a4db4f8f2ef318518c, type: 3}
---- !u!84 &6217996
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 6
-  m_Width: 256
-  m_Height: 256
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthStencilFormat: 0
-  m_ColorFormat: 48
-  m_MipMap: 0
-  m_GenerateMips: 1
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_UseDynamicScaleExplicit: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_EnableRandomWrite: 0
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 1
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 1
-    m_WrapV: 1
-    m_WrapW: 1
-  m_Dimension: 2
-  m_VolumeDepth: 1
-  m_ShadowSamplingMode: 2
 --- !u!4 &23983055 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4860051542155709582, guid: 7d62b942c9741004ca3c67b32166eabd, type: 3}
@@ -237,7 +200,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1446267767095836390, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
   m_PrefabInstance: {fileID: 2282612047558951031}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 2282612047558951032}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c1ad97d614a4de2488bc09afff1f0914, type: 3}
@@ -447,48 +410,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 90a0aeee76d81b74c9152d5874e7a680, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CodexOverlayView
+--- !u!23 &90313060 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 5614914716927812471, guid: f7a5319eafd7a4845a4e15e9dcd32639, type: 3}
+  m_PrefabInstance: {fileID: 3715254595802159084}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &136515594 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2720131932502202630, guid: 2dc4c65b347e4d24e86a18dbf1a42fdc, type: 3}
   m_PrefabInstance: {fileID: 8456889837428209980}
   m_PrefabAsset: {fileID: 0}
---- !u!84 &163083814
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 6
-  m_Width: 256
-  m_Height: 256
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthStencilFormat: 90
-  m_ColorFormat: 0
-  m_MipMap: 0
-  m_GenerateMips: 1
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_UseDynamicScaleExplicit: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_EnableRandomWrite: 0
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 1
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 1
-    m_WrapV: 1
-    m_WrapW: 1
-  m_Dimension: 2
-  m_VolumeDepth: 1
-  m_ShadowSamplingMode: 2
 --- !u!1 &180139000
 GameObject:
   m_ObjectHideFlags: 0
@@ -525,6 +456,11 @@ Transform:
   - {fileID: 875427324}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!23 &303449829 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 821350276992281384, guid: f7a5319eafd7a4845a4e15e9dcd32639, type: 3}
+  m_PrefabInstance: {fileID: 3715254595802159084}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &348805893
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -622,6 +558,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 013d3716c746b894fa03971b7009c867, type: 3}
+--- !u!108 &356386089 stripped
+Light:
+  m_CorrespondingSourceObject: {fileID: 2863520258845733180, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
+  m_PrefabInstance: {fileID: 6219715712046308512}
+  m_PrefabAsset: {fileID: 0}
 --- !u!21 &365861506
 Material:
   serializedVersion: 8
@@ -671,11 +612,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ShadowTexture:
-        m_Texture: {fileID: 163083814}
+        m_Texture: {fileID: 867162432}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TranslucencyTexture:
-        m_Texture: {fileID: 6217996}
+        m_Texture: {fileID: 1781363993}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
@@ -713,7 +654,7 @@ Material:
     - _ShadowColor: {r: 0, g: 0, b: 0, a: 1}
     - _ShadowIntensity: {r: 0.9, g: 0.100000024, b: 0, a: 0}
     - _ToLightDir: {r: -0, g: 0.012133064, b: -0.9999264, a: 0}
-    - _WindDirection: {r: 1.3689541, g: 0.91263604, b: 0, a: 38.318108}
+    - _WindDirection: {r: 4.2720437, g: 2.8480277, b: 0, a: 203.95122}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &412777436
@@ -899,6 +840,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31b40e4169a2a274d8f9387cfc8c5c5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.DeckPreviewView
+--- !u!108 &639492092 stripped
+Light:
+  m_CorrespondingSourceObject: {fileID: 8682191473313590363, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
+  m_PrefabInstance: {fileID: 6219715712046308512}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &655486814
 GameObject:
   m_ObjectHideFlags: 0
@@ -1015,7 +961,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8432ce450375e82479365bcb47106293, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ContractPaperClickable
 --- !u!65 &860107378
 BoxCollider:
@@ -1095,6 +1041,43 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 860107375}
   m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!84 &867162432
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 6
+  m_Width: 256
+  m_Height: 256
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthStencilFormat: 90
+  m_ColorFormat: 0
+  m_MipMap: 0
+  m_GenerateMips: 1
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_UseDynamicScaleExplicit: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_EnableRandomWrite: 0
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 1
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 1
+    m_WrapV: 1
+    m_WrapW: 1
+  m_Dimension: 2
+  m_VolumeDepth: 1
+  m_ShadowSamplingMode: 2
 --- !u!4 &875427324 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8410551936053609975, guid: 2369347f84f7d8a4db4f8f2ef318518c, type: 3}
@@ -1119,7 +1102,12 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2746152154942036010, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
   m_PrefabInstance: {fileID: 6219715712046308512}
   m_PrefabAsset: {fileID: 0}
---- !u!84 &1047242860
+--- !u!23 &991685244 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1944934686059169068, guid: f7a5319eafd7a4845a4e15e9dcd32639, type: 3}
+  m_PrefabInstance: {fileID: 3715254595802159084}
+  m_PrefabAsset: {fileID: 0}
+--- !u!84 &1080518271
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2021,6 +2009,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f746bc8e2a7667549b97d4f9ef49c116, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CardHand
+--- !u!108 &1570019867 stripped
+Light:
+  m_CorrespondingSourceObject: {fileID: 628379837999885251, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
+  m_PrefabInstance: {fileID: 6219715712046308512}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1574224341 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4014645466415016335, guid: f8e9c9a73980e4b41a4a529a07ebeec6, type: 3}
@@ -2053,6 +2046,43 @@ PhysicsMaterial:
   m_Bounciness: 0
   m_FrictionCombine: 0
   m_BounceCombine: 0
+--- !u!84 &1781363993
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 6
+  m_Width: 256
+  m_Height: 256
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthStencilFormat: 0
+  m_ColorFormat: 48
+  m_MipMap: 0
+  m_GenerateMips: 1
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_UseDynamicScaleExplicit: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_EnableRandomWrite: 0
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 1
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 1
+    m_WrapV: 1
+    m_WrapW: 1
+  m_Dimension: 2
+  m_VolumeDepth: 1
+  m_ShadowSamplingMode: 2
 --- !u!4 &1902803476 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4245370590929577225, guid: f7a5319eafd7a4845a4e15e9dcd32639, type: 3}
@@ -2228,6 +2258,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
   m_Asset: {fileID: 1238359934}
   m_ActionId: 24908448-c609-4bc3-a128-ea258674378a
+--- !u!23 &2122569595 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 6343591296089188802, guid: f7a5319eafd7a4845a4e15e9dcd32639, type: 3}
+  m_PrefabInstance: {fileID: 3715254595802159084}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &1032323150203617959 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8399160059412388993, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
@@ -2515,7 +2550,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 590883df2c70e1f4d8e4bfa2d4909d3a, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ContractPaperView
   papers: []
 --- !u!114 &2282612047558951036
@@ -2528,7 +2563,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8432ce450375e82479365bcb47106293, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ContractPaperClickable
 --- !u!65 &2282612047558951037
 BoxCollider:
@@ -2995,6 +3030,38 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 180139001}
     m_Modifications:
+    - target: {fileID: 1770934376653028412, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
+      propertyPath: enemyLight
+      value: 
+      objectReference: {fileID: 1570019867}
+    - target: {fileID: 1770934376653028412, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
+      propertyPath: enteranceLight
+      value: 
+      objectReference: {fileID: 356386089}
+    - target: {fileID: 1770934376653028412, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
+      propertyPath: volumetricLight
+      value: 
+      objectReference: {fileID: 639492092}
+    - target: {fileID: 1770934376653028412, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
+      propertyPath: moodProfiles.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1770934376653028412, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
+      propertyPath: 'windowGlassRenderers.Array.data[0]'
+      value: 
+      objectReference: {fileID: 303449829}
+    - target: {fileID: 1770934376653028412, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
+      propertyPath: 'windowGlassRenderers.Array.data[1]'
+      value: 
+      objectReference: {fileID: 991685244}
+    - target: {fileID: 1770934376653028412, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
+      propertyPath: 'windowGlassRenderers.Array.data[2]'
+      value: 
+      objectReference: {fileID: 2122569595}
+    - target: {fileID: 1770934376653028412, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
+      propertyPath: 'windowGlassRenderers.Array.data[3]'
+      value: 
+      objectReference: {fileID: 90313060}
     - target: {fileID: 2974963286488949990, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
       propertyPath: m_Name
       value: PresentationManager
@@ -3362,7 +3429,7 @@ PrefabInstance:
     - target: {fileID: 4228813926201636872, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
       propertyPath: m_TargetTexture
       value: 
-      objectReference: {fileID: 1047242860}
+      objectReference: {fileID: 1080518271}
     - target: {fileID: 9217523067565755968, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 

@@ -17,6 +17,7 @@ namespace DiaBlackJack.GameScene
 
         [Header("Mood")]
         [SerializeField] private Volume moodVolume;
+        [SerializeField] private MoodController moodController;
 
         [Header("Camera Shake")]
         [SerializeField] private CinemachineImpulseSource impulseSource;
@@ -102,6 +103,22 @@ namespace DiaBlackJack.GameScene
                 return;
 
             SetMoodWeight(0f, duration);
+        }
+
+        public bool TryBlendToMood(string id, float duration = -1f)
+        {
+            MoodController controller = ResolveMoodController();
+            return controller != null && controller.TryBlendToMood(id, duration);
+        }
+
+        public void BlendToMood(MoodProfileSO profile, float duration = -1f)
+        {
+            ResolveMoodController()?.BlendToMood(profile, duration);
+        }
+
+        public void SetMoodImmediate(MoodProfileSO profile)
+        {
+            ResolveMoodController()?.SetMoodImmediate(profile);
         }
 
         public void ShakeCamera(float force = 1f)
@@ -211,6 +228,14 @@ namespace DiaBlackJack.GameScene
 
             moodTween.Kill();
             moodTween = null;
+        }
+
+        private MoodController ResolveMoodController()
+        {
+            if (moodController == null)
+                moodController = GetComponentInChildren<MoodController>(true);
+
+            return moodController;
         }
 
         private void RestoreCameraShakeDuration()
