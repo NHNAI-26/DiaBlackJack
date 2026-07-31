@@ -80,3 +80,6 @@ crashlytics-build.properties
 # Editor screenshot output (debug)
 Assets/Screenshots/
 Assets/Screenshots.meta
+
+# Per-developer Codex instructions
+/AGENTS.md
