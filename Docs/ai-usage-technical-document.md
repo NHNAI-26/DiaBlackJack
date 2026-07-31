@@ -1547,3 +1547,11 @@ AI는 IMGUI 기반 `MainMenuView`와 `MainMenuController`를 추가하고 `MainM
 
 Unity MCP로 컴파일, 씬 유효성, 1280×720 Play Mode 화면과 전체 EditMode 798/798를 확인했다. 메뉴 화면은 기존 어두운 서부극 UI와의 범주 일치·중앙 정렬·상태 가독성을 기준으로 시각 검토했다. 외부 에셋·외부 코드·오픈소스·새 패키지·새 의존성은 추가하지 않았다.
 
+## 2026-07-31 GF-01 흐름 계약 테스트 기록
+
+이천서는 MainMenuScene 다음 단계 착수를 지시했다. AI에는 `gamescene-full-flow.md`의 단계 순서를 따르고, `GameFlowController`를 먼저 구현하지 말며, 현재 정식 도메인의 보존 계약을 순수 테스트로 고정하라는 지시를 적용했다. 최종 기획·코드·검증 책임자는 이천서다.
+
+AI는 기존 `FormalRunSession`, `StageProgressionSession`, `StageProgressionPresenter`를 직접 구동하는 `GameSceneFullFlowPresentationTests` 5개를 추가했다. 주요 검증은 시작 악마 2장 무선택 지급·공개, 공개 종료 뒤 상대 선택 자동 전환, 두 일반전과 두 상점 뒤 고정 보스, 보스 승리 후 상점 없는 RunVictory, 오래된 offer·중복 클릭 무변경 거부, 재시작 시 지급 악마 유지·재추첨 금지다. 테스트에는 `UnityEngine` 참조를 넣지 않았다.
+
+Unity MCP에서 신규 5/5와 전체 EditMode 803/803를 통과했고 Console 컴파일 오류는 0이었다. `MainMenuScene`의 누락 스크립트·깨진 프리팹도 0이었다. 런타임·씬·프리팹·Packages·외부 에셋·외부 코드·오픈소스·새 의존성은 변경하거나 추가하지 않았다.
+

@@ -1190,3 +1190,12 @@ Test Framework 준비·결과 저장·정리 안내였으며 컴파일·게임 �
 - 새 런·이어하기 성공 후에는 현재 정식 런 호스트인 `StageTest`로 이동한다. `GameScene` 단일 런 이관 뒤 목적지만 교체한다.
 - Unity MCP에서 씬 누락 스크립트·깨진 프리팹 0, 1280×720 Play Mode 화면, Console 컴파일 오류 0을 확인했다.
 - 전체 EditMode 798/798 통과. 외부 에셋·오픈소스·새 패키지·새 의존성 추가 없음.
+
+## 2026-07-31 GF-01 GameScene 전체 흐름 계약 고정
+
+- Unity MCP 인스턴스 `DiaBlackJack@5635a4cdcfecc8dd`, Unity 6000.3.10f1, 현재 체크아웃 일치와 `ready_for_tools = true`를 확인했다.
+- `Assets/06.Packages/Tests/EditMode/StageProgression/GameSceneFullFlowPresentationTests.cs`에 순수 흐름 계약 5개를 추가했다.
+- 시작 악마 무선택 공개, 상대 선택, 두 일반전과 두 상점, 고정 보스, 승리, 오래된 입력 거부, 재시작 재추첨 금지를 고정했다.
+- 신규 GF-01 5/5, 전체 EditMode 803/803 통과. Console 컴파일 오류 0.
+- `MainMenuScene` 유효성 검사에서 누락 스크립트·깨진 프리팹·기타 문제 0.
+- 런타임·씬·프리팹·Packages·외부 에셋·오픈소스·새 의존성 변경 없음.
