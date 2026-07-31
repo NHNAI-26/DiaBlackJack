@@ -16,22 +16,18 @@ namespace DiaBlackJack.StageProgression.Tests
             new DateTimeOffset(2026, 7, 28, 0, 0, 0, TimeSpan.Zero);
 
         [Test]
-        public void SV04_I01_StartingDemonSelectionWritesExactlyOneCheckpoint()
+        public void SV04_I01_StartingDemonGrantWritesExactlyOneCheckpoint()
         {
             CoordinatorHarness harness = CreateStartingHarness();
             Assert.That(harness.Coordinator.TryStartRun(), Is.True);
-            StartingDemonSelectionOffer offer =
-                harness.Session.PendingStartingDemonSelection;
 
-            bool selected = harness.Coordinator.TrySelectStartingDemon(
-                offer.OfferId,
-                offer.Options[0].OptionId);
-            bool duplicate = harness.Coordinator.TrySelectStartingDemon(
-                offer.OfferId,
-                offer.Options[0].OptionId);
+            bool completed =
+                harness.Coordinator.TryCompleteStartingDemonReveal();
+            bool duplicate =
+                harness.Coordinator.TryCompleteStartingDemonReveal();
             RunSaveLoadResult loaded = harness.Repository.Load();
 
-            Assert.That(selected, Is.True);
+            Assert.That(completed, Is.True);
             Assert.That(duplicate, Is.False);
             Assert.That(harness.Files.TemporaryWriteAttemptCount, Is.EqualTo(1));
             Assert.That(
@@ -44,11 +40,14 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(loaded.CanContinue, Is.True);
             Assert.That(
                 loaded.Snapshot.CheckpointKind,
-                Is.EqualTo(RunCheckpointKind.StartingDemonSelected));
+                Is.EqualTo(RunCheckpointKind.StartingDemonGranted));
             Assert.That(loaded.Snapshot.SaveSequence, Is.EqualTo(4));
             Assert.That(
-                loaded.Snapshot.Player.StartingDemonDefinitionKey,
-                Is.EqualTo(offer.Options[0].DefinitionKey));
+                loaded.Snapshot.Player.StartingDemonGrantCompleted,
+                Is.True);
+            Assert.That(
+                loaded.Snapshot.Player.DemonCards.Count,
+                Is.EqualTo(2));
         }
 
         [TestCase(false, RunNextContentKind.Shop)]
@@ -88,14 +87,9 @@ namespace DiaBlackJack.StageProgression.Tests
         public void SV04_I04_RejectedAndInvalidInputsDoNotWriteOrMutate()
         {
             CoordinatorHarness starting = CreateStartingHarness();
-            Assert.That(starting.Coordinator.TryStartRun(), Is.True);
-            StartingDemonSelectionOffer startingOffer =
-                starting.Session.PendingStartingDemonSelection;
 
             Assert.That(
-                starting.Coordinator.TrySelectStartingDemon(
-                    startingOffer.OfferId + 1,
-                    startingOffer.Options[0].OptionId),
+                starting.Coordinator.TryCompleteStartingDemonReveal(),
                 Is.False);
             Assert.That(starting.Files.TemporaryWriteAttemptCount, Is.Zero);
             Assert.That(starting.Session.Progress.Player.DemonDeck, Is.Empty);
@@ -119,13 +113,9 @@ namespace DiaBlackJack.StageProgression.Tests
             CoordinatorHarness harness = CreateStartingHarness();
             harness.Files.FailNextTemporaryWrite = true;
             Assert.That(harness.Coordinator.TryStartRun(), Is.True);
-            StartingDemonSelectionOffer offer =
-                harness.Session.PendingStartingDemonSelection;
 
             Assert.That(
-                harness.Coordinator.TrySelectStartingDemon(
-                    offer.OfferId,
-                    offer.Options[1].OptionId),
+                harness.Coordinator.TryCompleteStartingDemonReveal(),
                 Is.True);
             Assert.That(harness.Coordinator.HasPendingCheckpoint, Is.True);
             Assert.That(
@@ -153,12 +143,8 @@ namespace DiaBlackJack.StageProgression.Tests
         {
             CoordinatorHarness harness = CreateStartingHarness();
             Assert.That(harness.Coordinator.TryStartRun(), Is.True);
-            StartingDemonSelectionOffer offer =
-                harness.Session.PendingStartingDemonSelection;
             Assert.That(
-                harness.Coordinator.TrySelectStartingDemon(
-                    offer.OfferId,
-                    offer.Options[0].OptionId),
+                harness.Coordinator.TryCompleteStartingDemonReveal(),
                 Is.True);
 
             RunSaveSnapshot firstSnapshot = harness.Repository.Load().Snapshot;
@@ -330,8 +316,8 @@ namespace DiaBlackJack.StageProgression.Tests
                 opponentSelectionGenerator: new OpponentSelectionGenerator(
                     EnemyCombatProfileCatalog.Default,
                     RootSeed),
-                startingDemonSelectionGenerator:
-                    new StartingDemonSelectionGenerator(
+                startingDemonGrantGenerator:
+                    new StartingDemonGrantGenerator(
                         DemonContractCatalog.Default,
                         RootSeed));
             return CreateHarness(session);
@@ -339,16 +325,7 @@ namespace DiaBlackJack.StageProgression.Tests
 
         private static CoordinatorHarness CreateRewardHarness()
         {
-            PlayerRunState player = new PlayerRunState(
-                12,
-                12,
-                new[]
-                {
-                    new RunCardDefinition(0, 1),
-                    new RunCardDefinition(1, 2),
-                    new RunCardDefinition(2, 3),
-                    new RunCardDefinition(3, 4)
-                });
+            PlayerRunState player = CreateGrantedPlayer();
             return CreateHarness(
                 new StageProgressionSession(
                     new RunProgress(CreateStages(RootSeed), player)));
@@ -356,16 +333,7 @@ namespace DiaBlackJack.StageProgression.Tests
 
         private static CoordinatorHarness CreateFormalSettlementHarness()
         {
-            PlayerRunState player = new PlayerRunState(
-                12,
-                12,
-                new[]
-                {
-                    new RunCardDefinition(0, 1),
-                    new RunCardDefinition(1, 2),
-                    new RunCardDefinition(2, 3),
-                    new RunCardDefinition(3, 4)
-                });
+            PlayerRunState player = CreateGrantedPlayer();
             IReadOnlyList<StageDefinition> stages = CreateFormalStages(RootSeed);
             RunProgress progress = new RunProgress(stages, player);
             Assert.That(progress.StartRun(), Is.True);
@@ -422,6 +390,33 @@ namespace DiaBlackJack.StageProgression.Tests
                 4,
                 () => SavedAt);
             return new CoordinatorHarness(session, repository, coordinator, files);
+        }
+
+        private static PlayerRunState CreateGrantedPlayer()
+        {
+            return PlayerRunState.Restore(
+                12,
+                12,
+                0,
+                new[]
+                {
+                    new RunCardDefinition(0, 1),
+                    new RunCardDefinition(1, 2),
+                    new RunCardDefinition(2, 3),
+                    new RunCardDefinition(3, 4)
+                },
+                new[]
+                {
+                    new RunDemonDefinition(
+                        0,
+                        DemonContractCatalog.SatanKey),
+                    new RunDemonDefinition(
+                        1,
+                        DemonContractCatalog.MammonKey)
+                },
+                3,
+                1,
+                true);
         }
 
         private static BattleRewardOffer BeginNormalReward(RunProgress progress)

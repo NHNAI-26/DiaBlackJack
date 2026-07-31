@@ -41,7 +41,7 @@ namespace DiaBlackJack.StageProgression
             int currentGold,
             int lastIssuedCardId,
             int lastIssuedDemonCardId,
-            string startingDemonDefinitionKey,
+            bool startingDemonGrantCompleted,
             IEnumerable<RunSaveCardSnapshot> cards,
             IEnumerable<RunSaveDemonSnapshot> demonCards)
         {
@@ -50,7 +50,7 @@ namespace DiaBlackJack.StageProgression
             CurrentGold = currentGold;
             LastIssuedCardId = lastIssuedCardId;
             LastIssuedDemonCardId = lastIssuedDemonCardId;
-            StartingDemonDefinitionKey = startingDemonDefinitionKey;
+            StartingDemonGrantCompleted = startingDemonGrantCompleted;
             Cards = Copy(cards);
             DemonCards = Copy(demonCards);
         }
@@ -65,7 +65,7 @@ namespace DiaBlackJack.StageProgression
 
         public int LastIssuedDemonCardId { get; }
 
-        public string StartingDemonDefinitionKey { get; }
+        public bool StartingDemonGrantCompleted { get; }
 
         public IReadOnlyList<RunSaveCardSnapshot> Cards { get; }
 
@@ -112,8 +112,8 @@ namespace DiaBlackJack.StageProgression
 
     public sealed class RunSaveSnapshot
     {
-        public const int CurrentSchemaVersion = 1;
-        public const string CurrentContentRevision = "prototype-v2";
+        public const int CurrentSchemaVersion = 2;
+        public const string CurrentContentRevision = "prototype-v3";
 
         internal RunSaveSnapshot(
             int schemaVersion,

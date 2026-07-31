@@ -79,7 +79,7 @@ namespace Border.SaveLoad
             return !HasPendingCheckpoint && _session.TryAdvanceToNextStage();
         }
 
-        public bool TrySelectStartingDemon(int offerId, int optionId)
+        public bool TryCompleteStartingDemonReveal()
         {
             if (!CanCreateCheckpoint())
             {
@@ -87,13 +87,13 @@ namespace Border.SaveLoad
             }
 
             string savedAtUtc = GetSavedAtUtc();
-            if (!_session.TrySelectStartingDemon(offerId, optionId))
+            if (!_session.TryCompleteStartingDemonReveal())
             {
                 return false;
             }
 
             SaveCheckpoint(
-                RunCheckpointKind.StartingDemonSelected,
+                RunCheckpointKind.StartingDemonGranted,
                 ResolveStartingNextContent(),
                 savedAtUtc);
             return true;

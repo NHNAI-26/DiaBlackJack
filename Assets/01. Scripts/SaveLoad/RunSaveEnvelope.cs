@@ -30,7 +30,7 @@ namespace Border.SaveLoad
         public int currentGold;
         public int lastIssuedCardId;
         public int lastIssuedDemonCardId;
-        public string startingDemonDefinitionKey;
+        public bool startingDemonGrantCompleted;
         public RunSaveCardEnvelope[] cards;
         public RunSaveDemonEnvelope[] demonCards;
     }

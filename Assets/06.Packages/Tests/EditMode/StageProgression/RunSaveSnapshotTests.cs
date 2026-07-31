@@ -21,8 +21,10 @@ namespace DiaBlackJack.StageProgression.Tests
                 },
                 new[]
                 {
-                    new RunDemonDefinition(4, DemonContractCatalog.SatanKey)
+                    new RunDemonDefinition(4, DemonContractCatalog.SatanKey),
+                    new RunDemonDefinition(5, DemonContractCatalog.MammonKey)
                 });
+            Assert.That(player.StartingDemonGrantCompleted, Is.True);
             RunProgress progress = new RunProgress(CreateStages(), player);
             Assert.That(progress.StartRun(), Is.True);
             player.SetCurrentSoul(7);
@@ -42,19 +44,21 @@ namespace DiaBlackJack.StageProgression.Tests
 
             Assert.That(captured, Is.True);
             Assert.That(validation.IsValid, Is.True);
-            Assert.That(snapshot.SchemaVersion, Is.EqualTo(1));
+            Assert.That(
+                snapshot.SchemaVersion,
+                Is.EqualTo(RunSaveSnapshot.CurrentSchemaVersion));
             Assert.That(snapshot.CurrentStageIndex, Is.Zero);
             Assert.That(snapshot.CurrentStageId, Is.EqualTo("normal-1"));
             Assert.That(snapshot.Player.MaximumSoul, Is.EqualTo(12));
             Assert.That(snapshot.Player.CurrentSoul, Is.EqualTo(7));
             Assert.That(snapshot.Player.CurrentGold, Is.Zero);
             Assert.That(snapshot.Player.LastIssuedCardId, Is.EqualTo(7));
-            Assert.That(snapshot.Player.LastIssuedDemonCardId, Is.EqualTo(4));
+            Assert.That(snapshot.Player.LastIssuedDemonCardId, Is.EqualTo(5));
             Assert.That(snapshot.Player.Cards.Count, Is.EqualTo(2));
             Assert.That(snapshot.Player.Cards[0].Id, Is.EqualTo(2));
             Assert.That(snapshot.Player.Cards[1].DefinitionKey, Is.EqualTo("military-knife-10"));
             Assert.That(snapshot.Player.Cards[1].Suit, Is.EqualTo(CardSuit.Clover));
-            Assert.That(snapshot.Player.DemonCards.Count, Is.EqualTo(1));
+            Assert.That(snapshot.Player.DemonCards.Count, Is.EqualTo(2));
             Assert.That(snapshot.Player.DemonCards[0].Id, Is.EqualTo(4));
             Assert.That(
                 snapshot.Player.DemonCards[0].DefinitionKey,
@@ -140,10 +144,11 @@ namespace DiaBlackJack.StageProgression.Tests
             RunSaveSnapshot unknownDemon = CreateSnapshot(
                 demonCards: new[]
                 {
-                    new RunSaveDemonSnapshot(0, "unknown-demon")
+                    new RunSaveDemonSnapshot(0, "unknown-demon"),
+                    new RunSaveDemonSnapshot(1, DemonContractCatalog.MammonKey)
                 },
-                lastIssuedDemonCardId: 0,
-                startingDemonDefinitionKey: null);
+                lastIssuedDemonCardId: 1,
+                startingDemonGrantCompleted: true);
 
             Assert.That(
                 RunSaveValidator.Validate(unknownCard, CreateStages()).Error,
@@ -207,7 +212,7 @@ namespace DiaBlackJack.StageProgression.Tests
             RunProgress progress = CreateProgress();
             Assert.That(progress.StartRun(), Is.True);
             RunSaveCaptureContext context = new RunSaveCaptureContext(
-                0,
+                1,
                 "run-unstable",
                 SavedAtUtc,
                 RunCheckpointKind.CombatSettlementCompleted,
@@ -251,7 +256,8 @@ namespace DiaBlackJack.StageProgression.Tests
             };
             List<RunSaveDemonSnapshot> demonCards = new List<RunSaveDemonSnapshot>
             {
-                new RunSaveDemonSnapshot(0, DemonContractCatalog.SatanKey)
+                new RunSaveDemonSnapshot(0, DemonContractCatalog.SatanKey),
+                new RunSaveDemonSnapshot(1, DemonContractCatalog.MammonKey)
             };
             List<string> completedShopIds = new List<string> { "shop-1" };
             List<string> completedEventIds = new List<string> { "event-1" };
@@ -260,8 +266,8 @@ namespace DiaBlackJack.StageProgression.Tests
                 8,
                 0,
                 0,
-                0,
-                DemonContractCatalog.SatanKey,
+                1,
+                true,
                 cards,
                 demonCards);
             RunSaveSnapshot snapshot = new RunSaveSnapshot(
@@ -287,7 +293,7 @@ namespace DiaBlackJack.StageProgression.Tests
             completedEventIds.Clear();
 
             Assert.That(snapshot.Player.Cards.Count, Is.EqualTo(1));
-            Assert.That(snapshot.Player.DemonCards.Count, Is.EqualTo(1));
+            Assert.That(snapshot.Player.DemonCards.Count, Is.EqualTo(2));
             Assert.That(snapshot.CompletedShopIds, Is.EqualTo(new[] { "shop-1" }));
             Assert.That(snapshot.CompletedEventIds, Is.EqualTo(new[] { "event-1" }));
             Assert.That(
@@ -299,8 +305,8 @@ namespace DiaBlackJack.StageProgression.Tests
             IEnumerable<RunSaveCardSnapshot> cards = null,
             IEnumerable<RunSaveDemonSnapshot> demonCards = null,
             int lastIssuedCardId = 1,
-            int lastIssuedDemonCardId = 0,
-            string startingDemonDefinitionKey = DemonContractCatalog.SatanKey,
+            int lastIssuedDemonCardId = 1,
+            bool startingDemonGrantCompleted = true,
             int currentSoul = 8,
             RunCheckpointKind checkpointKind =
                 RunCheckpointKind.CombatSettlementCompleted,
@@ -313,7 +319,7 @@ namespace DiaBlackJack.StageProgression.Tests
                 0,
                 lastIssuedCardId,
                 lastIssuedDemonCardId,
-                startingDemonDefinitionKey,
+                startingDemonGrantCompleted,
                 cards ?? new[]
                 {
                     new RunSaveCardSnapshot(0, "standard-ace-1", CardSuit.Spade),
@@ -321,7 +327,8 @@ namespace DiaBlackJack.StageProgression.Tests
                 },
                 demonCards ?? new[]
                 {
-                    new RunSaveDemonSnapshot(0, DemonContractCatalog.SatanKey)
+                    new RunSaveDemonSnapshot(0, DemonContractCatalog.SatanKey),
+                    new RunSaveDemonSnapshot(1, DemonContractCatalog.MammonKey)
                 });
             return new RunSaveSnapshot(
                 RunSaveSnapshot.CurrentSchemaVersion,

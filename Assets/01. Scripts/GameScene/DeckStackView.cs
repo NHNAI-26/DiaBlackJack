@@ -80,6 +80,15 @@ namespace DiaBlackJack.GameScene
             EnqueueAnimations(delta);
         }
 
+        public void ResetView()
+        {
+            StopAnimationQueue();
+            _displayedCardCount = 0;
+            _targetCardCount = 0;
+            _hasRenderedCount = false;
+            ApplyStackCount(0);
+        }
+
         private void ApplyStackCount(int cardCount)
         {
             bool visible = cardCount > 0;

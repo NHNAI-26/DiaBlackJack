@@ -12,7 +12,7 @@ namespace DiaBlackJack.StageProgression
         private readonly Func<StageDefinition, BattleRewardTier> _rewardTierSelector;
         private readonly GoldRewardCatalog _goldRewardCatalog;
         private readonly bool _usesBattleRewards;
-        private readonly StartingDemonSelectionGenerator _startingDemonSelectionGenerator;
+        private readonly StartingDemonGrantGenerator _startingDemonGrantGenerator;
         private OpponentSelectionGenerator _opponentSelectionGenerator;
         private CoreLoopSession _battleSession;
         private CoreLoopBattle _processedBattle;
@@ -23,7 +23,7 @@ namespace DiaBlackJack.StageProgression
             BattleRewardGenerator rewardGenerator = null,
             Func<StageDefinition, BattleRewardTier> rewardTierSelector = null,
             OpponentSelectionGenerator opponentSelectionGenerator = null,
-            StartingDemonSelectionGenerator startingDemonSelectionGenerator = null,
+            StartingDemonGrantGenerator startingDemonGrantGenerator = null,
             GoldRewardCatalog goldRewardCatalog = null,
             bool usesBattleRewards = true)
         {
@@ -36,7 +36,7 @@ namespace DiaBlackJack.StageProgression
             _goldRewardCatalog = goldRewardCatalog ?? GoldRewardCatalog.CreatePrototype();
             _usesBattleRewards = usesBattleRewards;
             _opponentSelectionGenerator = opponentSelectionGenerator;
-            _startingDemonSelectionGenerator = startingDemonSelectionGenerator;
+            _startingDemonGrantGenerator = startingDemonGrantGenerator;
             ActiveStage = opponentSelectionGenerator == null
                 ? progress.CurrentStage
                 : null;
@@ -52,7 +52,7 @@ namespace DiaBlackJack.StageProgression
 
         public OpponentSelectionOffer PendingOpponentSelection { get; private set; }
 
-        public StartingDemonSelectionOffer PendingStartingDemonSelection { get; private set; }
+        public StartingDemonGrant PendingStartingDemonGrant { get; private set; }
 
         public RunProgress Progress { get; }
 
@@ -65,19 +65,35 @@ namespace DiaBlackJack.StageProgression
 
         public bool TryStartRun()
         {
-            if (_startingDemonSelectionGenerator != null &&
-                Progress.Player.StartingDemonDefinitionKey == null &&
-                Progress.Player.CanSelectStartingDemon)
+            if (_startingDemonGrantGenerator != null &&
+                Progress.Player.CanReceiveStartingDemonGrant)
             {
                 if (Progress.State != StageProgressionState.NotStarted ||
-                    PendingStartingDemonSelection != null)
+                    PendingStartingDemonGrant != null)
                 {
                     return false;
                 }
 
-                PendingStartingDemonSelection =
-                    _startingDemonSelectionGenerator.Generate();
+                StartingDemonGrant grant =
+                    _startingDemonGrantGenerator.Generate();
+                string[] definitionKeys =
+                {
+                    grant.Cards[0].DefinitionKey,
+                    grant.Cards[1].DefinitionKey
+                };
+                if (!Progress.Player.TryGrantStartingDemons(definitionKeys))
+                {
+                    throw new InvalidOperationException(
+                        "Player state rejected a validated starting demon grant.");
+                }
+
+                PendingStartingDemonGrant = grant;
                 return true;
+            }
+
+            if (PendingStartingDemonGrant != null)
+            {
+                return false;
             }
 
             if (!Progress.StartRun())
@@ -158,21 +174,16 @@ namespace DiaBlackJack.StageProgression
             return true;
         }
 
-        public bool TrySelectStartingDemon(int offerId, int optionId)
+        public bool TryCompleteStartingDemonReveal()
         {
-            StartingDemonSelectionOffer pending = PendingStartingDemonSelection;
             if (Progress.State != StageProgressionState.NotStarted ||
-                pending == null ||
-                pending.OfferId != offerId ||
-                !pending.TryGetOption(
-                    optionId,
-                    out StartingDemonSelectionOption selected) ||
-                !Progress.Player.TrySelectStartingDemon(selected.DefinitionKey))
+                PendingStartingDemonGrant == null ||
+                !Progress.Player.StartingDemonGrantCompleted)
             {
                 return false;
             }
 
-            PendingStartingDemonSelection = null;
+            PendingStartingDemonGrant = null;
             return true;
         }
 

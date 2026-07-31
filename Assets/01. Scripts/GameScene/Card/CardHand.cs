@@ -115,6 +115,12 @@ namespace DiaBlackJack.GameScene
             _hasRenderedLayout = true;
         }
 
+        public void ResetView()
+        {
+            ClearAll();
+            _hasRenderedLayout = false;
+        }
+
         public bool TryGetCardWorldPosition(int cardId, out Vector3 position)
         {
             for (int i = 0; i < _spawned.Count; i++)

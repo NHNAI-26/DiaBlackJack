@@ -900,7 +900,7 @@ Unity MCP 활성 인스턴스는 `DiaBlackJack@5635a4cdcfecc8dd`, Unity는
 
 | 경계 | 확인 결과 |
 | --- | --- |
-| 런 예약 | `RunReservationRepository`가 `run-reservation.tmp` 검증 뒤 `run-reservation.json`으로 교체하고 시작 악마 제안 ID·후보 키 2장을 보존 |
+| 런 예약 | `RunReservationRepository`가 `run-reservation.tmp` 검증 뒤 `run-reservation.json`으로 교체하고 시작 악마 지급 ID·확정 키 2장을 보존해 재접속 재추첨을 막음 |
 | 응용 흐름 | `RunSaveFlow`가 새 런 확인·취소, 예약 재개, 체크포인트 이어하기, 세션 교체, 저장 실패 보류·재시도를 소유 |
 | Runtime | `StageProgressionRuntime`이 `SystemRunSaveFileStore`·저장/예약 저장소·세션 Factory를 조립하고, 현재 저장 세션을 `FormalRunSession`으로 재결합해 `DontDestroyOnLoad`로 노출 |
 | 화면 | 기존 StageTest IMGUI Controller/View에 런 메뉴·시작 악마 2장·백업/손상/버전 안내·`SAVED`·실패 재시도 연결 |
@@ -1180,3 +1180,22 @@ Test Framework 준비·결과 저장·정리 안내였으며 컴파일·게임 �
 | 2026-07-21 | 이천서 | 현행 폴드 삭제·체인지 전투 누적 비용 구조와 Unity MCP 전체 EditMode 306/306·컴파일 오류 0 검증 결과를 추가하고 `GameScene` 무변경 확인 |
 | 2026-07-22 | 이천서 | 위협용 해머 상대 공개 카드 제거·적 AI·GameScene 표시 이관과 Unity MCP 전체 EditMode 308/308 검증 결과 추가 |
 | 2026-07-22 | 이천서 | 보위 나이프 비버스트 강제 폐기·공개 합 중간 버스트·전체 합 최종 승부 구조와 영향 13/13·전체 EditMode 309/309·Console 0 검증 결과 추가 |
+
+## 2026-07-31 MainMenuScene 제품 진입점
+
+- `Assets/00. Scenes/MainMenuScene.unity`을 Build Settings 0번으로 등록했다.
+- 빌드 씬 순서는 `MainMenuScene`, `StageTest`, `CoreLoopTest`, `GameScene`, `SampleScene`이다.
+- `MainMenuView`는 새 런, 이어하기, 시작 예약 재개, 종료를 표시한다. 미구현 설정은 `SETTINGS (LATER)` 비활성 버튼으로 명시한다.
+- `MainMenuController`는 기존 `RunSaveFlow`와 `RunSavePresenter`만 사용한다. 런 규칙과 저장 상태를 중복 소유하지 않는다.
+- 새 런·이어하기 성공 후에는 현재 정식 런 호스트인 `StageTest`로 이동한다. `GameScene` 단일 런 이관 뒤 목적지만 교체한다.
+- Unity MCP에서 씬 누락 스크립트·깨진 프리팹 0, 1280×720 Play Mode 화면, Console 컴파일 오류 0을 확인했다.
+- 전체 EditMode 798/798 통과. 외부 에셋·오픈소스·새 패키지·새 의존성 추가 없음.
+
+## 2026-07-31 GF-01 GameScene 전체 흐름 계약 고정
+
+- Unity MCP 인스턴스 `DiaBlackJack@5635a4cdcfecc8dd`, Unity 6000.3.10f1, 현재 체크아웃 일치와 `ready_for_tools = true`를 확인했다.
+- `Assets/06.Packages/Tests/EditMode/StageProgression/GameSceneFullFlowPresentationTests.cs`에 순수 흐름 계약 5개를 추가했다.
+- 시작 악마 무선택 공개, 상대 선택, 두 일반전과 두 상점, 고정 보스, 승리, 오래된 입력 거부, 재시작 재추첨 금지를 고정했다.
+- 신규 GF-01 5/5, 전체 EditMode 803/803 통과. Console 컴파일 오류 0.
+- `MainMenuScene` 유효성 검사에서 누락 스크립트·깨진 프리팹·기타 문제 0.
+- 런타임·씬·프리팹·Packages·외부 에셋·오픈소스·새 의존성 변경 없음.

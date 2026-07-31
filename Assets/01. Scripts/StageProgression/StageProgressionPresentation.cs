@@ -67,16 +67,14 @@ namespace DiaBlackJack.StageProgression.UI
         public string EffectSummary { get; }
     }
 
-    public sealed class StartingDemonOptionViewModel
+    public sealed class StartingDemonGrantCardViewModel
     {
-        public StartingDemonOptionViewModel(
-            int optionId,
+        public StartingDemonGrantCardViewModel(
             string definitionKey,
             string displayName,
             string summary,
             string costSummary)
         {
-            OptionId = optionId;
             DefinitionKey = definitionKey;
             DisplayName = displayName;
             Summary = summary;
@@ -88,8 +86,6 @@ namespace DiaBlackJack.StageProgression.UI
         public string DefinitionKey { get; }
 
         public string DisplayName { get; }
-
-        public int OptionId { get; }
 
         public string Summary { get; }
     }
@@ -144,8 +140,8 @@ namespace DiaBlackJack.StageProgression.UI
     {
         private readonly ReadOnlyCollection<BattleRewardOptionViewModel> _rewardOptions;
         private readonly ReadOnlyCollection<OpponentCandidateViewModel> _opponentCandidates;
-        private readonly ReadOnlyCollection<StartingDemonOptionViewModel>
-            _startingDemonOptions;
+        private readonly ReadOnlyCollection<StartingDemonGrantCardViewModel>
+            _startingDemonGrantCards;
         private readonly ReadOnlyCollection<ShopCardOptionViewModel>
             _shopCardOptions;
         private readonly ReadOnlyCollection<ShopOwnedCardViewModel>
@@ -173,9 +169,9 @@ namespace DiaBlackJack.StageProgression.UI
             string focusedOpponentProfileKey,
             bool canFocusOpponent,
             bool canConfirmOpponent,
-            int? startingDemonOfferId,
-            IEnumerable<StartingDemonOptionViewModel> startingDemonOptions,
-            bool canSelectStartingDemon,
+            int? startingDemonGrantId,
+            IEnumerable<StartingDemonGrantCardViewModel> startingDemonGrantCards,
+            bool isStartingDemonReveal,
             string playerGold,
             string goldResult,
             bool isShop,
@@ -214,12 +210,13 @@ namespace DiaBlackJack.StageProgression.UI
             FocusedOpponentProfileKey = focusedOpponentProfileKey;
             CanFocusOpponent = canFocusOpponent;
             CanConfirmOpponent = canConfirmOpponent;
-            StartingDemonOfferId = startingDemonOfferId;
-            _startingDemonOptions = new List<StartingDemonOptionViewModel>(
-                startingDemonOptions ?? throw new ArgumentNullException(
-                    nameof(startingDemonOptions)))
+            StartingDemonGrantId = startingDemonGrantId;
+            _startingDemonGrantCards =
+                new List<StartingDemonGrantCardViewModel>(
+                    startingDemonGrantCards ?? throw new ArgumentNullException(
+                        nameof(startingDemonGrantCards)))
                 .AsReadOnly();
-            CanSelectStartingDemon = canSelectStartingDemon;
+            IsStartingDemonReveal = isStartingDemonReveal;
             PlayerGold = playerGold;
             GoldResult = goldResult;
             IsShop = isShop;
@@ -280,12 +277,12 @@ namespace DiaBlackJack.StageProgression.UI
 
         public bool CanConfirmOpponent { get; }
 
-        public int? StartingDemonOfferId { get; }
+        public int? StartingDemonGrantId { get; }
 
-        public IReadOnlyList<StartingDemonOptionViewModel>
-            StartingDemonOptions => _startingDemonOptions;
+        public IReadOnlyList<StartingDemonGrantCardViewModel>
+            StartingDemonGrantCards => _startingDemonGrantCards;
 
-        public bool CanSelectStartingDemon { get; }
+        public bool IsStartingDemonReveal { get; }
 
         public bool CanLeaveShop { get; }
         public bool CanRestAtShop { get; }
@@ -326,7 +323,7 @@ namespace DiaBlackJack.StageProgression.UI
             return Create(
                 session.Progress,
                 session.PendingOpponentSelection,
-                session.PendingStartingDemonSelection,
+                session.PendingStartingDemonGrant,
                 focusedProfileKey,
                 null);
         }
@@ -344,7 +341,7 @@ namespace DiaBlackJack.StageProgression.UI
             return Create(
                 session.CombatSession.Progress,
                 session.CombatSession.PendingOpponentSelection,
-                session.CombatSession.PendingStartingDemonSelection,
+                session.CombatSession.PendingStartingDemonGrant,
                 focusedProfileKey,
                 session);
         }
@@ -352,13 +349,13 @@ namespace DiaBlackJack.StageProgression.UI
         private static StageProgressionViewModel Create(
             RunProgress progress,
             OpponentSelectionOffer opponentOffer,
-            StartingDemonSelectionOffer startingDemonOffer,
+            StartingDemonGrant startingDemonGrant,
             string focusedProfileKey,
             FormalRunSession formalSession)
         {
-            bool isStartingDemonSelection =
+            bool isStartingDemonReveal =
                 progress.State == StageProgressionState.NotStarted &&
-                startingDemonOffer != null;
+                startingDemonGrant != null;
             bool isOpponentSelection =
                 progress.State == StageProgressionState.OpponentSelection;
             if (isOpponentSelection && opponentOffer == null)
@@ -412,11 +409,11 @@ namespace DiaBlackJack.StageProgression.UI
                 progress.State,
                 isShop
                     ? "SHOP"
-                    : isStartingDemonSelection
-                        ? "CHOOSE STARTING DEMON"
+                    : isStartingDemonReveal
+                        ? "STARTING DEMONS"
                         : GetMessage(progress.State),
                 progress.State == StageProgressionState.NotStarted &&
-                    !isStartingDemonSelection,
+                    !isStartingDemonReveal,
                 formalSession == null &&
                     progress.State == StageProgressionState.StageCleared,
                 formalSession == null
@@ -440,13 +437,13 @@ namespace DiaBlackJack.StageProgression.UI
                 validatedFocusedProfileKey,
                 isOpponentSelection,
                 isOpponentSelection && validatedFocusedProfileKey != null,
-                isStartingDemonSelection
-                    ? startingDemonOffer.OfferId
+                isStartingDemonReveal
+                    ? startingDemonGrant.GrantId
                     : (int?)null,
-                isStartingDemonSelection
-                    ? CreateStartingDemonOptions(startingDemonOffer)
-                    : Array.Empty<StartingDemonOptionViewModel>(),
-                isStartingDemonSelection,
+                isStartingDemonReveal
+                    ? CreateStartingDemonGrantCards(startingDemonGrant)
+                    : Array.Empty<StartingDemonGrantCardViewModel>(),
+                isStartingDemonReveal,
                 $"{progress.Player.CurrentGold} GOLD",
                 formalSession != null && formalSession.LastGoldReward > 0
                     ? $"VICTORY +{formalSession.LastGoldReward} GOLD"
@@ -475,22 +472,21 @@ namespace DiaBlackJack.StageProgression.UI
                 isShop ? CreateShopTransactionResult(shop) : string.Empty);
         }
 
-        private static IReadOnlyList<StartingDemonOptionViewModel>
-            CreateStartingDemonOptions(StartingDemonSelectionOffer offer)
+        private static IReadOnlyList<StartingDemonGrantCardViewModel>
+            CreateStartingDemonGrantCards(StartingDemonGrant grant)
         {
-            var options = new List<StartingDemonOptionViewModel>(
-                offer.Options.Count);
-            foreach (StartingDemonSelectionOption option in offer.Options)
+            var cards = new List<StartingDemonGrantCardViewModel>(
+                grant.Cards.Count);
+            foreach (StartingDemonGrantCard card in grant.Cards)
             {
-                options.Add(new StartingDemonOptionViewModel(
-                    option.OptionId,
-                    option.DefinitionKey,
-                    option.DisplayName,
-                    option.Summary,
-                    option.CostSummary));
+                cards.Add(new StartingDemonGrantCardViewModel(
+                    card.DefinitionKey,
+                    card.DisplayName,
+                    card.Summary,
+                    card.CostSummary));
             }
 
-            return options;
+            return cards;
         }
 
         private static IReadOnlyList<OpponentCandidateViewModel> CreateOpponentCandidates(

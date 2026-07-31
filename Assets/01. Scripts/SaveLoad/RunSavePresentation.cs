@@ -76,7 +76,7 @@ namespace Border.SaveLoad.UI
                 case RunSaveNotice.ContinueAvailable:
                     return "RUN SAVE READY";
                 case RunSaveNotice.ReservationAvailable:
-                    return "STARTING DEMON SELECTION CAN BE RESUMED";
+                    return "STARTING DEMON GRANT CAN BE RESUMED";
                 case RunSaveNotice.BackupRecovered:
                     return "BACKUP RUN SAVE RECOVERED";
                 case RunSaveNotice.TerminalSave:
@@ -92,7 +92,7 @@ namespace Border.SaveLoad.UI
                 case RunSaveNotice.ReservationWriteFailed:
                     return "NEW RUN COULD NOT BE RESERVED";
                 case RunSaveNotice.ReservationInvalid:
-                    return "STARTING DEMON OFFER COULD NOT BE RESTORED";
+                    return "STARTING DEMON GRANT COULD NOT BE RESTORED";
                 case RunSaveNotice.ContinueFailed:
                     return "RUN SAVE COULD NOT BE RESTORED";
                 case RunSaveNotice.CheckpointSaved:

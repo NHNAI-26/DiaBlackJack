@@ -21,13 +21,7 @@ namespace DiaBlackJack.StageProgression.Tests
             MemoryRunFileStore files = new MemoryRunFileStore();
             RunSaveFlow first = CreateFlow(files, "run-a");
             Assert.That(first.TryRequestNewRun(), Is.True);
-            StartingDemonSelectionOffer starting =
-                first.Session.PendingStartingDemonSelection;
-            Assert.That(
-                first.TrySelectStartingDemon(
-                    starting.OfferId,
-                    starting.Options[0].OptionId),
-                Is.True);
+            Assert.That(first.TryCompleteStartingDemonReveal(), Is.True);
             OpponentSelectionOffer opponent =
                 first.Session.PendingOpponentSelection;
             Assert.That(
@@ -60,13 +54,7 @@ namespace DiaBlackJack.StageProgression.Tests
             MemoryRunFileStore files = new MemoryRunFileStore();
             RunSaveFlow first = CreateFlow(files, "run-b");
             Assert.That(first.TryRequestNewRun(), Is.True);
-            StartingDemonSelectionOffer starting =
-                first.Session.PendingStartingDemonSelection;
-            Assert.That(
-                first.TrySelectStartingDemon(
-                    starting.OfferId,
-                    starting.Options[0].OptionId),
-                Is.True);
+            Assert.That(first.TryCompleteStartingDemonReveal(), Is.True);
             OpponentSelectionOffer opponent =
                 first.Session.PendingOpponentSelection;
             Assert.That(
@@ -94,28 +82,28 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
-        public void SV05_I02_ReservationReconnectShowsSameStartingDemonOffer()
+        public void SV05_I02_ReservationReconnectShowsSameStartingDemonGrant()
         {
             MemoryRunFileStore files = new MemoryRunFileStore();
             RunSaveFlow first = CreateFlow(files, "reserved-run");
 
             Assert.That(first.TryRequestNewRun(), Is.True);
-            StartingDemonSelectionOffer original =
-                first.Session.PendingStartingDemonSelection;
+            StartingDemonGrant original =
+                first.Session.PendingStartingDemonGrant;
             Assert.That(original, Is.Not.Null);
 
             RunSaveFlow reconnected = CreateFlow(files, "unused");
             Assert.That(reconnected.CanResumeReservation, Is.True);
             Assert.That(reconnected.CanContinueRun, Is.False);
             Assert.That(reconnected.TryResumeReservation(), Is.True);
-            StartingDemonSelectionOffer restored =
-                reconnected.Session.PendingStartingDemonSelection;
+            StartingDemonGrant restored =
+                reconnected.Session.PendingStartingDemonGrant;
 
-            Assert.That(restored.OfferId, Is.EqualTo(original.OfferId));
+            Assert.That(restored.GrantId, Is.EqualTo(original.GrantId));
             Assert.That(
-                restored.Options.Select(option => option.DefinitionKey),
+                restored.Cards.Select(card => card.DefinitionKey),
                 Is.EqualTo(
-                    original.Options.Select(option => option.DefinitionKey)));
+                    original.Cards.Select(card => card.DefinitionKey)));
         }
 
         [Test]
@@ -124,15 +112,9 @@ namespace DiaBlackJack.StageProgression.Tests
             MemoryRunFileStore files = new MemoryRunFileStore();
             RunSaveFlow flow = CreateFlow(files, "retry-run");
             Assert.That(flow.TryRequestNewRun(), Is.True);
-            StartingDemonSelectionOffer offer =
-                flow.Session.PendingStartingDemonSelection;
             files.FailNextWriteFileName = RunSaveRepository.TemporaryFileName;
 
-            Assert.That(
-                flow.TrySelectStartingDemon(
-                    offer.OfferId,
-                    offer.Options[1].OptionId),
-                Is.True);
+            Assert.That(flow.TryCompleteStartingDemonReveal(), Is.True);
             RunSaveViewModel failed = RunSavePresenter.Create(flow);
 
             Assert.That(flow.HasPendingCheckpoint, Is.True);
@@ -151,7 +133,7 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
-        public void SV05_I04_NewRunWithoutStartingSelectionActivatesDefaultDemonDeck()
+        public void SV05_I04_NewRunWithoutStartingGrantActivatesDefaultDemonDeck()
         {
             MemoryRunFileStore files = new MemoryRunFileStore();
             RunSaveFlow flow = CreateDirectFlow(files, "direct-run");
@@ -159,7 +141,7 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(flow.TryRequestNewRun(), Is.True);
 
             Assert.That(flow.IsMenuVisible, Is.False);
-            Assert.That(flow.Session.PendingStartingDemonSelection, Is.Null);
+            Assert.That(flow.Session.PendingStartingDemonGrant, Is.Null);
             Assert.That(
                 flow.Session.Progress.State,
                 Is.EqualTo(StageProgressionState.OpponentSelection));
@@ -222,7 +204,7 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
-        public void SV05_U03_StartingDemonOfferHasTwoSelectableViewModels()
+        public void SV05_U03_StartingDemonGrantHasTwoRevealViewModels()
         {
             MemoryRunFileStore files = new MemoryRunFileStore();
             RunSaveFlow flow = CreateFlow(files, "view-run");
@@ -232,9 +214,9 @@ namespace DiaBlackJack.StageProgression.Tests
                 StageProgressionPresenter.Create(flow.Session);
 
             Assert.That(model.CanStartRun, Is.False);
-            Assert.That(model.CanSelectStartingDemon, Is.True);
-            Assert.That(model.StartingDemonOfferId, Is.Not.Null);
-            Assert.That(model.StartingDemonOptions.Count, Is.EqualTo(2));
+            Assert.That(model.IsStartingDemonReveal, Is.True);
+            Assert.That(model.StartingDemonGrantId, Is.Not.Null);
+            Assert.That(model.StartingDemonGrantCards.Count, Is.EqualTo(2));
         }
 
         [TestCase("{invalid", "DAMAGED")]
@@ -278,13 +260,7 @@ namespace DiaBlackJack.StageProgression.Tests
                     .Reservation;
             Assert.That(firstReservation.RootSeed, Is.EqualTo(seeds[0]));
 
-            StartingDemonSelectionOffer offer =
-                first.Session.PendingStartingDemonSelection;
-            Assert.That(
-                first.TrySelectStartingDemon(
-                    offer.OfferId,
-                    offer.Options[0].OptionId),
-                Is.True);
+            Assert.That(first.TryCompleteStartingDemonReveal(), Is.True);
             RunSaveLoadResult saved = new RunSaveRepository(
                 files,
                 CreateStages(seeds[0])).Load();
@@ -425,8 +401,8 @@ namespace DiaBlackJack.StageProgression.Tests
                 opponentSelectionGenerator: new OpponentSelectionGenerator(
                     EnemyCombatProfileCatalog.Default,
                     seed),
-                startingDemonSelectionGenerator:
-                    new StartingDemonSelectionGenerator(
+                startingDemonGrantGenerator:
+                    new StartingDemonGrantGenerator(
                         DemonContractCatalog.Default,
                         unchecked(seed + 2)));
         }
@@ -498,13 +474,7 @@ namespace DiaBlackJack.StageProgression.Tests
                 0,
                 () => CreatedAt);
             Assert.That(coordinator.TryStartRun(), Is.True);
-            StartingDemonSelectionOffer offer =
-                session.PendingStartingDemonSelection;
-            Assert.That(
-                coordinator.TrySelectStartingDemon(
-                    offer.OfferId,
-                    offer.Options[0].OptionId),
-                Is.True);
+            Assert.That(coordinator.TryCompleteStartingDemonReveal(), Is.True);
         }
 
         private static void WriteTerminalCheckpoint(MemoryRunFileStore files)
@@ -517,7 +487,15 @@ namespace DiaBlackJack.StageProgression.Tests
                 RootSeed,
                 0,
                 () => CreatedAt);
-            Assert.That(session.Progress.StartRun(), Is.True);
+            Assert.That(session.TryStartRun(), Is.True);
+            Assert.That(session.TryCompleteStartingDemonReveal(), Is.True);
+            Assert.That(session.TryStartRun(), Is.True);
+            OpponentSelectionOffer opponent = session.PendingOpponentSelection;
+            Assert.That(
+                session.TrySelectOpponent(
+                    opponent.OfferId,
+                    opponent.Candidates[0].ProfileKey),
+                Is.True);
             session.Progress.Player.SetCurrentSoul(0);
             Assert.That(session.Progress.TryDefeatRun(), Is.True);
             Assert.That(coordinator.TryCheckpointRunEnd(), Is.True);

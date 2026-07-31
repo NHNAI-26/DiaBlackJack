@@ -131,6 +131,14 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        public void SetEnemyStatusVisible(bool isVisible)
+        {
+            if (enemySoulText != null)
+            {
+                enemySoulText.gameObject.SetActive(isVisible);
+            }
+        }
+
         /// <summary>Shows the shared badge at a screen-space point supplied by a hovered card.</summary>
         public void ShowCardHoverBadge(
             string title,

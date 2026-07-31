@@ -48,7 +48,8 @@ namespace DiaBlackJack.StageProgression.UI
             _view.NewRunCancelled += RequestCancelNewRun;
             _view.ContinueRunRequested += RequestContinueRun;
             _view.ResumeReservationRequested += RequestResumeReservation;
-            _view.StartingDemonSelected += RequestSelectStartingDemon;
+            _view.StartingDemonRevealCompleted +=
+                RequestCompleteStartingDemonReveal;
             _view.SaveRetryRequested += RequestRetrySave;
             _view.ShopCardPurchaseRequested += RequestBuyShopCard;
             _view.ShopCardRemovalRequested += RequestRemoveShopCard;
@@ -89,7 +90,8 @@ namespace DiaBlackJack.StageProgression.UI
             _view.NewRunCancelled -= RequestCancelNewRun;
             _view.ContinueRunRequested -= RequestContinueRun;
             _view.ResumeReservationRequested -= RequestResumeReservation;
-            _view.StartingDemonSelected -= RequestSelectStartingDemon;
+            _view.StartingDemonRevealCompleted -=
+                RequestCompleteStartingDemonReveal;
             _view.SaveRetryRequested -= RequestRetrySave;
             _view.ShopCardPurchaseRequested -= RequestBuyShopCard;
             _view.ShopCardRemovalRequested -= RequestRemoveShopCard;
@@ -158,10 +160,9 @@ namespace DiaBlackJack.StageProgression.UI
                 _runtime.SaveFlow.TryResumeReservation());
         }
 
-        public void RequestSelectStartingDemon(int offerId, int optionId)
+        public void RequestCompleteStartingDemonReveal()
         {
-            ProcessInput(
-                () => TrySelectStartingDemon(offerId, optionId));
+            ProcessInput(TryCompleteStartingDemonReveal);
         }
 
         public void RequestRetrySave()
@@ -442,11 +443,15 @@ namespace DiaBlackJack.StageProgression.UI
                 : _runtime.SaveFlow.TrySkipBattleReward();
         }
 
-        private bool TrySelectStartingDemon(int offerId, int optionId)
+        private bool TryCompleteStartingDemonReveal()
         {
-            return _runtime.SaveFlow == null
-                ? ActiveSession.TrySelectStartingDemon(offerId, optionId)
-                : _runtime.SaveFlow.TrySelectStartingDemon(offerId, optionId);
+            if (_runtime.SaveFlow != null)
+            {
+                return _runtime.SaveFlow.TryCompleteStartingDemonReveal();
+            }
+
+            return ActiveSession.TryCompleteStartingDemonReveal() &&
+                ActiveSession.TryStartRun();
         }
 
         private StageProgressionSession ActiveSession =>

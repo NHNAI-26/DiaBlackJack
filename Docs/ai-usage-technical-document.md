@@ -717,6 +717,7 @@ AI 대화 원문을 그대로 싣지 말고 목적, 핵심 지시, 결과, 사�
 
 | 날짜 | 담당자 | AI 활용 작업 | 산출물 | 사람의 검토 상태 |
 | --- | --- | --- | --- | --- |
+| 2026-07-31 | 이천서 | 시작 악마 선택→자동 지급 도메인·저장·UI 이관 보조 | `StartingDemonGrant.cs`, `PlayerRunState.cs`, `StageProgressionSession`, `RunSave*`, Runtime·진행 Presenter/View/Controller, 지급·저장 테스트와 RF/SV 문서 | AI는 기존 2택 1 API와 단일 저장 키를 추적해 서로 다른 2장 원자 지급, 반복 시작 멱등성, 예약 재접속 무재추첨, 스키마 v2의 지급 완료 여부·두 물리 카드 보존, 입력 없는 동시 공개 뒤 자동 전환으로 이관했다. 이천서가 기획·구현·최종 승인 책임을 가진다. 전체 EditMode 784/784·컴파일 오류 0, GameScene 월드 카드 연출·씬·프리팹·외부 에셋·오픈소스·패키지 변경 없음. |
 | 2026-07-31 | 이천서 | RF-05 Unity 실화면 검증·720p 상점 배치 수정·로컬 경로 이식성 보조 | `StageProgressionView.cs`, `AGENTS.md`, 정식 런 문서 4종·공통 기록 | AI는 Unity MCP로 1280×720 정식 런 왕복과 1920×1080 상대 선택을 조작·관찰하고, 보유 카드 가로 넘침을 해상도별 4/5열 그리드로 수정했다. C/F 드라이브가 다른 팀 환경은 Unity 후보 탐색과 현재 Git 루트 계산으로 통합했다. 이천서가 기획·구현·최종 승인 책임을 가진다. 대상 6/6·전체 EditMode 798/798, 게임 코드 오류 0(Test Framework 안내 3건). 외부 에셋·오픈소스·패키지 추가 없음. |
 | 2026-07-31 | 이천서 | SV-06 정식 런·상점 저장 경계 분석, 구현·회귀·문서화 보조 | `RunSave*`, `RunRestoreFactory`, `FormalRunSession`, Runtime·진행 Controller, SV06 테스트와 저장 문서 4종 | AI는 상점 나가기 전 캡처→복원 후 1회 전진, 완료 상점 제안 재생, 공통 가격 단계 보존과 빈 시작 악마 키 정규화를 보조했다. 이천서가 기획·구현·최종 승인 책임을 가진다. 신규 5/5·저장/정식 런 59/59·전체 EditMode 798/798·게임 코드 오류 0(Test Framework 안내 1건), 사건·실제 앱 재실행·두 해상도는 잔여. 외부 에셋·오픈소스·패키지 추가 없음. |
 | 2026-07-31 | 이천서 | EPR07 광신도 계약 정책 현행 여부 확인·코드 이관·Unity 회귀 보조 | `CultistEnemyPolicy.cs`, `EnemyCombatProfileCatalog.cs`, EPR07 테스트와 계약·적 프로필 문서 | AI는 문서와 실제 코드의 2종/3종 불일치, 영혼·`CanUse` 의존을 추적하고 최소 수정·회귀 갱신을 보조했다. 이천서가 규칙·코드·최종 승인 책임을 가진다. 대상 21/21·전체 EditMode 793/793, 외부 에셋·오픈소스·패키지 추가 없음. |
@@ -1537,4 +1538,34 @@ Unity 기본 모듈과 IDE 연동 패키지의 전체 버전은 `Packages/manife
 - `Assets/Wingman`의 원 출처와 라이선스를 확인한다.
 - 후속 기능을 구현할 때 사용한 AI 모델/도구, 주요 지시, 수정 내역과 테스트 결과를 작업 단위로 계속 추가한다.
 - 생성형 이미지나 음원을 사용하면 도구·프롬프트·권리 검토 결과를 별도 자산 대장에 기록한다.
+
+## 2026-07-31 MainMenuScene 구현 기록
+
+이천서는 제품 시작 씬을 지금 구현하도록 지시했다. AI에는 기존 `RunSaveFlow`·`RunSavePresenter`·`StageProgressionRuntime`을 재사용하고, 메뉴가 런 규칙이나 저장 상태를 중복 소유하지 않으며, 아직 완료되지 않은 `GameScene` 단일 런 통합과 현재 동작 경계를 구분하라는 지시를 적용했다. 최종 기획·코드·화면 승인 책임자는 이천서다.
+
+AI는 IMGUI 기반 `MainMenuView`와 `MainMenuController`를 추가하고 `MainMenuScene`을 Build Settings 0번에 등록했다. 새 런·덮어쓰기 확인·이어하기·시작 예약 재개·종료는 기존 저장 흐름으로 연결했다. 설정 화면은 구현된 것처럼 오인되지 않도록 비활성 `SETTINGS (LATER)`로 표시했다. GF-02 이전 성공 진입은 현행 정식 런 호스트인 `StageTest`로 이동했으며, GF-02에서 목적지를 `GameScene`으로 교체했다.
+
+Unity MCP로 컴파일, 씬 유효성, 1280×720 Play Mode 화면과 전체 EditMode 798/798를 확인했다. 메뉴 화면은 기존 어두운 서부극 UI와의 범주 일치·중앙 정렬·상태 가독성을 기준으로 시각 검토했다. 외부 에셋·외부 코드·오픈소스·새 패키지·새 의존성은 추가하지 않았다.
+
+## 2026-07-31 GF-01 흐름 계약 테스트 기록
+
+이천서는 MainMenuScene 다음 단계 착수를 지시했다. AI에는 `gamescene-full-flow.md`의 단계 순서를 따르고, `GameFlowController`를 먼저 구현하지 말며, 현재 정식 도메인의 보존 계약을 순수 테스트로 고정하라는 지시를 적용했다. 최종 기획·코드·검증 책임자는 이천서다.
+
+AI는 기존 `FormalRunSession`, `StageProgressionSession`, `StageProgressionPresenter`를 직접 구동하는 `GameSceneFullFlowPresentationTests` 5개를 추가했다. 주요 검증은 시작 악마 2장 무선택 지급·공개, 공개 종료 뒤 상대 선택 자동 전환, 두 일반전과 두 상점 뒤 고정 보스, 보스 승리 후 상점 없는 RunVictory, 오래된 offer·중복 클릭 무변경 거부, 재시작 시 지급 악마 유지·재추첨 금지다. 테스트에는 `UnityEngine` 참조를 넣지 않았다.
+
+Unity MCP에서 신규 5/5와 전체 EditMode 803/803를 통과했고 Console 컴파일 오류는 0이었다. `MainMenuScene`의 누락 스크립트·깨진 프리팹도 0이었다. 런타임·씬·프리팹·Packages·외부 에셋·외부 코드·오픈소스·새 의존성은 변경하거나 추가하지 않았다.
+
+## 2026-07-31 GF-02 GameScene 단일 흐름 제어 기록
+
+이천서는 MainMenuScene 다음 구현 단계 착수를 지시했다. AI에는 `FormalRunSession`을 새로 복제하지 않고 기존 Runtime 세션을 단일 기준으로 사용하며, `GameManager`에는 화면 흐름 책임을 넣지 않고 전투 바인딩 생명주기만 추가하라는 지시를 적용했다. 최종 기획·코드·씬 승인 책임자는 이천서다.
+
+AI는 순수 `GameFlowScreenResolver`와 Unity `GameFlowController`를 추가했다. Controller는 시작 악마 공개, 상대 선택, 전투, 상점, 승리·패배 화면을 정식 도메인 상태에서 판정하고 기존 입력 API를 중계한다. `GameManager`는 정식 전투 완료 이벤트와 `BindBattle`/`UnbindBattle`을 제공하며 재바인딩 전에 coroutine, hover, 애니메이션, 손패와 덱 표시를 초기화한다. 메뉴 성공 목적지는 `StageTest`에서 `GameScene`으로 교체했다.
+
+Unity MCP로 신규 흐름 판정 2/2, GF 누적 7/7, 전체 EditMode 805/805와 `GameScene` validate 문제 0, Console 오류 0을 확인했다. Unity 저장 과정에서 발생한 무관한 RenderTexture 직렬화 변경은 결과물에서 제외하고 `GameFlowController` 추가분만 유지했다. GF-03의 시작 악마·상대 선택 실제 월드 UI는 아직 구현하지 않았다. 외부 에셋·외부 코드·오픈소스·패키지·새 의존성은 추가하지 않았다.
+
+## 2026-07-31 GF-03 시작 화면 상대 HUD 조정 기록
+
+이천서는 시작 악마 공개 화면에서 상대 표기가 노출되지 않도록 지시했다. AI에는 건너편 상인 연출은 유지하고, 상대 캐릭터나 전투 규칙을 변경하지 않으며, 씬 로드 직후 `Start()` 전 프레임부터 상대 영혼 HUD만 숨기라는 지시를 적용했다. 최종 기획·코드·화면 승인 책임자는 이천서다.
+
+AI는 `GameHudView.SetEnemyStatusVisible`을 추가하고 `GameFlowController.Awake()`에서 상대 HUD를 선제적으로 숨겼다. 통합 화면 갱신에서는 전투 화면에 진입한 경우에만 다시 표시한다. 신규 회귀 테스트 1/1과 HUD 관련 EditMode 12/12가 통과했고 컴파일 오류는 0이었다. 외부 에셋·외부 코드·오픈소스·패키지·새 의존성은 추가하지 않았다.
 

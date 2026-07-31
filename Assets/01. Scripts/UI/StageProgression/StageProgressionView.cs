@@ -7,6 +7,9 @@ namespace DiaBlackJack.StageProgression.UI
     [DisallowMultipleComponent]
     public sealed class StageProgressionView : MonoBehaviour
     {
+        private const float StartingDemonFaceDownDuration = 0.75f;
+        private const float StartingDemonRevealDuration = 1.5f;
+
         private StageProgressionViewModel _model;
         private RunSaveViewModel _saveModel;
         private GUIStyle _titleStyle;
@@ -18,6 +21,9 @@ namespace DiaBlackJack.StageProgression.UI
         private GUIStyle _selectedStyle;
         private bool _inputLocked;
         private Vector2 _shopScrollPosition;
+        private int? _activeStartingDemonGrantId;
+        private float _startingDemonRevealStartedAt;
+        private bool _startingDemonRevealCompletionRaised;
 
         public event Action StartRunRequested;
 
@@ -43,7 +49,7 @@ namespace DiaBlackJack.StageProgression.UI
 
         public event Action ResumeReservationRequested;
 
-        public event Action<int, int> StartingDemonSelected;
+        public event Action StartingDemonRevealCompleted;
 
         public event Action SaveRetryRequested;
 
@@ -62,11 +68,34 @@ namespace DiaBlackJack.StageProgression.UI
             _model = model ?? throw new ArgumentNullException(nameof(model));
             _saveModel = saveModel ??
                 throw new ArgumentNullException(nameof(saveModel));
+            SynchronizeStartingDemonReveal();
         }
 
         public void SetInputLocked(bool inputLocked)
         {
             _inputLocked = inputLocked;
+        }
+
+        private void Update()
+        {
+            if (_model == null ||
+                _saveModel == null ||
+                !_model.IsStartingDemonReveal ||
+                !_model.StartingDemonGrantId.HasValue ||
+                _startingDemonRevealCompletionRaised)
+            {
+                return;
+            }
+
+            float elapsed = Time.unscaledTime - _startingDemonRevealStartedAt;
+            if (elapsed <
+                StartingDemonFaceDownDuration + StartingDemonRevealDuration)
+            {
+                return;
+            }
+
+            _startingDemonRevealCompletionRaised = true;
+            StartingDemonRevealCompleted?.Invoke();
         }
 
         private void OnGUI()
@@ -223,9 +252,9 @@ namespace DiaBlackJack.StageProgression.UI
                 return;
             }
 
-            if (_model.CanSelectStartingDemon)
+            if (_model.IsStartingDemonReveal)
             {
-                DrawStartingDemonSelection();
+                DrawStartingDemonReveal();
                 GUI.enabled = previousEnabled;
                 return;
             }
@@ -407,43 +436,58 @@ namespace DiaBlackJack.StageProgression.UI
             return false;
         }
 
-        private void DrawStartingDemonSelection()
+        private void DrawStartingDemonReveal()
         {
-            if (!_model.StartingDemonOfferId.HasValue)
+            if (!_model.StartingDemonGrantId.HasValue)
             {
                 return;
             }
 
-            int offerId = _model.StartingDemonOfferId.Value;
+            bool isRevealed =
+                Time.unscaledTime - _startingDemonRevealStartedAt >=
+                StartingDemonFaceDownDuration;
             GUILayout.BeginHorizontal();
-            foreach (StartingDemonOptionViewModel option in
-                     _model.StartingDemonOptions)
+            foreach (StartingDemonGrantCardViewModel card in
+                     _model.StartingDemonGrantCards)
             {
                 GUILayout.BeginVertical(
                     GUI.skin.box,
                     GUILayout.MinHeight(Screen.height <= 720 ? 180f : 220f),
                     GUILayout.ExpandWidth(true));
-                GUILayout.Label(option.DisplayName, _messageStyle);
-                GUILayout.Space(6f);
-                GUILayout.Label(option.Summary, _candidateBodyStyle);
-                GUILayout.FlexibleSpace();
-                GUILayout.Label(option.CostSummary, _bodyStyle);
-                GUILayout.Space(8f);
-
-                GUI.enabled = !_inputLocked &&
-                    _model.CanSelectStartingDemon;
-                if (GUILayout.Button(
-                        "SELECT DEMON",
-                        _buttonStyle,
-                        GUILayout.Height(46f)))
+                if (isRevealed)
                 {
-                    StartingDemonSelected?.Invoke(offerId, option.OptionId);
+                    GUILayout.Label(card.DisplayName, _messageStyle);
+                    GUILayout.Space(6f);
+                    GUILayout.Label(card.Summary, _candidateBodyStyle);
+                    GUILayout.FlexibleSpace();
+                    GUILayout.Label(card.CostSummary, _bodyStyle);
+                }
+                else
+                {
+                    GUILayout.FlexibleSpace();
+                    GUILayout.Label("DEMON CARD", _messageStyle);
+                    GUILayout.FlexibleSpace();
                 }
 
                 GUILayout.EndVertical();
             }
 
             GUILayout.EndHorizontal();
+        }
+
+        private void SynchronizeStartingDemonReveal()
+        {
+            int? grantId = _model.IsStartingDemonReveal
+                ? _model.StartingDemonGrantId
+                : null;
+            if (_activeStartingDemonGrantId == grantId)
+            {
+                return;
+            }
+
+            _activeStartingDemonGrantId = grantId;
+            _startingDemonRevealStartedAt = Time.unscaledTime;
+            _startingDemonRevealCompletionRaised = false;
         }
 
         private void DrawOpponentSelection()

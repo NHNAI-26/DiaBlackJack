@@ -8,7 +8,7 @@ namespace Border.SaveLoad
 {
     internal static class RunSaveSerializer
     {
-        private const string StartingDemonSelected = "starting-demon-selected";
+        private const string StartingDemonGranted = "starting-demon-granted";
         private const string CombatSettlementCompleted = "combat-settlement-completed";
         private const string ShopExited = "shop-exited";
         private const string EventResolved = "event-resolved";
@@ -164,7 +164,8 @@ namespace Border.SaveLoad
                 currentGold = player.CurrentGold,
                 lastIssuedCardId = player.LastIssuedCardId,
                 lastIssuedDemonCardId = player.LastIssuedDemonCardId,
-                startingDemonDefinitionKey = player.StartingDemonDefinitionKey,
+                startingDemonGrantCompleted =
+                    player.StartingDemonGrantCompleted,
                 cards = ToCardEnvelopes(player.Cards),
                 demonCards = ToDemonEnvelopes(player.DemonCards)
             };
@@ -271,9 +272,7 @@ namespace Border.SaveLoad
                 envelope.currentGold,
                 envelope.lastIssuedCardId,
                 envelope.lastIssuedDemonCardId,
-                string.IsNullOrEmpty(envelope.startingDemonDefinitionKey)
-                    ? null
-                    : envelope.startingDemonDefinitionKey,
+                envelope.startingDemonGrantCompleted,
                 cards,
                 demonCards);
             return true;
@@ -334,8 +333,8 @@ namespace Border.SaveLoad
         {
             switch (checkpoint)
             {
-                case RunCheckpointKind.StartingDemonSelected:
-                    return StartingDemonSelected;
+                case RunCheckpointKind.StartingDemonGranted:
+                    return StartingDemonGranted;
                 case RunCheckpointKind.CombatSettlementCompleted:
                     return CombatSettlementCompleted;
                 case RunCheckpointKind.ShopExited:
@@ -357,8 +356,8 @@ namespace Border.SaveLoad
         {
             switch (value)
             {
-                case StartingDemonSelected:
-                    checkpoint = RunCheckpointKind.StartingDemonSelected;
+                case StartingDemonGranted:
+                    checkpoint = RunCheckpointKind.StartingDemonGranted;
                     return true;
                 case CombatSettlementCompleted:
                     checkpoint = RunCheckpointKind.CombatSettlementCompleted;

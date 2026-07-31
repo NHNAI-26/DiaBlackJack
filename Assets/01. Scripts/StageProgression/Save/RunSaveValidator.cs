@@ -24,7 +24,7 @@ namespace DiaBlackJack.StageProgression
         DuplicateDemonCardId,
         InvalidLastIssuedCardId,
         InvalidLastIssuedDemonCardId,
-        StartingDemonMissing,
+        StartingDemonGrantMissing,
         InvalidRandomState,
         InvalidCompletedContentId,
         DuplicateCompletedContentId,
@@ -192,6 +192,12 @@ namespace DiaBlackJack.StageProgression
                 return Invalid(RunSaveValidationError.InvalidGold);
             }
 
+            if (!player.StartingDemonGrantCompleted)
+            {
+                return Invalid(
+                    RunSaveValidationError.StartingDemonGrantMissing);
+            }
+
             RunSaveValidationResult result = ValidateCards(player);
             if (!result.IsValid)
             {
@@ -244,8 +250,6 @@ namespace DiaBlackJack.StageProgression
             }
 
             HashSet<int> knownIds = new HashSet<int>();
-            HashSet<string> ownedDefinitionKeys =
-                new HashSet<string>(StringComparer.Ordinal);
             int maximumId = -1;
             for (int i = 0; i < player.DemonCards.Count; i++)
             {
@@ -263,7 +267,6 @@ namespace DiaBlackJack.StageProgression
                     return Invalid(RunSaveValidationError.DuplicateDemonCardId);
                 }
 
-                ownedDefinitionKeys.Add(card.DefinitionKey);
                 maximumId = Math.Max(maximumId, card.Id);
             }
 
@@ -273,11 +276,11 @@ namespace DiaBlackJack.StageProgression
                 return Invalid(RunSaveValidationError.InvalidLastIssuedDemonCardId);
             }
 
-            if (!string.IsNullOrEmpty(player.StartingDemonDefinitionKey) &&
-                (!ContainsDemonDefinition(player.StartingDemonDefinitionKey) ||
-                 !ownedDefinitionKeys.Contains(player.StartingDemonDefinitionKey)))
+            if (player.StartingDemonGrantCompleted &&
+                player.DemonCards.Count < 2)
             {
-                return Invalid(RunSaveValidationError.StartingDemonMissing);
+                return Invalid(
+                    RunSaveValidationError.StartingDemonGrantMissing);
             }
 
             return RunSaveValidationResult.Valid();
@@ -334,11 +337,15 @@ namespace DiaBlackJack.StageProgression
             bool valid;
             switch (snapshot.CheckpointKind)
             {
-                case RunCheckpointKind.StartingDemonSelected:
+                case RunCheckpointKind.StartingDemonGranted:
                     valid = snapshot.Status == RunSaveStatus.InProgress &&
                         snapshot.CurrentStageIndex == 0 &&
-                        !string.IsNullOrEmpty(
-                            snapshot.Player.StartingDemonDefinitionKey) &&
+                        snapshot.Player.StartingDemonGrantCompleted &&
+                        snapshot.Player.DemonCards.Count == 2 &&
+                        !string.Equals(
+                            snapshot.Player.DemonCards[0].DefinitionKey,
+                            snapshot.Player.DemonCards[1].DefinitionKey,
+                            StringComparison.Ordinal) &&
                         snapshot.Random.OpponentOfferOrdinal == 0 &&
                         snapshot.Random.BattleRewardOrdinal == 0 &&
                         snapshot.Random.ShopOfferOrdinal == 0 &&

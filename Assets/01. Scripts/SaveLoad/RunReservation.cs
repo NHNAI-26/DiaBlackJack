@@ -7,14 +7,14 @@ namespace Border.SaveLoad
 {
     public sealed class RunReservation
     {
-        public const int CurrentVersion = 1;
+        public const int CurrentVersion = 2;
 
         private readonly ReadOnlyCollection<string> _startingDemonDefinitionKeys;
 
         public RunReservation(
             string runId,
             int rootSeed,
-            int startingDemonOfferId,
+            int startingDemonGrantId,
             IEnumerable<string> startingDemonDefinitionKeys,
             string createdAtUtc)
         {
@@ -25,10 +25,10 @@ namespace Border.SaveLoad
                     nameof(runId));
             }
 
-            if (startingDemonOfferId < 0)
+            if (startingDemonGrantId < 0)
             {
                 throw new ArgumentOutOfRangeException(
-                    nameof(startingDemonOfferId));
+                    nameof(startingDemonGrantId));
             }
 
             if (startingDemonDefinitionKeys == null)
@@ -62,7 +62,7 @@ namespace Border.SaveLoad
             Version = CurrentVersion;
             RunId = runId;
             RootSeed = rootSeed;
-            StartingDemonOfferId = startingDemonOfferId;
+            StartingDemonGrantId = startingDemonGrantId;
             _startingDemonDefinitionKeys = keys.AsReadOnly();
             CreatedAtUtc = createdAtUtc;
         }
@@ -76,7 +76,7 @@ namespace Border.SaveLoad
         public IReadOnlyList<string> StartingDemonDefinitionKeys =>
             _startingDemonDefinitionKeys;
 
-        public int StartingDemonOfferId { get; }
+        public int StartingDemonGrantId { get; }
 
         public int Version { get; }
     }
