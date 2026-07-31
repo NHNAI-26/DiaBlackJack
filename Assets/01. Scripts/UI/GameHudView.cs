@@ -338,14 +338,18 @@ namespace DiaBlackJack.GameScene
                 combatControlsRoot.SetActive(true);
             }
 
+            bool isDiegeticSelection =
+                combat.Mode == GameSceneCombatHudMode.DiegeticSelection;
             SetActive(actionRow, combat.Mode == GameSceneCombatHudMode.Actions);
             SetActive(
                 optionPanel,
                 combat.Mode == GameSceneCombatHudMode.Options ||
+                isDiegeticSelection ||
                 combat.Mode == GameSceneCombatHudMode.ReturningToRun ||
                 combat.Mode == GameSceneCombatHudMode.Restart ||
                 (combat.Mode == GameSceneCombatHudMode.Actions &&
                  combat.OptionActions.Count > 0));
+            SetOptionPanelChromeVisible(!isDiegeticSelection);
             SetActive(
                 contractDetailPanel,
                 false);
@@ -373,6 +377,20 @@ namespace DiaBlackJack.GameScene
 
             RenderPrimaryActions(Array.Empty<GameSceneCombatHudActionViewModel>());
             RenderOptionActions(combat.Prompt, combat.OptionActions);
+        }
+
+        private void SetOptionPanelChromeVisible(bool isVisible)
+        {
+            if (optionPanel != null &&
+                optionPanel.TryGetComponent(out Graphic background))
+            {
+                background.enabled = isVisible;
+            }
+
+            if (optionScrollRect != null)
+            {
+                optionScrollRect.gameObject.SetActive(isVisible);
+            }
         }
 
         private void RenderPrimaryActions(

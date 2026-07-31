@@ -66,6 +66,23 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CUV06_U01_HammerAndRevolverPresentationHideCombatHud()
+        {
+            CoreLoopBattle battle = CreateStartedBattle(10, 2, 4, 9);
+
+            GameSceneCombatHudViewModel model = GameSceneCombatHudPresenter.Create(
+                CoreLoopPresenter.Create(battle),
+                isStageBattle: false,
+                isShopOpen: false,
+                inputLocked: true,
+                hideForPresentation: true);
+
+            Assert.That(model.Mode, Is.EqualTo(GameSceneCombatHudMode.Hidden));
+            Assert.That(model.PrimaryActions, Is.Empty);
+            Assert.That(model.OptionActions, Is.Empty);
+        }
+
+        [Test]
         public void GSH01_U02_ChangeCandidatesKeepActualCandidateIndicesAndRespectInputLock()
         {
             CoreLoopBattle battle = CreateStartedBattle(10, 2, 4, 9);
@@ -218,7 +235,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CUM09_U02_HammerKeepsPromptButRemovesHudChoiceButtons()
+        public void CUM09_U02_HammerKeepsPromptWithoutBlackOptionPanel()
         {
             CoreLoopBattle battle = CreateStartedHammerBattle();
             BlackjackCard hammer = battle.Player.Draw(faceUp: true);
@@ -232,9 +249,39 @@ namespace DiaBlackJack.CoreLoop.Tests
                 inputLocked: false,
                 scene.UsesDiegeticCardEffectSelection);
 
-            Assert.That(hud.Mode, Is.EqualTo(GameSceneCombatHudMode.Options));
+            Assert.That(
+                hud.Mode,
+                Is.EqualTo(GameSceneCombatHudMode.DiegeticSelection));
             Assert.That(hud.Prompt, Is.EqualTo(scene.Core.CardEffectPrompt));
             Assert.That(hud.OptionActions, Is.Empty);
+
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                GameHudView view = instance.GetComponent<GameHudView>();
+                view.Render(scene.Core, hud);
+
+                SerializedObject serialized = new SerializedObject(view);
+                GameObject optionPanel = serialized.FindProperty("optionPanel")
+                    .objectReferenceValue as GameObject;
+                ScrollRect optionScroll = serialized.FindProperty("optionScrollRect")
+                    .objectReferenceValue as ScrollRect;
+                Component prompt = serialized.FindProperty("combatPromptText")
+                    .objectReferenceValue as Component;
+
+                Assert.That(optionPanel, Is.Not.Null);
+                Assert.That(optionPanel.activeSelf, Is.True);
+                Assert.That(optionPanel.GetComponent<Graphic>().enabled, Is.False);
+                Assert.That(optionScroll, Is.Not.Null);
+                Assert.That(optionScroll.gameObject.activeSelf, Is.False);
+                Assert.That(prompt, Is.Not.Null);
+                Assert.That(prompt.gameObject.activeInHierarchy, Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
         }
 
         [Test]

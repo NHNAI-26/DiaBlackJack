@@ -19,6 +19,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             Shader.PropertyToID("_CardBlendAmount");
         private static readonly int CardBlendUvRectId =
             Shader.PropertyToID("_CardBlendUVRect");
+        private static readonly int PixelOutlineVisibilityId =
+            Shader.PropertyToID("_PixelOutlineVisibility");
 
         private const string CardPrefabPath = "Assets/03. Prefabs/Card/Card.prefab";
         private const string DemonCardPrefabPath =
@@ -458,6 +460,113 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GSV03_U01_ShopNormalCardHoverMaterialIsIsolatedPerOffer()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            var instances = new GameObject[3];
+            try
+            {
+                var views = new CardView[instances.Length];
+                var renderers = new SpriteRenderer[instances.Length];
+                for (int i = 0; i < instances.Length; i++)
+                {
+                    instances[i] = Object.Instantiate(prefab);
+                    views[i] = instances[i].GetComponent<CardView>();
+                    views[i].SetShopPresentation();
+                    views[i].Bind(new GameSceneCardViewModel(
+                        i,
+                        rank: i + 1,
+                        isFaceUp: true,
+                        revealRank: true,
+                        canUse: true,
+                        displayName: "SHOP",
+                        definitionKey:
+                            CardDefinitionCatalog.GetDefaultForRank(i + 1).Key));
+                    renderers[i] = GetFrontRenderer(views[i]);
+                }
+
+                Assert.That(renderers[0].sharedMaterial,
+                    Is.Not.SameAs(renderers[1].sharedMaterial));
+                Assert.That(renderers[1].sharedMaterial,
+                    Is.Not.SameAs(renderers[2].sharedMaterial));
+
+                views[1].SetHovered(true);
+                var properties = new MaterialPropertyBlock();
+                renderers[0].GetPropertyBlock(properties);
+                Assert.That(properties.GetFloat(PixelOutlineVisibilityId), Is.Zero);
+                renderers[1].GetPropertyBlock(properties);
+                Assert.That(properties.GetFloat(PixelOutlineVisibilityId), Is.EqualTo(1f));
+                renderers[2].GetPropertyBlock(properties);
+                Assert.That(properties.GetFloat(PixelOutlineVisibilityId), Is.Zero);
+            }
+            finally
+            {
+                foreach (GameObject instance in instances)
+                {
+                    Object.DestroyImmediate(instance);
+                }
+            }
+        }
+
+        [Test]
+        public void GSV03_U02_ShopDemonCardUsesBrightUnlitMaterialInstance()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(DemonCardPrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                DemonCardView view = instance.GetComponent<DemonCardView>();
+                SpriteRenderer renderer = GetDemonFrontRenderer(view);
+                Material source = renderer.sharedMaterial;
+
+                view.SetShopPresentation();
+
+                Assert.That(renderer.sharedMaterial, Is.Not.SameAs(source));
+                Assert.That(renderer.sharedMaterial.IsKeywordEnabled("_UNLIT_ON"),
+                    Is.True);
+                Assert.That(renderer.sharedMaterial.GetFloat("_LightingMode"),
+                    Is.EqualTo(1f));
+                Assert.That(renderer.sharedMaterial.GetFloat("_Brightness"),
+                    Is.EqualTo(1f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSV03_U03_InactiveDeckStackSkipsAnimationCoroutine()
+        {
+            var gameObject = new GameObject("Inactive Deck Stack");
+            try
+            {
+                DeckStackView view = gameObject.AddComponent<DeckStackView>();
+                SetPrivateField(view, "_displayedCardCount", 5);
+                SetPrivateField(view, "_targetCardCount", 4);
+                gameObject.SetActive(false);
+
+                MethodInfo enqueue = typeof(DeckStackView).GetMethod(
+                    "EnqueueAnimations",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(enqueue, Is.Not.Null);
+                enqueue.Invoke(view, new object[] { -1 });
+
+                Assert.That(
+                    GetPrivateField<int>(view, "_displayedCardCount"),
+                    Is.EqualTo(4));
+                Assert.That(
+                    GetPrivateField<object>(view, "_animationQueueRoutine"),
+                    Is.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+            }
+        }
+
+        [Test]
         public void CUM10_U04_CardViewClearsUsedMarkAcrossRebindAndReactivation()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
@@ -573,6 +682,17 @@ namespace DiaBlackJack.CoreLoop.Tests
         private static SpriteRenderer GetBackRenderer(CardView view)
         {
             return GetRenderer(view, "back");
+        }
+
+        private static SpriteRenderer GetDemonFrontRenderer(DemonCardView view)
+        {
+            SerializedObject serialized = new SerializedObject(view);
+            GameObject face = serialized.FindProperty("front")
+                .objectReferenceValue as GameObject;
+            Assert.That(face, Is.Not.Null);
+            SpriteRenderer renderer = face.GetComponent<SpriteRenderer>();
+            Assert.That(renderer, Is.Not.Null);
+            return renderer;
         }
 
         private static SpriteRenderer GetUsedMarkStroke(
