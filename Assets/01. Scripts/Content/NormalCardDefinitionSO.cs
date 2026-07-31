@@ -47,9 +47,10 @@ namespace DiaBlackJack.Content
 
         internal void ValidateOrThrow()
         {
+            bool requiresDescription = effect != CardEffectKind.None;
             if (string.IsNullOrWhiteSpace(key) ||
                 string.IsNullOrWhiteSpace(displayName) ||
-                string.IsNullOrWhiteSpace(description) ||
+                (requiresDescription && string.IsNullOrWhiteSpace(description)) ||
                 rank < 1 || rank > 10 ||
                 basePurchasePrice < 0 ||
                 shopWeight <= 0 ||

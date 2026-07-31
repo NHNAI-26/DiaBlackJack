@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.DemonCardDefinitionSO
   key: leviathan
   displayName: 레비아탄
-  activeEffectDescription: 리볼버 첫 예측 실패 시 한 번 더 예측한다.
-  costDescription: 계약 시 영혼 1, 두 예측 모두 실패 시 영혼 1
+  activeEffectDescription: 리볼버의 첫 예측이 실패하면 한 번 더 예측할 수 있습니다.
+  costDescription: 두 예측이 모두 실패하면 영혼 1을 잃습니다.
   codexLoreDescription: 실패한 예측마저 집요하게 삼키는 심연의 악마. 두 번째 기회 뒤에는 반드시 대가가 남는다.
   baseSoulCost: 1
   basePurchasePrice: 3

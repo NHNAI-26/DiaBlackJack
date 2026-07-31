@@ -14,8 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
   key: threat-hammer-6
   displayName: "\uC704\uD611\uC6A9 \uD574\uBA38"
-  description: "\uC801 \uACF5\uAC1C \uCE74\uB4DC 1\uC7A5 \uC81C\uAC70; \uC2A4\uD0E0\uB4DC\uBA74
-    \uBE44\uACF5\uAC1C \uAD50\uCCB4"
+  description: 상대 공개 카드 1장을 버립니다. 상대가 스탠드했다면 스탠드를 취소하고 비공개 카드도 교체합니다.
   basePurchasePrice: 3
   shopWeight: 1
   rank: 6

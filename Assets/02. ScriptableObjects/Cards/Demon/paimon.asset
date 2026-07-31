@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.DemonCardDefinitionSO
   key: paimon
   displayName: 파이몬
-  activeEffectDescription: 상대 버스트 뒤 선택한 덱 위 카드 한 장을 전투 동안 추방한다.
-  costDescription: 계약 시 영혼 1, 라운드 승리 합계 18 이하면 버스트
+  activeEffectDescription: 상대가 버스트하면 상대 덱 위 카드 2장을 보고 1장을 이번 전투에서 추방할 수 있습니다.
+  costDescription: 승리한 라운드의 합계가 18 이하라면 자신이 버스트합니다.
   codexLoreDescription: 승리 뒤 남은 가능성까지 거두는 지옥의 군주. 그의 명령을 받은 카드는 한동안 덱에서 자취를 감춘다.
   baseSoulCost: 1
   basePurchasePrice: 3

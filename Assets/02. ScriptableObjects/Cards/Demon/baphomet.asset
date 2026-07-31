@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.DemonCardDefinitionSO
   key: baphomet
   displayName: 바포메트
-  activeEffectDescription: 양쪽 덱에 전투 한정 오망성을 섞고 소진된 쪽을 버스트시킨다.
-  costDescription: 계약 시 영혼 1, 자신의 오망성 3장 소진 시 자신 버스트
-  codexLoreDescription: 서로의 덱에 같은 저주를 새기는 검은 의식의 주인. 먼저 표식을 소진한 자가 제물이 된다.
+  activeEffectDescription: 상대 덱에 오망성 5장을 섞습니다. 상대 오망성이 모두 소진되면 상대를 버스트시킵니다.
+  costDescription: 자신의 덱에도 오망성 3장이 섞입니다. 모두 소진되면 자신이 버스트합니다.
+  codexLoreDescription: 서로의 덱에 저주를 새기는 검은 의식의 주인. 먼저 표식을 소진한 자가 제물이 된다.
   baseSoulCost: 1
   basePurchasePrice: 3
   shopWeight: 1

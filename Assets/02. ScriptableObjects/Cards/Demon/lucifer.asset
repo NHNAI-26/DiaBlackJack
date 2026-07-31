@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.DemonCardDefinitionSO
   key: lucifer
   displayName: 루시퍼
-  activeEffectDescription: 현재 악마 덱의 후보 중 하나와 추가로 계약할 수 있다.
-  costDescription: 계약 시 영혼 1, 개별 대가 영혼 1과 선택한 악마의 대가
+  activeEffectDescription: 악마 덱에서 제시된 카드 1장과 추가로 계약합니다.
+  costDescription: 영혼 1을 추가로 잃고, 선택한 악마의 대가도 적용됩니다.
   codexLoreDescription: 가장 빛나는 약속으로 더 깊은 계약을 권하는 타락한 별. 그의 손을 잡으면 또 다른 악마의 문이 열린다.
   baseSoulCost: 1
   basePurchasePrice: 3

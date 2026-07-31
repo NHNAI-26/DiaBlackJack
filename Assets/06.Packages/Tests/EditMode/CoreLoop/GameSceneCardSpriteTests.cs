@@ -40,7 +40,14 @@ namespace DiaBlackJack.CoreLoop.Tests
             foreach (CardDefinition definition in catalog.NormalDefinitions)
             {
                 Assert.That(definition.DisplayName, Is.Not.Empty, definition.Key);
-                Assert.That(definition.Description, Is.Not.Empty, definition.Key);
+                bool isEffectlessPlainCard =
+                    definition.Key == "standard-plain-2" ||
+                    definition.Key == "standard-plain-3" ||
+                    definition.Key == "standard-plain-4";
+                Assert.That(
+                    definition.Description,
+                    isEffectlessPlainCard ? Is.Empty : Is.Not.Empty,
+                    definition.Key);
                 Assert.That(definition.BasePurchasePrice, Is.EqualTo(3), definition.Key);
                 Assert.That(definition.ShopWeight, Is.EqualTo(1), definition.Key);
             }

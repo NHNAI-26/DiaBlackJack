@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
   key: military-knife-10
   displayName: 보위 나이프
-  description: 적에게 공개카드 1장 강제로 뽑게 함
+  description: 공개 합이 16 이하인 상대에게 히트를 강제합니다. 버스트하지 않으면 뽑은 카드를 버립니다.
   basePurchasePrice: 3
   shopWeight: 1
   rank: 10
