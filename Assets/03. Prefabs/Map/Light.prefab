@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2863520258845733180}
   - component: {fileID: 1240489430824712581}
   m_Layer: 0
-  m_Name: Point Light (1)
+  m_Name: EnteranceLight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5575,7 +5575,7 @@ GameObject:
   - component: {fileID: 5646797129048140786}
   - component: {fileID: 5276204458694102829}
   m_Layer: 0
-  m_Name: Point Light
+  m_Name: MainLight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5702,7 +5702,7 @@ GameObject:
   - component: {fileID: 628379837999885251}
   - component: {fileID: 8509273819712378398}
   m_Layer: 0
-  m_Name: Point Light (2)
+  m_Name: EnemyLight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

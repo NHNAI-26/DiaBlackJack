@@ -22,7 +22,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/TableObjects/Table Controller.prefab";
 
         [Test]
-        public void GSH01_U01_PlayerTurnProjectsFourFixedActionsAndDynamicTooltips()
+        public void GSH01_U01_PlayerTurnProjectsThreeButtonsAndTableContractEntry()
         {
             CoreLoopBattle battle = CreateStartedBattle(10, 2, 4, 9);
 
@@ -38,17 +38,100 @@ namespace DiaBlackJack.CoreLoop.Tests
             {
                 GameSceneCombatHudCommandKind.Hit,
                 GameSceneCombatHudCommandKind.Stand,
-                GameSceneCombatHudCommandKind.BeginChange,
-                GameSceneCombatHudCommandKind.BeginContract
+                GameSceneCombatHudCommandKind.BeginChange
             }));
-            Assert.That(model.PrimaryActions.Take(3).All(action => action.IsInteractable),
+            Assert.That(model.PrimaryActions.All(action => action.IsInteractable),
                 Is.True);
-            Assert.That(model.PrimaryActions[3].IsInteractable,
-                Is.EqualTo(core.DemonContract.CanBegin));
             Assert.That(model.PrimaryActions[2].Label, Is.EqualTo("CHANGE -0"));
             Assert.That(model.PrimaryActions[2].Tooltip, Does.Contain(core.ChangeActionText));
-            Assert.That(model.PrimaryActions[3].Tooltip,
-                Does.Contain(core.DemonContract.ActionText));
+            Assert.That(model.PrimaryActions.Any(action =>
+                action.Command.Kind == GameSceneCombatHudCommandKind.BeginContract),
+                Is.False);
+        }
+
+        [Test]
+        public void DCUI01_U01_PlayerPaperStaysUntilContractChoiceCommits()
+        {
+            CoreLoopBattle battle = CreateStartedContractBattle(
+                DemonContractKind.Belphegor,
+                DemonContractKind.Mammon);
+
+            ContractPaperViewModel initial = ContractPaperPresenter.Create(battle);
+            Assert.That(initial.VisibleCount, Is.EqualTo(2));
+            Assert.That(initial.CanPlayerBegin, Is.True);
+
+            Assert.That(battle.TryBeginPlayerDemonContract(), Is.True);
+            ContractPaperViewModel choosing = ContractPaperPresenter.Create(battle);
+            Assert.That(choosing.VisibleCount, Is.EqualTo(2));
+            Assert.That(choosing.CanPlayerBegin, Is.False);
+
+            PendingDemonContractInteraction pending =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(
+                battle.TryResolvePlayerDemonContract(
+                    pending.InteractionId,
+                    pending.Options[0].OptionId),
+                Is.True);
+
+            ContractPaperViewModel committed = ContractPaperPresenter.Create(battle);
+            Assert.That(committed.VisibleCount, Is.EqualTo(1));
+            Assert.That(committed.CanPlayerBegin, Is.False);
+        }
+
+        [Test]
+        public void DCUI01_U02_EnemyContractAutomaticallyConsumesOnePaper()
+        {
+            CoreLoopBattle battle = CreateEnemyContractBattle();
+
+            Assert.That(ContractPaperPresenter.Create(battle).VisibleCount,
+                Is.EqualTo(2));
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(battle.UsedEnemyBaseDemonContractCount, Is.EqualTo(1));
+            Assert.That(ContractPaperPresenter.Create(battle).VisibleCount,
+                Is.EqualTo(1));
+        }
+
+        [Test]
+        public void DCUI01_U03_ViewShowsExactPaperCountAndClickability()
+        {
+            var root = new GameObject("ContractPapers");
+            try
+            {
+                ContractPaperView view = root.AddComponent<ContractPaperView>();
+                ContractPaperClickable first = CreateContractPaper(root, "PaperA");
+                ContractPaperClickable second = CreateContractPaper(root, "PaperB");
+
+                view.Render(new ContractPaperViewModel(2, true));
+                Assert.That(view.HasRequiredReferences, Is.True);
+                Assert.That(view.VisibleCount, Is.EqualTo(2));
+                Assert.That(first.gameObject.activeSelf, Is.True);
+                Assert.That(second.gameObject.activeSelf, Is.True);
+                Assert.That(first.IsInteractable, Is.True);
+                Assert.That(second.IsInteractable, Is.True);
+
+                view.Render(new ContractPaperViewModel(1, false));
+                Assert.That(view.VisibleCount, Is.EqualTo(1));
+                Assert.That(first.gameObject.activeSelf, Is.True);
+                Assert.That(second.gameObject.activeSelf, Is.False);
+                Assert.That(first.IsInteractable, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void DCUI01_U04_NonCombatHidesBothPapers()
+        {
+            CoreLoopBattle battle = CreateStartedBattle(10, 2, 4, 9);
+
+            ContractPaperViewModel model = ContractPaperPresenter.Create(
+                battle,
+                isCombatVisible: false);
+
+            Assert.That(model.VisibleCount, Is.Zero);
+            Assert.That(model.CanPlayerBegin, Is.False);
         }
 
         [Test]
@@ -640,6 +723,44 @@ namespace DiaBlackJack.CoreLoop.Tests
                 playerDemonDeck: new DemonContractDeck(cards, seed: 73));
             Assert.That(battle.Start(), Is.True);
             return battle;
+        }
+
+        private static CoreLoopBattle CreateEnemyContractBattle()
+        {
+            DemonContractDefinition definition = DemonContractCatalog.Default
+                .GetByKey(DemonContractCatalog.BelphegorKey);
+            var enemyContracts = new List<DemonContractCard>();
+            for (int i = 0; i < 4; i++)
+            {
+                enemyContracts.Add(new DemonContractCard(1000 + i, definition));
+            }
+
+            var battle = new CoreLoopBattle(
+                BlackjackDeck.CreateInDrawOrder(CreateCards(
+                    0, 2, 2, 2, 2, 2, 2, 2, 2)),
+                BlackjackDeck.CreateInDrawOrder(CreateCards(
+                    100, 10, 2, 2, 2, 2, 2, 2, 2)),
+                playerMaximumSoul: 12,
+                playerCurrentSoul: 12,
+                enemyMaximumSoul: 3,
+                enemyPolicy: new CultistEnemyPolicy(),
+                cardEffectResolver: CardEffectResolver.CreateDefault(),
+                playerDemonDeck: new DemonContractDeck(
+                    System.Array.Empty<DemonContractCard>(),
+                    seed: 0),
+                demonContractResolver: DemonContractResolver.CreateDefault(),
+                enemyDemonDeck: new DemonContractDeck(enemyContracts, seed: 17));
+            Assert.That(battle.Start(), Is.True);
+            return battle;
+        }
+
+        private static ContractPaperClickable CreateContractPaper(
+            GameObject parent,
+            string name)
+        {
+            var paper = new GameObject(name);
+            paper.transform.SetParent(parent.transform, false);
+            return paper.AddComponent<ContractPaperClickable>();
         }
 
         private static IReadOnlyList<BlackjackCard> CreateCards(

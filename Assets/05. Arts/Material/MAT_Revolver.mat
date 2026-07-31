@@ -12,8 +12,8 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - _DISSOLVE_OBJECT_SPACE
   - _DISSOLVE_ON
-  - _METALLICMAP
   - _NORMALMAP
   - _SMOOTHNESSMAP
   m_InvalidKeywords: []
@@ -108,7 +108,7 @@ Material:
     - _Blend: 0
     - _BlendModePreserveSpecular: 1
     - _Brightness: 0.948
-    - _BumpScale: 1
+    - _BumpScale: 0.5
     - _CastShadows: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
@@ -117,12 +117,18 @@ Material:
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
-    - _DissolveAmount: 0
+    - _DissolveAmount: 1
     - _DissolveEdgeIntensity: 4.01
-    - _DissolveEdgeWidth: 0.148
+    - _DissolveEdgeWidth: 0.089
     - _DissolveEnabled: 1
-    - _DissolveMaxOffset: -0.515
-    - _DissolveMinOffset: -0.102
+    - _DissolveMaxOffset: 0
+    - _DissolveMinOffset: 0
+    - _DissolveObjectAxis: 2
+    - _DissolveObjectMax: 0.58
+    - _DissolveObjectMin: -0.48
+    - _DissolveObjectNoiseScale: 5
+    - _DissolveObjectNoiseStrength: 0.739
+    - _DissolveSpace: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EmissionEnabled: 0
@@ -135,11 +141,12 @@ Material:
     - _GlossyReflections: 0
     - _HeightFadeEnabled: 0
     - _HeightFadeLower: 0
+    - _HeightFadeOffset: 0
     - _HeightFadeUpper: 1
     - _HueShift: 16
     - _MaskMapEnabled: 0
     - _Metallic: 1
-    - _MetallicMapEnabled: 1
+    - _MetallicMapEnabled: 0
     - _NormalMapEnabled: 1
     - _OcclusionMapEnabled: 0
     - _OcclusionStrength: 1

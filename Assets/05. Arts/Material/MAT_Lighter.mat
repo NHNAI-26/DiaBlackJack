@@ -26,9 +26,11 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _ALPHATEST_ON
+  - _DISSOLVE_OBJECT_SPACE
   - _DISSOLVE_ON
   - _METALLICMAP
   - _NORMALMAP
+  - _RIM_ON
   - _SMOOTHNESSMAP
   m_InvalidKeywords: []
   m_LightmapFlags: 4
@@ -128,18 +130,18 @@ Material:
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DissolveAmount: 0
-    - _DissolveEdgeIntensity: 1
-    - _DissolveEdgeWidth: 0.171
+    - _DissolveEdgeIntensity: 1.83
+    - _DissolveEdgeWidth: 0.023
     - _DissolveEnabled: 1
-    - _DissolveMaxOffset: 0.11
-    - _DissolveMinOffset: -0.37
+    - _DissolveMaxOffset: -0.087
+    - _DissolveMinOffset: 0.557
     - _DissolveObjectAxis: 1
-    - _DissolveObjectMax: 1
-    - _DissolveObjectMin: 0
+    - _DissolveObjectMax: 1.22
+    - _DissolveObjectMin: -1.96
     - _DissolveObjectNoisePlane: 0
-    - _DissolveObjectNoiseScale: 0.1
-    - _DissolveObjectNoiseStrength: 0
-    - _DissolveSpace: 0
+    - _DissolveObjectNoiseScale: 9.5
+    - _DissolveObjectNoiseStrength: 0.374
+    - _DissolveSpace: 1
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EmissionEnabled: 0
@@ -163,9 +165,9 @@ Material:
     - _Parallax: 0.005
     - _QueueOffset: 0
     - _ReceiveShadows: 1
-    - _RimEnabled: 0
-    - _RimIntensity: 1
-    - _RimPower: 4
+    - _RimEnabled: 1
+    - _RimIntensity: 0
+    - _RimPower: 4.9
     - _Saturation: 1
     - _Smoothness: 0.71
     - _SmoothnessMapEnabled: 1
@@ -182,13 +184,13 @@ Material:
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _DissolveEdgeColor: {r: 0.8452529, g: 0, b: 15.999998, a: 1}
+    - _DissolveEdgeColor: {r: 0.16208647, g: 0, b: 15.999998, a: 1}
     - _DissolvePanning: {r: 0, g: 0, b: 0, a: 0}
     - _DissolveTilingOffset: {r: 1, g: 1, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _GlassGlowColor: {r: 1, g: 1, b: 1, a: 1}
     - _HeightFadeTint: {r: 0.24999997, g: 0.24999997, b: 0.24999997, a: 1}
-    - _RimColor: {r: 1, g: 1, b: 1, a: 1}
+    - _RimColor: {r: 1, g: 0.5668886, b: 0, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

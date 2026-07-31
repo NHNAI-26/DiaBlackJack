@@ -176,43 +176,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2369347f84f7d8a4db4f8f2ef318518c, type: 3}
---- !u!84 &6217996
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 6
-  m_Width: 256
-  m_Height: 256
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthStencilFormat: 0
-  m_ColorFormat: 48
-  m_MipMap: 0
-  m_GenerateMips: 1
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_UseDynamicScaleExplicit: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_EnableRandomWrite: 0
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 1
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 1
-    m_WrapV: 1
-    m_WrapW: 1
-  m_Dimension: 2
-  m_VolumeDepth: 1
-  m_ShadowSamplingMode: 2
 --- !u!4 &23983055 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4860051542155709582, guid: 7d62b942c9741004ca3c67b32166eabd, type: 3}
@@ -237,7 +200,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1446267767095836390, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
   m_PrefabInstance: {fileID: 2282612047558951031}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 2282612047558951032}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c1ad97d614a4de2488bc09afff1f0914, type: 3}
@@ -447,48 +410,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 90a0aeee76d81b74c9152d5874e7a680, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CodexOverlayView
+--- !u!23 &90313060 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 5614914716927812471, guid: f7a5319eafd7a4845a4e15e9dcd32639, type: 3}
+  m_PrefabInstance: {fileID: 3715254595802159084}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &136515594 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2720131932502202630, guid: 2dc4c65b347e4d24e86a18dbf1a42fdc, type: 3}
   m_PrefabInstance: {fileID: 8456889837428209980}
   m_PrefabAsset: {fileID: 0}
---- !u!84 &163083814
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 6
-  m_Width: 256
-  m_Height: 256
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthStencilFormat: 90
-  m_ColorFormat: 0
-  m_MipMap: 0
-  m_GenerateMips: 1
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_UseDynamicScaleExplicit: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_EnableRandomWrite: 0
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 1
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 1
-    m_WrapV: 1
-    m_WrapW: 1
-  m_Dimension: 2
-  m_VolumeDepth: 1
-  m_ShadowSamplingMode: 2
 --- !u!1 &180139000
 GameObject:
   m_ObjectHideFlags: 0
@@ -525,6 +456,11 @@ Transform:
   - {fileID: 875427324}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!23 &303449829 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 821350276992281384, guid: f7a5319eafd7a4845a4e15e9dcd32639, type: 3}
+  m_PrefabInstance: {fileID: 3715254595802159084}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &348805893
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -622,6 +558,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 013d3716c746b894fa03971b7009c867, type: 3}
+--- !u!108 &356386089 stripped
+Light:
+  m_CorrespondingSourceObject: {fileID: 2863520258845733180, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
+  m_PrefabInstance: {fileID: 6219715712046308512}
+  m_PrefabAsset: {fileID: 0}
 --- !u!21 &365861506
 Material:
   serializedVersion: 8
@@ -671,11 +612,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ShadowTexture:
-        m_Texture: {fileID: 163083814}
+        m_Texture: {fileID: 867162432}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TranslucencyTexture:
-        m_Texture: {fileID: 6217996}
+        m_Texture: {fileID: 1781363993}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
@@ -713,7 +654,7 @@ Material:
     - _ShadowColor: {r: 0, g: 0, b: 0, a: 1}
     - _ShadowIntensity: {r: 0.9, g: 0.100000024, b: 0, a: 0}
     - _ToLightDir: {r: -0, g: 0.012133064, b: -0.9999264, a: 0}
-    - _WindDirection: {r: 1.3689541, g: 0.91263604, b: 0, a: 38.318108}
+    - _WindDirection: {r: 4.2720437, g: 2.8480277, b: 0, a: 203.95122}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &412777436
@@ -899,6 +840,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31b40e4169a2a274d8f9387cfc8c5c5e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.DeckPreviewView
+--- !u!108 &639492092 stripped
+Light:
+  m_CorrespondingSourceObject: {fileID: 8682191473313590363, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
+  m_PrefabInstance: {fileID: 6219715712046308512}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &655486814
 GameObject:
   m_ObjectHideFlags: 0
@@ -970,6 +916,168 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4319304712395305500, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
   m_PrefabInstance: {fileID: 5351625620046191537}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &860107375
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 860107376}
+  - component: {fileID: 860107380}
+  - component: {fileID: 860107379}
+  - component: {fileID: 860107378}
+  - component: {fileID: 860107377}
+  m_Layer: 0
+  m_Name: ContractPaperB
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &860107376
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 860107375}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.018509867, y: 0.7068645, z: -0.7068645, w: 0.018509867}
+  m_LocalPosition: {x: 0.28, y: 0.19122362, z: 0.3}
+  m_LocalScale: {x: 0.45000002, y: 0.6, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2282612047558951034}
+  m_LocalEulerAnglesHint: {x: 90, y: -180, z: 0}
+--- !u!114 &860107377
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 860107375}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8432ce450375e82479365bcb47106293, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ContractPaperClickable
+--- !u!65 &860107378
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 860107375}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.0000001, y: 1, z: 0.1}
+  m_Center: {x: 0.00000023841858, y: 0.0000019073486, z: 0}
+--- !u!23 &860107379
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 860107375}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 94d0f7e6e37254d4c91e7c9bb681164c, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &860107380
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 860107375}
+  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!84 &867162432
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 6
+  m_Width: 256
+  m_Height: 256
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthStencilFormat: 90
+  m_ColorFormat: 0
+  m_MipMap: 0
+  m_GenerateMips: 1
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_UseDynamicScaleExplicit: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_EnableRandomWrite: 0
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 1
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 1
+    m_WrapV: 1
+    m_WrapW: 1
+  m_Dimension: 2
+  m_VolumeDepth: 1
+  m_ShadowSamplingMode: 2
 --- !u!4 &875427324 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8410551936053609975, guid: 2369347f84f7d8a4db4f8f2ef318518c, type: 3}
@@ -994,7 +1102,12 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2746152154942036010, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
   m_PrefabInstance: {fileID: 6219715712046308512}
   m_PrefabAsset: {fileID: 0}
---- !u!84 &1047242860
+--- !u!23 &991685244 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1944934686059169068, guid: f7a5319eafd7a4845a4e15e9dcd32639, type: 3}
+  m_PrefabInstance: {fileID: 3715254595802159084}
+  m_PrefabAsset: {fileID: 0}
+--- !u!84 &1080518271
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1896,6 +2009,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f746bc8e2a7667549b97d4f9ef49c116, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CardHand
+--- !u!108 &1570019867 stripped
+Light:
+  m_CorrespondingSourceObject: {fileID: 628379837999885251, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
+  m_PrefabInstance: {fileID: 6219715712046308512}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &1574224341 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4014645466415016335, guid: f8e9c9a73980e4b41a4a529a07ebeec6, type: 3}
@@ -1928,6 +2046,43 @@ PhysicsMaterial:
   m_Bounciness: 0
   m_FrictionCombine: 0
   m_BounceCombine: 0
+--- !u!84 &1781363993
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 6
+  m_Width: 256
+  m_Height: 256
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthStencilFormat: 0
+  m_ColorFormat: 48
+  m_MipMap: 0
+  m_GenerateMips: 1
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_UseDynamicScaleExplicit: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_EnableRandomWrite: 0
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 1
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 1
+    m_WrapV: 1
+    m_WrapW: 1
+  m_Dimension: 2
+  m_VolumeDepth: 1
+  m_ShadowSamplingMode: 2
 --- !u!4 &1902803476 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4245370590929577225, guid: f7a5319eafd7a4845a4e15e9dcd32639, type: 3}
@@ -2103,6 +2258,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
   m_Asset: {fileID: 1238359934}
   m_ActionId: 24908448-c609-4bc3-a128-ea258674378a
+--- !u!23 &2122569595 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 6343591296089188802, guid: f7a5319eafd7a4845a4e15e9dcd32639, type: 3}
+  m_PrefabInstance: {fileID: 3715254595802159084}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &1032323150203617959 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8399160059412388993, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
@@ -2262,6 +2422,10 @@ PrefabInstance:
       propertyPath: m_Material
       value: 
       objectReference: {fileID: 1645648211}
+    - target: {fileID: 5094800073091536977, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_Name
+      value: ContractPaperA
+      objectReference: {fileID: 0}
     - target: {fileID: 5469753862828902883, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
       propertyPath: m_LocalPosition.x
       value: 2.197
@@ -2302,6 +2466,30 @@ PrefabInstance:
       propertyPath: m_LocalPosition.z
       value: 0.413
       objectReference: {fileID: 0}
+    - target: {fileID: 5911099035163603691, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.28
+      objectReference: {fileID: 0}
+    - target: {fileID: 5911099035163603691, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 5911099035163603691, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -0.01850993
+      objectReference: {fileID: 0}
+    - target: {fileID: 5911099035163603691, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.01850993
+      objectReference: {fileID: 0}
+    - target: {fileID: 5911099035163603691, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.7068645
+      objectReference: {fileID: 0}
+    - target: {fileID: 5911099035163603691, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.7068645
+      objectReference: {fileID: 0}
     - target: {fileID: 6276801491819610148, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
       propertyPath: m_LocalPosition.z
       value: 1.3
@@ -2316,15 +2504,88 @@ PrefabInstance:
       objectReference: {fileID: 79799177}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 3318951457764372874, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 860107376}
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7672589191098316286, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2282612047558951035}
     - targetCorrespondingSourceObject: {fileID: 3384190014996572060, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
       insertIndex: -1
       addedObject: {fileID: 0}
     - targetCorrespondingSourceObject: {fileID: 62508386968908191, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
       insertIndex: -1
       addedObject: {fileID: 0}
+    - targetCorrespondingSourceObject: {fileID: 5094800073091536977, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2282612047558951037}
+    - targetCorrespondingSourceObject: {fileID: 5094800073091536977, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2282612047558951036}
   m_SourcePrefab: {fileID: 100100000, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+--- !u!1 &2282612047558951032 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7672589191098316286, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+  m_PrefabInstance: {fileID: 2282612047558951031}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &2282612047558951033 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5094800073091536977, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+  m_PrefabInstance: {fileID: 2282612047558951031}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &2282612047558951034 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3318951457764372874, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+  m_PrefabInstance: {fileID: 2282612047558951031}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2282612047558951035
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2282612047558951032}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 590883df2c70e1f4d8e4bfa2d4909d3a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ContractPaperView
+  papers: []
+--- !u!114 &2282612047558951036
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2282612047558951033}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8432ce450375e82479365bcb47106293, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ContractPaperClickable
+--- !u!65 &2282612047558951037
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2282612047558951033}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.0000001, y: 1, z: 0.1}
+  m_Center: {x: 0, y: 0.0000019073486, z: 0}
 --- !u!1001 &2692548345735408785
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2769,6 +3030,38 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 180139001}
     m_Modifications:
+    - target: {fileID: 1770934376653028412, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
+      propertyPath: enemyLight
+      value: 
+      objectReference: {fileID: 1570019867}
+    - target: {fileID: 1770934376653028412, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
+      propertyPath: enteranceLight
+      value: 
+      objectReference: {fileID: 356386089}
+    - target: {fileID: 1770934376653028412, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
+      propertyPath: volumetricLight
+      value: 
+      objectReference: {fileID: 639492092}
+    - target: {fileID: 1770934376653028412, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
+      propertyPath: moodProfiles.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1770934376653028412, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
+      propertyPath: 'windowGlassRenderers.Array.data[0]'
+      value: 
+      objectReference: {fileID: 303449829}
+    - target: {fileID: 1770934376653028412, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
+      propertyPath: 'windowGlassRenderers.Array.data[1]'
+      value: 
+      objectReference: {fileID: 991685244}
+    - target: {fileID: 1770934376653028412, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
+      propertyPath: 'windowGlassRenderers.Array.data[2]'
+      value: 
+      objectReference: {fileID: 2122569595}
+    - target: {fileID: 1770934376653028412, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
+      propertyPath: 'windowGlassRenderers.Array.data[3]'
+      value: 
+      objectReference: {fileID: 90313060}
     - target: {fileID: 2974963286488949990, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
       propertyPath: m_Name
       value: PresentationManager
@@ -3136,7 +3429,7 @@ PrefabInstance:
     - target: {fileID: 4228813926201636872, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
       propertyPath: m_TargetTexture
       value: 
-      objectReference: {fileID: 1047242860}
+      objectReference: {fileID: 1080518271}
     - target: {fileID: 9217523067565755968, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 

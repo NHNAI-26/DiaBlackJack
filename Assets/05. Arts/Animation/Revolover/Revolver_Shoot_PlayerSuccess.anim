@@ -7890,7 +7890,7 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 6.3333335
+        time: 6.9333334
         value: 0
         inSlope: 0
         outSlope: 0
@@ -7899,7 +7899,7 @@ AnimationClip:
         inWeight: 0.33333334
         outWeight: 0.33333334
       - serializedVersion: 3
-        time: 6.9
+        time: 7.5
         value: 1
         inSlope: 0
         outSlope: 0
@@ -28899,7 +28899,7 @@ AnimationClip:
       serializedVersion: 2
       m_Curve:
       - serializedVersion: 3
-        time: 6.3333335
+        time: 6.9333334
         value: 0
         inSlope: 0
         outSlope: 0
@@ -28908,7 +28908,7 @@ AnimationClip:
         inWeight: 0.33333334
         outWeight: 0.33333334
       - serializedVersion: 3
-        time: 6.9
+        time: 7.5
         value: 1
         inSlope: 0
         outSlope: 0
@@ -35910,7 +35910,7 @@ AnimationClip:
     messageOptions: 0
   - time: 6.233333
     functionName: NotifyShotImpact
-    data:
+    data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
     intParameter: 0

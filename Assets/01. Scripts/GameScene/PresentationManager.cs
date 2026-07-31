@@ -17,6 +17,7 @@ namespace DiaBlackJack.GameScene
 
         [Header("Mood")]
         [SerializeField] private Volume moodVolume;
+        [SerializeField] private MoodController moodController;
 
         [Header("Camera Shake")]
         [SerializeField] private CinemachineImpulseSource impulseSource;
@@ -104,6 +105,22 @@ namespace DiaBlackJack.GameScene
             SetMoodWeight(0f, duration);
         }
 
+        public bool TryBlendToMood(string id, float duration = -1f)
+        {
+            MoodController controller = ResolveMoodController();
+            return controller != null && controller.TryBlendToMood(id, duration);
+        }
+
+        public void BlendToMood(MoodProfileSO profile, float duration = -1f)
+        {
+            ResolveMoodController()?.BlendToMood(profile, duration);
+        }
+
+        public void SetMoodImmediate(MoodProfileSO profile)
+        {
+            ResolveMoodController()?.SetMoodImmediate(profile);
+        }
+
         public void ShakeCamera(float force = 1f)
         {
             if (!shakeEnabled || impulseSource == null ||
@@ -134,10 +151,10 @@ namespace DiaBlackJack.GameScene
             TweenChromaticAberration(1f, riseSpeed);
         }
 
-        public void StopChromaticAberration()
+        public void StopChromaticAberration(float returnSpeed = 0f)
         {
             if (chromaticVolume != null)
-                TweenChromaticAberration(0f, chromaticReturnSpeed);
+                TweenChromaticAberration(0f, ResolveReturnSpeed(returnSpeed, chromaticReturnSpeed));
         }
 
         public void StartFieldOfViewIncrease(float riseSpeed)
@@ -161,12 +178,15 @@ namespace DiaBlackJack.GameScene
             TweenFieldOfView(fieldOfViewTarget, riseSpeed, clearOriginalOnComplete: false);
         }
 
-        public void StopFieldOfViewIncrease()
+        public void StopFieldOfViewIncrease(float returnSpeed = 0f)
         {
             if (activeFieldOfViewCamera == null || originalFieldOfView < 0f)
                 return;
 
-            TweenFieldOfView(originalFieldOfView, fieldOfViewReturnSpeed, clearOriginalOnComplete: true);
+            TweenFieldOfView(
+                originalFieldOfView,
+                ResolveReturnSpeed(returnSpeed, fieldOfViewReturnSpeed),
+                clearOriginalOnComplete: true);
         }
 
         public void StartColorScreenBlend(float fadeOutSpeed)
@@ -208,6 +228,14 @@ namespace DiaBlackJack.GameScene
 
             moodTween.Kill();
             moodTween = null;
+        }
+
+        private MoodController ResolveMoodController()
+        {
+            if (moodController == null)
+                moodController = GetComponentInChildren<MoodController>(true);
+
+            return moodController;
         }
 
         private void RestoreCameraShakeDuration()
@@ -352,6 +380,14 @@ namespace DiaBlackJack.GameScene
         private static void SetFieldOfView(CinemachineCamera camera, float value)
         {
             camera.Lens.FieldOfView = Mathf.Clamp(value, 1f, 179f);
+        }
+
+        private static float ResolveReturnSpeed(float returnSpeed, float defaultSpeed)
+        {
+            if (returnSpeed > 0f && !float.IsNaN(returnSpeed) && !float.IsInfinity(returnSpeed))
+                return returnSpeed;
+
+            return defaultSpeed;
         }
 
         private bool EnsureColorScreenBlendMaterial()

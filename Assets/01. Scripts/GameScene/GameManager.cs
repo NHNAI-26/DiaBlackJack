@@ -35,6 +35,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private CodexController codex;
         [SerializeField] private DemonContractSelectionView demonContractSelection;
         [SerializeField] private TableCombatCommandGroup tableCombatCommands;
+        [SerializeField] private ContractPaperView contractPapers;
 
         [Header("Standalone enemy profile")]
         [SerializeField] private string enemyProfileKey =
@@ -278,6 +279,8 @@ namespace DiaBlackJack.GameScene
                 GetComponent<DemonContractSelectionView>();
             tableCombatCommands ??= FindFirstObjectByType<TableCombatCommandGroup>(
                 FindObjectsInactive.Include);
+            contractPapers ??= FindFirstObjectByType<ContractPaperView>(
+                FindObjectsInactive.Include);
 
             if (hud != null)
             {
@@ -341,6 +344,7 @@ namespace DiaBlackJack.GameScene
             UpdateCombatCommandHover(null);
             demonContractSelection?.SetHovered(null);
             demonContractSelection?.Hide();
+            contractPapers?.Render(null);
             hud?.HideCardHoverBadge();
             hud?.HideDemonContractDetail();
             hud?.Render(null);
@@ -414,6 +418,17 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            if (LighterDragTriggerController.BlocksBackgroundInteraction)
+            {
+                UpdateHover(null);
+                UpdateDemonCardHover(null);
+                UpdateShopUtilityItemHover(null);
+                demonContractSelection?.SetHovered(null);
+                hud?.HideCardHoverBadge();
+                hud?.HideDemonContractDetail();
+                return;
+            }
+
             bool hasHit = RaycastPointer(out RaycastHit hit);
             if (demonContractSelection != null &&
                 demonContractSelection.IsOpen)
@@ -474,6 +489,17 @@ namespace DiaBlackJack.GameScene
             {
                 CloseDeckPreview();
                 codex.Open();
+                return;
+            }
+
+            ContractPaperClickable pointedContractPaper = !shopOpen && hasHit
+                ? hit.collider.GetComponentInParent<ContractPaperClickable>()
+                : null;
+            if (pointedContractPaper != null &&
+                pointedContractPaper.IsInteractable)
+            {
+                CloseDeckPreview();
+                ProcessInput(TryBeginPlayerDemonContract);
                 return;
             }
 
@@ -1828,6 +1854,9 @@ namespace DiaBlackJack.GameScene
             tableCombatCommands?.Render(combat);
 
             RenderDemonContractSelection(combat);
+            contractPapers?.Render(ContractPaperPresenter.Create(
+                Battle,
+                isCombatVisible: !isShopOpen));
 
             RefreshDeckStacks();
             RefreshShopUtilityItems();

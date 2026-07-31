@@ -127,6 +127,24 @@ namespace DiaBlackJack.GameScene
             SoundManager.Current.StopSfx(id);
         }
 
+        public void ShakeCamera(float duration) =>
+            Presentation?.ShakeCameraForDuration(duration);
+
+        public void StartChromaticAberration(float riseSpeed) =>
+            Presentation?.StartChromaticAberration(riseSpeed);
+
+        public void StopChromaticAberration(float returnSpeed = 0f) =>
+            Presentation?.StopChromaticAberration(returnSpeed);
+
+        public void StartFieldOfViewIncrease(float riseSpeed) =>
+            Presentation?.StartFieldOfViewIncrease(riseSpeed);
+
+        public void StopFieldOfViewIncrease(float returnSpeed = 0f) =>
+            Presentation?.StopFieldOfViewIncrease(returnSpeed);
+
+        public void StartColorScreenBlend(float fadeOutSpeed) =>
+            Presentation?.StartColorScreenBlend(fadeOutSpeed);
+
         public void SetAnimatorTrigger(string triggerName)
         {
             string id = Key(triggerName);
@@ -226,6 +244,17 @@ namespace DiaBlackJack.GameScene
                     binding.eventName = Key(binding.eventName);
                     vfxCatalog.Add(id, binding);
                 }
+            }
+        }
+
+        private PresentationManager Presentation
+        {
+            get
+            {
+                if (PresentationManager.Current == null)
+                    Log.W("[LighterAnimationEventReceiver] PresentationManager is unavailable.", this);
+
+                return PresentationManager.Current;
             }
         }
 

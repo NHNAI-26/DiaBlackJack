@@ -13,11 +13,11 @@ ShaderVariantCollection:
       variants:
       - keywords: FOG_EXP2
         passType: 13
-      - keywords: FOG_EXP2 _ALPHATEST_ON _METALLICMAP _NORMALMAP _SMOOTHNESSMAP
+      - keywords: FOG_EXP2 _ALPHATEST_ON _DISSOLVE_OBJECT_SPACE _DISSOLVE_ON _METALLICMAP _NORMALMAP _RIM_ON _SMOOTHNESSMAP
+        passType: 13
+      - keywords: FOG_EXP2 _DISSOLVE_OBJECT_SPACE _DISSOLVE_ON _NORMALMAP _SMOOTHNESSMAP
         passType: 13
       - keywords: FOG_EXP2 _DISSOLVE_ON
-        passType: 13
-      - keywords: FOG_EXP2 _DISSOLVE_ON _METALLICMAP _NORMALMAP _SMOOTHNESSMAP
         passType: 13
       - keywords: FOG_EXP2 _DISSOLVE_ON _NORMALMAP _SMOOTHNESSMAP
         passType: 13
@@ -42,6 +42,8 @@ ShaderVariantCollection:
     second:
       variants:
       - keywords: FOG_EXP2 _ALPHATEST_ON _DISSOLVE_ON
+        passType: 13
+      - keywords: FOG_EXP2 _ALPHATEST_ON _DISSOLVE_ON _DISSOLVE_RADIAL _UNLIT_ON
         passType: 13
       - keywords: FOG_EXP2 _ALPHATEST_ON _PIXEL_OUTLINE_ON
         passType: 13

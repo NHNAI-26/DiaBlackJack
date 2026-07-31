@@ -116,12 +116,18 @@ Material:
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
-    - _DissolveAmount: 0
+    - _DissolveAmount: 1
     - _DissolveEdgeIntensity: 16
     - _DissolveEdgeWidth: 0.148
     - _DissolveEnabled: 1
-    - _DissolveMaxOffset: 0.113
+    - _DissolveMaxOffset: 0.57
     - _DissolveMinOffset: -0.237
+    - _DissolveObjectAxis: 1
+    - _DissolveObjectMax: 1
+    - _DissolveObjectMin: 0
+    - _DissolveObjectNoiseScale: 1
+    - _DissolveObjectNoiseStrength: 0.15
+    - _DissolveSpace: 0
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EmissionEnabled: 0
@@ -134,6 +140,7 @@ Material:
     - _GlossyReflections: 0
     - _HeightFadeEnabled: 0
     - _HeightFadeLower: 0
+    - _HeightFadeOffset: 0
     - _HeightFadeUpper: 1
     - _HueShift: 16
     - _MaskMapEnabled: 0
