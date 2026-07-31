@@ -16,6 +16,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private StartingDemonRevealView startingDemonReveal;
         [SerializeField] private OpponentSelectionView opponentSelection;
         [SerializeField] private RunResultView resultView;
+        [SerializeField] private CodexController codex;
         [SerializeField] private GameObject hudRoot;
         [SerializeField] private GameHudView hud;
         [SerializeField] private GameObject charactersRoot;
@@ -42,6 +43,7 @@ namespace DiaBlackJack.GameScene
             opponentSelection ??= GetComponent<OpponentSelectionView>();
             resultView ??= GetComponent<RunResultView>();
             resultView ??= gameObject.AddComponent<RunResultView>();
+            codex ??= GetComponent<CodexController>();
             ResolveSceneReferences();
 
             _runtime = StageProgressionRuntime.Instance;
@@ -432,6 +434,7 @@ namespace DiaBlackJack.GameScene
             bool isResult =
                 CurrentScreen == GameFlowScreen.RunVictory ||
                 CurrentScreen == GameFlowScreen.RunDefeat;
+            codex?.SetAvailable(isCombat || isShop);
             hud?.SetEnemyStatusVisible(isCombat);
 
             if (isStartingReveal &&

@@ -27,6 +27,11 @@ namespace DiaBlackJack.GameScene.Editor
 
         private void OnEnable()
         {
+            if (target == null)
+            {
+                return;
+            }
+
             _itemsRoot = serializedObject.FindProperty("itemsRoot");
             _demonCardHolder = serializedObject.FindProperty("demonCardHolder");
             _demonCardPrefab = serializedObject.FindProperty("demonCardPrefab");
@@ -41,6 +46,11 @@ namespace DiaBlackJack.GameScene.Editor
 
         public override void OnInspectorGUI()
         {
+            if (target == null)
+            {
+                return;
+            }
+
             DrawDefaultInspector();
             serializedObject.Update();
             EditorGUILayout.Space(12f);

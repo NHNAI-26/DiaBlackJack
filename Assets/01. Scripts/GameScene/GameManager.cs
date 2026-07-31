@@ -32,6 +32,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private DeckStackView remainingDeck;
         [SerializeField] private DeckStackView discardDeck;
         [SerializeField] private DeckPreviewView deckPreview;
+        [SerializeField] private CodexController codex;
         [SerializeField] private DemonContractSelectionView demonContractSelection;
 
         [Header("Standalone enemy profile")]
@@ -99,6 +100,7 @@ namespace DiaBlackJack.GameScene
         private CombatantSide _revolverImpactTargetSide;
         private bool _hammerSwitchInputLocked;
         private bool _deckPreviewSwitchInputLocked;
+        private bool _codexSwitchInputLocked;
         private bool _returnCameraToCurrentAfterHammer;
         private HammerAnimationController _hammerCameraLockController;
         private HammerAnimationController _playedHammerAnimationController;
@@ -120,6 +122,9 @@ namespace DiaBlackJack.GameScene
         public CoreLoopBattle Battle => IsStageBattle
             ? _stageSession.Battle
             : _session?.Battle;
+
+        private bool IsModalInputBlocked =>
+            _pauseInputBlocked || (codex != null && codex.IsOpen);
 
         public bool BindBattle(StageProgressionSession session)
         {
@@ -220,6 +225,12 @@ namespace DiaBlackJack.GameScene
 
         public bool TryCloseTransientOverlay()
         {
+            if (codex != null && codex.IsOpen)
+            {
+                CloseCodex();
+                return true;
+            }
+
             if (deckPreview == null || !deckPreview.IsOpen)
             {
                 return false;
@@ -258,6 +269,7 @@ namespace DiaBlackJack.GameScene
                 enemyCharacter.TrySetEnemyProfile(_activeEnemyProfileKey);
             }
             EnsureDeckPreview();
+            codex ??= GetComponent<CodexController>();
             demonContractSelection ??=
                 GetComponent<DemonContractSelectionView>();
 
@@ -275,6 +287,10 @@ namespace DiaBlackJack.GameScene
         private void OnEnable()
         {
             BindRevolverImpactEvent();
+            if (codex != null)
+            {
+                codex.OpenStateChanged += HandleCodexOpenStateChanged;
+            }
         }
 
         private void OnDisable()
@@ -282,6 +298,11 @@ namespace DiaBlackJack.GameScene
             UnbindRevolverImpactEvent();
             ClearPendingRevolverImpact();
             CloseDeckPreview();
+            CloseCodex();
+            if (codex != null)
+            {
+                codex.OpenStateChanged -= HandleCodexOpenStateChanged;
+            }
             demonContractSelection?.Hide();
             hud?.HideDemonContractDetail();
         }
@@ -316,6 +337,7 @@ namespace DiaBlackJack.GameScene
             hud?.HideDemonContractDetail();
             hud?.Render(null);
             CloseDeckPreview();
+            CloseCodex();
             EndHammerSwitchInputLock();
             ResolveHammerAnimation()?.Hide();
             ResetRevolverAnimationState();
@@ -352,7 +374,13 @@ namespace DiaBlackJack.GameScene
                 EndDeckPreviewSwitchInputLock();
             }
 
-            if (_pauseInputBlocked)
+            if (_codexSwitchInputLocked &&
+                (codex == null || !codex.IsOpen))
+            {
+                EndCodexSwitchInputLock();
+            }
+
+            if (IsModalInputBlocked)
             {
                 return;
             }
@@ -409,6 +437,16 @@ namespace DiaBlackJack.GameScene
             Mouse mouse = Mouse.current;
             if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
             {
+                return;
+            }
+
+            CodexClickable pointedCodex = hasHit
+                ? hit.collider.GetComponentInParent<CodexClickable>()
+                : null;
+            if (pointedCodex != null && codex != null && codex.IsAvailable)
+            {
+                CloseDeckPreview();
+                codex.Open();
                 return;
             }
 
@@ -610,6 +648,64 @@ namespace DiaBlackJack.GameScene
                 ResolveCameraViewController();
             controller?.UnlockSwitchInput();
             _deckPreviewSwitchInputLocked = false;
+        }
+
+        private void CloseCodex()
+        {
+            if (codex != null && codex.IsOpen)
+            {
+                codex.Close();
+            }
+
+            EndCodexSwitchInputLock();
+        }
+
+        private void HandleCodexOpenStateChanged(bool isOpen)
+        {
+            UpdateHover(null);
+            UpdateDemonCardHover(null);
+            UpdateShopUtilityItemHover(null);
+            hud?.HideCardHoverBadge();
+            hud?.HideDemonContractDetail();
+            if (isOpen)
+            {
+                BeginCodexSwitchInputLock();
+            }
+            else
+            {
+                EndCodexSwitchInputLock();
+            }
+        }
+
+        private void BeginCodexSwitchInputLock()
+        {
+            if (_codexSwitchInputLocked)
+            {
+                return;
+            }
+
+            GameSceneCameraViewController controller =
+                ResolveCameraViewController();
+            if (controller == null)
+            {
+                return;
+            }
+
+            controller.LockSwitchInput();
+            _codexSwitchInputLocked = true;
+        }
+
+        private void EndCodexSwitchInputLock()
+        {
+            if (!_codexSwitchInputLocked)
+            {
+                return;
+            }
+
+            GameSceneCameraViewController controller =
+                ResolveCameraViewController();
+            controller?.UnlockSwitchInput();
+            _codexSwitchInputLocked = false;
         }
 
         private void UpdateCardHoverBadge()
@@ -1130,7 +1226,7 @@ namespace DiaBlackJack.GameScene
 
         private void OnGUI()
         {
-            if (_pauseInputBlocked ||
+            if (IsModalInputBlocked ||
                 shop == null ||
                 !shop.IsOpen ||
                 (_core == null && _formalShopModel == null))
@@ -1378,7 +1474,7 @@ namespace DiaBlackJack.GameScene
 
         private void HandleCombatCommand(GameSceneCombatHudCommand command)
         {
-            if (_pauseInputBlocked)
+            if (IsModalInputBlocked)
             {
                 return;
             }
@@ -1425,7 +1521,7 @@ namespace DiaBlackJack.GameScene
 
         private void ProcessInput(Func<bool> action)
         {
-            if (_pauseInputBlocked || _inputLocked || action == null)
+            if (IsModalInputBlocked || _inputLocked || action == null)
             {
                 return;
             }
