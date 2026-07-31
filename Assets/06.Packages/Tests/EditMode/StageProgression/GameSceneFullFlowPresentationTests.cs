@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DiaBlackJack.CoreLoop;
+using DiaBlackJack.GameScene;
 using DiaBlackJack.StageProgression.UI;
 using NUnit.Framework;
 
@@ -191,6 +192,42 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(
                 run.CombatSession.Progress.State,
                 Is.EqualTo(StageProgressionState.OpponentSelection));
+        }
+
+        [Test]
+        public void GF02_U01_ScreenResolverFollowsFormalRunState()
+        {
+            FormalRunSession run = CreateRun();
+            Assert.That(run.TryStartRun(), Is.True);
+            Assert.That(
+                GameFlowScreenResolver.Resolve(run),
+                Is.EqualTo(GameFlowScreen.StartingDemonReveal));
+
+            Assert.That(
+                run.CombatSession.TryCompleteStartingDemonReveal(),
+                Is.True);
+            Assert.That(run.TryStartRun(), Is.True);
+            Assert.That(
+                GameFlowScreenResolver.Resolve(run),
+                Is.EqualTo(GameFlowScreen.OpponentSelection));
+
+            SelectFirstOpponent(run);
+            Assert.That(
+                GameFlowScreenResolver.Resolve(run),
+                Is.EqualTo(GameFlowScreen.Combat));
+
+            WinCurrentBattle(run.CombatSession);
+            Assert.That(
+                GameFlowScreenResolver.Resolve(run),
+                Is.EqualTo(GameFlowScreen.Shop));
+        }
+
+        [Test]
+        public void GF02_U02_NullFormalRunHasNoIntegratedScreen()
+        {
+            Assert.That(
+                GameFlowScreenResolver.Resolve(null),
+                Is.EqualTo(GameFlowScreen.Unavailable));
         }
 
         private static FormalRunSession CreateRun()

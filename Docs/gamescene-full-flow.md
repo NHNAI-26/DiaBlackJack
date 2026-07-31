@@ -3,7 +3,7 @@
 작성일: 2026-07-31  
 범위: 제품 시작 화면은 `MainMenuScene`, 실제 런 전체는 `GameScene`에서 진행.
 
-> 2026-07-31 현재 상태: `MainMenuScene`과 저장 흐름 기반 새 런·이어하기·시작 예약 재개 진입을 구현했다. GF-01 흐름 계약 테스트도 완료했다. 아직 `GameScene` 단일 런 통합 전이므로 성공한 메뉴 입력은 현행 정식 런 호스트인 `StageTest`로 이동한다. `StageTest`는 이후 단계에서 테스트 전용으로 축소하고 목적지를 `GameScene`으로 교체한다.
+> 2026-07-31 현재 상태: `MainMenuScene`과 저장 흐름 기반 새 런·이어하기·시작 예약 재개 진입을 구현했다. GF-01 흐름 계약 테스트와 GF-02 단일 씬 흐름 제어 기반도 완료했다. 성공한 메뉴 입력은 이제 `GameScene`으로 이동하며, `GameFlowController`가 시작 악마 공개·상대 선택·전투·상점·결과 화면을 도메인 상태에서 판정한다. 실제 시작 악마 공개·상대 선택 월드 UI는 GF-03 범위다.
 
 ## 1. 목표
 
@@ -272,6 +272,18 @@ Presenter는 기존 `StageProgressionPresentation`을 재사용하거나 GameSce
 - 씬 로드 없이 `OpponentSelection → Combat → Shop`
 - 첫 전투 종료 뒤 GameManager 전투 입력 완전 잠금
 - 다음 전투 시작 시 이전 카드/애니메이션/hover 상태 잔존 0
+
+구현 결과 — 2026-07-31, GF-02 완료:
+
+- `GameFlowScreenResolver`가 `FormalRunPhase`, 시작 악마 공개 대기와 `StageProgressionState`를 읽어 통합 화면을 결정한다.
+- `GameFlowController`가 기존 `StageProgressionRuntime.FormalSession`만 채택하고 시작 공개 완료, 상대 집중·확정, 정식 상점 입력을 기존 도메인 API로 전달한다.
+- 상대 확정과 다음 전투 준비는 씬 재로드 없이 `GameManager.BindBattle(StageProgressionSession)`로 연결한다.
+- `GameManager`는 정식 전투 완료를 controller에 알리고, 통합 controller가 없는 `StageTest` 회귀 경로에서만 기존 진행 씬 복귀를 사용한다.
+- 전투 해제·재바인딩 시 timeline, coroutine, hover, 계약 후보, 덱 미리보기, 해머·리볼버 상태, 손패, 덱 스택과 합계 표시를 초기화한다.
+- 새 게임·이어하기·예약 재개 성공 목적지를 `GameScene`으로 교체했다.
+- `GameScene`의 기존 `GameManager` 오브젝트에 `GameFlowController`를 연결했고 씬 validate 결과 누락 스크립트·깨진 prefab 0이다.
+- GF-02 화면 판정 2/2, GF 전체 7/7, 전체 EditMode 805/805를 Unity MCP로 통과했다. Console 오류 0.
+- GF-03 화면 자산 전이므로 GF-02만으로 시작 악마·상대 선택 UI가 표시되는 것으로 간주하지 않는다.
 
 ### 단계 3 — 시작 악마 자동 지급·공개와 상대 선택을 GameScene 뷰로 구현
 

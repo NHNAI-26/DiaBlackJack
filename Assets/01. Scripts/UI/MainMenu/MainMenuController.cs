@@ -92,7 +92,7 @@ namespace DiaBlackJack.MainMenu.UI
             RunSaveFlow flow = _runtime.SaveFlow;
             if (!flow.IsMenuVisible)
             {
-                _runtime.LoadProgressionScene();
+                _runtime.LoadBattleScene();
                 return;
             }
 

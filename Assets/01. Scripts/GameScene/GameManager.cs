@@ -108,10 +108,54 @@ namespace DiaBlackJack.GameScene
         private readonly List<string> _purchasedDemonContractKeys = new List<string>();
         private readonly List<RemovedNormalCard> _removedNormalCards =
             new List<RemovedNormalCard>();
+        private StageProgressionSession _completedStageSession;
+
+        public event Action FormalBattleCompleted;
 
         public CoreLoopBattle Battle => IsStageBattle
             ? _stageSession.Battle
             : _session?.Battle;
+
+        public bool BindBattle(StageProgressionSession session)
+        {
+            if (session == null ||
+                session.Progress.State != StageProgressionState.InBattle ||
+                session.Battle == null)
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(_stageSession, session) &&
+                ReferenceEquals(Battle, session.Battle))
+            {
+                return true;
+            }
+
+            ResetBattlePresentation();
+            _session = null;
+            _stageSession = session;
+            _completedStageSession = null;
+            _activeEnemyProfileKey =
+                session.ActiveStage?.BattleProfileKey ??
+                ResolveEnemyProfileKey();
+            enemyCharacter?.ExitMerchant();
+            enemyCharacter?.TrySetEnemyProfile(_activeEnemyProfileKey);
+            _inputLocked = false;
+            RefreshView();
+            return true;
+        }
+
+        public void UnbindBattle()
+        {
+            if (_stageSession == null)
+            {
+                return;
+            }
+
+            ResetBattlePresentation();
+            _stageSession = null;
+            _completedStageSession = null;
+        }
 
         public void SetPauseInputBlocked(bool blocked)
         {
@@ -203,6 +247,42 @@ namespace DiaBlackJack.GameScene
             {
                 hud.CombatCommandRequested -= HandleCombatCommand;
             }
+        }
+
+        private void ResetBattlePresentation()
+        {
+            StopAllCoroutines();
+            CoreLoopBattle battle = Battle;
+            if (battle != null)
+            {
+                battle.Stepped -= OnBattleStepped;
+            }
+
+            _timeline.Clear();
+            _core = null;
+            _inputLocked = true;
+            _choosingLighterRemoval = false;
+            UpdateHover(null);
+            UpdateDemonCardHover(null);
+            UpdateShopUtilityItemHover(null);
+            demonContractSelection?.SetHovered(null);
+            demonContractSelection?.Hide();
+            hud?.HideCardHoverBadge();
+            hud?.HideDemonContractDetail();
+            hud?.Render(null);
+            CloseDeckPreview();
+            EndHammerSwitchInputLock();
+            ResolveHammerAnimation()?.Hide();
+            ResetRevolverAnimationState();
+            playerHand?.ResetView();
+            enemyHand?.ResetView();
+            remainingDeck?.ResetView();
+            discardDeck?.ResetView();
+            totals?.Render(string.Empty, string.Empty);
+            enemyCharacter?.Render(
+                CharacterVisualState.Idle,
+                string.Empty);
+            shop?.Close();
         }
 
         // Diegetic input: hover any card to enlarge it (usable cards also show a HUD badge), click a
@@ -2291,6 +2371,19 @@ namespace DiaBlackJack.GameScene
             if (!IsStageBattle ||
                 _stageSession.Progress.State == StageProgressionState.InBattle)
             {
+                return;
+            }
+
+            if (ReferenceEquals(_completedStageSession, _stageSession))
+            {
+                return;
+            }
+
+            _completedStageSession = _stageSession;
+            _inputLocked = true;
+            if (FormalBattleCompleted != null)
+            {
+                FormalBattleCompleted.Invoke();
                 return;
             }
 

@@ -1543,7 +1543,7 @@ Unity 기본 모듈과 IDE 연동 패키지의 전체 버전은 `Packages/manife
 
 이천서는 제품 시작 씬을 지금 구현하도록 지시했다. AI에는 기존 `RunSaveFlow`·`RunSavePresenter`·`StageProgressionRuntime`을 재사용하고, 메뉴가 런 규칙이나 저장 상태를 중복 소유하지 않으며, 아직 완료되지 않은 `GameScene` 단일 런 통합과 현재 동작 경계를 구분하라는 지시를 적용했다. 최종 기획·코드·화면 승인 책임자는 이천서다.
 
-AI는 IMGUI 기반 `MainMenuView`와 `MainMenuController`를 추가하고 `MainMenuScene`을 Build Settings 0번에 등록했다. 새 런·덮어쓰기 확인·이어하기·시작 예약 재개·종료는 기존 저장 흐름으로 연결했다. 설정 화면은 구현된 것처럼 오인되지 않도록 비활성 `SETTINGS (LATER)`로 표시했다. 현재 성공한 진입은 현행 정식 런 호스트인 `StageTest`로 이동하며, 후속 단일 씬 통합에서 목적지를 `GameScene`으로 교체한다.
+AI는 IMGUI 기반 `MainMenuView`와 `MainMenuController`를 추가하고 `MainMenuScene`을 Build Settings 0번에 등록했다. 새 런·덮어쓰기 확인·이어하기·시작 예약 재개·종료는 기존 저장 흐름으로 연결했다. 설정 화면은 구현된 것처럼 오인되지 않도록 비활성 `SETTINGS (LATER)`로 표시했다. GF-02 이전 성공 진입은 현행 정식 런 호스트인 `StageTest`로 이동했으며, GF-02에서 목적지를 `GameScene`으로 교체했다.
 
 Unity MCP로 컴파일, 씬 유효성, 1280×720 Play Mode 화면과 전체 EditMode 798/798를 확인했다. 메뉴 화면은 기존 어두운 서부극 UI와의 범주 일치·중앙 정렬·상태 가독성을 기준으로 시각 검토했다. 외부 에셋·외부 코드·오픈소스·새 패키지·새 의존성은 추가하지 않았다.
 
@@ -1554,4 +1554,12 @@ Unity MCP로 컴파일, 씬 유효성, 1280×720 Play Mode 화면과 전체 Edit
 AI는 기존 `FormalRunSession`, `StageProgressionSession`, `StageProgressionPresenter`를 직접 구동하는 `GameSceneFullFlowPresentationTests` 5개를 추가했다. 주요 검증은 시작 악마 2장 무선택 지급·공개, 공개 종료 뒤 상대 선택 자동 전환, 두 일반전과 두 상점 뒤 고정 보스, 보스 승리 후 상점 없는 RunVictory, 오래된 offer·중복 클릭 무변경 거부, 재시작 시 지급 악마 유지·재추첨 금지다. 테스트에는 `UnityEngine` 참조를 넣지 않았다.
 
 Unity MCP에서 신규 5/5와 전체 EditMode 803/803를 통과했고 Console 컴파일 오류는 0이었다. `MainMenuScene`의 누락 스크립트·깨진 프리팹도 0이었다. 런타임·씬·프리팹·Packages·외부 에셋·외부 코드·오픈소스·새 의존성은 변경하거나 추가하지 않았다.
+
+## 2026-07-31 GF-02 GameScene 단일 흐름 제어 기록
+
+이천서는 MainMenuScene 다음 구현 단계 착수를 지시했다. AI에는 `FormalRunSession`을 새로 복제하지 않고 기존 Runtime 세션을 단일 기준으로 사용하며, `GameManager`에는 화면 흐름 책임을 넣지 않고 전투 바인딩 생명주기만 추가하라는 지시를 적용했다. 최종 기획·코드·씬 승인 책임자는 이천서다.
+
+AI는 순수 `GameFlowScreenResolver`와 Unity `GameFlowController`를 추가했다. Controller는 시작 악마 공개, 상대 선택, 전투, 상점, 승리·패배 화면을 정식 도메인 상태에서 판정하고 기존 입력 API를 중계한다. `GameManager`는 정식 전투 완료 이벤트와 `BindBattle`/`UnbindBattle`을 제공하며 재바인딩 전에 coroutine, hover, 애니메이션, 손패와 덱 표시를 초기화한다. 메뉴 성공 목적지는 `StageTest`에서 `GameScene`으로 교체했다.
+
+Unity MCP로 신규 흐름 판정 2/2, GF 누적 7/7, 전체 EditMode 805/805와 `GameScene` validate 문제 0, Console 오류 0을 확인했다. Unity 저장 과정에서 발생한 무관한 RenderTexture 직렬화 변경은 결과물에서 제외하고 `GameFlowController` 추가분만 유지했다. GF-03의 시작 악마·상대 선택 실제 월드 UI는 아직 구현하지 않았다. 외부 에셋·외부 코드·오픈소스·패키지·새 의존성은 추가하지 않았다.
 
