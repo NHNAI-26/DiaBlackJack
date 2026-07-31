@@ -13,6 +13,7 @@ namespace DiaBlackJack.StageProgression.UI
     {
         [SerializeField] private string progressionSceneName = "StageTest";
         [SerializeField] private string battleSceneName = "GameScene";
+        [SerializeField] private string mainMenuSceneName = "MainMenuScene";
         [SerializeField] private int seed = 20260719;
 
         public static StageProgressionRuntime Instance { get; private set; }
@@ -120,6 +121,11 @@ namespace DiaBlackJack.StageProgression.UI
         public void LoadProgressionScene()
         {
             SceneManager.LoadScene(progressionSceneName);
+        }
+
+        public void LoadMainMenuScene()
+        {
+            SceneManager.LoadScene(mainMenuSceneName);
         }
 
         internal static StageProgressionSession CreatePrototypeSession(int rootSeed)

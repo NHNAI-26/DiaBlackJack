@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Border.SaveLoad.UI;
 using DiaBlackJack.CoreLoop;
 using DiaBlackJack.GameScene;
 using DiaBlackJack.StageProgression.UI;
@@ -228,6 +229,100 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(
                 GameFlowScreenResolver.Resolve(null),
                 Is.EqualTo(GameFlowScreen.Unavailable));
+        }
+
+        [Test]
+        public void GF05_U01_VictoryResultPresentsSavedTotalsAndExitActions()
+        {
+            FormalRunSession run = CreateRun();
+            BeginSelectedBattle(run);
+            CompleteVictoryRun(run);
+            StageProgressionViewModel progression =
+                StageProgressionPresenter.Create(run);
+            RunSaveViewModel save = CreateSaveViewModel(
+                canRetrySave: false,
+                blocksProgressionInput: false,
+                saveIndicator: "SAVED");
+
+            RunResultViewModel result = RunResultPresenter.Create(
+                GameFlowScreen.RunVictory,
+                progression,
+                save);
+
+            Assert.That(result.IsVisible, Is.True);
+            Assert.That(result.IsVictory, Is.True);
+            Assert.That(result.Title, Is.EqualTo("RUN VICTORY"));
+            Assert.That(result.PlayerSoul, Is.EqualTo(progression.PlayerSoul));
+            Assert.That(result.PlayerGold, Is.EqualTo(progression.PlayerGold));
+            Assert.That(result.SaveStatus, Is.EqualTo("SAVED"));
+            Assert.That(result.CanRestart, Is.True);
+            Assert.That(result.CanReturnToMainMenu, Is.True);
+            Assert.That(result.CanRetrySave, Is.False);
+        }
+
+        [Test]
+        public void GF05_U02_PendingTerminalSaveLocksExitAndOffersRetry()
+        {
+            FormalRunSession run = CreateRun();
+            BeginSelectedBattle(run);
+            CompleteVictoryRun(run);
+            StageProgressionViewModel progression =
+                StageProgressionPresenter.Create(run);
+            RunSaveViewModel save = CreateSaveViewModel(
+                canRetrySave: true,
+                blocksProgressionInput: true,
+                saveIndicator: "SAVE FAILED");
+
+            RunResultViewModel result = RunResultPresenter.Create(
+                GameFlowScreen.RunVictory,
+                progression,
+                save);
+
+            Assert.That(result.IsVisible, Is.True);
+            Assert.That(result.CanRestart, Is.False);
+            Assert.That(result.CanReturnToMainMenu, Is.False);
+            Assert.That(result.CanRetrySave, Is.True);
+            Assert.That(result.SaveStatus, Is.EqualTo("SAVE FAILED"));
+        }
+
+        [Test]
+        public void GF05_U03_NonTerminalScreenHidesResult()
+        {
+            FormalRunSession run = CreateRun();
+            BeginSelectedBattle(run);
+            StageProgressionViewModel progression =
+                StageProgressionPresenter.Create(run);
+            RunSaveViewModel save = CreateSaveViewModel(
+                canRetrySave: false,
+                blocksProgressionInput: false,
+                saveIndicator: string.Empty);
+
+            RunResultViewModel result = RunResultPresenter.Create(
+                GameFlowScreen.Combat,
+                progression,
+                save);
+
+            Assert.That(result.IsVisible, Is.False);
+            Assert.That(result.CanRestart, Is.False);
+            Assert.That(result.CanReturnToMainMenu, Is.False);
+            Assert.That(result.CanRetrySave, Is.False);
+        }
+
+        private static RunSaveViewModel CreateSaveViewModel(
+            bool canRetrySave,
+            bool blocksProgressionInput,
+            string saveIndicator)
+        {
+            return new RunSaveViewModel(
+                false,
+                false,
+                false,
+                false,
+                false,
+                canRetrySave,
+                blocksProgressionInput,
+                string.Empty,
+                saveIndicator);
         }
 
         private static FormalRunSession CreateRun()

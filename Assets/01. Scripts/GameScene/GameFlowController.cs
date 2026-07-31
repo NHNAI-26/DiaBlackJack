@@ -15,6 +15,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameManager gameManager;
         [SerializeField] private StartingDemonRevealView startingDemonReveal;
         [SerializeField] private OpponentSelectionView opponentSelection;
+        [SerializeField] private RunResultView resultView;
         [SerializeField] private GameObject hudRoot;
         [SerializeField] private GameHudView hud;
         [SerializeField] private GameObject charactersRoot;
@@ -39,6 +40,8 @@ namespace DiaBlackJack.GameScene
             gameManager ??= GetComponent<GameManager>();
             startingDemonReveal ??= GetComponent<StartingDemonRevealView>();
             opponentSelection ??= GetComponent<OpponentSelectionView>();
+            resultView ??= GetComponent<RunResultView>();
+            resultView ??= gameObject.AddComponent<RunResultView>();
             hudRoot ??= GameObject.Find("UIHUD");
             hud ??= hudRoot == null
                 ? null
@@ -85,6 +88,13 @@ namespace DiaBlackJack.GameScene
                 opponentSelection.OpponentConfirmed +=
                     HandleOpponentConfirmed;
             }
+
+            if (resultView != null)
+            {
+                resultView.RestartRequested += HandleRestartRequested;
+                resultView.MainMenuRequested += HandleMainMenuRequested;
+                resultView.SaveRetryRequested += HandleSaveRetryRequested;
+            }
         }
 
         private void Start()
@@ -124,6 +134,13 @@ namespace DiaBlackJack.GameScene
                     HandleOpponentFocused;
                 opponentSelection.OpponentConfirmed -=
                     HandleOpponentConfirmed;
+            }
+
+            if (resultView != null)
+            {
+                resultView.RestartRequested -= HandleRestartRequested;
+                resultView.MainMenuRequested -= HandleMainMenuRequested;
+                resultView.SaveRetryRequested -= HandleSaveRetryRequested;
             }
         }
 
@@ -192,6 +209,62 @@ namespace DiaBlackJack.GameScene
         public bool RequestLeaveShop(int offerId)
         {
             return ProcessInput(() => _session.TryLeaveShop(offerId));
+        }
+
+        public bool RequestRestartRun()
+        {
+            if (!IsTerminalScreen() || IsInputBlocked())
+            {
+                return false;
+            }
+
+            RunSaveFlow flow = _runtime.SaveFlow;
+            if (!flow.TryOpenRunMenu() || !flow.TryRequestNewRun())
+            {
+                return false;
+            }
+
+            if (flow.RequiresNewRunConfirmation && !flow.TryConfirmNewRun())
+            {
+                return false;
+            }
+
+            _session = null;
+            ClearFocusedOpponent();
+            if (!TryAdoptFormalRun())
+            {
+                return false;
+            }
+
+            RefreshFlow();
+            return true;
+        }
+
+        public bool RequestReturnToMainMenu()
+        {
+            if (!IsTerminalScreen() || IsInputBlocked() ||
+                !_runtime.SaveFlow.TryOpenRunMenu())
+            {
+                return false;
+            }
+
+            _runtime.LoadMainMenuScene();
+            return true;
+        }
+
+        public bool RequestRetrySave()
+        {
+            if (!IsTerminalScreen() ||
+                _runtime == null ||
+                _runtime.SaveFlow == null ||
+                !_runtime.SaveFlow.HasPendingCheckpoint)
+            {
+                return false;
+            }
+
+            bool accepted = _runtime.SaveFlow.TryRetryPendingCheckpoint();
+            RefreshFlow();
+            return accepted;
         }
 
         private bool TryAdoptFormalRun()
@@ -296,6 +369,21 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        private void HandleRestartRequested()
+        {
+            RequestRestartRun();
+        }
+
+        private void HandleMainMenuRequested()
+        {
+            RequestReturnToMainMenu();
+        }
+
+        private void HandleSaveRetryRequested()
+        {
+            RequestRetrySave();
+        }
+
         private void RefreshFlow()
         {
             if (_session == null && !TryAdoptFormalRun())
@@ -352,6 +440,9 @@ namespace DiaBlackJack.GameScene
                 CurrentScreen == GameFlowScreen.OpponentSelection;
             bool isCombat = CurrentScreen == GameFlowScreen.Combat;
             bool isShop = CurrentScreen == GameFlowScreen.Shop;
+            bool isResult =
+                CurrentScreen == GameFlowScreen.RunVictory ||
+                CurrentScreen == GameFlowScreen.RunDefeat;
             hud?.SetEnemyStatusVisible(isCombat);
 
             if (isStartingReveal &&
@@ -373,6 +464,18 @@ namespace DiaBlackJack.GameScene
             else
             {
                 opponentSelection?.Hide();
+            }
+
+            if (isResult)
+            {
+                resultView?.Render(RunResultPresenter.Create(
+                    CurrentScreen,
+                    CurrentViewModel,
+                    RunSavePresenter.Create(_runtime.SaveFlow)));
+            }
+            else
+            {
+                resultView?.Hide();
             }
 
             if (hudRoot != null)
@@ -399,6 +502,12 @@ namespace DiaBlackJack.GameScene
                     enemyCharacter.ExitMerchant();
                 }
             }
+        }
+
+        private bool IsTerminalScreen()
+        {
+            return CurrentScreen == GameFlowScreen.RunVictory ||
+                CurrentScreen == GameFlowScreen.RunDefeat;
         }
 
         private void SynchronizeFocusedOpponent()
