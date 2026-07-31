@@ -171,6 +171,27 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void DCR07_U03_BeelzebubDiscardsHighestOpponentPublicCard()
+        {
+            EnemyActionCandidate low = CreateBeelzebubDiscardOption(
+                optionId: 10,
+                rank: 2);
+            EnemyActionCandidate high = CreateBeelzebubDiscardOption(
+                optionId: 11,
+                rank: 9);
+
+            EnemyDecision decision = new CultistEnemyPolicy().Decide(
+                CreateObservation(
+                    enemySoul: 3,
+                    candidates: new[] { low, high }));
+
+            Assert.That(decision.DemonContractOptionId, Is.EqualTo(11));
+            Assert.That(
+                decision.ReasonCode,
+                Is.EqualTo("cultist-beelzebub-discard-highest-opponent-card"));
+        }
+
+        [Test]
         public void DC08_U06_SameSeedRepeatsTheSameContractSelection()
         {
             for (int seed = 0; seed < 50; seed++)
@@ -346,6 +367,20 @@ namespace DiaBlackJack.CoreLoop.Tests
                 demonContractInteractionKind: DemonContractInteractionKind.ChooseContract,
                 demonContractKind: kind,
                 demonContractDefinitionKey: definition.Key);
+        }
+
+        private static EnemyActionCandidate CreateBeelzebubDiscardOption(
+            int optionId,
+            int rank)
+        {
+            return new EnemyActionCandidate(
+                EnemyActionType.DemonContract,
+                demonContractOptionId: optionId,
+                demonContractInteractionKind:
+                    DemonContractInteractionKind.BeelzebubChooseOpponentCard,
+                demonContractKind: DemonContractKind.Beelzebub,
+                demonContractDefinitionKey: DemonContractCatalog.BeelzebubKey,
+                demonContractOptionNumericValue: rank);
         }
 
         private static DemonContractKind GetSelectedContractKind(

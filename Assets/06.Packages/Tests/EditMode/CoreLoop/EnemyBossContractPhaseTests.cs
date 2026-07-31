@@ -34,8 +34,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(new[]
                 {
                     DemonContractCatalog.MammonKey,
-                    DemonContractCatalog.LeviathanKey,
-                    DemonContractCatalog.LuciferKey
+                    DemonContractCatalog.BeelzebubKey,
+                    DemonContractCatalog.SatanKey
                 }));
         }
 
@@ -73,7 +73,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(DemonContractKind.Asmodeus));
             Assert.That(
                 battle.EnemyDemonDeck.ContainsDiscardedDefinitionKey(
-                    DemonContractCatalog.LeviathanKey),
+                    DemonContractCatalog.BeelzebubKey),
                 Is.True);
 
             battle.ApplySoulDamage(CombatantSide.Enemy, 3);
@@ -85,9 +85,44 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(DemonContractKind.Azazel));
             Assert.That(
                 battle.EnemyDemonDeck.ContainsDiscardedDefinitionKey(
-                    DemonContractCatalog.LuciferKey),
+                    DemonContractCatalog.SatanKey),
                 Is.True);
             Assert.That(battle.UsedEnemyBaseDemonContractCount, Is.Zero);
+        }
+
+        [Test]
+        public void DCR07_I02_BossAsmodeusChoiceCompletesInsideEnemyTurn()
+        {
+            EnemyCombatProfile profile = EnemyCombatProfileCatalog.Default.GetByKey(
+                EnemyCombatProfileCatalog.FinalBossKey);
+            DemonContractCatalog catalog = DemonContractCatalog.Default;
+            DemonContractCard[] demonCards = profile.DemonContractDefinitionKeys
+                .Select((key, index) =>
+                    new DemonContractCard(index, catalog.GetByKey(key)))
+                .ToArray();
+            CoreLoopBattle battle = new CoreLoopBattle(
+                CreateDeck(2, 2, 2, 2, 2, 2, 2, 2, 2, 2),
+                CreateDeck(2, 2, 2, 2, 2, 2, 2, 2, 2, 2),
+                enemyMaximumSoul: profile.MaximumSoul,
+                enemyPolicy: new FinalBossEnemyPolicy(),
+                enemyDemonDeck: new DemonContractDeck(demonCards, seed: 109),
+                fixedEnemyDemonContractPhases:
+                    profile.FixedDemonContractPhases);
+            battle.Start();
+            battle.ApplySoulDamage(CombatantSide.Enemy, 3);
+            int asmodeusActionCount = battle.PublicActionHistory.Count(action =>
+                action.SourceCardDefinitionKey ==
+                    DemonContractCatalog.AsmodeusKey);
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+
+            Assert.That(battle.PendingEnemyDemonContractInteraction, Is.Null);
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+            Assert.That(
+                battle.PublicActionHistory.Count(action =>
+                    action.SourceCardDefinitionKey ==
+                        DemonContractCatalog.AsmodeusKey),
+                Is.EqualTo(asmodeusActionCount + 1));
         }
 
         [Test]
@@ -215,11 +250,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                 new FixedDemonContractPhaseDefinition(
                     activationSoulThreshold: null,
                     DemonContractCatalog.AsmodeusKey,
-                    DemonContractCatalog.LeviathanKey),
+                    DemonContractCatalog.BeelzebubKey),
                 new FixedDemonContractPhaseDefinition(
                     activationSoulThreshold: 5,
                     DemonContractCatalog.AzazelKey,
-                    DemonContractCatalog.LuciferKey)
+                    DemonContractCatalog.SatanKey)
             };
             var demonCards = new[]
             {
@@ -228,13 +263,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                     catalog.GetByKey(DemonContractCatalog.AsmodeusKey)),
                 new DemonContractCard(
                     1,
-                    catalog.GetByKey(DemonContractCatalog.LeviathanKey)),
+                    catalog.GetByKey(DemonContractCatalog.BeelzebubKey)),
                 new DemonContractCard(
                     2,
                     catalog.GetByKey(DemonContractCatalog.AzazelKey)),
                 new DemonContractCard(
                     3,
-                    catalog.GetByKey(DemonContractCatalog.LuciferKey))
+                    catalog.GetByKey(DemonContractCatalog.SatanKey))
             };
             CoreLoopBattle battle = new CoreLoopBattle(
                 CreateDeck(10, 9, 4, 4),

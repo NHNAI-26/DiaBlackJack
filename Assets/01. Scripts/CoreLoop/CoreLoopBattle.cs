@@ -172,7 +172,8 @@ namespace DiaBlackJack.CoreLoop
             bool injectsPoisonIntoPlayerDeckEachRound = false,
             bool enablesEnemyChange = false,
             IEnumerable<FixedDemonContractPhaseDefinition>
-                fixedEnemyDemonContractPhases = null)
+                fixedEnemyDemonContractPhases = null,
+            int? demonContractSeed = null)
             : this(
                 playerDeck,
                 enemyDeck,
@@ -186,7 +187,8 @@ namespace DiaBlackJack.CoreLoop
                 enemyDemonContractCandidateCount,
                 injectsPoisonIntoPlayerDeckEachRound,
                 enablesEnemyChange,
-                fixedEnemyDemonContractPhases)
+                fixedEnemyDemonContractPhases,
+                demonContractSeed)
         {
         }
 
@@ -206,7 +208,8 @@ namespace DiaBlackJack.CoreLoop
             bool injectsPoisonIntoPlayerDeckEachRound = false,
             bool enablesEnemyChange = false,
             IEnumerable<FixedDemonContractPhaseDefinition>
-                fixedEnemyDemonContractPhases = null)
+                fixedEnemyDemonContractPhases = null,
+            int? demonContractSeed = null)
             : this(
                 playerDeck,
                 enemyDeck,
@@ -216,6 +219,9 @@ namespace DiaBlackJack.CoreLoop
                 enemyPolicy,
                 CardEffectResolver.CreateDefault(),
                 playerDemonDeck,
+                demonContractResolver: DemonContractResolver.CreateDefault(
+                    demonContractSeed ??
+                        DemonContractResolver.DefaultDemonDieSeed),
                 enemyDemonDeck: enemyDemonDeck,
                 enemyAutomaticCardDecisionPolicy:
                     DefaultAutomaticCardDecisionPolicy.Instance,
@@ -1111,6 +1117,10 @@ namespace DiaBlackJack.CoreLoop
             RecordDemonContractActivationSoulCost(
                 playerSoulBeforeActivation,
                 Player.Soul.Current);
+            RecordPublicAction(
+                CombatantSide.Player,
+                PublicCombatActionType.DemonContract,
+                activeContract.Definition.Key);
             bool playerDepleted = Player.Soul.IsDepleted;
             LastDemonContractResult = new DemonContractResult(
                 pending.InteractionId,

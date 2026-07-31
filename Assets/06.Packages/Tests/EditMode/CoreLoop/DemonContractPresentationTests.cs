@@ -93,6 +93,21 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void DCR08_U01_BeelzebubActiveStatusDescribesImplementedEffect()
+        {
+            CoreLoopBattle battle = CreateStartedBattle(
+                DemonContractKind.Beelzebub);
+            SelectContract(battle, DemonContractKind.Beelzebub);
+
+            string status = CoreLoopPresenter.Create(battle)
+                .DemonContract.ActiveContracts.Single();
+
+            Assert.That(status, Does.Contain("바알제붑"));
+            Assert.That(status, Does.Contain("양측 공개 카드 선택 폐기"));
+            Assert.That(status, Does.Not.Contain("효과 구현 예정"));
+        }
+
+        [Test]
         public void DC05_U05_GameSceneUsesTheSameSafeContractProjection()
         {
             CoreLoopBattle battle = CreateStartedBattle(DemonContractKind.Leviathan);
@@ -357,6 +372,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                     return DemonContractCatalog.SatanKey;
                 case DemonContractKind.Belphegor:
                     return DemonContractCatalog.BelphegorKey;
+                case DemonContractKind.Beelzebub:
+                    return DemonContractCatalog.BeelzebubKey;
                 case DemonContractKind.Mammon:
                     return DemonContractCatalog.MammonKey;
                 case DemonContractKind.Leviathan:

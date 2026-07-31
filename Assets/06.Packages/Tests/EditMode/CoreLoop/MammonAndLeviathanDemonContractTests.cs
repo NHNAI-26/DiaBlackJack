@@ -487,6 +487,38 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(state.CanRerollThisTurn, Is.False);
         }
 
+        [Test]
+        public void DCR08_U02_BattleSeedControlsMammonInitialRoll()
+        {
+            CoreLoopBattle first = CreateSeededMammonBattle(demonContractSeed: 1);
+            CoreLoopBattle second = CreateSeededMammonBattle(demonContractSeed: 2);
+
+            ActivateFirstContract(first);
+            ActivateFirstContract(second);
+
+            MammonRuntimeState firstState = (MammonRuntimeState)first
+                .ActivePlayerDemonContracts.Single().RuntimeState;
+            MammonRuntimeState secondState = (MammonRuntimeState)second
+                .ActivePlayerDemonContracts.Single().RuntimeState;
+            Assert.That(firstState.CurrentDieValue, Is.EqualTo(4));
+            Assert.That(secondState.CurrentDieValue, Is.EqualTo(1));
+        }
+
+        private static CoreLoopBattle CreateSeededMammonBattle(
+            int demonContractSeed)
+        {
+            var battle = new CoreLoopBattle(
+                CreatePlainDeck(new[] { 5, 5, 2, 3, 4, 5 }),
+                CreatePlainDeck(new[] { 10, 7, 2, 3, 4, 5 }),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3,
+                enemyPolicy: new SequenceEnemyPolicy(EnemyActionType.Stand),
+                playerDemonDeck: CreateDemonDeck(DemonContractKind.Mammon),
+                demonContractSeed: demonContractSeed);
+            Assert.That(battle.Start(), Is.True);
+            return battle;
+        }
+
         private static CoreLoopBattle CreateMammonBattle(
             IReadOnlyList<int> playerRanks,
             IReadOnlyList<int> enemyRanks,

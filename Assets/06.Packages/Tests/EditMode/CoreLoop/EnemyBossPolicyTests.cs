@@ -194,6 +194,40 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void DCR07_U04_FinalBossResolvesAsmodeusTurnStartChoice()
+        {
+            EnemyActionCandidate skip = new EnemyActionCandidate(
+                EnemyActionType.DemonContract,
+                demonContractOptionId:
+                    AsmodeusDemonContractHandler.SkipForcedHitOptionId,
+                demonContractInteractionKind:
+                    DemonContractInteractionKind.AsmodeusForceOpponentHit,
+                demonContractKind: DemonContractKind.Asmodeus,
+                demonContractDefinitionKey: DemonContractCatalog.AsmodeusKey);
+            EnemyActionCandidate force = new EnemyActionCandidate(
+                EnemyActionType.DemonContract,
+                demonContractOptionId:
+                    AsmodeusDemonContractHandler.ForceHitOptionId,
+                demonContractInteractionKind:
+                    DemonContractInteractionKind.AsmodeusForceOpponentHit,
+                demonContractKind: DemonContractKind.Asmodeus,
+                demonContractDefinitionKey: DemonContractCatalog.AsmodeusKey);
+
+            EnemyDecision decision = new FinalBossEnemyPolicy().Decide(
+                CreateObservation(
+                    ownTotal: 16,
+                    enemyCurrentSoul: 5,
+                    candidates: new[] { skip, force }));
+
+            Assert.That(
+                decision.DemonContractOptionId,
+                Is.EqualTo(AsmodeusDemonContractHandler.ForceHitOptionId));
+            Assert.That(
+                decision.ReasonCode,
+                Is.EqualTo("boss-force-opponent-hit-with-asmodeus"));
+        }
+
+        [Test]
         public void EP05_I01_ExecutionPhaseTelegraphsThenUsesStrongCard()
         {
             var policy = new FinalBossEnemyPolicy();

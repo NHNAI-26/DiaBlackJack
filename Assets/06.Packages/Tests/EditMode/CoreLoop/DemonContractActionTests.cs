@@ -149,6 +149,11 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.LastDemonContractResult.PaidSoulCost, Is.EqualTo(1));
             Assert.That(battle.LastDemonContractResult.SoulAfterBaseCost, Is.EqualTo(1));
             Assert.That(battle.LastDemonContractResult.EndedBattle, Is.False);
+            PublicCombatAction publicAction = battle.PublicActionHistory.Single(action =>
+                action.ActorSide == CombatantSide.Player &&
+                action.ActionType == PublicCombatActionType.DemonContract);
+            Assert.That(publicAction.SourceCardDefinitionKey,
+                Is.EqualTo(active.Definition.Key));
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
         }
 

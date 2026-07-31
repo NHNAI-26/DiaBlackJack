@@ -153,11 +153,11 @@ namespace DiaBlackJack.CoreLoop
                 case DemonContractInteractionKind.BeelzebubChooseOwnerCard:
                     return EvaluateBeelzebubDiscard(
                         candidate,
-                        preferHigherRank: true);
+                        ownerCard: true);
                 case DemonContractInteractionKind.BeelzebubChooseOpponentCard:
                     return EvaluateBeelzebubDiscard(
                         candidate,
-                        preferHigherRank: false);
+                        ownerCard: false);
                 case DemonContractInteractionKind.AsmodeusForceOpponentHit:
                     bool forcesHit = candidate.DemonContractOptionId ==
                         AsmodeusDemonContractHandler.ForceHitOptionId;
@@ -305,18 +305,17 @@ namespace DiaBlackJack.CoreLoop
 
         private static EnemyActionScore EvaluateBeelzebubDiscard(
             EnemyActionCandidate candidate,
-            bool preferHigherRank)
+            bool ownerCard)
         {
             int rank = candidate.DemonContractOptionNumericValue ??
                 throw new InvalidOperationException(
                     "Cultist Beelzebub choice requires a public card rank.");
-            int score = preferHigherRank ? 1200 + rank : 1200 - rank;
             return Score(
                 candidate,
-                score,
-                preferHigherRank
+                1200 + rank,
+                ownerCard
                     ? "cultist-beelzebub-discard-highest-own-card"
-                    : "cultist-beelzebub-discard-lowest-opponent-card");
+                    : "cultist-beelzebub-discard-highest-opponent-card");
         }
 
         private static EnemyActionScore EvaluatePaimonExile(
