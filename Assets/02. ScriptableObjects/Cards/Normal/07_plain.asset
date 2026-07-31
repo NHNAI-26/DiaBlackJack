@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
   key: auto-pistol-7
   displayName: 리볼버
-  description: 적 비공개 숫자 맞히면 적 즉사
+  description: 숫자 하나를 선언합니다. 상대 비공개 카드와 일치하면 상대를 버스트시킵니다.
   basePurchasePrice: 3
   shopWeight: 1
   rank: 7

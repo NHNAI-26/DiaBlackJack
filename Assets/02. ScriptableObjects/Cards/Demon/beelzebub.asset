@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.DemonCardDefinitionSO
   key: beelzebub
   displayName: 바알제붑
-  activeEffectDescription: 버스트를 영혼과 소유자가 고른 양측 공개 카드로 대신한다.
-  costDescription: 계약 시 영혼 1, 공개 카드 3장 이하일 때 스탠드 불가
-  codexLoreDescription: 썩은 승부 위에 군림하는 파리의 군주. 패배의 순간조차 제물로 바꾸어 다시 판을 이어 간다.
+  activeEffectDescription: 버스트할 때 영혼 1을 지불하고, 양측 공개 카드 1장씩을 골라 버린 뒤 생존합니다.
+  costDescription: 자신의 공개 카드가 3장 이하라면 스탠드할 수 없습니다.
+  codexLoreDescription: 썩은 승부 위에 군림하는 파리의 군주. 패배의 순간마저 제물로 바꾸어 판을 이어 간다.
   baseSoulCost: 1
   basePurchasePrice: 3
   shopWeight: 1

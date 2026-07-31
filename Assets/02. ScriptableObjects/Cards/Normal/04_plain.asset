@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
   key: standard-plain-4
   displayName: 기본 카드
-  description: 기본 카드
+  description: ''
   basePurchasePrice: 3
   shopWeight: 1
   rank: 4

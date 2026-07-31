@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
   key: standard-ace-1
   displayName: 에이스
-  description: 기본 카드
+  description: 라운드 종료 시 합계가 21에 가장 가까워지도록 1 또는 11로 계산됩니다.
   basePurchasePrice: 3
   shopWeight: 1
   rank: 1

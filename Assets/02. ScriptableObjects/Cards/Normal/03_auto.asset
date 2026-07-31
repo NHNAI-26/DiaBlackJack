@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
   key: lie-detector-3
   displayName: 거짓말 탐지기
-  description: 숫자를 선언해 상대 비공개 카드의 이상·미만 확인
+  description: 숫자 하나를 선언합니다. 상대 비공개 카드가 선언한 숫자 이상인지 확인합니다.
   basePurchasePrice: 3
   shopWeight: 1
   rank: 3
