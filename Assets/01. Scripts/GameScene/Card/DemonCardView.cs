@@ -1,5 +1,6 @@
 using Border.Audio;
 using DiaBlackJack.Content;
+using TMPro;
 using UnityEngine;
 
 namespace DiaBlackJack.GameScene
@@ -9,6 +10,7 @@ namespace DiaBlackJack.GameScene
     {
         [SerializeField] private GameObject front;
         [SerializeField] private GameObject back;
+        [SerializeField] private TMP_Text englishNameText;
         [SerializeField] private CardContentCatalogSO cardContentCatalog;
 
         [Header("Hover badge anchor")]
@@ -83,7 +85,14 @@ namespace DiaBlackJack.GameScene
                 back.SetActive(!_showingFrontFace);
             }
 
-            HoverBadgeTitle = !card.IsFaceUp ? string.Empty : card.DisplayName;
+            string englishName = card.DefinitionKey.ToUpperInvariant();
+            if (englishNameText != null)
+            {
+                englishNameText.text = _showingFrontFace ? englishName : string.Empty;
+                englishNameText.gameObject.SetActive(_showingFrontFace);
+            }
+
+            HoverBadgeTitle = !card.IsFaceUp ? string.Empty : englishName;
             HoverBadgeDescription = !card.IsFaceUp
                 ? string.Empty
                 : FormatBadgeDescription(card);

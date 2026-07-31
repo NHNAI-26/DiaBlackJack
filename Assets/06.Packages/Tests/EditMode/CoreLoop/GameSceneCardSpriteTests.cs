@@ -293,6 +293,56 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GSV02_U07_DemonPrefabBindsUppercaseKeyOnCardAndHoverBadge()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(DemonCardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                DemonCardView view = instance.GetComponent<DemonCardView>();
+                Assert.That(view, Is.Not.Null);
+                DemonContractDefinition definition = DemonContractCatalog.Default.GetByKey(
+                    DemonContractCatalog.MephistophelesKey);
+                string expectedName = definition.Key.ToUpperInvariant();
+
+                view.Bind(new GameSceneDemonCardViewModel(
+                    cardId: 1,
+                    definitionKey: definition.Key,
+                    isFaceUp: true,
+                    canUse: true,
+                    displayName: definition.DisplayName));
+
+                SerializedObject serialized = new SerializedObject(view);
+                Component englishNameText = serialized.FindProperty("englishNameText")
+                    .objectReferenceValue as Component;
+                Assert.That(englishNameText, Is.Not.Null);
+                PropertyInfo textProperty = englishNameText.GetType().GetProperty("text");
+                Assert.That(textProperty, Is.Not.Null);
+                Assert.That(
+                    textProperty.GetValue(englishNameText),
+                    Is.EqualTo(expectedName));
+                Assert.That(englishNameText.gameObject.activeSelf, Is.True);
+                Assert.That(view.HoverBadgeTitle, Is.EqualTo(expectedName));
+
+                view.Bind(new GameSceneDemonCardViewModel(
+                    cardId: 1,
+                    definitionKey: definition.Key,
+                    isFaceUp: false,
+                    canUse: false,
+                    displayName: definition.DisplayName));
+
+                Assert.That(englishNameText.gameObject.activeSelf, Is.False);
+                Assert.That(view.HoverBadgeTitle, Is.Empty);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
         public void GSV02_U05_PlayerHiddenCardBlendsRealFaceOverBackOnlyWhileHovered()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
