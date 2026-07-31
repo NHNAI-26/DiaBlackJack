@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using DiaBlackJack.Content;
 using DiaBlackJack.GameScene;
+using DiaBlackJack.GameScene.Editor;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -111,7 +113,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
 
             Assert.That(prefab, Is.Not.Null);
-            Assert.That(prefab.GetComponent<CodexOverlayView>(), Is.Not.Null);
+            CodexOverlayView view = prefab.GetComponent<CodexOverlayView>();
+            Assert.That(view, Is.Not.Null);
             Assert.That(
                 prefab.GetComponentsInChildren<Button>(true).Length,
                 Is.GreaterThanOrEqualTo(3));
@@ -125,6 +128,46 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 prefab.GetComponentInChildren<EventSystem>(true),
                 Is.Null);
+
+            RectTransform[] rectTransforms =
+                prefab.GetComponentsInChildren<RectTransform>(true);
+            foreach (RectTransform rectTransform in rectTransforms)
+            {
+                Assert.That(
+                    IsAnchorPreset(rectTransform),
+                    Is.True,
+                    $"'{rectTransform.name}' must use a standard anchor preset.");
+
+                bool usesFixedAnchors =
+                    Mathf.Approximately(
+                        rectTransform.anchorMin.x,
+                        rectTransform.anchorMax.x) &&
+                    Mathf.Approximately(
+                        rectTransform.anchorMin.y,
+                        rectTransform.anchorMax.y);
+                if (rectTransform != prefab.transform && usesFixedAnchors)
+                {
+                    Assert.That(
+                        rectTransform.sizeDelta.x,
+                        Is.GreaterThan(0f),
+                        $"'{rectTransform.name}' must expose a positive width.");
+                    Assert.That(
+                        rectTransform.sizeDelta.y,
+                        Is.GreaterThan(0f),
+                        $"'{rectTransform.name}' must expose a positive height.");
+                }
+            }
+
+            CodexCardThumbnailView deckTemplate =
+                GetReference<CodexCardThumbnailView>(view, "deckTemplate");
+            RectTransform deckRect = deckTemplate.transform as RectTransform;
+            Assert.That(deckRect, Is.Not.Null);
+            Assert.That(deckRect.anchorMin, Is.EqualTo(new Vector2(0f, 1f)));
+            Assert.That(deckRect.anchorMax, Is.EqualTo(new Vector2(0f, 1f)));
+            Assert.That(
+                deckRect.anchoredPosition,
+                Is.EqualTo(new Vector2(292.8f, -92f)));
+            Assert.That(deckRect.sizeDelta, Is.EqualTo(new Vector2(116f, 164f)));
         }
 
         [Test]
@@ -137,6 +180,181 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(prefab.GetComponent<CodexClickable>(), Is.Not.Null);
             Assert.That(prefab.GetComponent<Collider>(), Is.Not.Null);
             Assert.That(prefab.GetComponent<SpriteRenderer>(), Is.Not.Null);
+        }
+
+        [Test]
+        public void DX02_U04_EditorPreviewUsesTemplatesWithoutCloningAndRestores()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
+            GameObject overlay = UnityEngine.Object.Instantiate(prefab);
+            CodexOverlayView view = overlay.GetComponent<CodexOverlayView>();
+            CodexCardThumbnailView contractTemplate =
+                GetReference<CodexCardThumbnailView>(
+                    view,
+                    "contractTemplate");
+            CodexCardThumbnailView deckTemplate =
+                GetReference<CodexCardThumbnailView>(view, "deckTemplate");
+            Component noContractText = GetReference<Component>(
+                view,
+                "noContractText");
+            Image deckFace = GetReference<Image>(
+                deckTemplate,
+                "faceImage");
+            Component deckName = GetReference<Component>(
+                deckTemplate,
+                "nameText");
+            int thumbnailCount = overlay
+                .GetComponentsInChildren<CodexCardThumbnailView>(true)
+                .Length;
+            bool contractActive = contractTemplate.gameObject.activeSelf;
+            bool deckActive = deckTemplate.gameObject.activeSelf;
+            bool noContractActive = noContractText.gameObject.activeSelf;
+            Sprite deckSprite = deckFace.sprite;
+            string deckLabel = GetText(deckName);
+
+            CardContentCatalogSO cardCatalog = LoadCardCatalog();
+            IReadOnlyList<EnemyCodexPageViewModel> pages =
+                CreateEnemyPages(cardCatalog);
+            int emptyContractIndex = FindEnemyPageIndex(
+                pages,
+                hasContracts: false);
+
+            try
+            {
+                Assert.That(
+                    CodexOverlayPreviewSession.ShowCategory(
+                        view,
+                        CodexCategory.Enemy),
+                    Is.Null);
+                MovePreviewToIndex(view, emptyContractIndex);
+
+                EnemyCodexPageViewModel page = pages[emptyContractIndex];
+                CodexDeckCardViewModel firstCard = page.StartingDeck[0];
+                Assert.That(
+                    overlay.GetComponentsInChildren<CodexCardThumbnailView>(true)
+                        .Length,
+                    Is.EqualTo(thumbnailCount));
+                Assert.That(contractTemplate.gameObject.activeSelf, Is.False);
+                Assert.That(deckTemplate.gameObject.activeSelf, Is.True);
+                Assert.That(noContractText.gameObject.activeSelf, Is.True);
+                Assert.That(
+                    deckFace.sprite,
+                    Is.EqualTo(cardCatalog.GetNormalFaceSprite(
+                        firstCard.DefinitionKey,
+                        firstCard.Suit)));
+                Assert.That(
+                    GetText(deckName),
+                    Is.EqualTo($"{firstCard.Rank}  {firstCard.DisplayName}"));
+
+                CodexOverlayPreviewSession.StopActive();
+                Assert.That(
+                    contractTemplate.gameObject.activeSelf,
+                    Is.EqualTo(contractActive));
+                Assert.That(
+                    deckTemplate.gameObject.activeSelf,
+                    Is.EqualTo(deckActive));
+                Assert.That(
+                    noContractText.gameObject.activeSelf,
+                    Is.EqualTo(noContractActive));
+                Assert.That(deckFace.sprite, Is.EqualTo(deckSprite));
+                Assert.That(GetText(deckName), Is.EqualTo(deckLabel));
+            }
+            finally
+            {
+                CodexOverlayPreviewSession.StopActive();
+                UnityEngine.Object.DestroyImmediate(overlay);
+            }
+        }
+
+        [Test]
+        public void DX02_U05_EditorPreviewShowsContractAndDemonAtBoundaries()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
+            GameObject overlay = UnityEngine.Object.Instantiate(prefab);
+            CodexOverlayView view = overlay.GetComponent<CodexOverlayView>();
+            CodexCardThumbnailView contractTemplate =
+                GetReference<CodexCardThumbnailView>(
+                    view,
+                    "contractTemplate");
+            CodexCardThumbnailView deckTemplate =
+                GetReference<CodexCardThumbnailView>(view, "deckTemplate");
+            Image contractFace = GetReference<Image>(
+                contractTemplate,
+                "faceImage");
+            Image demonCard = GetReference<Image>(view, "demonCardImage");
+            GameObject enemyPage = GetReference<GameObject>(
+                view,
+                "enemyPageRoot");
+            GameObject demonPage = GetReference<GameObject>(
+                view,
+                "demonPageRoot");
+
+            CardContentCatalogSO cardCatalog = LoadCardCatalog();
+            IReadOnlyList<EnemyCodexPageViewModel> enemyPages =
+                CreateEnemyPages(cardCatalog);
+            IReadOnlyList<DemonCodexPageViewModel> demonPages =
+                CodexPresenter.CreateDemonPages(
+                    cardCatalog.BuildRuntimeCatalog(),
+                    cardCatalog.BuildDemonLoreCatalog());
+            int contractIndex = FindEnemyPageIndex(
+                enemyPages,
+                hasContracts: true);
+
+            try
+            {
+                Assert.That(
+                    CodexOverlayPreviewSession.ShowCategory(
+                        view,
+                        CodexCategory.Enemy),
+                    Is.Null);
+                MovePreviewToIndex(view, contractIndex);
+                CodexDemonReferenceViewModel firstContract =
+                    enemyPages[contractIndex].ContractableDemons[0];
+                Assert.That(contractTemplate.gameObject.activeSelf, Is.True);
+                Assert.That(
+                    contractFace.sprite,
+                    Is.EqualTo(cardCatalog.GetDemonFaceSprite(
+                        firstContract.DefinitionKey)));
+
+                Assert.That(
+                    CodexOverlayPreviewSession.ShowCategory(
+                        view,
+                        CodexCategory.DemonCard),
+                    Is.Null);
+                CodexOverlayPreviewSession session =
+                    CodexOverlayPreviewSession.GetActive(view);
+                Assert.That(session.CurrentCategory, Is.EqualTo(
+                    CodexCategory.DemonCard));
+                Assert.That(enemyPage.activeSelf, Is.False);
+                Assert.That(demonPage.activeSelf, Is.True);
+                Assert.That(contractTemplate.gameObject.activeSelf, Is.False);
+                Assert.That(deckTemplate.gameObject.activeSelf, Is.False);
+                Assert.That(
+                    demonCard.sprite,
+                    Is.EqualTo(cardCatalog.GetDemonFaceSprite(
+                        demonPages[0].DefinitionKey)));
+
+                while (session.CanMoveNext)
+                {
+                    Assert.That(
+                        CodexOverlayPreviewSession.MoveNext(view),
+                        Is.Null);
+                }
+
+                int lastIndex = session.CurrentPageIndex;
+                Assert.That(
+                    CodexOverlayPreviewSession.MoveNext(view),
+                    Is.Null);
+                Assert.That(session.CurrentPageIndex, Is.EqualTo(lastIndex));
+                Assert.That(session.CanMoveNext, Is.False);
+            }
+            finally
+            {
+                CodexOverlayPreviewSession.StopActive();
+                UnityEngine.Object.DestroyImmediate(overlay);
+            }
         }
 
         [Test]
@@ -355,6 +573,105 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             return AssetDatabase.LoadAssetAtPath<EnemyContentCatalogSO>(
                 EnemyCatalogPath);
+        }
+
+        private static IReadOnlyList<EnemyCodexPageViewModel> CreateEnemyPages(
+            CardContentCatalogSO cardCatalog)
+        {
+            EnemyContentCatalogSO enemyCatalog = LoadEnemyCatalog();
+            return CodexPresenter.CreateEnemyPages(
+                enemyCatalog.BuildRuntimeCatalog(),
+                enemyCatalog.BuildGoldRewardCatalog(),
+                cardCatalog.BuildRuntimeCatalog());
+        }
+
+        private static int FindEnemyPageIndex(
+            IReadOnlyList<EnemyCodexPageViewModel> pages,
+            bool hasContracts)
+        {
+            for (int index = 0; index < pages.Count; index++)
+            {
+                if ((pages[index].ContractableDemons.Count > 0) ==
+                    hasContracts)
+                {
+                    return index;
+                }
+            }
+
+            Assert.Fail(
+                hasContracts
+                    ? "No enemy page has contractable demons."
+                    : "No enemy page has an empty contract list.");
+            return -1;
+        }
+
+        private static void MovePreviewToIndex(
+            CodexOverlayView view,
+            int targetIndex)
+        {
+            CodexOverlayPreviewSession session =
+                CodexOverlayPreviewSession.GetActive(view);
+            while (session.CurrentPageIndex < targetIndex)
+            {
+                Assert.That(
+                    CodexOverlayPreviewSession.MoveNext(view),
+                    Is.Null);
+            }
+
+            while (session.CurrentPageIndex > targetIndex)
+            {
+                Assert.That(
+                    CodexOverlayPreviewSession.MovePrevious(view),
+                    Is.Null);
+            }
+        }
+
+        private static T GetReference<T>(
+            UnityEngine.Object target,
+            string propertyName)
+            where T : UnityEngine.Object
+        {
+            SerializedObject serialized = new SerializedObject(target);
+            SerializedProperty property = serialized.FindProperty(propertyName);
+            Assert.That(
+                property,
+                Is.Not.Null,
+                $"Serialized property '{propertyName}' is missing.");
+            T value = property.objectReferenceValue as T;
+            Assert.That(
+                value,
+                Is.Not.Null,
+                $"Serialized reference '{propertyName}' is missing.");
+            return value;
+        }
+
+        private static string GetText(Component textComponent)
+        {
+            SerializedObject serialized = new SerializedObject(textComponent);
+            SerializedProperty text = serialized.FindProperty("m_text");
+            Assert.That(text, Is.Not.Null);
+            return text.stringValue;
+        }
+
+        private static bool IsAnchorPreset(RectTransform rectTransform)
+        {
+            return IsAnchorPresetAxis(
+                    rectTransform.anchorMin.x,
+                    rectTransform.anchorMax.x) &&
+                IsAnchorPresetAxis(
+                    rectTransform.anchorMin.y,
+                    rectTransform.anchorMax.y);
+        }
+
+        private static bool IsAnchorPresetAxis(float minimum, float maximum)
+        {
+            bool fixedAnchor = Mathf.Approximately(minimum, maximum) &&
+                (Mathf.Approximately(minimum, 0f) ||
+                    Mathf.Approximately(minimum, 0.5f) ||
+                    Mathf.Approximately(minimum, 1f));
+            bool stretchAnchor = Mathf.Approximately(minimum, 0f) &&
+                Mathf.Approximately(maximum, 1f);
+            return fixedAnchor || stretchAnchor;
         }
 
         private static void InvokeLifecycle(

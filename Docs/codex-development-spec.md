@@ -24,6 +24,9 @@
 - `CodexController`: 열림 상태, 카테고리별 마지막 페이지, `Q/E`, 책갈피, 닫기를 소유한다.
 - `CodexClickable`: GameManager의 기존 포인터 raycast로 여는 테이블 책 표식이다.
 - 기준 해상도는 1920×1080이며 Canvas Scaler와 앵커로 1280×720을 지원한다.
+- `CodexOverlayView` Custom Inspector는 Edit Mode와 Prefab Mode에서 적/악마·이전/다음·새로고침·끄기 프리뷰를 제공한다. 프리뷰는 새 오브젝트를 만들지 않고 기존 `ContractTemplate`과 `DeckTemplate`를 활성화해 각 목록의 첫 항목만 표시한다.
+- 프리뷰 시작 전 표시값과 활성 상태를 보관하고, 끄기·Scene/Prefab 저장·Prefab Stage 종료·Play Mode 진입·assembly reload 전에 복원한다. 템플릿과 컨테이너의 RectTransform·scale·layout 수정값은 복원 대상이 아니다.
+- 도감 프리팹의 RectTransform은 `custom` 앵커를 사용하지 않는다. 채움 용도의 기존 stretch preset은 유지하고, 나머지는 가까운 고정 preset과 양수 Width/Height를 직렬화해 Prefab Mode에서 직접 크기와 위치를 편집할 수 있게 한다.
 
 ## DX-03: 입력·생명주기
 
@@ -39,5 +42,7 @@
 - 현재 영혼·골드·설명·계약 목록·덱 순서와 카드 가격·효과·대가가 일치한다.
 - 페이지 경계와 카테고리별 마지막 페이지 복원이 보장된다.
 - 프리팹 필수 버튼, ScrollRect, 두 카드 템플릿과 테이블 책 Collider가 존재한다.
+- 에디터 프리뷰 전후 카드 템플릿 수는 2개로 유지되고, 프리뷰 종료 시 원래 표시값과 활성 상태가 복원된다.
+- 도감 프리팹의 모든 RectTransform 앵커가 표준 preset이며 루트를 제외한 고정 앵커 요소는 양수 Width/Height를 가진다.
 - GameScene missing script 0, Console Error 0, 전체 EditMode 실패 0을 유지한다.
 - `CardContentBootstrap`은 카드 SO를 먼저 설치한 뒤 적 SO에서 순수 적·골드 카탈로그를 생성하고 설치한다. 순수 계층의 기본 카탈로그는 EditMode 테스트 호환 fallback으로만 유지한다.

@@ -118,6 +118,43 @@ namespace DiaBlackJack.GameScene
             }
 
             EnsureConfigured();
+            bool showEnemy = RenderBookFrame(model);
+            if (showEnemy)
+            {
+                RenderEnemy(model.EnemyPage);
+            }
+            else
+            {
+                RenderDemon(model.DemonPage);
+            }
+        }
+
+#if UNITY_EDITOR
+        internal void RenderEditorPreview(CodexBookViewModel model)
+        {
+            if (model == null)
+            {
+                throw new ArgumentNullException(nameof(model));
+            }
+
+            EnsureConfigured();
+            ClearSpawnedItems(_contractItems);
+            ClearSpawnedItems(_deckItems);
+            bool showEnemy = RenderBookFrame(model);
+            if (showEnemy)
+            {
+                RenderEnemyPreview(model.EnemyPage);
+            }
+            else
+            {
+                SetTemplatesVisible(false);
+                RenderDemon(model.DemonPage);
+            }
+        }
+#endif
+
+        private bool RenderBookFrame(CodexBookViewModel model)
+        {
             bool showEnemy = model.Category == CodexCategory.Enemy;
             if (enemyPageRoot != null)
             {
@@ -157,17 +194,41 @@ namespace DiaBlackJack.GameScene
                     $"Q  이전    {model.PageIndex + 1} / {model.PageCount}    다음  E";
             }
 
-            if (showEnemy)
-            {
-                RenderEnemy(model.EnemyPage);
-            }
-            else
-            {
-                RenderDemon(model.DemonPage);
-            }
+            return showEnemy;
         }
 
         private void RenderEnemy(EnemyCodexPageViewModel page)
+        {
+            RenderEnemyDetails(page);
+
+            ClearSpawnedItems(_contractItems);
+            bool hasContracts = page.ContractableDemons.Count > 0;
+            RenderNoContractMessage(hasContracts);
+
+            foreach (CodexDemonReferenceViewModel demon in
+                page.ContractableDemons)
+            {
+                CodexCardThumbnailView item = CreateItem(
+                    contractTemplate,
+                    contractGrid,
+                    _contractItems);
+                RenderDemonThumbnail(item, demon);
+            }
+
+            ClearSpawnedItems(_deckItems);
+            foreach (CodexDeckCardViewModel card in page.StartingDeck)
+            {
+                CodexCardThumbnailView item = CreateItem(
+                    deckTemplate,
+                    deckGrid,
+                    _deckItems);
+                RenderDeckThumbnail(item, card);
+            }
+
+            ResetDeckScroll();
+        }
+
+        private void RenderEnemyDetails(EnemyCodexPageViewModel page)
         {
             if (page == null)
             {
@@ -186,45 +247,70 @@ namespace DiaBlackJack.GameScene
                 enemyPortraitImage.enabled =
                     enemyPortraitImage.sprite != null;
             }
+        }
 
-            ClearSpawnedItems(_contractItems);
-            bool hasContracts = page.ContractableDemons.Count > 0;
+        private void RenderNoContractMessage(bool hasContracts)
+        {
             if (noContractText != null)
             {
                 noContractText.gameObject.SetActive(!hasContracts);
                 noContractText.text = "계약 가능한 악마 없음";
             }
-
-            foreach (CodexDemonReferenceViewModel demon in
-                page.ContractableDemons)
-            {
-                CodexCardThumbnailView item = CreateItem(
-                    contractTemplate,
-                    contractGrid,
-                    _contractItems);
-                item.Render(
-                    demon.DisplayName,
-                    _cardContentCatalog.GetDemonFaceSprite(
-                        demon.DefinitionKey));
-            }
-
-            ClearSpawnedItems(_deckItems);
-            foreach (CodexDeckCardViewModel card in page.StartingDeck)
-            {
-                CodexCardThumbnailView item = CreateItem(
-                    deckTemplate,
-                    deckGrid,
-                    _deckItems);
-                string cardName = $"{card.Rank}  {card.DisplayName}";
-                item.Render(
-                    cardName,
-                    _cardContentCatalog.GetNormalFaceSprite(
-                        card.DefinitionKey,
-                        card.Suit));
-            }
-
-            ResetDeckScroll();
         }
+
+        private void RenderDemonThumbnail(
+            CodexCardThumbnailView target,
+            CodexDemonReferenceViewModel demon)
+        {
+            target.Render(
+                demon.DisplayName,
+                _cardContentCatalog.GetDemonFaceSprite(
+                    demon.DefinitionKey));
+        }
+
+        private void RenderDeckThumbnail(
+            CodexCardThumbnailView target,
+            CodexDeckCardViewModel card)
+        {
+            string cardName = $"{card.Rank}  {card.DisplayName}";
+            target.Render(
+                cardName,
+                _cardContentCatalog.GetNormalFaceSprite(
+                    card.DefinitionKey,
+                    card.Suit));
+        }
+
+#if UNITY_EDITOR
+        private void RenderEnemyPreview(EnemyCodexPageViewModel page)
+        {
+            RenderEnemyDetails(page);
+
+            bool hasContracts = page.ContractableDemons.Count > 0;
+            RenderNoContractMessage(hasContracts);
+            if (contractTemplate != null)
+            {
+                contractTemplate.gameObject.SetActive(hasContracts);
+                if (hasContracts)
+                {
+                    RenderDemonThumbnail(
+                        contractTemplate,
+                        page.ContractableDemons[0]);
+                }
+            }
+
+            bool hasDeck = page.StartingDeck.Count > 0;
+            if (deckTemplate != null)
+            {
+                deckTemplate.gameObject.SetActive(hasDeck);
+                if (hasDeck)
+                {
+                    RenderDeckThumbnail(
+                        deckTemplate,
+                        page.StartingDeck[0]);
+                }
+            }
+        }
+#endif
 
         private void RenderDemon(DemonCodexPageViewModel page)
         {
