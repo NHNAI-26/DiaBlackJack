@@ -32,11 +32,6 @@ namespace DiaBlackJack.GameScene
 
         [Header("Combat controls")]
         [SerializeField] private GameObject combatControlsRoot;
-        [SerializeField] private GameObject actionRow;
-        [SerializeField] private GameHudActionButton hitButton;
-        [SerializeField] private GameHudActionButton standButton;
-        [SerializeField] private GameHudActionButton changeButton;
-        [SerializeField] private GameHudActionButton contractButton;
         [SerializeField] private RectTransform actionTooltip;
         [SerializeField] private TMP_Text actionTooltipText;
         [SerializeField] private GameObject optionPanel;
@@ -50,7 +45,6 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private CardContentCatalogSO cardContentCatalog;
 
         private Canvas _canvas;
-        private GameHudActionButton _hoveredActionButton;
 
         public event Action<GameSceneCombatHudCommand> CombatCommandRequested;
 
@@ -229,44 +223,67 @@ namespace DiaBlackJack.GameScene
             SetActive(contractDetailPanel, false);
         }
 
+        public void ShowCombatActionTooltip(
+            string tooltip,
+            Vector2 screenPosition,
+            Camera worldCamera)
+        {
+            if (string.IsNullOrEmpty(tooltip) ||
+                actionTooltip == null ||
+                actionTooltipText == null)
+            {
+                HideCombatActionTooltip();
+                return;
+            }
+
+            RectTransform parent = actionTooltip.parent as RectTransform;
+            if (parent == null)
+            {
+                HideCombatActionTooltip();
+                return;
+            }
+
+            if (_canvas == null)
+            {
+                _canvas = GetComponentInParent<Canvas>();
+            }
+
+            Camera uiCamera = _canvas != null &&
+                _canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                ? _canvas.worldCamera != null ? _canvas.worldCamera : worldCamera
+                : null;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                    parent,
+                    screenPosition,
+                    uiCamera,
+                    out Vector2 localPosition))
+            {
+                HideCombatActionTooltip();
+                return;
+            }
+
+            actionTooltipText.text = tooltip;
+            actionTooltip.pivot = new Vector2(0.5f, 0f);
+            actionTooltip.localPosition = localPosition + new Vector2(0f, 14f);
+            actionTooltip.gameObject.SetActive(true);
+        }
+
+        public void HideCombatActionTooltip()
+        {
+            if (actionTooltip != null)
+            {
+                actionTooltip.gameObject.SetActive(false);
+            }
+        }
+
         private void BindCombatControls()
         {
-            BindActionButton(hitButton);
-            BindActionButton(standButton);
-            BindActionButton(changeButton);
-            BindActionButton(contractButton);
             BindChoiceButtons(optionSlots);
         }
 
         private void UnbindCombatControls()
         {
-            UnbindActionButton(hitButton);
-            UnbindActionButton(standButton);
-            UnbindActionButton(changeButton);
-            UnbindActionButton(contractButton);
             UnbindChoiceButtons(optionSlots);
-        }
-
-        private void BindActionButton(GameHudActionButton actionButton)
-        {
-            if (actionButton == null)
-            {
-                return;
-            }
-
-            actionButton.CommandRequested += RaiseCombatCommand;
-            actionButton.HoverChanged += HandleActionHoverChanged;
-        }
-
-        private void UnbindActionButton(GameHudActionButton actionButton)
-        {
-            if (actionButton == null)
-            {
-                return;
-            }
-
-            actionButton.CommandRequested -= RaiseCombatCommand;
-            actionButton.HoverChanged -= HandleActionHoverChanged;
         }
 
         private void BindChoiceButtons(GameHudChoiceButton[] slots)
@@ -306,26 +323,9 @@ namespace DiaBlackJack.GameScene
             CombatCommandRequested?.Invoke(command);
         }
 
-        private void HandleActionHoverChanged(GameHudActionButton source, bool isHovering)
-        {
-            if (isHovering)
-            {
-                _hoveredActionButton = source;
-                ShowActionTooltip(source);
-                return;
-            }
-
-            if (_hoveredActionButton == source)
-            {
-                _hoveredActionButton = null;
-                HideActionTooltip();
-            }
-        }
-
         private void RenderCombat(GameSceneCombatHudViewModel combat)
         {
-            HideActionTooltip();
-            _hoveredActionButton = null;
+            HideCombatActionTooltip();
 
             if (combat == null || combat.Mode == GameSceneCombatHudMode.Hidden)
             {
@@ -340,7 +340,6 @@ namespace DiaBlackJack.GameScene
 
             bool isDiegeticSelection =
                 combat.Mode == GameSceneCombatHudMode.DiegeticSelection;
-            SetActive(actionRow, combat.Mode == GameSceneCombatHudMode.Actions);
             SetActive(
                 optionPanel,
                 combat.Mode == GameSceneCombatHudMode.Options ||
@@ -364,18 +363,15 @@ namespace DiaBlackJack.GameScene
 
             if (combat.Mode == GameSceneCombatHudMode.Actions)
             {
-                RenderPrimaryActions(combat.PrimaryActions);
                 RenderOptionActions(combat.Prompt, combat.OptionActions);
                 return;
             }
 
             if (combat.Mode == GameSceneCombatHudMode.ContractCandidates)
             {
-                RenderPrimaryActions(Array.Empty<GameSceneCombatHudActionViewModel>());
                 return;
             }
 
-            RenderPrimaryActions(Array.Empty<GameSceneCombatHudActionViewModel>());
             RenderOptionActions(combat.Prompt, combat.OptionActions);
         }
 
@@ -390,31 +386,6 @@ namespace DiaBlackJack.GameScene
             if (optionScrollRect != null)
             {
                 optionScrollRect.gameObject.SetActive(isVisible);
-            }
-        }
-
-        private void RenderPrimaryActions(
-            System.Collections.Generic.IReadOnlyList<GameSceneCombatHudActionViewModel> actions)
-        {
-            RenderActionButton(hitButton, GetAction(actions, 0));
-            RenderActionButton(standButton, GetAction(actions, 1));
-            RenderActionButton(changeButton, GetAction(actions, 2));
-            RenderActionButton(contractButton, GetAction(actions, 3));
-        }
-
-        private void RenderActionButton(
-            GameHudActionButton actionButton,
-            GameSceneCombatHudActionViewModel action)
-        {
-            if (actionButton == null)
-            {
-                return;
-            }
-
-            actionButton.gameObject.SetActive(action != null);
-            if (action != null)
-            {
-                actionButton.Render(action);
             }
         }
 
@@ -463,65 +434,13 @@ namespace DiaBlackJack.GameScene
             optionScrollRect.verticalNormalizedPosition = 1f;
         }
 
-        private void ShowActionTooltip(GameHudActionButton source)
-        {
-            if (source == null || actionTooltip == null || actionTooltipText == null)
-            {
-                return;
-            }
-
-            actionTooltipText.text = source.Tooltip;
-            RectTransform parent = actionTooltip.parent as RectTransform;
-            if (parent == null || source.RectTransform == null)
-            {
-                return;
-            }
-
-            Camera uiCamera = _canvas != null &&
-                _canvas.renderMode != RenderMode.ScreenSpaceOverlay
-                ? _canvas.worldCamera
-                : null;
-            Vector3 worldPosition = source.RectTransform.TransformPoint(
-                new Vector3(0f, source.RectTransform.rect.height * 0.5f, 0f));
-            Vector2 screenPosition = RectTransformUtility.WorldToScreenPoint(uiCamera, worldPosition);
-            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    parent,
-                    screenPosition,
-                    uiCamera,
-                    out Vector2 localPosition))
-            {
-                actionTooltip.pivot = new Vector2(0.5f, 0f);
-                actionTooltip.localPosition = localPosition + new Vector2(0f, 14f);
-                actionTooltip.gameObject.SetActive(true);
-            }
-        }
-
-        private void HideActionTooltip()
-        {
-            if (actionTooltip != null)
-            {
-                actionTooltip.gameObject.SetActive(false);
-            }
-        }
-
         private void HideCombatControls()
         {
-            _hoveredActionButton = null;
-            HideActionTooltip();
+            HideCombatActionTooltip();
             SetActive(combatControlsRoot, false);
-            SetActive(actionRow, false);
             SetActive(optionPanel, false);
             SetActive(contractDetailPanel, false);
             SetActive(automaticCardResultPanel, false);
-        }
-
-        private static GameSceneCombatHudActionViewModel GetAction(
-            System.Collections.Generic.IReadOnlyList<GameSceneCombatHudActionViewModel> actions,
-            int index)
-        {
-            return actions != null && index >= 0 && index < actions.Count
-                ? actions[index]
-                : null;
         }
 
         private static void SetActive(GameObject target, bool isActive)

@@ -34,6 +34,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private DeckPreviewView deckPreview;
         [SerializeField] private CodexController codex;
         [SerializeField] private DemonContractSelectionView demonContractSelection;
+        [SerializeField] private TableCombatCommandGroup tableCombatCommands;
 
         [Header("Standalone enemy profile")]
         [SerializeField] private string enemyProfileKey =
@@ -74,6 +75,7 @@ namespace DiaBlackJack.GameScene
         private CardView _hoveredCard;
         private DemonCardView _hoveredDemonCard;
         private ShopUtilityItemView _hoveredShopUtilityItem;
+        private TableCombatCommandView _hoveredCombatCommand;
         private bool _inputLocked;
         private bool _pauseInputBlocked;
         private bool _choosingLighterRemoval;
@@ -203,6 +205,7 @@ namespace DiaBlackJack.GameScene
             UpdateHover(null);
             UpdateDemonCardHover(null);
             UpdateShopUtilityItemHover(null);
+            UpdateCombatCommandHover(null);
             hud?.HideCardHoverBadge();
             shop?.CloseFormal();
         }
@@ -219,6 +222,7 @@ namespace DiaBlackJack.GameScene
             UpdateDemonCardHover(null);
             demonContractSelection?.SetHovered(null);
             UpdateShopUtilityItemHover(null);
+            UpdateCombatCommandHover(null);
             hud?.HideCardHoverBadge();
             hud?.HideDemonContractDetail();
         }
@@ -272,6 +276,8 @@ namespace DiaBlackJack.GameScene
             codex ??= GetComponent<CodexController>();
             demonContractSelection ??=
                 GetComponent<DemonContractSelectionView>();
+            tableCombatCommands ??= FindFirstObjectByType<TableCombatCommandGroup>(
+                FindObjectsInactive.Include);
 
             if (hud != null)
             {
@@ -305,6 +311,7 @@ namespace DiaBlackJack.GameScene
             }
             demonContractSelection?.Hide();
             hud?.HideDemonContractDetail();
+            UpdateCombatCommandHover(null);
         }
 
         private void OnDestroy()
@@ -331,11 +338,13 @@ namespace DiaBlackJack.GameScene
             UpdateHover(null);
             UpdateDemonCardHover(null);
             UpdateShopUtilityItemHover(null);
+            UpdateCombatCommandHover(null);
             demonContractSelection?.SetHovered(null);
             demonContractSelection?.Hide();
             hud?.HideCardHoverBadge();
             hud?.HideDemonContractDetail();
             hud?.Render(null);
+            tableCombatCommands?.ResetView();
             CloseDeckPreview();
             CloseCodex();
             EndHammerSwitchInputLock();
@@ -365,7 +374,7 @@ namespace DiaBlackJack.GameScene
         // Diegetic input: hover any card to enlarge it (usable cards also show a HUD badge), click a
         // legal card-effect target to resolve that choice, or click a usable player card to activate
         // its effect. New Input System — legacy OnMouseDown does not fire, so we raycast the pointer
-        // ourselves. Other combat input comes from GameHudView.
+        // ourselves. Table commands and the contract share this same raycast path.
         private void Update()
         {
             if (_deckPreviewSwitchInputLocked &&
@@ -382,12 +391,14 @@ namespace DiaBlackJack.GameScene
 
             if (IsModalInputBlocked)
             {
+                UpdateCombatCommandHover(null);
                 return;
             }
 
             bool shopOpen = shop != null && shop.IsOpen;
             if (_core == null && !shopOpen)
             {
+                UpdateCombatCommandHover(null);
                 return;
             }
 
@@ -396,6 +407,7 @@ namespace DiaBlackJack.GameScene
                 UpdateHover(null);
                 UpdateDemonCardHover(null);
                 UpdateShopUtilityItemHover(null);
+                UpdateCombatCommandHover(null);
                 demonContractSelection?.SetHovered(null);
                 hud?.HideCardHoverBadge();
                 hud?.HideDemonContractDetail();
@@ -423,22 +435,26 @@ namespace DiaBlackJack.GameScene
             ShopUtilityItemView pointedShopUtilityItem = shopOpen && hasHit
                 ? hit.collider.GetComponentInParent<ShopUtilityItemView>()
                 : null;
+            TableCombatCommandView pointedCombatCommand = !shopOpen && hasHit
+                ? hit.collider.GetComponentInParent<TableCombatCommandView>()
+                : null;
 
             if (deckPreview != null && deckPreview.IsOpen)
             {
                 UpdateHover(null);
                 UpdateDemonCardHover(null);
                 UpdateShopUtilityItemHover(null);
+                UpdateCombatCommandHover(null);
                 hud?.HideCardHoverBadge();
 
                 return;
             }
 
-            // Hover is visual-only, so it runs even while input is locked (during timeline playback).
             UpdateHover(shopOpen ? pointedShopCard : pointedBattleCard);
             UpdateDemonCardHover(pointedDemonCard);
             UpdateCardHoverBadge();
             UpdateShopUtilityItemHover(pointedShopUtilityItem);
+            UpdateCombatCommandHover(pointedCombatCommand);
 
             if (_inputLocked || _choosingLighterRemoval)
             {
@@ -467,6 +483,14 @@ namespace DiaBlackJack.GameScene
             if (pointedDeck != null)
             {
                 OpenDeckPreview(pointedDeck.Kind);
+                return;
+            }
+
+            if (pointedCombatCommand != null &&
+                pointedCombatCommand.TryGetCommand(
+                    out GameSceneCombatHudCommand combatCommand))
+            {
+                HandleCombatCommand(combatCommand);
                 return;
             }
 
@@ -537,6 +561,7 @@ namespace DiaBlackJack.GameScene
             UpdateHover(null);
             UpdateDemonCardHover(null);
             UpdateShopUtilityItemHover(null);
+            UpdateCombatCommandHover(null);
             hud?.HideCardHoverBadge();
             demonContractSelection.SetHovered(pointed);
 
@@ -586,6 +611,48 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        private void UpdateCombatCommandHover(TableCombatCommandView pointed)
+        {
+            if (_hoveredCombatCommand != pointed)
+            {
+                _hoveredCombatCommand?.SetHovered(false);
+                _hoveredCombatCommand = pointed;
+                _hoveredCombatCommand?.SetHovered(true);
+            }
+
+            if (_hoveredCombatCommand == null ||
+                !_hoveredCombatCommand.IsInteractable ||
+                string.IsNullOrEmpty(_hoveredCombatCommand.Tooltip))
+            {
+                hud?.HideCombatActionTooltip();
+                return;
+            }
+
+            if (_camera == null)
+            {
+                _camera = Camera.main;
+            }
+
+            if (_camera == null)
+            {
+                hud?.HideCombatActionTooltip();
+                return;
+            }
+
+            Vector3 screenPosition = _camera.WorldToScreenPoint(
+                _hoveredCombatCommand.TooltipWorldPosition);
+            if (screenPosition.z <= 0f)
+            {
+                hud?.HideCombatActionTooltip();
+                return;
+            }
+
+            hud?.ShowCombatActionTooltip(
+                _hoveredCombatCommand.Tooltip,
+                new Vector2(screenPosition.x, screenPosition.y),
+                _camera);
+        }
+
         private void EnsureDeckPreview()
         {
             if (deckPreview == null)
@@ -614,6 +681,7 @@ namespace DiaBlackJack.GameScene
             }
 
             UpdateHover(null);
+            UpdateCombatCommandHover(null);
             deckPreview.Open(GameScenePresenter.CreateDeckPreview(battle, kind));
             BeginDeckPreviewSwitchInputLock();
         }
@@ -624,6 +692,7 @@ namespace DiaBlackJack.GameScene
             {
                 deckPreview.Close();
                 UpdateHover(null);
+                UpdateCombatCommandHover(null);
                 hud?.HideCardHoverBadge();
             }
 
@@ -676,6 +745,7 @@ namespace DiaBlackJack.GameScene
             UpdateHover(null);
             UpdateDemonCardHover(null);
             UpdateShopUtilityItemHover(null);
+            UpdateCombatCommandHover(null);
             hud?.HideCardHoverBadge();
             hud?.HideDemonContractDetail();
             if (isOpen)
@@ -1749,6 +1819,13 @@ namespace DiaBlackJack.GameScene
                     : shop != null ? shop.Gold : 0;
                 hud.SetGold(gold);
             }
+
+            if (combat.Mode != GameSceneCombatHudMode.Actions)
+            {
+                UpdateCombatCommandHover(null);
+            }
+
+            tableCombatCommands?.Render(combat);
 
             RenderDemonContractSelection(combat);
 

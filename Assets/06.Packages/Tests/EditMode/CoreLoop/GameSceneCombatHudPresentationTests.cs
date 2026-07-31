@@ -18,6 +18,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/UI/CardHoverTooltip.prefab";
         private const string ManagerPrefabPath =
             "Assets/03. Prefabs/Manager/GameManager.prefab";
+        private const string TablePrefabPath =
+            "Assets/03. Prefabs/TableObjects/Table Controller.prefab";
 
         [Test]
         public void GSH01_U01_PlayerTurnProjectsFourFixedActionsAndDynamicTooltips()
@@ -345,7 +347,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void GSH01_U06_HudPrefabAuthorsFixedButtonsSlotsTooltipAndCandidateCatalog()
+        public void GSH01_U06_HudPrefabOmitsFixedActionsAndKeepsSelectionControls()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
             Assert.That(prefab, Is.Not.Null);
@@ -358,6 +360,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(prefab.GetComponentsInChildren<GameHudChoiceButton>(true).Length,
                 Is.EqualTo(100));
             Assert.That(prefab.GetComponentInChildren<ScrollRect>(true), Is.Not.Null);
+            Assert.That(prefab.transform.Find("CombatControls/ActionRow"), Is.Null);
+            Assert.That(
+                prefab.GetComponentsInChildren<GameHudActionButton>(true),
+                Is.Empty);
 
             GameObject managerPrefab =
                 AssetDatabase.LoadAssetAtPath<GameObject>(ManagerPrefabPath);
@@ -368,11 +374,90 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(selection.HasCandidatePrefab, Is.True);
             Assert.That(selection.Capacity, Is.EqualTo(2));
 
-            Transform actionRow = prefab.transform.Find("CombatControls/ActionRow");
-            Assert.That(GetBrushName(actionRow, "Hit"), Is.EqualTo("Brush_UI_4"));
-            Assert.That(GetBrushName(actionRow, "Stand"), Is.EqualTo("Brush_UI_5"));
-            Assert.That(GetBrushName(actionRow, "Change"), Is.EqualTo("Brush_UI_9"));
-            Assert.That(GetBrushName(actionRow, "Contract"), Is.EqualTo("Brush_UI_10"));
+        }
+
+        [Test]
+        public void GSH01_U10_TablePrefabAuthorsThreeWorldCommands()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(TablePrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            TableCombatCommandGroup group =
+                prefab.GetComponentInChildren<TableCombatCommandGroup>(true);
+            Assert.That(group, Is.Not.Null);
+            Assert.That(group.CommandViewCount, Is.EqualTo(3));
+            Assert.That(group.HasRequiredReferences, Is.True);
+
+            TableCombatCommandView[] commands =
+                group.GetComponentsInChildren<TableCombatCommandView>(true);
+            Assert.That(commands, Has.Length.EqualTo(3));
+            Assert.That(commands.Select(command => command.Kind), Is.EquivalentTo(new[]
+            {
+                GameSceneCombatHudCommandKind.Hit,
+                GameSceneCombatHudCommandKind.Stand,
+                GameSceneCombatHudCommandKind.BeginChange
+            }));
+            Assert.That(commands.All(command => command.HasRequiredReferences), Is.True);
+            Assert.That(commands.All(command =>
+                command.GetComponent<Collider>() != null), Is.True);
+
+            Assert.That(prefab.transform.Find("ContractPlaceholder"), Is.Not.Null);
+            Assert.That(prefab.transform.Find("CodexBook"), Is.Not.Null);
+        }
+
+        [Test]
+        public void GSH01_U11_DisabledWorldCommandIsGrayAndRejectsClicks()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(TablePrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                TableCombatCommandGroup group =
+                    instance.GetComponentInChildren<TableCombatCommandGroup>(true);
+                var actions = new List<GameSceneCombatHudActionViewModel>
+                {
+                    new GameSceneCombatHudActionViewModel(
+                        new GameSceneCombatHudCommand(GameSceneCombatHudCommandKind.Hit),
+                        "HIT",
+                        false),
+                    new GameSceneCombatHudActionViewModel(
+                        new GameSceneCombatHudCommand(GameSceneCombatHudCommandKind.Stand),
+                        "STAND",
+                        true),
+                    new GameSceneCombatHudActionViewModel(
+                        new GameSceneCombatHudCommand(GameSceneCombatHudCommandKind.BeginChange),
+                        "CHANGE -2",
+                        true)
+                };
+                var model = new GameSceneCombatHudViewModel(
+                    GameSceneCombatHudMode.Actions,
+                    string.Empty,
+                    actions,
+                    null,
+                    null,
+                    string.Empty);
+
+                group.Render(model);
+                TableCombatCommandView hit = group
+                    .GetComponentsInChildren<TableCombatCommandView>(true)
+                    .Single(command => command.Kind == GameSceneCombatHudCommandKind.Hit);
+                Assert.That(hit.GetComponent<Collider>().enabled, Is.False);
+                Assert.That(hit.GetComponent<SpriteRenderer>().color,
+                    Is.EqualTo(new Color(0.35f, 0.35f, 0.35f, 0.35f)));
+                Assert.That(hit.TryGetCommand(out _), Is.False);
+
+                TableCombatCommandView stand = group
+                    .GetComponentsInChildren<TableCombatCommandView>(true)
+                    .Single(command => command.Kind == GameSceneCombatHudCommandKind.Stand);
+                Assert.That(stand.GetComponent<Collider>().enabled, Is.True);
+                Assert.That(stand.TryGetCommand(out GameSceneCombatHudCommand command), Is.True);
+                Assert.That(command.Kind, Is.EqualTo(GameSceneCombatHudCommandKind.Stand));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
         }
 
         [Test]
@@ -583,12 +668,6 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
 
             return cards;
-        }
-
-        private static string GetBrushName(Transform actionRow, string actionName)
-        {
-            Image image = actionRow.Find(actionName).GetComponent<Image>();
-            return image.sprite == null ? string.Empty : image.sprite.name;
         }
 
         private static string GetDefinitionKey(DemonContractKind kind)

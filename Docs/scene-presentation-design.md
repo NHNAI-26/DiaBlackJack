@@ -196,12 +196,14 @@
 
 ## 10.1 GSH-01 전투 HUD
 
-- `HUD.prefab`의 `CombatControls`는 하단 중앙 고정 `Hit`·`Stand`·`Change`·`Contract` 행, 행동 툴팁, 선택 모달, 자동 카드 결과 패널로 구성한다. 버튼 이미지는 각각 `Brush_UI_4`·`Brush_UI_5`·`Brush_UI_9`·`Brush_UI_10`을 사용한다.
-- 툴팁은 카드 호버 배지와 분리한다. 행동 의미와 `ChangeActionText`·계약 행동 문자열의 현재 영혼 비용/불가 사유를 함께 표시한다.
-- 선택 모달은 프리팹에 미리 배치한 스크롤 가능 슬롯 100개를 재사용한다. 현재 체인지 후보와 계약 후보는 모두 불투명 텍스트 버튼으로 선택하며, 런타임 전용 UI 오브젝트를 생성하지 않는다.
-- `GameManager`는 HUD 명령을 기존 `ProcessInput`과 `Try*` API로 전달한다. 전투용 `OnGUI`·즉시형 그리기는 제거했고, 상점·라이터 선택 패널만 `OnGUI`로 유지한다.
+- `HUD.prefab`의 `CombatControls`는 고정 `Hit`·`Stand`·`Change`·`Contract` 버튼 행을 두지 않고, 행동 툴팁·선택 모달·자동 카드 결과·계약 후보 상세만 소유한다.
+- `Table Controller.prefab`의 `CombatCommands`는 테이블 중앙에 아이보리 실선 영역 `HIT`·`STAND`·`CHANGE -N` 3개를 배치한다. 계약서 오브젝트와 입력은 별도 팀 변경이 소유한다.
+- 월드 명령은 `Actions` 모드에서만 표시한다. 사용 가능 상태는 아이보리, 호버는 혈색, 사용 불가는 회색 35%로 표시하고 콜라이더를 비활성화한다. 상점·선택 모달·카드 연출 중에는 그룹 전체를 숨긴다.
+- 툴팁은 카드 호버 배지와 분리한다. 월드 오브젝트 중심을 화면 좌표로 투영해 행동 의미와 `ChangeActionText`의 현재 영혼 비용/불가 사유를 표시한다.
+- 선택 모달은 프리팹에 미리 배치한 스크롤 가능 슬롯 100개를 재사용한다. 계약 후보는 기존 테이블 월드 카드와 HUD 상세를 유지하며, 런타임 전용 UI 오브젝트를 생성하지 않는다.
+- `GameManager`는 New Input System 포인터 레이캐스트로 카드·덱과 함께 테이블 명령을 감지하고, 유효 클릭을 기존 `HandleCombatCommand` → `ProcessInput` → `Try*` 경로로 전달한다. 전투용 `OnGUI`·즉시형 그리기는 제거했고, 상점·라이터 선택 패널만 `OnGUI`로 유지한다.
 - 카드 호버 툴팁의 헤더·본문·스타일은 독립 `CardHoverTooltip.prefab`이 소유하고 `HUD.prefab`은 이를 중첩 프리팹으로 1개만 재사용한다. 일반·악마 카드 프리팹의 기존 상단/하단 Anchor를 화면 좌표로 투영하며 추가 Screen Offset 없이 해당 Anchor에 툴팁 피벗을 정확히 맞춘다. 카드마다 UI 인스턴스를 만들지 않으며, Card/DemonCard 프리팹 루트를 선택하면 Scene View에서 TOP은 청록색, BOTTOM은 주황색 Gizmo로 생성 위치를 미리 본다.
-- 검증: `GameSceneCombatHudPresentationTests` 6/6, 전체 EditMode 767/767 통과. GameScene 1280×720 및 1920×1080 캡처에서 하단 4버튼과 툴팁의 버튼 겹침이 없음을 확인했고 Console Error/Warning 0.
+- 검증: `GameSceneCombatHudPresentationTests` 18/18, 전체 EditMode 850/850 통과, GameScene validation 0 issues. 1280×720·1920×1080에서 세 영역·손패·합계·덱의 비겹침을 확인했고, 실제 포인터 입력으로 HIT 카드 2→3장, STAND 라운드 1→2, CHANGE 선택 상태 전환을 확인했다. 신규 컴파일·런타임 오류는 0건이며, 기존 `SettingsSystem` 비루트 `DontDestroyOnLoad`와 URP property drawer Console 오류는 별도 잔존한다.
 
 ## 11. 완료 기준
 
@@ -223,6 +225,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-07-31 | HONG | GSH-01 `HIT`·`STAND`·`CHANGE -N` 입력을 HUD 고정 버튼에서 테이블 실선 영역으로 전환하고 기존 레이캐스트·`ProcessInput`·`Try*` 경로를 재사용했다. 계약서 오브젝트와 입력은 별도 팀 변경 소유로 분리했다. 전용 18/18, 전체 EditMode 850/850, GameScene validation 0 issues와 1280×720·1920×1080 배치 및 세 행동 실제 포인터 전환을 확인했다. 기존 `SettingsSystem`·URP Console 오류는 별도 잔존한다. |
 | 2026-07-31 | HONG | GSH-01 후속으로 `cardHoverBadgeScreenOffset`을 제거하고 툴팁 피벗을 카드 TOP/BOTTOM Anchor 좌표에 직접 배치했다. Card/DemonCard 프리팹용 Editor Anchor Gizmo를 추가했으며 전용 EditMode 2/2, 현재 전체 EditMode 811/811 및 GameScene validation 0 issues를 확인했다. 기존 셰이더 property drawer Console 오류는 별도 잔존한다. |
 | 2026-07-31 | HONG | CU-M10 사용 완료 공개 카드의 전체 흑색 처리를 폐기하고 원본 색 위에 0.35초 동안 그려지는 검은 흑연 X 표시로 교체하도록 확정 |
 | 2026-07-31 | HONG | GSH-01 카드 호버 툴팁 계층을 `CardHoverTooltip.prefab`으로 분리하고 `HUD.prefab`에 중첩 연결했다. 기존 `GameHudView` 직렬화 참조 5개와 카드 Anchor 추적은 유지했으며, 신규 프리팹 구조 검증 포함 전체 EditMode 822/822 및 GameScene validation 0 issues를 확인했다. 기존 셰이더 property drawer Console 오류는 별도 잔존한다. |

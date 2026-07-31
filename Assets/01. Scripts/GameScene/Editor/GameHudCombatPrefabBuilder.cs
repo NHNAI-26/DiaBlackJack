@@ -41,37 +41,10 @@ namespace DiaBlackJack.GameScene.Editor
                     throw new InvalidOperationException("HUD prefab has no TMP font to reuse.");
                 }
 
-                Sprite hitBrush = FindSprite("Brush_UI_4");
-                Sprite standBrush = FindSprite("Brush_UI_5");
-                Sprite changeBrush = FindSprite("Brush_UI_9");
-                Sprite contractBrush = FindSprite("Brush_UI_10");
                 Sprite panelBrush = FindSprite("Brush_UI_8");
 
                 RectTransform controls = CreateRect("CombatControls", hudRoot.transform);
                 Stretch(controls);
-
-                RectTransform actionRow = CreateRect("ActionRow", controls);
-                actionRow.anchorMin = new Vector2(0.5f, 0f);
-                actionRow.anchorMax = new Vector2(0.5f, 0f);
-                actionRow.pivot = new Vector2(0.5f, 0f);
-                actionRow.anchoredPosition = new Vector2(0f, 36f);
-                actionRow.sizeDelta = new Vector2(720f, 94f);
-                HorizontalLayoutGroup actionLayout = actionRow.gameObject.AddComponent<HorizontalLayoutGroup>();
-                actionLayout.spacing = 12f;
-                actionLayout.childAlignment = TextAnchor.MiddleCenter;
-                actionLayout.childControlWidth = false;
-                actionLayout.childControlHeight = false;
-                actionLayout.childForceExpandWidth = false;
-                actionLayout.childForceExpandHeight = false;
-
-                GameHudActionButton hit = CreateActionButton(
-                    "Hit", actionRow, hitBrush, "HIT", font);
-                GameHudActionButton stand = CreateActionButton(
-                    "Stand", actionRow, standBrush, "STAND", font);
-                GameHudActionButton change = CreateActionButton(
-                    "Change", actionRow, changeBrush, "CHANGE", font);
-                GameHudActionButton contract = CreateActionButton(
-                    "Contract", actionRow, contractBrush, "CONTRACT", font);
 
                 RectTransform tooltip = CreatePanel(
                     "ActionTooltip", controls, panelBrush, new Color(0.08f, 0.06f, 0.07f, 0.96f));
@@ -127,11 +100,6 @@ namespace DiaBlackJack.GameScene.Editor
                 AssignHudReferences(
                     hud,
                     controls.gameObject,
-                    actionRow.gameObject,
-                    hit,
-                    stand,
-                    change,
-                    contract,
                     tooltip,
                     tooltipText,
                     optionPanel.gameObject,
@@ -149,29 +117,6 @@ namespace DiaBlackJack.GameScene.Editor
             {
                 PrefabUtility.UnloadPrefabContents(hudRoot);
             }
-        }
-
-        private static GameHudActionButton CreateActionButton(
-            string name,
-            RectTransform parent,
-            Sprite sprite,
-            string label,
-            TMP_FontAsset font)
-        {
-            RectTransform root = CreateRect(name, parent);
-            root.sizeDelta = new Vector2(168f, 86f);
-            Image image = root.gameObject.AddComponent<Image>();
-            image.sprite = sprite;
-            image.preserveAspect = true;
-            Button button = root.gameObject.AddComponent<Button>();
-            button.targetGraphic = image;
-            TMP_Text labelText = CreateText(
-                "Label", root, font, 22f, TextAlignmentOptions.Center);
-            Stretch(labelText.rectTransform, 10f);
-            labelText.text = label;
-            GameHudActionButton action = root.gameObject.AddComponent<GameHudActionButton>();
-            AssignActionButtonReferences(action, button, labelText);
-            return action;
         }
 
         private static ScrollRect CreateOptionScroll(
@@ -398,11 +343,6 @@ namespace DiaBlackJack.GameScene.Editor
         private static void AssignHudReferences(
             GameHudView hud,
             GameObject controls,
-            GameObject actionRow,
-            GameHudActionButton hit,
-            GameHudActionButton stand,
-            GameHudActionButton change,
-            GameHudActionButton contract,
             RectTransform tooltip,
             TMP_Text tooltipText,
             GameObject optionPanel,
@@ -417,11 +357,6 @@ namespace DiaBlackJack.GameScene.Editor
         {
             SerializedObject serialized = new SerializedObject(hud);
             serialized.FindProperty("combatControlsRoot").objectReferenceValue = controls;
-            serialized.FindProperty("actionRow").objectReferenceValue = actionRow;
-            serialized.FindProperty("hitButton").objectReferenceValue = hit;
-            serialized.FindProperty("standButton").objectReferenceValue = stand;
-            serialized.FindProperty("changeButton").objectReferenceValue = change;
-            serialized.FindProperty("contractButton").objectReferenceValue = contract;
             serialized.FindProperty("actionTooltip").objectReferenceValue = tooltip;
             serialized.FindProperty("actionTooltipText").objectReferenceValue = tooltipText;
             serialized.FindProperty("optionPanel").objectReferenceValue = optionPanel;
@@ -434,17 +369,6 @@ namespace DiaBlackJack.GameScene.Editor
             serialized.FindProperty("automaticCardResultPanel").objectReferenceValue = automaticResult;
             serialized.FindProperty("automaticCardResultText").objectReferenceValue = automaticResultText;
             serialized.FindProperty("cardContentCatalog").objectReferenceValue = cardContentCatalog;
-            serialized.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        private static void AssignActionButtonReferences(
-            GameHudActionButton action,
-            Button button,
-            TMP_Text label)
-        {
-            SerializedObject serialized = new SerializedObject(action);
-            serialized.FindProperty("button").objectReferenceValue = button;
-            serialized.FindProperty("labelText").objectReferenceValue = label;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
