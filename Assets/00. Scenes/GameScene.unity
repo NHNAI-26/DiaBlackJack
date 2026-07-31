@@ -176,7 +176,7 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2369347f84f7d8a4db4f8f2ef318518c, type: 3}
---- !u!84 &5562738
+--- !u!84 &6217996
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -452,6 +452,43 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2720131932502202630, guid: 2dc4c65b347e4d24e86a18dbf1a42fdc, type: 3}
   m_PrefabInstance: {fileID: 8456889837428209980}
   m_PrefabAsset: {fileID: 0}
+--- !u!84 &163083814
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 6
+  m_Width: 256
+  m_Height: 256
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthStencilFormat: 90
+  m_ColorFormat: 0
+  m_MipMap: 0
+  m_GenerateMips: 1
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_UseDynamicScaleExplicit: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_EnableRandomWrite: 0
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 1
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 1
+    m_WrapV: 1
+    m_WrapW: 1
+  m_Dimension: 2
+  m_VolumeDepth: 1
+  m_ShadowSamplingMode: 2
 --- !u!1 &180139000
 GameObject:
   m_ObjectHideFlags: 0
@@ -634,11 +671,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ShadowTexture:
-        m_Texture: {fileID: 1538030178}
+        m_Texture: {fileID: 163083814}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TranslucencyTexture:
-        m_Texture: {fileID: 5562738}
+        m_Texture: {fileID: 6217996}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
@@ -676,7 +713,7 @@ Material:
     - _ShadowColor: {r: 0, g: 0, b: 0, a: 1}
     - _ShadowIntensity: {r: 0.9, g: 0.100000024, b: 0, a: 0}
     - _ToLightDir: {r: -0, g: 0.012133064, b: -0.9999264, a: 0}
-    - _WindDirection: {r: 2.4536262, g: 1.635751, b: 0, a: 47.58862}
+    - _WindDirection: {r: 1.3689541, g: 0.91263604, b: 0, a: 38.318108}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &412777436
@@ -957,6 +994,43 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2746152154942036010, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
   m_PrefabInstance: {fileID: 6219715712046308512}
   m_PrefabAsset: {fileID: 0}
+--- !u!84 &1047242860
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 6
+  m_Width: 1
+  m_Height: 1
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthStencilFormat: 90
+  m_ColorFormat: 0
+  m_MipMap: 0
+  m_GenerateMips: 1
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_UseDynamicScaleExplicit: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_EnableRandomWrite: 0
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 1
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 1
+    m_WrapV: 1
+    m_WrapW: 1
+  m_Dimension: 2
+  m_VolumeDepth: 1
+  m_ShadowSamplingMode: 2
 --- !u!114 &1152182556 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 8719880390428884935, guid: 489da36d85d144344a793541babc4877, type: 3}
@@ -1822,43 +1896,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f746bc8e2a7667549b97d4f9ef49c116, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CardHand
---- !u!84 &1538030178
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 6
-  m_Width: 256
-  m_Height: 256
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthStencilFormat: 90
-  m_ColorFormat: 0
-  m_MipMap: 0
-  m_GenerateMips: 1
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_UseDynamicScaleExplicit: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_EnableRandomWrite: 0
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 1
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 1
-    m_WrapV: 1
-    m_WrapW: 1
-  m_Dimension: 2
-  m_VolumeDepth: 1
-  m_ShadowSamplingMode: 2
 --- !u!4 &1574224341 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4014645466415016335, guid: f8e9c9a73980e4b41a4a529a07ebeec6, type: 3}
@@ -2052,43 +2089,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83a1708a6ba1e9a4788ad9fe96f41789, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.TableTotalsView
---- !u!84 &2113110117
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 6
-  m_Width: 1
-  m_Height: 1
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthStencilFormat: 90
-  m_ColorFormat: 0
-  m_MipMap: 0
-  m_GenerateMips: 1
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_UseDynamicScaleExplicit: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_EnableRandomWrite: 0
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 1
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 1
-    m_WrapV: 1
-    m_WrapW: 1
-  m_Dimension: 2
-  m_VolumeDepth: 1
-  m_ShadowSamplingMode: 2
 --- !u!114 &2114913103
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2234,10 +2234,78 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3789618327714740299, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4766476215700586316, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4766476215700586316, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4766476215700586316, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4766476215700586316, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2.02
+      objectReference: {fileID: 0}
+    - target: {fileID: 4766476215700586316, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.31
+      objectReference: {fileID: 0}
     - target: {fileID: 4773643196297998763, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
       propertyPath: m_Material
       value: 
       objectReference: {fileID: 1645648211}
+    - target: {fileID: 5469753862828902883, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2.197
+      objectReference: {fileID: 0}
+    - target: {fileID: 5469753862828902883, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.612
+      objectReference: {fileID: 0}
+    - target: {fileID: 5469753862828902883, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.656059
+      objectReference: {fileID: 0}
+    - target: {fileID: 5469753862828902883, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5469753862828902883, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.75470966
+      objectReference: {fileID: 0}
+    - target: {fileID: 5469753862828902883, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5469753862828902883, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 98
+      objectReference: {fileID: 0}
+    - target: {fileID: 5855099217914173639, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2.267
+      objectReference: {fileID: 0}
+    - target: {fileID: 5855099217914173639, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.018776417
+      objectReference: {fileID: 0}
+    - target: {fileID: 5855099217914173639, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.413
+      objectReference: {fileID: 0}
+    - target: {fileID: 6276801491819610148, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 1.3
+      objectReference: {fileID: 0}
     - target: {fileID: 7672589191098316286, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
       propertyPath: m_Name
       value: Table Controller
@@ -3068,7 +3136,7 @@ PrefabInstance:
     - target: {fileID: 4228813926201636872, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
       propertyPath: m_TargetTexture
       value: 
-      objectReference: {fileID: 2113110117}
+      objectReference: {fileID: 1047242860}
     - target: {fileID: 9217523067565755968, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
