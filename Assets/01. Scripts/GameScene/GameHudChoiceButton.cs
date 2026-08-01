@@ -44,7 +44,9 @@ namespace DiaBlackJack.GameScene
             _isInteractable = model != null && model.IsInteractable;
             if (labelText != null)
             {
-                labelText.text = model == null ? string.Empty : model.Label;
+                CurrencyIconText.Set(
+                    labelText,
+                    model == null ? string.Empty : model.Label);
             }
 
             if (button != null)

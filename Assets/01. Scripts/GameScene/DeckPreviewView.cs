@@ -264,7 +264,7 @@ namespace DiaBlackJack.GameScene
                 _hoveredSlot = slot;
                 if (detailsText != null)
                 {
-                    detailsText.text = slot.HoverText;
+                    CurrencyIconText.Set(detailsText, slot.HoverText);
                 }
 
                 return;
@@ -281,7 +281,9 @@ namespace DiaBlackJack.GameScene
         {
             if (detailsText != null)
             {
-                detailsText.text = "카드에 마우스를 올리면 이름과 효과를 확인합니다. 휠 또는 드래그로 스크롤합니다.";
+                CurrencyIconText.Set(
+                    detailsText,
+                    "카드에 마우스를 올리면 이름과 효과를 확인합니다. 휠 또는 드래그로 스크롤합니다.");
             }
         }
     }

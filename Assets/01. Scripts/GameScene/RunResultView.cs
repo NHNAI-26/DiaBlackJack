@@ -68,13 +68,21 @@ namespace DiaBlackJack.GameScene
                 panel.height - 72f));
             GUILayout.Label(_model.Title, _titleStyle);
             GUILayout.Space(8f);
-            GUILayout.Label(_model.Summary, _summaryStyle);
+            GUILayout.Label(
+                CurrencyIconGui.Content(_model.Summary),
+                _summaryStyle);
             GUILayout.Space(26f);
-            GUILayout.Label("SOUL  " + _model.PlayerSoul, _detailStyle);
-            GUILayout.Label("GOLD  " + _model.PlayerGold, _detailStyle);
+            GUILayout.Label(
+                CurrencyIconGui.Soul(_model.PlayerSoul),
+                _detailStyle);
+            GUILayout.Label(
+                CurrencyIconGui.Gold(_model.PlayerGold),
+                _detailStyle);
             if (!string.IsNullOrEmpty(_model.GoldResult))
             {
-                GUILayout.Label(_model.GoldResult, _detailStyle);
+                GUILayout.Label(
+                    CurrencyIconGui.Content(_model.GoldResult),
+                    _detailStyle);
             }
 
             GUILayout.FlexibleSpace();

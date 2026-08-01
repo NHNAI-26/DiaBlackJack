@@ -1,4 +1,5 @@
 using System;
+using DiaBlackJack.GameScene;
 using UnityEngine;
 
 namespace DiaBlackJack.CoreLoop.UI
@@ -73,10 +74,14 @@ namespace DiaBlackJack.CoreLoop.UI
 
             if (UsesCompactDemonContractCandidateScreen())
             {
+                GUILayout.BeginHorizontal();
                 GUILayout.Label(
-                    $"PLAYER SOUL  {_model.PlayerSoul}  |  " +
-                    $"ENEMY SOUL  {_model.EnemySoul}",
+                    CurrencyIconGui.Soul($"PLAYER  {_model.PlayerSoul}"),
                     _bodyStyle);
+                GUILayout.Label(
+                    CurrencyIconGui.Soul($"ENEMY  {_model.EnemySoul}"),
+                    _bodyStyle);
+                GUILayout.EndHorizontal();
                 GUILayout.FlexibleSpace();
                 DrawActions();
                 GUILayout.Space(4f);
@@ -103,9 +108,15 @@ namespace DiaBlackJack.CoreLoop.UI
             GUILayout.Space(4f);
             DrawEnemyInformation();
             GUILayout.Space(4f);
-            GUILayout.Label(GetBattleMessage(_model), _resultStyle);
-            GUILayout.Label(_model.LastRound, _bodyStyle);
-            GUILayout.Label(_model.LastCardEffect, _bodyStyle);
+            GUILayout.Label(
+                CurrencyIconGui.Content(GetBattleMessage(_model)),
+                _resultStyle);
+            GUILayout.Label(
+                CurrencyIconGui.Content(_model.LastRound),
+                _bodyStyle);
+            GUILayout.Label(
+                CurrencyIconGui.Content(_model.LastCardEffect),
+                _bodyStyle);
             DrawAutomaticCardStatus();
             GUILayout.FlexibleSpace();
             DrawActions();
@@ -127,7 +138,9 @@ namespace DiaBlackJack.CoreLoop.UI
             GUILayout.Label(
                 $"{_model.EnemyDisplayName}  |  {_model.EnemyGrade}",
                 _headingStyle);
-            GUILayout.Label(_model.EnemySummary, _bodyStyle);
+            GUILayout.Label(
+                CurrencyIconGui.Content(_model.EnemySummary),
+                _bodyStyle);
             GUILayout.Space(2f);
 
             if (_styleScreenHeight <= 720)
@@ -141,7 +154,9 @@ namespace DiaBlackJack.CoreLoop.UI
                 GUILayout.Label(compactInformation, _bodyStyle);
                 if (!string.IsNullOrEmpty(_model.EnemyWarning))
                 {
-                    GUILayout.Label(_model.EnemyWarning, _warningStyle);
+                    GUILayout.Label(
+                        CurrencyIconGui.Content(_model.EnemyWarning),
+                        _warningStyle);
                 }
 
                 GUILayout.EndVertical();
@@ -161,7 +176,9 @@ namespace DiaBlackJack.CoreLoop.UI
             GUILayout.EndHorizontal();
             if (!string.IsNullOrEmpty(_model.EnemyWarning))
             {
-                GUILayout.Label(_model.EnemyWarning, _warningStyle);
+                GUILayout.Label(
+                    CurrencyIconGui.Content(_model.EnemyWarning),
+                    _warningStyle);
             }
 
             GUILayout.EndVertical();
@@ -171,7 +188,7 @@ namespace DiaBlackJack.CoreLoop.UI
         {
             GUILayout.BeginVertical(GUI.skin.box, GUILayout.ExpandWidth(true));
             GUILayout.Label(name, _headingStyle);
-            GUILayout.Label($"SOUL  {soul}", _bodyStyle);
+            GUILayout.Label(CurrencyIconGui.Soul(soul), _bodyStyle);
             GUILayout.Space(_styleScreenHeight <= 720 ? 2f : 4f);
             GUILayout.Label($"CARDS  [ {cards} ]", _bodyStyle);
             GUILayout.Label(total, _bodyStyle);
@@ -239,12 +256,18 @@ namespace DiaBlackJack.CoreLoop.UI
 
             GUILayout.Space(4f);
             GUILayout.Label(
-                _model.ChangeActionText + "  ·  " +
-                _model.DemonContract.ActionText,
+                CurrencyIconGui.Content(
+                    _model.ChangeActionText + "  ·  " +
+                    _model.DemonContract.ActionText),
                 _bodyStyle);
             GUILayout.BeginHorizontal();
             GUI.enabled = _model.CanChange && !_inputLocked;
-            if (GUILayout.Button("CHANGE", _buttonStyle, GUILayout.Height(primaryActionHeight)))
+            if (GUILayout.Button(
+                    CurrencyIconGui.Content(
+                        CurrencyIconMarkup.FormatChangeActionLabel(
+                            _model.ChangeActionText)),
+                    _buttonStyle,
+                    GUILayout.Height(primaryActionHeight)))
             {
                 ChangeRequested?.Invoke();
             }
@@ -260,7 +283,7 @@ namespace DiaBlackJack.CoreLoop.UI
             {
                 GUI.enabled = !_inputLocked;
                 if (GUILayout.Button(
-                    action.Label,
+                    CurrencyIconGui.Content(action.Label),
                     _buttonStyle,
                     GUILayout.Height(primaryActionHeight)))
                 {
@@ -320,7 +343,9 @@ namespace DiaBlackJack.CoreLoop.UI
                 GUI.enabled = wasEnabled;
                 if (!string.IsNullOrEmpty(card.DisabledReason))
                 {
-                    GUILayout.Label(card.DisabledReason, _bodyStyle);
+                    GUILayout.Label(
+                        CurrencyIconGui.Content(card.DisabledReason),
+                        _bodyStyle);
                 }
 
                 GUILayout.EndVertical();
@@ -333,7 +358,9 @@ namespace DiaBlackJack.CoreLoop.UI
         private void DrawCardEffectChoices()
         {
             var choices = _model.CardEffectChoices;
-            GUILayout.Label(_model.CardEffectPrompt, _headingStyle);
+            GUILayout.Label(
+                CurrencyIconGui.Content(_model.CardEffectPrompt),
+                _headingStyle);
             GUILayout.Space(8f);
 
             const int choicesPerRow = 5;
@@ -351,7 +378,7 @@ namespace DiaBlackJack.CoreLoop.UI
                 {
                     CardEffectChoiceViewModel choice = choices[i];
                     if (GUILayout.Button(
-                        choice.Label,
+                        CurrencyIconGui.Content(choice.Label),
                         _buttonStyle,
                         GUILayout.Height(52f)))
                     {
@@ -379,10 +406,14 @@ namespace DiaBlackJack.CoreLoop.UI
                 GUI.skin.box,
                 GUILayout.ExpandWidth(true));
             GUILayout.Label("AUTOMATIC CARD", _headingStyle);
-            GUILayout.Label(result.PublicSummary, _bodyStyle);
+            GUILayout.Label(
+                CurrencyIconGui.Content(result.PublicSummary),
+                _bodyStyle);
             if (!string.IsNullOrEmpty(result.PrivateSummary))
             {
-                GUILayout.Label(result.PrivateSummary, _warningStyle);
+                GUILayout.Label(
+                    CurrencyIconGui.Content(result.PrivateSummary),
+                    _warningStyle);
             }
 
             GUILayout.EndVertical();
@@ -403,7 +434,9 @@ namespace DiaBlackJack.CoreLoop.UI
             GUILayout.Label(
                 interaction.SourceDisplayName,
                 _headingStyle);
-            GUILayout.Label(interaction.Prompt, _headingStyle);
+            GUILayout.Label(
+                CurrencyIconGui.Content(interaction.Prompt),
+                _headingStyle);
             GUILayout.Space(8f);
 
             const int choicesPerRow = 5;
@@ -422,7 +455,7 @@ namespace DiaBlackJack.CoreLoop.UI
                     AutomaticCardChoiceViewModel choice =
                         interaction.Choices[i];
                     if (GUILayout.Button(
-                        choice.Label,
+                        CurrencyIconGui.Content(choice.Label),
                         _buttonStyle,
                         GUILayout.Height(52f)))
                     {
@@ -442,10 +475,14 @@ namespace DiaBlackJack.CoreLoop.UI
         private void DrawDemonContractChoices()
         {
             DemonContractPanelViewModel contract = _model.DemonContract;
-            GUILayout.Label(contract.Prompt, _headingStyle);
+            GUILayout.Label(
+                CurrencyIconGui.Content(contract.Prompt),
+                _headingStyle);
             if (!string.IsNullOrEmpty(contract.OwnerPreview))
             {
-                GUILayout.Label(contract.OwnerPreview, _warningStyle);
+                GUILayout.Label(
+                    CurrencyIconGui.Content(contract.OwnerPreview),
+                    _warningStyle);
             }
 
             GUILayout.Space(6f);
@@ -470,17 +507,22 @@ namespace DiaBlackJack.CoreLoop.UI
                     GUILayout.Label(choice.Title, _headingStyle);
                     if (!string.IsNullOrEmpty(choice.Ability))
                     {
-                        GUILayout.Label(choice.Ability, _bodyStyle);
+                        GUILayout.Label(
+                            CurrencyIconGui.Content(choice.Ability),
+                            _bodyStyle);
                     }
 
                     if (!string.IsNullOrEmpty(choice.Cost))
                     {
-                        GUILayout.Label(choice.Cost, _warningStyle);
+                        GUILayout.Label(
+                            CurrencyIconGui.Content(choice.Cost),
+                            _warningStyle);
                     }
 
                     GUI.enabled = choice.CanSelect && !_inputLocked;
                     if (GUILayout.Button(
-                        choice.CanSelect ? "SELECT" : choice.DisabledReason,
+                        CurrencyIconGui.Content(
+                            choice.CanSelect ? "SELECT" : choice.DisabledReason),
                         _buttonStyle,
                         GUILayout.MinHeight(38f),
                         GUILayout.ExpandWidth(true)))

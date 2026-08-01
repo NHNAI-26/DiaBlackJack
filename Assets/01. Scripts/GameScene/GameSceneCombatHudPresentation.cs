@@ -445,30 +445,7 @@ namespace DiaBlackJack.GameScene
 
         private static string FormatChangeLabel(string changeActionText)
         {
-            const string prefix = "CHANGE (";
-            if (string.IsNullOrEmpty(changeActionText) ||
-                !changeActionText.StartsWith(prefix, StringComparison.Ordinal))
-            {
-                return "CHANGE";
-            }
-
-            int costEnd = changeActionText.IndexOf('|', prefix.Length);
-            if (costEnd < 0)
-            {
-                return "CHANGE";
-            }
-
-            string cost = changeActionText.Substring(
-                prefix.Length,
-                costEnd - prefix.Length).Trim();
-            if (cost.EndsWith(" SOUL", StringComparison.Ordinal))
-            {
-                cost = cost.Substring(0, cost.Length - " SOUL".Length);
-            }
-
-            return cost == "FREE"
-                ? "CHANGE -0"
-                : "CHANGE " + cost;
+            return CurrencyIconMarkup.FormatChangeActionLabel(changeActionText);
         }
 
         private static string BuildContractPrompt(DemonContractPanelViewModel contract)

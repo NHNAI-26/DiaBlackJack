@@ -64,12 +64,12 @@ namespace DiaBlackJack.GameScene
 
             if (nameText != null)
             {
-                nameText.text = displayName ?? string.Empty;
+                CurrencyIconText.Set(nameText, displayName);
             }
 
             if (hoverText != null)
             {
-                hoverText.text = description ?? string.Empty;
+                CurrencyIconText.Set(hoverText, description);
             }
 
             UpdateHoverBadge();

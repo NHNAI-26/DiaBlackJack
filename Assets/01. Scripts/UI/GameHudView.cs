@@ -96,12 +96,16 @@ namespace DiaBlackJack.GameScene
 
             if (playerSoulText != null)
             {
-                playerSoulText.text = $"YOU\n{core.PlayerSoul}";
+                CurrencyIconText.Set(
+                    playerSoulText,
+                    $"{CurrencyIconMarkup.SoulTag} {core.PlayerSoul}");
             }
 
             if (enemySoulText != null)
             {
-                enemySoulText.text = $"ENEMY\n{core.EnemySoul}";
+                CurrencyIconText.Set(
+                    enemySoulText,
+                    $"{CurrencyIconMarkup.SoulTag} {core.EnemySoul}");
             }
 
             if (roundText != null)
@@ -120,7 +124,9 @@ namespace DiaBlackJack.GameScene
         {
             if (goldText != null)
             {
-                goldText.text = $"GOLD\n{gold}";
+                CurrencyIconText.Set(
+                    goldText,
+                    $"{CurrencyIconMarkup.GoldTag} {gold}");
             }
         }
 
@@ -177,8 +183,8 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            cardHoverHeaderText.text = title;
-            cardHoverBadgeText.text = description ?? string.Empty;
+            CurrencyIconText.Set(cardHoverHeaderText, title);
+            CurrencyIconText.Set(cardHoverBadgeText, description);
 
             bool hasDescription = !string.IsNullOrEmpty(description);
             PositionCardHoverTooltip(localPoint, showBelow);
@@ -292,7 +298,7 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            actionTooltipText.text = tooltip;
+            CurrencyIconText.Set(actionTooltipText, tooltip);
             actionTooltip.pivot = new Vector2(0.5f, 0f);
             actionTooltip.localPosition = localPosition + new Vector2(0f, 14f);
             actionTooltip.gameObject.SetActive(true);
@@ -394,7 +400,9 @@ namespace DiaBlackJack.GameScene
 
             if (automaticCardResultText != null)
             {
-                automaticCardResultText.text = combat.AutomaticCardResult;
+                CurrencyIconText.Set(
+                    automaticCardResultText,
+                    combat.AutomaticCardResult);
             }
 
             if (combat.Mode == GameSceneCombatHudMode.Actions)
@@ -431,7 +439,7 @@ namespace DiaBlackJack.GameScene
         {
             if (combatPromptText != null)
             {
-                combatPromptText.text = prompt ?? string.Empty;
+                CurrencyIconText.Set(combatPromptText, prompt);
             }
 
             int activeCount = actions == null ? 0 : Mathf.Min(actions.Count, optionSlots.Length);

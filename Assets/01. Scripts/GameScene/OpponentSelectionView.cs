@@ -103,13 +103,16 @@ namespace DiaBlackJack.GameScene
             GUI.contentColor = ResolveGradeColor(candidate.Grade);
             GUILayout.Label(candidate.DisplayName, _headingStyle);
             GUILayout.Label(
-                $"{candidate.Grade}  ·  {candidate.MaximumSoul}",
+                CurrencyIconGui.Soul(
+                    $"{candidate.Grade}  ·  {candidate.MaximumSoul}"),
                 _headingStyle);
             GUI.contentColor = previousContent;
             GUILayout.Space(16f);
             GUILayout.Label(candidate.Summary, _bodyStyle);
             GUILayout.FlexibleSpace();
-            GUILayout.Label(candidate.RewardTier, _bodyStyle);
+            GUILayout.Label(
+                CurrencyIconGui.Content(candidate.RewardTier),
+                _bodyStyle);
             GUILayout.Space(14f);
 
             GUI.enabled = _model.CanFocusOpponent;

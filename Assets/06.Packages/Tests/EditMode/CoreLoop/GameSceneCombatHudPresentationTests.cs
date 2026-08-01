@@ -22,6 +22,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/Card/Card.prefab";
         private const string TablePrefabPath =
             "Assets/03. Prefabs/TableObjects/Table Controller.prefab";
+        private const string GoldSpriteAssetPath =
+            "Assets/TextMesh Pro/Resources/Sprite Assets/GoldIcon.asset";
+        private const string SoulSpriteAssetPath =
+            "Assets/TextMesh Pro/Resources/Sprite Assets/SoulIcon-v5.asset";
 
         [Test]
         public void GSH01_U01_PlayerTurnProjectsThreeButtonsAndTableContractEntry()
@@ -44,7 +48,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             }));
             Assert.That(model.PrimaryActions.All(action => action.IsInteractable),
                 Is.True);
-            Assert.That(model.PrimaryActions[2].Label, Is.EqualTo("CHANGE -0"));
+            Assert.That(
+                model.PrimaryActions[2].Label,
+                Is.EqualTo($"CHANGE {CurrencyIconMarkup.SoulTag} 0"));
             Assert.That(model.PrimaryActions[2].Tooltip, Does.Contain(core.ChangeActionText));
             Assert.That(model.PrimaryActions.Any(action =>
                 action.Command.Kind == GameSceneCombatHudCommandKind.BeginContract),
@@ -149,7 +155,47 @@ namespace DiaBlackJack.CoreLoop.Tests
                 isShopOpen: false,
                 inputLocked: false);
 
-            Assert.That(model.PrimaryActions[2].Label, Is.EqualTo("CHANGE -1"));
+            Assert.That(
+                model.PrimaryActions[2].Label,
+                Is.EqualTo($"CHANGE {CurrencyIconMarkup.SoulTag} -1"));
+        }
+
+        [Test]
+        public void CUI01_U01_CurrencyWordsBecomeInlineSpriteTags()
+        {
+            string formatted = CurrencyIconMarkup.FormatForTmp(
+                "PRICE 5 GOLD | 영혼 2 | SOULS 3 | 골드 4");
+
+            Assert.That(
+                formatted,
+                Is.EqualTo(
+                    $"PRICE 5 {CurrencyIconMarkup.GoldTag} | " +
+                    $"{CurrencyIconMarkup.SoulTag} 2 | " +
+                    $"{CurrencyIconMarkup.SoulTag} 3 | " +
+                    $"{CurrencyIconMarkup.GoldTag} 4"));
+        }
+
+        [TestCase(GoldSpriteAssetPath)]
+        [TestCase(SoulSpriteAssetPath)]
+        public void CUI01_U02_CurrencySpriteAssetContainsOneRenderableGlyph(
+            string assetPath)
+        {
+            Object spriteAsset = AssetDatabase.LoadMainAssetAtPath(assetPath);
+            Object[] embeddedAssets = AssetDatabase.LoadAllAssetsAtPath(assetPath);
+
+            Assert.That(spriteAsset, Is.Not.Null);
+            Assert.That(spriteAsset.GetType().Name, Is.EqualTo("TMP_SpriteAsset"));
+            Assert.That(embeddedAssets.OfType<Material>(), Is.Not.Empty);
+        }
+
+        [Test]
+        public void CUI01_U03_ImguiCurrencyIconUsesBoundedThumbnail()
+        {
+            GUIContent content = CurrencyIconGui.Soul("ELITE  ·  5");
+
+            Assert.That(content.image, Is.Not.Null);
+            Assert.That(content.image.width, Is.EqualTo(CurrencyIconGui.IconTextureSize));
+            Assert.That(content.image.height, Is.EqualTo(CurrencyIconGui.IconTextureSize));
         }
 
         [Test]
@@ -997,7 +1043,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(
                     GetRenderedText(panel.Find(
                         "DetailLayout/ContractDetail/Cost/txtCost")),
-                    Does.Contain("PRICE 5 GOLD"));
+                    Does.Contain(
+                        $"PRICE 5 {CurrencyIconMarkup.GoldTag}"));
 
                 hud.HideDemonContractDetail();
                 Assert.That(panel.gameObject.activeSelf, Is.False);
