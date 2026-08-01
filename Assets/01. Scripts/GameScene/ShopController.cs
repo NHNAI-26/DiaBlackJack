@@ -750,6 +750,7 @@ namespace DiaBlackJack.GameScene
                 definition.DisplayName,
                 abilityDescription: FormatNormalCardOfferText(definition, offer.Price),
                 suit: offer.Suit,
+                definitionKey: definition.Key,
                 showHoverBadgeWhenUnavailable: true));
         }
 
