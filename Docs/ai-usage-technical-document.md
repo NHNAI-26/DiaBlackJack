@@ -1635,3 +1635,11 @@ AI는 `SatanRuntimeState`의 정상 차례 종료 자동 전환을 제거하고,
 
 Unity MCP에서 사탄 전용 17/17(job `77fd549212df4aa593efb322e86f22c4`)을 통과했다. CoreLoop는 589개 중 587개(job `ab7dc3231a5a433294250df35069dc82`), 전체 EditMode는 863개 중 861개(job `b02819ede9a545b98e66aef1cbc9e9fa`)가 통과했다. 남은 두 실패는 기존 `CodexAssetTests.DX02_U02_OverlayPrefabHasTabsCloseAndScrollableDeck`의 도감 좌표와 `MoodControllerTests.MOO01_U04_WindowGlowUsesPropertyBlockOnly`의 창문 광원 색상 비교이며 사탄 관련 실패와 컴파일 오류는 0이다.
 
+## 2026-08-01 CU-M11·DC-UI02 공통 카드 효과 UI 이관
+
+이천서는 최신 `rule.md`, `card-use-design.md`, `demonic-contract-design.md`, `game-design-document.md`를 기준으로 현재 구현에서 확정 가능한 부분을 수정하도록 지시했다. AI에는 문서에서 미확정으로 남긴 숫자 선택 레이아웃을 임의 결정하지 않고, 기존 효과 상태·원자성·공개 정보 경계를 보존하며 GameScene 입력과 표시만 연결하라는 지시를 적용했다. 최종 기획·코드·화면 승인 책임자는 이천서다.
+
+AI는 자동 발동·계약 선택 모델에 대상 카드 ID를 투영하고, 월드 카드 클릭을 공통 HUD 명령으로 전달하도록 구현했다. 화염 방사기·회중시계·바알제붑은 선택 가능한 테이블 카드만 지속 윤곽과 직접 입력을 받으며, 바알제붑은 `(1/2)`·`(2/2)` 진행도를 표시한다. 효과 원본 일반 카드도 처리 중 지속 윤곽으로 표시한다. 리볼버·사탄 숫자 UI, 수정 구슬·벨페고르의 별도 하단 카드 제시 슬롯은 문서상 미확정 또는 전용 월드 표시가 필요해 변경하지 않았다. 외부 에셋·외부 코드·오픈소스·패키지·새 의존성·씬·프리팹은 추가하거나 변경하지 않았다.
+
+Unity MCP에서 GameScene HUD 대상 25/25(job `2f01c2875d914f378e0f6fc4f6e8bd8f`)가 통과했고 컴파일·게임 코드 오류는 0이었다. 전체 EditMode는 866개 중 864개(job `f7f4335d58dc4b79844263c38efc03e2`)가 통과했다. 남은 2건은 기존 도감 오버레이 좌표와 창문 광원 색상 비교 실패로 이번 작업 범위 밖이며, Console에는 Test Framework 결과 저장 안내 1건만 남았다.
+

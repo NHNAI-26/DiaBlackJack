@@ -45,7 +45,9 @@ namespace DiaBlackJack.GameScene
             string definitionKey = "",
             bool showHoverBadgeBelow = false,
             int? cardEffectChoiceOptionId = null,
-            bool isUsed = false)
+            bool isUsed = false,
+            GameSceneCombatHudCommand? directSelectionCommand = null,
+            bool isEffectSource = false)
         {
             CardId = cardId;
             Rank = rank;
@@ -60,6 +62,8 @@ namespace DiaBlackJack.GameScene
             ShowHoverBadgeBelow = showHoverBadgeBelow;
             CardEffectChoiceOptionId = cardEffectChoiceOptionId;
             IsUsed = isUsed;
+            DirectSelectionCommand = directSelectionCommand;
+            IsEffectSource = isEffectSource;
         }
 
         public int CardId { get; }
@@ -106,6 +110,10 @@ namespace DiaBlackJack.GameScene
         /// Hidden enemy state is never projected here.
         /// </summary>
         public bool IsUsed { get; }
+
+        public GameSceneCombatHudCommand? DirectSelectionCommand { get; }
+
+        public bool IsEffectSource { get; }
 
         /// <summary>
         /// Stable card archetype key used only to select authored visuals. It remains empty for an
@@ -330,7 +338,7 @@ namespace DiaBlackJack.GameScene
                 enemyLabel,
                 CreateRevolverAnimationCue(battle),
                 CreateHammerAnimationCue(battle),
-                UsesDiegeticCardEffectSelection(battle.PendingPlayerCardEffect));
+                UsesDiegeticSelection(battle));
         }
 
         /// <summary>
@@ -725,7 +733,10 @@ namespace DiaBlackJack.GameScene
                     abilityDescription: ResolveAbilityDescription(sourceCard),
                     suit: sourceCard == null ? CardSuit.Spade : sourceCard.Suit,
                     definitionKey: sourceCard?.DefinitionKey,
-                    isUsed: card.UseState == CardUseState.Used);
+                    isUsed: card.UseState == CardUseState.Used,
+                    directSelectionCommand:
+                        FindPlayerDirectSelectionCommand(battle, card.CardId),
+                    isEffectSource: IsPlayerEffectSource(battle, card.CardId));
 
                 // PlayerHand's world orientation makes the highest index land at screen-left.
                 // Keep hidden cards last and prepend face-up cards so new draws appear at
@@ -854,7 +865,9 @@ namespace DiaBlackJack.GameScene
                     showHoverBadgeBelow: faceUp,
                     cardEffectChoiceOptionId:
                         FindCardEffectChoiceOptionId(pendingEffect, card.Id),
-                    isUsed: faceUp && card.UseState == CardUseState.Used);
+                    isUsed: faceUp && card.UseState == CardUseState.Used,
+                    directSelectionCommand:
+                        FindEnemyDirectSelectionCommand(battle, card.Id));
 
                 // Both sides' hidden cards sit on the screen LEFT (each player's own right, mirrored
                 // across the table). The camera mirrors local X, so screen-left = highest index →
@@ -878,6 +891,128 @@ namespace DiaBlackJack.GameScene
             return pendingEffect != null &&
                 pendingEffect.ChoiceKind ==
                     CardEffectChoiceKind.DiscardOpponentFaceUpCard;
+        }
+
+        private static bool UsesDiegeticSelection(CoreLoopBattle battle)
+        {
+            if (UsesDiegeticCardEffectSelection(battle.PendingPlayerCardEffect))
+            {
+                return true;
+            }
+
+            PendingAutomaticCardInteraction automatic =
+                battle.PendingPlayerAutomaticInteraction;
+            if (automatic != null && HasCardChoice(automatic.Options))
+            {
+                return true;
+            }
+
+            PendingDemonContractInteraction contract =
+                battle.PendingPlayerDemonContractInteraction;
+            return contract != null &&
+                (contract.Kind == DemonContractInteractionKind.BeelzebubChooseOwnerCard ||
+                 contract.Kind == DemonContractInteractionKind.BeelzebubChooseOpponentCard);
+        }
+
+        private static bool HasCardChoice(
+            IReadOnlyList<AutomaticCardChoiceOption> options)
+        {
+            foreach (AutomaticCardChoiceOption option in options)
+            {
+                if (option.CardId.HasValue)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static GameSceneCombatHudCommand? FindPlayerDirectSelectionCommand(
+            CoreLoopBattle battle,
+            int cardId)
+        {
+            PendingAutomaticCardInteraction automatic =
+                battle.PendingPlayerAutomaticInteraction;
+            if (automatic != null)
+            {
+                foreach (AutomaticCardChoiceOption option in automatic.Options)
+                {
+                    if (option.CardId == cardId)
+                    {
+                        return new GameSceneCombatHudCommand(
+                            GameSceneCombatHudCommandKind.ResolveAutomaticCardChoice,
+                            option.OptionId,
+                            automatic.InteractionId);
+                    }
+                }
+            }
+
+            PendingDemonContractInteraction contract =
+                battle.PendingPlayerDemonContractInteraction;
+            if (contract == null || contract.Kind !=
+                    DemonContractInteractionKind.BeelzebubChooseOwnerCard)
+            {
+                return null;
+            }
+
+            return FindDemonContractCardCommand(contract, cardId);
+        }
+
+        private static GameSceneCombatHudCommand? FindEnemyDirectSelectionCommand(
+            CoreLoopBattle battle,
+            int cardId)
+        {
+            int? cardEffectOptionId = FindCardEffectChoiceOptionId(
+                battle.PendingPlayerCardEffect,
+                cardId);
+            if (cardEffectOptionId.HasValue)
+            {
+                return new GameSceneCombatHudCommand(
+                    GameSceneCombatHudCommandKind.ResolveCardEffectChoice,
+                    cardEffectOptionId.Value);
+            }
+
+            PendingDemonContractInteraction contract =
+                battle.PendingPlayerDemonContractInteraction;
+            if (contract == null || contract.Kind !=
+                    DemonContractInteractionKind.BeelzebubChooseOpponentCard)
+            {
+                return null;
+            }
+
+            return FindDemonContractCardCommand(contract, cardId);
+        }
+
+        private static GameSceneCombatHudCommand? FindDemonContractCardCommand(
+            PendingDemonContractInteraction interaction,
+            int cardId)
+        {
+            foreach (DemonContractOption option in interaction.Options)
+            {
+                if (option.ContractCardId == cardId)
+                {
+                    return new GameSceneCombatHudCommand(
+                        GameSceneCombatHudCommandKind.ResolveDemonContractChoice,
+                        option.OptionId,
+                        interaction.InteractionId);
+                }
+            }
+
+            return null;
+        }
+
+        private static bool IsPlayerEffectSource(CoreLoopBattle battle, int cardId)
+        {
+            PendingCardEffect manual = battle.PendingPlayerCardEffect;
+            if (manual != null && manual.SourceCardId == cardId)
+            {
+                return true;
+            }
+
+            PendingAutomaticCardInteraction automatic =
+                battle.PendingPlayerAutomaticInteraction;
+            return automatic != null && automatic.SourceCardId == cardId;
         }
 
         private static int? FindCardEffectChoiceOptionId(

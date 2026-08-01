@@ -207,6 +207,11 @@ namespace DiaBlackJack.GameScene
                 var options = new List<GameSceneCombatHudActionViewModel>();
                 foreach (AutomaticCardChoiceViewModel choice in interaction.Choices)
                 {
+                    if (choice.CardId.HasValue)
+                    {
+                        continue;
+                    }
+
                     options.Add(new GameSceneCombatHudActionViewModel(
                         new GameSceneCombatHudCommand(
                             GameSceneCombatHudCommandKind.ResolveAutomaticCardChoice,
@@ -214,6 +219,18 @@ namespace DiaBlackJack.GameScene
                             interaction.InteractionId),
                         choice.Label,
                         !inputLocked));
+                }
+
+                bool usesDirectCardSelection = HasCardChoice(interaction.Choices);
+                if (usesDirectCardSelection)
+                {
+                    return new GameSceneCombatHudViewModel(
+                        GameSceneCombatHudMode.DiegeticSelection,
+                        $"{interaction.SourceDisplayName}  |  {interaction.Prompt}",
+                        Array.Empty<GameSceneCombatHudActionViewModel>(),
+                        options,
+                        Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
+                        automaticCardResult);
                 }
 
                 return CreateOptions(
@@ -252,6 +269,24 @@ namespace DiaBlackJack.GameScene
             DemonContractPanelViewModel contract = core.DemonContract;
             if (contract.IsResolving)
             {
+                if (contract.InteractionKind ==
+                        DemonContractInteractionKind.BeelzebubChooseOwnerCard ||
+                    contract.InteractionKind ==
+                        DemonContractInteractionKind.BeelzebubChooseOpponentCard)
+                {
+                    string progress = contract.InteractionKind ==
+                            DemonContractInteractionKind.BeelzebubChooseOwnerCard
+                        ? " (1/2)"
+                        : " (2/2)";
+                    return new GameSceneCombatHudViewModel(
+                        GameSceneCombatHudMode.DiegeticSelection,
+                        BuildContractPrompt(contract) + progress,
+                        Array.Empty<GameSceneCombatHudActionViewModel>(),
+                        Array.Empty<GameSceneCombatHudActionViewModel>(),
+                        Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
+                        automaticCardResult);
+                }
+
                 if (contract.InteractionKind ==
                         DemonContractInteractionKind.ChooseContract &&
                     contract.Choices.Count <= 2)
@@ -424,6 +459,20 @@ namespace DiaBlackJack.GameScene
             return string.IsNullOrEmpty(contract.OwnerPreview)
                 ? contract.Prompt
                 : contract.Prompt + "  |  " + contract.OwnerPreview;
+        }
+
+        private static bool HasCardChoice(
+            IReadOnlyList<AutomaticCardChoiceViewModel> choices)
+        {
+            foreach (AutomaticCardChoiceViewModel choice in choices)
+            {
+                if (choice.CardId.HasValue)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static string FormatAutomaticCardResult(

@@ -521,10 +521,10 @@ namespace DiaBlackJack.GameScene
             }
 
             if (pointedBattleCard != null &&
-                pointedBattleCard.CardEffectChoiceOptionId.HasValue)
+                pointedBattleCard.DirectSelectionCommand.HasValue)
             {
-                int optionId = pointedBattleCard.CardEffectChoiceOptionId.Value;
-                ProcessInput(() => TryResolvePlayerCardChoice(optionId));
+                HandleCombatCommand(
+                    pointedBattleCard.DirectSelectionCommand.Value);
                 return;
             }
 

@@ -349,6 +349,11 @@ namespace DiaBlackJack.GameScene
                 (combat.Mode == GameSceneCombatHudMode.Actions &&
                  combat.OptionActions.Count > 0));
             SetOptionPanelChromeVisible(!isDiegeticSelection);
+            if (isDiegeticSelection && combat.OptionActions.Count > 0 &&
+                optionScrollRect != null)
+            {
+                optionScrollRect.gameObject.SetActive(true);
+            }
             SetActive(
                 contractDetailPanel,
                 false);

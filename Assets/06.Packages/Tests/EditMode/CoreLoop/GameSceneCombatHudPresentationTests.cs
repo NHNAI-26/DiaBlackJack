@@ -430,6 +430,138 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CUM11_U01_AutomaticCardTargetUsesTableCardAndKeepsSkipAction()
+        {
+            CardDefinition flamethrower = CardDefinitionCatalog.GetByKey(
+                CardDefinitionCatalog.FlamethrowerKey);
+            var battle = new CoreLoopBattle(
+                BlackjackDeck.CreateInDrawOrder(CreateCards(
+                    0, 2, 3, flamethrower, 4)),
+                BlackjackDeck.CreateInDrawOrder(CreateCards(100, 10, 7, 5)),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 4,
+                enemyPolicy: new StandPolicy());
+            Assert.That(battle.Start(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+
+            GameSceneViewModel scene = GameScenePresenter.Create(battle);
+            PendingAutomaticCardInteraction interaction =
+                battle.PendingPlayerAutomaticInteraction;
+            GameSceneCardViewModel target = scene.PlayerCards.Single(card =>
+                card.DirectSelectionCommand.HasValue);
+            GameSceneCombatHudCommand command = target.DirectSelectionCommand.Value;
+
+            Assert.That(scene.UsesDiegeticCardEffectSelection, Is.True);
+            Assert.That(command.Kind, Is.EqualTo(
+                GameSceneCombatHudCommandKind.ResolveAutomaticCardChoice));
+            Assert.That(command.InteractionId, Is.EqualTo(interaction.InteractionId));
+            Assert.That(scene.PlayerCards.Single(card =>
+                card.CardId == interaction.SourceCardId).IsEffectSource, Is.True);
+
+            GameSceneCombatHudViewModel hud = GameSceneCombatHudPresenter.Create(
+                scene.Core,
+                isStageBattle: false,
+                isShopOpen: false,
+                inputLocked: false,
+                scene.UsesDiegeticCardEffectSelection);
+            Assert.That(hud.Mode, Is.EqualTo(
+                GameSceneCombatHudMode.DiegeticSelection));
+            Assert.That(hud.OptionActions, Has.Count.EqualTo(1));
+            Assert.That(hud.OptionActions.Single().Command.OptionId,
+                Is.EqualTo(FlamethrowerEffectHandler.SkipOptionId));
+        }
+
+        [Test]
+        public void CUM11_U02_BeelzebubProjectsTwoStepTableTargets()
+        {
+            DemonContractDefinition definition = DemonContractCatalog.Default
+                .GetByKey(DemonContractCatalog.BeelzebubKey);
+            var battle = new CoreLoopBattle(
+                BlackjackDeck.CreateInDrawOrder(CreateCards(
+                    0, 10, 2, 10, 10, 2, 2)),
+                BlackjackDeck.CreateInDrawOrder(CreateCards(
+                    100, 8, 7, 2, 2, 2, 2)),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 4,
+                enemyPolicy: new StandPolicy(),
+                playerDemonDeck: new DemonContractDeck(
+                    new[] { new DemonContractCard(500, definition) },
+                    seed: 73));
+            Assert.That(battle.Start(), Is.True);
+            Assert.That(battle.TryBeginPlayerDemonContract(), Is.True);
+            PendingDemonContractInteraction offer =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                offer.InteractionId,
+                offer.Options[0].OptionId), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+
+            GameSceneViewModel ownerScene = GameScenePresenter.Create(battle);
+            GameSceneCardViewModel ownerTarget = ownerScene.PlayerCards.First(card =>
+                card.DirectSelectionCommand.HasValue);
+            GameSceneCombatHudCommand ownerCommand =
+                ownerTarget.DirectSelectionCommand.Value;
+            GameSceneCombatHudViewModel ownerHud =
+                GameSceneCombatHudPresenter.Create(
+                    ownerScene.Core, false, false, false,
+                    ownerScene.UsesDiegeticCardEffectSelection);
+            Assert.That(ownerCommand.Kind, Is.EqualTo(
+                GameSceneCombatHudCommandKind.ResolveDemonContractChoice));
+            Assert.That(ownerHud.Prompt, Does.EndWith("(1/2)"));
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                ownerCommand.InteractionId,
+                ownerCommand.OptionId), Is.True);
+
+            GameSceneViewModel opponentScene = GameScenePresenter.Create(battle);
+            GameSceneCardViewModel opponentTarget = opponentScene.EnemyCards.First(card =>
+                card.DirectSelectionCommand.HasValue);
+            GameSceneCombatHudCommand opponentCommand =
+                opponentTarget.DirectSelectionCommand.Value;
+            GameSceneCombatHudViewModel opponentHud =
+                GameSceneCombatHudPresenter.Create(
+                    opponentScene.Core, false, false, false,
+                    opponentScene.UsesDiegeticCardEffectSelection);
+            Assert.That(opponentCommand.Kind, Is.EqualTo(
+                GameSceneCombatHudCommandKind.ResolveDemonContractChoice));
+            Assert.That(opponentHud.Prompt, Does.EndWith("(2/2)"));
+        }
+
+        [Test]
+        public void CUM11_U03_CardViewRetainsDirectSelectionCommand()
+        {
+            GameObject cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/03. Prefabs/Card/Card.prefab");
+            GameObject instance = Object.Instantiate(cardPrefab);
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                var command = new GameSceneCombatHudCommand(
+                    GameSceneCombatHudCommandKind.ResolveAutomaticCardChoice,
+                    optionId: 7,
+                    interactionId: 11);
+                view.Bind(new GameSceneCardViewModel(
+                    cardId: 21,
+                    rank: 4,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    displayName: "Target",
+                    directSelectionCommand: command));
+
+                Assert.That(view.DirectSelectionCommand.HasValue, Is.True);
+                Assert.That(view.DirectSelectionCommand.Value.Kind,
+                    Is.EqualTo(command.Kind));
+                Assert.That(view.DirectSelectionCommand.Value.OptionId,
+                    Is.EqualTo(7));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
         public void GSH01_U06_HudPrefabOmitsFixedActionsAndKeepsSelectionControls()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);

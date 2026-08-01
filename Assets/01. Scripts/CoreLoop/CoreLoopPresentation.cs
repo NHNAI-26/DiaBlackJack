@@ -58,15 +58,21 @@ namespace DiaBlackJack.CoreLoop.UI
 
     public sealed class AutomaticCardChoiceViewModel
     {
-        public AutomaticCardChoiceViewModel(int optionId, string label)
+        public AutomaticCardChoiceViewModel(
+            int optionId,
+            string label,
+            int? cardId = null)
         {
             OptionId = optionId;
             Label = label ?? throw new ArgumentNullException(nameof(label));
+            CardId = cardId;
         }
 
         public int OptionId { get; }
 
         public string Label { get; }
+
+        public int? CardId { get; }
     }
 
     public sealed class AutomaticCardInteractionViewModel
@@ -547,7 +553,8 @@ namespace DiaBlackJack.CoreLoop.UI
             {
                 choices.Add(new AutomaticCardChoiceViewModel(
                     option.OptionId,
-                    option.Label));
+                    option.Label,
+                    option.CardId));
             }
 
             return new AutomaticCardInteractionViewModel(

@@ -88,6 +88,7 @@ namespace DiaBlackJack.GameScene
         private bool _hovered;
         private bool _hasBoundCard;
         private bool _isUsed;
+        private bool _isEffectHighlighted;
 
         /// <summary>Run card id of the bound card, for pointer routing. -1 when unbound.</summary>
         public int CardId { get; private set; } = -1;
@@ -101,6 +102,9 @@ namespace DiaBlackJack.GameScene
 
         /// <summary>Current card-effect option selected by clicking this world-space card.</summary>
         public int? CardEffectChoiceOptionId { get; private set; }
+
+        /// <summary>Current effect command routed by clicking this world-space card.</summary>
+        public GameSceneCombatHudCommand? DirectSelectionCommand { get; private set; }
 
         /// <summary>Title displayed by the shared HUD tooltip while this card is hovered.</summary>
         public string HoverBadgeTitle { get; private set; } = string.Empty;
@@ -177,6 +181,9 @@ namespace DiaBlackJack.GameScene
             DefinitionKey = card.DefinitionKey;
             CanUse = card.CanUse;
             CardEffectChoiceOptionId = card.CardEffectChoiceOptionId;
+            DirectSelectionCommand = card.DirectSelectionCommand;
+            _isEffectHighlighted = card.IsEffectSource ||
+                card.DirectSelectionCommand.HasValue;
             _isUsed = card.IsUsed;
             _hasBoundCard = true;
             bool showPlayerHiddenBlend = card.RevealRank && !card.IsFaceUp;
@@ -225,7 +232,7 @@ namespace DiaBlackJack.GameScene
             _hovered = false;
             StopScaleTween();
             transform.localScale = _baseScale;
-            ApplyHoverOutline(false);
+            ApplyHoverOutline(_isEffectHighlighted);
             ApplyUsedMark(animateUsedMark);
         }
 
@@ -240,7 +247,7 @@ namespace DiaBlackJack.GameScene
             _hovered = hovered;
             PlayHoverSfx(hovered);
             PlayHoverScaleTween(hovered ? _baseScale * hoverScale : _baseScale);
-            ApplyHoverOutline(hovered);
+            ApplyHoverOutline(hovered || _isEffectHighlighted);
             ApplyHoverCardBlend(hovered);
         }
 

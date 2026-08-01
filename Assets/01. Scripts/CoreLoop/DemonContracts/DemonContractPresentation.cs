@@ -12,7 +12,8 @@ namespace DiaBlackJack.CoreLoop.UI
             string ability,
             string cost,
             bool canSelect,
-            string disabledReason)
+            string disabledReason,
+            int? cardId = null)
         {
             OptionId = optionId;
             DefinitionKey = definitionKey ?? string.Empty;
@@ -21,6 +22,7 @@ namespace DiaBlackJack.CoreLoop.UI
             Cost = cost ?? string.Empty;
             CanSelect = canSelect;
             DisabledReason = disabledReason ?? string.Empty;
+            CardId = cardId;
         }
 
         public int OptionId { get; }
@@ -36,6 +38,8 @@ namespace DiaBlackJack.CoreLoop.UI
         public bool CanSelect { get; }
 
         public string DisabledReason { get; }
+
+        public int? CardId { get; }
     }
 
     public sealed class ActiveDemonContractActionViewModel
@@ -226,7 +230,8 @@ namespace DiaBlackJack.CoreLoop.UI
                     definition?.Summary ?? string.Empty,
                     definition?.CostSummary ?? string.Empty,
                     canSelect: true,
-                    disabledReason: string.Empty));
+                    disabledReason: string.Empty,
+                    cardId: option.ContractCardId));
             }
 
             return choices.AsReadOnly();
