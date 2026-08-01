@@ -1,5 +1,15 @@
 # 테이블 도감 개발 명세
 
+## DX-M02: 적 페이지 프리팹 계약
+
+- `CodexOverlayView` 공개 API와 표시 모델은 유지한다. 영혼/골드 동적 TMP는 숫자만 출력한다.
+- 초상화는 `RectMask2D` 뷰포트 안에서 비율 유지·중앙 크롭하고 `CodexFrame_0`으로 감싼다.
+- 영혼/골드·설명·계약·덱 패널 외곽선은 Sliced `CodexOutline_0`을 사용한다.
+- 시작 덱 `ScrollRect`는 세로 전용, Clamped, 스크롤바 없음이다. Content는 4열 고정 Grid, 셀 116×164, 간격 8×12, 좌우 패딩 8이다.
+- 계약 카드는 기존 템플릿과 3열을 유지하며 최대 6개를 2행으로 책 안에 표시한다.
+- `GameScene`의 덱 Content 인스턴스 `m_SizeDelta.y`, `m_AnchoredPosition.y` 오버라이드는 제거한다.
+- 프리팹 테스트는 아트 연결, Sliced 타입, 별도 아이콘, 필수 참조, Grid/ScrollRect 설정과 모델 렌더 값을 검증한다.
+
 ## DX-00: 콘텐츠 계약
 
 `EnemyCombatProfileDefinitionSO`는 적 이름·초상화·등급·최대 영혼·처치 골드·행동 정책 key·시작 덱·설명·계약 악마·보스 고정 단계를 소유한다. `EnemyContentCatalogSO`는 적 SO 6개를 순서대로 참조하고 순수 `EnemyCombatProfileCatalog`과 `GoldRewardCatalog`을 생성한다.

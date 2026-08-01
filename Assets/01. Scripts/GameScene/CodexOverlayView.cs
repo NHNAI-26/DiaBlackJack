@@ -236,8 +236,8 @@ namespace DiaBlackJack.GameScene
             }
 
             SetText(enemyNameText, page.DisplayName);
-            SetText(enemySoulText, $"영혼  {page.MaximumSoul}");
-            SetText(enemyGoldText, $"처치 골드  {page.DefeatGold}");
+            SetText(enemySoulText, page.MaximumSoul.ToString());
+            SetText(enemyGoldText, page.DefeatGold.ToString());
             SetText(enemyDescriptionText, page.Description);
 
             if (enemyPortraitImage != null)

@@ -1,5 +1,16 @@
 # 테이블 도감 진행 기록
 
+## DX-M02: 적 정보 페이지 레이아웃 개편
+
+- `CodexOverlay.prefab` 적 페이지만 재배치했다. 초상화 `CodexFrame_0`, 제목 `CodexFrame_2`, Sliced `CodexOutline_0`, 별도 `SoulIcon`/`GoldIcon` 연결을 완료했다.
+- 왼쪽 계약 영역은 3열×2행 최대 6개가 책 안에 들어오도록 조정했다. 오른쪽은 116×164, 4열, 8×12 간격, 세로 전용 ScrollRect와 `RectMask2D`를 적용했다.
+- `CodexOverlayView`의 영혼/골드 출력은 숫자 전용으로 변경했다. 공개 API와 도감 표시 모델은 변경하지 않았다.
+- `GameScene`의 덱 Content `m_SizeDelta.y`, `m_AnchoredPosition.y` 인스턴스 오버라이드만 제거했다.
+- Codex Asset tests: job `bd308aa51364466e8809a016550bc14c`, 12/12 통과. Codex Presentation tests: job `8542e5492e834b4094e0333f554cd74f`, 6/6 통과.
+- 전체 EditMode: job `81adb8024f934f838f4628c19dcf0905`, 880개 중 878개 통과. 실패 2개는 비도감 기존 영역 `GSH01_U10_TablePrefabAuthorsThreeWorldCommands`, `MOO01_U04_WindowGlowUsesPropertyBlockOnly`이다.
+- GameScene validate: issue 0, missing script 0, broken prefab 0. Codex 필터 Console Error 0.
+- 1920×1080과 1280×720에서 최종 보스 25장 덱의 상단·하단, 6개 계약 카드, 책 바깥 노출 없음과 스크롤 위치를 확인했다.
+
 | 작업 | 상태 | 결과 |
 | --- | --- | --- |
 | DX-00 | 완료 | 적 6종을 개별 `EnemyCombatProfileDefinitionSO`로 이전하고 악마 서사를 각 `DemonCardDefinitionSO`에 통합했다. 별도 `CodexContentCatalogSO`는 제거했다. 펼친 책 1536×1024, 닫힌 책·책갈피 1024×1024 투명 PNG를 사용한다. |

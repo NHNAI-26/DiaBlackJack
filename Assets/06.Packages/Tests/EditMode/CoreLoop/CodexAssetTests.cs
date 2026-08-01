@@ -22,6 +22,14 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/UI/GameScene/CodexOverlay.prefab";
         private const string BookPrefabPath =
             "Assets/03. Prefabs/Props/CodexBook.prefab";
+        private const string CodexFramePath =
+            "Assets/05. Arts/Texture/Codex/CodexFrame.png";
+        private const string CodexOutlinePath =
+            "Assets/05. Arts/Texture/Codex/CodexOutline.png";
+        private const string SoulIconPath =
+            "Assets/05. Arts/UI/Icons/SoulIcon.png";
+        private const string GoldIconPath =
+            "Assets/05. Arts/UI/Icons/GoldIcon.png";
 
         [Test]
         public void DX02_U01_ContentCatalogCoversEveryEnemyAndDemon()
@@ -164,10 +172,90 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(deckRect, Is.Not.Null);
             Assert.That(deckRect.anchorMin, Is.EqualTo(new Vector2(0f, 1f)));
             Assert.That(deckRect.anchorMax, Is.EqualTo(new Vector2(0f, 1f)));
-            Assert.That(
-                deckRect.anchoredPosition,
-                Is.EqualTo(new Vector2(292.8f, -92f)));
             Assert.That(deckRect.sizeDelta, Is.EqualTo(new Vector2(116f, 164f)));
+        }
+
+        [Test]
+        public void DX02_U06_EnemyLayoutUsesCodexArtAndVerticalFourColumnGrid()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            CodexOverlayView view = prefab.GetComponent<CodexOverlayView>();
+            Assert.That(view, Is.Not.Null);
+
+            Image portraitFrame = GetImageAtPath(
+                prefab,
+                "EnemyPage/LeftPage/PortraitPanel/PortraitFrame");
+            Image soulOutline = GetImageAtPath(
+                prefab,
+                "EnemyPage/LeftPage/SoulPanel/Outline");
+            Image soulIcon = GetImageAtPath(
+                prefab,
+                "EnemyPage/LeftPage/SoulPanel/Icon");
+            Image goldIcon = GetImageAtPath(
+                prefab,
+                "EnemyPage/LeftPage/GoldPanel/Icon");
+            Image deckBanner = GetImageAtPath(
+                prefab,
+                "EnemyPage/RightPage/DeckTitleBanner");
+            Image deckOutline = GetImageAtPath(
+                prefab,
+                "EnemyPage/RightPage/DeckPanel/Outline");
+
+            Assert.That(
+                portraitFrame.sprite,
+                Is.EqualTo(LoadSprite(CodexFramePath, "CodexFrame_0")));
+            Assert.That(portraitFrame.type, Is.EqualTo(Image.Type.Sliced));
+            Assert.That(
+                deckBanner.sprite,
+                Is.EqualTo(LoadSprite(CodexFramePath, "CodexFrame_2")));
+            Assert.That(
+                soulOutline.sprite,
+                Is.EqualTo(LoadSprite(CodexOutlinePath, "CodexOutline_0")));
+            Assert.That(
+                deckOutline.sprite,
+                Is.EqualTo(LoadSprite(CodexOutlinePath, "CodexOutline_0")));
+            Assert.That(soulOutline.type, Is.EqualTo(Image.Type.Sliced));
+            Assert.That(deckOutline.type, Is.EqualTo(Image.Type.Sliced));
+            Assert.That(
+                soulIcon.sprite,
+                Is.EqualTo(AssetDatabase.LoadAssetAtPath<Sprite>(SoulIconPath)));
+            Assert.That(
+                goldIcon.sprite,
+                Is.EqualTo(AssetDatabase.LoadAssetAtPath<Sprite>(GoldIconPath)));
+
+            ScrollRect scrollRect = GetReference<ScrollRect>(
+                view,
+                "deckScrollRect");
+            Assert.That(scrollRect.horizontal, Is.False);
+            Assert.That(scrollRect.vertical, Is.True);
+            Assert.That(
+                scrollRect.movementType,
+                Is.EqualTo(ScrollRect.MovementType.Clamped));
+            Assert.That(scrollRect.horizontalScrollbar, Is.Null);
+            Assert.That(scrollRect.verticalScrollbar, Is.Null);
+            Assert.That(
+                scrollRect.viewport.GetComponent<RectMask2D>(),
+                Is.Not.Null);
+
+            GridLayoutGroup grid =
+                scrollRect.content.GetComponent<GridLayoutGroup>();
+            ContentSizeFitter fitter =
+                scrollRect.content.GetComponent<ContentSizeFitter>();
+            Assert.That(grid, Is.Not.Null);
+            Assert.That(fitter, Is.Not.Null);
+            Assert.That(
+                grid.constraint,
+                Is.EqualTo(GridLayoutGroup.Constraint.FixedColumnCount));
+            Assert.That(grid.constraintCount, Is.EqualTo(4));
+            Assert.That(grid.cellSize, Is.EqualTo(new Vector2(116f, 164f)));
+            Assert.That(grid.spacing, Is.EqualTo(new Vector2(8f, 12f)));
+            Assert.That(grid.padding.left, Is.EqualTo(8));
+            Assert.That(grid.padding.right, Is.EqualTo(8));
+            Assert.That(
+                fitter.verticalFit,
+                Is.EqualTo(ContentSizeFitter.FitMode.PreferredSize));
         }
 
         [Test]
@@ -198,6 +286,18 @@ namespace DiaBlackJack.CoreLoop.Tests
             Component noContractText = GetReference<Component>(
                 view,
                 "noContractText");
+            Component enemySoulText = GetReference<Component>(
+                view,
+                "enemySoulText");
+            Component enemyGoldText = GetReference<Component>(
+                view,
+                "enemyGoldText");
+            Component enemyDescriptionText = GetReference<Component>(
+                view,
+                "enemyDescriptionText");
+            Image enemyPortraitImage = GetReference<Image>(
+                view,
+                "enemyPortraitImage");
             Image deckFace = GetReference<Image>(
                 deckTemplate,
                 "faceImage");
@@ -212,13 +312,20 @@ namespace DiaBlackJack.CoreLoop.Tests
             bool noContractActive = noContractText.gameObject.activeSelf;
             Sprite deckSprite = deckFace.sprite;
             string deckLabel = GetText(deckName);
+            string soulLabel = GetText(enemySoulText);
+            string goldLabel = GetText(enemyGoldText);
+            string descriptionLabel = GetText(enemyDescriptionText);
+            Sprite portraitSprite = enemyPortraitImage.sprite;
 
             CardContentCatalogSO cardCatalog = LoadCardCatalog();
+            EnemyContentCatalogSO enemyCatalog = LoadEnemyCatalog();
             IReadOnlyList<EnemyCodexPageViewModel> pages =
                 CreateEnemyPages(cardCatalog);
             int emptyContractIndex = FindEnemyPageIndex(
                 pages,
                 hasContracts: false);
+            int longestDescriptionIndex =
+                FindLongestDescriptionIndex(pages);
 
             try
             {
@@ -239,6 +346,18 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(deckTemplate.gameObject.activeSelf, Is.True);
                 Assert.That(noContractText.gameObject.activeSelf, Is.True);
                 Assert.That(
+                    GetText(enemySoulText),
+                    Is.EqualTo(page.MaximumSoul.ToString()));
+                Assert.That(
+                    GetText(enemyGoldText),
+                    Is.EqualTo(page.DefeatGold.ToString()));
+                Assert.That(
+                    GetText(enemyDescriptionText),
+                    Is.EqualTo(page.Description));
+                Assert.That(
+                    enemyPortraitImage.sprite,
+                    Is.EqualTo(enemyCatalog.GetPortrait(page.ProfileKey)));
+                Assert.That(
                     deckFace.sprite,
                     Is.EqualTo(cardCatalog.GetNormalFaceSprite(
                         firstCard.DefinitionKey,
@@ -246,6 +365,17 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(
                     GetText(deckName),
                     Is.EqualTo($"{firstCard.Rank}  {firstCard.DisplayName}"));
+
+                MovePreviewToIndex(view, longestDescriptionIndex);
+                EnemyCodexPageViewModel longestDescriptionPage =
+                    pages[longestDescriptionIndex];
+                Assert.That(
+                    GetText(enemyDescriptionText),
+                    Is.EqualTo(longestDescriptionPage.Description));
+                Assert.That(
+                    enemyPortraitImage.sprite,
+                    Is.EqualTo(enemyCatalog.GetPortrait(
+                        longestDescriptionPage.ProfileKey)));
 
                 CodexOverlayPreviewSession.StopActive();
                 Assert.That(
@@ -259,6 +389,12 @@ namespace DiaBlackJack.CoreLoop.Tests
                     Is.EqualTo(noContractActive));
                 Assert.That(deckFace.sprite, Is.EqualTo(deckSprite));
                 Assert.That(GetText(deckName), Is.EqualTo(deckLabel));
+                Assert.That(GetText(enemySoulText), Is.EqualTo(soulLabel));
+                Assert.That(GetText(enemyGoldText), Is.EqualTo(goldLabel));
+                Assert.That(
+                    GetText(enemyDescriptionText),
+                    Is.EqualTo(descriptionLabel));
+                Assert.That(enemyPortraitImage.sprite, Is.EqualTo(portraitSprite));
             }
             finally
             {
@@ -605,6 +741,22 @@ namespace DiaBlackJack.CoreLoop.Tests
             return -1;
         }
 
+        private static int FindLongestDescriptionIndex(
+            IReadOnlyList<EnemyCodexPageViewModel> pages)
+        {
+            int longestIndex = 0;
+            for (int index = 1; index < pages.Count; index++)
+            {
+                if (pages[index].Description.Length >
+                    pages[longestIndex].Description.Length)
+                {
+                    longestIndex = index;
+                }
+            }
+
+            return longestIndex;
+        }
+
         private static void MovePreviewToIndex(
             CodexOverlayView view,
             int targetIndex)
@@ -651,6 +803,33 @@ namespace DiaBlackJack.CoreLoop.Tests
             SerializedProperty text = serialized.FindProperty("m_text");
             Assert.That(text, Is.Not.Null);
             return text.stringValue;
+        }
+
+        private static Image GetImageAtPath(
+            GameObject root,
+            string path)
+        {
+            Transform target = root.transform.Find(path);
+            Assert.That(target, Is.Not.Null, $"'{path}' is missing.");
+            Image image = target.GetComponent<Image>();
+            Assert.That(image, Is.Not.Null, $"'{path}' requires an Image.");
+            return image;
+        }
+
+        private static Sprite LoadSprite(string path, string spriteName)
+        {
+            foreach (UnityEngine.Object asset in
+                AssetDatabase.LoadAllAssetsAtPath(path))
+            {
+                Sprite sprite = asset as Sprite;
+                if (sprite != null && sprite.name == spriteName)
+                {
+                    return sprite;
+                }
+            }
+
+            Assert.Fail($"Sprite '{spriteName}' is missing at '{path}'.");
+            return null;
         }
 
         private static bool IsAnchorPreset(RectTransform rectTransform)
