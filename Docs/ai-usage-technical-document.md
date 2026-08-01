@@ -1627,3 +1627,11 @@ AI는 공개 수동 효과 카드의 물리 ID와 손 순서를 발동 시작 �
 
 Unity MCP에서 아스모데우스·아자젤 및 보스 단계 대상 23개가 현행 기대값 기준 모두 통과했다. 전체 EditMode는 858개 중 856개가 통과했으며, 남은 `CodexAssetTests.DX02_U02_OverlayPrefabHasTabsCloseAndScrollableDeck`와 `MoodControllerTests.MOO01_U04_WindowGlowUsesPropertyBlockOnly`는 각각 기존 도감 오버레이 좌표와 창문 광원 색상 비교 실패로 이번 아자젤 변경 범위 밖이다. 아자젤·계약·보스 관련 실패와 컴파일 오류는 0이며 Console에는 Test Framework 결과 저장 안내만 남았다.
 
+## 2026-08-01 DC-R09 사탄 선택형 능력 이관
+
+이천서는 최신 `rule.md`의 사탄 변경을 코드에 반영하도록 지시했다. AI에는 사용자가 수정한 문서 차이를 우선 근거로 삼고, 기존 아자젤 및 다른 세션 변경을 보존하며, 사탄의 종말 카운트·스탠드 금지·절대 버스트 방지는 유지하라는 지시를 적용했다. 최종 기획·코드·검증 책임자는 이천서다.
+
+AI는 `SatanRuntimeState`의 정상 차례 종료 자동 전환을 제거하고, 유효한 윗면 두 숫자 선언 완료 또는 아랫면 강제 히트 후속 처리 완료 경계에서만 현재 면을 전환하도록 수정했다. 일반 히트·체인지·카드 사용은 면을 유지하며 잘못된 계약 ID와 오래된 선택은 기존 `Try*` 원자성을 따른다. 적 후보에는 일반 행동과 활성 사탄 능력이 함께 남고, 광신도·보스는 공개된 자신의 합계와 합법 후보만으로 안전한 일반 히트 또는 사탄 능력을 비교한다. 보스 정책은 활성 사탄 후보와 사탄 숫자 선언을 별도 처리해 지원하지 않는 계약 선택 예외를 막았다. SO와 런타임 카탈로그 설명도 선택형 규칙으로 갱신했다. 외부 에셋·외부 코드·오픈소스·패키지·새 의존성·씬·프리팹은 추가하거나 변경하지 않았다.
+
+Unity MCP에서 사탄 전용 17/17(job `77fd549212df4aa593efb322e86f22c4`)을 통과했다. CoreLoop는 589개 중 587개(job `ab7dc3231a5a433294250df35069dc82`), 전체 EditMode는 863개 중 861개(job `b02819ede9a545b98e66aef1cbc9e9fa`)가 통과했다. 남은 두 실패는 기존 `CodexAssetTests.DX02_U02_OverlayPrefabHasTabsCloseAndScrollableDeck`의 도감 좌표와 `MoodControllerTests.MOO01_U04_WindowGlowUsesPropertyBlockOnly`의 창문 광원 색상 비교이며 사탄 관련 실패와 컴파일 오류는 0이다.
+

@@ -10,8 +10,6 @@ namespace DiaBlackJack.CoreLoop
 
     public sealed class SatanRuntimeState : DemonContractRuntimeState
     {
-        private bool _ownerTurnInProgress;
-
         internal SatanRuntimeState(int remainingDoomCount)
         {
             if (remainingDoomCount <= 0)
@@ -31,7 +29,6 @@ namespace DiaBlackJack.CoreLoop
 
         internal bool BeginOwnerTurn()
         {
-            _ownerTurnInProgress = true;
             if (RemainingDoomCount > 0)
             {
                 RemainingDoomCount--;
@@ -45,24 +42,17 @@ namespace DiaBlackJack.CoreLoop
             PenaltyApplied = true;
         }
 
-        internal void EndOwnerTurn()
+        internal void CompleteCurrentFaceAbility()
         {
-            if (!_ownerTurnInProgress)
-            {
-                return;
-            }
-
             CurrentFace = CurrentFace == SatanContractFace.Upper
                 ? SatanContractFace.Lower
                 : SatanContractFace.Upper;
-            _ownerTurnInProgress = false;
         }
     }
 
     internal sealed class SatanDemonContractHandler :
         IDemonContractHandler,
         IDemonContractNormalTurnHandler,
-        IDemonContractNormalTurnEndHandler,
         IDemonContractStandRestrictionHandler,
         IDemonContractBustPreventionHandler
     {
@@ -90,16 +80,6 @@ namespace DiaBlackJack.CoreLoop
             context.ApplyOwnerSoulDamage(DoomSoulCost);
             state.MarkPenaltyApplied();
             return false;
-        }
-
-        public void OnNormalTurnEnded(
-            DemonContractContext context,
-            CombatantSide actorSide)
-        {
-            if (actorSide == context.ActiveContract.OwnerSide)
-            {
-                GetState(context).EndOwnerTurn();
-            }
         }
 
         public bool PreventsOwnerStand(DemonContractContext context)

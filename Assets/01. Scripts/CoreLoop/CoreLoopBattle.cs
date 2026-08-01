@@ -4000,6 +4000,7 @@ namespace DiaBlackJack.CoreLoop
             bool succeeded = hiddenCard.Rank == pending.ContextNumericValue.Value ||
                 hiddenCard.Rank == selectedNumber;
             SetPendingDemonContractInteraction(ownerSide, pending: null);
+            satanState.CompleteCurrentFaceAbility();
             OwnerBustHandlingResult handling = OwnerBustHandlingResult.NotHandled;
             if (succeeded)
             {
@@ -4065,11 +4066,15 @@ namespace DiaBlackJack.CoreLoop
                     ownerSide,
                     sourceContractCardId,
                     DemonContractKind.Satan,
-                    out _))
+                    out ActiveDemonContract activeContract) ||
+                !(activeContract.RuntimeState is SatanRuntimeState satanState) ||
+                satanState.CurrentFace != SatanContractFace.Lower)
             {
                 throw new InvalidOperationException(
-                    "Satan lower power lost its active contract.");
+                    "Satan lower power lost its active lower-face contract.");
             }
+
+            satanState.CompleteCurrentFaceAbility();
 
             CombatantSide opponentSide = GetOppositeSide(ownerSide);
             BattleParticipant opponent = GetParticipant(opponentSide);

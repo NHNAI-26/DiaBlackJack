@@ -117,8 +117,14 @@ namespace DiaBlackJack.CoreLoop
                     case DemonContractKind.Satan:
                         return Score(
                             candidate,
-                            980,
-                            "cultist-use-active-satan-contract");
+                            observation.OwnHandValue.Total >
+                                AggressiveHitCeiling
+                                    ? 650
+                                    : 150,
+                            observation.OwnHandValue.Total >
+                                AggressiveHitCeiling
+                                    ? "cultist-use-satan-instead-of-unsafe-hit"
+                                    : "cultist-continue-normal-action-before-satan");
                     default:
                         throw new InvalidOperationException(
                             "Cultist received an unsupported active contract action.");

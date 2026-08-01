@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.DemonCardDefinitionSO
   key: satan
   displayName: 사탄
-  activeEffectDescription: 스탠드할 수 없으며 버스트하지 않습니다. 차례마다 계약 상태가 전환되어 비공개 카드 예측 또는 강제 히트를 사용합니다.
+  activeEffectDescription: 스탠드할 수 없으며 버스트하지 않습니다. 일반 행동은 현재 면을 유지합니다. 현재 면 능력을 완료하면 반대 면으로 전환됩니다.
   costDescription: 종말 카운트가 0이 되면 영혼 2를 잃습니다.
   codexLoreDescription: 종말의 문턱에서 패배라는 말조차 거부하는 지옥의 왕. 그의 계약은 끝나야 할 승부를 억지로 이어 간다.
   baseSoulCost: 1

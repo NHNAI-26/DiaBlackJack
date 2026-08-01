@@ -17,7 +17,7 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentNullException(nameof(observation));
             }
 
-            if (HasDemonContractChoice(observation))
+            if (HasPendingDemonContractChoice(observation))
             {
                 ClearTelegraph();
                 CurrentDisplay = BossCombatDisplayModel.Create(
@@ -302,30 +302,45 @@ namespace DiaBlackJack.CoreLoop
             EnemyObservation observation,
             EnemyActionCandidate candidate)
         {
-            if (candidate.ActionType != EnemyActionType.DemonContract ||
-                candidate.DemonContractInteractionKind !=
-                    DemonContractInteractionKind.AsmodeusForceOpponentHit)
+            if (candidate.ActionType != EnemyActionType.DemonContract)
             {
                 throw new InvalidOperationException(
                     "Final boss received an unsupported demon contract choice.");
             }
 
-            bool forcesHit = candidate.DemonContractOptionId ==
-                AsmodeusDemonContractHandler.ForceHitOptionId;
-            return Score(
-                candidate,
-                forcesHit ? 3000 : 0,
-                forcesHit
-                    ? "boss-force-opponent-hit-with-asmodeus"
-                    : "boss-skip-asmodeus-forced-hit");
+            switch (candidate.DemonContractInteractionKind)
+            {
+                case DemonContractInteractionKind.AsmodeusForceOpponentHit:
+                    bool forcesHit = candidate.DemonContractOptionId ==
+                        AsmodeusDemonContractHandler.ForceHitOptionId;
+                    return Score(
+                        candidate,
+                        forcesHit ? 3000 : 0,
+                        forcesHit
+                            ? "boss-force-opponent-hit-with-asmodeus"
+                            : "boss-skip-asmodeus-forced-hit");
+                case DemonContractInteractionKind.SatanDeclareFirstNumber:
+                case DemonContractInteractionKind.SatanDeclareSecondNumber:
+                    int probability = FindInferenceProbability(
+                        observation,
+                        candidate.DemonContractOptionNumericValue);
+                    return Score(
+                        candidate,
+                        3000 + probability,
+                        "boss-declare-likely-satan-number");
+                default:
+                    throw new InvalidOperationException(
+                        "Final boss received an unsupported demon contract choice.");
+            }
         }
 
-        private static bool HasDemonContractChoice(
+        private static bool HasPendingDemonContractChoice(
             EnemyObservation observation)
         {
             foreach (EnemyActionCandidate candidate in observation.ActionCandidates)
             {
-                if (candidate.ActionType == EnemyActionType.DemonContract)
+                if (candidate.ActionType == EnemyActionType.DemonContract &&
+                    candidate.DemonContractOptionId.HasValue)
                 {
                     return true;
                 }
@@ -352,6 +367,22 @@ namespace DiaBlackJack.CoreLoop
                         candidate,
                         observation.OwnHandValue.Total > hitMaximum ? 800 : 200,
                         $"{reasonPrefix}-stand");
+                case EnemyActionType.DemonContract:
+                    if (candidate.DemonContractKind != DemonContractKind.Satan ||
+                        !candidate.DemonContractSourceCardId.HasValue)
+                    {
+                        return Score(
+                            candidate,
+                            -1000,
+                            $"{reasonPrefix}-ignore-unsupported-contract");
+                    }
+
+                    return Score(
+                        candidate,
+                        observation.OwnHandValue.Total > hitMaximum ? 650 : 150,
+                        observation.OwnHandValue.Total > hitMaximum
+                            ? $"{reasonPrefix}-use-satan-instead-of-unsafe-hit"
+                            : $"{reasonPrefix}-continue-normal-action-before-satan");
                 case EnemyActionType.Change:
                     return Score(candidate, 2000, $"{reasonPrefix}-required-change");
                 default:

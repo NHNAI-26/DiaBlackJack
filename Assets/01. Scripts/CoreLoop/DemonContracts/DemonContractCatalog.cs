@@ -139,7 +139,7 @@ namespace DiaBlackJack.CoreLoop
                     "사탄",
                     DemonContractKind.Satan,
                     baseSoulCost,
-                    "스탠드와 버스트를 거부하고 종말 카운터를 진행한다.",
+                    "스탠드와 버스트를 거부한다. 일반 행동은 면을 유지하고 현재 면 능력은 완료 후 면을 전환한다.",
                     "계약 시 영혼 1, 개별 대가 영혼 2"),
                 new DemonContractDefinition(
                     BelphegorKey,

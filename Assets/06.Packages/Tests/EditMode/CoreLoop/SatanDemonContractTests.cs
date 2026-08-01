@@ -112,7 +112,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR02_U05_OwnerTurnEndFlipsFaceAndOpponentTurnDoesNot()
+        public void DCR09_U01_RegularActionsKeepCurrentFace()
         {
             CoreLoopBattle battle = CreateSatanBattle(
                 LowRanks(10),
@@ -123,9 +123,56 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(state.CurrentFace, Is.EqualTo(SatanContractFace.Upper));
             Assert.That(battle.TryPlayerHit(), Is.True);
-            Assert.That(state.CurrentFace, Is.EqualTo(SatanContractFace.Lower));
+            Assert.That(state.CurrentFace, Is.EqualTo(SatanContractFace.Upper));
             Assert.That(battle.TryPlayerHit(), Is.True);
             Assert.That(state.CurrentFace, Is.EqualTo(SatanContractFace.Upper));
+
+            ActiveDemonContract satan = battle.ActivePlayerDemonContracts.Single();
+            FailUpperPower(battle, satan.SourceCardId);
+            Assert.That(state.CurrentFace, Is.EqualTo(SatanContractFace.Lower));
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(state.CurrentFace, Is.EqualTo(SatanContractFace.Lower));
+        }
+
+        [Test]
+        public void DCR09_U02_InvalidAbilityInputPreservesTurnAndFace()
+        {
+            CoreLoopBattle battle = CreateSatanBattle(
+                LowRanks(10),
+                new[] { 10, 7, 2, 2, 2, 2 },
+                new StandPolicy());
+            ActivateSatan(battle);
+            SatanRuntimeState state = GetSatanState(battle);
+
+            Assert.That(battle.TryBeginPlayerSatanContractAction(-1), Is.False);
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+            Assert.That(state.CurrentFace, Is.EqualTo(SatanContractFace.Upper));
+            Assert.That(battle.TryPlayerHit(), Is.True);
+        }
+
+        [TestCase(14, EnemyActionType.Hit)]
+        [TestCase(19, EnemyActionType.DemonContract)]
+        public void DCR09_U03_CultistComparesSatanWithNormalAction(
+            int ownTotal,
+            EnemyActionType expectedAction)
+        {
+            EnemyDecision decision = new CultistEnemyPolicy().Decide(
+                CreateActiveSatanObservation(ownTotal, enemyMaximumSoul: 5));
+
+            Assert.That(decision.ActionType, Is.EqualTo(expectedAction));
+        }
+
+        [TestCase(14, EnemyActionType.Hit)]
+        [TestCase(18, EnemyActionType.DemonContract)]
+        public void DCR09_U04_FinalBossComparesSatanWithNormalAction(
+            int ownTotal,
+            EnemyActionType expectedAction)
+        {
+            EnemyDecision decision = new FinalBossEnemyPolicy().Decide(
+                CreateActiveSatanObservation(ownTotal, enemyMaximumSoul: 8));
+
+            Assert.That(decision.ActionType, Is.EqualTo(expectedAction));
         }
 
         [Test]
@@ -442,6 +489,38 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Enumerable.Range(0, 4).Select(id =>
                     new DemonContractCard(id, definition)),
                 seed: 73);
+        }
+
+        private static EnemyObservation CreateActiveSatanObservation(
+            int ownTotal,
+            int enemyMaximumSoul)
+        {
+            EnemyActionCandidate hit = new EnemyActionCandidate(
+                EnemyActionType.Hit);
+            EnemyActionCandidate satan = new EnemyActionCandidate(
+                EnemyActionType.DemonContract,
+                demonContractKind: DemonContractKind.Satan,
+                demonContractDefinitionKey: DemonContractCatalog.SatanKey,
+                demonContractSourceCardId: 42);
+            return new EnemyObservation(
+                new HandValue(ownTotal),
+                Array.Empty<EnemyOwnedCardObservation>(),
+                Array.Empty<PublicCardObservation>(),
+                playerHiddenCardCount: 1,
+                new SoulObservation(12, 12),
+                new SoulObservation(enemyMaximumSoul, enemyMaximumSoul),
+                roundNumber: 1,
+                playerIsStanding: false,
+                enemyIsStanding: false,
+                ownDeckAvailableCount: 8,
+                playerDeckAvailableCount: 8,
+                Array.Empty<PublicCardObservation>(),
+                Array.Empty<PublicCardObservation>(),
+                Array.Empty<PublicCombatAction>(),
+                new[] { satan, hit },
+                Array.Empty<EnemyNumberInference>(),
+                pendingCardEffectKind: null,
+                decisionSeed: 73);
         }
 
         private static IReadOnlyList<int> LowRanks(int count)
