@@ -1,5 +1,6 @@
 using System;
 using Border.SaveLoad.UI;
+using DiaBlackJack.GameScene;
 using UnityEngine;
 
 namespace DiaBlackJack.StageProgression.UI
@@ -182,21 +183,31 @@ namespace DiaBlackJack.StageProgression.UI
             GUILayout.Label(_model.StageName, _messageStyle);
             GUILayout.Label(_model.StageKind, _bodyStyle);
             GUILayout.Space(Screen.height <= 720 ? 12f : 24f);
-            GUILayout.Label($"PLAYER SOUL  {_model.PlayerSoul}", _headingStyle);
-            GUILayout.Label($"RUN GOLD  {_model.PlayerGold}", _headingStyle);
+            GUILayout.Label(
+                CurrencyIconGui.Soul($"PLAYER  {_model.PlayerSoul}"),
+                _headingStyle);
+            GUILayout.Label(
+                CurrencyIconGui.Content(_model.PlayerGold),
+                _headingStyle);
             GUILayout.Label($"RUN DECK  {_model.DeckCount}", _bodyStyle);
             GUILayout.Space(12f);
-            GUILayout.Label(_model.Message, _messageStyle);
+            GUILayout.Label(
+                CurrencyIconGui.Content(_model.Message),
+                _messageStyle);
             if (!string.IsNullOrEmpty(_model.RewardResult))
             {
                 GUILayout.Space(6f);
-                GUILayout.Label(_model.RewardResult, _headingStyle);
+                GUILayout.Label(
+                    CurrencyIconGui.Content(_model.RewardResult),
+                    _headingStyle);
             }
 
             if (!string.IsNullOrEmpty(_model.GoldResult))
             {
                 GUILayout.Space(6f);
-                GUILayout.Label(_model.GoldResult, _selectedStyle);
+                GUILayout.Label(
+                    CurrencyIconGui.Content(_model.GoldResult),
+                    _selectedStyle);
             }
 
             if (!string.IsNullOrEmpty(_saveModel.SaveIndicator))
@@ -306,9 +317,13 @@ namespace DiaBlackJack.StageProgression.UI
                 GUILayout.Label(option.Category, _bodyStyle);
                 GUILayout.Label(option.DisplayName, _messageStyle);
                 GUILayout.Space(4f);
-                GUILayout.Label(option.Summary, _candidateBodyStyle);
+                GUILayout.Label(
+                    CurrencyIconGui.Content(option.Summary),
+                    _candidateBodyStyle);
                 GUILayout.FlexibleSpace();
-                GUILayout.Label(option.Price, _bodyStyle);
+                GUILayout.Label(
+                    CurrencyIconGui.Content(option.Price),
+                    _bodyStyle);
                 GUI.enabled = !_inputLocked && option.CanBuy;
                 if (GUILayout.Button(
                         option.IsSold ? "SOLD OUT" : "BUY",
@@ -329,7 +344,7 @@ namespace DiaBlackJack.StageProgression.UI
             GUILayout.BeginHorizontal();
             GUI.enabled = !_inputLocked && _model.CanRestAtShop;
             if (GUILayout.Button(
-                    _model.WhiskeyLabel,
+                    CurrencyIconGui.Content(_model.WhiskeyLabel),
                     _buttonStyle,
                     GUILayout.Height(48f),
                     GUILayout.ExpandWidth(true)))
@@ -340,7 +355,7 @@ namespace DiaBlackJack.StageProgression.UI
             GUI.enabled = !_inputLocked &&
                 HasRemovableShopCard();
             GUILayout.Label(
-                _model.LighterLabel,
+                CurrencyIconGui.Content(_model.LighterLabel),
                 _selectedStyle,
                 GUILayout.ExpandWidth(true));
 
@@ -358,7 +373,9 @@ namespace DiaBlackJack.StageProgression.UI
             if (!string.IsNullOrEmpty(_model.ShopTransactionResult))
             {
                 GUILayout.Space(6f);
-                GUILayout.Label(_model.ShopTransactionResult, _selectedStyle);
+                GUILayout.Label(
+                    CurrencyIconGui.Content(_model.ShopTransactionResult),
+                    _selectedStyle);
             }
 
             GUILayout.EndScrollView();
@@ -435,9 +452,13 @@ namespace DiaBlackJack.StageProgression.UI
                 {
                     GUILayout.Label(card.DisplayName, _messageStyle);
                     GUILayout.Space(6f);
-                    GUILayout.Label(card.Summary, _candidateBodyStyle);
+                    GUILayout.Label(
+                        CurrencyIconGui.Content(card.Summary),
+                        _candidateBodyStyle);
                     GUILayout.FlexibleSpace();
-                    GUILayout.Label(card.CostSummary, _bodyStyle);
+                    GUILayout.Label(
+                        CurrencyIconGui.Content(card.CostSummary),
+                        _bodyStyle);
                 }
                 else
                 {
@@ -500,12 +521,17 @@ namespace DiaBlackJack.StageProgression.UI
                     GUILayout.ExpandWidth(true));
                 GUILayout.Label(candidate.DisplayName, _messageStyle);
                 GUILayout.Label(
-                    $"{candidate.Grade}  |  {candidate.MaximumSoul}",
+                    CurrencyIconGui.Soul(
+                        $"{candidate.Grade}  |  {candidate.MaximumSoul}"),
                     _headingStyle);
                 GUILayout.Space(8f);
-                GUILayout.Label(candidate.Summary, _candidateBodyStyle);
+                GUILayout.Label(
+                    CurrencyIconGui.Content(candidate.Summary),
+                    _candidateBodyStyle);
                 GUILayout.FlexibleSpace();
-                GUILayout.Label(candidate.RewardTier, _bodyStyle);
+                GUILayout.Label(
+                    CurrencyIconGui.Content(candidate.RewardTier),
+                    _bodyStyle);
                 GUILayout.Space(8f);
 
                 GUI.enabled = !_inputLocked && _model.CanFocusOpponent;
@@ -559,7 +585,9 @@ namespace DiaBlackJack.StageProgression.UI
         private void DrawBattleReward()
         {
             GUILayout.Label(_model.RewardTier, _headingStyle);
-            GUILayout.Label(_model.RewardCompletionMessage, _bodyStyle);
+            GUILayout.Label(
+                CurrencyIconGui.Content(_model.RewardCompletionMessage),
+                _bodyStyle);
             GUILayout.Space(12f);
 
             GUILayout.BeginHorizontal();
@@ -569,7 +597,9 @@ namespace DiaBlackJack.StageProgression.UI
                 GUILayout.Label($"CARD {option.Rank}", _headingStyle);
                 GUILayout.Label(option.DisplayName, _messageStyle);
                 GUILayout.Space(6f);
-                GUILayout.Label(option.EffectSummary, _bodyStyle);
+                GUILayout.Label(
+                    CurrencyIconGui.Content(option.EffectSummary),
+                    _bodyStyle);
                 GUILayout.FlexibleSpace();
 
                 GUI.enabled = !_inputLocked && _model.CanSelectReward;

@@ -52,21 +52,25 @@ namespace DiaBlackJack.GameScene
         {
             if (titleText != null)
             {
-                titleText.text = title;
+                CurrencyIconText.Set(titleText, title);
             }
 
             if (abilityText != null)
             {
-                abilityText.text = hasModel
-                    ? "<color=#D34B3F><b>ACTIVE</b></color>\n" + ability
-                    : string.Empty;
+                CurrencyIconText.Set(
+                    abilityText,
+                    hasModel
+                        ? "<color=#D34B3F><b>ACTIVE</b></color>\n" + ability
+                        : string.Empty);
             }
 
             if (costText != null)
             {
-                costText.text = hasModel
-                    ? "<color=#D7A53B><b>COST</b></color>\n" + cost
-                    : string.Empty;
+                CurrencyIconText.Set(
+                    costText,
+                    hasModel
+                        ? "<color=#D7A53B><b>COST</b></color>\n" + cost
+                        : string.Empty);
             }
 
             if (faceImage != null)

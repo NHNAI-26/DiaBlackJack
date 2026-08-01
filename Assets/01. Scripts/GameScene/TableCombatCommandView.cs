@@ -44,7 +44,9 @@ namespace DiaBlackJack.GameScene
 
             if (labelText != null)
             {
-                labelText.text = _model == null ? string.Empty : _model.Label;
+                CurrencyIconText.Set(
+                    labelText,
+                    _model == null ? string.Empty : _model.Label);
             }
 
             if (hitCollider != null)
@@ -61,7 +63,7 @@ namespace DiaBlackJack.GameScene
             _isHovered = false;
             if (labelText != null)
             {
-                labelText.text = string.Empty;
+                CurrencyIconText.Set(labelText, string.Empty);
             }
 
             if (hitCollider != null)

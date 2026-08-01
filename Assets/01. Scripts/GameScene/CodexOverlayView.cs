@@ -470,10 +470,7 @@ namespace DiaBlackJack.GameScene
 
         private static void SetText(TMP_Text target, string value)
         {
-            if (target != null)
-            {
-                target.text = value ?? string.Empty;
-            }
+            CurrencyIconText.Set(target, value);
         }
     }
 }

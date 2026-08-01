@@ -149,6 +149,13 @@ MainMenuScene
 - `GameHudView`: 영혼, 골드, 라운드 등 전투 HUD
 - `DeckPreviewView`: 계약서/덱 오버레이로 계속 사용
 
+### 라운드 결과 표시
+
+- `CoreLoopBattle`의 `ResolvingRound` 스텝을 GameScene 결과 스냅샷으로 사용한다. 도메인의 자동 다음 라운드 전이는 변경하지 않는다.
+- 결과 스냅샷에서는 플레이어·적 비공개 카드를 같은 프레임에 앞면으로 투영하고, 적을 포함한 양측 최종 총합을 공개한다.
+- `GameManager`는 해당 스냅샷을 최소 2.5초 유지하며 입력을 잠근다. 이후 이미 생성된 다음 라운드 스냅샷을 표시한다.
+- `CardView`는 동일 카드가 뒷면에서 결과 앞면으로 바뀔 때 짧은 좌우 축소·복원 뒤집기 연출을 재생한다. 양측 손패 렌더가 같은 프레임에 실행되므로 두 비공개 카드가 동시에 전환된다.
+
 Presenter는 기존 `StageProgressionPresentation`을 재사용하거나 GameScene 전용 어댑터를 얇게 추가한다. 포맷·버튼 활성 조건을 MonoBehaviour에 다시 작성하지 않는다.
 
 ### 상태 단일화

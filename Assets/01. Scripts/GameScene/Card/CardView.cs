@@ -51,6 +51,10 @@ namespace DiaBlackJack.GameScene
         [Range(0f, 1f)]
         [SerializeField] private float hiddenCardBlendAmount = 0.5f;
 
+        [Header("Round result reveal")]
+        [Min(0.1f)]
+        [SerializeField] private float revealFlipDuration = 0.36f;
+
         [Header("Used card mark")]
         [SerializeField] private GameObject usedMark;
         [SerializeField] private SpriteRenderer usedMarkFirstStroke;
@@ -82,6 +86,7 @@ namespace DiaBlackJack.GameScene
         private Sprite _frontUvSprite;
         private Sprite _backUvSprite;
         private Tween _scaleTween;
+        private Sequence _revealSequence;
         private Sequence _usedMarkSequence;
         private Vector3 _baseScale = Vector3.one;
         private Vector3 _usedMarkFirstStrokeScale = Vector3.one;
@@ -161,6 +166,7 @@ namespace DiaBlackJack.GameScene
 
         private void OnDisable()
         {
+            StopRevealSequence();
             StopScaleTween();
             StopUsedMarkSequence();
             transform.localScale = _baseScale;
@@ -189,6 +195,15 @@ namespace DiaBlackJack.GameScene
                 CardId == card.CardId &&
                 !_isUsed &&
                 card.IsUsed;
+            bool animateReveal =
+                Application.isPlaying &&
+                _hasBoundCard &&
+                CardId == card.CardId &&
+                !_showingFrontFace &&
+                card.RevealRank &&
+                card.IsFaceUp;
+
+            StopRevealSequence();
 
             CardId = card.CardId;
             DefinitionKey = card.DefinitionKey;
@@ -213,15 +228,7 @@ namespace DiaBlackJack.GameScene
 
             ResetCardBlend(FrontSpriteRenderer());
 
-            if (front != null)
-            {
-                front.SetActive(_showingFrontFace);
-            }
-
-            if (back != null)
-            {
-                back.SetActive(!_showingFrontFace);
-            }
+            SetFaceObjects(animateReveal ? false : _showingFrontFace);
 
             ApplyCardBlend(
                 showPlayerHiddenBlend ? faceSprite : null,
@@ -247,6 +254,10 @@ namespace DiaBlackJack.GameScene
             transform.localScale = _baseScale;
             ApplyHoverOutline(_isEffectHighlighted);
             ApplyUsedMark(animateUsedMark);
+            if (animateReveal)
+            {
+                PlayRevealFlip();
+            }
         }
 
         /// <summary>Called by the pointer raycast when this card gains/loses hover.</summary>
@@ -255,6 +266,11 @@ namespace DiaBlackJack.GameScene
             if (_isShopSoldOut)
             {
                 hovered = false;
+            }
+
+            if (_revealSequence != null)
+            {
+                return;
             }
 
             if (_hovered == hovered)
@@ -276,8 +292,66 @@ namespace DiaBlackJack.GameScene
         internal void SetBaseScale(Vector3 baseScale)
         {
             _baseScale = baseScale;
+            StopRevealSequence();
             StopScaleTween();
             transform.localScale = _baseScale;
+        }
+
+        private void PlayRevealFlip()
+        {
+            StopScaleTween();
+            transform.localScale = _baseScale;
+            SetFaceObjects(showFront: false);
+
+            float halfDuration = Mathf.Max(revealFlipDuration, 0.1f) * 0.5f;
+            Sequence sequence = DOTween.Sequence()
+                .SetTarget(this)
+                .SetLink(gameObject, LinkBehaviour.KillOnDisable);
+            sequence.Append(
+                transform.DOScaleX(0f, halfDuration)
+                    .SetEase(Ease.InQuad));
+            sequence.AppendCallback(() => SetFaceObjects(showFront: true));
+            sequence.Append(
+                transform.DOScaleX(_baseScale.x, halfDuration)
+                    .SetEase(Ease.OutQuad));
+            sequence.OnComplete(() =>
+            {
+                transform.localScale = _baseScale;
+                SetFaceObjects(showFront: true);
+            });
+            sequence.OnKill(() =>
+            {
+                if (_revealSequence == sequence)
+                {
+                    _revealSequence = null;
+                }
+            });
+            _revealSequence = sequence;
+        }
+
+        private void StopRevealSequence()
+        {
+            if (_revealSequence != null)
+            {
+                _revealSequence.Kill();
+                _revealSequence = null;
+            }
+
+            transform.localScale = _baseScale;
+            SetFaceObjects(_showingFrontFace);
+        }
+
+        private void SetFaceObjects(bool showFront)
+        {
+            if (front != null)
+            {
+                front.SetActive(showFront);
+            }
+
+            if (back != null)
+            {
+                back.SetActive(!showFront);
+            }
         }
 
         internal void SetShopPresentation()
