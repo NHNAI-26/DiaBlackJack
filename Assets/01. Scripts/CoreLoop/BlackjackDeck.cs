@@ -457,6 +457,7 @@ namespace DiaBlackJack.CoreLoop
                 throw new InvalidOperationException($"Cannot take {count} cards from the deck.");
             }
 
+            EnsureDrawCapacity(count);
             var cards = new List<BlackjackCard>(count);
             for (int i = 0; i < count; i++)
             {
@@ -554,14 +555,29 @@ namespace DiaBlackJack.CoreLoop
                 throw new InvalidOperationException("No cards remain to draw or recycle.");
             }
 
+            RefillDrawPileBottomFromDiscard();
+        }
+
+        private void EnsureDrawCapacity(int count)
+        {
+            if (_drawPile.Count >= count)
+            {
+                return;
+            }
+
+            RefillDrawPileBottomFromDiscard();
+        }
+
+        private void RefillDrawPileBottomFromDiscard()
+        {
             foreach (BlackjackCard card in _discardPile)
             {
                 card.Conceal();
             }
 
-            _drawPile.AddRange(_discardPile);
+            Shuffle(_discardPile);
+            _drawPile.InsertRange(0, _discardPile);
             _discardPile.Clear();
-            Shuffle(_drawPile);
         }
 
         private void EnsureDrawPile()

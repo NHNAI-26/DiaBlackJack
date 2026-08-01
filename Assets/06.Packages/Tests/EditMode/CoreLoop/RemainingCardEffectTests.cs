@@ -27,6 +27,29 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CU04_U01B_CrystalOrbRefillsBelowLastDrawCardFromDiscard()
+        {
+            CoreLoopBattle battle = CreateStartedBattle(
+                playerRanks: new[] { 2, 5, 7, 8 },
+                enemyRanks: new[] { 10, 7, 5 });
+            BlackjackCard sourceCard = battle.Player.Hand.Cards[1];
+            BlackjackCard discardedCard = battle.Player.Deck.Draw();
+            battle.Player.Deck.Discard(discardedCard);
+
+            Assert.That(battle.Player.Deck.DrawCount, Is.EqualTo(1));
+            Assert.That(battle.Player.Deck.DiscardCount, Is.EqualTo(1));
+
+            Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
+
+            Assert.That(
+                battle.PendingPlayerCardEffect.TemporaryCards
+                    .Select(card => card.Rank),
+                Is.EqualTo(new[] { 8, 7 }));
+            Assert.That(battle.Player.Deck.DrawCount, Is.Zero);
+            Assert.That(battle.Player.Deck.DiscardCount, Is.Zero);
+        }
+
+        [Test]
         public void CU04_U02_CrystalOrbDetachesTwoCardsAndOffersOnlyItsThreeChoices()
         {
             CoreLoopBattle battle = CreateStartedBattle(
