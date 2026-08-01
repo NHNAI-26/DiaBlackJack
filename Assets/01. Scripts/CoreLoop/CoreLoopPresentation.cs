@@ -45,15 +45,21 @@ namespace DiaBlackJack.CoreLoop.UI
 
     public sealed class CardEffectChoiceViewModel
     {
-        public CardEffectChoiceViewModel(int optionId, string label)
+        public CardEffectChoiceViewModel(
+            int optionId,
+            string label,
+            int? cardId = null)
         {
             OptionId = optionId;
             Label = label ?? throw new ArgumentNullException(nameof(label));
+            CardId = cardId;
         }
 
         public int OptionId { get; }
 
         public string Label { get; }
+
+        public int? CardId { get; }
     }
 
     public sealed class AutomaticCardChoiceViewModel
@@ -532,7 +538,10 @@ namespace DiaBlackJack.CoreLoop.UI
             var choices = new List<CardEffectChoiceViewModel>(pendingEffect.Options.Count);
             foreach (CardEffectChoiceOption option in pendingEffect.Options)
             {
-                choices.Add(new CardEffectChoiceViewModel(option.Id, option.Label));
+                choices.Add(new CardEffectChoiceViewModel(
+                    option.Id,
+                    option.Label,
+                    option.CardId));
             }
 
             return choices.AsReadOnly();

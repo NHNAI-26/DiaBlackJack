@@ -286,6 +286,7 @@ namespace DiaBlackJack.GameScene
             IReadOnlyList<GameSceneCardViewModel> enemyCards,
             CharacterVisualState enemyVisual,
             string enemyActionLabel,
+            IReadOnlyList<GameSceneCardViewModel> crystalOrbCandidates,
             GameSceneRevolverAnimationCue revolverAnimationCue = null,
             GameSceneHammerAnimationCue hammerAnimationCue = null,
             bool usesDiegeticCardEffectSelection = false)
@@ -295,6 +296,8 @@ namespace DiaBlackJack.GameScene
             EnemyCards = enemyCards ?? throw new ArgumentNullException(nameof(enemyCards));
             EnemyVisual = enemyVisual;
             EnemyActionLabel = enemyActionLabel ?? string.Empty;
+            CrystalOrbCandidates = crystalOrbCandidates ??
+                throw new ArgumentNullException(nameof(crystalOrbCandidates));
             RevolverAnimationCue = revolverAnimationCue;
             HammerAnimationCue = hammerAnimationCue;
             UsesDiegeticCardEffectSelection = usesDiegeticCardEffectSelection;
@@ -310,6 +313,8 @@ namespace DiaBlackJack.GameScene
 
         /// <summary>Short action token shown above the enemy character. Empty = no label.</summary>
         public string EnemyActionLabel { get; }
+
+        public IReadOnlyList<GameSceneCardViewModel> CrystalOrbCandidates { get; }
 
         public GameSceneRevolverAnimationCue RevolverAnimationCue { get; }
 
@@ -336,6 +341,7 @@ namespace DiaBlackJack.GameScene
                 CreateEnemyCards(battle),
                 enemyVisual,
                 enemyLabel,
+                CreateCrystalOrbCandidates(battle),
                 CreateRevolverAnimationCue(battle),
                 CreateHammerAnimationCue(battle),
                 UsesDiegeticSelection(battle));
@@ -889,8 +895,59 @@ namespace DiaBlackJack.GameScene
         private static bool UsesDiegeticCardEffectSelection(PendingCardEffect pendingEffect)
         {
             return pendingEffect != null &&
-                pendingEffect.ChoiceKind ==
-                    CardEffectChoiceKind.DiscardOpponentFaceUpCard;
+                (pendingEffect.ChoiceKind ==
+                    CardEffectChoiceKind.DiscardOpponentFaceUpCard ||
+                 pendingEffect.ChoiceKind ==
+                    CardEffectChoiceKind.TakePeekedCard);
+        }
+
+        private static IReadOnlyList<GameSceneCardViewModel>
+            CreateCrystalOrbCandidates(CoreLoopBattle battle)
+        {
+            PendingCardEffect pendingEffect = battle.PendingPlayerCardEffect;
+            if (pendingEffect == null ||
+                pendingEffect.EffectKind != CardEffectKind.CrystalOrb ||
+                pendingEffect.ChoiceKind != CardEffectChoiceKind.TakePeekedCard)
+            {
+                return Array.AsReadOnly(Array.Empty<GameSceneCardViewModel>());
+            }
+
+            var candidates = new List<GameSceneCardViewModel>(
+                pendingEffect.TemporaryCards.Count);
+            foreach (BlackjackCard card in pendingEffect.TemporaryCards)
+            {
+                CardEffectChoiceOption option = null;
+                foreach (CardEffectChoiceOption candidateOption in pendingEffect.Options)
+                {
+                    if (candidateOption.CardId == card.Id)
+                    {
+                        option = candidateOption;
+                        break;
+                    }
+                }
+
+                if (option == null)
+                {
+                    continue;
+                }
+
+                candidates.Add(new GameSceneCardViewModel(
+                    card.Id,
+                    card.Rank,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    card.Definition.DisplayName,
+                    abilityDescription: ResolveAbilityDescription(card),
+                    suit: card.Suit,
+                    showHoverBadgeWhenUnavailable: true,
+                    definitionKey: card.DefinitionKey,
+                    directSelectionCommand: new GameSceneCombatHudCommand(
+                        GameSceneCombatHudCommandKind.ResolveCardEffectChoice,
+                        option.Id)));
+            }
+
+            return candidates.AsReadOnly();
         }
 
         private static bool UsesDiegeticSelection(CoreLoopBattle battle)
@@ -1019,7 +1076,9 @@ namespace DiaBlackJack.GameScene
             PendingCardEffect pendingEffect,
             int cardId)
         {
-            if (!UsesDiegeticCardEffectSelection(pendingEffect))
+            if (pendingEffect == null ||
+                pendingEffect.ChoiceKind !=
+                    CardEffectChoiceKind.DiscardOpponentFaceUpCard)
             {
                 return null;
             }

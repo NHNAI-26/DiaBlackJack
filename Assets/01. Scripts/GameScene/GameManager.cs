@@ -34,6 +34,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private DeckPreviewView deckPreview;
         [SerializeField] private CodexController codex;
         [SerializeField] private DemonContractSelectionView demonContractSelection;
+        private CrystalOrbSelectionView crystalOrbSelection;
         [SerializeField] private TableCombatCommandGroup tableCombatCommands;
         [SerializeField] private ContractPaperView contractPapers;
 
@@ -277,6 +278,11 @@ namespace DiaBlackJack.GameScene
             codex ??= GetComponent<CodexController>();
             demonContractSelection ??=
                 GetComponent<DemonContractSelectionView>();
+            crystalOrbSelection ??=
+                GetComponent<CrystalOrbSelectionView>();
+            crystalOrbSelection ??=
+                gameObject.AddComponent<CrystalOrbSelectionView>();
+            crystalOrbSelection.Initialize(playerHand?.CardPrefab);
             tableCombatCommands ??= FindFirstObjectByType<TableCombatCommandGroup>(
                 FindObjectsInactive.Include);
             contractPapers ??= FindFirstObjectByType<ContractPaperView>(
@@ -313,6 +319,7 @@ namespace DiaBlackJack.GameScene
                 codex.OpenStateChanged -= HandleCodexOpenStateChanged;
             }
             demonContractSelection?.Hide();
+            crystalOrbSelection?.Hide();
             hud?.HideDemonContractDetail();
             UpdateCombatCommandHover(null);
         }
@@ -344,6 +351,7 @@ namespace DiaBlackJack.GameScene
             UpdateCombatCommandHover(null);
             demonContractSelection?.SetHovered(null);
             demonContractSelection?.Hide();
+            crystalOrbSelection?.Hide();
             contractPapers?.Render(null);
             hud?.HideCardHoverBadge();
             hud?.HideDemonContractDetail();
@@ -413,6 +421,7 @@ namespace DiaBlackJack.GameScene
                 UpdateShopUtilityItemHover(null);
                 UpdateCombatCommandHover(null);
                 demonContractSelection?.SetHovered(null);
+                crystalOrbSelection?.SetHovered(null);
                 hud?.HideCardHoverBadge();
                 hud?.HideDemonContractDetail();
                 return;
@@ -424,6 +433,7 @@ namespace DiaBlackJack.GameScene
                 UpdateDemonCardHover(null);
                 UpdateShopUtilityItemHover(null);
                 demonContractSelection?.SetHovered(null);
+                crystalOrbSelection?.SetHovered(null);
                 hud?.HideCardHoverBadge();
                 hud?.HideDemonContractDetail();
                 return;
@@ -434,6 +444,12 @@ namespace DiaBlackJack.GameScene
                 demonContractSelection.IsOpen)
             {
                 HandleDemonContractSelectionInput(hasHit, hit);
+                return;
+            }
+
+            if (crystalOrbSelection != null && crystalOrbSelection.IsOpen)
+            {
+                HandleCrystalOrbSelectionInput(hasHit, hit);
                 return;
             }
 
@@ -616,6 +632,45 @@ namespace DiaBlackJack.GameScene
             ProcessInput(() => TryResolvePlayerDemonContract(
                 candidate.Command.InteractionId,
                 candidate.Command.OptionId));
+        }
+
+        private void HandleCrystalOrbSelectionInput(
+            bool hasHit,
+            RaycastHit hit)
+        {
+            CardView pointed = hasHit
+                ? hit.collider.GetComponentInParent<CardView>()
+                : null;
+            if (pointed != null && !crystalOrbSelection.Contains(pointed))
+            {
+                pointed = null;
+            }
+
+            UpdateHover(pointed);
+            UpdateDemonCardHover(null);
+            UpdateShopUtilityItemHover(null);
+            UpdateCombatCommandHover(null);
+            demonContractSelection?.SetHovered(null);
+            crystalOrbSelection.SetHovered(pointed);
+            hud?.HideDemonContractDetail();
+            UpdateCardHoverBadge();
+
+            GameSceneCardViewModel candidate =
+                crystalOrbSelection.GetCandidate(pointed);
+            if (_inputLocked ||
+                candidate == null ||
+                !candidate.DirectSelectionCommand.HasValue)
+            {
+                return;
+            }
+
+            Mouse mouse = Mouse.current;
+            if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
+            {
+                return;
+            }
+
+            HandleCombatCommand(candidate.DirectSelectionCommand.Value);
         }
 
         private void UpdateHover(CardView pointed)
@@ -1889,6 +1944,8 @@ namespace DiaBlackJack.GameScene
                 RenderHands(vm);
             }
 
+            RenderCrystalOrbSelection(vm);
+
             if (enemyCharacter != null)
             {
                 enemyCharacter.Render(
@@ -1926,6 +1983,27 @@ namespace DiaBlackJack.GameScene
             {
                 enemyHand.Render(vm.EnemyCards);
             }
+        }
+
+        private void RenderCrystalOrbSelection(GameSceneViewModel vm)
+        {
+            if (crystalOrbSelection == null)
+            {
+                return;
+            }
+
+            if (vm == null || vm.CrystalOrbCandidates.Count == 0)
+            {
+                crystalOrbSelection.Hide();
+                return;
+            }
+
+            if (_camera == null)
+            {
+                _camera = Camera.main;
+            }
+
+            crystalOrbSelection.Render(vm.CrystalOrbCandidates, _camera);
         }
 
         private void RefreshDeckStacks()

@@ -243,11 +243,28 @@ namespace DiaBlackJack.GameScene
             {
                 if (usesDiegeticCardEffectSelection)
                 {
+                    var directOptions =
+                        new List<GameSceneCombatHudActionViewModel>();
+                    foreach (CardEffectChoiceViewModel choice in core.CardEffectChoices)
+                    {
+                        if (choice.CardId.HasValue)
+                        {
+                            continue;
+                        }
+
+                        directOptions.Add(new GameSceneCombatHudActionViewModel(
+                            new GameSceneCombatHudCommand(
+                                GameSceneCombatHudCommandKind.ResolveCardEffectChoice,
+                                choice.OptionId),
+                            choice.Label,
+                            !inputLocked));
+                    }
+
                     return new GameSceneCombatHudViewModel(
                         GameSceneCombatHudMode.DiegeticSelection,
                         core.CardEffectPrompt,
                         Array.Empty<GameSceneCombatHudActionViewModel>(),
-                        Array.Empty<GameSceneCombatHudActionViewModel>(),
+                        directOptions,
                         Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
                         automaticCardResult);
                 }

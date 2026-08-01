@@ -18,6 +18,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/UI/CardHoverTooltip.prefab";
         private const string ManagerPrefabPath =
             "Assets/03. Prefabs/Manager/GameManager.prefab";
+        private const string CardPrefabPath =
+            "Assets/03. Prefabs/Card/Card.prefab";
         private const string TablePrefabPath =
             "Assets/03. Prefabs/TableObjects/Table Controller.prefab";
 
@@ -427,6 +429,148 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(hud.OptionActions.All(action =>
                 action.Command.Kind ==
                     GameSceneCombatHudCommandKind.ResolveCardEffectChoice), Is.True);
+        }
+
+        [Test]
+        public void CUM12_U01_CrystalOrbProjectsTwoWorldCandidatesAndSkipOnlyHud()
+        {
+            CoreLoopBattle battle = CreateStartedBattle(2, 5, 7, 8, 9);
+            BlackjackCard crystalOrb = battle.Player.Hand.Cards.Single(card =>
+                card.Definition.Effect == CardEffectKind.CrystalOrb);
+            Assert.That(battle.TryBeginPlayerCardUse(crystalOrb.Id), Is.True);
+
+            PendingCardEffect pending = battle.PendingPlayerCardEffect;
+            GameSceneViewModel scene = GameScenePresenter.Create(battle);
+            GameSceneCombatHudViewModel hud = GameSceneCombatHudPresenter.Create(
+                scene.Core,
+                isStageBattle: false,
+                isShopOpen: false,
+                inputLocked: false,
+                scene.UsesDiegeticCardEffectSelection);
+
+            Assert.That(scene.UsesDiegeticCardEffectSelection, Is.True);
+            Assert.That(scene.CrystalOrbCandidates, Has.Count.EqualTo(2));
+            Assert.That(
+                scene.CrystalOrbCandidates.Select(card => card.CardId),
+                Is.EqualTo(pending.TemporaryCards.Select(card => card.Id)));
+            foreach (GameSceneCardViewModel candidate in scene.CrystalOrbCandidates)
+            {
+                CardEffectChoiceOption option = pending.Options.Single(choice =>
+                    choice.CardId == candidate.CardId);
+                Assert.That(candidate.DirectSelectionCommand.HasValue, Is.True);
+                Assert.That(candidate.DirectSelectionCommand.Value.Kind, Is.EqualTo(
+                    GameSceneCombatHudCommandKind.ResolveCardEffectChoice));
+                Assert.That(candidate.DirectSelectionCommand.Value.OptionId,
+                    Is.EqualTo(option.Id));
+            }
+
+            Assert.That(hud.Mode, Is.EqualTo(
+                GameSceneCombatHudMode.DiegeticSelection));
+            Assert.That(hud.OptionActions, Has.Count.EqualTo(1));
+            Assert.That(hud.OptionActions.Single().Label,
+                Is.EqualTo("추가하지 않기"));
+            Assert.That(hud.OptionActions.Single().Command.OptionId, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void CUM12_U02_CrystalOrbSelectionViewRendersTwoClickableWorldCards()
+        {
+            GameObject cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                CardPrefabPath);
+            Assert.That(cardPrefab, Is.Not.Null);
+            var root = new GameObject("CrystalOrbSelectionTest");
+            try
+            {
+                CrystalOrbSelectionView view =
+                    root.AddComponent<CrystalOrbSelectionView>();
+                view.Initialize(cardPrefab.GetComponent<CardView>());
+                var candidates = new[]
+                {
+                    new GameSceneCardViewModel(
+                        31, 7, true, true, false, "리볼버",
+                        directSelectionCommand: new GameSceneCombatHudCommand(
+                            GameSceneCombatHudCommandKind.ResolveCardEffectChoice,
+                            1)),
+                    new GameSceneCardViewModel(
+                        32, 8, true, true, false, "나이프",
+                        directSelectionCommand: new GameSceneCombatHudCommand(
+                            GameSceneCombatHudCommandKind.ResolveCardEffectChoice,
+                            2))
+                };
+
+                view.Render(candidates, null);
+
+                Assert.That(view.HasCandidatePrefab, Is.True);
+                Assert.That(view.Capacity, Is.EqualTo(2));
+                Assert.That(view.VisibleCandidateCount, Is.EqualTo(2));
+                Assert.That(view.IsOpen, Is.True);
+                CardView[] cards = root.GetComponentsInChildren<CardView>(true);
+                Assert.That(cards, Has.Length.EqualTo(2));
+                Assert.That(cards.Count(card => card.gameObject.activeInHierarchy),
+                    Is.EqualTo(2));
+                Assert.That(cards.All(card =>
+                    card.DirectSelectionCommand.HasValue), Is.True);
+
+                CardView firstCard = cards.Single(card => card.CardId == 31);
+                Assert.That(view.Contains(firstCard), Is.True);
+                Assert.That(view.GetCandidate(firstCard), Is.SameAs(candidates[0]));
+                view.SetHovered(firstCard);
+                Assert.That(view.HoveredCandidateIndex, Is.EqualTo(0));
+
+                GameObject managerPrefab =
+                    AssetDatabase.LoadAssetAtPath<GameObject>(ManagerPrefabPath);
+                DemonContractSelectionView contractView =
+                    managerPrefab.GetComponent<DemonContractSelectionView>();
+                SerializedObject crystalLayout = new SerializedObject(view);
+                SerializedObject contractLayout = new SerializedObject(contractView);
+                string[] sharedLayoutFields =
+                {
+                    "cameraDistance",
+                    "viewportCenterY",
+                    "viewportSpacing",
+                    "hoverViewportLift",
+                    "hoverCameraPull",
+                    "fanAngle",
+                    "cardScale",
+                    "poseLerp",
+                    "baseSortingOrder"
+                };
+                foreach (string field in sharedLayoutFields)
+                {
+                    SerializedProperty crystalProperty =
+                        crystalLayout.FindProperty(field);
+                    SerializedProperty contractProperty =
+                        contractLayout.FindProperty(field);
+                    Assert.That(crystalProperty, Is.Not.Null, field);
+                    Assert.That(contractProperty, Is.Not.Null, field);
+                    Assert.That(
+                        crystalProperty.propertyType,
+                        Is.EqualTo(contractProperty.propertyType),
+                        field);
+                    if (crystalProperty.propertyType ==
+                        SerializedPropertyType.Integer)
+                    {
+                        Assert.That(
+                            crystalProperty.intValue,
+                            Is.EqualTo(contractProperty.intValue),
+                            field);
+                    }
+                    else
+                    {
+                        Assert.That(
+                            crystalProperty.floatValue,
+                            Is.EqualTo(contractProperty.floatValue),
+                            field);
+                    }
+                }
+
+                view.Hide();
+                Assert.That(view.IsOpen, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
         }
 
         [Test]
