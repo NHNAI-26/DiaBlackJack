@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5511161874967129288}
   - component: {fileID: 548693120486492936}
   - component: {fileID: 8719880390428884935}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: EnemyCharacter
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -57,10 +57,10 @@ SpriteRenderer:
   m_SmallMeshCulling: 1
   m_ForceMeshLod: -1
   m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
+  m_RenderingLayerMask: 2
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  - {fileID: 2100000, guid: f24ed73665246b7468878b37aa980a39, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -146,7 +146,7 @@ GameObject:
   - component: {fileID: 2953807721341338938}
   - component: {fileID: 4368954138958701763}
   - component: {fileID: 2053177299727793600}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: ActionLabel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
