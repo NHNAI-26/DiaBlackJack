@@ -3,9 +3,9 @@
 > 프로젝트: DiaBlackJack  
 > 기획·개발 책임자: 이천서  
 > 작업 식별자: DC-00~DC-08
-> 버전: v1.25
-> 상태: 중앙 계약서 2장 입력·소모 표시 구현
-> 최종 갱신: 2026-08-01
+> 버전: v1.26
+> 상태: 바알제붑 단측 선택·자동 카드 우선순위 개발 명세 확정, 코드 이관 대기
+> 최종 갱신: 2026-08-02
 
 > **DC-UI01 구현 경계 (2026-08-01):** 순수 `ContractPaperPresenter`가 양측 기본 계약 사용량으로 남은 계약서 수와 플레이어 입력 가능 여부를 계산한다. `ChooseContract` 후보 선택이 보류된 동안에는 플레이어 사용량을 표시상 예약으로 보아 계약서를 유지하고, 선택 확정 뒤 제거한다. `ContractPaperView`는 정확히 두 월드 오브젝트의 활성·클릭 상태만 반영한다. `GameManager`는 `ContractPaperClickable` 레이캐스트를 기존 `TryBeginPlayerDemonContract()`에 연결하며 상점 등 비전투 화면에서는 숨긴다. HUD 고정 행동열에서는 `BeginContract`를 노출하지 않는다.
 
@@ -437,7 +437,7 @@ DC-R02에서는 다음 구조로 구현했다.
 DC-R04 1차 구현은 기존 버스트와 수동 카드 결과 경계를 다음처럼 확장했다.
 
 - `IDemonContractBustReplacementHandler`는 사탄의 `IDemonContractBustPreventionHandler` 다음 순서에서 실행한다. 절대 무효화가 없을 때만 바알제붑이 비용과 카드 이동을 적용한다.
-- 바알제붑은 양쪽 공개 카드 존재를 검증한 뒤 영혼 1을 먼저 차감한다. 소유자가 생존하면 `BeelzebubChooseOwnerCard`와 `BeelzebubChooseOpponentCard`의 두 상호작용에서 선택한 물리 카드 ID를 다시 검증한 뒤 기존 `TryDiscardCard`로 각 원소유자의 버린 더미에 원자적으로 이동한다. 영혼 0이면 선택과 카드 이동 없이 즉시 전투 종료한다.
+- 기존 구현은 양쪽 공개 카드가 모두 있어야 바알제붑을 시작한다. 현행 목표는 어느 한쪽에만 공개 카드가 있어도 발동하고, 존재하는 쪽의 선택 단계만 생성하는 것이다. 양쪽 모두 있으면 두 선택, 한쪽만 있으면 단일 선택을 검증한 뒤 `TryDiscardCard`로 해당 원소유자의 버린 더미에 이동한다. 영혼 1 대가가 소유자를 0으로 만들면 선택과 카드 이동 없이 즉시 전투 종료한다.
 - `CoreLoopBattle.HandlesOwnerBust`는 숫자·카드·계약 버스트의 기존 진입점을 공유한다. 대가 사망 뒤에는 카드 효과 완료나 다음 차례가 상태를 덮어쓰지 않도록 각 연속 처리 지점에서 `BattleEnded`를 확인한다.
 - `MephistophelesDemonContractHandler`는 `CardEffectKind.MilitaryKnife`가 라운드를 끝내지 않은 결과에만 반응한다. 기본 보위 나이프가 이미 공개 합 21 초과 버스트를 처리하므로 해당 계산을 중복하지 않고 소유자의 단일 비공개 카드만 공개한다.
 - 카탈로그와 기본 Resolver는 여덟 구현 악마를 제공한다. 광신도는 바알제붑의 추가 영혼 대가를 생존할 수 있는지, 미사용 보위 나이프 보유 여부와 공개된 아스모데우스 선택지만 관측해 점수를 매긴다.
