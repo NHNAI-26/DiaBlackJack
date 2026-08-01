@@ -56,8 +56,10 @@ namespace DiaBlackJack.CoreLoop.Tests
                 .Select(card => card.Id),
                 Does.Contain(0));
             Assert.That(battle.Player.Deck.GetDiscardedCards()
-                .Select(card => card.Id),
-                Does.Contain(ownerChoice.SourceCardId));
+                .Any(card => card.Id == ownerChoice.SourceCardId),
+                Is.False);
+            Assert.That(battle.Player.Hand.Contains(ownerChoice.SourceCardId),
+                Is.True);
             Assert.That(battle.Enemy.Deck.GetDiscardedCards()
                 .Select(card => card.Id),
                 Does.Contain(100));
@@ -105,8 +107,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.PendingAutomaticInteraction, Is.Null);
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
             Assert.That(battle.Player.Deck.GetDiscardedCards()
-                .Select(card => card.Id),
-                Does.Contain(ownerChoice.SourceCardId));
+                .Any(card => card.Id == ownerChoice.SourceCardId),
+                Is.False);
+            Assert.That(battle.Player.Hand.Contains(ownerChoice.SourceCardId),
+                Is.True);
         }
 
         [Test]
@@ -130,7 +134,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void AC04_U04_FlamethrowerDiscardsSourceBeforeVisibleBustCheck()
+        public void AC04_U04_RetainedFlamethrowerCountsTowardVisibleBust()
         {
             CoreLoopBattle battle = CreateBattle(
                 PlayerCards(10, 2, 8, Flamethrower),
@@ -151,10 +155,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                     FlamethrowerEffectHandler.SkipOptionId),
                 Is.True);
 
-            Assert.That(battle.Player.VisibleHandValue.Total, Is.EqualTo(18));
-            Assert.That(battle.Player.VisibleHandValue.IsBust, Is.False);
+            Assert.That(battle.LastAutomaticCardResult.Value.SourceDisposition,
+                Is.EqualTo(AutomaticCardSourceDisposition.RetainFaceUp));
+            Assert.That(battle.LastResolution.HasValue, Is.True);
+            Assert.That(battle.LastResolution.Value.Outcome,
+                Is.EqualTo(RoundOutcome.PlayerBust));
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
-            Assert.That(battle.RoundNumber, Is.EqualTo(1));
+            Assert.That(battle.RoundNumber, Is.EqualTo(2));
         }
 
         [Test]

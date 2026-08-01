@@ -13,7 +13,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             CardDefinitionCatalog.GetByKey("crystal-orb-5");
 
         [Test]
-        public void AC02_U01_StandChoiceStandsOnlyOwnerAndDiscardsSource()
+        public void AC02_U01_StandChoiceStandsOnlyOwnerAndRetainsSource()
         {
             CoreLoopBattle battle = CreateBattle(
                 PlayerCards(2, 3, Poison),
@@ -23,7 +23,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.Start(), Is.True);
             const int poisonCardId = 2;
             bool observedPlayerStanding = false;
-            bool observedSourceDiscarded = false;
+            bool observedSourceRetained = false;
             battle.Stepped += () =>
             {
                 if (battle.LastAutomaticCardResult.HasValue &&
@@ -31,9 +31,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                         poisonCardId)
                 {
                     observedPlayerStanding |= battle.Player.IsStanding;
-                    observedSourceDiscarded |=
-                        battle.Player.Deck.GetDiscardedCards()
-                            .Count(card => card.Id == poisonCardId) == 1;
+                    observedSourceRetained |=
+                        battle.Player.Hand.TryGetCard(
+                            poisonCardId,
+                            out BlackjackCard sourceCard) &&
+                        sourceCard.IsFaceUp;
                 }
             };
 
@@ -45,9 +47,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(ResolvePlayerChoice(battle, pending, "스탠드"), Is.True);
 
             Assert.That(observedPlayerStanding, Is.True);
-            Assert.That(observedSourceDiscarded, Is.True);
+            Assert.That(observedSourceRetained, Is.True);
             Assert.That(battle.LastAutomaticCardResult.Value.SourceDisposition,
-                Is.EqualTo(AutomaticCardSourceDisposition.Discard));
+                Is.EqualTo(AutomaticCardSourceDisposition.RetainFaceUp));
         }
 
         [Test]
@@ -161,7 +163,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void AC02_U06_PaidPoisonLossDoesNotHealAndClearsReservation()
+        public void AC02_U06_RetainedPaidPoisonCanWinAndHealOwner()
         {
             CoreLoopBattle battle = CreateBattle(
                 PlayerCards(2, 2, Poison),
@@ -180,8 +182,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.TryPlayerStand(), Is.True);
 
             Assert.That(battle.LastResolution.Value.Outcome,
-                Is.EqualTo(RoundOutcome.EnemyWin));
-            Assert.That(battle.Player.Soul.Current, Is.EqualTo(6));
+                Is.EqualTo(RoundOutcome.PlayerWin));
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(12));
             Assert.That(battle.PendingPoisonWinRewardCount, Is.Zero);
         }
 

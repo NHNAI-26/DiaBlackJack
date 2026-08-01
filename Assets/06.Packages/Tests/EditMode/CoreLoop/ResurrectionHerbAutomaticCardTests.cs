@@ -70,7 +70,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(5));
             Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(5));
             Assert.That(battle.Player.Hand.Cards.Select(card => card.Id),
-                Is.EqualTo(playerInitialIds));
+                Is.EqualTo(playerInitialIds.Append(ownerChoice.SourceCardId)));
             Assert.That(battle.Enemy.Hand.Count, Is.EqualTo(2));
             Assert.That(battle.RoundNumber, Is.EqualTo(1));
         }
@@ -95,7 +95,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void ACRV03_U05_BothDeclinesOnlyDiscardSource()
+        public void ACRV03_U05_BothDeclinesRetainSourceFaceUp()
         {
             CoreLoopBattle battle = CreateBattle(playerSoul: 5, enemySoul: 6);
             IReadOnlyList<int> playerInitialIds = battle.Player.Hand.Cards
@@ -111,11 +111,15 @@ namespace DiaBlackJack.CoreLoop.Tests
                 ResurrectionHerbEffectHandler.DeclineOptionId), Is.True);
 
             Assert.That(battle.Player.Hand.Cards.Select(card => card.Id),
-                Is.EqualTo(playerInitialIds));
+                Is.EqualTo(playerInitialIds.Append(sourceCardId)));
             Assert.That(battle.Enemy.Hand.Cards.Select(card => card.Id),
                 Is.EqualTo(enemyIds));
+            Assert.That(battle.Player.Hand.TryGetCard(
+                sourceCardId,
+                out BlackjackCard sourceCard), Is.True);
+            Assert.That(sourceCard.IsFaceUp, Is.True);
             Assert.That(battle.Player.Deck.GetDiscardedCards()
-                .Any(card => card.Id == sourceCardId), Is.True);
+                .Any(card => card.Id == sourceCardId), Is.False);
             Assert.That(battle.RoundNumber, Is.EqualTo(1));
         }
 
@@ -131,7 +135,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(0));
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.BattleEnded));
             Assert.That(battle.PendingAutomaticInteraction, Is.Null);
-            Assert.That(battle.Player.Hand.Count, Is.EqualTo(2));
+            Assert.That(battle.Player.Hand.Count, Is.EqualTo(3));
         }
 
         [Test]

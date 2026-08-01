@@ -48,7 +48,7 @@ namespace DiaBlackJack.CoreLoop
                 wasComparable ? isAtLeastDeclaredNumber : (bool?)null);
 
             return AutomaticCardEffectStep.Complete(
-                AutomaticCardSourceDisposition.Discard);
+                AutomaticCardSourceDisposition.RetainFaceUp);
         }
 
         private static IReadOnlyList<AutomaticCardChoiceOption>

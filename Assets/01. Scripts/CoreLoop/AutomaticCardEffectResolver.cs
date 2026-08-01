@@ -55,6 +55,8 @@ namespace DiaBlackJack.CoreLoop
 
         internal bool DidResurrectionHerbRedeal { get; private set; }
 
+        internal bool DidOwnerResurrectionHerbRedeal { get; private set; }
+
         public bool TryStandOwner()
         {
             return Battle.TryStandOwnerForAutomaticCard(OwnerSide);
@@ -84,6 +86,8 @@ namespace DiaBlackJack.CoreLoop
                 side,
                 SourceCard);
             DidResurrectionHerbRedeal |= redealt;
+            DidOwnerResurrectionHerbRedeal |=
+                redealt && side == OwnerSide;
             return redealt;
         }
 

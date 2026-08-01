@@ -80,11 +80,12 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(expectedAtLeast));
             Assert.That(knowledge.Value.RoundNumber,
                 Is.EqualTo(battle.RoundNumber));
-            Assert.That(
-                battle.Player.Deck.GetDiscardedCards()
-                    .Single(card => card.Id == sourceCardId)
-                    .DefinitionKey,
+            Assert.That(battle.Player.Hand.TryGetCard(
+                sourceCardId,
+                out BlackjackCard retainedSource), Is.True);
+            Assert.That(retainedSource.DefinitionKey,
                 Is.EqualTo(CardDefinitionCatalog.LieDetectorKey));
+            Assert.That(retainedSource.IsFaceUp, Is.True);
         }
 
         [Test]
@@ -310,10 +311,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 battle.LastLieDetectorPublicResult.Value.WasComparable,
                 Is.False);
-            Assert.That(
-                battle.Player.Deck.GetDiscardedCards()
-                    .Count(card => card.Id == sourceCardId),
-                Is.EqualTo(1));
+            Assert.That(battle.Player.Hand.TryGetCard(
+                sourceCardId,
+                out BlackjackCard retainedSource), Is.True);
+            Assert.That(retainedSource.IsFaceUp, Is.True);
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
         }
 

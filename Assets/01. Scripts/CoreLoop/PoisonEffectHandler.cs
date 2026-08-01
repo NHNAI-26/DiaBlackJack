@@ -57,20 +57,20 @@ namespace DiaBlackJack.CoreLoop
                     }
 
                     return AutomaticCardEffectStep.Complete(
-                        AutomaticCardSourceDisposition.Discard);
+                        AutomaticCardSourceDisposition.RetainFaceUp);
 
                 case PaySoulOptionId:
                     context.ApplyOwnerSoulDamage(SoulCost);
                     if (context.IsOwnerSoulDepleted)
                     {
                         return AutomaticCardEffectStep.Complete(
-                            AutomaticCardSourceDisposition.Discard,
+                            AutomaticCardSourceDisposition.RetainFaceUp,
                             AutomaticCardCompletionFlow.EndBattle);
                     }
 
                     context.RegisterPoisonWinReward(WinHealAmount);
                     return AutomaticCardEffectStep.Complete(
-                        AutomaticCardSourceDisposition.Discard);
+                        AutomaticCardSourceDisposition.RetainFaceUp);
 
                 default:
                     throw new InvalidOperationException(

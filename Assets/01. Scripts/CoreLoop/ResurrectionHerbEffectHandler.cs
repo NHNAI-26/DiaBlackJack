@@ -62,7 +62,7 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return AutomaticCardEffectStep.Complete(
-                AutomaticCardSourceDisposition.Discard,
+                GetSourceDisposition(context),
                 context.DidResurrectionHerbRedeal
                     ? AutomaticCardCompletionFlow.CancelContinuation
                     : AutomaticCardCompletionFlow.ResumeContinuation);
@@ -110,8 +110,16 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return AutomaticCardEffectStep.Complete(
-                AutomaticCardSourceDisposition.Discard,
+                GetSourceDisposition(context),
                 AutomaticCardCompletionFlow.EndBattle);
+        }
+
+        private static AutomaticCardSourceDisposition GetSourceDisposition(
+            AutomaticCardEffectContext context)
+        {
+            return context.DidOwnerResurrectionHerbRedeal
+                ? AutomaticCardSourceDisposition.Discard
+                : AutomaticCardSourceDisposition.RetainFaceUp;
         }
     }
 }

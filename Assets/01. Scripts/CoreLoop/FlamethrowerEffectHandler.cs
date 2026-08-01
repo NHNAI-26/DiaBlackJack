@@ -36,7 +36,7 @@ namespace DiaBlackJack.CoreLoop
                         context.OpponentSide,
                         selectedOption);
                     return AutomaticCardEffectStep.Complete(
-                        AutomaticCardSourceDisposition.Discard);
+                        AutomaticCardSourceDisposition.RetainFaceUp);
 
                 default:
                     throw new InvalidOperationException(
@@ -72,7 +72,7 @@ namespace DiaBlackJack.CoreLoop
             if (context.IsStanding(context.OpponentSide))
             {
                 return AutomaticCardEffectStep.Complete(
-                    AutomaticCardSourceDisposition.Discard);
+                    AutomaticCardSourceDisposition.RetainFaceUp);
             }
 
             IReadOnlyList<BlackjackCard> candidates =
@@ -80,7 +80,7 @@ namespace DiaBlackJack.CoreLoop
             if (candidates.Count == 0)
             {
                 return AutomaticCardEffectStep.Complete(
-                    AutomaticCardSourceDisposition.Discard);
+                    AutomaticCardSourceDisposition.RetainFaceUp);
             }
 
             return CreateDiscardChoice(
