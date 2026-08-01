@@ -19,6 +19,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             Shader.PropertyToID("_CardBlendAmount");
         private static readonly int CardBlendUvRectId =
             Shader.PropertyToID("_CardBlendUVRect");
+        private static readonly int BaseSpriteUvRectId =
+            Shader.PropertyToID("_BaseSpriteUVRect");
         private static readonly int PixelOutlineVisibilityId =
             Shader.PropertyToID("_PixelOutlineVisibility");
 
@@ -459,6 +461,51 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(frontRenderer.gameObject.activeSelf, Is.True);
                 Assert.That(backRenderer.gameObject.activeSelf, Is.False);
                 Assert.That(properties.GetFloat(CardBlendAmountId), Is.Zero);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSV04_U01_CardViewRestoresLostSpriteUvStateWithoutSpriteChange()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                Assert.That(view, Is.Not.Null);
+                SpriteRenderer frontRenderer = GetFrontRenderer(view);
+
+                view.Bind(new GameSceneCardViewModel(
+                    cardId: 1,
+                    rank: 6,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: true,
+                    displayName: "Hammer",
+                    definitionKey: "standard-hammer-6"));
+
+                Sprite boundSprite = frontRenderer.sprite;
+                Vector4 expectedUvRect = GetSpriteUvRect(boundSprite);
+                frontRenderer.SetPropertyBlock(null);
+
+                MethodInfo refresh = typeof(CardView).GetMethod(
+                    "RefreshSpriteUvRects",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(refresh, Is.Not.Null);
+                refresh.Invoke(view, null);
+
+                MaterialPropertyBlock properties = new MaterialPropertyBlock();
+                frontRenderer.GetPropertyBlock(properties);
+                Assert.That(frontRenderer.sprite, Is.SameAs(boundSprite));
+                Assert.That(
+                    properties.GetVector(BaseSpriteUvRectId),
+                    Is.EqualTo(expectedUvRect));
             }
             finally
             {

@@ -690,18 +690,33 @@ namespace DiaBlackJack.GameScene
 
         private void RefreshSpriteUvRect(SpriteRenderer renderer, ref Sprite trackedSprite)
         {
-            if (renderer == null || renderer.sprite == trackedSprite)
+            if (renderer == null)
             {
                 return;
             }
 
-            trackedSprite = renderer.sprite;
-            Vector4 uvRect = GetSpriteUvRect(trackedSprite);
-
             MaterialPropertyBlock propertyBlock = PropertyBlockFor(renderer);
             renderer.GetPropertyBlock(propertyBlock);
+
+            Sprite currentSprite = renderer.sprite;
+            Vector4 uvRect = GetSpriteUvRect(currentSprite);
+            if (currentSprite == trackedSprite &&
+                Approximately(propertyBlock.GetVector(BaseSpriteUvRectId), uvRect))
+            {
+                return;
+            }
+
+            trackedSprite = currentSprite;
             propertyBlock.SetVector(BaseSpriteUvRectId, uvRect);
             renderer.SetPropertyBlock(propertyBlock);
+        }
+
+        private static bool Approximately(Vector4 left, Vector4 right)
+        {
+            return Mathf.Approximately(left.x, right.x) &&
+                Mathf.Approximately(left.y, right.y) &&
+                Mathf.Approximately(left.z, right.z) &&
+                Mathf.Approximately(left.w, right.w);
         }
 
         private MaterialPropertyBlock PropertyBlockFor(Renderer renderer)
