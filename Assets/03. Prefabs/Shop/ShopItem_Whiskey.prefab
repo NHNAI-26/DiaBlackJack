@@ -15,7 +15,7 @@ PrefabInstance:
     - target: {fileID: 3795005150099411801, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 18f95a6aedd1d9b4688daec5fdee7135, type: 2}
+      objectReference: {fileID: 2100000, guid: 8ebc01aaeda6a7a4f9fa530e41a61be8, type: 2}
     - target: {fileID: 3879847998483440863, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
       propertyPath: m_text
       value: WHISKEY

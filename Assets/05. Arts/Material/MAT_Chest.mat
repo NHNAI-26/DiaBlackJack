@@ -119,14 +119,28 @@ Material:
     - _DissolveEdgeIntensity: 16
     - _DissolveEdgeWidth: 0
     - _DissolveEnabled: 0
+    - _DissolveMaxOffset: 0
+    - _DissolveMinOffset: 0
+    - _DissolveObjectAxis: 1
+    - _DissolveObjectMax: 1
+    - _DissolveObjectMin: 0
+    - _DissolveObjectNoiseScale: 1
+    - _DissolveObjectNoiseStrength: 0.15
+    - _DissolveSpace: 0
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EmissionEnabled: 0
     - _EmissionIntensity: 12.77
     - _EnvironmentReflections: 1
+    - _GlassGlowEnabled: 0
+    - _GlassGlowOffset: 0
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
+    - _HeightFadeEnabled: 0
+    - _HeightFadeLower: 0
+    - _HeightFadeOffset: 0
+    - _HeightFadeUpper: 1
     - _HueShift: 8
     - _MaskMapEnabled: 0
     - _Metallic: 1
@@ -160,6 +174,8 @@ Material:
     - _DissolvePanning: {r: 0, g: 0, b: 0, a: 0}
     - _DissolveTilingOffset: {r: 0.1, g: 0.1, b: 0, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
+    - _GlassGlowColor: {r: 1, g: 1, b: 1, a: 1}
+    - _HeightFadeTint: {r: 0.24999997, g: 0.24999997, b: 0.24999997, a: 1}
     - _RimColor: {r: 1, g: 1, b: 1, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
   m_BuildTextureStacks: []
