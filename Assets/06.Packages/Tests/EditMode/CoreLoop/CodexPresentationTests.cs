@@ -88,14 +88,20 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DX01_U05_NavigationClampsAndRestoresCategoryPage()
+        public void DX01_U05_NavigationCrossesCategoryBoundaryAndClampsBookEnds()
         {
             CodexNavigationState navigation =
                 new CodexNavigationState(2, 3);
 
             Assert.That(navigation.TryMovePrevious(), Is.False);
             Assert.That(navigation.TryMoveNext(), Is.True);
-            Assert.That(navigation.TryMoveNext(), Is.False);
+            Assert.That(navigation.CurrentPageIndex, Is.EqualTo(1));
+            Assert.That(navigation.TryMoveNext(), Is.True);
+            Assert.That(navigation.Category, Is.EqualTo(CodexCategory.DemonCard));
+            Assert.That(navigation.CurrentPageIndex, Is.Zero);
+
+            Assert.That(navigation.TryMovePrevious(), Is.True);
+            Assert.That(navigation.Category, Is.EqualTo(CodexCategory.Enemy));
             Assert.That(navigation.CurrentPageIndex, Is.EqualTo(1));
 
             Assert.That(
@@ -114,6 +120,40 @@ namespace DiaBlackJack.CoreLoop.Tests
                 navigation.TryShowCategory(CodexCategory.DemonCard),
                 Is.True);
             Assert.That(navigation.CurrentPageIndex, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void DX01_U06_BookModelKeepsBoundaryArrowsAcrossCategories()
+        {
+            var enemyLast = new CodexBookViewModel(
+                CodexCategory.Enemy,
+                pageIndex: 1,
+                pageCount: 2,
+                enemyPage: null,
+                demonPage: null);
+            var demonFirst = new CodexBookViewModel(
+                CodexCategory.DemonCard,
+                pageIndex: 0,
+                pageCount: 3,
+                enemyPage: null,
+                demonPage: null);
+            var enemyFirst = new CodexBookViewModel(
+                CodexCategory.Enemy,
+                pageIndex: 0,
+                pageCount: 2,
+                enemyPage: null,
+                demonPage: null);
+            var demonLast = new CodexBookViewModel(
+                CodexCategory.DemonCard,
+                pageIndex: 2,
+                pageCount: 3,
+                enemyPage: null,
+                demonPage: null);
+
+            Assert.That(enemyLast.CanMoveNext, Is.True);
+            Assert.That(demonFirst.CanMovePrevious, Is.True);
+            Assert.That(enemyFirst.CanMovePrevious, Is.False);
+            Assert.That(demonLast.CanMoveNext, Is.False);
         }
 
         private static CardContentCatalog CreateCardCatalog()

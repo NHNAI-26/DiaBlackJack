@@ -165,11 +165,14 @@ namespace DiaBlackJack.GameScene.Editor
             $"{_navigation.CurrentPageIndex + 1} / {_navigation.CurrentPageCount}";
 
         internal bool CanMovePrevious =>
-            _navigation != null && _navigation.CurrentPageIndex > 0;
+            _navigation != null &&
+            (_navigation.CurrentPageIndex > 0 ||
+             _navigation.Category == CodexCategory.DemonCard);
 
         internal bool CanMoveNext =>
             _navigation != null &&
-            _navigation.CurrentPageIndex + 1 < _navigation.CurrentPageCount;
+            (_navigation.CurrentPageIndex + 1 < _navigation.CurrentPageCount ||
+             _navigation.Category == CodexCategory.Enemy);
 
         internal CodexCategory CurrentCategory => _category;
 

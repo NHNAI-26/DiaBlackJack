@@ -13,7 +13,7 @@
 - `EnemyCodexPageViewModel`: 이름, 프로필 key, 최대 영혼, 처치 골드, 설명, 계약 악마 목록, 시작 덱.
 - `DemonCodexPageViewModel`: 이름, 정의 key, 구매 골드, 영혼 가격, 서사, 액티브 스킬, 대가.
 - `CodexDeckCardViewModel`: 정의 key, 숫자, 표시 이름, suit.
-- `CodexNavigationState`: 카테고리별 현재 인덱스와 경계 이동.
+- `CodexNavigationState`: 카테고리별 현재 인덱스와 책 전체 경계 이동. 적 마지막 장에서 `E`를 누르면 악마 카드 첫 장으로, 악마 카드 첫 장에서 `Q`를 누르면 적 마지막 장으로 이동한다. 책 전체의 첫 장과 마지막 장에서는 더 이동하지 않는다.
 
 적 정보는 `EnemyContentCatalogSO`가 생성한 `EnemyCombatProfileCatalog`, `GoldRewardCatalog`과 `CardContentCatalog`을 읽는다. 악마 정보는 `DemonCardDefinitionSO`에서 생성한 카드 정의와 서사 사전을 읽는다.
 
@@ -40,7 +40,7 @@
 
 - 적 6종, 악마 12종이 누락·중복 없이 생성된다.
 - 현재 영혼·골드·설명·계약 목록·덱 순서와 카드 가격·효과·대가가 일치한다.
-- 페이지 경계와 카테고리별 마지막 페이지 복원이 보장된다.
+- 카테고리를 직접 전환하면 카테고리별 마지막 페이지를 복원하고, `Q/E` 순차 이동은 적→악마 카드 경계를 끊김 없이 넘는 것이 보장된다.
 - 프리팹 필수 버튼, ScrollRect, 두 카드 템플릿과 테이블 책 Collider가 존재한다.
 - 에디터 프리뷰 전후 카드 템플릿 수는 2개로 유지되고, 프리뷰 종료 시 원래 표시값과 활성 상태가 복원된다.
 - 도감 프리팹의 모든 RectTransform 앵커가 표준 preset이며 루트를 제외한 고정 앵커 요소는 양수 Width/Height를 가진다.

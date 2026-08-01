@@ -164,9 +164,11 @@ namespace DiaBlackJack.GameScene
             DemonPage = demonPage;
         }
 
-        public bool CanMoveNext => PageIndex + 1 < PageCount;
+        public bool CanMoveNext =>
+            PageIndex + 1 < PageCount || Category == CodexCategory.Enemy;
 
-        public bool CanMovePrevious => PageIndex > 0;
+        public bool CanMovePrevious =>
+            PageIndex > 0 || Category == CodexCategory.DemonCard;
 
         public CodexCategory Category { get; }
 
@@ -219,7 +221,14 @@ namespace DiaBlackJack.GameScene
         {
             if (CurrentPageIndex + 1 >= CurrentPageCount)
             {
-                return false;
+                if (Category != CodexCategory.Enemy)
+                {
+                    return false;
+                }
+
+                Category = CodexCategory.DemonCard;
+                _demonPageIndex = 0;
+                return true;
             }
 
             if (Category == CodexCategory.Enemy)
@@ -238,7 +247,14 @@ namespace DiaBlackJack.GameScene
         {
             if (CurrentPageIndex <= 0)
             {
-                return false;
+                if (Category != CodexCategory.DemonCard)
+                {
+                    return false;
+                }
+
+                Category = CodexCategory.Enemy;
+                _enemyPageIndex = _enemyPageCount - 1;
+                return true;
             }
 
             if (Category == CodexCategory.Enemy)
