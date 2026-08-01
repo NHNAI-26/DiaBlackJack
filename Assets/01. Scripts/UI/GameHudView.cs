@@ -45,6 +45,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private CardContentCatalogSO cardContentCatalog;
 
         private Canvas _canvas;
+        private bool _shopDemonDetailActivatedCombatControlsRoot;
 
         public event Action<GameSceneCombatHudCommand> CombatCommandRequested;
 
@@ -62,7 +63,7 @@ namespace DiaBlackJack.GameScene
 
         public bool IsDemonContractDetailVisible =>
             contractDetailPanel != null &&
-            contractDetailPanel.activeSelf;
+            contractDetailPanel.activeInHierarchy;
 
         private void Awake()
         {
@@ -218,9 +219,38 @@ namespace DiaBlackJack.GameScene
             contractDetailPanel.SetActive(true);
         }
 
+        public void ShowDemonContractDetail(GameSceneDemonCardViewModel card)
+        {
+            if (card == null ||
+                contractDetailPanel == null ||
+                contractDetailView == null)
+            {
+                HideDemonContractDetail();
+                return;
+            }
+
+            contractDetailView.Render(
+                card,
+                cardContentCatalog == null
+                    ? null
+                    : cardContentCatalog.GetDemonFaceSprite(card.DefinitionKey));
+            if (combatControlsRoot != null && !combatControlsRoot.activeSelf)
+            {
+                combatControlsRoot.SetActive(true);
+                _shopDemonDetailActivatedCombatControlsRoot = true;
+            }
+
+            contractDetailPanel.SetActive(true);
+        }
+
         public void HideDemonContractDetail()
         {
             SetActive(contractDetailPanel, false);
+            if (_shopDemonDetailActivatedCombatControlsRoot)
+            {
+                SetActive(combatControlsRoot, false);
+                _shopDemonDetailActivatedCombatControlsRoot = false;
+            }
         }
 
         public void ShowCombatActionTooltip(
@@ -335,6 +365,7 @@ namespace DiaBlackJack.GameScene
 
             if (combatControlsRoot != null)
             {
+                _shopDemonDetailActivatedCombatControlsRoot = false;
                 combatControlsRoot.SetActive(true);
             }
 
@@ -442,6 +473,7 @@ namespace DiaBlackJack.GameScene
         private void HideCombatControls()
         {
             HideCombatActionTooltip();
+            _shopDemonDetailActivatedCombatControlsRoot = false;
             SetActive(combatControlsRoot, false);
             SetActive(optionPanel, false);
             SetActive(contractDetailPanel, false);

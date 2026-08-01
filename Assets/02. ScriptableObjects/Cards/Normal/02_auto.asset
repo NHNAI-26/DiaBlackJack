@@ -13,13 +13,16 @@ MonoBehaviour:
   m_Name: 02_auto
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
   key: resurrection-herb-2
-  displayName: 부활초
-  description: 양측은 각자 영혼 1을 지불할 수 있습니다. 지불한 사람만 손패를 모두 버리고 비공개 카드와 공개 카드 1장을 다시 받습니다.
+  displayName: "\uBD80\uD65C\uCD08"
+  description: "\uC591\uCE21\uC740 \uAC01\uC790 \uC601\uD63C 1\uC744 \uC9C0\uBD88\uD560
+    \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uC9C0\uBD88\uD55C \uC0AC\uB78C\uB9CC \uC190\uD328\uB97C
+    \uBAA8\uB450 \uBC84\uB9AC\uACE0 \uBE44\uACF5\uAC1C \uCE74\uB4DC\uC640 \uACF5\uAC1C
+    \uCE74\uB4DC 1\uC7A5\uC744 \uB2E4\uC2DC \uBC1B\uC2B5\uB2C8\uB2E4."
   basePurchasePrice: 3
   shopWeight: 1
   rank: 2
   activation: 3
   effect: 7
   isStandardDeckDefault: 0
-  spadeFaceSprite: {fileID: 21300000, guid: b76faae24a1700f479371a2ddbbd6f7f, type: 3}
-  cloverFaceSprite: {fileID: 21300000, guid: b76faae24a1700f479371a2ddbbd6f7f, type: 3}
+  spadeFaceSprite: {fileID: 21300000, guid: 28ac66a3eb54b6d488eb7133c65fa9a0, type: 3}
+  cloverFaceSprite: {fileID: 21300000, guid: 28ac66a3eb54b6d488eb7133c65fa9a0, type: 3}

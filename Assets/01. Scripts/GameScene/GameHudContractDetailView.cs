@@ -23,23 +23,50 @@ namespace DiaBlackJack.GameScene
             GameSceneCombatHudContractCandidateViewModel model,
             Sprite faceSprite)
         {
+            Render(
+                model == null ? string.Empty : model.Title,
+                model == null ? string.Empty : model.Ability,
+                model == null ? string.Empty : model.Cost,
+                faceSprite,
+                model != null);
+        }
+
+        public void Render(
+            GameSceneDemonCardViewModel model,
+            Sprite faceSprite)
+        {
+            Render(
+                model == null ? string.Empty : model.DisplayName,
+                model == null ? string.Empty : model.Summary,
+                model == null ? string.Empty : model.CostSummary,
+                faceSprite,
+                model != null);
+        }
+
+        private void Render(
+            string title,
+            string ability,
+            string cost,
+            Sprite faceSprite,
+            bool hasModel)
+        {
             if (titleText != null)
             {
-                titleText.text = model == null ? string.Empty : model.Title;
+                titleText.text = title;
             }
 
             if (abilityText != null)
             {
-                abilityText.text = model == null
-                    ? string.Empty
-                    : "<color=#D34B3F><b>ACTIVE</b></color>\n" + model.Ability;
+                abilityText.text = hasModel
+                    ? "<color=#D34B3F><b>ACTIVE</b></color>\n" + ability
+                    : string.Empty;
             }
 
             if (costText != null)
             {
-                costText.text = model == null
-                    ? string.Empty
-                    : "<color=#D7A53B><b>COST</b></color>\n" + model.Cost;
+                costText.text = hasModel
+                    ? "<color=#D7A53B><b>COST</b></color>\n" + cost
+                    : string.Empty;
             }
 
             if (faceImage != null)

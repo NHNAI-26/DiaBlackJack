@@ -13,13 +13,16 @@ MonoBehaviour:
   m_Name: 01_auto
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
   key: poison-1
-  displayName: 독극물
-  description: 즉시 스탠드하거나 영혼 3을 겁니다. 영혼이 3 미만이면 남은 영혼을 모두 겁니다. 영혼을 걸고 승리하면 영혼 5를 회복합니다.
+  displayName: "\uB3C5\uADF9\uBB3C"
+  description: "\uC989\uC2DC \uC2A4\uD0E0\uB4DC\uD558\uAC70\uB098 \uC601\uD63C 3\uC744
+    \uAC81\uB2C8\uB2E4. \uC601\uD63C\uC774 3 \uBBF8\uB9CC\uC774\uBA74 \uB0A8\uC740
+    \uC601\uD63C\uC744 \uBAA8\uB450 \uAC81\uB2C8\uB2E4. \uC601\uD63C\uC744 \uAC78\uACE0
+    \uC2B9\uB9AC\uD558\uBA74 \uC601\uD63C 5\uB97C \uD68C\uBCF5\uD569\uB2C8\uB2E4."
   basePurchasePrice: 3
   shopWeight: 1
   rank: 1
   activation: 3
   effect: 6
   isStandardDeckDefault: 0
-  spadeFaceSprite: {fileID: 21300000, guid: 28ac66a3eb54b6d488eb7133c65fa9a0, type: 3}
-  cloverFaceSprite: {fileID: 21300000, guid: 28ac66a3eb54b6d488eb7133c65fa9a0, type: 3}
+  spadeFaceSprite: {fileID: 21300000, guid: b76faae24a1700f479371a2ddbbd6f7f, type: 3}
+  cloverFaceSprite: {fileID: 21300000, guid: b76faae24a1700f479371a2ddbbd6f7f, type: 3}

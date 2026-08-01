@@ -912,27 +912,17 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            if (_camera == null)
-            {
-                _camera = Camera.main;
-            }
-
             if (_hoveredDemonCard == null ||
                 !_hoveredDemonCard.ShouldShowHoverBadge ||
-                !_hoveredDemonCard.TryGetHoverBadgeScreenPosition(
-                    _camera,
-                    out Vector2 screenPosition))
+                _hoveredDemonCard.BoundCard == null)
             {
                 hud.HideCardHoverBadge();
+                hud.HideDemonContractDetail();
                 return;
             }
 
-            hud.ShowCardHoverBadge(
-                _hoveredDemonCard.HoverBadgeTitle,
-                _hoveredDemonCard.HoverBadgeDescription,
-                screenPosition,
-                _camera,
-                showBelow: false);
+            hud.HideCardHoverBadge();
+            hud.ShowDemonContractDetail(_hoveredDemonCard.BoundCard);
         }
 
         private void UpdateDemonCardHover(DemonCardView pointed)
@@ -945,6 +935,10 @@ namespace DiaBlackJack.GameScene
             if (_hoveredDemonCard != null)
             {
                 _hoveredDemonCard.SetHovered(false);
+                if (pointed == null)
+                {
+                    hud?.HideDemonContractDetail();
+                }
             }
 
             _hoveredDemonCard = pointed;

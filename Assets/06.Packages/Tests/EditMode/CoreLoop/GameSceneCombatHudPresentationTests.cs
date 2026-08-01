@@ -956,6 +956,76 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
         }
 
+        [Test]
+        public void GSH01_U12_ShopDemonReusesContractDetailPanel()
+        {
+            GameObject hudPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
+            GameObject demonPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/03. Prefabs/Card/DemonCard.prefab");
+            GameObject hudInstance = Object.Instantiate(hudPrefab);
+            GameObject demonInstance = Object.Instantiate(demonPrefab);
+            try
+            {
+                GameHudView hud = hudInstance.GetComponent<GameHudView>();
+                DemonCardView demon = demonInstance.GetComponent<DemonCardView>();
+                demon.Bind(new GameSceneDemonCardViewModel(
+                    cardId: 7,
+                    definitionKey: DemonContractCatalog.SatanKey,
+                    isFaceUp: true,
+                    canUse: true,
+                    displayName: "사탄",
+                    summary: "공개 카드 한 장을 사용한다.",
+                    costSummary: "PRICE 5 GOLD"));
+
+                hud.Render((CoreLoopViewModel)null);
+                hud.ShowDemonContractDetail(demon.BoundCard);
+
+                Transform panel = hudInstance.transform.Find(
+                    "CombatControls/ContractDetailPanel");
+                Assert.That(panel.gameObject.activeSelf, Is.True);
+                Assert.That(panel.gameObject.activeInHierarchy, Is.True);
+                Assert.That(hud.IsDemonContractDetailVisible, Is.True);
+                Assert.That(
+                    GetRenderedText(panel.Find(
+                        "DetailLayout/ContractDetail/Title/txtTitle")),
+                    Is.EqualTo("사탄"));
+                Assert.That(
+                    GetRenderedText(panel.Find(
+                        "DetailLayout/ContractDetail/Ability/txtAbility")),
+                    Does.Contain("공개 카드 한 장을 사용한다."));
+                Assert.That(
+                    GetRenderedText(panel.Find(
+                        "DetailLayout/ContractDetail/Cost/txtCost")),
+                    Does.Contain("PRICE 5 GOLD"));
+
+                hud.HideDemonContractDetail();
+                Assert.That(panel.gameObject.activeSelf, Is.False);
+                Assert.That(hud.IsDemonContractDetailVisible, Is.False);
+                Assert.That(
+                    hudInstance.transform.Find("CombatControls").gameObject.activeSelf,
+                    Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(hudInstance);
+                Object.DestroyImmediate(demonInstance);
+            }
+        }
+
+        private static string GetRenderedText(Transform target)
+        {
+            Assert.That(target, Is.Not.Null);
+            Component textComponent = target
+                .GetComponents<Component>()
+                .First(component =>
+                    component != null &&
+                    component.GetType().GetProperty("text") != null);
+            return (string)textComponent.GetType()
+                .GetProperty("text")
+                .GetValue(textComponent);
+        }
+
         private static CoreLoopBattle CreateStartedBattle(params int[] playerRanks)
         {
             var battle = new CoreLoopBattle(

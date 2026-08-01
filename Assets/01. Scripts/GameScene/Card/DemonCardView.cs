@@ -42,6 +42,8 @@ namespace DiaBlackJack.GameScene
 
         public bool CanUse { get; private set; }
 
+        internal GameSceneDemonCardViewModel BoundCard { get; private set; }
+
         public string HoverBadgeTitle { get; private set; } = string.Empty;
 
         public string HoverBadgeDescription { get; private set; } = string.Empty;
@@ -93,6 +95,7 @@ namespace DiaBlackJack.GameScene
             }
 
             CardId = card.CardId;
+            BoundCard = card;
             CanUse = card.CanUse;
             _showingFrontFace = card.IsFaceUp;
             _showBadgeOnHover = CanUse || card.ShowHoverBadgeWhenUnavailable;
