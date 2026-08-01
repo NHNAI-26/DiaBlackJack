@@ -192,6 +192,57 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GSV06_U01_RoundResolutionRevealsBothHiddenCardsAndFinalTotals()
+        {
+            var battle = new CoreLoopBattle(
+                CreateDeck(new[] { 10, 8, 2, 3 }),
+                CreateDeck(new[] { 10, 7, 4, 5 }),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3,
+                enemyPolicy: new StandPolicy());
+            Assert.That(battle.Start(), Is.True);
+            int playerHiddenCardId = battle.Player.Hand.Cards[1].Id;
+            int enemyHiddenCardId = battle.Enemy.Hand.Cards[1].Id;
+            GameSceneViewModel resolvingModel = null;
+            battle.Stepped += () =>
+            {
+                if (battle.State == CoreLoopState.ResolvingRound)
+                {
+                    resolvingModel = GameScenePresenter.Create(battle);
+                }
+            };
+
+            Assert.That(battle.TryPlayerStand(), Is.True);
+
+            Assert.That(resolvingModel, Is.Not.Null);
+            Assert.That(
+                resolvingModel.PlayerCards.Single(card =>
+                    card.CardId == playerHiddenCardId).IsFaceUp,
+                Is.True);
+            GameSceneCardViewModel enemyHidden = resolvingModel.EnemyCards.Single(
+                card => card.CardId == enemyHiddenCardId);
+            Assert.That(enemyHidden.IsFaceUp, Is.True);
+            Assert.That(enemyHidden.RevealRank, Is.True);
+            Assert.That(enemyHidden.Rank, Is.EqualTo(7));
+            Assert.That(
+                resolvingModel.PlayerTotalsText,
+                Is.EqualTo("총합 : 18\n공개 카드 합 : 10"));
+            Assert.That(
+                resolvingModel.EnemyTotalsText,
+                Is.EqualTo("총합 : 17\n공개 카드 합 : 10"));
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+            Assert.That(battle.RoundNumber, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void GSV06_U02_RoundResultHoldKeepsAtLeastTwoAndHalfSeconds()
+        {
+            Assert.That(
+                GameManager.MinimumRoundResultHoldSeconds,
+                Is.GreaterThanOrEqualTo(2.5f));
+        }
+
+        [Test]
         public void CUM05_U01_EnemyHoverInfoIsAvailableOnlyAfterCardIsRevealed()
         {
             CoreLoopBattle battle = CreateBattle(
@@ -984,6 +1035,14 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
 
             return BlackjackDeck.CreateInDrawOrder(cards);
+        }
+
+        private sealed class StandPolicy : IEnemyBehaviorPolicy
+        {
+            public EnemyDecision Decide(EnemyObservation observation)
+            {
+                return new EnemyDecision(EnemyActionType.Stand, "test-stand");
+            }
         }
     }
 }

@@ -50,7 +50,9 @@ namespace DiaBlackJack.GameScene
 
         [Header("Presentation pacing")]
         [SerializeField] private float stepSeconds = 1.0f;
-        [SerializeField] private float resolveHoldSeconds = 1.1f;
+        [SerializeField] private float resolveHoldSeconds = 2.5f;
+
+        internal const float MinimumRoundResultHoldSeconds = 2.5f;
 
         [Header("Revolver animation")]
         [SerializeField] private Animator revolverAnimator;
@@ -1823,7 +1825,9 @@ namespace DiaBlackJack.GameScene
                     deferHammerSmashCardRender: true);
 
                 bool resolveBeat = vm.Core.State == CoreLoopState.ResolvingRound;
-                float waitSeconds = resolveBeat ? resolveHoldSeconds : stepSeconds;
+                float waitSeconds = resolveBeat
+                    ? Mathf.Max(resolveHoldSeconds, MinimumRoundResultHoldSeconds)
+                    : stepSeconds;
                 if (playedAnimation.PlayedAny)
                 {
                     waitSeconds = Mathf.Max(
@@ -1956,8 +1960,8 @@ namespace DiaBlackJack.GameScene
             if (totals != null)
             {
                 totals.Render(
-                    vm.Core.PlayerTotalsText,
-                    vm.Core.EnemyVisibleTotalText);
+                    vm.PlayerTotalsText,
+                    vm.EnemyTotalsText);
             }
 
             return CreateAppliedAnimationResult(

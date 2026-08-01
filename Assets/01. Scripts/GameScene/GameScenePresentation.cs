@@ -290,7 +290,9 @@ namespace DiaBlackJack.GameScene
             GameSceneRevolverAnimationCue revolverAnimationCue = null,
             GameSceneHammerAnimationCue hammerAnimationCue = null,
             bool usesDiegeticCardEffectSelection = false,
-            bool focusesEnemyCardsForSelection = false)
+            bool focusesEnemyCardsForSelection = false,
+            string playerTotalsText = null,
+            string enemyTotalsText = null)
         {
             Core = core ?? throw new ArgumentNullException(nameof(core));
             PlayerCards = playerCards ?? throw new ArgumentNullException(nameof(playerCards));
@@ -303,6 +305,8 @@ namespace DiaBlackJack.GameScene
             HammerAnimationCue = hammerAnimationCue;
             UsesDiegeticCardEffectSelection = usesDiegeticCardEffectSelection;
             FocusesEnemyCardsForSelection = focusesEnemyCardsForSelection;
+            PlayerTotalsText = playerTotalsText ?? core.PlayerTotalsText;
+            EnemyTotalsText = enemyTotalsText ?? core.EnemyVisibleTotalText;
         }
 
         public CoreLoopViewModel Core { get; }
@@ -325,6 +329,10 @@ namespace DiaBlackJack.GameScene
         public bool UsesDiegeticCardEffectSelection { get; }
 
         public bool FocusesEnemyCardsForSelection { get; }
+
+        public string PlayerTotalsText { get; }
+
+        public string EnemyTotalsText { get; }
     }
 
     public static class GameScenePresenter
@@ -337,19 +345,52 @@ namespace DiaBlackJack.GameScene
             }
 
             CoreLoopViewModel core = CoreLoopPresenter.Create(battle, profileKey);
+            bool revealRoundResult = battle.State == CoreLoopState.ResolvingRound &&
+                battle.LastResolution.HasValue;
             (CharacterVisualState enemyVisual, string enemyLabel) =
                 ResolveSide(battle, CombatantSide.Enemy);
             return new GameSceneViewModel(
                 core,
-                CreatePlayerCards(core, battle),
-                CreateEnemyCards(battle),
+                CreatePlayerCards(core, battle, revealRoundResult),
+                CreateEnemyCards(battle, revealRoundResult),
                 enemyVisual,
                 enemyLabel,
                 CreateCrystalOrbCandidates(battle),
                 CreateRevolverAnimationCue(battle),
                 CreateHammerAnimationCue(battle),
                 UsesDiegeticSelection(battle),
-                FocusesEnemyCardsForSelection(battle));
+                FocusesEnemyCardsForSelection(battle),
+                CreatePlayerTotalsText(battle, core, revealRoundResult),
+                CreateEnemyTotalsText(battle, core, revealRoundResult));
+        }
+
+        private static string CreatePlayerTotalsText(
+            CoreLoopBattle battle,
+            CoreLoopViewModel core,
+            bool revealRoundResult)
+        {
+            return revealRoundResult
+                ? FormatFinalTotals(
+                    battle.Player.HandValue.Total,
+                    battle.Player.VisibleHandValue.Total)
+                : core.PlayerTotalsText;
+        }
+
+        private static string CreateEnemyTotalsText(
+            CoreLoopBattle battle,
+            CoreLoopViewModel core,
+            bool revealRoundResult)
+        {
+            return revealRoundResult
+                ? FormatFinalTotals(
+                    battle.Enemy.HandValue.Total,
+                    battle.Enemy.VisibleHandValue.Total)
+                : core.EnemyVisibleTotalText;
+        }
+
+        private static string FormatFinalTotals(int total, int publicTotal)
+        {
+            return $"총합 : {total}\n공개 카드 합 : {publicTotal}";
         }
 
         private static bool FocusesEnemyCardsForSelection(
@@ -733,7 +774,8 @@ namespace DiaBlackJack.GameScene
 
         private static IReadOnlyList<GameSceneCardViewModel> CreatePlayerCards(
             CoreLoopViewModel core,
-            CoreLoopBattle battle)
+            CoreLoopBattle battle,
+            bool revealRoundResult)
         {
             var cards = new List<GameSceneCardViewModel>(core.PlayerCardActions.Count);
             int hiddenCardCount = 0;
@@ -746,7 +788,7 @@ namespace DiaBlackJack.GameScene
                 var projectedCard = new GameSceneCardViewModel(
                     card.CardId,
                     card.Rank,
-                    card.IsFaceUp,
+                    card.IsFaceUp || revealRoundResult,
                     revealRank: true,
                     canUse: card.CanUse,
                     card.DisplayName,
@@ -858,7 +900,9 @@ namespace DiaBlackJack.GameScene
             return header + "  " + total + "장\n\n" + body;
         }
 
-        private static IReadOnlyList<GameSceneCardViewModel> CreateEnemyCards(CoreLoopBattle battle)
+        private static IReadOnlyList<GameSceneCardViewModel> CreateEnemyCards(
+            CoreLoopBattle battle,
+            bool revealRoundResult)
         {
             IReadOnlyList<BlackjackCard> hand = battle.Enemy.Hand.Cards;
             PendingCardEffect pendingEffect = battle.PendingPlayerCardEffect;
@@ -867,7 +911,7 @@ namespace DiaBlackJack.GameScene
             foreach (BlackjackCard card in hand)
             {
                 // Face-down enemy card: emit no rank. This is the information-hiding boundary.
-                bool faceUp = card.IsFaceUp;
+                bool faceUp = card.IsFaceUp || revealRoundResult;
                 bool isHiddenCard = battle.Enemy.Hand.IsHiddenCard(card.Id);
                 var projectedCard = new GameSceneCardViewModel(
                     card.Id,
