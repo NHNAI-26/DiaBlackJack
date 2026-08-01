@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using DiaBlackJack.GameScene;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 namespace DiaBlackJack.CoreLoop.Tests
@@ -251,6 +253,271 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 purchasedKeys,
                 Has.Member(DemonContractCatalog.LeviathanKey));
+        }
+
+        [Test]
+        public void GSV06_U01_PurchasedCardsKeepSlotsAndShowSoldOutStatus()
+        {
+            Transform normalHolder = CreateHolder("Normal Card Holder");
+            Transform demonHolder = CreateHolder("Demon Card Holder");
+            CardView normalPrefab = CreateNormalCardPrefab();
+            DemonCardView demonPrefab = CreateDemonCardPrefab();
+            ShopCardOfferStatusView statusPrefab = CreateStatusPrefab();
+            SetPrivateField("normalCardHolder", normalHolder);
+            SetPrivateField("demonCardHolder", demonHolder);
+            SetPrivateField("normalCardPrefab", normalPrefab);
+            SetPrivateField("demonCardPrefab", demonPrefab);
+            SetPrivateField("cardOfferStatusPrefab", statusPrefab);
+            SetPrivateField("normalCardOfferCount", 3);
+            SetPrivateField("demonCardOfferCount", 2);
+
+            _shop.Open();
+            CardView[] normalCards =
+                normalHolder.GetComponentsInChildren<CardView>(true);
+            DemonCardView[] demonCards =
+                demonHolder.GetComponentsInChildren<DemonCardView>(true);
+            ShopCardOfferStatusView[] normalStatuses =
+                normalHolder.GetComponentsInChildren<ShopCardOfferStatusView>(true);
+            ShopCardOfferStatusView[] demonStatuses =
+                demonHolder.GetComponentsInChildren<ShopCardOfferStatusView>(true);
+            Vector3[] normalPositions = GetLocalPositions(normalCards);
+            Vector3[] demonPositions = GetLocalPositions(demonCards);
+
+            Assert.That(normalCards, Has.Length.EqualTo(3));
+            Assert.That(demonCards, Has.Length.EqualTo(2));
+            Assert.That(normalStatuses, Has.Length.EqualTo(3));
+            Assert.That(demonStatuses, Has.Length.EqualTo(2));
+            Assert.That(normalStatuses[0].PriceLabel, Does.StartWith("돈 : "));
+            Assert.That(demonStatuses[0].PriceLabel, Does.StartWith("돈 : "));
+            Assert.That(
+                normalCards.All(card =>
+                    !string.IsNullOrWhiteSpace(card.DefinitionKey)),
+                Is.True);
+
+            Assert.That(
+                _shop.TryPurchaseNormalCard(normalCards[0].CardId, out _, out _),
+                Is.True);
+            Assert.That(
+                _shop.TryPurchaseDemonCard(demonCards[0].CardId, out _),
+                Is.True);
+
+            Assert.That(
+                normalHolder.GetComponentsInChildren<CardView>(true),
+                Has.Length.EqualTo(3));
+            Assert.That(
+                demonHolder.GetComponentsInChildren<DemonCardView>(true),
+                Has.Length.EqualTo(2));
+            Assert.That(normalCards[0].gameObject.activeSelf, Is.True);
+            Assert.That(demonCards[0].gameObject.activeSelf, Is.True);
+            Assert.That(normalCards[0].IsShopSoldOut, Is.True);
+            Assert.That(demonCards[0].IsShopSoldOut, Is.True);
+            Assert.That(normalCards[0].CanUse, Is.False);
+            Assert.That(demonCards[0].CanUse, Is.False);
+            Assert.That(
+                normalCards[0].GetComponentInChildren<SpriteRenderer>().color.r,
+                Is.LessThan(0.5f));
+            Assert.That(
+                demonCards[0].GetComponentInChildren<SpriteRenderer>().color.r,
+                Is.LessThan(0.5f));
+            Assert.That(FindStatusAt(normalStatuses, normalPositions[0]).IsSoldOut,
+                Is.True);
+            Assert.That(FindStatusAt(demonStatuses, demonPositions[0]).IsSoldOut,
+                Is.True);
+            Assert.That(
+                FindStatusAt(normalStatuses, normalPositions[0]).PriceColor,
+                Is.EqualTo(new Color(0.42f, 0.42f, 0.42f, 1f)));
+            AssertLocalPositions(normalCards, normalPositions);
+            AssertLocalPositions(demonCards, demonPositions);
+
+            int goldAfterPurchase = _shop.Gold;
+            Assert.That(
+                _shop.TryPurchaseNormalCard(normalCards[0].CardId, out _, out _),
+                Is.False);
+            Assert.That(_shop.Gold, Is.EqualTo(goldAfterPurchase));
+        }
+
+        [Test]
+        public void GSV06_U02_InsufficientGoldDoesNotLookSoldOrChangeSlot()
+        {
+            Transform holder = CreateHolder("Normal Card Holder");
+            CardView prefab = CreateNormalCardPrefab();
+            ShopCardOfferStatusView statusPrefab = CreateStatusPrefab();
+            SetPrivateField("normalCardHolder", holder);
+            SetPrivateField("normalCardPrefab", prefab);
+            SetPrivateField("cardOfferStatusPrefab", statusPrefab);
+            SetPrivateField("normalCardOfferCount", 1);
+
+            _shop.Open();
+            _shop.ResetGold();
+            CardView card = holder.GetComponentInChildren<CardView>(true);
+            ShopCardOfferStatusView status =
+                holder.GetComponentInChildren<ShopCardOfferStatusView>(true);
+            Vector3 position = card.transform.localPosition;
+
+            Assert.That(card.CanUse, Is.False);
+            Assert.That(card.IsShopSoldOut, Is.False);
+            Assert.That(
+                card.GetComponentInChildren<SpriteRenderer>().color,
+                Is.EqualTo(Color.white));
+            Assert.That(status.IsSoldOut, Is.False);
+            Assert.That(status.PriceLabel, Does.StartWith("돈 : "));
+            Assert.That(
+                status.PriceColor,
+                Is.EqualTo(new Color(0.95f, 0.82f, 0.55f, 1f)));
+            Assert.That(
+                _shop.TryPurchaseNormalCard(card.CardId, out _, out _),
+                Is.False);
+            Assert.That(_shop.Gold, Is.Zero);
+            Assert.That(card.transform.localPosition, Is.EqualTo(position));
+            Assert.That(card.IsShopSoldOut, Is.False);
+            Assert.That(status.IsSoldOut, Is.False);
+        }
+
+        [Test]
+        public void GSV06_U04_StatusPrefabUsesKoreanFontAndDoesNotBlockInput()
+        {
+            const string prefabPath =
+                "Assets/03. Prefabs/Shop/Resources/ShopCardOfferStatus.prefab";
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                ShopCardOfferStatusView status =
+                    instance.GetComponent<ShopCardOfferStatusView>();
+                Assert.That(status, Is.Not.Null);
+                status.Bind(3, isSoldOut: true);
+
+                Assert.That(status.PriceLabel, Is.EqualTo("돈 : 3"));
+                Assert.That(status.IsSoldOut, Is.True);
+                Assert.That(
+                    instance.GetComponentsInChildren<Collider>(true),
+                    Is.Empty);
+                Assert.That(
+                    instance.transform.Find("Price").localScale.x,
+                    Is.EqualTo(0.22f).Within(0.001f));
+
+                int textCount = 0;
+                foreach (Component component in
+                         instance.GetComponentsInChildren<Component>(true))
+                {
+                    if (component.GetType().FullName != "TMPro.TextMeshPro")
+                    {
+                        continue;
+                    }
+
+                    textCount++;
+                    object font = component.GetType().GetProperty("font")
+                        .GetValue(component, null);
+                    bool raycastTarget = (bool)component.GetType()
+                        .GetProperty("raycastTarget")
+                        .GetValue(component, null);
+                    Assert.That(((Object)font).name,
+                        Is.EqualTo("BMHANNAAir_ttf SDF"));
+                    Assert.That(raycastTarget, Is.False);
+                }
+
+                Assert.That(textCount, Is.EqualTo(2));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        private Transform CreateHolder(string name)
+        {
+            GameObject holder = new GameObject(name);
+            holder.transform.SetParent(_root.transform);
+            return holder.transform;
+        }
+
+        private CardView CreateNormalCardPrefab()
+        {
+            GameObject prefabObject = new GameObject("Normal Card Prefab");
+            prefabObject.transform.SetParent(_root.transform);
+            CardView prefab = prefabObject.AddComponent<CardView>();
+            GameObject front = new GameObject("Front");
+            front.transform.SetParent(prefabObject.transform);
+            front.AddComponent<SpriteRenderer>();
+            SetPrivateField(prefab, "front", front);
+            return prefab;
+        }
+
+        private DemonCardView CreateDemonCardPrefab()
+        {
+            GameObject prefabObject = new GameObject("Demon Card Prefab");
+            prefabObject.transform.SetParent(_root.transform);
+            DemonCardView prefab = prefabObject.AddComponent<DemonCardView>();
+            GameObject front = new GameObject("Front");
+            front.transform.SetParent(prefabObject.transform);
+            front.AddComponent<SpriteRenderer>();
+            SetPrivateField(prefab, "front", front);
+            return prefab;
+        }
+
+        private ShopCardOfferStatusView CreateStatusPrefab()
+        {
+            GameObject prefabObject = new GameObject("Status Prefab");
+            prefabObject.transform.SetParent(_root.transform);
+            ShopCardOfferStatusView prefab =
+                prefabObject.AddComponent<ShopCardOfferStatusView>();
+            Component priceText = CreateText("Price", prefabObject.transform);
+            Component soldOutText = CreateText("Sold Out", prefabObject.transform);
+            SetPrivateField(prefab, "priceText", priceText);
+            SetPrivateField(prefab, "soldOutText", soldOutText);
+            return prefab;
+        }
+
+        private static Component CreateText(string name, Transform parent)
+        {
+            GameObject textObject = new GameObject(name);
+            textObject.transform.SetParent(parent);
+            System.Type textType = System.Type.GetType(
+                "TMPro.TextMeshPro, Unity.TextMeshPro");
+            Assert.That(textType, Is.Not.Null);
+            return textObject.AddComponent(textType);
+        }
+
+        private static Vector3[] GetLocalPositions<T>(T[] views)
+            where T : Component
+        {
+            var positions = new Vector3[views.Length];
+            for (int i = 0; i < views.Length; i++)
+            {
+                positions[i] = views[i].transform.localPosition;
+            }
+
+            return positions;
+        }
+
+        private static void AssertLocalPositions<T>(
+            T[] views,
+            Vector3[] positions)
+            where T : Component
+        {
+            Assert.That(views, Has.Length.EqualTo(positions.Length));
+            for (int i = 0; i < views.Length; i++)
+            {
+                Assert.That(views[i].transform.localPosition,
+                    Is.EqualTo(positions[i]));
+            }
+        }
+
+        private static ShopCardOfferStatusView FindStatusAt(
+            ShopCardOfferStatusView[] statuses,
+            Vector3 localPosition)
+        {
+            foreach (ShopCardOfferStatusView status in statuses)
+            {
+                if (status.transform.localPosition == localPosition)
+                {
+                    return status;
+                }
+            }
+
+            Assert.Fail($"Status not found at {localPosition}.");
+            return null;
         }
 
         private void SetPrivateField(string fieldName, object value)

@@ -113,14 +113,16 @@ namespace DiaBlackJack.GameScene
         }
 
         /// <summary>
-        /// Writes the run gold counter (top-left, beside souls). Separate from <see cref="Render"/>
-        /// because gold is GameScene-local state in the MVP, not part of the battle view-model.
+        /// Writes the run gold amount beside the authored Gold Icon. Separate from
+        /// <see cref="Render"/> because gold is GameScene-local state in the MVP, not part of the
+        /// battle view-model. Its placement is authored with the Gold Icon and Gold Amount
+        /// RectTransforms in the HUD prefab.
         /// </summary>
         public void SetGold(int gold)
         {
             if (goldText != null)
             {
-                goldText.text = $"GOLD\n{gold}";
+                goldText.text = gold.ToString();
             }
         }
 

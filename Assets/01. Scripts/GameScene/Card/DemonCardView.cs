@@ -21,6 +21,9 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float hoverScale = 1.15f;
         [SerializeField] private float scaleLerp = 12f;
         [SerializeField] private string hoverSfxId = "cardHover";
+        [Header("Shop sold out")]
+        [SerializeField] private Color shopSoldOutTint =
+            new Color(0.35f, 0.35f, 0.35f, 1f);
         private static readonly int LightingModeId =
             Shader.PropertyToID("_LightingMode");
         private static readonly int BrightnessId =
@@ -37,10 +40,15 @@ namespace DiaBlackJack.GameScene
         private bool _showingFrontFace = true;
         private bool _showBadgeOnHover;
         private bool _hovered;
+        private bool _isShopSoldOut;
+        private bool _shopColorCaptured;
+        private Color _shopFrontColor = Color.white;
 
         public int CardId { get; private set; } = -1;
 
         public bool CanUse { get; private set; }
+
+        internal bool IsShopSoldOut => _isShopSoldOut;
 
         internal GameSceneDemonCardViewModel BoundCard { get; private set; }
 
@@ -53,7 +61,10 @@ namespace DiaBlackJack.GameScene
             : $"{HoverBadgeTitle}\n{HoverBadgeDescription}";
 
         public bool ShouldShowHoverBadge =>
-            _hovered && _showBadgeOnHover && !string.IsNullOrEmpty(HoverBadgeTitle);
+            !_isShopSoldOut &&
+            _hovered &&
+            _showBadgeOnHover &&
+            !string.IsNullOrEmpty(HoverBadgeTitle);
 
         private void Awake()
         {
@@ -134,6 +145,11 @@ namespace DiaBlackJack.GameScene
 
         public void SetHovered(bool hovered)
         {
+            if (_isShopSoldOut)
+            {
+                hovered = false;
+            }
+
             if (_hovered == hovered)
             {
                 return;
@@ -150,6 +166,12 @@ namespace DiaBlackJack.GameScene
             if (renderer == null)
             {
                 return;
+            }
+
+            if (!_shopColorCaptured)
+            {
+                _shopFrontColor = renderer.color;
+                _shopColorCaptured = true;
             }
 
             if (_shopMaterial == null)
@@ -171,12 +193,43 @@ namespace DiaBlackJack.GameScene
             _shopMaterial.SetFloat(BrightnessId, 1f);
             _shopMaterial.EnableKeyword(UnlitKeyword);
             _shopMaterial.DisableKeyword(PixelOutlineKeyword);
-            renderer.color = Color.white;
+            renderer.color = _shopFrontColor;
 
             var properties = new MaterialPropertyBlock();
             renderer.GetPropertyBlock(properties);
             properties.SetFloat(PixelOutlineVisibilityId, 0f);
             renderer.SetPropertyBlock(properties);
+        }
+
+        internal void SetShopSoldOut(bool isSoldOut)
+        {
+            _isShopSoldOut = isSoldOut;
+            if (isSoldOut)
+            {
+                CanUse = false;
+                _showBadgeOnHover = false;
+                SetHovered(false);
+            }
+
+            SpriteRenderer renderer = FrontSpriteRenderer();
+            if (renderer == null)
+            {
+                return;
+            }
+
+            if (!_shopColorCaptured)
+            {
+                _shopFrontColor = renderer.color;
+                _shopColorCaptured = true;
+            }
+
+            renderer.color = isSoldOut
+                ? new Color(
+                    _shopFrontColor.r * shopSoldOutTint.r,
+                    _shopFrontColor.g * shopSoldOutTint.g,
+                    _shopFrontColor.b * shopSoldOutTint.b,
+                    _shopFrontColor.a * shopSoldOutTint.a)
+                : _shopFrontColor;
         }
 
         public Sprite GetFaceSprite(string definitionKey)

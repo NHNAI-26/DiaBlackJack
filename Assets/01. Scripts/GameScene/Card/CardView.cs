@@ -58,6 +58,10 @@ namespace DiaBlackJack.GameScene
         [Min(0f)]
         [SerializeField] private float usedMarkStrokeDuration = 0.175f;
 
+        [Header("Shop sold out")]
+        [SerializeField] private Color shopSoldOutTint =
+            new Color(0.35f, 0.35f, 0.35f, 1f);
+
         private static readonly int BaseSpriteUvRectId = Shader.PropertyToID("_BaseSpriteUVRect");
         private static readonly int CardBlendTextureId = Shader.PropertyToID("_CardBlendTex");
         private static readonly int CardBlendAmountId = Shader.PropertyToID("_CardBlendAmount");
@@ -89,6 +93,10 @@ namespace DiaBlackJack.GameScene
         private bool _hasBoundCard;
         private bool _isUsed;
         private bool _isEffectHighlighted;
+        private bool _isShopSoldOut;
+        private bool _shopColorsCaptured;
+        private Color _shopFrontColor = Color.white;
+        private Color _shopBackColor = Color.white;
 
         /// <summary>Run card id of the bound card, for pointer routing. -1 when unbound.</summary>
         public int CardId { get; private set; } = -1;
@@ -99,6 +107,8 @@ namespace DiaBlackJack.GameScene
         internal string DefinitionKey { get; private set; } = string.Empty;
 
         internal bool IsUsedMarkVisible => usedMark != null && usedMark.activeSelf;
+
+        internal bool IsShopSoldOut => _isShopSoldOut;
 
         /// <summary>Current card-effect option selected by clicking this world-space card.</summary>
         public int? CardEffectChoiceOptionId { get; private set; }
@@ -120,7 +130,10 @@ namespace DiaBlackJack.GameScene
 
         /// <summary>Whether the shared HUD badge should currently be visible for this card.</summary>
         public bool ShouldShowHoverBadge =>
-            _hovered && _showBadgeOnHover && !string.IsNullOrEmpty(HoverBadgeTitle);
+            !_isShopSoldOut &&
+            _hovered &&
+            _showBadgeOnHover &&
+            !string.IsNullOrEmpty(HoverBadgeTitle);
 
         /// <summary>Returns the authored front sprite used for an already-projected card model.</summary>
         internal Sprite GetFaceSprite(GameSceneCardViewModel card)
@@ -239,6 +252,11 @@ namespace DiaBlackJack.GameScene
         /// <summary>Called by the pointer raycast when this card gains/loses hover.</summary>
         public void SetHovered(bool hovered)
         {
+            if (_isShopSoldOut)
+            {
+                hovered = false;
+            }
+
             if (_hovered == hovered)
             {
                 return;
@@ -264,6 +282,7 @@ namespace DiaBlackJack.GameScene
 
         internal void SetShopPresentation()
         {
+            CaptureShopColors();
             CreateMaterialInstance(
                 FrontSpriteRenderer(),
                 ref _shopFrontMaterial);
@@ -271,6 +290,21 @@ namespace DiaBlackJack.GameScene
                 BackSpriteRenderer(),
                 ref _shopBackMaterial);
             ApplyHoverOutline(false);
+        }
+
+        internal void SetShopSoldOut(bool isSoldOut)
+        {
+            _isShopSoldOut = isSoldOut;
+            if (isSoldOut)
+            {
+                CanUse = false;
+                _showBadgeOnHover = false;
+                SetHovered(false);
+            }
+
+            CaptureShopColors();
+            ApplyShopTint(FrontSpriteRenderer(), _shopFrontColor, isSoldOut);
+            ApplyShopTint(BackSpriteRenderer(), _shopBackColor, isSoldOut);
         }
 
         internal void SetSortingOrder(int sortingOrder)
@@ -310,6 +344,47 @@ namespace DiaBlackJack.GameScene
             {
                 _usedMarkSecondStrokeScale = usedMarkSecondStroke.transform.localScale;
             }
+        }
+
+        private void CaptureShopColors()
+        {
+            if (_shopColorsCaptured)
+            {
+                return;
+            }
+
+            SpriteRenderer frontRenderer = FrontSpriteRenderer();
+            SpriteRenderer backRenderer = BackSpriteRenderer();
+            if (frontRenderer != null)
+            {
+                _shopFrontColor = frontRenderer.color;
+            }
+
+            if (backRenderer != null)
+            {
+                _shopBackColor = backRenderer.color;
+            }
+
+            _shopColorsCaptured = true;
+        }
+
+        private void ApplyShopTint(
+            SpriteRenderer renderer,
+            Color baseColor,
+            bool isSoldOut)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            renderer.color = isSoldOut
+                ? new Color(
+                    baseColor.r * shopSoldOutTint.r,
+                    baseColor.g * shopSoldOutTint.g,
+                    baseColor.b * shopSoldOutTint.b,
+                    baseColor.a * shopSoldOutTint.a)
+                : baseColor;
         }
 
         private void ApplyUsedMark(bool animate)

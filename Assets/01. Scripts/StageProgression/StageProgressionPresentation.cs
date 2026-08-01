@@ -99,6 +99,7 @@ namespace DiaBlackJack.StageProgression.UI
             string category,
             string summary,
             string price,
+            int priceAmount,
             bool canBuy,
             bool isSold)
         {
@@ -108,6 +109,7 @@ namespace DiaBlackJack.StageProgression.UI
             Category = category;
             Summary = summary;
             Price = price;
+            PriceAmount = priceAmount;
             CanBuy = canBuy;
             IsSold = isSold;
         }
@@ -119,6 +121,7 @@ namespace DiaBlackJack.StageProgression.UI
         public bool IsSold { get; }
         public int OptionId { get; }
         public string Price { get; }
+        public int PriceAmount { get; }
         public string Summary { get; }
     }
 
@@ -559,6 +562,7 @@ namespace DiaBlackJack.StageProgression.UI
                     category,
                     summary,
                     $"{option.Price} GOLD",
+                    option.Price,
                     !isSold && player.CurrentGold >= option.Price,
                     isSold));
             }

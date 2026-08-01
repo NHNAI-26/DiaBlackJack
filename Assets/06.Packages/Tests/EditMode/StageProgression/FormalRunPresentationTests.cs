@@ -204,6 +204,180 @@ namespace DiaBlackJack.StageProgression.Tests
             }
         }
 
+        [Test]
+        public void GSV06_U03_FormalRefreshKeepsFiveSlotsAndSoldOptionOrder()
+        {
+            FormalRunSession run = OpenFirstShop();
+            StageProgressionViewModel before = StageProgressionPresenter.Create(run);
+            ShopCardOptionViewModel purchasedOption = before.ShopCardOptions[0];
+            int[] optionOrder = GetOptionOrder(before);
+            Assert.That(purchasedOption.PriceAmount, Is.EqualTo(3));
+            Assert.That(purchasedOption.Price, Is.EqualTo("3 GOLD"));
+
+            GameObject root = new GameObject("GSV06 Formal Shop Test");
+            try
+            {
+                ShopController shop = CreateFormalShopController(root);
+                shop.OpenFormal(before);
+                Vector3[] firstPositions = GetActiveOfferPositions(root);
+
+                Assert.That(run.TryBuyShopCard(
+                    before.ShopOfferId.Value,
+                    purchasedOption.OptionId), Is.True);
+                StageProgressionViewModel after = StageProgressionPresenter.Create(run);
+                shop.OpenFormal(after);
+
+                Assert.That(GetOptionOrder(after), Is.EqualTo(optionOrder));
+                Assert.That(after.ShopCardOptions, Has.Count.EqualTo(5));
+                Assert.That(after.ShopCardOptions[0].IsSold, Is.True);
+                Assert.That(GetActiveOfferPositions(root), Is.EqualTo(firstPositions));
+
+                ShopCardOfferStatusView[] statuses =
+                    GetActiveComponents<ShopCardOfferStatusView>(root);
+                Assert.That(statuses, Has.Length.EqualTo(5));
+                Assert.That(statuses[0].PriceLabel, Is.EqualTo("돈 : 3"));
+                Assert.That(CountSoldStatuses(statuses), Is.EqualTo(1));
+
+                CardView[] normalCards = GetActiveComponents<CardView>(root);
+                DemonCardView[] demonCards = GetActiveComponents<DemonCardView>(root);
+                Assert.That(normalCards.Length + demonCards.Length, Is.EqualTo(5));
+                Assert.That(FindOfferCanUse(
+                    normalCards,
+                    demonCards,
+                    purchasedOption.OptionId), Is.False);
+                Assert.That(run.TryBuyShopCard(
+                    after.ShopOfferId.Value,
+                    purchasedOption.OptionId), Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
+        private static ShopController CreateFormalShopController(GameObject root)
+        {
+            ShopController shop = root.AddComponent<ShopController>();
+            Transform normalHolder = CreateChild(root, "Normal Holder").transform;
+            Transform demonHolder = CreateChild(root, "Demon Holder").transform;
+            CardView normalPrefab = CreateChild(root, "Normal Prefab")
+                .AddComponent<CardView>();
+            DemonCardView demonPrefab = CreateChild(root, "Demon Prefab")
+                .AddComponent<DemonCardView>();
+            GameObject statusObject = CreateChild(root, "Status Prefab");
+            ShopCardOfferStatusView statusPrefab =
+                statusObject.AddComponent<ShopCardOfferStatusView>();
+            Type textType = Type.GetType(
+                "TMPro.TextMeshPro, Unity.TextMeshPro");
+            Assert.That(textType, Is.Not.Null);
+            Component price = CreateChild(statusObject, "Price")
+                .AddComponent(textType);
+            Component sold = CreateChild(statusObject, "Sold")
+                .AddComponent(textType);
+            SetField(statusPrefab, "priceText", price);
+            SetField(statusPrefab, "soldOutText", sold);
+            SetField(shop, "normalCardHolder", normalHolder);
+            SetField(shop, "demonCardHolder", demonHolder);
+            SetField(shop, "normalCardPrefab", normalPrefab);
+            SetField(shop, "demonCardPrefab", demonPrefab);
+            SetField(shop, "cardOfferStatusPrefab", statusPrefab);
+            return shop;
+        }
+
+        private static GameObject CreateChild(GameObject parent, string name)
+        {
+            GameObject child = new GameObject(name);
+            child.transform.SetParent(parent.transform);
+            return child;
+        }
+
+        private static int[] GetOptionOrder(StageProgressionViewModel model)
+        {
+            var ids = new int[model.ShopCardOptions.Count];
+            for (int i = 0; i < ids.Length; i++)
+            {
+                ids[i] = model.ShopCardOptions[i].OptionId;
+            }
+
+            return ids;
+        }
+
+        private static Vector3[] GetActiveOfferPositions(GameObject root)
+        {
+            CardView[] normalCards = GetActiveComponents<CardView>(root);
+            DemonCardView[] demonCards = GetActiveComponents<DemonCardView>(root);
+            var positions = new Vector3[normalCards.Length + demonCards.Length];
+            int index = 0;
+            foreach (CardView card in normalCards)
+            {
+                positions[index++] = card.transform.localPosition;
+            }
+
+            foreach (DemonCardView card in demonCards)
+            {
+                positions[index++] = card.transform.localPosition;
+            }
+
+            return positions;
+        }
+
+        private static T[] GetActiveComponents<T>(GameObject root)
+            where T : Component
+        {
+            T[] all = root.GetComponentsInChildren<T>(true);
+            var active = new List<T>();
+            foreach (T component in all)
+            {
+                if (component.gameObject.activeInHierarchy &&
+                    component.transform.parent != root.transform)
+                {
+                    active.Add(component);
+                }
+            }
+
+            return active.ToArray();
+        }
+
+        private static int CountSoldStatuses(
+            ShopCardOfferStatusView[] statuses)
+        {
+            int count = 0;
+            foreach (ShopCardOfferStatusView status in statuses)
+            {
+                if (status.IsSoldOut)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static bool FindOfferCanUse(
+            CardView[] normalCards,
+            DemonCardView[] demonCards,
+            int optionId)
+        {
+            foreach (CardView card in normalCards)
+            {
+                if (card.CardId == optionId)
+                {
+                    return card.CanUse;
+                }
+            }
+
+            foreach (DemonCardView card in demonCards)
+            {
+                if (card.CardId == optionId)
+                {
+                    return card.CanUse;
+                }
+            }
+
+            Assert.Fail($"Offer {optionId} was not rendered.");
+            return false;
+        }
+
         private static StageProgressionController CreateController(
             StageProgressionSession session,
             out GameObject root)

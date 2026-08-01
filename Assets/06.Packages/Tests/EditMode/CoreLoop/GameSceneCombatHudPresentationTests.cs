@@ -738,6 +738,47 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GSV06_U06_HudGoldIconOwnsAdjustableAmount()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+
+            Transform goldIcon = prefab.transform.Find("Icon/Gold Icon");
+            Assert.That(goldIcon, Is.Not.Null);
+            Assert.That(goldIcon.GetComponent<Image>(), Is.Not.Null);
+
+            Transform goldAmount = goldIcon.Find("Gold Amount");
+            Assert.That(goldAmount, Is.Not.Null);
+            Component text = goldAmount.GetComponents<Component>()
+                .First(component => component.GetType().FullName ==
+                    "TMPro.TextMeshProUGUI");
+
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                GameHudView hud = instance.GetComponent<GameHudView>();
+                hud.SetGold(13);
+                Component instanceText = instance.transform
+                    .Find("Icon/Gold Icon/Gold Amount")
+                    .GetComponents<Component>()
+                    .First(component => component.GetType().FullName ==
+                        "TMPro.TextMeshProUGUI");
+                Assert.That(
+                    instanceText.GetType().GetProperty("text")
+                        .GetValue(instanceText, null),
+                    Is.EqualTo("13"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+
+            Assert.That(text, Is.Not.Null);
+            Assert.That(goldIcon, Is.TypeOf<RectTransform>());
+            Assert.That(goldAmount, Is.TypeOf<RectTransform>());
+        }
+
+        [Test]
         public void GSH01_U10_TablePrefabAuthorsThreeWorldCommands()
         {
             GameObject prefab =
