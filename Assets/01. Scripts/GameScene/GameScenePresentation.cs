@@ -289,7 +289,8 @@ namespace DiaBlackJack.GameScene
             IReadOnlyList<GameSceneCardViewModel> crystalOrbCandidates,
             GameSceneRevolverAnimationCue revolverAnimationCue = null,
             GameSceneHammerAnimationCue hammerAnimationCue = null,
-            bool usesDiegeticCardEffectSelection = false)
+            bool usesDiegeticCardEffectSelection = false,
+            bool focusesEnemyCardsForSelection = false)
         {
             Core = core ?? throw new ArgumentNullException(nameof(core));
             PlayerCards = playerCards ?? throw new ArgumentNullException(nameof(playerCards));
@@ -301,6 +302,7 @@ namespace DiaBlackJack.GameScene
             RevolverAnimationCue = revolverAnimationCue;
             HammerAnimationCue = hammerAnimationCue;
             UsesDiegeticCardEffectSelection = usesDiegeticCardEffectSelection;
+            FocusesEnemyCardsForSelection = focusesEnemyCardsForSelection;
         }
 
         public CoreLoopViewModel Core { get; }
@@ -321,6 +323,8 @@ namespace DiaBlackJack.GameScene
         public GameSceneHammerAnimationCue HammerAnimationCue { get; }
 
         public bool UsesDiegeticCardEffectSelection { get; }
+
+        public bool FocusesEnemyCardsForSelection { get; }
     }
 
     public static class GameScenePresenter
@@ -344,7 +348,17 @@ namespace DiaBlackJack.GameScene
                 CreateCrystalOrbCandidates(battle),
                 CreateRevolverAnimationCue(battle),
                 CreateHammerAnimationCue(battle),
-                UsesDiegeticSelection(battle));
+                UsesDiegeticSelection(battle),
+                FocusesEnemyCardsForSelection(battle));
+        }
+
+        private static bool FocusesEnemyCardsForSelection(
+            CoreLoopBattle battle)
+        {
+            PendingDemonContractInteraction interaction =
+                battle.PendingPlayerDemonContractInteraction;
+            return interaction != null && interaction.Kind ==
+                DemonContractInteractionKind.BeelzebubChooseOpponentCard;
         }
 
         /// <summary>

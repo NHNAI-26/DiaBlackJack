@@ -13,7 +13,17 @@ namespace DiaBlackJack.CoreLoop
         public AutomaticCardEffectStep Begin(
             AutomaticCardEffectContext context)
         {
-            return BeginOwnerDiscardChoice(context);
+            AutomaticCardEffectStep playerChoice =
+                BeginDiscardChoice(context, CombatantSide.Player);
+            if (playerChoice != null)
+            {
+                return playerChoice;
+            }
+
+            context.CommitFlamethrowerDecision(
+                CombatantSide.Player,
+                cardId: null);
+            return BeginEnemyDiscardChoiceOrComplete(context);
         }
 
         public AutomaticCardEffectStep ResolveChoice(
@@ -21,73 +31,76 @@ namespace DiaBlackJack.CoreLoop
             PendingAutomaticCardInteraction pendingInteraction,
             AutomaticCardChoiceOption selectedOption)
         {
-            switch (pendingInteraction.ChoiceKind)
+            if (pendingInteraction.ChoiceKind !=
+                GetChoiceKind(context, pendingInteraction.DecisionSide))
             {
-                case AutomaticCardChoiceKind.FlamethrowerOwnerDiscard:
-                    ResolveDiscardChoice(
-                        context,
-                        context.OwnerSide,
-                        selectedOption);
-                    return BeginOpponentDiscardChoice(context);
-
-                case AutomaticCardChoiceKind.FlamethrowerOpponentDiscard:
-                    ResolveDiscardChoice(
-                        context,
-                        context.OpponentSide,
-                        selectedOption);
-                    return AutomaticCardEffectStep.Complete(
-                        AutomaticCardSourceDisposition.RetainFaceUp);
-
-                default:
-                    throw new InvalidOperationException(
-                        "Flamethrower received an invalid choice kind.");
+                throw new InvalidOperationException(
+                    "Flamethrower received an invalid choice kind.");
             }
+
+            CommitDiscardChoice(
+                context,
+                pendingInteraction.DecisionSide,
+                selectedOption);
+            if (pendingInteraction.DecisionSide == CombatantSide.Player)
+            {
+                return BeginEnemyDiscardChoiceOrComplete(context);
+            }
+
+            context.ApplyCommittedFlamethrowerDecisions();
+            return AutomaticCardEffectStep.Complete(
+                AutomaticCardSourceDisposition.RetainFaceUp);
         }
 
-        private static AutomaticCardEffectStep BeginOwnerDiscardChoice(
-            AutomaticCardEffectContext context)
+        private static AutomaticCardEffectStep
+            BeginEnemyDiscardChoiceOrComplete(
+                AutomaticCardEffectContext context)
         {
-            if (context.IsStanding(context.OwnerSide))
+            AutomaticCardEffectStep enemyChoice =
+                BeginDiscardChoice(context, CombatantSide.Enemy);
+            if (enemyChoice != null)
             {
-                return BeginOpponentDiscardChoice(context);
+                return enemyChoice;
+            }
+
+            context.CommitFlamethrowerDecision(
+                CombatantSide.Enemy,
+                cardId: null);
+            context.ApplyCommittedFlamethrowerDecisions();
+            return AutomaticCardEffectStep.Complete(
+                AutomaticCardSourceDisposition.RetainFaceUp);
+        }
+
+        private static AutomaticCardEffectStep BeginDiscardChoice(
+            AutomaticCardEffectContext context,
+            CombatantSide decisionSide)
+        {
+            if (context.IsStanding(decisionSide))
+            {
+                return null;
             }
 
             IReadOnlyList<BlackjackCard> candidates =
-                context.GetFaceUpDiscardCandidates(context.OwnerSide);
+                context.GetFaceUpDiscardCandidates(decisionSide);
             if (candidates.Count == 0)
             {
-                return BeginOpponentDiscardChoice(context);
+                return null;
             }
 
             return CreateDiscardChoice(
-                context.OwnerSide,
-                AutomaticCardChoiceKind.FlamethrowerOwnerDiscard,
+                decisionSide,
+                GetChoiceKind(context, decisionSide),
                 "Choose one of your face-up cards to discard, or skip.",
                 candidates);
         }
 
-        private static AutomaticCardEffectStep BeginOpponentDiscardChoice(
-            AutomaticCardEffectContext context)
+        private static AutomaticCardChoiceKind GetChoiceKind(
+            AutomaticCardEffectContext context,
+            CombatantSide decisionSide)
         {
-            if (context.IsStanding(context.OpponentSide))
-            {
-                return AutomaticCardEffectStep.Complete(
-                    AutomaticCardSourceDisposition.RetainFaceUp);
-            }
-
-            IReadOnlyList<BlackjackCard> candidates =
-                context.GetFaceUpDiscardCandidates(context.OpponentSide);
-            if (candidates.Count == 0)
-            {
-                return AutomaticCardEffectStep.Complete(
-                    AutomaticCardSourceDisposition.RetainFaceUp);
-            }
-
-            return CreateDiscardChoice(
-                context.OpponentSide,
-                AutomaticCardChoiceKind.FlamethrowerOpponentDiscard,
-                "Choose one of your face-up cards to discard, or skip.",
-                candidates);
+            return decisionSide == context.OwnerSide
+                ? AutomaticCardChoiceKind.FlamethrowerOwnerDiscard
+                : AutomaticCardChoiceKind.FlamethrowerOpponentDiscard;
         }
 
         private static AutomaticCardEffectStep CreateDiscardChoice(
@@ -119,7 +132,7 @@ namespace DiaBlackJack.CoreLoop
                 options);
         }
 
-        private static void ResolveDiscardChoice(
+        private static void CommitDiscardChoice(
             AutomaticCardEffectContext context,
             CombatantSide decisionSide,
             AutomaticCardChoiceOption selectedOption)
@@ -132,18 +145,22 @@ namespace DiaBlackJack.CoreLoop
                         "Flamethrower skip option cannot identify a card.");
                 }
 
+                context.CommitFlamethrowerDecision(
+                    decisionSide,
+                    cardId: null);
                 return;
             }
 
             if (!selectedOption.CardId.HasValue ||
-                selectedOption.OptionId != selectedOption.CardId.Value ||
-                !context.TryDiscardFaceUpCard(
-                    decisionSide,
-                    selectedOption.CardId.Value))
+                selectedOption.OptionId != selectedOption.CardId.Value)
             {
                 throw new InvalidOperationException(
                     "Flamethrower discard target is no longer valid.");
             }
+
+            context.CommitFlamethrowerDecision(
+                decisionSide,
+                selectedOption.CardId.Value);
         }
     }
 }

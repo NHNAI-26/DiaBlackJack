@@ -650,6 +650,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 GameSceneCombatHudPresenter.Create(
                     ownerScene.Core, false, false, false,
                     ownerScene.UsesDiegeticCardEffectSelection);
+            Assert.That(ownerScene.FocusesEnemyCardsForSelection, Is.False);
             Assert.That(ownerCommand.Kind, Is.EqualTo(
                 GameSceneCombatHudCommandKind.ResolveDemonContractChoice));
             Assert.That(ownerHud.Prompt, Does.EndWith("(1/2)"));
@@ -666,6 +667,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 GameSceneCombatHudPresenter.Create(
                     opponentScene.Core, false, false, false,
                     opponentScene.UsesDiegeticCardEffectSelection);
+            Assert.That(opponentScene.FocusesEnemyCardsForSelection, Is.True);
             Assert.That(opponentCommand.Kind, Is.EqualTo(
                 GameSceneCombatHudCommandKind.ResolveDemonContractChoice));
             Assert.That(opponentHud.Prompt, Does.EndWith("(2/2)"));

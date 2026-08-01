@@ -18,7 +18,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             CardDefinitionCatalog.GetByKey("threat-hammer-6");
 
         [Test]
-        public void AC04_U01_FlamethrowerChoosesOwnerThenOpponent()
+        public void AC04_U01_FlamethrowerCommitsPlayerBeforeRevealingEnemyChoice()
         {
             CoreLoopBattle battle = CreateBattle(
                 PlayerCards(2, 3, Flamethrower),
@@ -43,7 +43,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(AutomaticCardChoiceKind.FlamethrowerOpponentDiscard));
             Assert.That(opponentChoice.DecisionSide,
                 Is.EqualTo(CombatantSide.Enemy));
-            Assert.That(battle.Player.Hand.Contains(0), Is.False);
+            Assert.That(battle.Player.Hand.Contains(0), Is.True);
+            Assert.That(battle.Player.Deck.GetDiscardedCards()
+                .Any(card => card.Id == 0), Is.False);
             Assert.That(
                 ResolveCardOption(
                     battle,

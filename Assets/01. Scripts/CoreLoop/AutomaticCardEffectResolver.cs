@@ -17,6 +17,15 @@ namespace DiaBlackJack.CoreLoop
 
     internal sealed class AutomaticCardEffectContext
     {
+        private bool _hasPlayerFlamethrowerDecision;
+        private bool _hasEnemyFlamethrowerDecision;
+        private int? _playerFlamethrowerCardId;
+        private int? _enemyFlamethrowerCardId;
+        private bool _hasPlayerResurrectionHerbDecision;
+        private bool _hasEnemyResurrectionHerbDecision;
+        private bool _playerPaysResurrectionHerbSoul;
+        private bool _enemyPaysResurrectionHerbSoul;
+
         public AutomaticCardEffectContext(
             CoreLoopBattle battle,
             CombatantSide ownerSide,
@@ -170,6 +179,125 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return participant.TryDiscardCard(cardId);
+        }
+
+        internal void CommitFlamethrowerDecision(
+            CombatantSide side,
+            int? cardId)
+        {
+            bool alreadyCommitted = side == CombatantSide.Player
+                ? _hasPlayerFlamethrowerDecision
+                : _hasEnemyFlamethrowerDecision;
+            if (alreadyCommitted ||
+                (cardId.HasValue && !IsFlamethrowerCandidate(side, cardId.Value)))
+            {
+                throw new InvalidOperationException(
+                    "Flamethrower decision is duplicated or no longer valid.");
+            }
+
+            if (side == CombatantSide.Player)
+            {
+                _hasPlayerFlamethrowerDecision = true;
+                _playerFlamethrowerCardId = cardId;
+                return;
+            }
+
+            _hasEnemyFlamethrowerDecision = true;
+            _enemyFlamethrowerCardId = cardId;
+        }
+
+        internal void ApplyCommittedFlamethrowerDecisions()
+        {
+            if (!_hasPlayerFlamethrowerDecision ||
+                !_hasEnemyFlamethrowerDecision ||
+                (_playerFlamethrowerCardId.HasValue &&
+                    !IsFlamethrowerCandidate(
+                        CombatantSide.Player,
+                        _playerFlamethrowerCardId.Value)) ||
+                (_enemyFlamethrowerCardId.HasValue &&
+                    !IsFlamethrowerCandidate(
+                        CombatantSide.Enemy,
+                        _enemyFlamethrowerCardId.Value)))
+            {
+                throw new InvalidOperationException(
+                    "Committed flamethrower decisions cannot be applied.");
+            }
+
+            if (_playerFlamethrowerCardId.HasValue &&
+                !TryDiscardFaceUpCard(
+                    CombatantSide.Player,
+                    _playerFlamethrowerCardId.Value))
+            {
+                throw new InvalidOperationException(
+                    "Committed player flamethrower card could not be discarded.");
+            }
+
+            if (_enemyFlamethrowerCardId.HasValue &&
+                !TryDiscardFaceUpCard(
+                    CombatantSide.Enemy,
+                    _enemyFlamethrowerCardId.Value))
+            {
+                throw new InvalidOperationException(
+                    "Committed enemy flamethrower card could not be discarded.");
+            }
+        }
+
+        internal void CommitResurrectionHerbDecision(
+            CombatantSide side,
+            bool paysSoul)
+        {
+            bool alreadyCommitted = side == CombatantSide.Player
+                ? _hasPlayerResurrectionHerbDecision
+                : _hasEnemyResurrectionHerbDecision;
+            if (alreadyCommitted ||
+                (paysSoul && !CanPayResurrectionHerbSoul(side)))
+            {
+                throw new InvalidOperationException(
+                    "Resurrection herb decision is duplicated or no longer valid.");
+            }
+
+            if (side == CombatantSide.Player)
+            {
+                _hasPlayerResurrectionHerbDecision = true;
+                _playerPaysResurrectionHerbSoul = paysSoul;
+                return;
+            }
+
+            _hasEnemyResurrectionHerbDecision = true;
+            _enemyPaysResurrectionHerbSoul = paysSoul;
+        }
+
+        internal bool ApplyCommittedResurrectionHerbDecisions()
+        {
+            if (!_hasPlayerResurrectionHerbDecision ||
+                !_hasEnemyResurrectionHerbDecision)
+            {
+                throw new InvalidOperationException(
+                    "Both resurrection herb decisions must be committed first.");
+            }
+
+            bool playerSurvived = !_playerPaysResurrectionHerbSoul ||
+                PayResurrectionHerbSoulAndRedeal(CombatantSide.Player);
+            bool enemySurvived = !_enemyPaysResurrectionHerbSoul ||
+                PayResurrectionHerbSoulAndRedeal(CombatantSide.Enemy);
+            return !playerSurvived || !enemySurvived;
+        }
+
+        private bool IsFlamethrowerCandidate(
+            CombatantSide side,
+            int cardId)
+        {
+            IReadOnlyList<BlackjackCard> candidates =
+                GetFaceUpDiscardCandidates(side);
+            foreach (BlackjackCard candidate in candidates)
+            {
+                if (candidate.Id == cardId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public IReadOnlyList<BlackjackCard>

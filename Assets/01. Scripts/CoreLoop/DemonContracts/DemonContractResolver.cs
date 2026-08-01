@@ -149,8 +149,8 @@ namespace DiaBlackJack.CoreLoop
 
         public bool CanChooseBeelzebubDiscardCards =>
             !Owner.Soul.IsDepleted &&
-            Owner.Hand.GetPublicCards().Count > 0 &&
-            Opponent.Hand.GetPublicCards().Count > 0;
+            (Owner.Hand.GetPublicCards().Count > 0 ||
+                Opponent.Hand.GetPublicCards().Count > 0);
 
         public void ApplyOwnerSoulDamage(int amount)
         {
@@ -179,25 +179,30 @@ namespace DiaBlackJack.CoreLoop
         }
 
         public bool TryDiscardChosenFaceUpCards(
-            int ownerCardId,
-            int opponentCardId)
+            int? ownerCardId,
+            int? opponentCardId)
         {
-            if (!Owner.Hand.TryGetCard(
-                    ownerCardId,
-                    out BlackjackCard ownerCard) ||
-                !ownerCard.IsFaceUp ||
-                Owner.Hand.IsHiddenCard(ownerCardId) ||
-                !Opponent.Hand.TryGetCard(
-                    opponentCardId,
-                    out BlackjackCard opponentCard) ||
-                !opponentCard.IsFaceUp ||
-                Opponent.Hand.IsHiddenCard(opponentCardId))
+            if ((!ownerCardId.HasValue && !opponentCardId.HasValue) ||
+                (ownerCardId.HasValue &&
+                    (!Owner.Hand.TryGetCard(
+                        ownerCardId.Value,
+                        out BlackjackCard ownerCard) ||
+                    !ownerCard.IsFaceUp ||
+                    Owner.Hand.IsHiddenCard(ownerCardId.Value))) ||
+                (opponentCardId.HasValue &&
+                    (!Opponent.Hand.TryGetCard(
+                        opponentCardId.Value,
+                        out BlackjackCard opponentCard) ||
+                    !opponentCard.IsFaceUp ||
+                    Opponent.Hand.IsHiddenCard(opponentCardId.Value))))
             {
                 return false;
             }
 
-            if (!Owner.TryDiscardCard(ownerCardId) ||
-                !Opponent.TryDiscardCard(opponentCardId))
+            if ((ownerCardId.HasValue &&
+                    !Owner.TryDiscardCard(ownerCardId.Value)) ||
+                (opponentCardId.HasValue &&
+                    !Opponent.TryDiscardCard(opponentCardId.Value)))
             {
                 throw new InvalidOperationException(
                     "Validated demon bust replacement could not discard its cards.");
@@ -565,8 +570,8 @@ namespace DiaBlackJack.CoreLoop
         public bool TryCompleteOwnerBustReplacement(
             CoreLoopBattle battle,
             ActiveDemonContract activeContract,
-            int ownerCardId,
-            int opponentCardId)
+            int? ownerCardId,
+            int? opponentCardId)
         {
             if (battle == null)
             {

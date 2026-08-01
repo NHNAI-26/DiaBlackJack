@@ -232,6 +232,72 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Does.Contain(100));
         }
 
+        [Test]
+        public void DCR04_U09_BeelzebubResolvesWithOnlyOwnerPublicCards()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                PlainDeck(new[] { 10, 2, 10, 10, 2, 2, 2, 2 }),
+                PlainDeck(new[] { 8, 7, 2, 2, 2, 2 }, 100),
+                new StandPolicy(),
+                DemonContractKind.Beelzebub,
+                playerCurrentSoul: 12);
+            ActivateFirstContract(battle);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            foreach (BlackjackCard card in
+                battle.Enemy.Hand.GetPublicCards().ToArray())
+            {
+                Assert.That(battle.Enemy.TryDiscardCard(card.Id), Is.True);
+            }
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            PendingDemonContractInteraction ownerChoice =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(ownerChoice.Kind, Is.EqualTo(
+                DemonContractInteractionKind.BeelzebubChooseOwnerCard));
+            DemonContractOption option = ownerChoice.Options.Single(candidate =>
+                candidate.ContractCardId == 2);
+
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                ownerChoice.InteractionId,
+                option.OptionId), Is.True);
+
+            Assert.That(battle.PendingPlayerDemonContractInteraction, Is.Null);
+            Assert.That(battle.Player.Hand.Contains(2), Is.False);
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(10));
+        }
+
+        [Test]
+        public void DCR04_U10_BeelzebubContextAcceptsOnlyOpponentPublicCard()
+        {
+            CoreLoopBattle battle = CreateStartedBattle(
+                PlainDeck(new[] { 10, 7, 2, 2 }),
+                PlainDeck(new[] { 8, 6, 2, 2 }, 100),
+                new StandPolicy(),
+                new DemonContractDeck(Array.Empty<DemonContractCard>(), seed: 0),
+                DemonContractResolver.CreateDefault(),
+                playerCurrentSoul: 12);
+            foreach (BlackjackCard card in
+                battle.Player.Hand.GetPublicCards().ToArray())
+            {
+                Assert.That(battle.Player.TryDiscardCard(card.Id), Is.True);
+            }
+
+            DemonContractDefinition definition = DemonContractCatalog.Default
+                .GetByKey(DemonContractCatalog.BeelzebubKey);
+            var activeContract = new ActiveDemonContract(
+                new DemonContractCard(500, definition),
+                CombatantSide.Player,
+                new BeelzebubRuntimeState());
+            var context = new DemonContractContext(battle, activeContract);
+            int opponentCardId = battle.Enemy.Hand.GetPublicCards().Single().Id;
+
+            Assert.That(context.CanChooseBeelzebubDiscardCards, Is.True);
+            Assert.That(context.TryDiscardChosenFaceUpCards(
+                ownerCardId: null,
+                opponentCardId), Is.True);
+            Assert.That(battle.Enemy.Hand.Contains(opponentCardId), Is.False);
+        }
+
         private static CoreLoopBattle CreateBattle(
             BlackjackDeck playerDeck,
             BlackjackDeck enemyDeck,

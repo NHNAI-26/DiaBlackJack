@@ -3783,6 +3783,15 @@ namespace DiaBlackJack.CoreLoop
                 resolution.OwnerCardId = selectedCardId;
                 IReadOnlyList<BlackjackCard> opponentCards =
                     GetOpponent(ownerSide).Hand.GetPublicCards();
+                if (opponentCards.Count == 0)
+                {
+                    return CompleteBeelzebubBustResolution(
+                        ownerSide,
+                        resolution,
+                        selectedCardId,
+                        opponentCardId: null);
+                }
+
                 PendingDemonContractInteraction next =
                     CreateBeelzebubDiscardInteraction(
                         TakeNextDemonContractInteractionId(),
@@ -3795,13 +3804,29 @@ namespace DiaBlackJack.CoreLoop
             }
 
             if (pending.Kind !=
-                    DemonContractInteractionKind.BeelzebubChooseOpponentCard ||
-                !resolution.OwnerCardId.HasValue ||
-                !_demonContractResolver.TryCompleteOwnerBustReplacement(
+                    DemonContractInteractionKind.BeelzebubChooseOpponentCard)
+            {
+                return false;
+            }
+
+            return CompleteBeelzebubBustResolution(
+                ownerSide,
+                resolution,
+                resolution.OwnerCardId,
+                selectedCardId);
+        }
+
+        private bool CompleteBeelzebubBustResolution(
+            CombatantSide ownerSide,
+            PendingBeelzebubBustResolution resolution,
+            int? ownerCardId,
+            int? opponentCardId)
+        {
+            if (!_demonContractResolver.TryCompleteOwnerBustReplacement(
                     this,
                     resolution.ActiveContract,
-                    resolution.OwnerCardId.Value,
-                    selectedCardId))
+                    ownerCardId,
+                    opponentCardId))
             {
                 return false;
             }
@@ -5744,8 +5769,10 @@ namespace DiaBlackJack.CoreLoop
                 CreateBeelzebubDiscardInteraction(
                     TakeNextDemonContractInteractionId(),
                     replacementContract,
-                    ownerCards,
-                    choosingOwnerCard: true);
+                    ownerCards.Count > 0
+                        ? ownerCards
+                        : GetOpponent(ownerSide).Hand.GetPublicCards(),
+                    choosingOwnerCard: ownerCards.Count > 0);
             SetPendingDemonContractInteraction(ownerSide, pending);
             State = ownerSide == CombatantSide.Player
                 ? CoreLoopState.PlayerResolvingDemonContract

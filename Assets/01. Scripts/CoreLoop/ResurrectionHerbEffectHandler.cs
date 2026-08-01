@@ -15,10 +15,10 @@ namespace DiaBlackJack.CoreLoop
             AutomaticCardEffectContext context)
         {
             return AutomaticCardEffectStep.AwaitChoice(
-                context.OwnerSide,
-                AutomaticCardChoiceKind.ResurrectionHerbDecision,
+                CombatantSide.Player,
+                GetChoiceKind(context, CombatantSide.Player),
                 "Choose whether to pay 1 soul and redeal your hand.",
-                CreateDecisionOptions(context, context.OwnerSide));
+                CreateDecisionOptions(context, CombatantSide.Player));
         }
 
         public AutomaticCardEffectStep ResolveChoice(
@@ -26,46 +26,44 @@ namespace DiaBlackJack.CoreLoop
             PendingAutomaticCardInteraction pendingInteraction,
             AutomaticCardChoiceOption selectedOption)
         {
-            if (pendingInteraction.ChoiceKind ==
-                AutomaticCardChoiceKind.ResurrectionHerbDecision)
-            {
-                AutomaticCardEffectStep terminal = ResolvePayment(
-                    context,
-                    context.OwnerSide,
-                    selectedOption);
-                if (terminal != null)
-                {
-                    return terminal;
-                }
-
-                return AutomaticCardEffectStep.AwaitChoice(
-                    context.OpponentSide,
-                    AutomaticCardChoiceKind.ResurrectionHerbOpponentDecision,
-                    "Choose whether to pay 1 soul and redeal your hand.",
-                    CreateDecisionOptions(context, context.OpponentSide));
-            }
-
             if (pendingInteraction.ChoiceKind !=
-                AutomaticCardChoiceKind.ResurrectionHerbOpponentDecision)
+                GetChoiceKind(context, pendingInteraction.DecisionSide))
             {
                 throw new InvalidOperationException(
                     "Resurrection herb received an invalid choice kind.");
             }
 
-            AutomaticCardEffectStep opponentTerminal = ResolvePayment(
+            CommitDecision(
                 context,
-                context.OpponentSide,
+                pendingInteraction.DecisionSide,
                 selectedOption);
-            if (opponentTerminal != null)
+            if (pendingInteraction.DecisionSide == CombatantSide.Player)
             {
-                return opponentTerminal;
+                return AutomaticCardEffectStep.AwaitChoice(
+                    CombatantSide.Enemy,
+                    GetChoiceKind(context, CombatantSide.Enemy),
+                    "Choose whether to pay 1 soul and redeal your hand.",
+                    CreateDecisionOptions(context, CombatantSide.Enemy));
             }
 
+            bool battleEndedBySoulLoss =
+                context.ApplyCommittedResurrectionHerbDecisions();
             return AutomaticCardEffectStep.Complete(
                 GetSourceDisposition(context),
-                context.DidResurrectionHerbRedeal
+                battleEndedBySoulLoss
+                    ? AutomaticCardCompletionFlow.EndBattle
+                    : context.DidResurrectionHerbRedeal
                     ? AutomaticCardCompletionFlow.CancelContinuation
                     : AutomaticCardCompletionFlow.ResumeContinuation);
+        }
+
+        private static AutomaticCardChoiceKind GetChoiceKind(
+            AutomaticCardEffectContext context,
+            CombatantSide decisionSide)
+        {
+            return decisionSide == context.OwnerSide
+                ? AutomaticCardChoiceKind.ResurrectionHerbDecision
+                : AutomaticCardChoiceKind.ResurrectionHerbOpponentDecision;
         }
 
         private static IReadOnlyList<AutomaticCardChoiceOption>
@@ -87,14 +85,17 @@ namespace DiaBlackJack.CoreLoop
             return options.AsReadOnly();
         }
 
-        private static AutomaticCardEffectStep ResolvePayment(
+        private static void CommitDecision(
             AutomaticCardEffectContext context,
             CombatantSide decisionSide,
             AutomaticCardChoiceOption selectedOption)
         {
             if (selectedOption.OptionId == DeclineOptionId)
             {
-                return null;
+                context.CommitResurrectionHerbDecision(
+                    decisionSide,
+                    paysSoul: false);
+                return;
             }
 
             if (selectedOption.OptionId != PaySoulAndRedealOptionId ||
@@ -104,14 +105,9 @@ namespace DiaBlackJack.CoreLoop
                     "Resurrection herb received an invalid payment option.");
             }
 
-            if (context.PayResurrectionHerbSoulAndRedeal(decisionSide))
-            {
-                return null;
-            }
-
-            return AutomaticCardEffectStep.Complete(
-                GetSourceDisposition(context),
-                AutomaticCardCompletionFlow.EndBattle);
+            context.CommitResurrectionHerbDecision(
+                decisionSide,
+                paysSoul: true);
         }
 
         private static AutomaticCardSourceDisposition GetSourceDisposition(

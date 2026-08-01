@@ -43,6 +43,8 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(ResolvePlayer(battle, ownerChoice,
                 ResurrectionHerbEffectHandler.PaySoulAndRedealOptionId), Is.True);
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(5));
+            Assert.That(battle.Player.Hand.Count, Is.EqualTo(3));
             Assert.That(ResolveEnemy(battle,
                 ResurrectionHerbEffectHandler.DeclineOptionId), Is.True);
 
@@ -132,6 +134,12 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(ResolvePlayer(battle, ownerChoice,
                 ResurrectionHerbEffectHandler.PaySoulAndRedealOptionId), Is.True);
 
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(1));
+            Assert.That(battle.State,
+                Is.EqualTo(CoreLoopState.ResolvingAutomaticCardEffect));
+            Assert.That(ResolveEnemy(battle,
+                ResurrectionHerbEffectHandler.DeclineOptionId), Is.True);
+
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(0));
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.BattleEnded));
             Assert.That(battle.PendingAutomaticInteraction, Is.Null);
@@ -191,7 +199,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void ACRV03_I02_EnemyOwnedHerbHandsSecondDecisionToPlayer()
+        public void ACRV03_I02_EnemyOwnedHerbStillCommitsPlayerDecisionFirst()
         {
             var battle = new CoreLoopBattle(
                 BlackjackDeck.CreateInDrawOrder(CreateCards(
@@ -206,24 +214,27 @@ namespace DiaBlackJack.CoreLoop.Tests
                 enemyAutomaticCardDecisionPolicy: null);
             Assert.That(battle.Start(), Is.True);
             Assert.That(battle.TryPlayerStand(), Is.True);
+            PendingAutomaticCardInteraction playerChoice =
+                battle.PendingPlayerAutomaticInteraction;
+            Assert.That(playerChoice.OwnerSide, Is.EqualTo(CombatantSide.Enemy));
+            Assert.That(playerChoice.DecisionSide, Is.EqualTo(CombatantSide.Player));
+            Assert.That(playerChoice.ChoiceKind,
+                Is.EqualTo(AutomaticCardChoiceKind.ResurrectionHerbOpponentDecision));
+            Assert.That(battle.TryResolvePlayerAutomaticCardChoice(
+                playerChoice.InteractionId,
+                ResurrectionHerbEffectHandler.DeclineOptionId), Is.True);
+
             PendingAutomaticCardInteraction enemyChoice =
                 battle.PendingAutomaticInteraction;
-            Assert.That(enemyChoice.OwnerSide, Is.EqualTo(CombatantSide.Enemy));
             Assert.That(enemyChoice.DecisionSide, Is.EqualTo(CombatantSide.Enemy));
-
+            Assert.That(enemyChoice.ChoiceKind,
+                Is.EqualTo(AutomaticCardChoiceKind.ResurrectionHerbDecision));
+            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(6));
             Assert.That(battle.TryResolveAutomaticCardChoice(
                 CombatantSide.Enemy,
                 enemyChoice.InteractionId,
                 ResurrectionHerbEffectHandler.PaySoulAndRedealOptionId), Is.True);
 
-            Assert.That(battle.PendingPlayerAutomaticInteraction, Is.Not.Null);
-            Assert.That(battle.PendingPlayerAutomaticInteraction.ChoiceKind,
-                Is.EqualTo(AutomaticCardChoiceKind.ResurrectionHerbOpponentDecision));
-            PendingAutomaticCardInteraction playerChoice =
-                battle.PendingPlayerAutomaticInteraction;
-            Assert.That(battle.TryResolvePlayerAutomaticCardChoice(
-                playerChoice.InteractionId,
-                ResurrectionHerbEffectHandler.DeclineOptionId), Is.True);
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
             Assert.That(battle.PendingAutomaticInteraction, Is.Null);
             Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(5));

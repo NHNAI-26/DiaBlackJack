@@ -103,6 +103,7 @@ namespace DiaBlackJack.GameScene
         private bool _revolverImpactPending;
         private CombatantSide _revolverImpactTargetSide;
         private bool _hammerSwitchInputLocked;
+        private bool _enemyCardSelectionSwitchInputLocked;
         private bool _deckPreviewSwitchInputLocked;
         private bool _codexSwitchInputLocked;
         private bool _returnCameraToCurrentAfterHammer;
@@ -314,6 +315,7 @@ namespace DiaBlackJack.GameScene
             ClearPendingRevolverImpact();
             CloseDeckPreview();
             CloseCodex();
+            EndEnemyCardSelectionCamera();
             if (codex != null)
             {
                 codex.OpenStateChanged -= HandleCodexOpenStateChanged;
@@ -326,6 +328,7 @@ namespace DiaBlackJack.GameScene
 
         private void OnDestroy()
         {
+            EndEnemyCardSelectionCamera();
             if (hud != null)
             {
                 hud.CombatCommandRequested -= HandleCombatCommand;
@@ -359,6 +362,7 @@ namespace DiaBlackJack.GameScene
             tableCombatCommands?.ResetView();
             CloseDeckPreview();
             CloseCodex();
+            EndEnemyCardSelectionCamera();
             EndHammerSwitchInputLock();
             ResolveHammerAnimation()?.Hide();
             ResetRevolverAnimationState();
@@ -1923,6 +1927,8 @@ namespace DiaBlackJack.GameScene
             _playedHammerAnimationController = null;
             bool playedHammerAnimation =
                 TryPlayHammerAnimation(vm.HammerAnimationCue);
+            UpdateEnemyCardSelectionCamera(
+                vm.FocusesEnemyCardsForSelection);
             bool deferredCardRender =
                 deferHammerSmashCardRender &&
                 playedHammerAnimation &&
@@ -2202,6 +2208,49 @@ namespace DiaBlackJack.GameScene
 
             controller.SetView(view);
             controller.LockSwitchInputForSeconds(lockSeconds);
+        }
+
+        private void UpdateEnemyCardSelectionCamera(bool focusesEnemyCards)
+        {
+            if (focusesEnemyCards == _enemyCardSelectionSwitchInputLocked)
+            {
+                return;
+            }
+
+            if (!focusesEnemyCards)
+            {
+                EndEnemyCardSelectionCamera();
+                return;
+            }
+
+            GameSceneCameraViewController controller =
+                ResolveCameraViewController();
+            if (controller == null ||
+                !controller.SetView(GameSceneCameraView.EnemyFocus))
+            {
+                return;
+            }
+
+            controller.LockSwitchInput();
+            _enemyCardSelectionSwitchInputLocked = true;
+        }
+
+        private void EndEnemyCardSelectionCamera()
+        {
+            if (!_enemyCardSelectionSwitchInputLocked)
+            {
+                return;
+            }
+
+            GameSceneCameraViewController controller =
+                ResolveCameraViewController();
+            if (controller != null)
+            {
+                controller.SetView(GameSceneCameraView.Current);
+                controller.UnlockSwitchInput();
+            }
+
+            _enemyCardSelectionSwitchInputLocked = false;
         }
 
         private void ApplyCinematicCamera(
