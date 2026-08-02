@@ -199,6 +199,40 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CUI01_U04_HudCurrencyCountersUseMirroredSafeAreaLayout()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+
+            RectTransform playerSoul = prefab.transform
+                .Find("PlayerSoul")
+                .GetComponent<RectTransform>();
+            RectTransform enemySoul = prefab.transform
+                .Find("EnemySoul")
+                .GetComponent<RectTransform>();
+            RectTransform gold = prefab.transform
+                .Find("Gold")
+                .GetComponent<RectTransform>();
+
+            Assert.That(playerSoul.gameObject.activeSelf, Is.True);
+            Assert.That(enemySoul.gameObject.activeSelf, Is.True);
+            Assert.That(gold.gameObject.activeSelf, Is.True);
+            Assert.That(playerSoul.anchorMin, Is.EqualTo(new Vector2(0f, 1f)));
+            Assert.That(enemySoul.anchorMin, Is.EqualTo(new Vector2(1f, 1f)));
+            Assert.That(gold.anchorMin, Is.EqualTo(new Vector2(0f, 1f)));
+            Assert.That(
+                playerSoul.anchoredPosition,
+                Is.EqualTo(new Vector2(24f, -20f)));
+            Assert.That(
+                enemySoul.anchoredPosition,
+                Is.EqualTo(new Vector2(-24f, -20f)));
+            Assert.That(
+                gold.anchoredPosition,
+                Is.EqualTo(new Vector2(24f, -120f)));
+        }
+
+        [Test]
         public void CUV06_U01_HammerAndRevolverPresentationHideCombatHud()
         {
             CoreLoopBattle battle = CreateStartedBattle(10, 2, 4, 9);

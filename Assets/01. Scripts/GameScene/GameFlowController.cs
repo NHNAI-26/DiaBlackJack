@@ -515,7 +515,8 @@ namespace DiaBlackJack.GameScene
                 hudRoot = hud.gameObject;
             }
 
-            hud?.SetEnemyStatusVisible(false);
+            // Formal screens decide visibility in RenderFlowScreen; standalone combat keeps
+            // the authored HUD state so the enemy soul counter remains visible.
             startingDemonReveal?.BindHud(hud);
             if (charactersRoot == null)
             {
