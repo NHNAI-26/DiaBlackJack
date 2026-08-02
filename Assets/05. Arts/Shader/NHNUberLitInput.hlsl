@@ -129,8 +129,8 @@ inline half4 NHNSampleBase(float2 rawUV, out float2 surfaceUV)
 {
 #if defined(NHN_SPRITE_UBER)
     float2 baseSpriteUV = NHNGetBaseSpriteUV(rawUV);
-    surfaceUV = NHNGetBaseSpriteAtlasUV(baseSpriteUV);
-    half4 baseSample = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, surfaceUV);
+    surfaceUV = rawUV;
+    half4 baseSample = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, rawUV);
     float2 blendSpriteUV = NHNGetCardBlendAtlasUV(baseSpriteUV);
     half4 blendSample = SAMPLE_TEXTURE2D(_CardBlendTex, sampler_CardBlendTex, blendSpriteUV);
     return lerp(baseSample, blendSample, saturate(_CardBlendAmount));
@@ -152,8 +152,7 @@ inline half NHNSampleSpriteBaseAlpha(float2 rawUV)
     float2 baseSpriteUV = NHNGetBaseSpriteUVUnclamped(rawUV);
     half inside = NHNGetSpriteUVInside(baseSpriteUV);
     float2 clampedSpriteUV = saturate(baseSpriteUV);
-    half mainAlpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex,
-        NHNGetBaseSpriteAtlasUV(clampedSpriteUV)).a;
+    half mainAlpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, rawUV).a;
     half blendAlpha = SAMPLE_TEXTURE2D(_CardBlendTex, sampler_CardBlendTex,
         NHNGetCardBlendAtlasUV(clampedSpriteUV)).a;
     return lerp(mainAlpha, blendAlpha, saturate(_CardBlendAmount)) * inside;

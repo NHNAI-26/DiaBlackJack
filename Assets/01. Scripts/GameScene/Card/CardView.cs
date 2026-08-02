@@ -80,6 +80,7 @@ namespace DiaBlackJack.GameScene
 
         private MaterialPropertyBlock _frontPropertyBlock;
         private MaterialPropertyBlock _backPropertyBlock;
+        private Material _cardBackMaterial;
         private Material _shopFrontMaterial;
         private Material _shopBackMaterial;
         private SpriteRenderer _frontSpriteRenderer;
@@ -198,6 +199,7 @@ namespace DiaBlackJack.GameScene
 
         private void OnDestroy()
         {
+            DestroyMaterialInstance(_cardBackMaterial);
             DestroyMaterialInstance(_shopFrontMaterial);
             DestroyMaterialInstance(_shopBackMaterial);
         }
@@ -247,6 +249,7 @@ namespace DiaBlackJack.GameScene
             }
 
             ResetCardBlend(FrontSpriteRenderer());
+            ResetCardBlend(BackSpriteRenderer());
 
             SetFaceObjects(animateReveal ? false : _showingFrontFace);
 
@@ -379,10 +382,12 @@ namespace DiaBlackJack.GameScene
             CaptureShopColors();
             CreateMaterialInstance(
                 FrontSpriteRenderer(),
-                ref _shopFrontMaterial);
+                ref _shopFrontMaterial,
+                "Shop Card Instance");
             CreateMaterialInstance(
                 BackSpriteRenderer(),
-                ref _shopBackMaterial);
+                ref _shopBackMaterial,
+                "Shop Card Instance");
             ApplyHoverOutline(false);
         }
 
@@ -736,7 +741,8 @@ namespace DiaBlackJack.GameScene
 
         private static void CreateMaterialInstance(
             Renderer renderer,
-            ref Material materialInstance)
+            ref Material materialInstance,
+            string instanceLabel)
         {
             if (renderer == null || materialInstance != null)
             {
@@ -751,7 +757,7 @@ namespace DiaBlackJack.GameScene
 
             materialInstance = new Material(source)
             {
-                name = source.name + " (Shop Card Instance)"
+                name = source.name + " (" + instanceLabel + ")"
             };
             renderer.sharedMaterial = materialInstance;
         }
@@ -798,25 +804,29 @@ namespace DiaBlackJack.GameScene
 
         private void ApplyCardBlend(Sprite sprite, float amount)
         {
-            Renderer renderer = BackRenderer();
+            SpriteRenderer renderer = BackSpriteRenderer();
             if (renderer == null)
             {
                 return;
             }
 
+            Sprite textureSprite = sprite != null ? sprite : renderer.sprite;
+            EnsureCardBackMaterialInstance(renderer);
             MaterialPropertyBlock propertyBlock = PropertyBlockFor(renderer);
             renderer.GetPropertyBlock(propertyBlock);
-            if (sprite != null)
-            {
-                propertyBlock.SetTexture(CardBlendTextureId, sprite.texture);
-            }
-
-            propertyBlock.SetVector(CardBlendUvRectId, GetSpriteUvRect(sprite));
-            propertyBlock.SetFloat(CardBlendAmountId, Mathf.Clamp01(amount));
+            float blendAmount = sprite == null ? 0f : Mathf.Clamp01(amount);
+            SetCardBlendSpriteProperties(
+                propertyBlock,
+                renderer.sharedMaterial,
+                textureSprite);
+            SetCardBlendAmountProperty(
+                propertyBlock,
+                renderer.sharedMaterial,
+                blendAmount);
             renderer.SetPropertyBlock(propertyBlock);
         }
 
-        private void ResetCardBlend(Renderer renderer)
+        private void ResetCardBlend(SpriteRenderer renderer)
         {
             if (renderer == null)
             {
@@ -825,22 +835,90 @@ namespace DiaBlackJack.GameScene
 
             MaterialPropertyBlock propertyBlock = PropertyBlockFor(renderer);
             renderer.GetPropertyBlock(propertyBlock);
-            propertyBlock.SetVector(CardBlendUvRectId, GetSpriteUvRect(null));
-            propertyBlock.SetFloat(CardBlendAmountId, 0f);
+            if (renderer == _backSpriteRenderer)
+            {
+                EnsureCardBackMaterialInstance(renderer);
+            }
+
+            Material blendMaterial =
+                renderer == _backSpriteRenderer ? renderer.sharedMaterial : null;
+            SetCardBlendSpriteProperties(
+                propertyBlock,
+                blendMaterial,
+                renderer.sprite);
+            SetCardBlendAmountProperty(propertyBlock, blendMaterial, 0f);
             renderer.SetPropertyBlock(propertyBlock);
+        }
+
+        private void EnsureCardBackMaterialInstance(SpriteRenderer renderer)
+        {
+            if (renderer == null || renderer != _backSpriteRenderer)
+            {
+                return;
+            }
+
+            CreateMaterialInstance(
+                renderer,
+                ref _cardBackMaterial,
+                "Card Back Instance");
+        }
+
+        private static void SetCardBlendSpriteProperties(
+            MaterialPropertyBlock propertyBlock,
+            Material material,
+            Sprite sprite)
+        {
+            if (propertyBlock == null)
+            {
+                return;
+            }
+
+            Texture texture = sprite == null ? Texture2D.whiteTexture : sprite.texture;
+            Vector4 uvRect = GetSpriteUvRect(sprite);
+            propertyBlock.SetTexture(CardBlendTextureId, texture);
+            propertyBlock.SetVector(CardBlendUvRectId, uvRect);
+            if (material != null)
+            {
+                if (material.HasProperty(CardBlendTextureId))
+                {
+                    material.SetTexture(CardBlendTextureId, texture);
+                }
+
+                if (material.HasProperty(CardBlendUvRectId))
+                {
+                    material.SetVector(CardBlendUvRectId, uvRect);
+                }
+            }
+        }
+
+        private static void SetCardBlendAmountProperty(
+            MaterialPropertyBlock propertyBlock,
+            Material material,
+            float amount)
+        {
+            float clampedAmount = Mathf.Clamp01(amount);
+            propertyBlock.SetFloat(CardBlendAmountId, clampedAmount);
+            if (material != null && material.HasProperty(CardBlendAmountId))
+            {
+                material.SetFloat(CardBlendAmountId, clampedAmount);
+            }
         }
 
         private void SetCardBlendAmount(float amount)
         {
-            Renderer renderer = BackRenderer();
+            SpriteRenderer renderer = BackSpriteRenderer();
             if (renderer == null)
             {
                 return;
             }
 
+            EnsureCardBackMaterialInstance(renderer);
             MaterialPropertyBlock propertyBlock = PropertyBlockFor(renderer);
             renderer.GetPropertyBlock(propertyBlock);
-            propertyBlock.SetFloat(CardBlendAmountId, Mathf.Clamp01(amount));
+            SetCardBlendAmountProperty(
+                propertyBlock,
+                renderer.sharedMaterial,
+                amount);
             renderer.SetPropertyBlock(propertyBlock);
         }
 
