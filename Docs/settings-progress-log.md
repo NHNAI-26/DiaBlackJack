@@ -3,7 +3,7 @@
 > 프로젝트: DiaBlackJack
 > 작업 범위: SET-00~SET-05
 > 버전: v1.0
-> 최종 갱신: 2026-07-30
+> 최종 갱신: 2026-08-02
 
 ## 1. 완료 내용
 
@@ -33,6 +33,17 @@
 - `SettingsSystem`을 `StageTest`와 `GameScene`에 배치했다.
 - `PauseSettingsCanvas`를 `GameScene`에 배치했다.
 - `GameScene` 검증 결과 missing script 0, broken prefab 0이었다.
+- 1920×1080 설정 화면의 모든 선택기·슬라이더·뒤로 버튼이 화면 안에 있고
+  서로 겹치지 않음을 확인했다.
+- 플레이어 빌드에서 `Editor` 전용 도구가 런타임 어셈블리에 포함되던 문제를
+  `UNITY_EDITOR` 경계로 차단했다.
+- 중첩 배치된 `SettingsSystem`을 런타임 루트로 승격한 뒤
+  `DontDestroyOnLoad`하도록 수정해 씬 전환 경고를 제거했다.
+- 화면 적용 검증이 해상도뿐 아니라 실제 `FullScreenMode`도 비교하도록 보강했다.
+  현재 Radeon 드라이버가 독점 전체 화면을 거부하거나 테두리 없는 모드로 내리면
+  설정값만 성공한 것처럼 남기지 않고 이전 설정으로 복구한다.
+- SO와 `CardDefinitionCatalog`의 카드 설명을 동기화해 테스트 실행 순서에 따라
+  호버 설명이 달라지던 회귀를 제거했다.
 
 ## 2. 검증 결과
 
@@ -45,13 +56,20 @@
 | 2026-07-30 | 설정 저장 | 설정 화면 종료 뒤 PlayerPrefs 버전 키 생성 확인 |
 | 2026-07-30 | 씬 서비스 수 | StageTest 1개, 전환 뒤 GameScene 1개 확인 |
 | 2026-07-30 | 직접 GameScene Console | 설정 화면 조작 뒤 오류·경고 0 |
+| 2026-08-02 | 1920×1080 Game View | 시각 판정 96/100, 패널 잘림·겹침 0 |
+| 2026-08-02 | Windows 창 모드 | 1280×720 `Windowed` 요청·실제 상태 일치 |
+| 2026-08-02 | Windows 테두리 없는 전체 화면 | 네이티브 해상도 `FullScreenWindow` 요청·실제 상태 일치 |
+| 2026-08-02 | Windows 독점 전체 화면 | 드라이버의 DXGI 거부·모드 강등 확인, 실제 모드 검증과 이전값 복구 추가 |
+| 2026-08-02 | 설정 저장 재실행 | 1920×1080·테두리 없는 전체 화면 저장 스냅샷 재로드 확인 |
+| 2026-08-02 | `StageTest → GameScene` 강제 전환 5회 | 매회 런타임 오브젝트 1,547개, missing script 0, Console 오류·경고 0 |
+| 2026-08-02 | 전체 EditMode | 891/891 통과, job `9f62901d9c1647fcb1b1a088af4c5837` |
+| 2026-08-02 | Windows Release 전체 씬 빌드 | 211.58MB, 오류 0, job `build-3985a4d314` |
 
-## 3. 미완료·후속 확인
+## 3. 잔여 위험
 
-- 1080p Game View와 Windows Standalone 실기기 화면 모드 전환은 아직 확인하지 않았다.
-- 강제 `SceneManager.LoadScene`으로 실행한 `StageTest → GameScene` 진단에서
-  `The referenced script (Unknown) on this Behaviour is missing!` 로그 1건이 발생했다.
-  두 씬과 설정 프리팹의 정적 검증은 누락 0건이므로 정상 게임 진행 경로에서 원인을
-  별도 확인해야 한다.
-- 테스트 러너가 출력하는 Performance Testing 준비·정리 경고는 제품 코드 경고와
-  구분한다.
+- 이 PC의 Radeon 드라이버는 1920×1080 독점 전체 화면 요청을
+  `DXGI 887a0022`로 거부한다. 게임은 실패를 감지해 이전 화면 설정으로 복구한다.
+- 과거의 간헐적 Missing Script 로그는 정적 검사와 강제 전환 5회에서 재현되지 않았다.
+  현재 확인된 관련 경고는 중첩 `SettingsSystem`의 비루트 영속화였으며 수정 완료했다.
+- 테스트 러너의 Performance Testing 준비·정리 메시지와 개발 빌드의 MCP 로컬 연결
+  실패 메시지는 제품 설정 로직 오류와 구분한다.

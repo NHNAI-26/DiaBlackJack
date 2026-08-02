@@ -9,7 +9,7 @@ namespace DiaBlackJack.StageProgression.Tests
     public sealed class FormalRunShopTests
     {
         [Test]
-        public void RF02_U01_OfferHasFixedSlotsUniqueDefinitionsAndConfiguredPrices()
+        public void RF02_U01_OfferHasFixedSlotsDistinctDemonsAndConfiguredPrices()
         {
             var generator = new ShopOfferGenerator(12001);
             ShopOffer offer = generator.Generate(0, 0, false);
@@ -27,8 +27,12 @@ namespace DiaBlackJack.StageProgression.Tests
                 offer.CardOptions.Select(option => option.OptionId).Distinct().Count(),
                 Is.EqualTo(5));
             Assert.That(
-                offer.CardOptions.Select(option => option.DefinitionKey).Distinct().Count(),
-                Is.EqualTo(5));
+                offer.CardOptions
+                    .Where(option => option.DeckKind == ShopCardDeckKind.Demon)
+                    .Select(option => option.DefinitionKey)
+                    .Distinct()
+                    .Count(),
+                Is.EqualTo(2));
             Assert.That(
                 offer.CardOptions.All(option => option.Price == 3),
                 Is.True);
@@ -289,6 +293,45 @@ namespace DiaBlackJack.StageProgression.Tests
                 observedKeys,
                 Is.EquivalentTo(
                     DemonContractCatalog.PrototypeEnabledDemonKeys));
+        }
+
+        [Test]
+        public void GSV07_U01_ShopExcludesOwnedDemonsAndKeepsDemonOffersDistinct()
+        {
+            IReadOnlyList<string> prototypeKeys =
+                DemonContractCatalog.PrototypeEnabledDemonKeys;
+            string[] ownedKeys = prototypeKeys.Take(3).ToArray();
+
+            ShopOffer offer = new ShopOfferGenerator(20260802).Generate(
+                0,
+                0,
+                false,
+                ownedKeys);
+            string[] offeredKeys = offer.CardOptions
+                .Where(option => option.DeckKind == ShopCardDeckKind.Demon)
+                .Select(option => option.DefinitionKey)
+                .ToArray();
+
+            Assert.That(offeredKeys, Has.Length.EqualTo(2));
+            Assert.That(offeredKeys.Distinct().Count(), Is.EqualTo(2));
+            Assert.That(offeredKeys.Intersect(ownedKeys), Is.Empty);
+        }
+
+        [Test]
+        public void GSV07_U02_NormalShopCardsMayRepeat()
+        {
+            bool foundRepeatedNormalCard = false;
+            for (int seed = 1; seed <= 100 && !foundRepeatedNormalCard; seed++)
+            {
+                ShopOffer offer = new ShopOfferGenerator(seed).Generate(0, 0, false);
+                string[] normalKeys = offer.CardOptions
+                    .Where(option => option.DeckKind == ShopCardDeckKind.Normal)
+                    .Select(option => option.DefinitionKey)
+                    .ToArray();
+                foundRepeatedNormalCard = normalKeys.Distinct().Count() < normalKeys.Length;
+            }
+
+            Assert.That(foundRepeatedNormalCard, Is.True);
         }
 
         [Test]

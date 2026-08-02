@@ -3,7 +3,7 @@
 > 프로젝트: DiaBlackJack
 > 작업 범위: SET-00~SET-05
 > 버전: v1.0
-> 최종 갱신: 2026-07-30
+> 최종 갱신: 2026-08-02
 
 | 작업 | 내용 | 검증 게이트 | 상태 |
 | --- | --- | --- | --- |
@@ -12,11 +12,13 @@
 | SET-02 | 해상도 목록과 화면 모드 적용 | 중복 제거·정렬·최고 주사율·매핑 테스트 | 완료 |
 | SET-03 | 설정 서비스와 오디오 이벤트 재발행 | 즉시 미리보기·저장·씬 중복 방지 확인 | 완료 |
 | SET-04 | 일시정지·설정·종료 확인 UI | ESC 우선순위·입력 차단·timeScale 복원 확인 | 완료 |
-| SET-05 | 프리팹·씬 연결과 회귀 검증 | 전체 EditMode, 720p/1080p, Console 확인 | 진행 중 |
+| SET-05 | 프리팹·씬 연결과 회귀 검증 | 전체 EditMode, 720p/1080p, Windows 빌드·Console 확인 | 완료 |
 
-## SET-05 잔여 수동 게이트
+## SET-05 최종 게이트
 
-- 1080p Game View 레이아웃 확인
-- Windows Standalone에서 세 화면 모드 전환 확인
+- 1920×1080 Game View에서 설정 패널 잘림·겹침 없음 확인
+- Windows Standalone에서 창 모드와 테두리 없는 전체 화면 전환 확인
+- 독점 전체 화면 실패 시 실제 모드 불일치를 감지하고 이전 설정으로 복구
 - 빌드 재실행 뒤 저장값 유지 확인
-- 정상 게임 진행으로 `StageTest → GameScene` 전환 시 Console 오류 0 확인
+- `StageTest → GameScene` 강제 전환 5회에서 Missing Script·Console 오류 0 확인
+- 전체 EditMode와 비개발 Windows Release 빌드 통과

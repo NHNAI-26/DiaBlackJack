@@ -1,0 +1,10 @@
+using UnityEngine;
+
+namespace DiaBlackJack.GameScene
+{
+    [DisallowMultipleComponent]
+    public sealed class WhiskeyAnimationEventReceiver :
+        PresentationAnimationEventReceiver
+    {
+    }
+}

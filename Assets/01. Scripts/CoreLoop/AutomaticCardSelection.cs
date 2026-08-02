@@ -149,18 +149,35 @@ namespace DiaBlackJack.CoreLoop
         }
     }
 
+    public enum AutomaticCardDecisionOutcome
+    {
+        None,
+        Declined,
+        Accepted
+    }
+
     public readonly struct AutomaticCardResult
     {
         public AutomaticCardResult(
             int sourceCardId,
             CardEffectKind effectKind,
             CombatantSide ownerSide,
-            AutomaticCardSourceDisposition sourceDisposition)
+            AutomaticCardSourceDisposition sourceDisposition,
+            AutomaticCardDecisionOutcome playerDecision =
+                AutomaticCardDecisionOutcome.None,
+            AutomaticCardDecisionOutcome enemyDecision =
+                AutomaticCardDecisionOutcome.None,
+            int? playerTargetCardId = null,
+            int? enemyTargetCardId = null)
         {
             SourceCardId = sourceCardId;
             EffectKind = effectKind;
             OwnerSide = ownerSide;
             SourceDisposition = sourceDisposition;
+            PlayerDecision = playerDecision;
+            EnemyDecision = enemyDecision;
+            PlayerTargetCardId = playerTargetCardId;
+            EnemyTargetCardId = enemyTargetCardId;
         }
 
         public int SourceCardId { get; }
@@ -170,5 +187,13 @@ namespace DiaBlackJack.CoreLoop
         public CombatantSide OwnerSide { get; }
 
         public AutomaticCardSourceDisposition SourceDisposition { get; }
+
+        public AutomaticCardDecisionOutcome PlayerDecision { get; }
+
+        public AutomaticCardDecisionOutcome EnemyDecision { get; }
+
+        public int? PlayerTargetCardId { get; }
+
+        public int? EnemyTargetCardId { get; }
     }
 }

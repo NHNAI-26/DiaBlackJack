@@ -56,6 +56,10 @@ namespace Border.Settings
             }
 
             _current = this;
+            if (transform.parent != null)
+            {
+                transform.SetParent(null);
+            }
             DontDestroyOnLoad(gameObject);
             _repository = new PlayerPrefsSettingsRepository();
 
@@ -171,11 +175,18 @@ namespace Border.Settings
             yield return null;
             yield return null;
 
-            if (Application.isEditor ||
+            FullScreenMode expectedMode =
+                SettingsGraphicsUtility.GetFullScreenMode(
+                    requested.WindowMode);
+            bool modeApplied = Screen.fullScreenMode == expectedMode;
+            bool resolutionApplied =
                 requested.WindowMode ==
-                GameWindowMode.BorderlessFullscreen ||
+                    GameWindowMode.BorderlessFullscreen ||
                 (Screen.width == requested.ResolutionWidth &&
-                 Screen.height == requested.ResolutionHeight))
+                 Screen.height == requested.ResolutionHeight);
+
+            if (Application.isEditor ||
+                (modeApplied && resolutionApplied))
             {
                 _displayVerification = null;
                 yield break;

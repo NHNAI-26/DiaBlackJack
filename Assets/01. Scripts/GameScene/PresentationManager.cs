@@ -14,6 +14,8 @@ namespace DiaBlackJack.GameScene
         private static readonly int ColorScreenBlendEnabledId = Shader.PropertyToID("_ColorScreenBlendEnabled");
         private static readonly int BlendStrengthId = Shader.PropertyToID("_BlendStrength");
         private const string ColorScreenBlendKeyword = "_COLOR_SCREEN_BLEND_ON";
+        private const int DefaultNormalImpulseChannel = 1;
+        private const int DefaultSmallImpulseChannel = 1 << 1;
 
         [Header("Mood")]
         [SerializeField] private Volume moodVolume;
@@ -23,6 +25,9 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private CinemachineImpulseSource impulseSource;
         [SerializeField] private BoolEventChannelSO changeCameraShakeEvent;
         [SerializeField] private bool shakeEnabled = true;
+        [SerializeField] private int normalImpulseChannel = DefaultNormalImpulseChannel;
+        [SerializeField] private int smallImpulseChannel = DefaultSmallImpulseChannel;
+        [SerializeField, Min(0f)] private float smallImpulseAmplitude = 0.025f;
 
         [SerializeField, Min(0.01f)] private float chromaticReturnSpeed = 2f;
 
@@ -123,25 +128,32 @@ namespace DiaBlackJack.GameScene
 
         public void ShakeCamera(float force = 1f)
         {
-            if (!shakeEnabled || impulseSource == null ||
-                force <= 0f || float.IsNaN(force) || float.IsInfinity(force))
+            if (!CanShake(force))
                 return;
 
             RestoreCameraShakeDuration();
-            impulseSource.GenerateImpulseWithForce(force);
+            GenerateImpulse(force, ResolveImpulseChannel(normalImpulseChannel));
         }
 
         public void ShakeCameraForDuration(float duration)
         {
-            if (!shakeEnabled || impulseSource == null ||
-                duration <= 0f || float.IsNaN(duration) || float.IsInfinity(duration))
-                return;
-            if (originalImpulseDuration < 0f)
-                originalImpulseDuration = impulseSource.ImpulseDefinition.ImpulseDuration;
-            shakeDurationRestoreTween?.Kill();
-            impulseSource.ImpulseDefinition.ImpulseDuration = duration;
-            impulseSource.GenerateImpulseWithForce(1f);
-            shakeDurationRestoreTween = DOVirtual.DelayedCall(duration, RestoreCameraShakeDuration, false);
+            ShakeCameraForDuration(duration, 1f, ResolveImpulseChannel(normalImpulseChannel));
+        }
+
+        public void ShakeSmallCameraForDuration(float duration)
+        {
+            ShakeCameraForDuration(
+                duration,
+                ResolveSmallImpulseVelocity(smallImpulseAmplitude),
+                ResolveImpulseChannel(smallImpulseChannel));
+        }
+
+        public void ShakeSmallCameraForDuration(float duration, float amplitude)
+        {
+            ShakeCameraForDuration(
+                duration,
+                ResolveSmallImpulseVelocity(amplitude),
+                ResolveImpulseChannel(smallImpulseChannel));
         }
         public void StartChromaticAberration(float riseSpeed)
         {
@@ -200,9 +212,9 @@ namespace DiaBlackJack.GameScene
             KillColorScreenBlendTween();
             SetColorScreenBlendStrength(1f);
             colorScreenBlendTween = DOTween
-                .To(() => colorScreenBlendMaterial.GetFloat(BlendStrengthId),
-                    SetColorScreenBlendStrength,
-                    0f,
+                .To(() => 0f,
+                    progress => SetColorScreenBlendStrength(SmoothLerp(1f, 0f, progress)),
+                    1f,
                     1f / fadeOutSpeed)
                 .SetEase(Ease.Linear)
                 .OnComplete(() => colorScreenBlendTween = null);
@@ -247,6 +259,93 @@ namespace DiaBlackJack.GameScene
             if (impulseSource != null)
                 impulseSource.ImpulseDefinition.ImpulseDuration = originalImpulseDuration;
             originalImpulseDuration = -1f;
+        }
+
+        private void ShakeCameraForDuration(float duration, float force, int impulseChannel)
+        {
+            if (!CanShake(force) ||
+                duration <= 0f || float.IsNaN(duration) || float.IsInfinity(duration))
+                return;
+
+            if (originalImpulseDuration < 0f)
+                originalImpulseDuration = impulseSource.ImpulseDefinition.ImpulseDuration;
+
+            shakeDurationRestoreTween?.Kill();
+            impulseSource.ImpulseDefinition.ImpulseDuration = duration;
+            GenerateImpulse(force, impulseChannel);
+            shakeDurationRestoreTween = DOVirtual.DelayedCall(duration, RestoreCameraShakeDuration, false);
+        }
+
+        private void ShakeCameraForDuration(float duration, Vector3 velocity, int impulseChannel)
+        {
+            if (!CanShake(velocity) ||
+                duration <= 0f || float.IsNaN(duration) || float.IsInfinity(duration))
+                return;
+
+            if (originalImpulseDuration < 0f)
+                originalImpulseDuration = impulseSource.ImpulseDefinition.ImpulseDuration;
+
+            shakeDurationRestoreTween?.Kill();
+            impulseSource.ImpulseDefinition.ImpulseDuration = duration;
+            GenerateImpulse(velocity, impulseChannel);
+            shakeDurationRestoreTween = DOVirtual.DelayedCall(duration, RestoreCameraShakeDuration, false);
+        }
+
+        private bool CanShake(float force)
+        {
+            return shakeEnabled &&
+                impulseSource != null &&
+                force > 0f &&
+                !float.IsNaN(force) &&
+                !float.IsInfinity(force);
+        }
+
+        private bool CanShake(Vector3 velocity)
+        {
+            return shakeEnabled &&
+                impulseSource != null &&
+                velocity.sqrMagnitude > 0f &&
+                IsFinite(velocity);
+        }
+
+        private void GenerateImpulse(float force, int impulseChannel)
+        {
+            int previousImpulseChannel = impulseSource.ImpulseDefinition.ImpulseChannel;
+            impulseSource.ImpulseDefinition.ImpulseChannel = impulseChannel;
+            impulseSource.GenerateImpulseWithForce(force);
+            impulseSource.ImpulseDefinition.ImpulseChannel = previousImpulseChannel;
+        }
+
+        private void GenerateImpulse(Vector3 velocity, int impulseChannel)
+        {
+            int previousImpulseChannel = impulseSource.ImpulseDefinition.ImpulseChannel;
+            impulseSource.ImpulseDefinition.ImpulseChannel = impulseChannel;
+            impulseSource.GenerateImpulseWithVelocity(velocity);
+            impulseSource.ImpulseDefinition.ImpulseChannel = previousImpulseChannel;
+        }
+
+        private Vector3 ResolveSmallImpulseVelocity(float amplitude)
+        {
+            Vector3 direction = impulseSource.DefaultVelocity;
+            if (direction.sqrMagnitude <= 0f || !IsFinite(direction))
+                direction = Vector3.down;
+
+            return direction.normalized * Mathf.Max(0f, amplitude);
+        }
+
+        private int ResolveImpulseChannel(int impulseChannel)
+        {
+            return impulseChannel == 0 ? DefaultNormalImpulseChannel : impulseChannel;
+        }
+
+        private static bool IsFinite(Vector3 value)
+        {
+            return !float.IsNaN(value.x) &&
+                !float.IsNaN(value.y) &&
+                !float.IsNaN(value.z) &&
+                !float.IsInfinity(value.x) &&
+                !float.IsInfinity(value.y) &&
+                !float.IsInfinity(value.z);
         }
         private void EnsureChromaticAberration()
         {
@@ -413,6 +512,12 @@ namespace DiaBlackJack.GameScene
         private void SetColorScreenBlendStrength(float value)
         {
             colorScreenBlendMaterial.SetFloat(BlendStrengthId, Mathf.Clamp01(value));
+        }
+
+        private static float SmoothLerp(float from, float to, float t)
+        {
+            float smoothed = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t));
+            return Mathf.LerpUnclamped(from, to, smoothed);
         }
 
         private void ResetColorScreenBlendImmediate()

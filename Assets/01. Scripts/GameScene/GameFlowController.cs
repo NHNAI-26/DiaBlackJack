@@ -392,17 +392,17 @@ namespace DiaBlackJack.GameScene
             if (nextScreen == GameFlowScreen.Combat)
             {
                 gameManager.UnbindFormalShop();
-                gameManager.enabled = true;
                 if (!gameManager.BindBattle(_session.CombatSession))
                 {
                     throw new InvalidOperationException(
                         "The active formal battle could not be bound.");
                 }
+
+                gameManager.enabled = true;
             }
             else if (nextScreen == GameFlowScreen.Shop)
             {
                 gameManager.UnbindBattle();
-                gameManager.enabled = true;
                 if (!gameManager.BindFormalShop(
                         CurrentViewModel,
                         _session.CombatSession.Progress.Player.CurrentGold))
@@ -410,6 +410,8 @@ namespace DiaBlackJack.GameScene
                     throw new InvalidOperationException(
                         "The active formal shop could not be bound.");
                 }
+
+                gameManager.enabled = true;
             }
             else
             {
@@ -472,7 +474,7 @@ namespace DiaBlackJack.GameScene
 
             if (hudRoot != null)
             {
-                hudRoot.SetActive(isCombat || isShop);
+                hudRoot.SetActive(ShouldShowHudRoot(CurrentScreen));
             }
 
             if (charactersRoot != null)
@@ -514,6 +516,7 @@ namespace DiaBlackJack.GameScene
             }
 
             hud?.SetEnemyStatusVisible(false);
+            startingDemonReveal?.BindHud(hud);
             if (charactersRoot == null)
             {
                 charactersRoot = GameObject.Find("Characters");
@@ -527,6 +530,13 @@ namespace DiaBlackJack.GameScene
                     ? null
                     : enemy.GetComponent<CharacterView>();
             }
+        }
+
+        internal static bool ShouldShowHudRoot(GameFlowScreen screen)
+        {
+            return screen == GameFlowScreen.StartingDemonReveal ||
+                screen == GameFlowScreen.Combat ||
+                screen == GameFlowScreen.Shop;
         }
 
         private bool IsTerminalScreen()

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using DiaBlackJack.CoreLoop;
 
 namespace DiaBlackJack.StageProgression
@@ -255,7 +256,8 @@ namespace DiaBlackJack.StageProgression
                     ActiveShop = new ShopVisit(_shopOfferGenerator.Generate(
                         CompletedShopCount,
                         UtilityPriceLevel,
-                        followsEliteVictory));
+                        followsEliteVictory,
+                        GetOwnedDemonDefinitionKeys()));
                     Phase = FormalRunPhase.Shop;
                     CombatSettlementCompleted?.Invoke();
                     break;
@@ -299,7 +301,8 @@ namespace DiaBlackJack.StageProgression
             ActiveShop = new ShopVisit(_shopOfferGenerator.Generate(
                 CompletedShopCount,
                 UtilityPriceLevel,
-                followsEliteVictory));
+                followsEliteVictory,
+                GetOwnedDemonDefinitionKeys()));
             LastGoldReward = 0;
             _goldBeforeCurrentBattle = CombatSession.Progress.Player.CurrentGold;
             Phase = FormalRunPhase.Shop;
@@ -328,8 +331,22 @@ namespace DiaBlackJack.StageProgression
                     skippedVisit,
                     0,
                     FollowsEliteVictory(
-                        CombatSession.Progress.Stages[skippedVisit]));
+                        CombatSession.Progress.Stages[skippedVisit]),
+                    GetOwnedDemonDefinitionKeys());
             }
+        }
+
+        private IReadOnlyList<string> GetOwnedDemonDefinitionKeys()
+        {
+            IReadOnlyList<RunDemonDefinition> demonDeck =
+                CombatSession.Progress.Player.DemonDeck;
+            var definitionKeys = new string[demonDeck.Count];
+            for (int index = 0; index < demonDeck.Count; index++)
+            {
+                definitionKeys[index] = demonDeck[index].DefinitionKey;
+            }
+
+            return definitionKeys;
         }
     }
 }

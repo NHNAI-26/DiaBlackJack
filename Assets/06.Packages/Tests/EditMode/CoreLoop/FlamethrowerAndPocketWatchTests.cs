@@ -46,6 +46,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.Player.Hand.Contains(0), Is.True);
             Assert.That(battle.Player.Deck.GetDiscardedCards()
                 .Any(card => card.Id == 0), Is.False);
+            Assert.That(battle.LastAutomaticCardResult, Is.Null);
             Assert.That(
                 ResolveCardOption(
                     battle,
@@ -65,6 +66,14 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.Enemy.Deck.GetDiscardedCards()
                 .Select(card => card.Id),
                 Does.Contain(100));
+            AutomaticCardResult result =
+                battle.LastAutomaticCardResult.Value;
+            Assert.That(result.PlayerDecision,
+                Is.EqualTo(AutomaticCardDecisionOutcome.Accepted));
+            Assert.That(result.EnemyDecision,
+                Is.EqualTo(AutomaticCardDecisionOutcome.Accepted));
+            Assert.That(result.PlayerTargetCardId, Is.EqualTo(0));
+            Assert.That(result.EnemyTargetCardId, Is.EqualTo(100));
         }
 
         [Test]

@@ -59,8 +59,8 @@
 | [formal-run-flow-progress-log.md](./formal-run-flow-progress-log.md) | 정식 런 분업·결정·구현·검증 누적 기록 | 시작 자동 지급 미구현 v1.3 |
 | [settings-design.md](./settings-design.md) | 설정·일시정지 메뉴 목표와 사용자 흐름 | SET-00~SET-05 v1.0 |
 | [settings-development-spec.md](./settings-development-spec.md) | 설정 데이터·저장·화면 모드·UI 연결 명세 | 구현 기준 v1.0 |
-| [settings-implementation-plan.md](./settings-implementation-plan.md) | SET-00~SET-05 작업 순서와 검증 게이트 | SET-05 수동 확인 진행 중 v1.0 |
-| [settings-progress-log.md](./settings-progress-log.md) | 설정 기능 구현·테스트·잔여 검증 기록 | 전체 EditMode 781/781 v1.0 |
+| [settings-implementation-plan.md](./settings-implementation-plan.md) | SET-00~SET-05 작업 순서와 검증 게이트 | SET-05 완료 v1.1 |
+| [settings-progress-log.md](./settings-progress-log.md) | 설정 기능 구현·테스트·잔여 검증 기록 | 전체 EditMode 891/891·Windows 빌드 완료 v1.1 |
 | [save-system-design.md](./save-system-design.md) | 안정 체크포인트·이어하기·재추첨 방지·단일 슬롯·파일 복구 기획 | 시작 악마 지급 체크포인트 재명세 v1.3 |
 | [save-system-development-spec.md](./save-system-development-spec.md) | 순수 스냅샷·버전 JSON·원자 저장·백업·복원·RF 연결 명세 | 자동 지급 저장 이관 대기 v1.2 |
 | [save-system-implementation-plan.md](./save-system-implementation-plan.md) | SV-00~SV-06 구현 순서와 검증 게이트 | 선택 체크포인트 이관 대기 v1.2 |

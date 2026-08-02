@@ -687,3 +687,10 @@ Docs/
 | 2026-07-22 | 이천서 | 위협용 해머의 상대 공개 카드 제거, 적 AI 대상 선택, GameScene 표시와 전체 EditMode 308/308 검증을 현행 기술 기준으로 반영 |
 | 2026-07-22 | 이천서 | CU-M02 보위 나이프 비버스트 강제 폐기와 공개 합 중간 버스트·전체 합 최종 승부 분리, 영향 13/13·전체 EditMode 309/309 검증 반영 |
 | 2026-07-22 | 이천서 | CU-M03 양측 비공개 카드의 플레이어 시점 최좌측 표시와 모델 순서·정보 은닉 보존, 신규 1/1·전체 EditMode 310/310 검증 반영 |
+
+## CU-M13 리볼버 숫자 선택 표시 명세
+
+- `CoreLoopViewModel.PendingCardEffectKind`로 리볼버 대기 상태를 표시 경계에 전달한다.
+- `GameSceneCombatHudMode.RevolverNumberSelection`은 1~10 선택 명령을 보존하되 일반 선택지 목록을 렌더하지 않는다.
+- `RevolverNumberSelectorView`가 숫자 순환·확정과 키보드·마우스 입력을 담당한다. 도메인 판정 API는 변경하지 않는다.
+- 선택 UI가 열린 동안 `GameManager`의 월드 레이캐스트 입력을 차단한다.

@@ -43603,7 +43603,7 @@ AnimationClip:
     messageOptions: 0
   - time: 7.4666667
     functionName: NotifyShotImpact
-    data:
+    data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
     intParameter: 0
@@ -43626,7 +43626,7 @@ AnimationClip:
     functionName: StartColorScreenBlend
     data: 
     objectReferenceParameter: {fileID: 0}
-    floatParameter: 1
+    floatParameter: 0.5
     intParameter: 0
     messageOptions: 0
   - time: 7.8

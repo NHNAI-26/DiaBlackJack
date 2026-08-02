@@ -283,6 +283,63 @@ namespace DiaBlackJack.CoreLoop
             return !playerSurvived || !enemySurvived;
         }
 
+        internal AutomaticCardResult CreateResult(
+            AutomaticCardSourceDisposition sourceDisposition)
+        {
+            AutomaticCardDecisionOutcome playerDecision =
+                AutomaticCardDecisionOutcome.None;
+            AutomaticCardDecisionOutcome enemyDecision =
+                AutomaticCardDecisionOutcome.None;
+            int? playerTargetCardId = null;
+            int? enemyTargetCardId = null;
+
+            switch (SourceCard.Definition.Effect)
+            {
+                case CardEffectKind.Flamethrower:
+                    if (!_hasPlayerFlamethrowerDecision ||
+                        !_hasEnemyFlamethrowerDecision)
+                    {
+                        throw new InvalidOperationException(
+                            "Flamethrower result requires both committed decisions.");
+                    }
+
+                    playerTargetCardId = _playerFlamethrowerCardId;
+                    enemyTargetCardId = _enemyFlamethrowerCardId;
+                    playerDecision = playerTargetCardId.HasValue
+                        ? AutomaticCardDecisionOutcome.Accepted
+                        : AutomaticCardDecisionOutcome.Declined;
+                    enemyDecision = enemyTargetCardId.HasValue
+                        ? AutomaticCardDecisionOutcome.Accepted
+                        : AutomaticCardDecisionOutcome.Declined;
+                    break;
+                case CardEffectKind.ResurrectionHerb:
+                    if (!_hasPlayerResurrectionHerbDecision ||
+                        !_hasEnemyResurrectionHerbDecision)
+                    {
+                        throw new InvalidOperationException(
+                            "Resurrection herb result requires both committed decisions.");
+                    }
+
+                    playerDecision = _playerPaysResurrectionHerbSoul
+                        ? AutomaticCardDecisionOutcome.Accepted
+                        : AutomaticCardDecisionOutcome.Declined;
+                    enemyDecision = _enemyPaysResurrectionHerbSoul
+                        ? AutomaticCardDecisionOutcome.Accepted
+                        : AutomaticCardDecisionOutcome.Declined;
+                    break;
+            }
+
+            return new AutomaticCardResult(
+                SourceCard.Id,
+                SourceCard.Definition.Effect,
+                OwnerSide,
+                sourceDisposition,
+                playerDecision,
+                enemyDecision,
+                playerTargetCardId,
+                enemyTargetCardId);
+        }
+
         private bool IsFlamethrowerCandidate(
             CombatantSide side,
             int cardId)

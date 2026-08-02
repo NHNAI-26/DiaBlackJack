@@ -45,6 +45,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 ResurrectionHerbEffectHandler.PaySoulAndRedealOptionId), Is.True);
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(5));
             Assert.That(battle.Player.Hand.Count, Is.EqualTo(3));
+            Assert.That(battle.LastAutomaticCardResult, Is.Null);
             Assert.That(ResolveEnemy(battle,
                 ResurrectionHerbEffectHandler.DeclineOptionId), Is.True);
 
@@ -54,6 +55,12 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.Enemy.Hand.Cards.Select(card => card.Id),
                 Is.EqualTo(enemyIds));
             Assert.That(battle.RoundNumber, Is.EqualTo(1));
+            AutomaticCardResult result =
+                battle.LastAutomaticCardResult.Value;
+            Assert.That(result.PlayerDecision,
+                Is.EqualTo(AutomaticCardDecisionOutcome.Accepted));
+            Assert.That(result.EnemyDecision,
+                Is.EqualTo(AutomaticCardDecisionOutcome.Declined));
         }
 
         [Test]

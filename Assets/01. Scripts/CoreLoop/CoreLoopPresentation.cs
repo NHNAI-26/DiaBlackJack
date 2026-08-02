@@ -174,6 +174,7 @@ namespace DiaBlackJack.CoreLoop.UI
             bool isChoosingChangeCard,
             IReadOnlyList<PlayerCardViewModel> playerCardActions,
             string cardEffectPrompt,
+            CardEffectKind? pendingCardEffectKind,
             IReadOnlyList<CardEffectChoiceViewModel> cardEffectChoices,
             string lastCardEffect,
             bool isResolvingCardEffect,
@@ -215,6 +216,7 @@ namespace DiaBlackJack.CoreLoop.UI
             PlayerCardActions = playerCardActions ??
                 throw new ArgumentNullException(nameof(playerCardActions));
             CardEffectPrompt = cardEffectPrompt ?? string.Empty;
+            PendingCardEffectKind = pendingCardEffectKind;
             CardEffectChoices = cardEffectChoices ??
                 throw new ArgumentNullException(nameof(cardEffectChoices));
             LastCardEffect = lastCardEffect ?? string.Empty;
@@ -286,6 +288,8 @@ namespace DiaBlackJack.CoreLoop.UI
 
         public string CardEffectPrompt { get; }
 
+        public CardEffectKind? PendingCardEffectKind { get; }
+
         public IReadOnlyList<CardEffectChoiceViewModel> CardEffectChoices { get; }
 
         public string LastCardEffect { get; }
@@ -350,6 +354,7 @@ namespace DiaBlackJack.CoreLoop.UI
                 battle.CanSelectChangedCard,
                 FormatPlayerCardActions(battle),
                 battle.PendingPlayerCardEffect?.Prompt,
+                battle.PendingPlayerCardEffect?.EffectKind,
                 FormatCardEffectChoices(battle.PendingPlayerCardEffect),
                 FormatLastCardEffect(battle.LastCardEffectResult),
                 battle.State == CoreLoopState.PlayerResolvingCardEffect,
@@ -608,9 +613,9 @@ namespace DiaBlackJack.CoreLoop.UI
                         : "  |  RESERVATION RESOLVED";
                     break;
                 case CardEffectKind.ResurrectionHerb:
-                    publicSummary += battle.LastRoundTransition.HasValue
-                        ? "  |  ROUND RESTARTED"
-                        : "  |  RESTART DECLINED";
+                    publicSummary +=
+                        $"  |  PLAYER {FormatDecision(result.PlayerDecision, "PAID", "DECLINED")}" +
+                        $"  |  ENEMY {FormatDecision(result.EnemyDecision, "PAID", "DECLINED")}";
                     break;
                 case CardEffectKind.LieDetector:
                     if (battle.LastLieDetectorPublicResult.HasValue)
@@ -634,7 +639,9 @@ namespace DiaBlackJack.CoreLoop.UI
 
                     break;
                 case CardEffectKind.Flamethrower:
-                    publicSummary += "  |  DISCARD CHOICES RESOLVED";
+                    publicSummary +=
+                        $"  |  PLAYER {FormatDecision(result.PlayerDecision, "DISCARDED", "SKIPPED")}" +
+                        $"  |  ENEMY {FormatDecision(result.EnemyDecision, "DISCARDED", "SKIPPED")}";
                     break;
                 case CardEffectKind.PocketWatch:
                     publicSummary += result.SourceDisposition ==
@@ -649,6 +656,16 @@ namespace DiaBlackJack.CoreLoop.UI
                 ownerLabel,
                 publicSummary,
                 privateSummary);
+        }
+
+        private static string FormatDecision(
+            AutomaticCardDecisionOutcome outcome,
+            string acceptedLabel,
+            string declinedLabel)
+        {
+            return outcome == AutomaticCardDecisionOutcome.Accepted
+                ? acceptedLabel
+                : declinedLabel;
         }
 
         private static string FormatCardDisabledReason(

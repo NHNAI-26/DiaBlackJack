@@ -66,7 +66,7 @@ namespace DiaBlackJack.CoreLoop
                     6,
                     CardActivationKind.Manual,
                     CardEffectKind.ThreatHammer,
-                    "적 공개 카드 1장 제거; 스탠드면 비공개 교체",
+                    "상대 공개 카드 1장을 버립니다. 상대가 스탠드했다면 스탠드를 취소하고 비공개 카드도 교체합니다.",
                     isStandardDeckDefault: true),
                 new CardDefinition(
                     "auto-pistol-7",
@@ -74,7 +74,7 @@ namespace DiaBlackJack.CoreLoop
                     7,
                     CardActivationKind.Manual,
                     CardEffectKind.AutoPistol,
-                    "적 비공개 숫자 맞히면 적 즉사",
+                    "숫자 하나를 선언합니다. 상대 비공개 카드와 일치하면 상대를 버스트시킵니다.",
                     isStandardDeckDefault: true),
                 new CardDefinition(
                     "auto-pistol-8",
@@ -82,7 +82,7 @@ namespace DiaBlackJack.CoreLoop
                     8,
                     CardActivationKind.Manual,
                     CardEffectKind.AutoPistol,
-                    "적 비공개 숫자 맞히면 적 즉사",
+                    "숫자 하나를 선언합니다. 상대 비공개 카드와 일치하면 상대를 버스트시킵니다.",
                     isStandardDeckDefault: true),
                 new CardDefinition(
                     "military-knife-9",
@@ -106,7 +106,7 @@ namespace DiaBlackJack.CoreLoop
                     1,
                     CardActivationKind.Automatic,
                     CardEffectKind.Poison,
-                    "즉시 스탠드 또는 영혼 3 지불; 지불 후 승리 시 영혼 5 회복"),
+                    "즉시 스탠드하거나 영혼 3을 겁니다. 영혼이 3 미만이면 남은 영혼을 모두 겁니다. 영혼을 걸고 승리하면 영혼 5를 회복합니다."),
                 new CardDefinition(
                     ResurrectionHerbKey,
                     "부활초",

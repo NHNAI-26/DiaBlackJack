@@ -312,6 +312,100 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void ACRV04_U04_FlamethrowerResultAppearsOnlyAfterBothCommits()
+        {
+            CardDefinition flamethrower = CardDefinitionCatalog.GetByKey(
+                CardDefinitionCatalog.FlamethrowerKey);
+            var battle = new CoreLoopBattle(
+                BlackjackDeck.CreateInDrawOrder(CreateCards(
+                    0, 2, 3, flamethrower, 4)),
+                BlackjackDeck.CreateInDrawOrder(CreateCards(100, 4, 5, 6)),
+                playerMaximumSoul: 12,
+                playerCurrentSoul: 12,
+                enemyMaximumSoul: 4,
+                enemyPolicy: new StandPolicy(),
+                cardEffectResolver: CardEffectResolver.CreateDefault(),
+                enemyAutomaticCardDecisionPolicy: null);
+            Assert.That(battle.Start(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            PendingAutomaticCardInteraction playerChoice =
+                battle.PendingPlayerAutomaticInteraction;
+            AutomaticCardChoiceOption playerCard = playerChoice.Options
+                .Single(option => option.CardId == 0);
+
+            Assert.That(battle.TryResolvePlayerAutomaticCardChoice(
+                playerChoice.InteractionId,
+                playerCard.OptionId), Is.True);
+            GameSceneCombatHudViewModel committedPlayer =
+                GameSceneCombatHudPresenter.Create(
+                    CoreLoopPresenter.Create(battle), false, false, false);
+            Assert.That(committedPlayer.AutomaticCardResult, Is.Empty);
+            Assert.That(committedPlayer.Mode,
+                Is.EqualTo(GameSceneCombatHudMode.Hidden));
+
+            PendingAutomaticCardInteraction enemyChoice =
+                battle.PendingAutomaticInteraction;
+            AutomaticCardChoiceOption enemySkip = enemyChoice.Options
+                .Single(option => option.OptionId ==
+                    FlamethrowerEffectHandler.SkipOptionId);
+            Assert.That(battle.TryResolveAutomaticCardChoice(
+                CombatantSide.Enemy,
+                enemyChoice.InteractionId,
+                enemySkip.OptionId), Is.True);
+            GameSceneCombatHudViewModel revealed =
+                GameSceneCombatHudPresenter.Create(
+                    CoreLoopPresenter.Create(battle), false, false, false);
+
+            Assert.That(revealed.AutomaticCardResult,
+                Does.Contain("PLAYER DISCARDED"));
+            Assert.That(revealed.AutomaticCardResult,
+                Does.Contain("ENEMY SKIPPED"));
+        }
+
+        [Test]
+        public void GSH01_U13_EnemyLieDetectorDecisionDoesNotOpenPlayerChoiceHud()
+        {
+            CardDefinition lieDetector = CardDefinitionCatalog.GetByKey(
+                CardDefinitionCatalog.LieDetectorKey);
+            var battle = new CoreLoopBattle(
+                BlackjackDeck.CreateInDrawOrder(CreateCards(0, 10, 10, 2, 3)),
+                BlackjackDeck.CreateInDrawOrder(CreateCards(
+                    100,
+                    2,
+                    3,
+                    lieDetector,
+                    4)),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 4,
+                enemyPolicy: new HitThenStandPolicy());
+            CoreLoopViewModel enemyDecisionFrame = null;
+            battle.Stepped += () =>
+            {
+                PendingAutomaticCardInteraction pending =
+                    battle.PendingAutomaticInteraction;
+                if (pending?.DecisionSide == CombatantSide.Enemy)
+                {
+                    enemyDecisionFrame = CoreLoopPresenter.Create(battle);
+                }
+            };
+            Assert.That(battle.Start(), Is.True);
+
+            Assert.That(battle.TryPlayerStand(), Is.True);
+
+            Assert.That(enemyDecisionFrame, Is.Not.Null);
+            Assert.That(enemyDecisionFrame.IsResolvingAutomaticCardEffect, Is.True);
+            Assert.That(enemyDecisionFrame.AutomaticCardInteraction, Is.Null);
+            GameSceneCombatHudViewModel hud = GameSceneCombatHudPresenter.Create(
+                enemyDecisionFrame,
+                isStageBattle: false,
+                isShopOpen: false,
+                inputLocked: false);
+            Assert.That(hud.Mode, Is.EqualTo(GameSceneCombatHudMode.Hidden));
+            Assert.That(hud.Prompt, Is.Empty);
+            Assert.That(hud.OptionActions, Is.Empty);
+        }
+
+        [Test]
         public void GSH01_U05_BattleEndDifferentiatesStageReturnAndStandaloneRestart()
         {
             CoreLoopSession session = new CoreLoopSession(() => new CoreLoopBattle(
@@ -448,7 +542,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CUM09_U04_NonHammerManualChoicesRemainHudButtons()
+        public void CUM13_U01_RevolverUsesFocusedNumberSelector()
         {
             CardDefinition revolver = CardDefinitionCatalog.GetDefaultForRank(7);
             var battle = new CoreLoopBattle(
@@ -471,10 +565,65 @@ namespace DiaBlackJack.CoreLoop.Tests
                 scene.UsesDiegeticCardEffectSelection);
 
             Assert.That(scene.UsesDiegeticCardEffectSelection, Is.False);
+            Assert.That(
+                hud.Mode,
+                Is.EqualTo(GameSceneCombatHudMode.RevolverNumberSelection));
             Assert.That(hud.OptionActions, Has.Count.EqualTo(10));
             Assert.That(hud.OptionActions.All(action =>
                 action.Command.Kind ==
                     GameSceneCombatHudCommandKind.ResolveCardEffectChoice), Is.True);
+        }
+
+        [Test]
+        public void DCUI03_U01_SatanShowsTenCardsAndBrandsFirstDeclaration()
+        {
+            CoreLoopBattle battle = CreateStartedContractBattle(
+                DemonContractKind.Satan,
+                DemonContractKind.Belphegor);
+            Assert.That(battle.TryBeginPlayerDemonContract(), Is.True);
+            PendingDemonContractInteraction offer =
+                battle.PendingPlayerDemonContractInteraction;
+            DemonContractOption satan = offer.Options.Single(option =>
+                option.ContractDefinitionKey == DemonContractCatalog.SatanKey);
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                offer.InteractionId,
+                satan.OptionId), Is.True);
+
+            ActiveDemonContract active =
+                battle.ActivePlayerDemonContracts.Single();
+            Assert.That(battle.TryBeginPlayerActiveDemonContractAction(
+                active.SourceCardId), Is.True);
+
+            GameSceneViewModel first = GameScenePresenter.Create(battle);
+            GameSceneCombatHudViewModel firstHud =
+                GameSceneCombatHudPresenter.Create(
+                    first.Core,
+                    isStageBattle: false,
+                    isShopOpen: false,
+                    inputLocked: false);
+            Assert.That(firstHud.Mode,
+                Is.EqualTo(GameSceneCombatHudMode.SatanNumberSelection));
+            Assert.That(first.SatanNumberCandidates, Has.Count.EqualTo(10));
+            Assert.That(first.SatanNumberCandidates.All(card =>
+                card.DirectSelectionCommand.HasValue), Is.True);
+            Assert.That(first.SatanNumberCandidates.All(card => !card.IsUsed),
+                Is.True);
+
+            PendingDemonContractInteraction declaration =
+                battle.PendingPlayerDemonContractInteraction;
+            DemonContractOption three = declaration.Options.Single(option =>
+                option.NumericValue == 3);
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                declaration.InteractionId,
+                three.OptionId), Is.True);
+
+            GameSceneViewModel second = GameScenePresenter.Create(battle);
+            GameSceneCardViewModel branded = second.SatanNumberCandidates.Single(
+                card => card.IsUsed);
+            Assert.That(branded.Rank, Is.EqualTo(3));
+            Assert.That(branded.DirectSelectionCommand.HasValue, Is.False);
+            Assert.That(second.SatanNumberCandidates.Count(card =>
+                card.DirectSelectionCommand.HasValue), Is.EqualTo(9));
         }
 
         [Test]
@@ -807,9 +956,6 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(commands.All(command => command.HasRequiredReferences), Is.True);
             Assert.That(commands.All(command =>
                 command.GetComponent<Collider>() != null), Is.True);
-
-            Assert.That(prefab.transform.Find("ContractPlaceholder"), Is.Not.Null);
-            Assert.That(prefab.transform.Find("CodexBook"), Is.Not.Null);
         }
 
         [Test]
@@ -1194,6 +1340,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                     return DemonContractCatalog.BelphegorKey;
                 case DemonContractKind.Mammon:
                     return DemonContractCatalog.MammonKey;
+                case DemonContractKind.Satan:
+                    return DemonContractCatalog.SatanKey;
                 default:
                     throw new System.ArgumentOutOfRangeException(nameof(kind));
             }
@@ -1204,6 +1352,20 @@ namespace DiaBlackJack.CoreLoop.Tests
             public EnemyDecision Decide(EnemyObservation observation)
             {
                 return new EnemyDecision(EnemyActionType.Stand, "gsh01-stand");
+            }
+        }
+
+        private sealed class HitThenStandPolicy : IEnemyBehaviorPolicy
+        {
+            private bool _hasHit;
+
+            public EnemyDecision Decide(EnemyObservation observation)
+            {
+                EnemyActionType action = _hasHit
+                    ? EnemyActionType.Stand
+                    : EnemyActionType.Hit;
+                _hasHit = true;
+                return new EnemyDecision(action, "gsh01-hit-then-stand");
             }
         }
     }

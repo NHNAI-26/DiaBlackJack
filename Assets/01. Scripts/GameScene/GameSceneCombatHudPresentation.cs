@@ -12,6 +12,8 @@ namespace DiaBlackJack.GameScene
         Options,
         DiegeticSelection,
         ContractCandidates,
+        RevolverNumberSelection,
+        SatanNumberSelection,
         ReturningToRun,
         Restart
     }
@@ -198,10 +200,7 @@ namespace DiaBlackJack.GameScene
                 AutomaticCardInteractionViewModel interaction = core.AutomaticCardInteraction;
                 if (interaction == null)
                 {
-                    return CreateOptions(
-                        "ENEMY AUTOMATIC DECISION",
-                        Array.Empty<GameSceneCombatHudActionViewModel>(),
-                        automaticCardResult);
+                    return CreateHidden();
                 }
 
                 var options = new List<GameSceneCombatHudActionViewModel>();
@@ -241,6 +240,30 @@ namespace DiaBlackJack.GameScene
 
             if (core.IsResolvingCardEffect)
             {
+                if (core.PendingCardEffectKind == CardEffectKind.AutoPistol)
+                {
+                    var revolverOptions =
+                        new List<GameSceneCombatHudActionViewModel>();
+                    foreach (CardEffectChoiceViewModel choice in
+                        core.CardEffectChoices)
+                    {
+                        revolverOptions.Add(new GameSceneCombatHudActionViewModel(
+                            new GameSceneCombatHudCommand(
+                                GameSceneCombatHudCommandKind.ResolveCardEffectChoice,
+                                choice.OptionId),
+                            choice.Label,
+                            !inputLocked));
+                    }
+
+                    return new GameSceneCombatHudViewModel(
+                        GameSceneCombatHudMode.RevolverNumberSelection,
+                        core.CardEffectPrompt,
+                        Array.Empty<GameSceneCombatHudActionViewModel>(),
+                        revolverOptions,
+                        Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
+                        automaticCardResult);
+                }
+
                 if (usesDiegeticCardEffectSelection)
                 {
                     var directOptions =
@@ -286,6 +309,20 @@ namespace DiaBlackJack.GameScene
             DemonContractPanelViewModel contract = core.DemonContract;
             if (contract.IsResolving)
             {
+                if (contract.InteractionKind ==
+                        DemonContractInteractionKind.SatanDeclareFirstNumber ||
+                    contract.InteractionKind ==
+                        DemonContractInteractionKind.SatanDeclareSecondNumber)
+                {
+                    return new GameSceneCombatHudViewModel(
+                        GameSceneCombatHudMode.SatanNumberSelection,
+                        BuildContractPrompt(contract),
+                        Array.Empty<GameSceneCombatHudActionViewModel>(),
+                        Array.Empty<GameSceneCombatHudActionViewModel>(),
+                        Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
+                        automaticCardResult);
+                }
+
                 if (contract.InteractionKind ==
                         DemonContractInteractionKind.BeelzebubChooseOwnerCard ||
                     contract.InteractionKind ==

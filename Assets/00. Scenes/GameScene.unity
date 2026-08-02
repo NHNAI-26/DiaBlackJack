@@ -6415,8 +6415,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.StartingDemonRevealView
   demonCardPrefab: {fileID: 88746123954579456, guid: 45d32c4ca972f2243966a587c6684a0c, type: 3}
   deckPosition: {x: 1.5, y: 3.58, z: 16.44}
-  firstCardPosition: {x: -0.62, y: 3.6, z: 16.3}
-  secondCardPosition: {x: 0.62, y: 3.6, z: 16.3}
+  firstCardPosition: {x: -0.55, y: 3.56, z: 17}
+  secondCardPosition: {x: 0.55, y: 3.56, z: 17}
   cardEulerAngles: {x: 270, y: 0, z: 0}
   deckVisualCardCount: 3
   dealDuration: 0.55

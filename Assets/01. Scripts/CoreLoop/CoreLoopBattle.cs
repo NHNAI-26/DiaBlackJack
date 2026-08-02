@@ -60,6 +60,7 @@ namespace DiaBlackJack.CoreLoop
         private AutomaticCardEffectContext _activeAutomaticCardEffectContext;
         private AutomaticCardContinuation _automaticCardContinuation;
         private PendingAutomaticCardInteraction _pendingAutomaticCardInteraction;
+        private bool _isBeginningAutomaticCardEffect;
         private bool _isResolvingEnemyAutomaticChoice;
         private int _nextAutomaticCardInteractionId = 1;
         private int _enemyDecisionOrdinal;
@@ -2411,6 +2412,15 @@ namespace DiaBlackJack.CoreLoop
 
         internal bool HasActiveCardEffect => _activeCardEffectContext != null;
 
+        internal CardEffectKind? ActiveCardEffectKind =>
+            _activeCardEffectContext?.SourceCard.Definition.Effect;
+
+        internal int? ActiveCardEffectSourceCardId =>
+            _activeCardEffectContext?.SourceCard.Id;
+
+        internal CombatantSide? ActiveCardEffectActorSide =>
+            _activeCardEffectActorSide;
+
         internal PendingCardEffect PendingEnemyCardEffect =>
             _activeCardEffectActorSide == CombatantSide.Enemy
                 ? _pendingCardEffect
@@ -2654,11 +2664,6 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentNullException(nameof(continuation));
             }
 
-            if (HasPendingAzazelBust(ownerSide))
-            {
-                return false;
-            }
-
             if (sourceCard.Definition.Activation != CardActivationKind.Automatic)
             {
                 return false;
@@ -2691,18 +2696,26 @@ namespace DiaBlackJack.CoreLoop
             _activeAutomaticCardEffectContext =
                 new AutomaticCardEffectContext(this, ownerSide, sourceCard);
             _automaticCardContinuation = continuation;
-            AutomaticCardEffectStep step =
-                _automaticCardEffectResolver.Begin(
-                    _activeAutomaticCardEffectContext);
-            bool isWaitingForChoice = ApplyAutomaticCardEffectStep(
-                step,
-                resumeContinuation: false);
-            if (!isWaitingForChoice)
+            _isBeginningAutomaticCardEffect = true;
+            try
             {
-                immediateResult = LastAutomaticCardResult;
-            }
+                AutomaticCardEffectStep step =
+                    _automaticCardEffectResolver.Begin(
+                        _activeAutomaticCardEffectContext);
+                bool isWaitingForChoice = ApplyAutomaticCardEffectStep(
+                    step,
+                    resumeContinuation: false);
+                if (!isWaitingForChoice)
+                {
+                    immediateResult = LastAutomaticCardResult;
+                }
 
-            return isWaitingForChoice;
+                return isWaitingForChoice;
+            }
+            finally
+            {
+                _isBeginningAutomaticCardEffect = false;
+            }
         }
 
         internal bool TryResolveAutomaticCardChoice(
@@ -2731,7 +2744,7 @@ namespace DiaBlackJack.CoreLoop
                     selectedOption);
             ApplyAutomaticCardEffectStep(
                 step,
-                resumeContinuation: true);
+                resumeContinuation: !_isBeginningAutomaticCardEffect);
             return true;
         }
 
@@ -2819,11 +2832,7 @@ namespace DiaBlackJack.CoreLoop
                     throw new ArgumentOutOfRangeException(nameof(disposition));
             }
 
-            var result = new AutomaticCardResult(
-                sourceCard.Id,
-                sourceCard.Definition.Effect,
-                context.OwnerSide,
-                disposition);
+            AutomaticCardResult result = context.CreateResult(disposition);
             AutomaticCardContinuation continuation =
                 _automaticCardContinuation ??
                     throw new InvalidOperationException(
@@ -4423,13 +4432,13 @@ namespace DiaBlackJack.CoreLoop
             }
 
             card.Reveal();
-            CardEffectStep step = _cardEffectResolver.Begin(context);
             _activeCardEffectContext = context;
             _activeCardEffectActorSide = actorSide;
             RecordPublicAction(
                 actorSide,
                 PublicCombatActionType.UseCard,
                 card.DefinitionKey);
+            CardEffectStep step = _cardEffectResolver.Begin(context);
 
             CardEffectApplicationResult applicationResult = ApplyCardEffectStep(step);
             if (applicationResult == CardEffectApplicationResult.Completed &&
