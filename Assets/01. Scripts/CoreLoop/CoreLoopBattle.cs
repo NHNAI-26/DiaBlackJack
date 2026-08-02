@@ -2655,11 +2655,6 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentNullException(nameof(continuation));
             }
 
-            if (HasPendingAzazelBust(ownerSide))
-            {
-                return false;
-            }
-
             if (sourceCard.Definition.Activation != CardActivationKind.Automatic)
             {
                 return false;
@@ -2828,11 +2823,7 @@ namespace DiaBlackJack.CoreLoop
                     throw new ArgumentOutOfRangeException(nameof(disposition));
             }
 
-            var result = new AutomaticCardResult(
-                sourceCard.Id,
-                sourceCard.Definition.Effect,
-                context.OwnerSide,
-                disposition);
+            AutomaticCardResult result = context.CreateResult(disposition);
             AutomaticCardContinuation continuation =
                 _automaticCardContinuation ??
                     throw new InvalidOperationException(

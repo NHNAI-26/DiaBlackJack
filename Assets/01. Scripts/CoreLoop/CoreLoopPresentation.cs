@@ -613,9 +613,9 @@ namespace DiaBlackJack.CoreLoop.UI
                         : "  |  RESERVATION RESOLVED";
                     break;
                 case CardEffectKind.ResurrectionHerb:
-                    publicSummary += battle.LastRoundTransition.HasValue
-                        ? "  |  ROUND RESTARTED"
-                        : "  |  RESTART DECLINED";
+                    publicSummary +=
+                        $"  |  PLAYER {FormatDecision(result.PlayerDecision, "PAID", "DECLINED")}" +
+                        $"  |  ENEMY {FormatDecision(result.EnemyDecision, "PAID", "DECLINED")}";
                     break;
                 case CardEffectKind.LieDetector:
                     if (battle.LastLieDetectorPublicResult.HasValue)
@@ -639,7 +639,9 @@ namespace DiaBlackJack.CoreLoop.UI
 
                     break;
                 case CardEffectKind.Flamethrower:
-                    publicSummary += "  |  DISCARD CHOICES RESOLVED";
+                    publicSummary +=
+                        $"  |  PLAYER {FormatDecision(result.PlayerDecision, "DISCARDED", "SKIPPED")}" +
+                        $"  |  ENEMY {FormatDecision(result.EnemyDecision, "DISCARDED", "SKIPPED")}";
                     break;
                 case CardEffectKind.PocketWatch:
                     publicSummary += result.SourceDisposition ==
@@ -654,6 +656,16 @@ namespace DiaBlackJack.CoreLoop.UI
                 ownerLabel,
                 publicSummary,
                 privateSummary);
+        }
+
+        private static string FormatDecision(
+            AutomaticCardDecisionOutcome outcome,
+            string acceptedLabel,
+            string declinedLabel)
+        {
+            return outcome == AutomaticCardDecisionOutcome.Accepted
+                ? acceptedLabel
+                : declinedLabel;
         }
 
         private static string FormatCardDisabledReason(

@@ -170,7 +170,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR04_U16_AzazelBustPrecedesAutomaticCardActivation()
+        public void ACRV04_U03_AutomaticCardPrecedesAzazelBust()
         {
             CardDefinition poison = CardDefinitionCatalog.GetByKey(
                 CardDefinitionCatalog.PoisonKey);
@@ -192,9 +192,17 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(battle.TryPlayerHit(), Is.True);
 
+            Assert.That(battle.LastResolution, Is.Null);
+            Assert.That(battle.PendingPlayerAutomaticInteraction.ChoiceKind,
+                Is.EqualTo(AutomaticCardChoiceKind.PoisonDecision));
+            Assert.That(battle.TryResolvePlayerAutomaticCardChoice(
+                battle.PendingPlayerAutomaticInteraction.InteractionId,
+                PoisonEffectHandler.PaySoulOptionId), Is.True);
+
             Assert.That(battle.LastResolution.Value.Cause,
                 Is.EqualTo(RoundEndCause.ContractEffectBust));
-            Assert.That(battle.LastAutomaticCardResult, Is.Null);
+            Assert.That(battle.LastAutomaticCardResult.Value.EffectKind,
+                Is.EqualTo(CardEffectKind.Poison));
         }
 
         [Test]

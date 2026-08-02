@@ -312,6 +312,57 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void ACRV04_U04_FlamethrowerResultAppearsOnlyAfterBothCommits()
+        {
+            CardDefinition flamethrower = CardDefinitionCatalog.GetByKey(
+                CardDefinitionCatalog.FlamethrowerKey);
+            var battle = new CoreLoopBattle(
+                BlackjackDeck.CreateInDrawOrder(CreateCards(
+                    0, 2, 3, flamethrower, 4)),
+                BlackjackDeck.CreateInDrawOrder(CreateCards(100, 4, 5, 6)),
+                playerMaximumSoul: 12,
+                playerCurrentSoul: 12,
+                enemyMaximumSoul: 4,
+                enemyPolicy: new StandPolicy(),
+                cardEffectResolver: CardEffectResolver.CreateDefault(),
+                enemyAutomaticCardDecisionPolicy: null);
+            Assert.That(battle.Start(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            PendingAutomaticCardInteraction playerChoice =
+                battle.PendingPlayerAutomaticInteraction;
+            AutomaticCardChoiceOption playerCard = playerChoice.Options
+                .Single(option => option.CardId == 0);
+
+            Assert.That(battle.TryResolvePlayerAutomaticCardChoice(
+                playerChoice.InteractionId,
+                playerCard.OptionId), Is.True);
+            GameSceneCombatHudViewModel committedPlayer =
+                GameSceneCombatHudPresenter.Create(
+                    CoreLoopPresenter.Create(battle), false, false, false);
+            Assert.That(committedPlayer.AutomaticCardResult, Is.Empty);
+            Assert.That(committedPlayer.Mode,
+                Is.EqualTo(GameSceneCombatHudMode.Hidden));
+
+            PendingAutomaticCardInteraction enemyChoice =
+                battle.PendingAutomaticInteraction;
+            AutomaticCardChoiceOption enemySkip = enemyChoice.Options
+                .Single(option => option.OptionId ==
+                    FlamethrowerEffectHandler.SkipOptionId);
+            Assert.That(battle.TryResolveAutomaticCardChoice(
+                CombatantSide.Enemy,
+                enemyChoice.InteractionId,
+                enemySkip.OptionId), Is.True);
+            GameSceneCombatHudViewModel revealed =
+                GameSceneCombatHudPresenter.Create(
+                    CoreLoopPresenter.Create(battle), false, false, false);
+
+            Assert.That(revealed.AutomaticCardResult,
+                Does.Contain("PLAYER DISCARDED"));
+            Assert.That(revealed.AutomaticCardResult,
+                Does.Contain("ENEMY SKIPPED"));
+        }
+
+        [Test]
         public void GSH01_U13_EnemyLieDetectorDecisionDoesNotOpenPlayerChoiceHud()
         {
             CardDefinition lieDetector = CardDefinitionCatalog.GetByKey(
