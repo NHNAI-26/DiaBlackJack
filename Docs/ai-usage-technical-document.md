@@ -1719,3 +1719,9 @@ Unity MCP에서 재화 아이콘 집중 테스트 6/6(job `5af0e4d60f564594bc5e7
 
 대상 2/2(job `bf7df2fa683f4bf092b8b74b61df0084`)와 전체 EditMode 891/891(job `5d0c19f02d3b479bbacf4fadbeca3180`)가 통과했고 Console Error는 0이다. 런타임 코드·씬·프리팹·외부 에셋·오픈소스·패키지 변경은 없다. 최종 승인 책임자는 이천서다.
 
+## 2026-08-02 SET-05 설정 시스템 마감
+
+이천서는 1920×1080 화면, Windows 빌드 화면 모드 전환, `StageTest → GameScene` 강제 전환의 간헐적 Missing Script 조사를 지시했다. AI는 Unity MCP로 화면·씬·Console·전체 EditMode를 검증하고, 개발용 Windows 플레이어에서 화면 상태를 자동 기록하는 임시 QA 프로브를 사용했다. 프로브와 빌드가 생성한 URP 직렬화 변경은 검증 후 제거했다. 최종 승인 책임자는 이천서다.
+
+1920×1080 설정 화면은 시각 판정 96/100으로 통과했다. Windows에서 창 모드와 테두리 없는 전체 화면은 요청·실제 상태가 일치했고 저장 재로드도 확인했다. Radeon 드라이버가 독점 전체 화면을 거부하거나 강등하는 경우를 확인해 실제 `FullScreenMode`까지 검증하고 이전 설정으로 복구하도록 보강했다. 강제 씬 전환 5회는 Missing Script·Console 오류 0이었고, 비루트 `SettingsSystem`의 영속화 경고를 별도로 수정했다. 플레이어 빌드에서 Editor 전용 도구를 제외하고 최종 Windows Release 빌드 오류 0, 전체 EditMode 891/891을 확인했다. 카드 설명 SO와 정적 카탈로그의 불일치도 함께 동기화했다. 외부 에셋·오픈소스·패키지·새 의존성은 추가하지 않았다.
+

@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 
@@ -101,3 +102,4 @@ namespace DiaBlackJack.GameScene.Editor
         }
     }
 }
+#endif

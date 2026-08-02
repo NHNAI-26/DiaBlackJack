@@ -264,7 +264,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(visibleCardModel.DisplayName, Is.EqualTo("리볼버"));
             Assert.That(
                 visibleCardModel.AbilityDescription,
-                Is.EqualTo("적 비공개 숫자 맞히면 적 즉사"));
+                Is.EqualTo("숫자 하나를 선언합니다. 상대 비공개 카드와 일치하면 상대를 버스트시킵니다."));
             Assert.That(visibleCardModel.ShowHoverBadgeWhenUnavailable, Is.True);
             Assert.That(visibleCardModel.ShowHoverBadgeBelow, Is.True);
             Assert.That(hiddenCardModel.RevealRank, Is.False);
@@ -284,7 +284,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(revealedHiddenCardModel.DisplayName, Is.EqualTo("위협용 해머"));
             Assert.That(
                 revealedHiddenCardModel.AbilityDescription,
-                Is.EqualTo("적 공개 카드 1장 제거; 스탠드면 비공개 교체"));
+                Is.EqualTo("상대 공개 카드 1장을 버립니다. 상대가 스탠드했다면 스탠드를 취소하고 비공개 카드도 교체합니다."));
             Assert.That(revealedHiddenCardModel.ShowHoverBadgeWhenUnavailable, Is.True);
             Assert.That(revealedHiddenCardModel.ShowHoverBadgeBelow, Is.True);
         }
@@ -321,7 +321,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(cardView.ShowHoverBadgeBelow, Is.True);
                 Assert.That(
                     cardView.HoverBadgeText,
-                    Is.EqualTo("7 리볼버\n적 비공개 숫자 맞히면 적 즉사"));
+                    Is.EqualTo(
+                        "7 리볼버\n숫자 하나를 선언합니다. " +
+                        "상대 비공개 카드와 일치하면 상대를 버스트시킵니다."));
 
                 cardView.Bind(hiddenCardModel);
                 cardView.SetHovered(true);
@@ -363,7 +365,10 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(CardDefinitionCatalog.PoisonKey));
             Assert.That(
                 poisonModel.AbilityDescription,
-                Is.EqualTo("즉시 스탠드 또는 영혼 3 지불; 지불 후 승리 시 영혼 5 회복"));
+                Is.EqualTo(
+                    "즉시 스탠드하거나 영혼 3을 겁니다. " +
+                    "영혼이 3 미만이면 남은 영혼을 모두 겁니다. " +
+                    "영혼을 걸고 승리하면 영혼 5를 회복합니다."));
             Assert.That(poisonModel.ShowHoverBadgeWhenUnavailable, Is.True);
         }
 
@@ -624,7 +629,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(model.EnemyActionLabel, Is.EqualTo("DISCARD"));
             Assert.That(
                 sourceModel.AbilityDescription,
-                Is.EqualTo("적 공개 카드 1장 제거; 스탠드면 비공개 교체"));
+                Is.EqualTo("상대 공개 카드 1장을 버립니다. 상대가 스탠드했다면 스탠드를 취소하고 비공개 카드도 교체합니다."));
         }
 
         [Test]

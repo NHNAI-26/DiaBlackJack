@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System.Collections.Generic;
 using TMPro;
 using UnityEditor;
@@ -445,3 +446,4 @@ namespace DiaBlackJack.GameScene.Editor
         }
     }
 }
+#endif
