@@ -391,11 +391,14 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(frontRenderer.gameObject.activeSelf, Is.False);
                 Assert.That(backRenderer.gameObject.activeSelf, Is.True);
                 Assert.That(
-                    properties.GetTexture(CardBlendTextureId),
+                    backRenderer.sharedMaterial.GetTexture(CardBlendTextureId),
                     Is.SameAs(frontRenderer.sprite.texture));
+                Assert.That(
+                    backRenderer.sharedMaterial.GetFloat(CardBlendAmountId),
+                    Is.Zero);
                 Assert.That(properties.GetFloat(CardBlendAmountId), Is.Zero);
                 Assert.That(
-                    properties.GetVector(CardBlendUvRectId),
+                    backRenderer.sharedMaterial.GetVector(CardBlendUvRectId),
                     Is.EqualTo(GetSpriteUvRect(frontRenderer.sprite)));
 
                 view.SetHovered(true);
@@ -465,6 +468,106 @@ namespace DiaBlackJack.CoreLoop.Tests
             finally
             {
                 Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSV02_U08_HiddenBlendRebindResetsToCurrentBackSprite()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                Assert.That(view, Is.Not.Null);
+                SpriteRenderer backRenderer = GetBackRenderer(view);
+
+                view.Bind(new GameSceneCardViewModel(
+                    cardId: 1,
+                    rank: 8,
+                    isFaceUp: false,
+                    revealRank: true,
+                    canUse: false,
+                    displayName: "Eight",
+                    definitionKey: "standard-plain-8"));
+                view.SetHovered(true);
+
+                view.Bind(new GameSceneCardViewModel(
+                    cardId: 2,
+                    rank: 0,
+                    isFaceUp: false,
+                    revealRank: false,
+                    canUse: false,
+                    displayName: string.Empty));
+
+                MaterialPropertyBlock properties = new MaterialPropertyBlock();
+                backRenderer.GetPropertyBlock(properties);
+                Assert.That(properties.GetFloat(CardBlendAmountId), Is.Zero);
+                Assert.That(
+                    backRenderer.sharedMaterial.GetTexture(CardBlendTextureId),
+                    Is.SameAs(backRenderer.sprite.texture));
+                Assert.That(
+                    backRenderer.sharedMaterial.GetVector(CardBlendUvRectId),
+                    Is.EqualTo(GetSpriteUvRect(backRenderer.sprite)));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSV02_U09_SameHiddenCardBlendAmountsStayPerView()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject first = Object.Instantiate(prefab);
+            GameObject second = Object.Instantiate(prefab);
+
+            try
+            {
+                CardView firstView = first.GetComponent<CardView>();
+                CardView secondView = second.GetComponent<CardView>();
+                Assert.That(firstView, Is.Not.Null);
+                Assert.That(secondView, Is.Not.Null);
+                SpriteRenderer firstBack = GetBackRenderer(firstView);
+                SpriteRenderer secondBack = GetBackRenderer(secondView);
+
+                GameSceneCardViewModel model = new GameSceneCardViewModel(
+                    cardId: 1,
+                    rank: 8,
+                    isFaceUp: false,
+                    revealRank: true,
+                    canUse: false,
+                    displayName: "Eight",
+                    definitionKey: "standard-plain-8");
+                firstView.Bind(model);
+                secondView.Bind(new GameSceneCardViewModel(
+                    cardId: 2,
+                    rank: model.Rank,
+                    isFaceUp: model.IsFaceUp,
+                    revealRank: model.RevealRank,
+                    canUse: model.CanUse,
+                    displayName: model.DisplayName,
+                    definitionKey: model.DefinitionKey));
+
+                firstView.SetHovered(true);
+
+                MaterialPropertyBlock properties = new MaterialPropertyBlock();
+                firstBack.GetPropertyBlock(properties);
+                Assert.That(properties.GetFloat(CardBlendAmountId), Is.EqualTo(0.5f));
+                secondBack.GetPropertyBlock(properties);
+                Assert.That(properties.GetFloat(CardBlendAmountId), Is.Zero);
+                Assert.That(
+                    secondBack.sharedMaterial.GetTexture(CardBlendTextureId),
+                    Is.SameAs(secondBack.sprite.texture));
+            }
+            finally
+            {
+                Object.DestroyImmediate(first);
+                Object.DestroyImmediate(second);
             }
         }
 

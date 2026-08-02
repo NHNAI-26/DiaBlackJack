@@ -201,6 +201,26 @@ MonoBehaviour:
     volume: 1
     pitch: 1
     loop: 0
+  - id: heartSoundSlow
+    clip: {fileID: 8300000, guid: bffa776c3a338964195d46ba3c5ad489, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 1
+  - id: heartSoundFast
+    clip: {fileID: 8300000, guid: 103f352550f28a64ba17067bd0a9adc4, type: 3}
+    volume: 0.75
+    pitch: 1
+    loop: 1
+  - id: knifeBurn
+    clip: {fileID: 8300000, guid: 5a8f701e82cfbc74db1eadfdd4a7cfef, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
+  - id: knifeThrow
+    clip: {fileID: 8300000, guid: 72f3abfc954c50f438083bc7b95c153c, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1

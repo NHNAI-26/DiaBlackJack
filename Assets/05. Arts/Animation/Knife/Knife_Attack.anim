@@ -3571,11 +3571,32 @@ AnimationClip:
     floatParameter: 3
     intParameter: 0
     messageOptions: 0
+  - time: 0
+    functionName: StopSfx
+    data: heartSoundSlow
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 0.033333335
+    functionName: PlaySfx
+    data: heartSoundFast
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 0.06666667
+    functionName: PlaySfx
+    data: knifeThrow
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
   - time: 0.43333334
     functionName: StartFieldOfViewIncrease
     data: 
     objectReferenceParameter: {fileID: 0}
-    floatParameter: 3
+    floatParameter: 5
     intParameter: 0
     messageOptions: 0
   - time: 2.7333333
@@ -3586,22 +3607,36 @@ AnimationClip:
     intParameter: 0
     messageOptions: 0
   - time: 2.8
-    functionName: StopFieldOfViewIncrease
-    data: 
-    objectReferenceParameter: {fileID: 0}
-    floatParameter: 0
-    intParameter: 0
-    messageOptions: 0
-  - time: 2.8
     functionName: ShakeCamera
-    data:
+    data: 
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0.5
     intParameter: 0
     messageOptions: 0
   - time: 2.8
     functionName: NotifyKnifeImpact
-    data:
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 2.8333333
+    functionName: StopFieldOfViewIncrease
+    data: 
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 2.8333333
+    functionName: StopSfx
+    data: heartSoundFast
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
+    intParameter: 0
+    messageOptions: 0
+  - time: 2.9
+    functionName: PlaySfx
+    data: dissolve
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0
     intParameter: 0

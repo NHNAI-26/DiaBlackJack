@@ -457,6 +457,8 @@ MonoBehaviour:
   nameText: {fileID: 3879847998483440863}
   hoverBadge: {fileID: 3169398093149201028}
   hoverText: {fileID: 8856677999567629907}
+  displayModelPrefab: {fileID: 0}
+  placeholderRenderer: {fileID: 3795005150099411801}
   hoverScale: 1.12
   scaleLerp: 12
 --- !u!1 &9196873438216898575

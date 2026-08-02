@@ -74,6 +74,8 @@ namespace DiaBlackJack.GameScene
 
         public static bool BlocksBackgroundInteraction => _backgroundBlockCount > 0;
 
+        public bool HasCompletedInteraction { get; private set; }
+
         private void Awake()
         {
             ResolveBindings();
@@ -87,6 +89,7 @@ namespace DiaBlackJack.GameScene
             _dragTarget = DragTarget.None;
             _startSequenceSeen = false;
             _blocksBackground = false;
+            HasCompletedInteraction = false;
         }
 
         private void OnDisable()
@@ -214,6 +217,7 @@ namespace DiaBlackJack.GameScene
                 !animator.IsInTransition(baseLayerIndex))
             {
                 EndBackgroundBlock();
+                HasCompletedInteraction = true;
                 _state = InteractionState.WaitingForStart;
                 _startSequenceSeen = false;
                 _dragTarget = DragTarget.None;

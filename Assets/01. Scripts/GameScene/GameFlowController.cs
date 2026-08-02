@@ -339,7 +339,10 @@ namespace DiaBlackJack.GameScene
         {
             if (CurrentViewModel?.ShopOfferId is int offerId)
             {
-                RequestRemoveShopCard(offerId, cardId);
+                if (RequestRemoveShopCard(offerId, cardId))
+                {
+                    gameManager?.PlayLighterShopAnimation();
+                }
             }
         }
 
@@ -347,7 +350,10 @@ namespace DiaBlackJack.GameScene
         {
             if (CurrentViewModel?.ShopOfferId is int offerId)
             {
-                RequestRestAtShop(offerId);
+                if (RequestRestAtShop(offerId))
+                {
+                    gameManager?.PlayWhiskeyShopAnimation();
+                }
             }
         }
 

@@ -78,6 +78,10 @@ Material:
     - _DissolveEnabled: 0
     - _DissolveMaxOffset: 0
     - _DissolveMinOffset: 0
+    - _DissolveMode: 0
+    - _DissolveRadialNoiseStrength: 0.15
+    - _DissolveRadialOrigin: 0
+    - _DissolveRadialRadius: 1.4142
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EmissionEnabled: 0
@@ -106,6 +110,8 @@ Material:
     - _ShadowCull: 2
     - _Smoothness: 0.5
     - _SmoothnessMapEnabled: 0
+    - _SpriteFlipX: 0
+    - _SpriteFlipY: 0
     - _SrcBlend: 1
     - _SrcBlendAlpha: 1
     - _Surface: 0
