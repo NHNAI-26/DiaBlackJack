@@ -312,6 +312,49 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GSH01_U13_EnemyLieDetectorDecisionDoesNotOpenPlayerChoiceHud()
+        {
+            CardDefinition lieDetector = CardDefinitionCatalog.GetByKey(
+                CardDefinitionCatalog.LieDetectorKey);
+            var battle = new CoreLoopBattle(
+                BlackjackDeck.CreateInDrawOrder(CreateCards(0, 10, 10, 2, 3)),
+                BlackjackDeck.CreateInDrawOrder(CreateCards(
+                    100,
+                    2,
+                    3,
+                    lieDetector,
+                    4)),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 4,
+                enemyPolicy: new HitThenStandPolicy());
+            CoreLoopViewModel enemyDecisionFrame = null;
+            battle.Stepped += () =>
+            {
+                PendingAutomaticCardInteraction pending =
+                    battle.PendingAutomaticInteraction;
+                if (pending?.DecisionSide == CombatantSide.Enemy)
+                {
+                    enemyDecisionFrame = CoreLoopPresenter.Create(battle);
+                }
+            };
+            Assert.That(battle.Start(), Is.True);
+
+            Assert.That(battle.TryPlayerStand(), Is.True);
+
+            Assert.That(enemyDecisionFrame, Is.Not.Null);
+            Assert.That(enemyDecisionFrame.IsResolvingAutomaticCardEffect, Is.True);
+            Assert.That(enemyDecisionFrame.AutomaticCardInteraction, Is.Null);
+            GameSceneCombatHudViewModel hud = GameSceneCombatHudPresenter.Create(
+                enemyDecisionFrame,
+                isStageBattle: false,
+                isShopOpen: false,
+                inputLocked: false);
+            Assert.That(hud.Mode, Is.EqualTo(GameSceneCombatHudMode.Hidden));
+            Assert.That(hud.Prompt, Is.Empty);
+            Assert.That(hud.OptionActions, Is.Empty);
+        }
+
+        [Test]
         public void GSH01_U05_BattleEndDifferentiatesStageReturnAndStandaloneRestart()
         {
             CoreLoopSession session = new CoreLoopSession(() => new CoreLoopBattle(
@@ -1204,6 +1247,20 @@ namespace DiaBlackJack.CoreLoop.Tests
             public EnemyDecision Decide(EnemyObservation observation)
             {
                 return new EnemyDecision(EnemyActionType.Stand, "gsh01-stand");
+            }
+        }
+
+        private sealed class HitThenStandPolicy : IEnemyBehaviorPolicy
+        {
+            private bool _hasHit;
+
+            public EnemyDecision Decide(EnemyObservation observation)
+            {
+                EnemyActionType action = _hasHit
+                    ? EnemyActionType.Stand
+                    : EnemyActionType.Hit;
+                _hasHit = true;
+                return new EnemyDecision(action, "gsh01-hit-then-stand");
             }
         }
     }

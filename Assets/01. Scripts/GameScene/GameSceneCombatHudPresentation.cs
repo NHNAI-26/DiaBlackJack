@@ -198,10 +198,7 @@ namespace DiaBlackJack.GameScene
                 AutomaticCardInteractionViewModel interaction = core.AutomaticCardInteraction;
                 if (interaction == null)
                 {
-                    return CreateOptions(
-                        "ENEMY AUTOMATIC DECISION",
-                        Array.Empty<GameSceneCombatHudActionViewModel>(),
-                        automaticCardResult);
+                    return CreateHidden();
                 }
 
                 var options = new List<GameSceneCombatHudActionViewModel>();

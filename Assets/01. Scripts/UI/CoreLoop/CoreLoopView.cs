@@ -425,9 +425,6 @@ namespace DiaBlackJack.CoreLoop.UI
                 _model.AutomaticCardInteraction;
             if (interaction == null)
             {
-                GUILayout.Label(
-                    "ENEMY AUTOMATIC DECISION",
-                    _headingStyle);
                 return;
             }
 

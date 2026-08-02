@@ -248,7 +248,7 @@ PendingAutomaticCardInteraction
 - `InteractionId`는 전투 안에서 증가하며 0으로 재사용하지 않는다.
 - 플레이어 입력은 `InteractionId`와 `OptionId`를 함께 전달한다.
 - 오래된 ID, 중복 선택, 다른 카드의 옵션과 선택 주체가 다른 입력은 무변경 거절한다.
-- 적이 선택 주체이면 UI 입력을 열지 않고 적 자동 선택 정책으로 같은 옵션을 해결한다.
+- 적이 선택 주체이면 UI 입력을 열지 않고 적 자동 선택 정책으로 같은 옵션을 해결한다. `Stepped`가 자동 정책 실행 직전 상태를 전달하더라도 `PendingPlayerAutomaticInteraction`이 없는 프레임은 GameScene HUD와 CoreLoop IMGUI에서 숨긴다.
 - 한 시점에는 자동 상호작용 하나만 존재한다.
 
 ### 6.3 전투 상태

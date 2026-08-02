@@ -3,7 +3,7 @@
 > 프로젝트: DiaBlackJack  
 > 문서 책임자: 이천서  
 > 버전: v0.1  
-> 최종 갱신: 2026-07-31
+> 최종 갱신: 2026-08-02
 
 ## 1. 기록 목적
 
@@ -27,6 +27,7 @@
 
 | 날짜 | 영역 | 실제 수행 내용 | 관련 파일/산출물 | 검증/비고 |
 | --- | --- | --- | --- | --- |
+| 2026-08-02 | 적 거짓말 탐지기 UI 회귀 보정 | 적 거짓말 탐지기의 자동 선언 직전 중간 프레임이 플레이어 선택 패널로 표시되는 원인을 확인하고 GameScene HUD·CoreLoop IMGUI 표시를 차단했다. | `GameSceneCombatHudPresentation.cs`, `CoreLoopView.cs`, `GameSceneCombatHudPresentationTests.cs`, 자동 카드 기획·개발·진행 문서 | 이천서 기획·구현·검증 책임, AI 경로 추적·코드·테스트·문서화 보조. 관련 25/25, 전체 888/890 통과. 잔여 2건은 기존 프리팹 참조·광원 정밀 비교 실패. 씬·프리팹·외부 에셋·패키지 변경 없음. |
 | 2026-07-31 | 상대 악마 7종 정합성 DC-R07 | 집행자의 파이몬 계약을 제거하고 보스 고정 쌍을 프로토타입 7종 안으로 교체했다. 바알제붑은 자기·상대 공개 카드 중 각각 최고 숫자를 버리고, 보스는 아스모데우스 강제 히트 선택을 실제 적 턴에서 해결하도록 정책을 개선했다. | `EnemyCombatProfileCatalog.cs`, `CultistEnemyPolicy.cs`, `FinalBossEnemyPolicy.cs`, 적 계약·보스·프로필 회귀, 규칙·계약·적 프로필·AI 활용 문서 | 이천서 기획·구현·검증 책임, AI 문서/코드 불일치 추적·코드·테스트·문서화 보조. 대상 64/64·전체 EditMode 821/821, 컴파일 오류 0. 외부 에셋·오픈소스·패키지·씬·프리팹 변경 없음. |
 | 2026-07-31 | 시작 악마 확인 UI·마몬 차례 선택 정정 | 시작 악마 2장을 선택 없이 모두 지급한 상태로 공개하고 확인 버튼 뒤 상대 선택으로 이동하게 했다. 마몬은 매 소유자 차례 시작마다 유지/재굴림을 묻고, 유지는 정상 행동·재굴림은 차례 종료로 정정했다. | `StartingDemonRevealView.cs`, `GameFlowController.cs`, `StageProgressionView.cs`, 마몬 처리기·전투·적 AI·표시, DCR03_U14와 관련 기획 문서 | 이천서 기획·구현·검증 책임, AI 코드 추적·회귀 테스트·문서 정리 보조. 마몬·표시·적 AI 대상 51/51, CoreLoop 543/543, 전체 EditMode 817/817, 컴파일 오류 0. 기존 프로젝트 에셋만 사용. |
 | 2026-07-31 | GameScene 전체 QA GF-06 | 1080p 정식 런 전 구간과 720p 상대 선택·전투 HUD, 상점 거래·체크포인트 이어하기·보스 결과·새 런을 검증하고 비전투 HUD, CHANGE 비용, 런타임 카드 덱 미리보기 회귀를 수정했다. | `GameFlowController.cs`, `GameSceneCombatHudPresentation.cs`, `DeckCardDisplaySnapshot.cs`, `GameScenePresentation.cs`, GF-06 회귀 테스트·전체 흐름·정식 런·AI 활용 기록 | 이천서 기획·구현·검증 책임, AI MCP 조작·원인 분석·코드·테스트·시각 판정·문서화 보조. 신규 2/2·전체 EditMode 813/813, MainMenuScene·GameScene 문제 0, Console Error 0, 시각 판정 94/100. 사용자 저장 해시 일치 복원, 씬·프리팹·외부 에셋·오픈소스·패키지 변경 없음. |
