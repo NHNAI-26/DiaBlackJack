@@ -174,6 +174,7 @@ namespace DiaBlackJack.CoreLoop.UI
             bool isChoosingChangeCard,
             IReadOnlyList<PlayerCardViewModel> playerCardActions,
             string cardEffectPrompt,
+            CardEffectKind? pendingCardEffectKind,
             IReadOnlyList<CardEffectChoiceViewModel> cardEffectChoices,
             string lastCardEffect,
             bool isResolvingCardEffect,
@@ -215,6 +216,7 @@ namespace DiaBlackJack.CoreLoop.UI
             PlayerCardActions = playerCardActions ??
                 throw new ArgumentNullException(nameof(playerCardActions));
             CardEffectPrompt = cardEffectPrompt ?? string.Empty;
+            PendingCardEffectKind = pendingCardEffectKind;
             CardEffectChoices = cardEffectChoices ??
                 throw new ArgumentNullException(nameof(cardEffectChoices));
             LastCardEffect = lastCardEffect ?? string.Empty;
@@ -286,6 +288,8 @@ namespace DiaBlackJack.CoreLoop.UI
 
         public string CardEffectPrompt { get; }
 
+        public CardEffectKind? PendingCardEffectKind { get; }
+
         public IReadOnlyList<CardEffectChoiceViewModel> CardEffectChoices { get; }
 
         public string LastCardEffect { get; }
@@ -350,6 +354,7 @@ namespace DiaBlackJack.CoreLoop.UI
                 battle.CanSelectChangedCard,
                 FormatPlayerCardActions(battle),
                 battle.PendingPlayerCardEffect?.Prompt,
+                battle.PendingPlayerCardEffect?.EffectKind,
                 FormatCardEffectChoices(battle.PendingPlayerCardEffect),
                 FormatLastCardEffect(battle.LastCardEffectResult),
                 battle.State == CoreLoopState.PlayerResolvingCardEffect,

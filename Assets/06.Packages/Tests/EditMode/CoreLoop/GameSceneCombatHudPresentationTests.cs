@@ -491,7 +491,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CUM09_U04_NonHammerManualChoicesRemainHudButtons()
+        public void CUM13_U01_RevolverUsesFocusedNumberSelector()
         {
             CardDefinition revolver = CardDefinitionCatalog.GetDefaultForRank(7);
             var battle = new CoreLoopBattle(
@@ -514,10 +514,65 @@ namespace DiaBlackJack.CoreLoop.Tests
                 scene.UsesDiegeticCardEffectSelection);
 
             Assert.That(scene.UsesDiegeticCardEffectSelection, Is.False);
+            Assert.That(
+                hud.Mode,
+                Is.EqualTo(GameSceneCombatHudMode.RevolverNumberSelection));
             Assert.That(hud.OptionActions, Has.Count.EqualTo(10));
             Assert.That(hud.OptionActions.All(action =>
                 action.Command.Kind ==
                     GameSceneCombatHudCommandKind.ResolveCardEffectChoice), Is.True);
+        }
+
+        [Test]
+        public void DCUI03_U01_SatanShowsTenCardsAndBrandsFirstDeclaration()
+        {
+            CoreLoopBattle battle = CreateStartedContractBattle(
+                DemonContractKind.Satan,
+                DemonContractKind.Belphegor);
+            Assert.That(battle.TryBeginPlayerDemonContract(), Is.True);
+            PendingDemonContractInteraction offer =
+                battle.PendingPlayerDemonContractInteraction;
+            DemonContractOption satan = offer.Options.Single(option =>
+                option.ContractDefinitionKey == DemonContractCatalog.SatanKey);
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                offer.InteractionId,
+                satan.OptionId), Is.True);
+
+            ActiveDemonContract active =
+                battle.ActivePlayerDemonContracts.Single();
+            Assert.That(battle.TryBeginPlayerActiveDemonContractAction(
+                active.SourceCardId), Is.True);
+
+            GameSceneViewModel first = GameScenePresenter.Create(battle);
+            GameSceneCombatHudViewModel firstHud =
+                GameSceneCombatHudPresenter.Create(
+                    first.Core,
+                    isStageBattle: false,
+                    isShopOpen: false,
+                    inputLocked: false);
+            Assert.That(firstHud.Mode,
+                Is.EqualTo(GameSceneCombatHudMode.SatanNumberSelection));
+            Assert.That(first.SatanNumberCandidates, Has.Count.EqualTo(10));
+            Assert.That(first.SatanNumberCandidates.All(card =>
+                card.DirectSelectionCommand.HasValue), Is.True);
+            Assert.That(first.SatanNumberCandidates.All(card => !card.IsUsed),
+                Is.True);
+
+            PendingDemonContractInteraction declaration =
+                battle.PendingPlayerDemonContractInteraction;
+            DemonContractOption three = declaration.Options.Single(option =>
+                option.NumericValue == 3);
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                declaration.InteractionId,
+                three.OptionId), Is.True);
+
+            GameSceneViewModel second = GameScenePresenter.Create(battle);
+            GameSceneCardViewModel branded = second.SatanNumberCandidates.Single(
+                card => card.IsUsed);
+            Assert.That(branded.Rank, Is.EqualTo(3));
+            Assert.That(branded.DirectSelectionCommand.HasValue, Is.False);
+            Assert.That(second.SatanNumberCandidates.Count(card =>
+                card.DirectSelectionCommand.HasValue), Is.EqualTo(9));
         }
 
         [Test]
@@ -1237,6 +1292,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                     return DemonContractCatalog.BelphegorKey;
                 case DemonContractKind.Mammon:
                     return DemonContractCatalog.MammonKey;
+                case DemonContractKind.Satan:
+                    return DemonContractCatalog.SatanKey;
                 default:
                     throw new System.ArgumentOutOfRangeException(nameof(kind));
             }

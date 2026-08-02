@@ -46,6 +46,7 @@ namespace DiaBlackJack.GameScene
 
         private Canvas _canvas;
         private bool _shopDemonDetailActivatedCombatControlsRoot;
+        private RevolverNumberSelectorView _revolverNumberSelector;
 
         public event Action<GameSceneCombatHudCommand> CombatCommandRequested;
 
@@ -65,9 +66,16 @@ namespace DiaBlackJack.GameScene
             contractDetailPanel != null &&
             contractDetailPanel.activeInHierarchy;
 
+        public bool IsRevolverNumberSelectionOpen =>
+            _revolverNumberSelector != null && _revolverNumberSelector.IsOpen;
+
         private void Awake()
         {
             _canvas = GetComponentInParent<Canvas>();
+            _revolverNumberSelector =
+                GetComponent<RevolverNumberSelectorView>() ??
+                gameObject.AddComponent<RevolverNumberSelectorView>();
+            _revolverNumberSelector.CommandRequested += RaiseCombatCommand;
             HideCardHoverBadge();
             HideDemonContractDetail();
             BindCombatControls();
@@ -76,6 +84,11 @@ namespace DiaBlackJack.GameScene
 
         private void OnDestroy()
         {
+            if (_revolverNumberSelector != null)
+            {
+                _revolverNumberSelector.CommandRequested -= RaiseCombatCommand;
+            }
+
             UnbindCombatControls();
         }
 
@@ -363,6 +376,25 @@ namespace DiaBlackJack.GameScene
         {
             HideCombatActionTooltip();
 
+            if (combat != null &&
+                combat.Mode == GameSceneCombatHudMode.RevolverNumberSelection)
+            {
+                if (combatControlsRoot != null)
+                {
+                    _shopDemonDetailActivatedCombatControlsRoot = false;
+                    combatControlsRoot.SetActive(true);
+                }
+
+                SetActive(optionPanel, false);
+                SetActive(contractDetailPanel, false);
+                _revolverNumberSelector?.Render(
+                    combat.Prompt,
+                    combat.OptionActions);
+                return;
+            }
+
+            _revolverNumberSelector?.Hide();
+
             if (combat == null || combat.Mode == GameSceneCombatHudMode.Hidden)
             {
                 HideCombatControls();
@@ -376,7 +408,8 @@ namespace DiaBlackJack.GameScene
             }
 
             bool isDiegeticSelection =
-                combat.Mode == GameSceneCombatHudMode.DiegeticSelection;
+                combat.Mode == GameSceneCombatHudMode.DiegeticSelection ||
+                combat.Mode == GameSceneCombatHudMode.SatanNumberSelection;
             SetActive(
                 optionPanel,
                 combat.Mode == GameSceneCombatHudMode.Options ||
@@ -481,6 +514,7 @@ namespace DiaBlackJack.GameScene
         private void HideCombatControls()
         {
             HideCombatActionTooltip();
+            _revolverNumberSelector?.Hide();
             _shopDemonDetailActivatedCombatControlsRoot = false;
             SetActive(combatControlsRoot, false);
             SetActive(optionPanel, false);

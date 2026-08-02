@@ -35,6 +35,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private CodexController codex;
         [SerializeField] private DemonContractSelectionView demonContractSelection;
         private CrystalOrbSelectionView crystalOrbSelection;
+        private SatanNumberSelectionView satanNumberSelection;
         [SerializeField] private TableCombatCommandGroup tableCombatCommands;
         [SerializeField] private ContractPaperView contractPapers;
 
@@ -286,6 +287,11 @@ namespace DiaBlackJack.GameScene
             crystalOrbSelection ??=
                 gameObject.AddComponent<CrystalOrbSelectionView>();
             crystalOrbSelection.Initialize(playerHand?.CardPrefab);
+            satanNumberSelection ??=
+                GetComponent<SatanNumberSelectionView>();
+            satanNumberSelection ??=
+                gameObject.AddComponent<SatanNumberSelectionView>();
+            satanNumberSelection.Initialize(playerHand?.CardPrefab);
             tableCombatCommands ??= FindFirstObjectByType<TableCombatCommandGroup>(
                 FindObjectsInactive.Include);
             contractPapers ??= FindFirstObjectByType<ContractPaperView>(
@@ -327,6 +333,7 @@ namespace DiaBlackJack.GameScene
             }
             demonContractSelection?.Hide();
             crystalOrbSelection?.Hide();
+            satanNumberSelection?.Hide();
             hud?.HideDemonContractDetail();
             UpdateCombatCommandHover(null);
         }
@@ -360,6 +367,7 @@ namespace DiaBlackJack.GameScene
             demonContractSelection?.SetHovered(null);
             demonContractSelection?.Hide();
             crystalOrbSelection?.Hide();
+            satanNumberSelection?.Hide();
             contractPapers?.Render(null);
             hud?.HideCardHoverBadge();
             hud?.HideDemonContractDetail();
@@ -431,6 +439,7 @@ namespace DiaBlackJack.GameScene
                 UpdateCombatCommandHover(null);
                 demonContractSelection?.SetHovered(null);
                 crystalOrbSelection?.SetHovered(null);
+                satanNumberSelection?.SetHovered(null);
                 hud?.HideCardHoverBadge();
                 hud?.HideDemonContractDetail();
                 return;
@@ -443,8 +452,23 @@ namespace DiaBlackJack.GameScene
                 UpdateShopUtilityItemHover(null);
                 demonContractSelection?.SetHovered(null);
                 crystalOrbSelection?.SetHovered(null);
+                satanNumberSelection?.SetHovered(null);
                 hud?.HideCardHoverBadge();
                 hud?.HideDemonContractDetail();
+                return;
+            }
+
+            if (hud != null && hud.IsRevolverNumberSelectionOpen)
+            {
+                UpdateHover(null);
+                UpdateDemonCardHover(null);
+                UpdateShopUtilityItemHover(null);
+                UpdateCombatCommandHover(null);
+                demonContractSelection?.SetHovered(null);
+                crystalOrbSelection?.SetHovered(null);
+                satanNumberSelection?.SetHovered(null);
+                hud.HideCardHoverBadge();
+                hud.HideDemonContractDetail();
                 return;
             }
 
@@ -459,6 +483,12 @@ namespace DiaBlackJack.GameScene
             if (crystalOrbSelection != null && crystalOrbSelection.IsOpen)
             {
                 HandleCrystalOrbSelectionInput(hasHit, hit);
+                return;
+            }
+
+            if (satanNumberSelection != null && satanNumberSelection.IsOpen)
+            {
+                HandleSatanNumberSelectionInput(hasHit, hit);
                 return;
             }
 
@@ -668,6 +698,45 @@ namespace DiaBlackJack.GameScene
                 crystalOrbSelection.GetCandidate(pointed);
             if (_inputLocked ||
                 candidate == null ||
+                !candidate.DirectSelectionCommand.HasValue)
+            {
+                return;
+            }
+
+            Mouse mouse = Mouse.current;
+            if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
+            {
+                return;
+            }
+
+            HandleCombatCommand(candidate.DirectSelectionCommand.Value);
+        }
+
+        private void HandleSatanNumberSelectionInput(
+            bool hasHit,
+            RaycastHit hit)
+        {
+            CardView pointed = hasHit
+                ? hit.collider.GetComponentInParent<CardView>()
+                : null;
+            if (pointed != null && !satanNumberSelection.Contains(pointed))
+            {
+                pointed = null;
+            }
+
+            UpdateHover(pointed);
+            UpdateDemonCardHover(null);
+            UpdateShopUtilityItemHover(null);
+            UpdateCombatCommandHover(null);
+            demonContractSelection?.SetHovered(null);
+            crystalOrbSelection?.SetHovered(null);
+            satanNumberSelection.SetHovered(pointed);
+            hud?.HideDemonContractDetail();
+            UpdateCardHoverBadge();
+
+            GameSceneCardViewModel candidate =
+                satanNumberSelection.GetCandidate(pointed);
+            if (_inputLocked || candidate == null ||
                 !candidate.DirectSelectionCommand.HasValue)
             {
                 return;
@@ -1958,6 +2027,7 @@ namespace DiaBlackJack.GameScene
             }
 
             RenderCrystalOrbSelection(vm);
+            RenderSatanNumberSelection(vm);
 
             if (enemyCharacter != null)
             {
@@ -2017,6 +2087,23 @@ namespace DiaBlackJack.GameScene
             }
 
             crystalOrbSelection.Render(vm.CrystalOrbCandidates, _camera);
+        }
+
+        private void RenderSatanNumberSelection(GameSceneViewModel vm)
+        {
+            if (satanNumberSelection == null)
+            {
+                return;
+            }
+
+            if (vm == null || vm.SatanNumberCandidates.Count == 0)
+            {
+                satanNumberSelection.Hide();
+                return;
+            }
+
+            _camera ??= Camera.main;
+            satanNumberSelection.Render(vm.SatanNumberCandidates, _camera);
         }
 
         private void RefreshDeckStacks()

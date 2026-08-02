@@ -287,6 +287,7 @@ namespace DiaBlackJack.GameScene
             CharacterVisualState enemyVisual,
             string enemyActionLabel,
             IReadOnlyList<GameSceneCardViewModel> crystalOrbCandidates,
+            IReadOnlyList<GameSceneCardViewModel> satanNumberCandidates,
             GameSceneRevolverAnimationCue revolverAnimationCue = null,
             GameSceneHammerAnimationCue hammerAnimationCue = null,
             bool usesDiegeticCardEffectSelection = false,
@@ -301,6 +302,8 @@ namespace DiaBlackJack.GameScene
             EnemyActionLabel = enemyActionLabel ?? string.Empty;
             CrystalOrbCandidates = crystalOrbCandidates ??
                 throw new ArgumentNullException(nameof(crystalOrbCandidates));
+            SatanNumberCandidates = satanNumberCandidates ??
+                throw new ArgumentNullException(nameof(satanNumberCandidates));
             RevolverAnimationCue = revolverAnimationCue;
             HammerAnimationCue = hammerAnimationCue;
             UsesDiegeticCardEffectSelection = usesDiegeticCardEffectSelection;
@@ -321,6 +324,8 @@ namespace DiaBlackJack.GameScene
         public string EnemyActionLabel { get; }
 
         public IReadOnlyList<GameSceneCardViewModel> CrystalOrbCandidates { get; }
+
+        public IReadOnlyList<GameSceneCardViewModel> SatanNumberCandidates { get; }
 
         public GameSceneRevolverAnimationCue RevolverAnimationCue { get; }
 
@@ -356,6 +361,7 @@ namespace DiaBlackJack.GameScene
                 enemyVisual,
                 enemyLabel,
                 CreateCrystalOrbCandidates(battle),
+                CreateSatanNumberCandidates(battle),
                 CreateRevolverAnimationCue(battle),
                 CreateHammerAnimationCue(battle),
                 UsesDiegeticSelection(battle),
@@ -1003,6 +1009,58 @@ namespace DiaBlackJack.GameScene
                     directSelectionCommand: new GameSceneCombatHudCommand(
                         GameSceneCombatHudCommandKind.ResolveCardEffectChoice,
                         option.Id)));
+            }
+
+            return candidates.AsReadOnly();
+        }
+
+        private static IReadOnlyList<GameSceneCardViewModel>
+            CreateSatanNumberCandidates(CoreLoopBattle battle)
+        {
+            PendingDemonContractInteraction interaction =
+                battle.PendingPlayerDemonContractInteraction;
+            if (interaction == null ||
+                (interaction.Kind !=
+                    DemonContractInteractionKind.SatanDeclareFirstNumber &&
+                 interaction.Kind !=
+                    DemonContractInteractionKind.SatanDeclareSecondNumber))
+            {
+                return Array.AsReadOnly(Array.Empty<GameSceneCardViewModel>());
+            }
+
+            var candidates = new List<GameSceneCardViewModel>(10);
+            for (int number = 1; number <= 10; number++)
+            {
+                DemonContractOption option = null;
+                foreach (DemonContractOption candidate in interaction.Options)
+                {
+                    if (candidate.NumericValue == number)
+                    {
+                        option = candidate;
+                        break;
+                    }
+                }
+
+                CardDefinition definition =
+                    CardDefinitionCatalog.GetDefaultForRank(number);
+                bool isBranded = interaction.ContextNumericValue == number;
+                GameSceneCombatHudCommand? command = option == null
+                    ? null
+                    : new GameSceneCombatHudCommand(
+                        GameSceneCombatHudCommandKind.ResolveDemonContractChoice,
+                        option.OptionId,
+                        interaction.InteractionId);
+                candidates.Add(new GameSceneCardViewModel(
+                    100000 + number,
+                    number,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    definition.DisplayName,
+                    suit: CardSuit.Spade,
+                    definitionKey: definition.Key,
+                    isUsed: isBranded,
+                    directSelectionCommand: command));
             }
 
             return candidates.AsReadOnly();
