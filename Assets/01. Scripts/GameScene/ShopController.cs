@@ -38,7 +38,6 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float demonCardSpacing = 1.1f;
         [SerializeField] private int normalCardOfferCount = 3;
         [SerializeField] private float normalCardSpacing = 0.95f;
-        [SerializeField] private float normalCardHorizontalOffset = 0.5f;
         [SerializeField] private int lighterPrice = 2;
         [SerializeField] private int whiskeyPrice = 2;
         [Tooltip("Added to both utility prices for every earlier shop where either utility was purchased.")]
@@ -63,9 +62,6 @@ namespace DiaBlackJack.GameScene
         private bool _lighterPurchasedThisVisit;
         private bool _whiskeyPurchasedThisVisit;
         private bool _utilityPurchasedThisVisit;
-        private bool _formalUtilityLayoutApplied;
-        private Vector3 _lighterOriginalPosition;
-        private Vector3 _whiskeyOriginalPosition;
 
         public bool IsOpen { get; private set; }
 
@@ -144,7 +140,6 @@ namespace DiaBlackJack.GameScene
             IsFormal = true;
             ClearFormalOffers();
             CreateFormalCardOffers(model);
-            ApplyFormalUtilityLayout();
             BindFormalUtilityItems(model);
 
             merchant?.EnterMerchant();
@@ -165,7 +160,6 @@ namespace DiaBlackJack.GameScene
             IsFormal = false;
             IsOpen = false;
             ClearFormalOffers();
-            RestoreUtilityLayout();
             lighterItem?.SetHovered(false);
             whiskeyItem?.SetHovered(false);
             merchant?.ExitMerchant();
@@ -413,13 +407,11 @@ namespace DiaBlackJack.GameScene
             LayoutFormalOffers(
                 _formalNormalOffers,
                 _formalNormalStatuses,
-                normalCardSpacing,
-                normalCardHorizontalOffset);
+                normalCardSpacing);
             LayoutFormalOffers(
                 _formalDemonOffers,
                 _formalDemonStatuses,
-                demonCardSpacing,
-                horizontalOffset: 0f);
+                demonCardSpacing);
         }
 
         private void CreateFormalDemonOffer(ShopCardOptionViewModel option)
@@ -481,45 +473,6 @@ namespace DiaBlackJack.GameScene
                 option.IsSold));
         }
 
-        private void ApplyFormalUtilityLayout()
-        {
-            if (_formalUtilityLayoutApplied ||
-                lighterItem == null ||
-                whiskeyItem == null)
-            {
-                return;
-            }
-
-            Transform lighterTransform = lighterItem.transform;
-            Transform whiskeyTransform = whiskeyItem.transform;
-            _lighterOriginalPosition = lighterTransform.position;
-            _whiskeyOriginalPosition = whiskeyTransform.position;
-            lighterTransform.position = _whiskeyOriginalPosition;
-            whiskeyTransform.position = _lighterOriginalPosition;
-
-            _formalUtilityLayoutApplied = true;
-        }
-
-        private void RestoreUtilityLayout()
-        {
-            if (!_formalUtilityLayoutApplied)
-            {
-                return;
-            }
-
-            if (lighterItem != null)
-            {
-                lighterItem.transform.position = _lighterOriginalPosition;
-            }
-
-            if (whiskeyItem != null)
-            {
-                whiskeyItem.transform.position = _whiskeyOriginalPosition;
-            }
-
-            _formalUtilityLayoutApplied = false;
-        }
-
         private void BindFormalUtilityItems(StageProgressionViewModel model)
         {
             bool canRemove = false;
@@ -578,8 +531,7 @@ namespace DiaBlackJack.GameScene
         private static void LayoutFormalOffers<T>(
             IReadOnlyList<T> views,
             IReadOnlyList<ShopCardOfferStatusView> statuses,
-            float spacing,
-            float horizontalOffset)
+            float spacing)
             where T : Component
         {
             float offset = -(views.Count - 1) * 0.5f * spacing;
@@ -592,7 +544,7 @@ namespace DiaBlackJack.GameScene
                 }
 
                 view.transform.localPosition = new Vector3(
-                    horizontalOffset + offset + i * spacing,
+                    offset + i * spacing,
                     0f,
                     i * 0.01f);
                 view.transform.localRotation = Quaternion.identity;
@@ -851,7 +803,7 @@ namespace DiaBlackJack.GameScene
                 }
 
                 offer.View.transform.localPosition = new Vector3(
-                    normalCardHorizontalOffset + offset + i * normalCardSpacing,
+                    offset + i * normalCardSpacing,
                     0f,
                     i * 0.01f);
                 offer.View.transform.localRotation = Quaternion.identity;

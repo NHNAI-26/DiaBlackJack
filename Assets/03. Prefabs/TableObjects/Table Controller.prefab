@@ -1923,7 +1923,6 @@ MonoBehaviour:
   demonCardSpacing: 1.1
   normalCardOfferCount: 3
   normalCardSpacing: 0.95
-  normalCardHorizontalOffset: 0.5
   lighterPrice: 2
   whiskeyPrice: 2
   utilityPriceIncreasePerUsedVisit: 1
@@ -2175,7 +2174,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8926471034187765097, guid: f869929a665917242a3cf6d945943044, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 2.289
+      value: 2.02
       objectReference: {fileID: 0}
     - target: {fileID: 8926471034187765097, guid: f869929a665917242a3cf6d945943044, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2183,7 +2182,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8926471034187765097, guid: f869929a665917242a3cf6d945943044, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.143
+      value: -0.31
       objectReference: {fileID: 0}
     - target: {fileID: 8926471034187765097, guid: f869929a665917242a3cf6d945943044, type: 3}
       propertyPath: m_LocalRotation.w

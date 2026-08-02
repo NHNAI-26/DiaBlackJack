@@ -220,6 +220,10 @@ namespace DiaBlackJack.StageProgression.Tests
                 ShopController shop = CreateFormalShopController(root);
                 shop.OpenFormal(before);
                 Vector3[] firstPositions = GetActiveOfferPositions(root);
+                CardView[] firstNormalCards = GetActiveComponents<CardView>(root);
+                Assert.That(
+                    AverageLocalX(firstNormalCards),
+                    Is.EqualTo(0f).Within(0.0001f));
 
                 Assert.That(run.TryBuyShopCard(
                     before.ShopOfferId.Value,
@@ -248,6 +252,42 @@ namespace DiaBlackJack.StageProgression.Tests
                 Assert.That(run.TryBuyShopCard(
                     after.ShopOfferId.Value,
                     purchasedOption.OptionId), Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void GSV06_U06_FormalShopKeepsAuthoredUtilityItemPositions()
+        {
+            FormalRunSession run = OpenFirstShop();
+            StageProgressionViewModel model = StageProgressionPresenter.Create(run);
+            GameObject root = new GameObject("GSV06 Utility Layout Test");
+            try
+            {
+                ShopController shop = CreateFormalShopController(root);
+                ShopUtilityItemView lighter = CreateChild(root, "Lighter")
+                    .AddComponent<ShopUtilityItemView>();
+                ShopUtilityItemView whiskey = CreateChild(root, "Whiskey")
+                    .AddComponent<ShopUtilityItemView>();
+                Vector3 lighterPosition = new Vector3(-1.25f, 2.5f, 3.75f);
+                Vector3 whiskeyPosition = new Vector3(4.5f, 5.75f, -6.25f);
+                lighter.transform.localPosition = lighterPosition;
+                whiskey.transform.localPosition = whiskeyPosition;
+                SetField(shop, "lighterItem", lighter);
+                SetField(shop, "whiskeyItem", whiskey);
+
+                shop.OpenFormal(model);
+
+                Assert.That(lighter.transform.localPosition, Is.EqualTo(lighterPosition));
+                Assert.That(whiskey.transform.localPosition, Is.EqualTo(whiskeyPosition));
+
+                shop.CloseFormal();
+
+                Assert.That(lighter.transform.localPosition, Is.EqualTo(lighterPosition));
+                Assert.That(whiskey.transform.localPosition, Is.EqualTo(whiskeyPosition));
             }
             finally
             {
@@ -328,6 +368,17 @@ namespace DiaBlackJack.StageProgression.Tests
             }
 
             return positions;
+        }
+
+        private static float AverageLocalX(CardView[] cards)
+        {
+            float sum = 0f;
+            foreach (CardView card in cards)
+            {
+                sum += card.transform.localPosition.x;
+            }
+
+            return cards.Length == 0 ? 0f : sum / cards.Length;
         }
 
         private static T[] GetActiveComponents<T>(GameObject root)

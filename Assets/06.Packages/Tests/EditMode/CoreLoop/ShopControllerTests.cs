@@ -290,6 +290,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(demonCards, Has.Length.EqualTo(2));
             Assert.That(normalStatuses, Has.Length.EqualTo(3));
             Assert.That(demonStatuses, Has.Length.EqualTo(2));
+            Assert.That(
+                normalPositions.Average(position => position.x),
+                Is.EqualTo(0f).Within(0.0001f));
             Assert.That(normalStatuses[0].PriceLabel, Does.StartWith("돈 : "));
             Assert.That(demonStatuses[0].PriceLabel, Does.StartWith("돈 : "));
             Assert.That(
