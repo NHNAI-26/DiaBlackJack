@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using DiaBlackJack.StageProgression.UI;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace DiaBlackJack.GameScene
 {
@@ -15,9 +16,9 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Vector3 deckPosition =
             new Vector3(1.5f, 3.58f, 16.44f);
         [SerializeField] private Vector3 firstCardPosition =
-            new Vector3(-0.62f, 3.6f, 16.3f);
+            new Vector3(-0.55f, 3.56f, 17f);
         [SerializeField] private Vector3 secondCardPosition =
-            new Vector3(0.62f, 3.6f, 16.3f);
+            new Vector3(0.55f, 3.56f, 17f);
         [SerializeField] private Vector3 cardEulerAngles =
             new Vector3(270f, 0f, 0f);
         [SerializeField] private int deckVisualCardCount = 3;
@@ -29,14 +30,41 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float revealedHoldDuration = 1.2f;
 
         private readonly List<GameObject> _instances = new List<GameObject>();
+        private readonly List<DemonCardView> _revealedCards =
+            new List<DemonCardView>(2);
         private GUIStyle _buttonStyle;
         private Coroutine _revealRoutine;
+        private Camera _camera;
+        private GameHudView _hud;
+        private DemonCardView _hoveredCard;
         private int? _activeGrantId;
         private bool _canConfirm;
 
         public event Action ConfirmationRequested;
 
         public bool IsVisible { get; private set; }
+
+        internal void BindHud(GameHudView hud)
+        {
+            _hud = hud;
+        }
+
+        private void Update()
+        {
+            if (!IsVisible)
+            {
+                return;
+            }
+
+            UpdateHover(RaycastRevealedCard());
+            if (_hoveredCard == null || !_hoveredCard.ShouldShowHoverBadge)
+            {
+                ResolveHud()?.HideDemonContractDetail();
+                return;
+            }
+
+            ResolveHud()?.ShowDemonContractDetail(_hoveredCard.BoundCard);
+        }
 
         public void Render(
             int grantId,
@@ -75,6 +103,9 @@ namespace DiaBlackJack.GameScene
             }
 
             _instances.Clear();
+            _revealedCards.Clear();
+            UpdateHover(null);
+            ResolveHud()?.HideDemonContractDetail();
             _activeGrantId = null;
             _canConfirm = false;
             IsVisible = false;
@@ -225,6 +256,8 @@ namespace DiaBlackJack.GameScene
                 CreateCardViewModel(cards[0], 11000, isFaceUp: true));
             second.GetComponent<DemonCardView>().Bind(
                 CreateCardViewModel(cards[1], 11001, isFaceUp: true));
+            _revealedCards.Add(first.GetComponent<DemonCardView>());
+            _revealedCards.Add(second.GetComponent<DemonCardView>());
             first.transform.localScale = new Vector3(
                 0f,
                 firstScale.y,
@@ -301,7 +334,55 @@ namespace DiaBlackJack.GameScene
                 canUse: false,
                 card.DisplayName,
                 card.Summary,
-                card.CostSummary);
+                card.CostSummary,
+                showHoverBadgeWhenUnavailable: isFaceUp);
+        }
+
+        private DemonCardView RaycastRevealedCard()
+        {
+            if (_camera == null)
+            {
+                _camera = Camera.main;
+            }
+
+            Mouse mouse = Mouse.current;
+            if (_camera == null || mouse == null)
+            {
+                return null;
+            }
+
+            Ray ray = _camera.ScreenPointToRay(mouse.position.ReadValue());
+            if (!Physics.Raycast(ray, out RaycastHit hit, 200f))
+            {
+                return null;
+            }
+
+            DemonCardView pointed = hit.collider.GetComponentInParent<DemonCardView>();
+            return pointed != null && _revealedCards.Contains(pointed)
+                ? pointed
+                : null;
+        }
+
+        private void UpdateHover(DemonCardView pointed)
+        {
+            if (_hoveredCard == pointed)
+            {
+                return;
+            }
+
+            _hoveredCard?.SetHovered(false);
+            _hoveredCard = pointed;
+            _hoveredCard?.SetHovered(true);
+        }
+
+        private GameHudView ResolveHud()
+        {
+            if (_hud == null)
+            {
+                _hud = FindFirstObjectByType<GameHudView>();
+            }
+
+            return _hud;
         }
     }
 }

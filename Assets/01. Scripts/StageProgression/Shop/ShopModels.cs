@@ -118,7 +118,6 @@ namespace DiaBlackJack.StageProgression
             }
 
             var copiedOptions = new List<ShopCardOption>();
-            var normalKeys = new HashSet<string>(StringComparer.Ordinal);
             var demonKeys = new HashSet<string>(StringComparer.Ordinal);
             _optionsById = new Dictionary<int, ShopCardOption>();
             int normalCount = 0;
@@ -139,13 +138,11 @@ namespace DiaBlackJack.StageProgression
                         nameof(cardOptions));
                 }
 
-                HashSet<string> knownKeys = option.DeckKind == ShopCardDeckKind.Normal
-                    ? normalKeys
-                    : demonKeys;
-                if (!knownKeys.Add(option.DefinitionKey))
+                if (option.DeckKind == ShopCardDeckKind.Demon &&
+                    !demonKeys.Add(option.DefinitionKey))
                 {
                     throw new ArgumentException(
-                        $"Shop definition '{option.DefinitionKey}' is duplicated.",
+                        $"Shop demon definition '{option.DefinitionKey}' is duplicated.",
                         nameof(cardOptions));
                 }
 

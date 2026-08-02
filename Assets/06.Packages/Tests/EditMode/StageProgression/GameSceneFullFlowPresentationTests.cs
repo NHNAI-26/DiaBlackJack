@@ -10,6 +10,19 @@ namespace DiaBlackJack.StageProgression.Tests
     public sealed class GameSceneFullFlowPresentationTests
     {
         [Test]
+        public void GSV07_U03_StartingDemonRevealKeepsHudRootVisibleForDetailPanel()
+        {
+            Assert.That(
+                GameFlowController.ShouldShowHudRoot(
+                    GameFlowScreen.StartingDemonReveal),
+                Is.True);
+            Assert.That(
+                GameFlowController.ShouldShowHudRoot(
+                    GameFlowScreen.OpponentSelection),
+                Is.False);
+        }
+
+        [Test]
         public void GF01_U01_NewRunPresentsTwoGrantedDemonsWithoutSelection()
         {
             FormalRunSession run = CreateRun();

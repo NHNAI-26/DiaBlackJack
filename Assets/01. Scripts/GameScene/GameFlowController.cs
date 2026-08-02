@@ -472,7 +472,7 @@ namespace DiaBlackJack.GameScene
 
             if (hudRoot != null)
             {
-                hudRoot.SetActive(isCombat || isShop);
+                hudRoot.SetActive(ShouldShowHudRoot(CurrentScreen));
             }
 
             if (charactersRoot != null)
@@ -514,6 +514,7 @@ namespace DiaBlackJack.GameScene
             }
 
             hud?.SetEnemyStatusVisible(false);
+            startingDemonReveal?.BindHud(hud);
             if (charactersRoot == null)
             {
                 charactersRoot = GameObject.Find("Characters");
@@ -527,6 +528,13 @@ namespace DiaBlackJack.GameScene
                     ? null
                     : enemy.GetComponent<CharacterView>();
             }
+        }
+
+        internal static bool ShouldShowHudRoot(GameFlowScreen screen)
+        {
+            return screen == GameFlowScreen.StartingDemonReveal ||
+                screen == GameFlowScreen.Combat ||
+                screen == GameFlowScreen.Shop;
         }
 
         private bool IsTerminalScreen()

@@ -83,7 +83,8 @@ namespace DiaBlackJack.StageProgression
         public ShopOffer Generate(
             int visitIndex,
             int utilityPriceLevel,
-            bool followsEliteVictory)
+            bool followsEliteVictory,
+            IEnumerable<string> ownedDemonDefinitionKeys = null)
         {
             if (visitIndex < 0 || visitIndex > 1)
             {
@@ -108,7 +109,7 @@ namespace DiaBlackJack.StageProgression
                 utilityPriceLevel);
             var options = new List<ShopCardOption>(5);
             AddNormalOptions(options, followsEliteVictory);
-            AddDemonOptions(options);
+            AddDemonOptions(options, ownedDemonDefinitionKeys);
 
             var offer = new ShopOffer(
                 _nextOfferId,
@@ -126,14 +127,12 @@ namespace DiaBlackJack.StageProgression
             ICollection<ShopCardOption> options,
             bool followsEliteVictory)
         {
-            var remainingKeys = new List<string>(_normalDefinitionKeys);
             for (int optionId = 0; optionId < 3; optionId++)
             {
                 int selectedIndex = SelectNormalIndex(
-                    remainingKeys,
+                    _normalDefinitionKeys,
                     followsEliteVictory);
-                string selectedKey = remainingKeys[selectedIndex];
-                remainingKeys.RemoveAt(selectedIndex);
+                string selectedKey = _normalDefinitionKeys[selectedIndex];
                 options.Add(new ShopCardOption(
                     optionId,
                     ShopCardDeckKind.Normal,
@@ -142,9 +141,25 @@ namespace DiaBlackJack.StageProgression
             }
         }
 
-        private void AddDemonOptions(ICollection<ShopCardOption> options)
+        private void AddDemonOptions(
+            ICollection<ShopCardOption> options,
+            IEnumerable<string> ownedDemonDefinitionKeys)
         {
             var remainingKeys = new List<string>(_demonDefinitionKeys);
+            if (ownedDemonDefinitionKeys != null)
+            {
+                var ownedKeys = new HashSet<string>(
+                    ownedDemonDefinitionKeys,
+                    StringComparer.Ordinal);
+                remainingKeys.RemoveAll(ownedKeys.Contains);
+            }
+
+            if (remainingKeys.Count < 2)
+            {
+                throw new InvalidOperationException(
+                    "A shop requires two unowned demon card definitions.");
+            }
+
             for (int optionId = 3; optionId < 5; optionId++)
             {
                 int selectedIndex = SelectDemonIndex(remainingKeys);
