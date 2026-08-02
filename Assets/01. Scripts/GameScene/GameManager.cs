@@ -101,6 +101,9 @@ namespace DiaBlackJack.GameScene
         private GUIStyle _labelStyle;
         private GUIStyle _shopPanelStyle;
         private GUIStyle _shopCardButtonStyle;
+        private GUIStyle _mammonDieStyle;
+        private int? _playerMammonDieValue;
+        private int? _enemyMammonDieValue;
         private Vector2 _lighterRemovalScroll;
         private bool _hasLastRevolverAnimationCue;
         private int _lastRevolverAnimationRoundNumber;
@@ -1488,8 +1491,14 @@ namespace DiaBlackJack.GameScene
 
         private void OnGUI()
         {
-            if (IsModalInputBlocked ||
-                shop == null ||
+            if (IsModalInputBlocked)
+            {
+                return;
+            }
+
+            DrawMammonDieStatus();
+
+            if (shop == null ||
                 !shop.IsOpen ||
                 (_core == null && _formalShopModel == null))
             {
@@ -1522,6 +1531,43 @@ namespace DiaBlackJack.GameScene
             {
                 DrawShopControls();
             }
+        }
+
+        private void DrawMammonDieStatus()
+        {
+            if ((shop != null && shop.IsOpen) ||
+                (!_playerMammonDieValue.HasValue &&
+                 !_enemyMammonDieValue.HasValue))
+            {
+                return;
+            }
+
+            _mammonDieStyle ??= new GUIStyle(GUI.skin.box)
+            {
+                font = uiFont,
+                fontSize = 20,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter,
+                normal = { textColor = Color.white }
+            };
+
+            string label = "MAMMON DIE";
+            if (_playerMammonDieValue.HasValue)
+            {
+                label += "  YOU " + _playerMammonDieValue.Value;
+            }
+
+            if (_enemyMammonDieValue.HasValue)
+            {
+                label += "  ENEMY " + _enemyMammonDieValue.Value;
+            }
+
+            const float width = 330f;
+            const float height = 42f;
+            GUI.Box(
+                new Rect((Screen.width - width) * 0.5f, 48f, width, height),
+                label,
+                _mammonDieStyle);
         }
 
         private void DrawShopControls()
@@ -1985,6 +2031,8 @@ namespace DiaBlackJack.GameScene
             bool deferHammerSmashCardRender = false)
         {
             _core = vm.Core;
+            _playerMammonDieValue = vm.PlayerMammonDieValue;
+            _enemyMammonDieValue = vm.EnemyMammonDieValue;
             bool isShopOpen = shop != null && shop.IsOpen;
             bool hideCombatHudForPresentation =
                 _inputLocked &&

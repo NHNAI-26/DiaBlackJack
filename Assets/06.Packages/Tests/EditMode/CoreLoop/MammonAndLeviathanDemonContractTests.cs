@@ -91,6 +91,30 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(3));
         }
 
+        [Test]
+        public void DCR03_U15_GameSceneShowsCurrentMammonDieAfterReroll()
+        {
+            CoreLoopBattle battle = CreateMammonBattle(
+                playerRanks: new[] { 5, 5, 2, 3, 4, 5 },
+                enemyRanks: new[] { 10, 7, 2, 3, 4, 5 },
+                new SequenceEnemyPolicy(EnemyActionType.Stand),
+                dieValues: new[] { 2, 4 });
+            ActivateFirstContract(battle);
+
+            GameSceneViewModel initial = GameScenePresenter.Create(battle);
+            Assert.That(initial.PlayerMammonDieValue, Is.EqualTo(2));
+            Assert.That(initial.EnemyMammonDieValue, Is.Null);
+
+            PendingDemonContractInteraction pending =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                pending.InteractionId,
+                MammonDemonContractHandler.RerollDieOptionId), Is.True);
+
+            GameSceneViewModel rerolled = GameScenePresenter.Create(battle);
+            Assert.That(rerolled.PlayerMammonDieValue, Is.EqualTo(4));
+        }
+
         [TestCase(false, RoundOutcome.EnemyWin, 10, 3)]
         [TestCase(true, RoundOutcome.PlayerWin, 11, 2)]
         public void DCR03_U04_MammonFinalChoiceDistinguishesIgnoredAndAppliedDie(

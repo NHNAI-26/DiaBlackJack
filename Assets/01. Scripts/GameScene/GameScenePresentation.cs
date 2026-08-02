@@ -347,7 +347,9 @@ namespace DiaBlackJack.GameScene
             bool focusesEnemyCardsForSelection = false,
             string playerTotalsText = null,
             string enemyTotalsText = null,
-            GameSceneKnifeAnimationCue knifeAnimationCue = null)
+            GameSceneKnifeAnimationCue knifeAnimationCue = null,
+            int? playerMammonDieValue = null,
+            int? enemyMammonDieValue = null)
         {
             Core = core ?? throw new ArgumentNullException(nameof(core));
             PlayerCards = playerCards ?? throw new ArgumentNullException(nameof(playerCards));
@@ -365,6 +367,8 @@ namespace DiaBlackJack.GameScene
             PlayerTotalsText = playerTotalsText ?? core.PlayerTotalsText;
             EnemyTotalsText = enemyTotalsText ?? core.EnemyVisibleTotalText;
             KnifeAnimationCue = knifeAnimationCue;
+            PlayerMammonDieValue = playerMammonDieValue;
+            EnemyMammonDieValue = enemyMammonDieValue;
         }
 
         public CoreLoopViewModel Core { get; }
@@ -395,6 +399,10 @@ namespace DiaBlackJack.GameScene
         public string PlayerTotalsText { get; }
 
         public string EnemyTotalsText { get; }
+
+        public int? PlayerMammonDieValue { get; }
+
+        public int? EnemyMammonDieValue { get; }
     }
 
     public static class GameScenePresenter
@@ -425,7 +433,24 @@ namespace DiaBlackJack.GameScene
                 FocusesEnemyCardsForSelection(battle),
                 CreatePlayerTotalsText(battle, core, revealRoundResult),
                 CreateEnemyTotalsText(battle, core, revealRoundResult),
-                CreateKnifeAnimationCue(battle));
+                CreateKnifeAnimationCue(battle),
+                FindMammonDieValue(battle.ActivePlayerDemonContracts),
+                FindMammonDieValue(battle.ActiveEnemyDemonContracts));
+        }
+
+        private static int? FindMammonDieValue(
+            IReadOnlyList<ActiveDemonContract> contracts)
+        {
+            foreach (ActiveDemonContract contract in contracts)
+            {
+                if (contract.Kind == DemonContractKind.Mammon &&
+                    contract.RuntimeState is MammonRuntimeState mammon)
+                {
+                    return mammon.CurrentDieValue;
+                }
+            }
+
+            return null;
         }
 
         private static string CreatePlayerTotalsText(
