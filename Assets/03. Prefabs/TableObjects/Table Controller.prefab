@@ -226,6 +226,7 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CardHand
   cardPrefab: {fileID: 2250541817930894918, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
+  demonCardPrefab: {fileID: 2245145291204370677, guid: 45d32c4ca972f2243966a587c6684a0c, type: 3}
   spacing: 0.66
   depthStagger: 0.01
   sortingOrderBase: 0
@@ -833,6 +834,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CardHand
   cardPrefab: {fileID: 2250541817930894918, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
+  demonCardPrefab: {fileID: 2245145291204370677, guid: 45d32c4ca972f2243966a587c6684a0c, type: 3}
   spacing: 0.66
   depthStagger: 0.01
   sortingOrderBase: 0

@@ -375,6 +375,8 @@ namespace DiaBlackJack.GameScene
             CoreLoopViewModel core,
             IReadOnlyList<GameSceneCardViewModel> playerCards,
             IReadOnlyList<GameSceneCardViewModel> enemyCards,
+            IReadOnlyList<GameSceneDemonCardViewModel> playerDemonCards,
+            IReadOnlyList<GameSceneDemonCardViewModel> enemyDemonCards,
             CharacterVisualState enemyVisual,
             string enemyActionLabel,
             IReadOnlyList<GameSceneCardViewModel> crystalOrbCandidates,
@@ -390,6 +392,10 @@ namespace DiaBlackJack.GameScene
             Core = core ?? throw new ArgumentNullException(nameof(core));
             PlayerCards = playerCards ?? throw new ArgumentNullException(nameof(playerCards));
             EnemyCards = enemyCards ?? throw new ArgumentNullException(nameof(enemyCards));
+            PlayerDemonCards = playerDemonCards ??
+                throw new ArgumentNullException(nameof(playerDemonCards));
+            EnemyDemonCards = enemyDemonCards ??
+                throw new ArgumentNullException(nameof(enemyDemonCards));
             EnemyVisual = enemyVisual;
             EnemyActionLabel = enemyActionLabel ?? string.Empty;
             CrystalOrbCandidates = crystalOrbCandidates ??
@@ -410,6 +416,10 @@ namespace DiaBlackJack.GameScene
         public IReadOnlyList<GameSceneCardViewModel> PlayerCards { get; }
 
         public IReadOnlyList<GameSceneCardViewModel> EnemyCards { get; }
+
+        public IReadOnlyList<GameSceneDemonCardViewModel> PlayerDemonCards { get; }
+
+        public IReadOnlyList<GameSceneDemonCardViewModel> EnemyDemonCards { get; }
 
         public CharacterVisualState EnemyVisual { get; }
 
@@ -453,6 +463,8 @@ namespace DiaBlackJack.GameScene
                 core,
                 CreatePlayerCards(core, battle, revealRoundResult),
                 CreateEnemyCards(battle, revealRoundResult),
+                CreateActiveDemonCards(battle.ActivePlayerDemonContracts),
+                CreateActiveDemonCards(battle.ActiveEnemyDemonContracts),
                 enemyVisual,
                 enemyLabel,
                 CreateCrystalOrbCandidates(battle),
@@ -1013,6 +1025,27 @@ namespace DiaBlackJack.GameScene
         private static string ResolveAbilityDescription(BlackjackCard card)
         {
             return card?.Definition.Description ?? string.Empty;
+        }
+
+        private static IReadOnlyList<GameSceneDemonCardViewModel>
+            CreateActiveDemonCards(IReadOnlyList<ActiveDemonContract> contracts)
+        {
+            var cards = new List<GameSceneDemonCardViewModel>(contracts.Count);
+            foreach (ActiveDemonContract contract in contracts)
+            {
+                DemonContractDefinition definition = contract.Definition;
+                cards.Add(new GameSceneDemonCardViewModel(
+                    contract.SourceCardId,
+                    definition.Key,
+                    isFaceUp: true,
+                    canUse: false,
+                    definition.DisplayName,
+                    definition.Summary,
+                    definition.CostSummary,
+                    showHoverBadgeWhenUnavailable: true));
+            }
+
+            return cards.AsReadOnly();
         }
 
         private static BlackjackCard FindCardById(IReadOnlyList<BlackjackCard> cards, int cardId)

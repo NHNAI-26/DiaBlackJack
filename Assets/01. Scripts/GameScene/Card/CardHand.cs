@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
@@ -15,6 +16,7 @@ namespace DiaBlackJack.GameScene
     public sealed class CardHand : MonoBehaviour
     {
         [SerializeField] private CardView cardPrefab;
+        [SerializeField] private DemonCardView demonCardPrefab;
         [SerializeField] private float spacing = 1.1f;
         [SerializeField] private float depthStagger = 0.01f;
         [SerializeField] private int sortingOrderBase;
@@ -34,9 +36,14 @@ namespace DiaBlackJack.GameScene
 
         private readonly List<CardView> _spawned = new List<CardView>();
         private readonly List<Tween> _moveTweens = new List<Tween>();
+        private readonly List<DemonCardView> _spawnedDemonCards =
+            new List<DemonCardView>();
+        private readonly List<Tween> _demonMoveTweens = new List<Tween>();
         private bool _hasRenderedLayout;
 
         internal CardView CardPrefab => cardPrefab;
+
+        internal DemonCardView DemonCardPrefab => demonCardPrefab;
 
         private void OnValidate()
         {
@@ -60,16 +67,24 @@ namespace DiaBlackJack.GameScene
 
         public void Render(IReadOnlyList<GameSceneCardViewModel> cards)
         {
-            if (cardPrefab == null || cards == null)
+            Render(cards, Array.Empty<GameSceneDemonCardViewModel>());
+        }
+
+        public void Render(
+            IReadOnlyList<GameSceneCardViewModel> cards,
+            IReadOnlyList<GameSceneDemonCardViewModel> demonCards)
+        {
+            if (cardPrefab == null ||
+                cards == null ||
+                demonCards == null ||
+                (demonCards.Count > 0 && demonCardPrefab == null))
             {
                 ClearAll();
                 return;
             }
 
             int previousCount = _spawned.Count;
-            bool animateIncrease = Application.isPlaying &&
-                _hasRenderedLayout &&
-                cards.Count > previousCount;
+            int previousDemonCount = _spawnedDemonCards.Count;
 
             var retainedCardIds = new HashSet<int>();
             for (int i = 0; i < cards.Count; i++)
@@ -98,7 +113,14 @@ namespace DiaBlackJack.GameScene
                 RemoveCardAt(_spawned.Count - 1, animateDiscard: true);
             }
 
-            float offset = -(cards.Count - 1) * 0.5f * spacing;
+            HashSet<int> newDemonCardIds = SynchronizeDemonCards(demonCards);
+            bool animateLayout = Application.isPlaying &&
+                _hasRenderedLayout &&
+                (cards.Count > previousCount ||
+                 demonCards.Count != previousDemonCount ||
+                 newDemonCardIds.Count > 0);
+            int totalCardCount = cards.Count + demonCards.Count;
+            float offset = -(totalCardCount - 1) * 0.5f * spacing;
             for (int i = 0; i < cards.Count; i++)
             {
                 CardView card = _spawned[i];
@@ -109,7 +131,34 @@ namespace DiaBlackJack.GameScene
                 card.transform.localRotation = Quaternion.identity;
                 card.SetSortingOrder(sortingOrderBase + i * sortingOrderStep);
                 card.Bind(cards[i]);
-                MoveCardToLayoutPosition(card, i, targetPosition, animateIncrease, i >= previousCount);
+                MoveCardToLayoutPosition(
+                    card,
+                    i,
+                    targetPosition,
+                    animateLayout,
+                    i >= previousCount);
+            }
+
+            for (int i = 0; i < _spawnedDemonCards.Count; i++)
+            {
+                int combinedIndex = cards.Count + i;
+                DemonCardView card = _spawnedDemonCards[i];
+                GameSceneDemonCardViewModel model =
+                    demonCards[demonCards.Count - 1 - i];
+                Vector3 targetPosition = new Vector3(
+                    offset + combinedIndex * spacing,
+                    0f,
+                    combinedIndex * depthStagger);
+                card.transform.localRotation = Quaternion.identity;
+                card.SetSortingOrder(
+                    sortingOrderBase + combinedIndex * sortingOrderStep);
+                card.Bind(model);
+                MoveDemonCardToLayoutPosition(
+                    card,
+                    i,
+                    targetPosition,
+                    animateLayout,
+                    newDemonCardIds.Contains(model.CardId));
             }
 
             _hasRenderedLayout = true;
@@ -126,6 +175,24 @@ namespace DiaBlackJack.GameScene
             for (int i = 0; i < _spawned.Count; i++)
             {
                 CardView card = _spawned[i];
+                if (card != null && card.CardId == cardId)
+                {
+                    position = card.transform.position;
+                    return true;
+                }
+            }
+
+            position = default;
+            return false;
+        }
+
+        internal bool TryGetDemonCardWorldPosition(
+            int cardId,
+            out Vector3 position)
+        {
+            for (int i = 0; i < _spawnedDemonCards.Count; i++)
+            {
+                DemonCardView card = _spawnedDemonCards[i];
                 if (card != null && card.CardId == cardId)
                 {
                     position = card.transform.position;
@@ -154,7 +221,7 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
-            int selected = Random.Range(0, aliveCount);
+            int selected = UnityEngine.Random.Range(0, aliveCount);
             for (int i = 0; i < _spawned.Count; i++)
             {
                 CardView card = _spawned[i];
@@ -184,13 +251,83 @@ namespace DiaBlackJack.GameScene
             {
                 if (card != null)
                 {
-                    Destroy(card.gameObject);
+                    DestroyCardObject(card.gameObject);
                 }
             }
 
             _spawned.Clear();
             _moveTweens.Clear();
+
+            foreach (DemonCardView card in _spawnedDemonCards)
+            {
+                if (card != null)
+                {
+                    DestroyCardObject(card.gameObject);
+                }
+            }
+
+            _spawnedDemonCards.Clear();
+            _demonMoveTweens.Clear();
             _hasRenderedLayout = false;
+        }
+
+        private HashSet<int> SynchronizeDemonCards(
+            IReadOnlyList<GameSceneDemonCardViewModel> demonCards)
+        {
+            var previousCards = new List<DemonCardView>(_spawnedDemonCards);
+            var previousTweens = new List<Tween>(_demonMoveTweens);
+            var newCardIds = new HashSet<int>();
+            _spawnedDemonCards.Clear();
+            _demonMoveTweens.Clear();
+
+            for (int modelIndex = demonCards.Count - 1;
+                modelIndex >= 0;
+                modelIndex--)
+            {
+                GameSceneDemonCardViewModel model = demonCards[modelIndex];
+                int previousIndex = FindDemonCardIndex(previousCards, model.CardId);
+                if (previousIndex >= 0)
+                {
+                    _spawnedDemonCards.Add(previousCards[previousIndex]);
+                    _demonMoveTweens.Add(previousTweens[previousIndex]);
+                    previousCards[previousIndex] = null;
+                    previousTweens[previousIndex] = null;
+                    continue;
+                }
+
+                DemonCardView card = Instantiate(demonCardPrefab, transform);
+                _spawnedDemonCards.Add(card);
+                _demonMoveTweens.Add(null);
+                newCardIds.Add(model.CardId);
+            }
+
+            for (int i = 0; i < previousCards.Count; i++)
+            {
+                if (previousCards[i] == null)
+                {
+                    continue;
+                }
+
+                previousTweens[i]?.Kill();
+                AnimateDemonDiscard(previousCards[i]);
+            }
+
+            return newCardIds;
+        }
+
+        private static int FindDemonCardIndex(
+            IReadOnlyList<DemonCardView> cards,
+            int cardId)
+        {
+            for (int i = 0; i < cards.Count; i++)
+            {
+                if (cards[i] != null && cards[i].CardId == cardId)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         private void MoveCardToLayoutPosition(
@@ -231,11 +368,42 @@ namespace DiaBlackJack.GameScene
             return targetPosition;
         }
 
+        private void MoveDemonCardToLayoutPosition(
+            DemonCardView card,
+            int index,
+            Vector3 targetPosition,
+            bool animate,
+            bool isNewCard)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            KillDemonMoveTween(index);
+
+            if (!animate)
+            {
+                card.transform.localPosition = targetPosition;
+                return;
+            }
+
+            if (isNewCard)
+            {
+                card.transform.localPosition = GetBodyEntryPosition(targetPosition);
+            }
+
+            _demonMoveTweens[index] = card.transform
+                .DOLocalMove(targetPosition, isNewCard ? enterDuration : moveDuration)
+                .SetEase(isNewCard ? enterCurve : moveCurve)
+                .SetTarget(card);
+        }
+
         private void AnimateDiscard(CardView card)
         {
             if (!Application.isPlaying || discardDuration <= 0f)
             {
-                Destroy(card.gameObject);
+                DestroyCardObject(card.gameObject);
                 return;
             }
 
@@ -254,7 +422,34 @@ namespace DiaBlackJack.GameScene
             {
                 if (card != null)
                 {
-                    Destroy(card.gameObject);
+                    DestroyCardObject(card.gameObject);
+                }
+            });
+        }
+
+        private void AnimateDemonDiscard(DemonCardView card)
+        {
+            if (!Application.isPlaying || discardDuration <= 0f)
+            {
+                DestroyCardObject(card.gameObject);
+                return;
+            }
+
+            Vector3 targetPosition = card.transform.localPosition;
+            targetPosition.y += discardExitDistance * ResolveBodyEntryDirection();
+            Sequence sequence = DOTween.Sequence()
+                .SetTarget(card)
+                .SetLink(card.gameObject, LinkBehaviour.KillOnDestroy);
+            sequence.Join(
+                card.transform
+                    .DOLocalMove(targetPosition, discardDuration)
+                    .SetEase(discardCurve));
+            sequence.Join(card.transform.DOScale(Vector3.zero, discardDuration));
+            sequence.OnComplete(() =>
+            {
+                if (card != null)
+                {
+                    DestroyCardObject(card.gameObject);
                 }
             });
         }
@@ -276,7 +471,24 @@ namespace DiaBlackJack.GameScene
             }
             else
             {
-                Destroy(card.gameObject);
+                DestroyCardObject(card.gameObject);
+            }
+        }
+
+        private static void DestroyCardObject(GameObject target)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(target);
+            }
+            else
+            {
+                DestroyImmediate(target);
             }
         }
 
@@ -318,6 +530,25 @@ namespace DiaBlackJack.GameScene
             for (int i = 0; i < _moveTweens.Count; i++)
             {
                 KillMoveTween(i);
+            }
+
+            for (int i = 0; i < _demonMoveTweens.Count; i++)
+            {
+                KillDemonMoveTween(i);
+            }
+        }
+
+        private void KillDemonMoveTween(int index)
+        {
+            if (index < 0 || index >= _demonMoveTweens.Count)
+            {
+                return;
+            }
+
+            if (_demonMoveTweens[index] != null)
+            {
+                _demonMoveTweens[index].Kill();
+                _demonMoveTweens[index] = null;
             }
         }
     }

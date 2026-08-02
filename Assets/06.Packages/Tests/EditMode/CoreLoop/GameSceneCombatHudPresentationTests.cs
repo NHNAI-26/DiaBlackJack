@@ -20,6 +20,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/Manager/GameManager.prefab";
         private const string CardPrefabPath =
             "Assets/03. Prefabs/Card/Card.prefab";
+        private const string DemonCardPrefabPath =
+            "Assets/03. Prefabs/Card/DemonCard.prefab";
         private const string TablePrefabPath =
             "Assets/03. Prefabs/TableObjects/Table Controller.prefab";
         private const string ContractPaperSpritePath =
@@ -181,6 +183,214 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(model.VisibleCount, Is.Zero);
             Assert.That(model.CanPlayerBegin, Is.False);
+        }
+
+        [Test]
+        public void DCUI04_U01_ActiveContractsProjectFaceUpDemonCardsForBothSides()
+        {
+            CoreLoopBattle playerBattle = CreateStartedContractBattle(
+                DemonContractKind.Belphegor,
+                DemonContractKind.Mammon);
+            Assert.That(playerBattle.TryBeginPlayerDemonContract(), Is.True);
+            PendingDemonContractInteraction playerOffer =
+                playerBattle.PendingPlayerDemonContractInteraction;
+            DemonContractOption belphegor = playerOffer.Options.Single(option =>
+                option.ContractDefinitionKey == DemonContractCatalog.BelphegorKey);
+            Assert.That(playerBattle.TryResolvePlayerDemonContract(
+                playerOffer.InteractionId,
+                belphegor.OptionId), Is.True);
+
+            GameSceneViewModel playerScene =
+                GameScenePresenter.Create(playerBattle);
+            GameSceneDemonCardViewModel playerCard =
+                playerScene.PlayerDemonCards.Single();
+            DemonContractDefinition playerDefinition =
+                DemonContractCatalog.Default.GetByKey(
+                    DemonContractCatalog.BelphegorKey);
+            Assert.That(playerCard.DefinitionKey,
+                Is.EqualTo(playerDefinition.Key));
+            Assert.That(playerCard.IsFaceUp, Is.True);
+            Assert.That(playerCard.CanUse, Is.False);
+            Assert.That(playerCard.ShowHoverBadgeWhenUnavailable, Is.True);
+            Assert.That(playerCard.Summary, Is.EqualTo(playerDefinition.Summary));
+            Assert.That(playerCard.CostSummary,
+                Is.EqualTo(playerDefinition.CostSummary));
+            Assert.That(playerScene.EnemyDemonCards, Is.Empty);
+
+            CoreLoopBattle enemyBattle = CreateEnemyContractBattle();
+            Assert.That(enemyBattle.TryPlayerHit(), Is.True);
+            Assert.That(enemyBattle.ActiveEnemyDemonContracts, Has.Count.EqualTo(1));
+
+            GameSceneViewModel enemyScene = GameScenePresenter.Create(enemyBattle);
+            GameSceneDemonCardViewModel enemyCard =
+                enemyScene.EnemyDemonCards.Single();
+            Assert.That(enemyCard.DefinitionKey,
+                Is.EqualTo(DemonContractCatalog.BelphegorKey));
+            Assert.That(enemyCard.IsFaceUp, Is.True);
+            Assert.That(enemyCard.ShowHoverBadgeWhenUnavailable, Is.True);
+        }
+
+        [Test]
+        public void DCUI04_U02_MultipleContractsPreserveAcquisitionOrderForLayout()
+        {
+            CoreLoopBattle battle = CreateStartedContractBattle(
+                DemonContractKind.Lucifer,
+                DemonContractKind.Belphegor);
+            Assert.That(battle.TryBeginPlayerDemonContract(), Is.True);
+            PendingDemonContractInteraction baseOffer =
+                battle.PendingPlayerDemonContractInteraction;
+            DemonContractOption lucifer = baseOffer.Options.Single(option =>
+                option.ContractDefinitionKey == DemonContractCatalog.LuciferKey);
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                baseOffer.InteractionId,
+                lucifer.OptionId), Is.True);
+
+            PendingDemonContractInteraction additionalOffer =
+                battle.PendingPlayerDemonContractInteraction;
+            DemonContractOption additional = additionalOffer.Options.Single(option =>
+                option.ContractDefinitionKey == DemonContractCatalog.BelphegorKey);
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                additionalOffer.InteractionId,
+                additional.OptionId), Is.True);
+
+            GameSceneViewModel scene = GameScenePresenter.Create(battle);
+            Assert.That(
+                scene.PlayerDemonCards.Select(card => card.DefinitionKey),
+                Is.EqualTo(new[]
+                {
+                    DemonContractCatalog.LuciferKey,
+                    DemonContractCatalog.BelphegorKey
+                }));
+        }
+
+        [Test]
+        public void DCUI04_U03_CardHandPlacesNewestDemonNearestHiddenAtScreenLeft()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(TablePrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+            IReadOnlyList<GameSceneCardViewModel> normalCards =
+                CreateSceneCardsForHand();
+            IReadOnlyList<GameSceneDemonCardViewModel> demonCards =
+                CreateSceneDemonCardsForHand();
+
+            try
+            {
+                CardHand[] hands = instance
+                    .GetComponentsInChildren<CardHand>(true)
+                    .OrderBy(hand => hand.name)
+                    .ToArray();
+                Assert.That(hands, Has.Length.EqualTo(2));
+
+                foreach (CardHand hand in hands)
+                {
+                    hand.gameObject.SetActive(true);
+                    hand.Render(normalCards, demonCards);
+                    Assert.That(hand.TryGetCardWorldPosition(
+                        normalCards[normalCards.Count - 1].CardId,
+                        out Vector3 hiddenWorld), Is.True);
+                    Assert.That(hand.TryGetDemonCardWorldPosition(
+                        demonCards[1].CardId,
+                        out Vector3 newestWorld), Is.True);
+                    Assert.That(hand.TryGetDemonCardWorldPosition(
+                        demonCards[0].CardId,
+                        out Vector3 oldestWorld), Is.True);
+
+                    float hiddenX = hand.transform
+                        .InverseTransformPoint(hiddenWorld).x;
+                    float newestX = hand.transform
+                        .InverseTransformPoint(newestWorld).x;
+                    float oldestX = hand.transform
+                        .InverseTransformPoint(oldestWorld).x;
+                    Assert.That(newestX, Is.GreaterThan(hiddenX));
+                    Assert.That(oldestX, Is.GreaterThan(newestX));
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void DCUI04_U04_CardHandRemovesEndedDemonAndKeepsRemaining()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(TablePrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+            CardHand hand = instance.GetComponentsInChildren<CardHand>(true)
+                .Single(candidate => candidate.name == "PlayerHand");
+            IReadOnlyList<GameSceneCardViewModel> normalCards =
+                CreateSceneCardsForHand();
+            IReadOnlyList<GameSceneDemonCardViewModel> demonCards =
+                CreateSceneDemonCardsForHand();
+
+            try
+            {
+                hand.gameObject.SetActive(true);
+                hand.Render(normalCards, demonCards);
+                hand.Render(normalCards, new[] { demonCards[0] });
+
+                Assert.That(hand.TryGetDemonCardWorldPosition(
+                    demonCards[1].CardId,
+                    out _), Is.False);
+                Assert.That(hand.TryGetDemonCardWorldPosition(
+                    demonCards[0].CardId,
+                    out Vector3 remainingWorld), Is.True);
+                Assert.That(hand.TryGetCardWorldPosition(
+                    normalCards[normalCards.Count - 1].CardId,
+                    out Vector3 hiddenWorld), Is.True);
+                Assert.That(
+                    hand.transform.InverseTransformPoint(remainingWorld).x,
+                    Is.GreaterThan(
+                        hand.transform.InverseTransformPoint(hiddenWorld).x));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void DCUI04_U05_ActiveDemonUsesDedicatedHoverDetail()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(DemonCardPrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                DemonCardView view = instance.GetComponent<DemonCardView>();
+                GameSceneDemonCardViewModel model =
+                    CreateSceneDemonCardsForHand()[0];
+                view.Bind(model);
+                view.SetHovered(true);
+
+                Assert.That(view.CanUse, Is.False);
+                Assert.That(view.ShouldShowHoverBadge, Is.True);
+                Assert.That(view.BoundCard, Is.SameAs(model));
+                Assert.That(view.HoverBadgeDescription,
+                    Does.Contain(model.Summary));
+                Assert.That(view.HoverBadgeDescription,
+                    Does.Contain(model.CostSummary));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void DCUI04_U06_TablePrefabWiresDemonPrefabToBothHands()
+        {
+            GameObject table =
+                AssetDatabase.LoadAssetAtPath<GameObject>(TablePrefabPath);
+            GameObject demon =
+                AssetDatabase.LoadAssetAtPath<GameObject>(DemonCardPrefabPath);
+            DemonCardView expected = demon.GetComponent<DemonCardView>();
+            CardHand[] hands = table.GetComponentsInChildren<CardHand>(true);
+
+            Assert.That(hands, Has.Length.EqualTo(2));
+            Assert.That(hands.All(hand => hand.DemonCardPrefab == expected), Is.True);
         }
 
         [Test]
@@ -1394,6 +1604,65 @@ namespace DiaBlackJack.CoreLoop.Tests
             return cards;
         }
 
+        private static IReadOnlyList<GameSceneCardViewModel>
+            CreateSceneCardsForHand()
+        {
+            return new[]
+            {
+                new GameSceneCardViewModel(
+                    500,
+                    2,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    "Two"),
+                new GameSceneCardViewModel(
+                    501,
+                    5,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    "Five"),
+                new GameSceneCardViewModel(
+                    502,
+                    7,
+                    isFaceUp: false,
+                    revealRank: true,
+                    canUse: false,
+                    "Hidden")
+            };
+        }
+
+        private static IReadOnlyList<GameSceneDemonCardViewModel>
+            CreateSceneDemonCardsForHand()
+        {
+            DemonContractDefinition oldest = DemonContractCatalog.Default.GetByKey(
+                DemonContractCatalog.MammonKey);
+            DemonContractDefinition newest = DemonContractCatalog.Default.GetByKey(
+                DemonContractCatalog.BelphegorKey);
+            return new[]
+            {
+                new GameSceneDemonCardViewModel(
+                    700,
+                    oldest.Key,
+                    isFaceUp: true,
+                    canUse: false,
+                    oldest.DisplayName,
+                    oldest.Summary,
+                    oldest.CostSummary,
+                    showHoverBadgeWhenUnavailable: true),
+                new GameSceneDemonCardViewModel(
+                    701,
+                    newest.Key,
+                    isFaceUp: true,
+                    canUse: false,
+                    newest.DisplayName,
+                    newest.Summary,
+                    newest.CostSummary,
+                    showHoverBadgeWhenUnavailable: true)
+            };
+        }
+
         private static IReadOnlyList<BlackjackCard> CreateRankCards(
             int firstId,
             IReadOnlyList<int> ranks)
@@ -1417,6 +1686,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                     return DemonContractCatalog.MammonKey;
                 case DemonContractKind.Satan:
                     return DemonContractCatalog.SatanKey;
+                case DemonContractKind.Lucifer:
+                    return DemonContractCatalog.LuciferKey;
                 default:
                     throw new System.ArgumentOutOfRangeException(nameof(kind));
             }

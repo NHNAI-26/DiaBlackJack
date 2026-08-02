@@ -546,7 +546,7 @@ namespace DiaBlackJack.GameScene
             CardView pointedCard = hasHit
                 ? hit.collider.GetComponentInParent<CardView>()
                 : null;
-            DemonCardView pointedDemonCard = shopOpen && hasHit
+            DemonCardView pointedDemonCard = hasHit
                 ? hit.collider.GetComponentInParent<DemonCardView>()
                 : null;
             CardView pointedBattleCard = shopOpen ? null : pointedCard;
@@ -646,7 +646,9 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            if (pointedDemonCard != null && pointedDemonCard.CanUse)
+            if (shopOpen &&
+                pointedDemonCard != null &&
+                pointedDemonCard.CanUse)
             {
                 PurchaseShopDemonCard(pointedDemonCard);
                 return;
@@ -2170,12 +2172,12 @@ namespace DiaBlackJack.GameScene
 
             if (playerHand != null)
             {
-                playerHand.Render(vm.PlayerCards);
+                playerHand.Render(vm.PlayerCards, vm.PlayerDemonCards);
             }
 
             if (enemyHand != null)
             {
-                enemyHand.Render(vm.EnemyCards);
+                enemyHand.Render(vm.EnemyCards, vm.EnemyDemonCards);
             }
         }
 

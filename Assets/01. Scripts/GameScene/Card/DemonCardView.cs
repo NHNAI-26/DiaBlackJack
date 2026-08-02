@@ -252,6 +252,21 @@ namespace DiaBlackJack.GameScene
                 : _shopFrontColor;
         }
 
+        internal void SetSortingOrder(int sortingOrder)
+        {
+            SpriteRenderer[] renderers =
+                GetComponentsInChildren<SpriteRenderer>(includeInactive: true);
+            foreach (SpriteRenderer renderer in renderers)
+            {
+                renderer.sortingOrder = sortingOrder;
+            }
+
+            if (englishNameText != null && englishNameText.GetComponent<Renderer>() != null)
+            {
+                englishNameText.GetComponent<Renderer>().sortingOrder = sortingOrder + 1;
+            }
+        }
+
         public Sprite GetFaceSprite(string definitionKey)
         {
             return cardContentCatalog == null
