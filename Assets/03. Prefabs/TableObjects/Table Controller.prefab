@@ -96,7 +96,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9541d86e2fd84c1d9990edf0852d74ab, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshPro
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -197,7 +197,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &6276801491819610148
 Transform:
   m_ObjectHideFlags: 0
@@ -223,7 +223,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f746bc8e2a7667549b97d4f9ef49c116, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CardHand
   cardPrefab: {fileID: 2250541817930894918, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
   demonCardPrefab: {fileID: 2245145291204370677, guid: 45d32c4ca972f2243966a587c6684a0c, type: 3}
@@ -478,7 +478,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0.9, y: 0.3}
+  m_SizeDelta: {x: 0.4, y: 0.3}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!23 &146262585345504572
 MeshRenderer:
@@ -805,7 +805,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &3789618327714740299
 Transform:
   m_ObjectHideFlags: 0
@@ -1248,7 +1248,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1992513753665762863
 Transform:
   m_ObjectHideFlags: 0
@@ -1315,7 +1315,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0.9, y: 0.3}
+  m_SizeDelta: {x: 0.4, y: 0.3}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!23 &7892178130197301830
 MeshRenderer:
@@ -1579,7 +1579,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0.9, y: 0.3}
+  m_SizeDelta: {x: 0.4, y: 0.3}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!23 &8689480704758544260
 MeshRenderer:
@@ -1735,7 +1735,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3318951457764372874}
   - component: {fileID: 1446267767095836390}
-  - component: {fileID: 2880182475690012642}
+  - component: {fileID: 8460495607259845532}
   m_Layer: 0
   m_Name: Table Controller
   m_TagString: Untagged
@@ -1806,7 +1806,7 @@ MonoBehaviour:
   utilityPriceIncreasePerUsedVisit: 1
   whiskeySoulRestore: 2
   shopRandomSeed: 20260726
---- !u!114 &2880182475690012642
+--- !u!114 &8460495607259845532
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1818,9 +1818,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 590883df2c70e1f4d8e4bfa2d4909d3a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ContractPaperView
-  papers:
-  - {fileID: 4727994459525672121}
-  - {fileID: 2556982308481158934}
+  papers: []
 --- !u!1 &7875009814782919910
 GameObject:
   m_ObjectHideFlags: 0
@@ -1836,7 +1834,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &675468776541750733
 Transform:
   m_ObjectHideFlags: 0
@@ -1940,7 +1938,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7297903055653142785, guid: 78a7d4a82745ad24a9e0dc0cf04092e1, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1971,7 +1969,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5608053121608605007, guid: eeacf6b38a79afd419575cf95901a96c, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9194961626681403262, guid: eeacf6b38a79afd419575cf95901a96c, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2054,7 +2052,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8926471034187765097, guid: f869929a665917242a3cf6d945943044, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 2.02
+      value: 2.224
       objectReference: {fileID: 0}
     - target: {fileID: 8926471034187765097, guid: f869929a665917242a3cf6d945943044, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2062,7 +2060,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8926471034187765097, guid: f869929a665917242a3cf6d945943044, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.31
+      value: -0.339
       objectReference: {fileID: 0}
     - target: {fileID: 8926471034187765097, guid: f869929a665917242a3cf6d945943044, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2116,7 +2114,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8602642487676205222, guid: 072fdfbdc17e55d46a3b6819d7e27da8, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -1.305
+      value: 1.295
       objectReference: {fileID: 0}
     - target: {fileID: 8602642487676205222, guid: 072fdfbdc17e55d46a3b6819d7e27da8, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2124,7 +2122,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8602642487676205222, guid: 072fdfbdc17e55d46a3b6819d7e27da8, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 17.323
+      value: 15.27
       objectReference: {fileID: 0}
     - target: {fileID: 8602642487676205222, guid: 072fdfbdc17e55d46a3b6819d7e27da8, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2193,19 +2191,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.92
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.92
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.92
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -2.42
+      value: -2.295
       objectReference: {fileID: 0}
     - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2213,7 +2211,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.23
+      value: -0.093
       objectReference: {fileID: 0}
     - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2248,17 +2246,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
---- !u!114 &4727994459525672121 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 9183613973446898455, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
-  m_PrefabInstance: {fileID: 4535113459030253486}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8432ce450375e82479365bcb47106293, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ContractPaperClickable
 --- !u!4 &6063242983543284749 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
@@ -2274,7 +2261,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 6397532680839346606, guid: efa7a2a8dd070cc4c83a970a8581cd17, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.405
+      value: -1.188
       objectReference: {fileID: 0}
     - target: {fileID: 6397532680839346606, guid: efa7a2a8dd070cc4c83a970a8581cd17, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2282,7 +2269,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6397532680839346606, guid: efa7a2a8dd070cc4c83a970a8581cd17, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 17.29
+      value: 15.178
       objectReference: {fileID: 0}
     - target: {fileID: 6397532680839346606, guid: efa7a2a8dd070cc4c83a970a8581cd17, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2355,19 +2342,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.92
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.92
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.92
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -2.27
+      value: -2.145
       objectReference: {fileID: 0}
     - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2375,7 +2362,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.1
+      value: -0.22299996
       objectReference: {fileID: 0}
     - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2410,17 +2397,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
---- !u!114 &2556982308481158934 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 9183613973446898455, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
-  m_PrefabInstance: {fileID: 6633513750385654785}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8432ce450375e82479365bcb47106293, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ContractPaperClickable
 --- !u!4 &3946837089618397090 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
