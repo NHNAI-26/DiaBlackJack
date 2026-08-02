@@ -370,15 +370,15 @@ namespace DiaBlackJack.CoreLoop
             DeckCardDisplaySnapshot left,
             DeckCardDisplaySnapshot right)
         {
-            int comparison = StringComparer.Ordinal.Compare(
-                left.DefinitionKey,
-                right.DefinitionKey);
+            int comparison = left.Rank.CompareTo(right.Rank);
             if (comparison != 0)
             {
                 return comparison;
             }
 
-            comparison = left.Rank.CompareTo(right.Rank);
+            comparison = StringComparer.Ordinal.Compare(
+                left.DefinitionKey,
+                right.DefinitionKey);
             if (comparison != 0)
             {
                 return comparison;

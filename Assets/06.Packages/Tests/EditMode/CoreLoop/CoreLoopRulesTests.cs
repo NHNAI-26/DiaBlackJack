@@ -105,16 +105,28 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             var drawDisplay = deck.GetDrawPileDisplayCards();
 
-            Assert.That(drawDisplay.Select(card => card.Id), Is.EqualTo(new[] { 0, 1, 2, 3 }));
-            Assert.That(drawDisplay[2].Suit, Is.EqualTo(CardSuit.Spade));
-            Assert.That(drawDisplay[3].Suit, Is.EqualTo(CardSuit.Clover));
+            Assert.That(drawDisplay.Select(card => card.Rank), Is.EqualTo(new[] { 1, 1, 7, 10 }));
+            Assert.That(drawDisplay.Select(card => card.Id), Is.EqualTo(new[] { 2, 3, 0, 1 }));
+            Assert.That(drawDisplay[0].Suit, Is.EqualTo(CardSuit.Spade));
+            Assert.That(drawDisplay[1].Suit, Is.EqualTo(CardSuit.Clover));
 
             BlackjackCard nextDraw = deck.Draw();
             deck.Discard(nextDraw);
 
             Assert.That(nextDraw.Id, Is.EqualTo(3));
             Assert.That(drawDisplay[0].Id, Is.Not.EqualTo(nextDraw.Id));
-            Assert.That(deck.GetDiscardPileDisplayCards().Single().Id, Is.EqualTo(3));
+
+            for (int i = 0; i < 3; i++)
+            {
+                deck.Discard(deck.Draw());
+            }
+
+            Assert.That(
+                deck.GetDiscardPileDisplayCards().Select(card => card.Id),
+                Is.EqualTo(new[] { 2, 3, 0, 1 }));
+            Assert.That(
+                deck.GetDiscardPileDisplayCards().Select(card => card.Rank),
+                Is.EqualTo(new[] { 1, 1, 7, 10 }));
         }
 
         [Test]
