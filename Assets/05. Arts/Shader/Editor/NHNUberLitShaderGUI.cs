@@ -26,7 +26,7 @@ public class NHNUberLitShaderGUI : LWGUI.LWGUI
 
             bool usesDirectRenderQueue = material.HasProperty("_BaseSpriteUVRect");
             int renderQueue = material.rawRenderQueue;
-            bool preserveExplicitRenderQueue = usesDirectRenderQueue && renderQueue >= 0;
+            bool preserveExplicitRenderQueue = renderQueue >= 0;
 
             // Sprite/UI transparency must fade the complete source color. URP's preserve-specular
             // mode switches Alpha blending to Src=One and relies on the lit BRDF to premultiply only
@@ -47,6 +47,68 @@ public class NHNUberLitShaderGUI : LWGUI.LWGUI
             RestoreEnumKeyword(material, "_DissolveMode", "_DISSOLVE_RADIAL", null);
             RestoreEnumKeyword(material, "_DissolveSpace", "_DISSOLVE_OBJECT_SPACE", null);
         }
+
+        DrawRenderQueueControl(materialEditor);
+    }
+
+    private static void DrawRenderQueueControl(MaterialEditor materialEditor)
+    {
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("Advanced", EditorStyles.boldLabel);
+
+        EditorGUI.BeginChangeCheck();
+        EditorGUI.showMixedValue = HasMixedRenderQueue(materialEditor.targets);
+        int renderQueue = EditorGUILayout.IntField("Render Queue", GetRenderQueue(materialEditor.targets));
+        EditorGUI.showMixedValue = false;
+
+        if (!EditorGUI.EndChangeCheck())
+            return;
+
+        foreach (Object target in materialEditor.targets)
+        {
+            if (!(target is Material material))
+                continue;
+
+            Undo.RecordObject(material, "Change Render Queue");
+            material.renderQueue = renderQueue;
+            EditorUtility.SetDirty(material);
+        }
+    }
+
+    private static int GetRenderQueue(Object[] targets)
+    {
+        foreach (Object target in targets)
+        {
+            if (target is Material material)
+                return material.rawRenderQueue >= 0 ? material.rawRenderQueue : material.renderQueue;
+        }
+
+        return -1;
+    }
+
+    private static bool HasMixedRenderQueue(Object[] targets)
+    {
+        bool hasValue = false;
+        int firstRenderQueue = 0;
+
+        foreach (Object target in targets)
+        {
+            if (!(target is Material material))
+                continue;
+
+            int renderQueue = material.rawRenderQueue >= 0 ? material.rawRenderQueue : material.renderQueue;
+            if (!hasValue)
+            {
+                firstRenderQueue = renderQueue;
+                hasValue = true;
+                continue;
+            }
+
+            if (renderQueue != firstRenderQueue)
+                return true;
+        }
+
+        return false;
     }
 
     private static void SeedKeyword(MaterialProperty[] properties, string propertyName, string keyword)

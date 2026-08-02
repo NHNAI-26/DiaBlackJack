@@ -1,25 +1,15 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using Border.Audio;
 using Border.Core;
 using DiaBlackJack.CoreLoop;
 using UnityEngine;
-using UnityEngine.VFX;
 
 namespace DiaBlackJack.GameScene
 {
     [DisallowMultipleComponent]
-    public sealed class HammerAnimationController : MonoBehaviour
+    public sealed class HammerAnimationController :
+        PresentationAnimationEventReceiver
     {
-        [Serializable]
-        private sealed class VfxBinding
-        {
-            [SerializeField] internal string id;
-            [SerializeField] internal VisualEffect effect;
-            [SerializeField] internal string eventName;
-        }
-
         [Header("Animator")]
         [SerializeField] private Animator animator;
         [SerializeField] private GameObject root;
@@ -33,12 +23,6 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private string playerSmashStateName = "Hammer_Smash";
         [SerializeField] private string enemySmashStateName = "Hammer_EnemySmash";
         [SerializeField] private float smashStateWaitTimeoutSeconds = 8f;
-
-        [Header("VFX")]
-        [SerializeField] private List<VfxBinding> vfxBindings = new();
-
-        private readonly Dictionary<string, VfxBinding> vfxCatalog =
-            new(StringComparer.Ordinal);
 
         private bool _hasLastCue;
         private int _lastRoundNumber;
@@ -60,12 +44,12 @@ namespace DiaBlackJack.GameScene
 
         public event Action SmashAnimationFinished;
 
-        private void Awake()
+        protected override void Awake()
         {
+            base.Awake();
             animator ??= GetComponent<Animator>();
             root ??= gameObject;
             target ??= transform.Find("Hammer_Rigging/Target");
-            BuildVfxCatalog();
         }
 
         public bool TryPlay(
@@ -219,66 +203,6 @@ namespace DiaBlackJack.GameScene
                 SmashAnimationFinished?.Invoke();
             }
         }
-
-        public void PlayVfx(string bindingId)
-        {
-            string id = Key(bindingId);
-            if (string.IsNullOrEmpty(id))
-            {
-                Log.W("[HammerAnimationController] Cannot play a VFX with an empty binding ID.", this);
-                return;
-            }
-
-            if (!vfxCatalog.TryGetValue(id, out VfxBinding binding))
-            {
-                Log.W($"[HammerAnimationController] VFX binding ID '{id}' is not configured.", this);
-                return;
-            }
-
-            if (binding.effect == null)
-            {
-                Log.W($"[HammerAnimationController] VFX binding '{id}' has no VisualEffect.", this);
-                return;
-            }
-
-            binding.effect.SendEvent(binding.eventName);
-        }
-
-        public void PlaySfx(string soundId)
-        {
-            string id = Key(soundId);
-            if (string.IsNullOrEmpty(id))
-            {
-                Log.W("[HammerAnimationController] Cannot play an SFX with an empty sound ID.", this);
-                return;
-            }
-
-            if (SoundManager.Current == null)
-            {
-                Log.W($"[HammerAnimationController] SoundManager is unavailable for SFX '{id}'.", this);
-                return;
-            }
-
-            SoundManager.Current.PlaySfx(id);
-        }
-
-        public void ShakeCamera(float duration) =>
-            Presentation?.ShakeCameraForDuration(duration);
-
-        public void StartChromaticAberration(float riseSpeed) =>
-            Presentation?.StartChromaticAberration(riseSpeed);
-
-        public void StopChromaticAberration() =>
-            Presentation?.StopChromaticAberration();
-
-        public void StartFieldOfViewIncrease(float riseSpeed) =>
-            Presentation?.StartFieldOfViewIncrease(riseSpeed);
-
-        public void StopFieldOfViewIncrease() =>
-            Presentation?.StopFieldOfViewIncrease();
-
-        public void StartColorScreenBlend(float fadeOutSpeed) =>
-            Presentation?.StartColorScreenBlend(fadeOutSpeed);
 
         private bool TryResolveTargetPosition(
             GameSceneHammerAnimationCue cue,
@@ -524,50 +448,5 @@ namespace DiaBlackJack.GameScene
             return target;
         }
 
-        private void BuildVfxCatalog()
-        {
-            for (int i = 0; i < vfxBindings.Count; i++)
-            {
-                VfxBinding binding = vfxBindings[i];
-                string id = binding == null ? string.Empty : Key(binding.id);
-
-                if (string.IsNullOrEmpty(id))
-                {
-                    Log.W($"[HammerAnimationController] VFX binding {i} has an empty ID and was ignored.", this);
-                }
-                else if (binding.effect == null)
-                {
-                    Log.W($"[HammerAnimationController] VFX binding '{id}' has no VisualEffect and was ignored.", this);
-                }
-                else if (string.IsNullOrEmpty(Key(binding.eventName)))
-                {
-                    Log.W($"[HammerAnimationController] VFX binding '{id}' has an empty event name and was ignored.", this);
-                }
-                else if (vfxCatalog.ContainsKey(id))
-                {
-                    Log.W($"[HammerAnimationController] Duplicate VFX binding ID '{id}' was ignored.", this);
-                }
-                else
-                {
-                    binding.eventName = Key(binding.eventName);
-                    vfxCatalog.Add(id, binding);
-                }
-            }
-        }
-
-        private PresentationManager Presentation
-        {
-            get
-            {
-                if (PresentationManager.Current == null)
-                {
-                    Log.W("[HammerAnimationController] PresentationManager is unavailable.", this);
-                }
-
-                return PresentationManager.Current;
-            }
-        }
-
-        private static string Key(string value) => value?.Trim() ?? string.Empty;
     }
 }
