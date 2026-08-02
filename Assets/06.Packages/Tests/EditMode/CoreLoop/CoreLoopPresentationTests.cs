@@ -849,6 +849,77 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(cue.ActorSide, Is.EqualTo(CombatantSide.Player));
             Assert.That(cue.Phase,
                 Is.EqualTo(GameSceneRevolverAnimationPhase.Ready));
+            Assert.That(
+                GameScenePresenter.Create(battle).EnemyVisual,
+                Is.EqualTo(CharacterVisualState.AttackThreatened));
+        }
+
+        [Test]
+        public void CUM14_U01_KnifeShowsThreatenedBeforeSafeDrawResolvesAsMiss()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 9, 2 },
+                enemyRanks: new[] { 5, 1, 2 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            Assert.That(battle.Start(), Is.True);
+            BlackjackCard sourceCard = battle.Player.Hand.Cards[0];
+            GameSceneViewModel readyModel = null;
+            GameSceneViewModel resolvedModel = null;
+            battle.Stepped += () =>
+            {
+                GameSceneViewModel model = GameScenePresenter.Create(battle);
+                if (model.KnifeAnimationCue?.Phase == GameSceneKnifeAnimationPhase.Ready)
+                {
+                    readyModel = model;
+                }
+                else if (model.KnifeAnimationCue?.Phase == GameSceneKnifeAnimationPhase.Resolved)
+                {
+                    resolvedModel = model;
+                }
+            };
+
+            Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
+
+            Assert.That(readyModel, Is.Not.Null);
+            Assert.That(
+                readyModel.EnemyVisual,
+                Is.EqualTo(CharacterVisualState.AttackThreatened));
+            Assert.That(resolvedModel, Is.Not.Null);
+            Assert.That(resolvedModel.KnifeAnimationCue.Succeeded, Is.False);
+            Assert.That(resolvedModel.EnemyVisual, Is.Not.EqualTo(CharacterVisualState.Attacked));
+            Assert.That(resolvedModel.EnemyActionLabel, Is.EqualTo("MISS"));
+        }
+
+        [Test]
+        public void CUM14_U02_KnifeBustResolvesAsHit()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 9, 2 },
+                enemyRanks: new[] { 6, 1, 10, 10 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            Assert.That(battle.Start(), Is.True);
+            Assert.That(battle.Enemy.Draw(faceUp: true), Is.Not.Null);
+            BlackjackCard sourceCard = battle.Player.Hand.Cards[0];
+            GameSceneViewModel resolvedModel = null;
+            battle.Stepped += () =>
+            {
+                GameSceneViewModel model = GameScenePresenter.Create(battle);
+                if (model.KnifeAnimationCue?.Phase == GameSceneKnifeAnimationPhase.Resolved)
+                {
+                    resolvedModel = model;
+                }
+            };
+
+            Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
+
+            Assert.That(resolvedModel, Is.Not.Null);
+            Assert.That(resolvedModel.KnifeAnimationCue.Succeeded, Is.True);
+            Assert.That(
+                resolvedModel.EnemyVisual,
+                Is.EqualTo(CharacterVisualState.Attacked));
+            Assert.That(resolvedModel.EnemyActionLabel, Is.EqualTo("HIT!"));
         }
 
         [Test]

@@ -3632,9 +3632,16 @@ AnimationClip:
     messageOptions: 0
   - time: 2.8
     functionName: ShakeCameraTap
-    data: 
+    data:
     objectReferenceParameter: {fileID: 0}
     floatParameter: 0.5
+    intParameter: 0
+    messageOptions: 0
+  - time: 2.8
+    functionName: NotifyKnifeImpact
+    data:
+    objectReferenceParameter: {fileID: 0}
+    floatParameter: 0
     intParameter: 0
     messageOptions: 0
   - time: 2.8

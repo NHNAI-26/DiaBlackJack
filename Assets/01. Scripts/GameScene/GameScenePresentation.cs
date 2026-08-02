@@ -215,6 +215,59 @@ namespace DiaBlackJack.GameScene
         public bool Succeeded { get; }
     }
 
+    public enum GameSceneKnifeAnimationPhase
+    {
+        Ready,
+        Resolved,
+    }
+
+    public sealed class GameSceneKnifeAnimationCue
+    {
+        public GameSceneKnifeAnimationCue(
+            int roundNumber,
+            int sourceCardId,
+            CombatantSide actorSide,
+            GameSceneKnifeAnimationPhase phase,
+            bool succeeded = false)
+        {
+            if (roundNumber < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(roundNumber));
+            }
+
+            if (sourceCardId < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceCardId));
+            }
+
+            if (!Enum.IsDefined(typeof(CombatantSide), actorSide))
+            {
+                throw new ArgumentOutOfRangeException(nameof(actorSide));
+            }
+
+            if (!Enum.IsDefined(typeof(GameSceneKnifeAnimationPhase), phase))
+            {
+                throw new ArgumentOutOfRangeException(nameof(phase));
+            }
+
+            RoundNumber = roundNumber;
+            SourceCardId = sourceCardId;
+            ActorSide = actorSide;
+            Phase = phase;
+            Succeeded = succeeded;
+        }
+
+        public int RoundNumber { get; }
+
+        public int SourceCardId { get; }
+
+        public CombatantSide ActorSide { get; }
+
+        public GameSceneKnifeAnimationPhase Phase { get; }
+
+        public bool Succeeded { get; }
+    }
+
     public enum GameSceneHammerAnimationPhase
     {
         Ready,
@@ -293,7 +346,8 @@ namespace DiaBlackJack.GameScene
             bool usesDiegeticCardEffectSelection = false,
             bool focusesEnemyCardsForSelection = false,
             string playerTotalsText = null,
-            string enemyTotalsText = null)
+            string enemyTotalsText = null,
+            GameSceneKnifeAnimationCue knifeAnimationCue = null)
         {
             Core = core ?? throw new ArgumentNullException(nameof(core));
             PlayerCards = playerCards ?? throw new ArgumentNullException(nameof(playerCards));
@@ -310,6 +364,7 @@ namespace DiaBlackJack.GameScene
             FocusesEnemyCardsForSelection = focusesEnemyCardsForSelection;
             PlayerTotalsText = playerTotalsText ?? core.PlayerTotalsText;
             EnemyTotalsText = enemyTotalsText ?? core.EnemyVisibleTotalText;
+            KnifeAnimationCue = knifeAnimationCue;
         }
 
         public CoreLoopViewModel Core { get; }
@@ -330,6 +385,8 @@ namespace DiaBlackJack.GameScene
         public GameSceneRevolverAnimationCue RevolverAnimationCue { get; }
 
         public GameSceneHammerAnimationCue HammerAnimationCue { get; }
+
+        public GameSceneKnifeAnimationCue KnifeAnimationCue { get; }
 
         public bool UsesDiegeticCardEffectSelection { get; }
 
@@ -367,7 +424,8 @@ namespace DiaBlackJack.GameScene
                 UsesDiegeticSelection(battle),
                 FocusesEnemyCardsForSelection(battle),
                 CreatePlayerTotalsText(battle, core, revealRoundResult),
-                CreateEnemyTotalsText(battle, core, revealRoundResult));
+                CreateEnemyTotalsText(battle, core, revealRoundResult),
+                CreateKnifeAnimationCue(battle));
         }
 
         private static string CreatePlayerTotalsText(
@@ -529,6 +587,42 @@ namespace DiaBlackJack.GameScene
                 result.Succeeded);
         }
 
+        private static GameSceneKnifeAnimationCue CreateKnifeAnimationCue(
+            CoreLoopBattle battle)
+        {
+            if (battle.ActiveCardEffectKind == CardEffectKind.MilitaryKnife &&
+                battle.ActiveCardEffectSourceCardId.HasValue &&
+                battle.ActiveCardEffectActorSide.HasValue &&
+                IsLastUseCardEffect(battle, CardEffectKind.MilitaryKnife))
+            {
+                return new GameSceneKnifeAnimationCue(
+                    battle.RoundNumber,
+                    battle.ActiveCardEffectSourceCardId.Value,
+                    battle.ActiveCardEffectActorSide.Value,
+                    GameSceneKnifeAnimationPhase.Ready);
+            }
+
+            if (!battle.LastCardEffectResult.HasValue ||
+                !battle.LastCardEffectActorSide.HasValue)
+            {
+                return null;
+            }
+
+            CardEffectResult result = battle.LastCardEffectResult.Value;
+            if (result.EffectKind != CardEffectKind.MilitaryKnife ||
+                !IsLastUseCardEffect(battle, CardEffectKind.MilitaryKnife))
+            {
+                return null;
+            }
+
+            return new GameSceneKnifeAnimationCue(
+                battle.RoundNumber,
+                result.SourceCardId,
+                battle.LastCardEffectActorSide.Value,
+                GameSceneKnifeAnimationPhase.Resolved,
+                result.EndedRound);
+        }
+
         private static bool IsLastUseCardEffect(
             CoreLoopBattle battle,
             CardEffectKind effectKind)
@@ -662,6 +756,12 @@ namespace DiaBlackJack.GameScene
                 kind = pending.EffectKind;
                 actor = CombatantSide.Player;
             }
+            else if (battle.ActiveCardEffectKind.HasValue &&
+                     battle.ActiveCardEffectActorSide.HasValue)
+            {
+                kind = battle.ActiveCardEffectKind.Value;
+                actor = battle.ActiveCardEffectActorSide.Value;
+            }
             else if (battle.LastPublicAction != null &&
                      battle.LastPublicAction.ActionType == PublicCombatActionType.UseCard &&
                      battle.LastCardEffectResult.HasValue &&
@@ -696,7 +796,7 @@ namespace DiaBlackJack.GameScene
                     {
                         visual = CharacterVisualState.AttackThreatened;
                     }
-                    else if (completedResult.Value.Succeeded)
+                    else if (DidAttackHit(kind, completedResult.Value))
                     {
                         visual = CharacterVisualState.Attacked;
                     }
@@ -725,6 +825,15 @@ namespace DiaBlackJack.GameScene
                 default:
                     return false;
             }
+        }
+
+        private static bool DidAttackHit(
+            CardEffectKind kind,
+            CardEffectResult result)
+        {
+            return kind == CardEffectKind.MilitaryKnife
+                ? result.EndedRound
+                : result.Succeeded;
         }
 
         private static bool IsAttackReaction(CharacterVisualState state)
@@ -773,6 +882,11 @@ namespace DiaBlackJack.GameScene
             if (kind == CardEffectKind.AutoPistol)
             {
                 return result.Succeeded ? "HIT!" : "MISS";
+            }
+
+            if (kind == CardEffectKind.MilitaryKnife)
+            {
+                return result.EndedRound ? "HIT!" : "MISS";
             }
 
             return EffectActionLabel(kind);

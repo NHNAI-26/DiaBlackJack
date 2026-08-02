@@ -66,6 +66,17 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private string enemySuccessTrigger = "EnemySuccess";
         [SerializeField] private string enemyFailTrigger = "EnemyFail";
 
+        [Header("Knife animation")]
+        [SerializeField] private Animator knifeAnimator;
+        [SerializeField] private GameObject knifeRoot;
+        [SerializeField] private float knifeReadySeconds = 0.7f;
+        [SerializeField] private float knifeResultSeconds = 3.1f;
+        [SerializeField] private string knifeBaseStateName = "Knife_Empty";
+        [SerializeField] private string playerKnifeStartTrigger = "PlayerStart";
+        [SerializeField] private string enemyKnifeStartTrigger = "EnemyStart";
+        [SerializeField] private string knifeSuccessTrigger = "Success";
+        [SerializeField] private string knifeFailTrigger = "Fail";
+
         [Header("Hammer animation")]
         [SerializeField] private HammerAnimationController hammerAnimation;
 
@@ -105,6 +116,16 @@ namespace DiaBlackJack.GameScene
         private RevolverAnimationEventReceiver _revolverEventReceiver;
         private bool _revolverImpactPending;
         private CombatantSide _revolverImpactTargetSide;
+        private bool _hasLastKnifeAnimationCue;
+        private int _lastKnifeAnimationRoundNumber;
+        private int _lastKnifeAnimationSourceCardId;
+        private CombatantSide _lastKnifeAnimationActorSide;
+        private GameSceneKnifeAnimationPhase _lastKnifeAnimationPhase;
+        private bool _lastKnifeAnimationSucceeded;
+        private Coroutine _knifeHideRoutine;
+        private KnifeAnimationEventReceiver _knifeEventReceiver;
+        private bool _knifeImpactPending;
+        private CombatantSide _knifeImpactTargetSide;
         private bool _hammerSwitchInputLocked;
         private bool _enemyCardSelectionSwitchInputLocked;
         private bool _deckPreviewSwitchInputLocked;
@@ -253,6 +274,7 @@ namespace DiaBlackJack.GameScene
         private void Awake()
         {
             HideRevolverAnimation();
+            HideKnifeAnimation();
             ResolveHammerAnimation()?.Hide();
             _stageRuntime = StageProgressionRuntime.Instance;
             StageProgressionSession runtimeSession =
@@ -314,6 +336,7 @@ namespace DiaBlackJack.GameScene
         private void OnEnable()
         {
             BindRevolverImpactEvent();
+            BindKnifeImpactEvent();
             if (codex != null)
             {
                 codex.OpenStateChanged += HandleCodexOpenStateChanged;
@@ -324,6 +347,8 @@ namespace DiaBlackJack.GameScene
         {
             UnbindRevolverImpactEvent();
             ClearPendingRevolverImpact();
+            UnbindKnifeImpactEvent();
+            ClearPendingKnifeImpact();
             CloseDeckPreview();
             CloseCodex();
             EndEnemyCardSelectionCamera();
@@ -379,6 +404,7 @@ namespace DiaBlackJack.GameScene
             EndHammerSwitchInputLock();
             ResolveHammerAnimation()?.Hide();
             ResetRevolverAnimationState();
+            ResetKnifeAnimationState();
             playerHand?.ResetView();
             enemyHand?.ResetView();
             remainingDeck?.ResetView();
@@ -1044,6 +1070,7 @@ namespace DiaBlackJack.GameScene
         private CoreLoopBattle CreateBattle()
         {
             ResetRevolverAnimationState();
+            ResetKnifeAnimationState();
             int battleSeed = seed + (_battleIndex * 2);
             _battleIndex++;
             int enemyDeckSeed = battleSeed + 1;
@@ -1962,7 +1989,8 @@ namespace DiaBlackJack.GameScene
             bool hideCombatHudForPresentation =
                 _inputLocked &&
                 (vm.HammerAnimationCue != null ||
-                 vm.RevolverAnimationCue != null);
+                 vm.RevolverAnimationCue != null ||
+                 vm.KnifeAnimationCue != null);
             GameSceneCombatHudViewModel combat =
                 GameSceneCombatHudPresenter.Create(
                     vm.Core,
@@ -2000,6 +2028,8 @@ namespace DiaBlackJack.GameScene
                 TryPlayRevolverAnimation(
                     vm.RevolverAnimationCue,
                     scheduleRevolverRetry);
+            bool playedKnifeAnimation =
+                TryPlayKnifeAnimation(vm.KnifeAnimationCue);
             _playedHammerAnimationController = null;
             bool playedHammerAnimation =
                 TryPlayHammerAnimation(vm.HammerAnimationCue);
@@ -2016,6 +2046,7 @@ namespace DiaBlackJack.GameScene
             {
                 return CreateAppliedAnimationResult(
                     playedRevolverAnimation,
+                    playedKnifeAnimation,
                     playedHammerAnimation,
                     deferredCardRender: false,
                     deferredViewModel: null);
@@ -2032,7 +2063,11 @@ namespace DiaBlackJack.GameScene
             if (enemyCharacter != null)
             {
                 enemyCharacter.Render(
-                    ResolveRevolverTimedVisual(CombatantSide.Enemy, vm.EnemyVisual),
+                    ResolveKnifeTimedVisual(
+                        CombatantSide.Enemy,
+                        ResolveRevolverTimedVisual(
+                            CombatantSide.Enemy,
+                            vm.EnemyVisual)),
                     vm.EnemyActionLabel);
             }
 
@@ -2045,6 +2080,7 @@ namespace DiaBlackJack.GameScene
 
             return CreateAppliedAnimationResult(
                 playedRevolverAnimation,
+                playedKnifeAnimation,
                 playedHammerAnimation,
                 deferredCardRender,
                 deferredCardRender ? vm : null);
@@ -2236,6 +2272,227 @@ namespace DiaBlackJack.GameScene
             }
 
             return true;
+        }
+
+        private bool TryPlayKnifeAnimation(GameSceneKnifeAnimationCue cue)
+        {
+            Animator animator = ResolveKnifeAnimator();
+            if (cue == null || animator == null || IsLastKnifeAnimationCue(cue))
+            {
+                return false;
+            }
+
+            RememberKnifeAnimationCue(cue);
+            GameObject root = ResolveKnifeRoot();
+            if (root != null && !root.activeSelf)
+            {
+                root.SetActive(true);
+            }
+
+            if (!animator.gameObject.activeInHierarchy)
+            {
+                return false;
+            }
+
+            StopKnifeHideRoutine();
+            ResetKnifeTriggers();
+
+            if (cue.Phase == GameSceneKnifeAnimationPhase.Ready)
+            {
+                ClearPendingKnifeImpact();
+                ResetKnifeAnimatorToBase();
+                animator.SetTrigger(
+                    cue.ActorSide == CombatantSide.Player
+                        ? playerKnifeStartTrigger
+                        : enemyKnifeStartTrigger);
+                ApplyCinematicCamera(
+                    ResolveKnifeCameraView(cue.ActorSide),
+                    knifeReadySeconds);
+                return true;
+            }
+
+            if (cue.Succeeded)
+            {
+                _knifeImpactPending = true;
+                _knifeImpactTargetSide = Opposite(cue.ActorSide);
+                BindKnifeImpactEvent();
+            }
+            else
+            {
+                ClearPendingKnifeImpact();
+            }
+
+            animator.SetTrigger(
+                cue.Succeeded ? knifeSuccessTrigger : knifeFailTrigger);
+            ApplyCinematicCamera(
+                ResolveKnifeCameraView(cue.ActorSide),
+                knifeResultSeconds);
+
+            if (Application.isPlaying && knifeResultSeconds > 0f)
+            {
+                _knifeHideRoutine = StartCoroutine(HideKnifeAnimationAfterDelay());
+            }
+
+            return true;
+        }
+
+        internal static GameSceneCameraView ResolveKnifeCameraView(
+            CombatantSide actorSide)
+        {
+            if (!Enum.IsDefined(typeof(CombatantSide), actorSide))
+            {
+                throw new ArgumentOutOfRangeException(nameof(actorSide));
+            }
+
+            return GameSceneCameraView.Current;
+        }
+
+        private Animator ResolveKnifeAnimator()
+        {
+            if (knifeAnimator != null)
+            {
+                return knifeAnimator;
+            }
+
+            KnifeAnimationEventReceiver receiver =
+                FindFirstObjectByType<KnifeAnimationEventReceiver>(
+                    FindObjectsInactive.Include);
+            if (receiver != null)
+            {
+                _knifeEventReceiver = receiver;
+                knifeAnimator = receiver.GetComponent<Animator>() ??
+                    receiver.GetComponentInParent<Animator>(true) ??
+                    receiver.GetComponentInChildren<Animator>(true);
+            }
+
+            if (knifeAnimator != null)
+            {
+                return knifeAnimator;
+            }
+
+            Animator[] animators = FindObjectsByType<Animator>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+            for (int i = 0; i < animators.Length; i++)
+            {
+                Animator candidate = animators[i];
+                if (candidate != null && candidate.gameObject.name == "Knife_Anim")
+                {
+                    knifeAnimator = candidate;
+                    break;
+                }
+            }
+
+            return knifeAnimator;
+        }
+
+        private GameObject ResolveKnifeRoot()
+        {
+            if (knifeRoot != null)
+            {
+                return knifeRoot;
+            }
+
+            return knifeAnimator != null ? knifeAnimator.gameObject : null;
+        }
+
+        private void ResetKnifeTriggers()
+        {
+            ResetKnifeTrigger(playerKnifeStartTrigger);
+            ResetKnifeTrigger(enemyKnifeStartTrigger);
+            ResetKnifeTrigger(knifeSuccessTrigger);
+            ResetKnifeTrigger(knifeFailTrigger);
+        }
+
+        private void ResetKnifeTrigger(string triggerName)
+        {
+            if (knifeAnimator != null && !string.IsNullOrWhiteSpace(triggerName))
+            {
+                knifeAnimator.ResetTrigger(triggerName);
+            }
+        }
+
+        private void ResetKnifeAnimatorToBase()
+        {
+            if (knifeAnimator == null ||
+                !knifeAnimator.gameObject.activeInHierarchy ||
+                string.IsNullOrWhiteSpace(knifeBaseStateName))
+            {
+                return;
+            }
+
+            knifeAnimator.Play(knifeBaseStateName, 0, 0f);
+            knifeAnimator.Update(0f);
+        }
+
+        private bool IsLastKnifeAnimationCue(GameSceneKnifeAnimationCue cue)
+        {
+            return _hasLastKnifeAnimationCue &&
+                _lastKnifeAnimationRoundNumber == cue.RoundNumber &&
+                _lastKnifeAnimationSourceCardId == cue.SourceCardId &&
+                _lastKnifeAnimationActorSide == cue.ActorSide &&
+                _lastKnifeAnimationPhase == cue.Phase &&
+                _lastKnifeAnimationSucceeded == cue.Succeeded;
+        }
+
+        private void RememberKnifeAnimationCue(GameSceneKnifeAnimationCue cue)
+        {
+            _hasLastKnifeAnimationCue = true;
+            _lastKnifeAnimationRoundNumber = cue.RoundNumber;
+            _lastKnifeAnimationSourceCardId = cue.SourceCardId;
+            _lastKnifeAnimationActorSide = cue.ActorSide;
+            _lastKnifeAnimationPhase = cue.Phase;
+            _lastKnifeAnimationSucceeded = cue.Succeeded;
+        }
+
+        private void ResetKnifeAnimationState()
+        {
+            _hasLastKnifeAnimationCue = false;
+            _lastKnifeAnimationRoundNumber = 0;
+            _lastKnifeAnimationSourceCardId = 0;
+            _lastKnifeAnimationActorSide = CombatantSide.Player;
+            _lastKnifeAnimationPhase = GameSceneKnifeAnimationPhase.Ready;
+            _lastKnifeAnimationSucceeded = false;
+            ClearPendingKnifeImpact();
+            HideKnifeAnimation();
+        }
+
+        private IEnumerator HideKnifeAnimationAfterDelay()
+        {
+            yield return new WaitForSeconds(knifeResultSeconds);
+            _knifeHideRoutine = null;
+            ResetKnifeAnimatorToBase();
+            GameObject root = ResolveKnifeRoot();
+            if (root != null)
+            {
+                root.SetActive(false);
+            }
+
+            ClearPendingKnifeImpact();
+        }
+
+        private void StopKnifeHideRoutine()
+        {
+            if (_knifeHideRoutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(_knifeHideRoutine);
+            _knifeHideRoutine = null;
+        }
+
+        private void HideKnifeAnimation()
+        {
+            StopKnifeHideRoutine();
+            ClearPendingKnifeImpact();
+            ResolveKnifeAnimator();
+            ResetKnifeAnimatorToBase();
+            GameObject root = ResolveKnifeRoot();
+            if (root != null)
+            {
+                root.SetActive(false);
+            }
         }
 
         private bool TryPlayHammerAnimation(GameSceneHammerAnimationCue cue)
@@ -2453,6 +2710,7 @@ namespace DiaBlackJack.GameScene
 
         private AppliedAnimationResult CreateAppliedAnimationResult(
             bool playedRevolver,
+            bool playedKnife,
             bool playedHammer,
             bool deferredCardRender = false,
             GameSceneViewModel deferredViewModel = null)
@@ -2461,6 +2719,15 @@ namespace DiaBlackJack.GameScene
             if (playedRevolver)
             {
                 waitSeconds = Mathf.Max(waitSeconds, revolverAnimationSeconds);
+            }
+
+            if (playedKnife)
+            {
+                waitSeconds = Mathf.Max(
+                    waitSeconds,
+                    _lastKnifeAnimationPhase == GameSceneKnifeAnimationPhase.Ready
+                        ? knifeReadySeconds
+                        : knifeResultSeconds);
             }
 
             if (playedHammer)
@@ -2473,6 +2740,7 @@ namespace DiaBlackJack.GameScene
 
             return new AppliedAnimationResult(
                 playedRevolver,
+                playedKnife,
                 playedHammer,
                 waitSeconds,
                 playedHammer ? _playedHammerAnimationController : null,
@@ -2686,6 +2954,30 @@ namespace DiaBlackJack.GameScene
                 _revolverImpactTargetSide);
         }
 
+        internal static CharacterVisualState ResolveKnifeTimedVisual(
+            CombatantSide side,
+            CharacterVisualState visual,
+            bool impactPending,
+            CombatantSide impactTargetSide)
+        {
+            return impactPending &&
+                side == impactTargetSide &&
+                visual == CharacterVisualState.Attacked
+                    ? CharacterVisualState.AttackThreatened
+                    : visual;
+        }
+
+        private CharacterVisualState ResolveKnifeTimedVisual(
+            CombatantSide side,
+            CharacterVisualState visual)
+        {
+            return ResolveKnifeTimedVisual(
+                side,
+                visual,
+                _knifeImpactPending,
+                _knifeImpactTargetSide);
+        }
+
         private void BindRevolverImpactEvent()
         {
             RevolverAnimationEventReceiver receiver = ResolveRevolverEventReceiver();
@@ -2746,6 +3038,67 @@ namespace DiaBlackJack.GameScene
         {
             _revolverImpactPending = false;
             _revolverImpactTargetSide = CombatantSide.Player;
+        }
+
+        private void BindKnifeImpactEvent()
+        {
+            KnifeAnimationEventReceiver receiver = ResolveKnifeEventReceiver();
+            if (receiver == null)
+            {
+                return;
+            }
+
+            receiver.KnifeImpact -= HandleKnifeImpact;
+            receiver.KnifeImpact += HandleKnifeImpact;
+        }
+
+        private void UnbindKnifeImpactEvent()
+        {
+            if (_knifeEventReceiver != null)
+            {
+                _knifeEventReceiver.KnifeImpact -= HandleKnifeImpact;
+            }
+        }
+
+        private KnifeAnimationEventReceiver ResolveKnifeEventReceiver()
+        {
+            if (_knifeEventReceiver != null)
+            {
+                return _knifeEventReceiver;
+            }
+
+            Animator animator = ResolveKnifeAnimator();
+            if (animator == null)
+            {
+                return null;
+            }
+
+            _knifeEventReceiver =
+                animator.GetComponent<KnifeAnimationEventReceiver>() ??
+                animator.GetComponentInParent<KnifeAnimationEventReceiver>(true) ??
+                animator.GetComponentInChildren<KnifeAnimationEventReceiver>(true);
+            return _knifeEventReceiver;
+        }
+
+        private void HandleKnifeImpact()
+        {
+            if (!_knifeImpactPending)
+            {
+                return;
+            }
+
+            if (_knifeImpactTargetSide == CombatantSide.Enemy)
+            {
+                enemyCharacter?.Render(CharacterVisualState.Attacked, "HIT!");
+            }
+
+            ClearPendingKnifeImpact();
+        }
+
+        private void ClearPendingKnifeImpact()
+        {
+            _knifeImpactPending = false;
+            _knifeImpactTargetSide = CombatantSide.Player;
         }
 
         private static CombatantSide Opposite(CombatantSide side)
@@ -2818,6 +3171,7 @@ namespace DiaBlackJack.GameScene
         {
             public AppliedAnimationResult(
                 bool playedRevolver,
+                bool playedKnife,
                 bool playedHammer,
                 float waitSeconds,
                 HammerAnimationController hammerController,
@@ -2825,6 +3179,7 @@ namespace DiaBlackJack.GameScene
                 GameSceneViewModel deferredViewModel)
             {
                 PlayedRevolver = playedRevolver;
+                PlayedKnife = playedKnife;
                 PlayedHammer = playedHammer;
                 WaitSeconds = waitSeconds;
                 HammerController = hammerController;
@@ -2834,9 +3189,11 @@ namespace DiaBlackJack.GameScene
 
             public bool PlayedRevolver { get; }
 
+            public bool PlayedKnife { get; }
+
             public bool PlayedHammer { get; }
 
-            public bool PlayedAny => PlayedRevolver || PlayedHammer;
+            public bool PlayedAny => PlayedRevolver || PlayedKnife || PlayedHammer;
 
             public float WaitSeconds { get; }
 

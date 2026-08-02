@@ -173,6 +173,63 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(impact.time, Is.EqualTo(gunFire.time).Within(0.0001f));
         }
 
+        [Test]
+        public void CUM14_U03_KnifeHitStaysThreatenedUntilImpactEvent()
+        {
+            CharacterVisualState beforeImpact = GameManager.ResolveKnifeTimedVisual(
+                CombatantSide.Enemy,
+                CharacterVisualState.Attacked,
+                impactPending: true,
+                impactTargetSide: CombatantSide.Enemy);
+            CharacterVisualState afterImpact = GameManager.ResolveKnifeTimedVisual(
+                CombatantSide.Enemy,
+                CharacterVisualState.Attacked,
+                impactPending: false,
+                impactTargetSide: CombatantSide.Enemy);
+
+            Assert.That(beforeImpact, Is.EqualTo(CharacterVisualState.AttackThreatened));
+            Assert.That(afterImpact, Is.EqualTo(CharacterVisualState.Attacked));
+        }
+
+        [Test]
+        public void CUM14_U04_KnifeImpactReceiverRaisesOnlyExplicitImpactEvent()
+        {
+            KnifeAnimationEventReceiver receiver =
+                _root.AddComponent<KnifeAnimationEventReceiver>();
+            int impactCount = 0;
+            receiver.KnifeImpact += () => impactCount++;
+
+            receiver.NotifyKnifeImpact();
+
+            Assert.That(impactCount, Is.EqualTo(1));
+        }
+
+        [TestCase("Assets/05. Arts/Animation/Knife/Knife_Attack.anim", "ShakeCamera")]
+        [TestCase("Assets/05. Arts/Animation/Knife/Knife_Attack_Enemy.anim", "ShakeCameraTap")]
+        public void CUM14_U05_KnifeImpactMatchesAuthoredHitFrame(
+            string assetPath,
+            string hitEventName)
+        {
+            AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(assetPath);
+            AnimationEvent[] events = AnimationUtility.GetAnimationEvents(clip);
+            AnimationEvent impact = events.Single(item =>
+                item.functionName == "NotifyKnifeImpact");
+            AnimationEvent authoredHit = events.Single(item =>
+                item.functionName == hitEventName);
+
+            Assert.That(impact.time, Is.EqualTo(authoredHit.time).Within(0.0001f));
+        }
+
+        [TestCase(CombatantSide.Player)]
+        [TestCase(CombatantSide.Enemy)]
+        public void CUM14_U06_KnifeAnimationKeepsCurrentCameraView(
+            CombatantSide actorSide)
+        {
+            Assert.That(
+                GameManager.ResolveKnifeCameraView(actorSide),
+                Is.EqualTo(GameSceneCameraView.Current));
+        }
+
         private CharacterView ConfigureView()
         {
             CharacterView view = _root.GetComponent<CharacterView>();

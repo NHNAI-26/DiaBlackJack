@@ -2412,6 +2412,15 @@ namespace DiaBlackJack.CoreLoop
 
         internal bool HasActiveCardEffect => _activeCardEffectContext != null;
 
+        internal CardEffectKind? ActiveCardEffectKind =>
+            _activeCardEffectContext?.SourceCard.Definition.Effect;
+
+        internal int? ActiveCardEffectSourceCardId =>
+            _activeCardEffectContext?.SourceCard.Id;
+
+        internal CombatantSide? ActiveCardEffectActorSide =>
+            _activeCardEffectActorSide;
+
         internal PendingCardEffect PendingEnemyCardEffect =>
             _activeCardEffectActorSide == CombatantSide.Enemy
                 ? _pendingCardEffect

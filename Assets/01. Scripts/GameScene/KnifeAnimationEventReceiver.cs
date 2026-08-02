@@ -8,6 +8,8 @@ namespace DiaBlackJack.GameScene
     public sealed class KnifeAnimationEventReceiver :
         PresentationAnimationEventReceiver
     {
+        public event Action KnifeImpact;
+
         [Serializable]
         private sealed class CameraShakeProfile
         {
@@ -72,6 +74,11 @@ namespace DiaBlackJack.GameScene
 
         public void ShakeCameraTap() =>
             ShakeCameraProfile("tap");
+
+        public void NotifyKnifeImpact()
+        {
+            KnifeImpact?.Invoke();
+        }
 
         private void BuildCameraShakeCatalog()
         {
