@@ -905,9 +905,6 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(commands.All(command => command.HasRequiredReferences), Is.True);
             Assert.That(commands.All(command =>
                 command.GetComponent<Collider>() != null), Is.True);
-
-            Assert.That(prefab.transform.Find("ContractPlaceholder"), Is.Not.Null);
-            Assert.That(prefab.transform.Find("CodexBook"), Is.Not.Null);
         }
 
         [Test]

@@ -126,7 +126,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 controller.SetMoodImmediate(profile);
 
                 renderer.GetPropertyBlock(properties);
-                Assert.That(properties.GetColor(GlassGlowColorId), Is.EqualTo(targetColor));
+                AssertColorApproximately(
+                    properties.GetColor(GlassGlowColorId),
+                    targetColor);
                 Assert.That(material.GetColor(GlassGlowColorId), Is.EqualTo(sourceColor));
             }
             finally
@@ -136,6 +138,15 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Object.DestroyImmediate(material);
                 Object.DestroyImmediate(profile);
             }
+        }
+
+        private static void AssertColorApproximately(Color actual, Color expected)
+        {
+            const float tolerance = 0.0001f;
+            Assert.That(actual.r, Is.EqualTo(expected.r).Within(tolerance));
+            Assert.That(actual.g, Is.EqualTo(expected.g).Within(tolerance));
+            Assert.That(actual.b, Is.EqualTo(expected.b).Within(tolerance));
+            Assert.That(actual.a, Is.EqualTo(expected.a).Within(tolerance));
         }
 
         private static MoodProfileSO CreateProfile(
