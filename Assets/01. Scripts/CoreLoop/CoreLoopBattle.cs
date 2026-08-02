@@ -60,6 +60,7 @@ namespace DiaBlackJack.CoreLoop
         private AutomaticCardEffectContext _activeAutomaticCardEffectContext;
         private AutomaticCardContinuation _automaticCardContinuation;
         private PendingAutomaticCardInteraction _pendingAutomaticCardInteraction;
+        private bool _isBeginningAutomaticCardEffect;
         private bool _isResolvingEnemyAutomaticChoice;
         private int _nextAutomaticCardInteractionId = 1;
         private int _enemyDecisionOrdinal;
@@ -2691,18 +2692,26 @@ namespace DiaBlackJack.CoreLoop
             _activeAutomaticCardEffectContext =
                 new AutomaticCardEffectContext(this, ownerSide, sourceCard);
             _automaticCardContinuation = continuation;
-            AutomaticCardEffectStep step =
-                _automaticCardEffectResolver.Begin(
-                    _activeAutomaticCardEffectContext);
-            bool isWaitingForChoice = ApplyAutomaticCardEffectStep(
-                step,
-                resumeContinuation: false);
-            if (!isWaitingForChoice)
+            _isBeginningAutomaticCardEffect = true;
+            try
             {
-                immediateResult = LastAutomaticCardResult;
-            }
+                AutomaticCardEffectStep step =
+                    _automaticCardEffectResolver.Begin(
+                        _activeAutomaticCardEffectContext);
+                bool isWaitingForChoice = ApplyAutomaticCardEffectStep(
+                    step,
+                    resumeContinuation: false);
+                if (!isWaitingForChoice)
+                {
+                    immediateResult = LastAutomaticCardResult;
+                }
 
-            return isWaitingForChoice;
+                return isWaitingForChoice;
+            }
+            finally
+            {
+                _isBeginningAutomaticCardEffect = false;
+            }
         }
 
         internal bool TryResolveAutomaticCardChoice(
@@ -2731,7 +2740,7 @@ namespace DiaBlackJack.CoreLoop
                     selectedOption);
             ApplyAutomaticCardEffectStep(
                 step,
-                resumeContinuation: true);
+                resumeContinuation: !_isBeginningAutomaticCardEffect);
             return true;
         }
 
@@ -4423,13 +4432,13 @@ namespace DiaBlackJack.CoreLoop
             }
 
             card.Reveal();
-            CardEffectStep step = _cardEffectResolver.Begin(context);
             _activeCardEffectContext = context;
             _activeCardEffectActorSide = actorSide;
             RecordPublicAction(
                 actorSide,
                 PublicCombatActionType.UseCard,
                 card.DefinitionKey);
+            CardEffectStep step = _cardEffectResolver.Begin(context);
 
             CardEffectApplicationResult applicationResult = ApplyCardEffectStep(step);
             if (applicationResult == CardEffectApplicationResult.Completed &&

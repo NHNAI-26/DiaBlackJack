@@ -299,7 +299,10 @@ namespace DiaBlackJack.GameScene
 
         private void Start()
         {
-            RefreshView();
+            if (Battle != null)
+            {
+                RefreshView();
+            }
         }
 
         private void OnEnable()
@@ -1868,8 +1871,14 @@ namespace DiaBlackJack.GameScene
 
         private void RefreshView()
         {
+            CoreLoopBattle battle = Battle;
+            if (battle == null)
+            {
+                return;
+            }
+
             GameSceneViewModel vm =
-                GameScenePresenter.Create(Battle, _activeEnemyProfileKey);
+                GameScenePresenter.Create(battle, _activeEnemyProfileKey);
             MaybeOpenShop(vm);
             ApplyView(vm);
         }

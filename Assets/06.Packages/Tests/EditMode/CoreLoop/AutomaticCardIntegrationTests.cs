@@ -175,6 +175,35 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void AC06_U07_KnifeForcedEnemyAutomaticChoiceResumesParentEffect()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                PlayerCards(
+                    2,
+                    CardDefinitionCatalog.GetByKey("military-knife-9"),
+                    3),
+                EnemyCards(
+                    5,
+                    7,
+                    Automatic(CardDefinitionCatalog.PoisonKey),
+                    4),
+                new StandPolicy());
+            Assert.That(battle.Start(), Is.True);
+            BlackjackCard knife = battle.Player.Hand.Cards[1];
+            bool accepted = false;
+
+            Assert.That(
+                () => accepted = battle.TryBeginPlayerCardUse(knife.Id),
+                Throws.Nothing);
+
+            Assert.That(accepted, Is.True);
+            Assert.That(battle.PendingAutomaticInteraction, Is.Null);
+            Assert.That(
+                battle.LastAutomaticCardResult.Value.EffectKind,
+                Is.EqualTo(CardEffectKind.Poison));
+        }
+
+        [Test]
         public void ACRV03_I01_TenRedealtBattlesKeepCardsAndStateIsolated()
         {
             for (int iteration = 0; iteration < 10; iteration++)
