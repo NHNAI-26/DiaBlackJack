@@ -22,6 +22,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float scaleLerp = 12f;
         [SerializeField] private string hoverSfxId = "cardHover";
         [Header("Shop sold out")]
+        [Tooltip("Authored card-local price and sold-out display. Detached beside the card in shops.")]
+        [SerializeField] private ShopCardOfferStatusView shopOfferStatus;
         [SerializeField] private Color shopSoldOutTint =
             new Color(0.35f, 0.35f, 0.35f, 1f);
         private static readonly int LightingModeId =
@@ -50,6 +52,19 @@ namespace DiaBlackJack.GameScene
 
         internal bool IsShopSoldOut => _isShopSoldOut;
 
+        internal ShopCardOfferStatusView DetachShopOfferStatus(Transform holder)
+        {
+            if (shopOfferStatus == null || holder == null)
+            {
+                return null;
+            }
+
+            ShopCardOfferStatusView status = shopOfferStatus;
+            shopOfferStatus = null;
+            status.DetachFromCard(holder);
+            return status;
+        }
+
         internal GameSceneDemonCardViewModel BoundCard { get; private set; }
 
         public string HoverBadgeTitle { get; private set; } = string.Empty;
@@ -68,6 +83,11 @@ namespace DiaBlackJack.GameScene
 
         private void Awake()
         {
+            if (shopOfferStatus != null)
+            {
+                shopOfferStatus.gameObject.SetActive(false);
+            }
+
             _baseScale = transform.localScale;
             _targetScale = _baseScale;
         }

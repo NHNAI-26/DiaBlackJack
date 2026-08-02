@@ -13,6 +13,11 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Color soldOutPriceColor =
             new Color(0.42f, 0.42f, 0.42f, 1f);
 
+        private Vector3 _authoredLocalPosition;
+        private Quaternion _authoredLocalRotation = Quaternion.identity;
+        private Vector3 _authoredLocalScale = Vector3.one;
+        private bool _isDetached;
+
         public string PriceLabel => priceText == null
             ? string.Empty
             : priceText.text;
@@ -23,6 +28,12 @@ namespace DiaBlackJack.GameScene
         internal Color PriceColor => priceText == null
             ? default
             : priceText.color;
+
+        internal Vector3 AuthoredLocalPosition => _authoredLocalPosition;
+
+        internal Vector3 AuthoredLocalScale => _authoredLocalScale;
+
+        internal bool IsDetached => _isDetached;
 
         private void Awake()
         {
@@ -45,6 +56,35 @@ namespace DiaBlackJack.GameScene
                 soldOutText.text = "SOLD OUT";
                 soldOutText.gameObject.SetActive(isSoldOut);
             }
+        }
+
+        internal void DetachFromCard(Transform holder)
+        {
+            if (holder == null || _isDetached)
+            {
+                return;
+            }
+
+            _authoredLocalPosition = transform.localPosition;
+            _authoredLocalRotation = transform.localRotation;
+            _authoredLocalScale = transform.localScale;
+            transform.SetParent(holder, false);
+            transform.localRotation = _authoredLocalRotation;
+            transform.localScale = _authoredLocalScale;
+            gameObject.SetActive(true);
+            _isDetached = true;
+        }
+
+        internal void LayoutAt(Vector3 cardLocalPosition)
+        {
+            if (!_isDetached)
+            {
+                return;
+            }
+
+            transform.localPosition = cardLocalPosition + _authoredLocalPosition;
+            transform.localRotation = _authoredLocalRotation;
+            transform.localScale = _authoredLocalScale;
         }
 
         private void DisableRaycastTargets()

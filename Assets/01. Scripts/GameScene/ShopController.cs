@@ -26,8 +26,6 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Transform normalCardHolder;
         [Tooltip("World-space normal card prefab used for shop offers.")]
         [SerializeField] private CardView normalCardPrefab;
-        [Tooltip("Text-only world-space price and sold-out overlay used by every card offer.")]
-        [SerializeField] private ShopCardOfferStatusView cardOfferStatusPrefab;
         [Tooltip("Temporary table item that removes one card from the player's deck.")]
         [SerializeField] private ShopUtilityItemView lighterItem;
         [Tooltip("Temporary table item that restores player soul for gold.")]
@@ -41,7 +39,6 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private int normalCardOfferCount = 3;
         [SerializeField] private float normalCardSpacing = 0.95f;
         [SerializeField] private float normalCardHorizontalOffset = 0.5f;
-        [SerializeField] private float normalCardStatusScale = 1.4f;
         [SerializeField] private int lighterPrice = 2;
         [SerializeField] private int whiskeyPrice = 2;
         [Tooltip("Added to both utility prices for every earlier shop where either utility was purchased.")]
@@ -446,8 +443,8 @@ namespace DiaBlackJack.GameScene
                 showHoverBadgeWhenUnavailable: true));
             view.SetShopSoldOut(option.IsSold);
             _formalDemonOffers.Add(view);
-            _formalDemonStatuses.Add(CreateOfferStatus(
-                demonCardHolder,
+            _formalDemonStatuses.Add(PrepareOfferStatus(
+                view.DetachShopOfferStatus(demonCardHolder),
                 option.PriceAmount,
                 option.IsSold));
         }
@@ -478,11 +475,10 @@ namespace DiaBlackJack.GameScene
                 showHoverBadgeWhenUnavailable: true));
             view.SetShopSoldOut(option.IsSold);
             _formalNormalOffers.Add(view);
-            _formalNormalStatuses.Add(CreateOfferStatus(
-                normalCardHolder,
+            _formalNormalStatuses.Add(PrepareOfferStatus(
+                view.DetachShopOfferStatus(normalCardHolder),
                 option.PriceAmount,
-                option.IsSold,
-                normalCardStatusScale));
+                option.IsSold));
         }
 
         private void ApplyFormalUtilityLayout()
@@ -645,8 +641,8 @@ namespace DiaBlackJack.GameScene
                     definition,
                     definition.BasePurchasePrice,
                     view,
-                    CreateOfferStatus(
-                        demonCardHolder,
+                    PrepareOfferStatus(
+                        view.DetachShopOfferStatus(demonCardHolder),
                         definition.BasePurchasePrice,
                         isSoldOut: false));
                 _demonOffers.Add(offer);
@@ -681,11 +677,10 @@ namespace DiaBlackJack.GameScene
                     candidate.Suit,
                     candidate.Definition.BasePurchasePrice,
                     view,
-                    CreateOfferStatus(
-                        normalCardHolder,
+                    PrepareOfferStatus(
+                        view.DetachShopOfferStatus(normalCardHolder),
                         candidate.Definition.BasePurchasePrice,
-                        isSoldOut: false,
-                        normalCardStatusScale));
+                        isSoldOut: false));
                 _normalOffers.Add(offer);
                 BindOfferView(offer);
             }
@@ -864,34 +859,18 @@ namespace DiaBlackJack.GameScene
             }
         }
 
-        private ShopCardOfferStatusView CreateOfferStatus(
-            Transform holder,
+        private static ShopCardOfferStatusView PrepareOfferStatus(
+            ShopCardOfferStatusView status,
             int price,
-            bool isSoldOut,
-            float scale = 1f)
+            bool isSoldOut)
         {
-            ShopCardOfferStatusView prefab = ResolveOfferStatusPrefab();
-            if (holder == null || prefab == null)
+            if (status == null)
             {
                 return null;
             }
 
-            ShopCardOfferStatusView status = Instantiate(prefab, holder);
-            status.transform.localRotation = Quaternion.identity;
-            status.transform.localScale = Vector3.one * scale;
             status.Bind(price, isSoldOut);
             return status;
-        }
-
-        private ShopCardOfferStatusView ResolveOfferStatusPrefab()
-        {
-            if (cardOfferStatusPrefab == null)
-            {
-                cardOfferStatusPrefab = Resources.Load<ShopCardOfferStatusView>(
-                    "ShopCardOfferStatus");
-            }
-
-            return cardOfferStatusPrefab;
         }
 
         private static void DestroyStatusViews(
@@ -946,8 +925,7 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            status.transform.localPosition = localPosition;
-            status.transform.localRotation = Quaternion.identity;
+            status.LayoutAt(localPosition);
         }
 
         private DemonCardOffer FindDemonOffer(int offerId)

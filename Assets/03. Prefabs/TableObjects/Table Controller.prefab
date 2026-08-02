@@ -1858,7 +1858,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3318951457764372874}
   - component: {fileID: 1446267767095836390}
-  - component: {fileID: 3307033121480723640}
+  - component: {fileID: 2880182475690012642}
   m_Layer: 0
   m_Name: Table Controller
   m_TagString: Untagged
@@ -1908,7 +1908,6 @@ MonoBehaviour:
   demonCardPrefab: {fileID: 2245145291204370677, guid: 45d32c4ca972f2243966a587c6684a0c, type: 3}
   normalCardHolder: {fileID: 1407574788194841408}
   normalCardPrefab: {fileID: 2250541817930894918, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
-  cardOfferStatusPrefab: {fileID: 0}
   lighterItem: {fileID: 2922053240498535864}
   whiskeyItem: {fileID: 8474414684798555276}
   combatTableObjects:
@@ -1925,13 +1924,12 @@ MonoBehaviour:
   normalCardOfferCount: 3
   normalCardSpacing: 0.95
   normalCardHorizontalOffset: 0.5
-  normalCardStatusScale: 1.4
   lighterPrice: 2
   whiskeyPrice: 2
   utilityPriceIncreasePerUsedVisit: 1
   whiskeySoulRestore: 2
   shopRandomSeed: 20260726
---- !u!114 &3307033121480723640
+--- !u!114 &2880182475690012642
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

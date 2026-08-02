@@ -260,12 +260,25 @@ namespace DiaBlackJack.StageProgression.Tests
             ShopController shop = root.AddComponent<ShopController>();
             Transform normalHolder = CreateChild(root, "Normal Holder").transform;
             Transform demonHolder = CreateChild(root, "Demon Holder").transform;
-            CardView normalPrefab = CreateChild(root, "Normal Prefab")
-                .AddComponent<CardView>();
-            DemonCardView demonPrefab = CreateChild(root, "Demon Prefab")
-                .AddComponent<DemonCardView>();
-            GameObject statusObject = CreateChild(root, "Status Prefab");
-            ShopCardOfferStatusView statusPrefab =
+            GameObject normalPrefabObject = CreateChild(root, "Normal Prefab");
+            CardView normalPrefab = normalPrefabObject.AddComponent<CardView>();
+            GameObject demonPrefabObject = CreateChild(root, "Demon Prefab");
+            DemonCardView demonPrefab = demonPrefabObject.AddComponent<DemonCardView>();
+            CreateEmbeddedStatus(normalPrefabObject, normalPrefab);
+            CreateEmbeddedStatus(demonPrefabObject, demonPrefab);
+            SetField(shop, "normalCardHolder", normalHolder);
+            SetField(shop, "demonCardHolder", demonHolder);
+            SetField(shop, "normalCardPrefab", normalPrefab);
+            SetField(shop, "demonCardPrefab", demonPrefab);
+            return shop;
+        }
+
+        private static void CreateEmbeddedStatus(
+            GameObject cardObject,
+            Component cardView)
+        {
+            GameObject statusObject = CreateChild(cardObject, "ShopCardOfferStatus");
+            ShopCardOfferStatusView status =
                 statusObject.AddComponent<ShopCardOfferStatusView>();
             Type textType = Type.GetType(
                 "TMPro.TextMeshPro, Unity.TextMeshPro");
@@ -274,14 +287,10 @@ namespace DiaBlackJack.StageProgression.Tests
                 .AddComponent(textType);
             Component sold = CreateChild(statusObject, "Sold")
                 .AddComponent(textType);
-            SetField(statusPrefab, "priceText", price);
-            SetField(statusPrefab, "soldOutText", sold);
-            SetField(shop, "normalCardHolder", normalHolder);
-            SetField(shop, "demonCardHolder", demonHolder);
-            SetField(shop, "normalCardPrefab", normalPrefab);
-            SetField(shop, "demonCardPrefab", demonPrefab);
-            SetField(shop, "cardOfferStatusPrefab", statusPrefab);
-            return shop;
+            SetField(status, "priceText", price);
+            SetField(status, "soldOutText", sold);
+            SetField(cardView, "shopOfferStatus", status);
+            statusObject.SetActive(false);
         }
 
         private static GameObject CreateChild(GameObject parent, string name)

@@ -63,6 +63,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float usedMarkStrokeDuration = 0.175f;
 
         [Header("Shop sold out")]
+        [Tooltip("Authored card-local price and sold-out display. Detached beside the card in shops.")]
+        [SerializeField] private ShopCardOfferStatusView shopOfferStatus;
         [SerializeField] private Color shopSoldOutTint =
             new Color(0.35f, 0.35f, 0.35f, 1f);
 
@@ -115,6 +117,19 @@ namespace DiaBlackJack.GameScene
 
         internal bool IsShopSoldOut => _isShopSoldOut;
 
+        internal ShopCardOfferStatusView DetachShopOfferStatus(Transform holder)
+        {
+            if (shopOfferStatus == null || holder == null)
+            {
+                return null;
+            }
+
+            ShopCardOfferStatusView status = shopOfferStatus;
+            shopOfferStatus = null;
+            status.DetachFromCard(holder);
+            return status;
+        }
+
         /// <summary>Current card-effect option selected by clicking this world-space card.</summary>
         public int? CardEffectChoiceOptionId { get; private set; }
 
@@ -150,6 +165,11 @@ namespace DiaBlackJack.GameScene
 
         private void Awake()
         {
+            if (shopOfferStatus != null)
+            {
+                shopOfferStatus.gameObject.SetActive(false);
+            }
+
             _baseScale = transform.localScale;
             CaptureUsedMarkScales();
 

@@ -10,6 +10,11 @@ namespace DiaBlackJack.CoreLoop.Tests
 {
     public sealed class ShopControllerTests
     {
+        private static readonly Vector3 NormalStatusOffset =
+            new Vector3(0f, -0.25f, 0f);
+        private static readonly Vector3 DemonStatusOffset =
+            new Vector3(0f, -0.4f, 0f);
+
         private GameObject _root;
         private ShopController _shop;
 
@@ -262,12 +267,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             Transform demonHolder = CreateHolder("Demon Card Holder");
             CardView normalPrefab = CreateNormalCardPrefab();
             DemonCardView demonPrefab = CreateDemonCardPrefab();
-            ShopCardOfferStatusView statusPrefab = CreateStatusPrefab();
             SetPrivateField("normalCardHolder", normalHolder);
             SetPrivateField("demonCardHolder", demonHolder);
             SetPrivateField("normalCardPrefab", normalPrefab);
             SetPrivateField("demonCardPrefab", demonPrefab);
-            SetPrivateField("cardOfferStatusPrefab", statusPrefab);
             SetPrivateField("normalCardOfferCount", 3);
             SetPrivateField("demonCardOfferCount", 2);
 
@@ -319,13 +322,27 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 demonCards[0].GetComponentInChildren<SpriteRenderer>().color.r,
                 Is.LessThan(0.5f));
-            Assert.That(FindStatusAt(normalStatuses, normalPositions[0]).IsSoldOut,
-                Is.True);
-            Assert.That(FindStatusAt(demonStatuses, demonPositions[0]).IsSoldOut,
+            Assert.That(
+                FindStatusAt(
+                    normalStatuses,
+                    normalPositions[0] + NormalStatusOffset).IsSoldOut,
                 Is.True);
             Assert.That(
-                FindStatusAt(normalStatuses, normalPositions[0]).PriceColor,
+                FindStatusAt(
+                    demonStatuses,
+                    demonPositions[0] + DemonStatusOffset).IsSoldOut,
+                Is.True);
+            Assert.That(
+                FindStatusAt(
+                    normalStatuses,
+                    normalPositions[0] + NormalStatusOffset).PriceColor,
                 Is.EqualTo(new Color(0.42f, 0.42f, 0.42f, 1f)));
+            Assert.That(normalStatuses.All(status => status.IsDetached), Is.True);
+            Assert.That(demonStatuses.All(status => status.IsDetached), Is.True);
+            Vector3 statusScale = normalStatuses[0].transform.localScale;
+            normalCards[1].SetHovered(true);
+            Assert.That(normalStatuses[0].transform.localScale,
+                Is.EqualTo(statusScale));
             AssertLocalPositions(normalCards, normalPositions);
             AssertLocalPositions(demonCards, demonPositions);
 
@@ -341,10 +358,8 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             Transform holder = CreateHolder("Normal Card Holder");
             CardView prefab = CreateNormalCardPrefab();
-            ShopCardOfferStatusView statusPrefab = CreateStatusPrefab();
             SetPrivateField("normalCardHolder", holder);
             SetPrivateField("normalCardPrefab", prefab);
-            SetPrivateField("cardOfferStatusPrefab", statusPrefab);
             SetPrivateField("normalCardOfferCount", 1);
 
             _shop.Open();
@@ -377,7 +392,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         public void GSV06_U04_StatusPrefabUsesKoreanFontAndDoesNotBlockInput()
         {
             const string prefabPath =
-                "Assets/03. Prefabs/Shop/Resources/ShopCardOfferStatus.prefab";
+                "Assets/03. Prefabs/Shop/ShopCardOfferStatus.prefab";
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             Assert.That(prefab, Is.Not.Null);
             GameObject instance = Object.Instantiate(prefab);
@@ -425,6 +440,68 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
         }
 
+        [Test]
+        public void GSV06_U05_CardPrefabsAuthorPricePositionAndScale()
+        {
+            GameObject cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/03. Prefabs/Card/Card.prefab");
+            GameObject demonPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/03. Prefabs/Card/DemonCard.prefab");
+            Assert.That(cardPrefab, Is.Not.Null);
+            Assert.That(demonPrefab, Is.Not.Null);
+
+            ShopCardOfferStatusView cardStatus =
+                cardPrefab.GetComponentInChildren<ShopCardOfferStatusView>(true);
+            ShopCardOfferStatusView demonStatus =
+                demonPrefab.GetComponentInChildren<ShopCardOfferStatusView>(true);
+            Assert.That(cardStatus, Is.Not.Null);
+            Assert.That(demonStatus, Is.Not.Null);
+            Assert.That(
+                GetPrivateField<ShopCardOfferStatusView>(
+                    cardPrefab.GetComponent<CardView>(),
+                    "shopOfferStatus"),
+                Is.SameAs(cardStatus));
+            Assert.That(
+                GetPrivateField<ShopCardOfferStatusView>(
+                    demonPrefab.GetComponent<DemonCardView>(),
+                    "shopOfferStatus"),
+                Is.SameAs(demonStatus));
+
+            RectTransform cardPrice =
+                cardStatus.transform.Find("Price") as RectTransform;
+            RectTransform demonPrice =
+                demonStatus.transform.Find("Price") as RectTransform;
+            Assert.That(cardPrice, Is.Not.Null);
+            Assert.That(demonPrice, Is.Not.Null);
+            Assert.That(cardPrice.anchoredPosition.y, Is.LessThan(0f));
+            Assert.That(demonPrice.anchoredPosition.y, Is.LessThan(0f));
+            Assert.That(cardStatus.transform.localScale.x, Is.GreaterThan(0f));
+            Assert.That(demonStatus.transform.localScale.x, Is.GreaterThan(0f));
+
+            GameObject cardInstance = Object.Instantiate(cardPrefab);
+            GameObject demonInstance = Object.Instantiate(demonPrefab);
+            try
+            {
+                ShopCardOfferStatusView cardInstanceStatus =
+                    cardInstance.GetComponentInChildren<ShopCardOfferStatusView>(true);
+                ShopCardOfferStatusView demonInstanceStatus =
+                    demonInstance.GetComponentInChildren<ShopCardOfferStatusView>(true);
+                cardInstanceStatus.gameObject.SetActive(true);
+                demonInstanceStatus.gameObject.SetActive(true);
+
+                InvokePrivate(cardInstance.GetComponent<CardView>(), "Awake");
+                InvokePrivate(demonInstance.GetComponent<DemonCardView>(), "Awake");
+
+                Assert.That(cardInstanceStatus.gameObject.activeSelf, Is.False);
+                Assert.That(demonInstanceStatus.gameObject.activeSelf, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(cardInstance);
+                Object.DestroyImmediate(demonInstance);
+            }
+        }
+
         private Transform CreateHolder(string name)
         {
             GameObject holder = new GameObject(name);
@@ -441,6 +518,11 @@ namespace DiaBlackJack.CoreLoop.Tests
             front.transform.SetParent(prefabObject.transform);
             front.AddComponent<SpriteRenderer>();
             SetPrivateField(prefab, "front", front);
+            ShopCardOfferStatusView status = CreateStatusPrefab(
+                prefabObject.transform,
+                NormalStatusOffset,
+                Vector3.one * 1.4f);
+            SetPrivateField(prefab, "shopOfferStatus", status);
             return prefab;
         }
 
@@ -453,19 +535,30 @@ namespace DiaBlackJack.CoreLoop.Tests
             front.transform.SetParent(prefabObject.transform);
             front.AddComponent<SpriteRenderer>();
             SetPrivateField(prefab, "front", front);
+            ShopCardOfferStatusView status = CreateStatusPrefab(
+                prefabObject.transform,
+                DemonStatusOffset,
+                Vector3.one);
+            SetPrivateField(prefab, "shopOfferStatus", status);
             return prefab;
         }
 
-        private ShopCardOfferStatusView CreateStatusPrefab()
+        private ShopCardOfferStatusView CreateStatusPrefab(
+            Transform parent,
+            Vector3 localPosition,
+            Vector3 localScale)
         {
-            GameObject prefabObject = new GameObject("Status Prefab");
-            prefabObject.transform.SetParent(_root.transform);
+            GameObject prefabObject = new GameObject("ShopCardOfferStatus");
+            prefabObject.transform.SetParent(parent, false);
+            prefabObject.transform.localPosition = localPosition;
+            prefabObject.transform.localScale = localScale;
             ShopCardOfferStatusView prefab =
                 prefabObject.AddComponent<ShopCardOfferStatusView>();
             Component priceText = CreateText("Price", prefabObject.transform);
             Component soldOutText = CreateText("Sold Out", prefabObject.transform);
             SetPrivateField(prefab, "priceText", priceText);
             SetPrivateField(prefab, "soldOutText", soldOutText);
+            prefabObject.SetActive(false);
             return prefab;
         }
 
@@ -535,6 +628,24 @@ namespace DiaBlackJack.CoreLoop.Tests
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, fieldName);
             field.SetValue(target, value);
+        }
+
+        private static T GetPrivateField<T>(object target, string fieldName)
+        {
+            FieldInfo field = target.GetType().GetField(
+                fieldName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, fieldName);
+            return (T)field.GetValue(target);
+        }
+
+        private static void InvokePrivate(object target, string methodName)
+        {
+            MethodInfo method = target.GetType().GetMethod(
+                methodName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null, methodName);
+            method.Invoke(target, null);
         }
 
         private static DemonContractDeck InvokeCreatePlayerDemonDeck(

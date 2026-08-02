@@ -233,6 +233,22 @@ PrefabInstance:
       propertyPath: m_Sprite
       value: 
       objectReference: {fileID: 21300000, guid: f793ca74147d4d741981ca7f4041f82e, type: 3}
+    - target: {fileID: 4184099497688883973, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.437
+      objectReference: {fileID: 0}
+    - target: {fileID: 6980505170722215037, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6980505170722215037, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6980505170722215037, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7625881686824308818, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -278,6 +294,7 @@ MonoBehaviour:
   hoverScale: 1.15
   scaleLerp: 12
   hoverSfxId: cardHover
+  shopOfferStatus: {fileID: 3469392917929214280}
   shopSoldOutTint: {r: 0.35, g: 0.35, b: 0.35, a: 1}
 --- !u!1 &805380802697689471 stripped
 GameObject:
@@ -289,6 +306,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 7366520915214099447, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
   m_PrefabInstance: {fileID: 7858142292954665316}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &3469392917929214280 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6712748001319981100, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
+  m_PrefabInstance: {fileID: 7858142292954665316}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdc581742b122ac4abb1bcbba802ee78, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ShopCardOfferStatusView
 --- !u!4 &5217502089744215780 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2694824136228126592, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
