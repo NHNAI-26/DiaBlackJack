@@ -494,6 +494,61 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void DX02_U07_EditorPreviewResumesAfterSaveAndKeepsLayoutEdit()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
+            GameObject overlay = UnityEngine.Object.Instantiate(prefab);
+            CodexOverlayView view = overlay.GetComponent<CodexOverlayView>();
+            RectTransform leftPage = overlay.transform.Find(
+                "EnemyPage/LeftPage") as RectTransform;
+            Assert.That(leftPage, Is.Not.Null);
+
+            try
+            {
+                Assert.That(
+                    CodexOverlayPreviewSession.ShowCategory(
+                        view,
+                        CodexCategory.DemonCard),
+                    Is.Null);
+                Assert.That(
+                    CodexOverlayPreviewSession.MoveNext(view),
+                    Is.Null);
+                CodexOverlayPreviewSession beforeSave =
+                    CodexOverlayPreviewSession.GetActive(view);
+                int pageIndex = beforeSave.CurrentPageIndex;
+                Vector2 editedPosition =
+                    leftPage.anchoredPosition + new Vector2(7f, -9f);
+                leftPage.anchoredPosition = editedPosition;
+
+                CodexOverlayPreviewLifecycle.SuspendForPrefabSave(overlay);
+                Assert.That(
+                    CodexOverlayPreviewSession.GetActive(view),
+                    Is.Null);
+                Assert.That(
+                    leftPage.anchoredPosition,
+                    Is.EqualTo(editedPosition));
+
+                CodexOverlayPreviewLifecycle.ResumeAfterPrefabSave(overlay);
+                CodexOverlayPreviewSession afterSave =
+                    CodexOverlayPreviewSession.GetActive(view);
+                Assert.That(afterSave, Is.Not.Null);
+                Assert.That(
+                    afterSave.CurrentCategory,
+                    Is.EqualTo(CodexCategory.DemonCard));
+                Assert.That(afterSave.CurrentPageIndex, Is.EqualTo(pageIndex));
+                Assert.That(
+                    leftPage.anchoredPosition,
+                    Is.EqualTo(editedPosition));
+            }
+            finally
+            {
+                CodexOverlayPreviewSession.StopActive();
+                UnityEngine.Object.DestroyImmediate(overlay);
+            }
+        }
+
+        [Test]
         public void DX00_U01_ContentCatalogRejectsNullEnemy()
         {
             AssertInvalidEnemyCatalog(catalog =>

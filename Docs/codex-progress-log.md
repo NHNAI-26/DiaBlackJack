@@ -1,5 +1,12 @@
 # 테이블 도감 진행 기록
 
+## DX-M03: 편집 중 미리보기 유지
+
+- Prefab Mode Auto Save가 오브젝트 이동 때 `prefabSaving`을 발생시키며 미리보기를 종료하던 동작을 수정했다.
+- 저장 직전 authored 값을 복원하고 저장 완료 후 같은 카테고리·페이지로 새 스냅샷을 생성해 자동 재개한다. Scene 저장도 같은 수명주기를 사용한다.
+- 레이아웃 위치 수정값이 중단·재개 뒤 유지되는 테스트 `DX02_U07_EditorPreviewResumesAfterSaveAndKeepsLayoutEdit`를 추가했다.
+- Codex Asset tests: job `46ba5e665dbb443c9dabfadc23552277`, 13/13 통과. Codex 관련 컴파일/Console Error 0.
+
 ## DX-M02: 적 정보 페이지 레이아웃 개편
 
 - `CodexOverlay.prefab` 적 페이지만 재배치했다. 초상화 `CodexFrame_0`, 제목 `CodexFrame_2`, Sliced `CodexOutline_0`, 별도 `SoulIcon`/`GoldIcon` 연결을 완료했다.

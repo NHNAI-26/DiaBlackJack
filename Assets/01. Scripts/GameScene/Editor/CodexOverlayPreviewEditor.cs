@@ -115,7 +115,8 @@ namespace DiaBlackJack.GameScene.Editor
 
             EditorGUILayout.HelpBox(
                 "Preview fills the existing ContractTemplate and DeckTemplate. " +
-                "No preview objects are created. Saving exits preview and restores authored values.",
+                "No preview objects are created. Saving restores authored values " +
+                "for serialization, then resumes the current preview.",
                 MessageType.None);
 
             if (!string.IsNullOrEmpty(_lastError))
@@ -287,6 +288,50 @@ namespace DiaBlackJack.GameScene.Editor
             SceneView.RepaintAll();
         }
 
+        internal static CodexOverlayPreviewResumeState CaptureResumeState()
+        {
+            CodexOverlayPreviewSession session = _active;
+            return session == null
+                ? null
+                : new CodexOverlayPreviewResumeState(
+                    session._view,
+                    session._category,
+                    session._enemyPageIndex,
+                    session._demonPageIndex);
+        }
+
+        internal static string Resume(
+            CodexOverlayPreviewResumeState state)
+        {
+            if (state == null || state.View == null)
+            {
+                return null;
+            }
+
+            StopActive();
+            CodexOverlayPreviewSession session =
+                new CodexOverlayPreviewSession(state.View)
+                {
+                    _category = state.Category,
+                    _enemyPageIndex = state.EnemyPageIndex,
+                    _demonPageIndex = state.DemonPageIndex
+                };
+
+            try
+            {
+                session.RebuildModels();
+                _active = session;
+                session.Render();
+                return null;
+            }
+            catch (Exception exception)
+            {
+                _active = null;
+                session._snapshot.Restore();
+                return exception.Message;
+            }
+        }
+
         private static string EnsureActive(CodexOverlayView view)
         {
             if (view == null)
@@ -406,6 +451,42 @@ namespace DiaBlackJack.GameScene.Editor
                 _enemyPages,
                 _demonPages);
             _view.RenderEditorPreview(model);
+        }
+    }
+
+    internal sealed class CodexOverlayPreviewResumeState
+    {
+        internal CodexOverlayPreviewResumeState(
+            CodexOverlayView view,
+            CodexCategory category,
+            int enemyPageIndex,
+            int demonPageIndex)
+        {
+            View = view;
+            Category = category;
+            EnemyPageIndex = enemyPageIndex;
+            DemonPageIndex = demonPageIndex;
+        }
+
+        internal CodexCategory Category { get; }
+
+        internal int DemonPageIndex { get; }
+
+        internal int EnemyPageIndex { get; }
+
+        internal CodexOverlayView View { get; }
+
+        internal bool BelongsTo(GameObject root)
+        {
+            return View != null &&
+                   root != null &&
+                   (View.transform == root.transform ||
+                    View.transform.IsChildOf(root.transform));
+        }
+
+        internal bool BelongsTo(Scene scene)
+        {
+            return View != null && View.gameObject.scene == scene;
         }
     }
 
@@ -674,6 +755,9 @@ namespace DiaBlackJack.GameScene.Editor
     [InitializeOnLoad]
     internal static class CodexOverlayPreviewLifecycle
     {
+        private static CodexOverlayPreviewResumeState _prefabResumeState;
+        private static CodexOverlayPreviewResumeState _sceneResumeState;
+
         static CodexOverlayPreviewLifecycle()
         {
             EditorApplication.playModeStateChanged -= HandlePlayModeStateChanged;
@@ -684,10 +768,14 @@ namespace DiaBlackJack.GameScene.Editor
             AssemblyReloadEvents.beforeAssemblyReload += StopPreview;
             PrefabStage.prefabSaving -= HandlePrefabSaving;
             PrefabStage.prefabSaving += HandlePrefabSaving;
+            PrefabStage.prefabSaved -= HandlePrefabSaved;
+            PrefabStage.prefabSaved += HandlePrefabSaved;
             PrefabStage.prefabStageClosing -= HandlePrefabStageClosing;
             PrefabStage.prefabStageClosing += HandlePrefabStageClosing;
             EditorSceneManager.sceneSaving -= HandleSceneSaving;
             EditorSceneManager.sceneSaving += HandleSceneSaving;
+            EditorSceneManager.sceneSaved -= HandleSceneSaved;
+            EditorSceneManager.sceneSaved += HandleSceneSaved;
         }
 
         private static void HandlePlayModeStateChanged(
@@ -701,21 +789,89 @@ namespace DiaBlackJack.GameScene.Editor
 
         private static void HandlePrefabSaving(GameObject root)
         {
-            StopPreview();
+            SuspendForPrefabSave(root);
+        }
+
+        private static void HandlePrefabSaved(GameObject root)
+        {
+            ResumeAfterPrefabSave(root);
         }
 
         private static void HandlePrefabStageClosing(PrefabStage stage)
         {
+            ClearPendingResume();
             StopPreview();
         }
 
         private static void HandleSceneSaving(Scene scene, string path)
         {
-            StopPreview();
+            SuspendForSceneSave(scene);
+        }
+
+        private static void HandleSceneSaved(Scene scene)
+        {
+            ResumeAfterSceneSave(scene);
+        }
+
+        internal static void SuspendForPrefabSave(GameObject root)
+        {
+            CodexOverlayPreviewResumeState state =
+                CodexOverlayPreviewSession.CaptureResumeState();
+            if (state == null || !state.BelongsTo(root))
+            {
+                return;
+            }
+
+            _prefabResumeState = state;
+            CodexOverlayPreviewSession.StopActive();
+        }
+
+        internal static void ResumeAfterPrefabSave(GameObject root)
+        {
+            CodexOverlayPreviewResumeState state = _prefabResumeState;
+            _prefabResumeState = null;
+            if (state == null || !state.BelongsTo(root))
+            {
+                return;
+            }
+
+            CodexOverlayPreviewSession.Resume(state);
+        }
+
+        internal static void SuspendForSceneSave(Scene scene)
+        {
+            CodexOverlayPreviewResumeState state =
+                CodexOverlayPreviewSession.CaptureResumeState();
+            if (state == null || !state.BelongsTo(scene))
+            {
+                return;
+            }
+
+            _sceneResumeState = state;
+            CodexOverlayPreviewSession.StopActive();
+        }
+
+        internal static void ResumeAfterSceneSave(Scene scene)
+        {
+            CodexOverlayPreviewResumeState state = _sceneResumeState;
+            _sceneResumeState = null;
+            if (state == null || !state.BelongsTo(scene))
+            {
+                return;
+            }
+
+            CodexOverlayPreviewSession.Resume(state);
+        }
+
+        private static void ClearPendingResume()
+        {
+            _prefabResumeState = null;
+            _sceneResumeState = null;
         }
 
         private static void StopPreview()
         {
+            ClearPendingResume();
             CodexOverlayPreviewSession.StopActive();
         }
     }

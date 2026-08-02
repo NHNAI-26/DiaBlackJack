@@ -126,13 +126,13 @@ TextureImporter:
       name: CodexFrame_0
       rect:
         serializedVersion: 2
-        x: 37
-        y: 369
-        width: 629
+        x: 43
+        y: 370
+        width: 615
         height: 616
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
-      border: {x: 116, y: 77, z: 91, w: 92}
+      border: {x: 24, y: 45, z: 56, w: 43}
       customData: 
       outline: []
       physicsShape: []

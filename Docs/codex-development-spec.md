@@ -1,5 +1,12 @@
 # 테이블 도감 개발 명세
 
+## DX-M03: 미리보기 저장 수명주기
+
+- `PrefabStage.prefabSaving`/`prefabSaved`와 `EditorSceneManager.sceneSaving`/`sceneSaved`을 저장 전 중단·저장 후 재개 쌍으로 처리한다.
+- 재개 상태는 대상 `CodexOverlayView`, 카테고리, 적 페이지 인덱스, 악마 페이지 인덱스를 보존한다.
+- 다른 프리팹이나 다른 Scene 저장은 활성 도감 미리보기에 영향을 주지 않는다.
+- Play Mode 진입, Prefab Stage 종료, assembly reload, Editor 종료에서는 기존처럼 완전히 종료한다.
+
 ## DX-M02: 적 페이지 프리팹 계약
 
 - `CodexOverlayView` 공개 API와 표시 모델은 유지한다. 영혼/골드 동적 TMP는 숫자만 출력한다.
