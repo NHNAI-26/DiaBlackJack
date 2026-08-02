@@ -44,7 +44,9 @@ namespace DiaBlackJack.GameScene
                 }
 
                 bool visible = i < visibleCount;
-                paper.SetInteractable(visible && canPlayerBegin);
+                bool isTopPaper = i == visibleCount - 1;
+                paper.SetInteractable(
+                    visible && isTopPaper && canPlayerBegin);
                 paper.gameObject.SetActive(visible);
             }
 

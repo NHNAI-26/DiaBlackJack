@@ -32,20 +32,13 @@ namespace DiaBlackJack.GameScene
                 return new ContractPaperViewModel(0, false);
             }
 
-            int reservedPlayerUse =
-                battle.PendingPlayerDemonContractInteraction?.Kind ==
-                    DemonContractInteractionKind.ChooseContract
-                    ? 1
-                    : 0;
-            int committedPlayerUses = Math.Max(
-                0,
-                battle.UsedPlayerBaseDemonContractCount - reservedPlayerUse);
             int totalUses =
                 CoreLoopBattle.BasePlayerDemonContractUseLimit +
                 CoreLoopBattle.BaseEnemyDemonContractUseLimit;
-            int committedUses =
-                committedPlayerUses + battle.UsedEnemyBaseDemonContractCount;
-            int visibleCount = Math.Max(0, totalUses - committedUses);
+            int usedCount =
+                battle.UsedPlayerBaseDemonContractCount +
+                battle.UsedEnemyBaseDemonContractCount;
+            int visibleCount = Math.Max(0, totalUses - usedCount);
 
             return new ContractPaperViewModel(
                 visibleCount,

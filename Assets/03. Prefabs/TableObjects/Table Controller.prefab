@@ -96,7 +96,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9541d86e2fd84c1d9990edf0852d74ab, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshPro
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -223,7 +223,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f746bc8e2a7667549b97d4f9ef49c116, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CardHand
   cardPrefab: {fileID: 2250541817930894918, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
   spacing: 0.66
@@ -1542,131 +1542,6 @@ Transform:
   - {fileID: 1649024631392973660}
   m_Father: {fileID: 675468776541750733}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &6591034769665368237
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8449990245192571684}
-  - component: {fileID: 3684675152055755782}
-  - component: {fileID: 1748872474647131944}
-  - component: {fileID: 6308891166183107637}
-  - component: {fileID: 5184980258043333235}
-  m_Layer: 0
-  m_Name: ContractPaperB
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &8449990245192571684
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6591034769665368237}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0.018509867, y: 0.7068645, z: -0.7068645, w: 0.018509867}
-  m_LocalPosition: {x: -2.32, y: 0.191, z: 0.17}
-  m_LocalScale: {x: 0.45000002, y: 0.6, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3318951457764372874}
-  m_LocalEulerAnglesHint: {x: 90, y: -180, z: 0}
---- !u!33 &3684675152055755782
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6591034769665368237}
-  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &1748872474647131944
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6591034769665368237}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 94d0f7e6e37254d4c91e7c9bb681164c, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 1
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &6308891166183107637
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6591034769665368237}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1.0000001, y: 1, z: 0.1}
-  m_Center: {x: 0.00000023841858, y: 0.0000019073486, z: 0}
---- !u!114 &5184980258043333235
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6591034769665368237}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8432ce450375e82479365bcb47106293, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ContractPaperClickable
 --- !u!1 &7622204401950776379
 GameObject:
   m_ObjectHideFlags: 0
@@ -1887,7 +1762,8 @@ Transform:
   - {fileID: 675468776541750733}
   - {fileID: 4766476215700586316}
   - {fileID: 4288345854882619063}
-  - {fileID: 8449990245192571684}
+  - {fileID: 6063242983543284749}
+  - {fileID: 3946837089618397090}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1446267767095836390
@@ -1940,7 +1816,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 590883df2c70e1f4d8e4bfa2d4909d3a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ContractPaperView
-  papers: []
+  papers:
+  - {fileID: 4727994459525672121}
+  - {fileID: 2556982308481158934}
 --- !u!1 &7875009814782919910
 GameObject:
   m_ObjectHideFlags: 0
@@ -2295,6 +2173,95 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8602642487676205222, guid: 072fdfbdc17e55d46a3b6819d7e27da8, type: 3}
   m_PrefabInstance: {fileID: 4365719051199537870}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &4535113459030253486
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3318951457764372874}
+    m_Modifications:
+    - target: {fileID: 1764951484256450125, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_Name
+      value: ContractPaperA
+      objectReference: {fileID: 0}
+    - target: {fileID: 2524692990480338388, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_SortingOrder
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.92
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.92
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.92
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2.42
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.195
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.23
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -0.024677703
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.024677703
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.70667607
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.70667607
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+--- !u!114 &4727994459525672121 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9183613973446898455, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+  m_PrefabInstance: {fileID: 4535113459030253486}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8432ce450375e82479365bcb47106293, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ContractPaperClickable
+--- !u!4 &6063242983543284749 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+  m_PrefabInstance: {fileID: 4535113459030253486}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &5632342019611134706
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2368,3 +2335,92 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d1460e7844649c0baccc950541bf585, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ShopUtilityItemView
+--- !u!1001 &6633513750385654785
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3318951457764372874}
+    m_Modifications:
+    - target: {fileID: 1764951484256450125, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_Name
+      value: ContractPaperB
+      objectReference: {fileID: 0}
+    - target: {fileID: 2524692990480338388, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_SortingOrder
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.92
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.92
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.92
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -2.27
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.205
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.012340684
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0.012340684
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.7069991
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.7069991
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+--- !u!114 &2556982308481158934 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9183613973446898455, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+  m_PrefabInstance: {fileID: 6633513750385654785}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8432ce450375e82479365bcb47106293, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ContractPaperClickable
+--- !u!4 &3946837089618397090 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7695247651552197539, guid: ec89a25b577211940ae04a108fe0ee6e, type: 3}
+  m_PrefabInstance: {fileID: 6633513750385654785}
+  m_PrefabAsset: {fileID: 0}

@@ -22,6 +22,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/Card/Card.prefab";
         private const string TablePrefabPath =
             "Assets/03. Prefabs/TableObjects/Table Controller.prefab";
+        private const string ContractPaperSpritePath =
+            "Assets/05. Arts/Texture/ContractPaper/ContractPaper.png";
         private const string GoldSpriteAssetPath =
             "Assets/TextMesh Pro/Resources/Sprite Assets/GoldIcon.asset";
         private const string SoulSpriteAssetPath =
@@ -58,7 +60,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCUI01_U01_PlayerPaperStaysUntilContractChoiceCommits()
+        public void DCUI01_U01_PlayerClickImmediatelyConsumesTopPaper()
         {
             CoreLoopBattle battle = CreateStartedContractBattle(
                 DemonContractKind.Belphegor,
@@ -70,7 +72,7 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(battle.TryBeginPlayerDemonContract(), Is.True);
             ContractPaperViewModel choosing = ContractPaperPresenter.Create(battle);
-            Assert.That(choosing.VisibleCount, Is.EqualTo(2));
+            Assert.That(choosing.VisibleCount, Is.EqualTo(1));
             Assert.That(choosing.CanPlayerBegin, Is.False);
 
             PendingDemonContractInteraction pending =
@@ -114,7 +116,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(view.VisibleCount, Is.EqualTo(2));
                 Assert.That(first.gameObject.activeSelf, Is.True);
                 Assert.That(second.gameObject.activeSelf, Is.True);
-                Assert.That(first.IsInteractable, Is.True);
+                Assert.That(first.IsInteractable, Is.False);
                 Assert.That(second.IsInteractable, Is.True);
 
                 view.Render(new ContractPaperViewModel(1, false));
@@ -127,6 +129,45 @@ namespace DiaBlackJack.CoreLoop.Tests
             {
                 Object.DestroyImmediate(root);
             }
+        }
+
+        [Test]
+        public void DCUI01_U05_TablePrefabHasTwoStackedContractPaperSprites()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(TablePrefabPath);
+            Sprite expectedSprite =
+                AssetDatabase.LoadAssetAtPath<Sprite>(ContractPaperSpritePath);
+
+            Assert.That(prefab, Is.Not.Null);
+            Assert.That(expectedSprite, Is.Not.Null);
+
+            ContractPaperView view =
+                prefab.GetComponentInChildren<ContractPaperView>(true);
+            ContractPaperClickable[] papers = prefab
+                .GetComponentsInChildren<ContractPaperClickable>(true)
+                .OrderBy(paper => paper.name)
+                .ToArray();
+
+            Assert.That(view, Is.Not.Null);
+            Assert.That(view.HasRequiredReferences, Is.True);
+            Assert.That(papers, Has.Length.EqualTo(2));
+            Assert.That(
+                papers.Select(paper => paper.name),
+                Is.EqualTo(new[] { "ContractPaperA", "ContractPaperB" }));
+            Assert.That(
+                papers.All(paper =>
+                    paper.GetComponent<SpriteRenderer>()?.sprite == expectedSprite),
+                Is.True);
+            Assert.That(
+                papers.All(paper => paper.GetComponent<BoxCollider>() != null),
+                Is.True);
+            Assert.That(
+                papers[0].GetComponent<SpriteRenderer>().sortingOrder,
+                Is.LessThan(papers[1].GetComponent<SpriteRenderer>().sortingOrder));
+            Assert.That(
+                papers[0].transform.localPosition.y,
+                Is.LessThan(papers[1].transform.localPosition.y));
         }
 
         [Test]
