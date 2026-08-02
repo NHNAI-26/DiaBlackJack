@@ -80,6 +80,16 @@ namespace DiaBlackJack.GameScene
         [Header("Hammer animation")]
         [SerializeField] private HammerAnimationController hammerAnimation;
 
+        [Header("Shop utility animations")]
+        [SerializeField] private GameObject lighterAnimationRoot;
+        [SerializeField] private Animator lighterAnimator;
+        [SerializeField] private GameObject whiskeyAnimationRoot;
+        [SerializeField] private Animator whiskeyAnimator;
+        [SerializeField] private float whiskeyAnimationSeconds = 5.6f;
+
+        private const string WhiskeyAnimationStateName =
+            "Base Layer.DrinkWhiskey";
+
         [Header("Cinematic camera")]
         [SerializeField] private GameSceneCameraViewController cameraViewController;
 
@@ -94,6 +104,7 @@ namespace DiaBlackJack.GameScene
         private TableCombatCommandView _hoveredCombatCommand;
         private bool _inputLocked;
         private bool _pauseInputBlocked;
+        private bool _shopUtilityAnimationPlaying;
         private bool _choosingLighterRemoval;
         private int _battleIndex;
         private string _activeEnemyProfileKey;
@@ -156,7 +167,9 @@ namespace DiaBlackJack.GameScene
             : _session?.Battle;
 
         private bool IsModalInputBlocked =>
-            _pauseInputBlocked || (codex != null && codex.IsOpen);
+            _pauseInputBlocked ||
+            _shopUtilityAnimationPlaying ||
+            (codex != null && codex.IsOpen);
 
         public bool BindBattle(StageProgressionSession session)
         {
@@ -364,6 +377,7 @@ namespace DiaBlackJack.GameScene
             satanNumberSelection?.Hide();
             hud?.HideDemonContractDetail();
             UpdateCombatCommandHover(null);
+            ResetShopUtilityAnimations();
         }
 
         private void OnDestroy()
@@ -408,6 +422,7 @@ namespace DiaBlackJack.GameScene
             ResolveHammerAnimation()?.Hide();
             ResetRevolverAnimationState();
             ResetKnifeAnimationState();
+            ResetShopUtilityAnimations();
             playerHand?.ResetView();
             enemyHand?.ResetView();
             remainingDeck?.ResetView();
@@ -1292,6 +1307,7 @@ namespace DiaBlackJack.GameScene
             RemoveRunDeckCard(option);
             RemoveCurrentBattleAvailableCard(option);
             _choosingLighterRemoval = false;
+            PlayLighterShopAnimation();
             RefreshView();
             return true;
         }
@@ -1325,6 +1341,7 @@ namespace DiaBlackJack.GameScene
             }
 
             battle.Player.Soul.Restore(restoreAmount);
+            PlayWhiskeyShopAnimation();
             RefreshView();
             UpdateShopUtilityItemHover(null);
         }
@@ -1531,6 +1548,131 @@ namespace DiaBlackJack.GameScene
             {
                 DrawShopControls();
             }
+        }
+
+        internal bool PlayLighterShopAnimation()
+        {
+            if (_shopUtilityAnimationPlaying || !TryResolveLighterAnimation())
+            {
+                return false;
+            }
+
+            StartCoroutine(PlayLighterShopAnimationRoutine());
+            return true;
+        }
+
+        internal bool PlayWhiskeyShopAnimation()
+        {
+            if (_shopUtilityAnimationPlaying || !TryResolveWhiskeyAnimation())
+            {
+                return false;
+            }
+
+            StartCoroutine(PlayWhiskeyShopAnimationRoutine());
+            return true;
+        }
+
+        private IEnumerator PlayLighterShopAnimationRoutine()
+        {
+            _shopUtilityAnimationPlaying = true;
+            lighterAnimationRoot.SetActive(true);
+            lighterAnimator.Rebind();
+            lighterAnimator.Update(0f);
+            lighterAnimator.SetLayerWeight(0, 1f);
+            LighterDragTriggerController interaction =
+                lighterAnimationRoot.GetComponent<LighterDragTriggerController>();
+            lighterAnimator.SetTrigger("Start");
+
+            if (interaction != null)
+            {
+                while (!interaction.HasCompletedInteraction)
+                {
+                    yield return null;
+                }
+            }
+            else
+            {
+                yield return new WaitForSecondsRealtime(3f);
+            }
+
+            lighterAnimationRoot.SetActive(false);
+            _shopUtilityAnimationPlaying = false;
+        }
+
+        private IEnumerator PlayWhiskeyShopAnimationRoutine()
+        {
+            _shopUtilityAnimationPlaying = true;
+            whiskeyAnimationRoot.SetActive(true);
+            whiskeyAnimator.Rebind();
+            whiskeyAnimator.Update(0f);
+            whiskeyAnimator.SetLayerWeight(0, 1f);
+            whiskeyAnimator.Play(WhiskeyAnimationStateName, 0, 0f);
+            whiskeyAnimator.Update(0f);
+            yield return new WaitForSecondsRealtime(whiskeyAnimationSeconds);
+            whiskeyAnimationRoot.SetActive(false);
+            _shopUtilityAnimationPlaying = false;
+        }
+
+        private bool TryResolveLighterAnimation()
+        {
+            if (lighterAnimationRoot == null)
+            {
+                lighterAnimationRoot = FindInactiveSceneObject("Lighter_Anim");
+            }
+
+            if (lighterAnimator == null && lighterAnimationRoot != null)
+            {
+                lighterAnimator = lighterAnimationRoot.GetComponent<Animator>();
+            }
+
+            return lighterAnimationRoot != null && lighterAnimator != null;
+        }
+
+        private bool TryResolveWhiskeyAnimation()
+        {
+            if (whiskeyAnimationRoot == null)
+            {
+                whiskeyAnimationRoot = FindInactiveSceneObject("whiskey_Anim");
+            }
+
+            if (whiskeyAnimator == null && whiskeyAnimationRoot != null)
+            {
+                whiskeyAnimator = whiskeyAnimationRoot.GetComponent<Animator>();
+            }
+
+            return whiskeyAnimationRoot != null && whiskeyAnimator != null;
+        }
+
+        private static GameObject FindInactiveSceneObject(string objectName)
+        {
+            Transform[] transforms = Resources.FindObjectsOfTypeAll<Transform>();
+            for (int i = 0; i < transforms.Length; i++)
+            {
+                Transform candidate = transforms[i];
+                if (candidate != null &&
+                    candidate.name == objectName &&
+                    candidate.gameObject.scene.IsValid())
+                {
+                    return candidate.gameObject;
+                }
+            }
+
+            return null;
+        }
+
+        private void ResetShopUtilityAnimations()
+        {
+            if (lighterAnimationRoot != null)
+            {
+                lighterAnimationRoot.SetActive(false);
+            }
+
+            if (whiskeyAnimationRoot != null)
+            {
+                whiskeyAnimationRoot.SetActive(false);
+            }
+
+            _shopUtilityAnimationPlaying = false;
         }
 
         private void DrawMammonDieStatus()

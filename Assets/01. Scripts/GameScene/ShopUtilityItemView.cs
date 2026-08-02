@@ -17,6 +17,10 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameObject hoverBadge;
         [SerializeField] private TMP_Text hoverText;
 
+        [Header("Display model")]
+        [SerializeField] private GameObject displayModelPrefab;
+        [SerializeField] private Renderer placeholderRenderer;
+
         [Header("Hover feel")]
         [SerializeField] private float hoverScale = 1.12f;
         [SerializeField] private float scaleLerp = 12f;
@@ -27,16 +31,36 @@ namespace DiaBlackJack.GameScene
 
         public ShopUtilityItemKind Kind => kind;
 
+        internal GameObject DisplayModelPrefab => displayModelPrefab;
+
         public bool CanUse { get; private set; }
 
         private void Awake()
         {
+            CreateDisplayModel();
             _baseScale = transform.localScale;
             _targetScale = _baseScale;
             if (hoverBadge != null)
             {
                 hoverBadge.SetActive(false);
             }
+        }
+
+        private void CreateDisplayModel()
+        {
+            if (displayModelPrefab == null)
+            {
+                return;
+            }
+
+            if (placeholderRenderer != null)
+            {
+                placeholderRenderer.enabled = false;
+            }
+
+            GameObject model = Instantiate(displayModelPrefab, transform);
+            model.name = displayModelPrefab.name;
+            model.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
         }
 
         private void Update()
