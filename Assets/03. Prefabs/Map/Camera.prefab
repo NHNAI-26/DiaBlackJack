@@ -89,7 +89,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineImpulseListener
   ApplyAfter: 2
-  ChannelMask: 1
+  ChannelMask: 3
   Gain: 1
   Use2DDistance: 0
   UseCameraSpace: 1
@@ -379,7 +379,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineImpulseListener
   ApplyAfter: 2
-  ChannelMask: 1
+  ChannelMask: 3
   Gain: 1
   Use2DDistance: 0
   UseCameraSpace: 1
@@ -403,7 +403,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineImpulseListener
   ApplyAfter: 2
-  ChannelMask: 1
+  ChannelMask: 3
   Gain: 1
   Use2DDistance: 0
   UseCameraSpace: 1
@@ -427,7 +427,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Unity.Cinemachine::Unity.Cinemachine.CinemachineImpulseListener
   ApplyAfter: 2
-  ChannelMask: 1
+  ChannelMask: 3
   Gain: 1
   Use2DDistance: 0
   UseCameraSpace: 1

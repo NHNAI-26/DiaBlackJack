@@ -112,7 +112,7 @@ namespace DiaBlackJack.GameScene
             SoundManager.Current.StopSfx(id);
         }
 
-        public void ShakeCamera(float duration) =>
+        public virtual void ShakeCamera(float duration) =>
             Presentation?.ShakeCameraForDuration(duration);
 
         public void StartChromaticAberration(float riseSpeed) =>
@@ -123,6 +123,9 @@ namespace DiaBlackJack.GameScene
 
         public void StopChromaticAberration(float returnSpeed) =>
             Presentation?.StopChromaticAberration(returnSpeed);
+
+        public void StopChromaticAberrationWithSpeed(float returnSpeed) =>
+            StopChromaticAberration(returnSpeed);
 
         public void StartFieldOfViewIncrease(float riseSpeed) =>
             Presentation?.StartFieldOfViewIncrease(riseSpeed);
@@ -161,7 +164,7 @@ namespace DiaBlackJack.GameScene
             }
         }
 
-        private PresentationManager Presentation
+        protected PresentationManager Presentation
         {
             get
             {

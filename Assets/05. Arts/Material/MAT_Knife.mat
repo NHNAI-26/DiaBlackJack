@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: MAT_Hammer
+  m_Name: MAT_Knife
   m_Shader: {fileID: 4800000, guid: 70016fb08aac4c0b96a824528187bc59, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -117,11 +117,11 @@ Material:
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
     - _DissolveAmount: 0
-    - _DissolveEdgeIntensity: 4.01
-    - _DissolveEdgeWidth: 0.148
+    - _DissolveEdgeIntensity: 14.6
+    - _DissolveEdgeWidth: 0.031
     - _DissolveEnabled: 1
-    - _DissolveMaxOffset: -0.515
-    - _DissolveMinOffset: -0.102
+    - _DissolveMaxOffset: 0.77
+    - _DissolveMinOffset: 0.01
     - _DissolveObjectAxis: 1
     - _DissolveObjectMax: 1
     - _DissolveObjectMin: 0
@@ -156,7 +156,7 @@ Material:
     - _RimIntensity: 12.09
     - _RimPower: 6.45
     - _Saturation: 1
-    - _Smoothness: 0.35
+    - _Smoothness: 1
     - _SmoothnessMapEnabled: 1
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1

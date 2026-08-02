@@ -52,6 +52,9 @@ MonoBehaviour:
   impulseSource: {fileID: 2950961947140462763}
   changeCameraShakeEvent: {fileID: 11400000, guid: f92f1f812ab1d64479f08b11c1c04f5c, type: 2}
   shakeEnabled: 1
+  normalImpulseChannel: 1
+  smallImpulseChannel: 2
+  smallImpulseAmplitude: 0.005
   chromaticReturnSpeed: 100
   fieldOfViewCamera: {fileID: 0}
   fieldOfViewTarget: 90
@@ -137,7 +140,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a5e4e587b5d04ef9a3dfe033d6c1ac93, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.MoodController
   moodProfiles:
   - {fileID: 11400000, guid: c6b74142c15f4fbb937487522a61e8d0, type: 2}
