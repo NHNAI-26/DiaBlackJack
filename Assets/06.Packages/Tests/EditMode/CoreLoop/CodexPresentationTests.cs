@@ -30,7 +30,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(gunslinger.Description, Is.EqualTo(profile.Summary));
             Assert.That(gunslinger.ContractableDemons, Is.Empty);
             Assert.That(
-                gunslinger.StartingDeck.Count,
+                gunslinger.StartingDeckCardCount,
                 Is.EqualTo(profile.DeckDefinitionKeys.Count));
         }
 
@@ -49,11 +49,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                 .Where(card => card.Rank == 7)
                 .ToArray();
 
-            Assert.That(sevens.Length, Is.EqualTo(4));
+            Assert.That(sevens.Length, Is.EqualTo(2));
             Assert.That(sevens[0].Suit, Is.EqualTo(CardSuit.Spade));
             Assert.That(sevens[1].Suit, Is.EqualTo(CardSuit.Clover));
-            Assert.That(sevens[2].Suit, Is.EqualTo(CardSuit.Spade));
-            Assert.That(sevens[3].Suit, Is.EqualTo(CardSuit.Clover));
+            Assert.That(sevens[0].Count, Is.EqualTo(2));
+            Assert.That(sevens[1].Count, Is.EqualTo(2));
         }
 
         [Test]

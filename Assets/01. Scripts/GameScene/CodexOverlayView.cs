@@ -57,11 +57,16 @@ namespace DiaBlackJack.GameScene
         private CardContentCatalogSO _cardContentCatalog;
         private EnemyContentCatalogSO _enemyContentCatalog;
         private CardContentCatalog _runtimeCardCatalog;
+        private CodexCardThumbnailView _hoveredDeckItem;
         private bool _controlsBound;
 
         public event Action CloseRequested;
 
         public event Action<CodexCategory> CategoryRequested;
+
+        public event Action<CardHoverBadgeRequest> HoverBadgeRequested;
+
+        public event Action HoverBadgeCleared;
 
         public bool IsOpen { get; private set; }
 
@@ -74,6 +79,7 @@ namespace DiaBlackJack.GameScene
 
         private void OnDestroy()
         {
+            ClearHoveredDeckItem();
             UnbindControls();
         }
 
@@ -106,7 +112,7 @@ namespace DiaBlackJack.GameScene
         {
             IsOpen = false;
             ClearSpawnedItems(_contractItems);
-            ClearSpawnedItems(_deckItems);
+            ClearDeckItems();
             ApplyVisibility(false);
         }
 
@@ -118,6 +124,7 @@ namespace DiaBlackJack.GameScene
             }
 
             EnsureConfigured();
+            ClearHoveredDeckItem();
             bool showEnemy = RenderBookFrame(model);
             if (showEnemy)
             {
@@ -139,7 +146,7 @@ namespace DiaBlackJack.GameScene
 
             EnsureConfigured();
             ClearSpawnedItems(_contractItems);
-            ClearSpawnedItems(_deckItems);
+            ClearDeckItems();
             bool showEnemy = RenderBookFrame(model);
             if (showEnemy)
             {
@@ -215,13 +222,14 @@ namespace DiaBlackJack.GameScene
                 RenderDemonThumbnail(item, demon);
             }
 
-            ClearSpawnedItems(_deckItems);
+            ClearDeckItems();
             foreach (CodexDeckCardViewModel card in page.StartingDeck)
             {
                 CodexCardThumbnailView item = CreateItem(
                     deckTemplate,
                     deckGrid,
                     _deckItems);
+                item.HoverChanged += HandleDeckItemHoverChanged;
                 RenderDeckThumbnail(item, card);
             }
 
@@ -273,11 +281,14 @@ namespace DiaBlackJack.GameScene
             CodexDeckCardViewModel card)
         {
             string cardName = $"{card.Rank}  {card.DisplayName}";
-            target.Render(
+            target.RenderDeck(
                 cardName,
                 _cardContentCatalog.GetNormalFaceSprite(
                     card.DefinitionKey,
-                    card.Suit));
+                    card.Suit),
+                card.Count,
+                $"{card.Rank}. {card.DisplayName}",
+                card.Description);
         }
 
 #if UNITY_EDITOR
@@ -376,6 +387,60 @@ namespace DiaBlackJack.GameScene
         private void HandleDemonTabRequested()
         {
             CategoryRequested?.Invoke(CodexCategory.DemonCard);
+        }
+
+        private void HandleDeckItemHoverChanged(
+            CodexCardThumbnailView item,
+            bool hovered)
+        {
+            if (!IsOpen)
+            {
+                return;
+            }
+
+            if (hovered)
+            {
+                _hoveredDeckItem = item;
+                CardHoverBadgeRequest request =
+                    item.CreateHoverBadgeRequest();
+                if (request != null)
+                {
+                    HoverBadgeRequested?.Invoke(request);
+                }
+
+                return;
+            }
+
+            if (_hoveredDeckItem == item)
+            {
+                _hoveredDeckItem = null;
+                HoverBadgeCleared?.Invoke();
+            }
+        }
+
+        private void ClearHoveredDeckItem()
+        {
+            if (_hoveredDeckItem == null)
+            {
+                return;
+            }
+
+            _hoveredDeckItem = null;
+            HoverBadgeCleared?.Invoke();
+        }
+
+        private void ClearDeckItems()
+        {
+            ClearHoveredDeckItem();
+            foreach (CodexCardThumbnailView item in _deckItems)
+            {
+                if (item != null)
+                {
+                    item.HoverChanged -= HandleDeckItemHoverChanged;
+                }
+            }
+
+            ClearSpawnedItems(_deckItems);
         }
 
         private void ApplyVisibility(bool visible)

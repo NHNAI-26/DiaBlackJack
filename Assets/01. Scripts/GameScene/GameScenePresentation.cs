@@ -122,29 +122,67 @@ namespace DiaBlackJack.GameScene
         public string DefinitionKey { get; }
     }
 
+    public sealed class GameSceneDeckCardGroupViewModel
+    {
+        public GameSceneDeckCardGroupViewModel(
+            GameSceneCardViewModel card,
+            int count)
+        {
+            if (count < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+
+            Card = card ?? throw new ArgumentNullException(nameof(card));
+            Count = count;
+        }
+
+        public GameSceneCardViewModel Card { get; }
+
+        public int Count { get; }
+    }
+
     /// <summary>
-    /// Immutable projection for inspecting one player deck pile in the GameScene. Cards are already
-    /// in display order and never reveal the next physical draw order.
+    /// Immutable projection for inspecting one player deck pile in the GameScene. Card groups are
+    /// already in display order and never reveal the next physical draw order.
     /// </summary>
     public sealed class GameSceneDeckViewModel
     {
         public GameSceneDeckViewModel(
             DeckKind kind,
             string title,
-            IReadOnlyList<GameSceneCardViewModel> cards)
+            IReadOnlyList<GameSceneDeckCardGroupViewModel> cardGroups)
         {
             Kind = kind;
             Title = title ?? string.Empty;
-            Cards = cards ?? throw new ArgumentNullException(nameof(cards));
+            CardGroups = cardGroups ??
+                throw new ArgumentNullException(nameof(cardGroups));
+
+            int cardCount = 0;
+            foreach (GameSceneDeckCardGroupViewModel group in CardGroups)
+            {
+                if (group == null)
+                {
+                    throw new ArgumentException(
+                        "Deck card groups cannot contain null.",
+                        nameof(cardGroups));
+                }
+
+                cardCount += group.Count;
+            }
+
+            CardCount = cardCount;
         }
 
         public DeckKind Kind { get; }
 
         public string Title { get; }
 
-        public IReadOnlyList<GameSceneCardViewModel> Cards { get; }
+        public IReadOnlyList<GameSceneDeckCardGroupViewModel> CardGroups { get; }
 
-        public int CardCount => Cards.Count;
+        public int CardCount { get; }
+
+        public int GroupCount => CardGroups.Count;
     }
 
     public enum GameSceneRevolverAnimationPhase
@@ -482,24 +520,59 @@ namespace DiaBlackJack.GameScene
             IReadOnlyList<DeckCardDisplaySnapshot> snapshots = kind == DeckKind.Draw
                 ? battle.Player.Deck.GetDrawPileDisplayCards()
                 : battle.Player.Deck.GetDiscardPileDisplayCards();
-            var cards = new List<GameSceneCardViewModel>(snapshots.Count);
-            foreach (DeckCardDisplaySnapshot card in snapshots)
+            var groups = new List<GameSceneDeckCardGroupViewModel>(
+                snapshots.Count);
+            GameSceneCardViewModel representative = null;
+            string definitionKey = null;
+            CardSuit suit = default;
+            int count = 0;
+            foreach (DeckCardDisplaySnapshot snapshot in snapshots)
             {
-                cards.Add(new GameSceneCardViewModel(
-                    card.Id,
-                    card.Rank,
-                    isFaceUp: true,
-                    revealRank: true,
-                    canUse: false,
-                    card.DisplayName,
-                    abilityDescription: card.AbilityDescription,
-                    suit: card.Suit,
-                    showHoverBadgeWhenUnavailable: true,
-                    definitionKey: card.DefinitionKey));
+                bool continuesGroup = representative != null &&
+                    string.Equals(
+                        definitionKey,
+                        snapshot.DefinitionKey,
+                        StringComparison.Ordinal) &&
+                    suit == snapshot.Suit;
+                if (!continuesGroup && representative != null)
+                {
+                    groups.Add(new GameSceneDeckCardGroupViewModel(
+                        representative,
+                        count));
+                }
+
+                if (!continuesGroup)
+                {
+                    representative = new GameSceneCardViewModel(
+                        snapshot.Id,
+                        snapshot.Rank,
+                        isFaceUp: true,
+                        revealRank: true,
+                        canUse: false,
+                        snapshot.DisplayName,
+                        abilityDescription: snapshot.AbilityDescription,
+                        suit: snapshot.Suit,
+                        showHoverBadgeWhenUnavailable: true,
+                        definitionKey: snapshot.DefinitionKey);
+                    definitionKey = snapshot.DefinitionKey;
+                    suit = snapshot.Suit;
+                    count = 1;
+                }
+                else
+                {
+                    count++;
+                }
+            }
+
+            if (representative != null)
+            {
+                groups.Add(new GameSceneDeckCardGroupViewModel(
+                    representative,
+                    count));
             }
 
             string title = kind == DeckKind.Draw ? "뽑을 카드" : "버린 카드";
-            return new GameSceneDeckViewModel(kind, title, cards.AsReadOnly());
+            return new GameSceneDeckViewModel(kind, title, groups.AsReadOnly());
         }
 
         private static GameSceneHammerAnimationCue CreateHammerAnimationCue(

@@ -610,6 +610,9 @@ namespace DiaBlackJack.GameScene.Editor
             CaptureText(fallback);
             CaptureGameObject(fallback?.gameObject);
             CaptureText(GetReference<TMP_Text>(serialized, "nameText"));
+            TMP_Text count = GetReference<TMP_Text>(serialized, "countText");
+            CaptureText(count);
+            CaptureGameObject(count?.gameObject);
         }
 
         private void CaptureGameObject(

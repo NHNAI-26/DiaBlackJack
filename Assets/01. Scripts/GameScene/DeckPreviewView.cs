@@ -19,7 +19,6 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Button closeButton;
         [SerializeField] private ScrollRect cardScrollRect;
         [SerializeField] private TMP_Text titleText;
-        [SerializeField] private TMP_Text detailsText;
         [SerializeField] private DeckPreviewCardView[] cardSlots = Array.Empty<DeckPreviewCardView>();
 
         private GameSceneDeckViewModel _model;
@@ -28,9 +27,15 @@ namespace DiaBlackJack.GameScene
         private Coroutine _enableRaycasterRoutine;
         private bool _controlsBound;
 
+        public event Action<CardHoverBadgeRequest> HoverBadgeRequested;
+
+        public event Action HoverBadgeCleared;
+
         public bool IsOpen { get; private set; }
 
         public int CardCount => IsOpen && _model != null ? _model.CardCount : 0;
+
+        public int GroupCount => IsOpen && _model != null ? _model.GroupCount : 0;
 
         public int CardSlotCount => cardSlots == null ? 0 : cardSlots.Length;
 
@@ -42,9 +47,9 @@ namespace DiaBlackJack.GameScene
 
         private void OnDisable()
         {
+            ClearHoveredSlot();
             IsOpen = false;
             _model = null;
-            _hoveredSlot = null;
             _enableRaycasterRoutine = null;
         }
 
@@ -77,7 +82,6 @@ namespace DiaBlackJack.GameScene
             gameObject.SetActive(true);
             RenderSlots();
             ResetScrollToTop();
-            ShowDefaultDetails();
 
             if (previewRaycaster != null)
             {
@@ -95,7 +99,7 @@ namespace DiaBlackJack.GameScene
 
             IsOpen = false;
             _model = null;
-            _hoveredSlot = null;
+            ClearHoveredSlot();
             if (_enableRaycasterRoutine != null)
             {
                 StopCoroutine(_enableRaycasterRoutine);
@@ -183,7 +187,7 @@ namespace DiaBlackJack.GameScene
             }
 
             int slotCount = CardSlotCount;
-            int displayedCount = Mathf.Min(_model.CardCount, slotCount);
+            int displayedCount = Mathf.Min(_model.GroupCount, slotCount);
             for (int i = 0; i < slotCount; i++)
             {
                 DeckPreviewCardView slot = cardSlots[i];
@@ -199,17 +203,19 @@ namespace DiaBlackJack.GameScene
                     continue;
                 }
 
-                GameSceneCardViewModel card = _model.Cards[i];
+                GameSceneDeckCardGroupViewModel group =
+                    _model.CardGroups[i];
+                GameSceneCardViewModel card = group.Card;
                 Sprite faceSprite = _cardVisualSource == null
                     ? null
                     : _cardVisualSource.GetFaceSprite(card);
-                slot.Render(card, faceSprite);
+                slot.Render(group, faceSprite);
             }
 
-            if (slotCount > 0 && _model.CardCount > slotCount)
+            if (slotCount > 0 && _model.GroupCount > slotCount)
             {
                 Debug.LogError(
-                    $"Deck preview has {_model.CardCount} cards but only {slotCount} authored slots.",
+                    $"Deck preview has {_model.GroupCount} groups but only {slotCount} authored slots.",
                     this);
             }
         }
@@ -262,9 +268,11 @@ namespace DiaBlackJack.GameScene
             if (hovered)
             {
                 _hoveredSlot = slot;
-                if (detailsText != null)
+                CardHoverBadgeRequest request =
+                    slot.CreateHoverBadgeRequest();
+                if (request != null)
                 {
-                    CurrencyIconText.Set(detailsText, slot.HoverText);
+                    HoverBadgeRequested?.Invoke(request);
                 }
 
                 return;
@@ -273,18 +281,19 @@ namespace DiaBlackJack.GameScene
             if (_hoveredSlot == slot)
             {
                 _hoveredSlot = null;
-                ShowDefaultDetails();
+                HoverBadgeCleared?.Invoke();
             }
         }
 
-        private void ShowDefaultDetails()
+        private void ClearHoveredSlot()
         {
-            if (detailsText != null)
+            if (_hoveredSlot == null)
             {
-                CurrencyIconText.Set(
-                    detailsText,
-                    "카드에 마우스를 올리면 이름과 효과를 확인합니다. 휠 또는 드래그로 스크롤합니다.");
+                return;
             }
+
+            _hoveredSlot = null;
+            HoverBadgeCleared?.Invoke();
         }
     }
 }

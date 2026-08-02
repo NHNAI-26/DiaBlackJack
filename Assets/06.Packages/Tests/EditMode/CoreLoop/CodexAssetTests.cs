@@ -172,7 +172,11 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(deckRect, Is.Not.Null);
             Assert.That(deckRect.anchorMin, Is.EqualTo(new Vector2(0f, 1f)));
             Assert.That(deckRect.anchorMax, Is.EqualTo(new Vector2(0f, 1f)));
-            Assert.That(deckRect.sizeDelta, Is.EqualTo(new Vector2(116f, 164f)));
+            Assert.That(deckRect.sizeDelta, Is.EqualTo(new Vector2(116f, 184f)));
+            Graphic countText = GetReference<Graphic>(deckTemplate, "countText");
+            Assert.That(countText, Is.Not.Null);
+            Assert.That(countText.transform.parent, Is.EqualTo(deckTemplate.transform));
+            Assert.That(countText.raycastTarget, Is.False);
         }
 
         [Test]
@@ -249,7 +253,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 grid.constraint,
                 Is.EqualTo(GridLayoutGroup.Constraint.FixedColumnCount));
             Assert.That(grid.constraintCount, Is.EqualTo(4));
-            Assert.That(grid.cellSize, Is.EqualTo(new Vector2(116f, 164f)));
+            Assert.That(grid.cellSize, Is.EqualTo(new Vector2(116f, 184f)));
             Assert.That(grid.spacing, Is.EqualTo(new Vector2(8f, 12f)));
             Assert.That(grid.padding.left, Is.EqualTo(8));
             Assert.That(grid.padding.right, Is.EqualTo(8));
@@ -304,6 +308,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Component deckName = GetReference<Component>(
                 deckTemplate,
                 "nameText");
+            Component deckCount = GetReference<Component>(
+                deckTemplate,
+                "countText");
             int thumbnailCount = overlay
                 .GetComponentsInChildren<CodexCardThumbnailView>(true)
                 .Length;
@@ -312,6 +319,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             bool noContractActive = noContractText.gameObject.activeSelf;
             Sprite deckSprite = deckFace.sprite;
             string deckLabel = GetText(deckName);
+            string deckCountLabel = GetText(deckCount);
             string soulLabel = GetText(enemySoulText);
             string goldLabel = GetText(enemyGoldText);
             string descriptionLabel = GetText(enemyDescriptionText);
@@ -365,6 +373,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(
                     GetText(deckName),
                     Is.EqualTo($"{firstCard.Rank}  {firstCard.DisplayName}"));
+                Assert.That(
+                    GetText(deckCount),
+                    Is.EqualTo($"x{firstCard.Count}"));
 
                 MovePreviewToIndex(view, longestDescriptionIndex);
                 EnemyCodexPageViewModel longestDescriptionPage =
@@ -389,6 +400,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                     Is.EqualTo(noContractActive));
                 Assert.That(deckFace.sprite, Is.EqualTo(deckSprite));
                 Assert.That(GetText(deckName), Is.EqualTo(deckLabel));
+                Assert.That(GetText(deckCount), Is.EqualTo(deckCountLabel));
                 Assert.That(GetText(enemySoulText), Is.EqualTo(soulLabel));
                 Assert.That(GetText(enemyGoldText), Is.EqualTo(goldLabel));
                 Assert.That(

@@ -389,17 +389,67 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(preview.Title, Is.EqualTo("뽑을 카드"));
             Assert.That(preview.CardCount, Is.EqualTo(battle.Player.Deck.DrawCount));
             Assert.That(
-                preview.Cards.Select(card => card.CardId),
+                preview.CardGroups.Select(group => group.Card.CardId),
                 Is.Not.Contains(battle.Player.Hand.Cards[0].Id));
             Assert.That(
-                preview.Cards.Select(card => card.CardId),
+                preview.CardGroups.Select(group => group.Card.CardId),
                 Is.Not.Contains(battle.Player.Hand.Cards[1].Id));
-            Assert.That(preview.Cards.All(card => card.IsFaceUp), Is.True);
-            Assert.That(preview.Cards.All(card => card.RevealRank), Is.True);
-            Assert.That(preview.Cards.All(card => !card.CanUse), Is.True);
+            Assert.That(preview.CardGroups.All(group => group.Card.IsFaceUp), Is.True);
+            Assert.That(preview.CardGroups.All(group => group.Card.RevealRank), Is.True);
+            Assert.That(preview.CardGroups.All(group => !group.Card.CanUse), Is.True);
             Assert.That(
-                preview.Cards.All(card => card.ShowHoverBadgeWhenUnavailable),
+                preview.CardGroups.All(group =>
+                    group.Card.ShowHoverBadgeWhenUnavailable),
                 Is.True);
+        }
+
+        [Test]
+        public void GSV03_U07_DeckPreviewGroupsByDefinitionAndSuitOnly()
+        {
+            CardDefinition standardSeven =
+                CardDefinitionCatalog.GetDefaultForRank(7);
+            var alternateSeven = new CardDefinition(
+                "alternate-seven",
+                "Alternate Seven",
+                7,
+                CardActivationKind.None,
+                CardEffectKind.None,
+                "Alternate description");
+            BlackjackDeck playerDeck = BlackjackDeck.CreateInDrawOrder(
+                new[]
+                {
+                    new BlackjackCard(8, standardSeven, suit: CardSuit.Spade),
+                    new BlackjackCard(2, standardSeven, suit: CardSuit.Spade),
+                    new BlackjackCard(3, standardSeven, suit: CardSuit.Clover),
+                    new BlackjackCard(4, alternateSeven, suit: CardSuit.Spade),
+                });
+            CoreLoopBattle battle = new CoreLoopBattle(
+                playerDeck,
+                CreateDeck(new[] { 10, 7 }),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+
+            GameSceneDeckViewModel preview = GameScenePresenter.CreateDeckPreview(
+                battle,
+                DeckKind.Draw);
+
+            Assert.That(preview.CardCount, Is.EqualTo(4));
+            Assert.That(preview.GroupCount, Is.EqualTo(3));
+            GameSceneDeckCardGroupViewModel spadeGroup =
+                preview.CardGroups.Single(group =>
+                    group.Card.DefinitionKey == standardSeven.Key &&
+                    group.Card.Suit == CardSuit.Spade);
+            Assert.That(spadeGroup.Count, Is.EqualTo(2));
+            Assert.That(spadeGroup.Card.CardId, Is.EqualTo(2));
+            Assert.That(
+                preview.CardGroups.Single(group =>
+                    group.Card.DefinitionKey == standardSeven.Key &&
+                    group.Card.Suit == CardSuit.Clover).Count,
+                Is.EqualTo(1));
+            Assert.That(
+                preview.CardGroups.Single(group =>
+                    group.Card.DefinitionKey == alternateSeven.Key).Count,
+                Is.EqualTo(1));
         }
 
         [Test]
@@ -430,8 +480,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 battle,
                 DeckKind.Draw);
 
-            GameSceneCardViewModel runtimeCard = preview.Cards.Single(
-                card => card.DefinitionKey == runtimeDefinition.Key);
+            GameSceneCardViewModel runtimeCard = preview.CardGroups.Single(
+                group => group.Card.DefinitionKey == runtimeDefinition.Key).Card;
             Assert.That(runtimeCard.DisplayName, Is.EqualTo(runtimeDefinition.DisplayName));
             Assert.That(runtimeCard.AbilityDescription, Is.EqualTo(runtimeDefinition.Description));
         }

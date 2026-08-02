@@ -13,15 +13,22 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Image faceImage;
         [SerializeField] private GameObject hoverFrame;
         [SerializeField] private TMP_Text fallbackText;
+        [SerializeField] private TMP_Text countText;
+
+        [Header("Deck card hover badge")]
+        [Tooltip("Local UI offset from the deck card's right-center edge.")]
+        [SerializeField] private Vector2 deckCardHoverBadgeOffset =
+            new Vector2(16f, 0f);
 
         private GameSceneCardViewModel _card;
 
         public event Action<DeckPreviewCardView, bool> HoverChanged;
 
-        public string HoverText { get; private set; } = string.Empty;
-
-        public void Render(GameSceneCardViewModel card, Sprite faceSprite)
+        public void Render(
+            GameSceneDeckCardGroupViewModel group,
+            Sprite faceSprite)
         {
+            GameSceneCardViewModel card = group?.Card;
             _card = card;
             if (faceImage != null)
             {
@@ -37,12 +44,23 @@ namespace DiaBlackJack.GameScene
                 fallbackText.gameObject.SetActive(faceSprite == null && card != null);
             }
 
-            HoverText = card == null
-                ? string.Empty
-                : string.IsNullOrEmpty(card.AbilityDescription)
-                    ? $"{card.Rank} {card.DisplayName}"
-                    : $"{card.Rank} {card.DisplayName}\n{card.AbilityDescription}";
+            if (countText != null)
+            {
+                countText.text = group == null ? string.Empty : $"x{group.Count}";
+            }
+
             SetHoverFrame(false);
+        }
+
+        public CardHoverBadgeRequest CreateHoverBadgeRequest()
+        {
+            return _card == null
+                ? null
+                : CardHoverBadgeRequest.CreateForDeckRect(
+                    transform as RectTransform,
+                    $"{_card.Rank}. {_card.DisplayName}",
+                    _card.AbilityDescription,
+                    deckCardHoverBadgeOffset);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -60,6 +78,11 @@ namespace DiaBlackJack.GameScene
         {
             SetHoverFrame(false);
             HoverChanged?.Invoke(this, false);
+        }
+
+        private void OnDisable()
+        {
+            SetHoverFrame(false);
         }
 
         private void SetHoverFrame(bool visible)

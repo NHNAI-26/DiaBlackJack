@@ -92,6 +92,7 @@ namespace DiaBlackJack.GameScene
         private DemonCardView _hoveredDemonCard;
         private ShopUtilityItemView _hoveredShopUtilityItem;
         private TableCombatCommandView _hoveredCombatCommand;
+        private object _hoverBadgeOwner;
         private bool _inputLocked;
         private bool _pauseInputBlocked;
         private bool _choosingLighterRemoval;
@@ -337,9 +338,21 @@ namespace DiaBlackJack.GameScene
         {
             BindRevolverImpactEvent();
             BindKnifeImpactEvent();
+            if (deckPreview != null)
+            {
+                deckPreview.HoverBadgeRequested +=
+                    HandleDeckPreviewHoverBadgeRequested;
+                deckPreview.HoverBadgeCleared +=
+                    HandleDeckPreviewHoverBadgeCleared;
+            }
+
             if (codex != null)
             {
                 codex.OpenStateChanged += HandleCodexOpenStateChanged;
+                codex.HoverBadgeRequested +=
+                    HandleCodexHoverBadgeRequested;
+                codex.HoverBadgeCleared +=
+                    HandleCodexHoverBadgeCleared;
             }
         }
 
@@ -352,9 +365,21 @@ namespace DiaBlackJack.GameScene
             CloseDeckPreview();
             CloseCodex();
             EndEnemyCardSelectionCamera();
+            if (deckPreview != null)
+            {
+                deckPreview.HoverBadgeRequested -=
+                    HandleDeckPreviewHoverBadgeRequested;
+                deckPreview.HoverBadgeCleared -=
+                    HandleDeckPreviewHoverBadgeCleared;
+            }
+
             if (codex != null)
             {
                 codex.OpenStateChanged -= HandleCodexOpenStateChanged;
+                codex.HoverBadgeRequested -=
+                    HandleCodexHoverBadgeRequested;
+                codex.HoverBadgeCleared -=
+                    HandleCodexHoverBadgeCleared;
             }
             demonContractSelection?.Hide();
             crystalOrbSelection?.Hide();
@@ -541,7 +566,6 @@ namespace DiaBlackJack.GameScene
                 UpdateDemonCardHover(null);
                 UpdateShopUtilityItemHover(null);
                 UpdateCombatCommandHover(null);
-                hud?.HideCardHoverBadge();
 
                 return;
             }
@@ -941,6 +965,57 @@ namespace DiaBlackJack.GameScene
             {
                 EndCodexSwitchInputLock();
             }
+        }
+
+        private void HandleDeckPreviewHoverBadgeRequested(
+            CardHoverBadgeRequest request)
+        {
+            ShowOverlayHoverBadge(deckPreview, request);
+        }
+
+        private void HandleDeckPreviewHoverBadgeCleared()
+        {
+            ClearOverlayHoverBadge(deckPreview);
+        }
+
+        private void HandleCodexHoverBadgeRequested(
+            CardHoverBadgeRequest request)
+        {
+            ShowOverlayHoverBadge(codex, request);
+        }
+
+        private void HandleCodexHoverBadgeCleared()
+        {
+            ClearOverlayHoverBadge(codex);
+        }
+
+        private void ShowOverlayHoverBadge(
+            object owner,
+            CardHoverBadgeRequest request)
+        {
+            if (hud == null || owner == null || request == null)
+            {
+                return;
+            }
+
+            _hoverBadgeOwner = owner;
+            hud.ShowCardHoverBadge(
+                request.Title,
+                request.Description,
+                request.ScreenPosition,
+                _camera,
+                request.TooltipPivot);
+        }
+
+        private void ClearOverlayHoverBadge(object owner)
+        {
+            if (!ReferenceEquals(_hoverBadgeOwner, owner))
+            {
+                return;
+            }
+
+            _hoverBadgeOwner = null;
+            hud?.HideCardHoverBadge();
         }
 
         private void BeginCodexSwitchInputLock()

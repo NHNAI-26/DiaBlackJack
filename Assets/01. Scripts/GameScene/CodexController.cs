@@ -23,6 +23,10 @@ namespace DiaBlackJack.GameScene
 
         public event Action<bool> OpenStateChanged;
 
+        public event Action<CardHoverBadgeRequest> HoverBadgeRequested;
+
+        public event Action HoverBadgeCleared;
+
         public CodexCategory CurrentCategory =>
             _navigation == null
                 ? CodexCategory.Enemy
@@ -48,6 +52,8 @@ namespace DiaBlackJack.GameScene
 
             view.CloseRequested += Close;
             view.CategoryRequested += ShowCategory;
+            view.HoverBadgeRequested += HandleHoverBadgeRequested;
+            view.HoverBadgeCleared += HandleHoverBadgeCleared;
         }
 
         private void OnDisable()
@@ -56,6 +62,8 @@ namespace DiaBlackJack.GameScene
             {
                 view.CloseRequested -= Close;
                 view.CategoryRequested -= ShowCategory;
+                view.HoverBadgeRequested -= HandleHoverBadgeRequested;
+                view.HoverBadgeCleared -= HandleHoverBadgeCleared;
             }
 
             Close();
@@ -212,6 +220,16 @@ namespace DiaBlackJack.GameScene
                 _navigation,
                 _enemyPages,
                 _demonPages);
+        }
+
+        private void HandleHoverBadgeRequested(CardHoverBadgeRequest request)
+        {
+            HoverBadgeRequested?.Invoke(request);
+        }
+
+        private void HandleHoverBadgeCleared()
+        {
+            HoverBadgeCleared?.Invoke();
         }
 
         private void SetBookVisible(bool visible)

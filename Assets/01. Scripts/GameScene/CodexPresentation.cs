@@ -19,8 +19,14 @@ namespace DiaBlackJack.GameScene
             int rank,
             string displayName,
             string description,
-            CardSuit suit)
+            CardSuit suit,
+            int count)
         {
+            if (count < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+
             DefinitionKey = definitionKey ??
                 throw new ArgumentNullException(nameof(definitionKey));
             DisplayName = displayName ??
@@ -28,7 +34,10 @@ namespace DiaBlackJack.GameScene
             Description = description ?? string.Empty;
             Rank = rank;
             Suit = suit;
+            Count = count;
         }
+
+        public int Count { get; }
 
         public string DefinitionKey { get; }
 
@@ -81,6 +90,21 @@ namespace DiaBlackJack.GameScene
                 throw new ArgumentNullException(nameof(contractableDemons));
             StartingDeck = startingDeck ??
                 throw new ArgumentNullException(nameof(startingDeck));
+
+            int startingDeckCardCount = 0;
+            foreach (CodexDeckCardViewModel card in StartingDeck)
+            {
+                if (card == null)
+                {
+                    throw new ArgumentException(
+                        "Starting deck cannot contain null.",
+                        nameof(startingDeck));
+                }
+
+                startingDeckCardCount += card.Count;
+            }
+
+            StartingDeckCardCount = startingDeckCardCount;
         }
 
         public IReadOnlyList<CodexDemonReferenceViewModel>
@@ -97,6 +121,8 @@ namespace DiaBlackJack.GameScene
         public string ProfileKey { get; }
 
         public IReadOnlyList<CodexDeckCardViewModel> StartingDeck { get; }
+
+        public int StartingDeckCardCount { get; }
     }
 
     public sealed class DemonCodexPageViewModel
@@ -413,6 +439,8 @@ namespace DiaBlackJack.GameScene
 
             var deck = new List<CodexDeckCardViewModel>(
                 profile.DeckDefinitionKeys.Count);
+            var groupIndices =
+                new Dictionary<(string DefinitionKey, CardSuit Suit), int>();
             int[] rankOccurrences = new int[11];
             foreach (string definitionKey in profile.DeckDefinitionKeys)
             {
@@ -422,12 +450,29 @@ namespace DiaBlackJack.GameScene
                     ? CardSuit.Spade
                     : CardSuit.Clover;
                 rankOccurrences[definition.Rank]++;
+                (string DefinitionKey, CardSuit Suit) groupKey =
+                    (definition.Key, suit);
+                if (groupIndices.TryGetValue(groupKey, out int groupIndex))
+                {
+                    CodexDeckCardViewModel existing = deck[groupIndex];
+                    deck[groupIndex] = new CodexDeckCardViewModel(
+                        existing.DefinitionKey,
+                        existing.Rank,
+                        existing.DisplayName,
+                        existing.Description,
+                        existing.Suit,
+                        existing.Count + 1);
+                    continue;
+                }
+
+                groupIndices.Add(groupKey, deck.Count);
                 deck.Add(new CodexDeckCardViewModel(
                     definition.Key,
                     definition.Rank,
                     definition.DisplayName,
                     definition.Description,
-                    suit));
+                    suit,
+                    count: 1));
             }
 
             return new EnemyCodexPageViewModel(

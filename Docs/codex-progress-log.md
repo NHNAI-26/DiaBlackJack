@@ -1,5 +1,12 @@
 # 테이블 도감 진행 기록
 
+## DX-M04: 시작 덱 수량 묶음·공용 호버 뱃지
+
+- 도감·덱 검사 관련 필터 EditMode job `6692a6688e1c4b2f80172ef66d0dbf8f` 58/58, 전체 EditMode job `52f09303e89347fb894d757610bc69b8` 907/907 통과.
+- GameScene validation issue 0, missing script 0, broken prefab 0. 검증 종료 후 Console을 비우고 재확인한 Error 0.
+- Play Mode 1920×1080·1280×720에서 도감·뽑을 카드·버린 카드 창을 각각 확인했다. `x1`/`x2`, 수량 줄 간격, 스크롤 영역, 오버레이 위 공용 뱃지, 화면 내 상·하 방향 배치가 보였고 도감 닫기 뒤 헤더·본문 뱃지 비활성화를 확인했다.
+- 후속으로 방향별 오프셋을 폐기하고 도감·덱 카드 전용 `Deck Card Hover Badge Offset` 하나를 노출했다. 덱 카드 우측 중앙과 툴팁 왼쪽 중앙 피벗 결합, 로컬 오프셋 적용을 `GameSceneDeckPreviewTests` job `5d97c1bbac9d4a76a36a00b8197beef8` 5/5로 확인했다. 테스트 종료 때 기존 Test Framework/URP Material Drawer 로그가 기록됐고 Console을 비운 뒤 신규 Error 0을 확인했다.
+
 ## DX-M03: 편집 중 미리보기 유지
 
 - Prefab Mode Auto Save가 오브젝트 이동 때 `prefabSaving`을 발생시키며 미리보기를 종료하던 동작을 수정했다.

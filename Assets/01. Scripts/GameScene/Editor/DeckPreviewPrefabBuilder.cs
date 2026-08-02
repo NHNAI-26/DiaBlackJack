@@ -184,20 +184,11 @@ namespace DiaBlackJack.GameScene.Editor
             Stretch(closeLabel.rectTransform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             closeLabel.text = "닫기";
 
-            TMP_Text details = CreateText("Details", panel.transform, 22, TextAlignmentOptions.Left);
-            Stretch(
-                details.rectTransform,
-                new Vector2(0.04f, 0.77f),
-                new Vector2(0.96f, 0.87f),
-                Vector2.zero,
-                Vector2.zero);
-            details.textWrappingMode = TextWrappingModes.Normal;
-
             GameObject scrollRoot = CreateUiObject("CardScroll", panel.transform);
             Stretch(
                 scrollRoot.GetComponent<RectTransform>(),
                 new Vector2(0.04f, 0.05f),
-                new Vector2(0.96f, 0.74f),
+                new Vector2(0.96f, 0.86f),
                 Vector2.zero,
                 Vector2.zero);
             ScrollRect scrollRect = scrollRoot.AddComponent<ScrollRect>();
@@ -221,7 +212,7 @@ namespace DiaBlackJack.GameScene.Editor
             contentRect.sizeDelta = Vector2.zero;
             GridLayoutGroup grid = content.AddComponent<GridLayoutGroup>();
             grid.padding = new RectOffset(22, 22, 22, 22);
-            grid.cellSize = new Vector2(220f, 318f);
+            grid.cellSize = new Vector2(220f, 350f);
             grid.spacing = new Vector2(20f, 20f);
             grid.childAlignment = TextAnchor.UpperCenter;
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
@@ -247,7 +238,6 @@ namespace DiaBlackJack.GameScene.Editor
             serializedView.FindProperty("closeButton").objectReferenceValue = closeButton;
             serializedView.FindProperty("cardScrollRect").objectReferenceValue = scrollRect;
             serializedView.FindProperty("titleText").objectReferenceValue = title;
-            serializedView.FindProperty("detailsText").objectReferenceValue = details;
             SerializedProperty slotsProperty = serializedView.FindProperty("cardSlots");
             slotsProperty.arraySize = slots.Count;
             for (int i = 0; i < slots.Count; i++)
@@ -262,20 +252,30 @@ namespace DiaBlackJack.GameScene.Editor
         private static GameObject CreateCardSlot()
         {
             GameObject root = CreateUiObject("DeckPreviewCard", null);
-            root.GetComponent<RectTransform>().sizeDelta = new Vector2(220f, 318f);
+            root.GetComponent<RectTransform>().sizeDelta = new Vector2(220f, 350f);
             Image frame = root.AddComponent<Image>();
             frame.color = new Color(0.18f, 0.18f, 0.2f, 1f);
             DeckPreviewCardView view = root.AddComponent<DeckPreviewCardView>();
 
             GameObject faceRoot = CreateUiObject("Face", root.transform);
             RectTransform faceRect = faceRoot.GetComponent<RectTransform>();
-            Stretch(faceRect, Vector2.zero, Vector2.one, new Vector2(8f, 8f), new Vector2(-8f, -8f));
+            Stretch(
+                faceRect,
+                Vector2.zero,
+                Vector2.one,
+                new Vector2(8f, 40f),
+                new Vector2(-8f, -8f));
             Image face = faceRoot.AddComponent<Image>();
             face.preserveAspect = true;
             face.raycastTarget = true;
 
             GameObject hoverRoot = CreateUiObject("HoverFrame", root.transform);
-            Stretch(hoverRoot.GetComponent<RectTransform>(), Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            Stretch(
+                hoverRoot.GetComponent<RectTransform>(),
+                Vector2.zero,
+                Vector2.one,
+                new Vector2(0f, 32f),
+                Vector2.zero);
             CreateBorder("Top", hoverRoot.transform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -6f), Vector2.zero);
             CreateBorder("Bottom", hoverRoot.transform, Vector2.zero, new Vector2(1f, 0f), Vector2.zero, new Vector2(0f, 6f));
             CreateBorder("Left", hoverRoot.transform, Vector2.zero, new Vector2(0f, 1f), Vector2.zero, new Vector2(6f, 0f));
@@ -283,13 +283,33 @@ namespace DiaBlackJack.GameScene.Editor
             hoverRoot.SetActive(false);
 
             TMP_Text fallback = CreateText("Fallback", root.transform, 28, TextAlignmentOptions.Center);
-            Stretch(fallback.rectTransform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            Stretch(
+                fallback.rectTransform,
+                Vector2.zero,
+                Vector2.one,
+                new Vector2(0f, 32f),
+                Vector2.zero);
             fallback.textWrappingMode = TextWrappingModes.Normal;
+
+            TMP_Text count = CreateText(
+                "Count",
+                root.transform,
+                26,
+                TextAlignmentOptions.Center);
+            Stretch(
+                count.rectTransform,
+                Vector2.zero,
+                new Vector2(1f, 0f),
+                Vector2.zero,
+                new Vector2(0f, 32f));
+            count.fontStyle = FontStyles.Bold;
+            count.text = "x1";
 
             SerializedObject serializedView = new SerializedObject(view);
             serializedView.FindProperty("faceImage").objectReferenceValue = face;
             serializedView.FindProperty("hoverFrame").objectReferenceValue = hoverRoot;
             serializedView.FindProperty("fallbackText").objectReferenceValue = fallback;
+            serializedView.FindProperty("countText").objectReferenceValue = count;
             serializedView.ApplyModifiedPropertiesWithoutUndo();
             return root;
         }

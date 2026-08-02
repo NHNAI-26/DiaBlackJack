@@ -155,9 +155,24 @@ namespace DiaBlackJack.GameScene
         public void ShowCardHoverBadge(
             string title,
             string description,
-            Vector2 cardTopScreenPosition,
+            Vector2 anchorScreenPosition,
             Camera worldCamera,
             bool showBelow)
+        {
+            ShowCardHoverBadge(
+                title,
+                description,
+                anchorScreenPosition,
+                worldCamera,
+                new Vector2(0.5f, showBelow ? 1f : 0f));
+        }
+
+        public void ShowCardHoverBadge(
+            string title,
+            string description,
+            Vector2 anchorScreenPosition,
+            Camera worldCamera,
+            Vector2 tooltipPivot)
         {
             if (cardHoverTooltipRoot == null ||
                 cardHoverBadge == null ||
@@ -188,7 +203,7 @@ namespace DiaBlackJack.GameScene
                 : null;
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
                     parent,
-                    cardTopScreenPosition,
+                    anchorScreenPosition,
                     uiCamera,
                     out Vector2 localPoint))
             {
@@ -200,7 +215,7 @@ namespace DiaBlackJack.GameScene
             CurrencyIconText.Set(cardHoverBadgeText, description);
 
             bool hasDescription = !string.IsNullOrEmpty(description);
-            PositionCardHoverTooltip(localPoint, showBelow);
+            PositionCardHoverTooltip(localPoint, tooltipPivot);
             cardHoverHeaderBadge.gameObject.SetActive(true);
             cardHoverBadge.gameObject.SetActive(hasDescription);
         }
@@ -532,11 +547,9 @@ namespace DiaBlackJack.GameScene
 
         private void PositionCardHoverTooltip(
             Vector2 localPoint,
-            bool showBelow)
+            Vector2 tooltipPivot)
         {
-            cardHoverTooltipRoot.pivot = new Vector2(
-                cardHoverTooltipRoot.pivot.x,
-                showBelow ? 1f : 0f);
+            cardHoverTooltipRoot.pivot = tooltipPivot;
             cardHoverTooltipRoot.localPosition = new Vector3(
                 localPoint.x,
                 localPoint.y,

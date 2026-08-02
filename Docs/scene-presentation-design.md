@@ -190,8 +190,11 @@
 - 검사창은 `DeckPreviewOverlay.prefab` 기반 Screen Space Overlay uGUI다. `Card.prefab`의 앞면 스프라이트를 5열 `ScrollRect` 그리드에 표시하고 휠·드래그로 연속 스크롤한다.
 - 카드 슬롯 100개는 `DeckPreviewOverlay.prefab` 안에 미리 배치한다. `GameScene`에는 이를 기반으로 만든 단일 `UIDeckPreview`와 `GameManager.deckPreview` 참조를 직렬화하며 런타임에 검사창이나 슬롯을 생성하지 않는다.
 - `UIDeckPreview`는 평소 비활성 상태다. 더미 클릭 시 오브젝트 자체를 활성화하고, 배경 클릭·`ESC`·닫기 버튼·상점 진입·재시작·매니저 비활성화 시 다시 비활성화해 재사용한다. 에디터 로드·컴파일 후 자동 설치는 수행하지 않는다.
-- 카드 목록은 종류·숫자·무늬·ID의 안정 순서다. 내부 더미 및 다음 드로우 순서는 표시하지 않는다.
-- 열린 동안 전투 입력과 `W`·`S` 카메라 전환을 차단한다. 카드 호버는 검사창 상단 이름·효과 설명을 갱신하고, 배경 클릭·`ESC`·닫기 버튼으로 닫는다.
+- 카드 목록은 정의·숫자·무늬·ID의 안정 순서를 먼저 만든 뒤 `(DefinitionKey, Suit)`가 같은 카드만 한 항목으로 묶는다. 대표 이미지는 각 묶음의 첫 안정 정렬 카드이며 개별 ID만 무시한다. 같은 정의라도 스페이드·클로버는 분리하고 같은 숫자라도 정의가 다르면 분리한다. 내부 더미 및 다음 드로우 순서는 표시하지 않는다.
+- `GameSceneDeckViewModel`은 묶음 목록 `CardGroups`, 실제 총 장수 `CardCount`, 표시 묶음 수 `GroupCount`를 제공한다. 모든 슬롯 아래 중복 여부와 무관하게 `x1`, `x2` 형식 수량을 표시하고, 슬롯·Grid 높이는 수량 줄을 포함한다.
+- 열린 동안 전투 입력과 `W`·`S` 카메라 전환을 차단한다. 검사창 상단 설명은 두지 않는다. 카드 호버는 제목 `"{Rank}. {DisplayName}"`과 효과 설명을 GameHUD 공용 카드 뱃지로 전달하고, 배경 클릭·`ESC`·닫기 버튼으로 닫는다.
+- 도감과 덱 검사창의 덱 카드는 우측 중앙에 공용 뱃지의 왼쪽 중앙 피벗을 붙인다. `DeckPreviewCardView`와 `CodexCardThumbnailView`의 Inspector에서 덱 전용 `Deck Card Hover Badge Offset`을 카드 로컬 UI 좌표로 조정하며 기본값은 `(16, 0)`이다. 전투 손패 카드의 기존 상·하 Anchor 배치는 유지한다. `CardHoverTooltip` 중첩 Canvas는 `overrideSorting=true`, `sortingOrder=200`이고 Raycast를 차단하지 않는다. 덱 검사창은 100, 도감은 120 정렬 순서를 유지한다.
+- 슬롯 전환·페이지 변경·창 닫기·비활성화 때 현재 호버 소유자를 확인하고 공용 뱃지를 즉시 숨긴다.
 - 검증: 전용 `GameSceneDeckPreviewTests` 3/3, 전체 EditMode 749/749 통과. GameScene Play Mode에서 단일 `UIDeckPreview`가 뽑을 카드 18장으로 활성화되고 카메라 입력 잠금 수가 1이 되는지, 직접 닫은 뒤 오브젝트가 비활성화되고 다음 프레임 잠금 수가 0으로 복구되는지 확인했다. Console Error/Warning 0.
 
 ## 10.1 GSH-01 전투 HUD
@@ -225,6 +228,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-08-03 | HONG | GSV-03·DX-M04에서 도감 시작 덱과 뽑기·버림 목록을 정의+무늬로 묶고 모든 항목에 `xN`을 표시했다. GameHUD 공용 카드 호버 뱃지를 도감·덱 검사창에도 연결하고 중첩 Canvas 정렬 200·비차단을 적용했다. 필터 58/58(job `6692a6688e1c4b2f80172ef66d0dbf8f`), 전체 EditMode 907/907(job `52f09303e89347fb894d757610bc69b8`), GameScene validation 0 issues, 최종 Console Error 0과 1920×1080·1280×720 도감·뽑기·버림 화면 및 닫은 뒤 뱃지 해제를 확인했다. |
 | 2026-08-01 | 이천서 | 사탄 입력을 일반 행동 또는 현재 면 능력 선택으로 개정하고, 능력 성공 시에만 윗면/아랫면 상태 표시를 전환하도록 확정했다. |
 | 2026-07-31 | HONG | GSH-01 `HIT`·`STAND`·`CHANGE -N` 입력을 HUD 고정 버튼에서 테이블 실선 영역으로 전환하고 기존 레이캐스트·`ProcessInput`·`Try*` 경로를 재사용했다. 계약서 오브젝트와 입력은 별도 팀 변경 소유로 분리했다. 전용 18/18, 전체 EditMode 850/850, GameScene validation 0 issues와 1280×720·1920×1080 배치 및 세 행동 실제 포인터 전환을 확인했다. 기존 `SettingsSystem`·URP Console 오류는 별도 잔존한다. |
 | 2026-07-31 | HONG | GSH-01 후속으로 `cardHoverBadgeScreenOffset`을 제거하고 툴팁 피벗을 카드 TOP/BOTTOM Anchor 좌표에 직접 배치했다. Card/DemonCard 프리팹용 Editor Anchor Gizmo를 추가했으며 전용 EditMode 2/2, 현재 전체 EditMode 811/811 및 GameScene validation 0 issues를 확인했다. 기존 셰이더 property drawer Console 오류는 별도 잔존한다. |
