@@ -28,6 +28,27 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void MOO01_U05_MoodProfileAcceptsOptionalBgmIds()
+        {
+            MoodProfileSO profile = CreateProfile(
+                "round-1",
+                bgmIds: new[] { "normalStage01", "normalStage02" });
+            try
+            {
+                Assert.That(profile.HasBgmIds, Is.True);
+                Assert.That(profile.TryGetRandomBgmId(out string bgmId), Is.True);
+                Assert.That(
+                    bgmId == "normalStage01" ||
+                    bgmId == "normalStage02",
+                    Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(profile);
+            }
+        }
+
+        [Test]
         public void MOO01_U02_TryBlendToMoodReturnsOnlyRegisteredProfile()
         {
             MoodProfileSO profile = CreateProfile("round-1");
@@ -151,6 +172,7 @@ namespace DiaBlackJack.CoreLoop.Tests
 
         private static MoodProfileSO CreateProfile(
             string id,
+            IEnumerable<string> bgmIds = null,
             Color? windowColor = null,
             Color? volumetricColor = null,
             Color? enemyColor = null,
@@ -158,6 +180,12 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             MoodProfileSO profile = ScriptableObject.CreateInstance<MoodProfileSO>();
             SetPrivateField(profile, "id", id);
+            SetPrivateField(
+                profile,
+                "bgmIds",
+                bgmIds == null
+                    ? new List<string>()
+                    : new List<string>(bgmIds));
             SetPrivateField(
                 profile,
                 "windowGlassGlowColor",

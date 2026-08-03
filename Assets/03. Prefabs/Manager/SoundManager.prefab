@@ -90,6 +90,16 @@ MonoBehaviour:
     volume: 1
     pitch: 1
     loop: 1
+  - id: readyStage01
+    clip: {fileID: 8300000, guid: 1bc44e1dc1422bb49b6a37df5438e65a, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 1
+  - id: readyStage02
+    clip: {fileID: 8300000, guid: 7b1f4665da54c8f4294776425384e072, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 1
   sfxEntries:
   - id: dissolve
     clip: {fileID: 8300000, guid: 753e4bea79ae5324f8b86dadf0e6bde9, type: 3}

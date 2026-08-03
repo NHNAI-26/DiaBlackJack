@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DiaBlackJack.GameScene
@@ -8,6 +9,7 @@ namespace DiaBlackJack.GameScene
     public sealed class MoodProfileSO : ScriptableObject
     {
         [SerializeField] private string id;
+        [SerializeField] private List<string> bgmIds = new List<string>();
         [ColorUsage(false, true)]
         [SerializeField] private Color windowGlassGlowColor = Color.white;
         [ColorUsage(false, true)]
@@ -19,6 +21,8 @@ namespace DiaBlackJack.GameScene
 
         public string Id => id;
 
+        public IReadOnlyList<string> BgmIds => bgmIds;
+
         public Color WindowGlassGlowColor => windowGlassGlowColor;
 
         public Color VolumetricLightColor => volumetricLightColor;
@@ -28,6 +32,39 @@ namespace DiaBlackJack.GameScene
         public Color EnteranceLightColor => enteranceLightColor;
 
         public bool HasValidId => !string.IsNullOrWhiteSpace(id);
+
+        public bool HasBgmIds => CountValidBgmIds() > 0;
+
+        public bool TryGetRandomBgmId(out string bgmId)
+        {
+            int validCount = CountValidBgmIds();
+            if (validCount <= 0)
+            {
+                bgmId = null;
+                return false;
+            }
+
+            int targetIndex = Random.Range(0, validCount);
+            int currentIndex = 0;
+            foreach (string candidate in bgmIds)
+            {
+                if (string.IsNullOrWhiteSpace(candidate))
+                {
+                    continue;
+                }
+
+                if (currentIndex == targetIndex)
+                {
+                    bgmId = candidate;
+                    return true;
+                }
+
+                currentIndex++;
+            }
+
+            bgmId = null;
+            return false;
+        }
 
         private void OnValidate()
         {
@@ -39,6 +76,25 @@ namespace DiaBlackJack.GameScene
             Debug.LogError(
                 $"Mood profile asset '{name}' requires a non-empty id.",
                 this);
+        }
+
+        private int CountValidBgmIds()
+        {
+            if (bgmIds == null)
+            {
+                return 0;
+            }
+
+            int validCount = 0;
+            foreach (string candidate in bgmIds)
+            {
+                if (!string.IsNullOrWhiteSpace(candidate))
+                {
+                    validCount++;
+                }
+            }
+
+            return validCount;
         }
     }
 }

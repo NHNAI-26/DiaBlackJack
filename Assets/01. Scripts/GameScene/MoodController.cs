@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Border.Audio;
 using DG.Tweening;
 using UnityEngine;
 
@@ -51,6 +52,7 @@ namespace DiaBlackJack.GameScene
             }
 
             KillMoodSequence();
+            ApplyBgm(profile);
 
             switch (transitionMode)
             {
@@ -76,6 +78,7 @@ namespace DiaBlackJack.GameScene
                 profile.VolumetricLightColor,
                 profile.EnemyLightColor,
                 profile.EnteranceLightColor);
+            ApplyBgm(profile);
         }
 
         public MoodProfileSO FindProfile(string id)
@@ -207,6 +210,15 @@ namespace DiaBlackJack.GameScene
             if (target != null)
             {
                 target.color = color;
+            }
+        }
+
+        private static void ApplyBgm(MoodProfileSO profile)
+        {
+            if (profile != null &&
+                profile.TryGetRandomBgmId(out string bgmId))
+            {
+                SoundManager.Current?.PlayBgm(bgmId);
             }
         }
 

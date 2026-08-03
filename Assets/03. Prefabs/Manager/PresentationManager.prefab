@@ -144,6 +144,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.MoodController
   moodProfiles:
   - {fileID: 11400000, guid: c6b74142c15f4fbb937487522a61e8d0, type: 2}
+  - {fileID: 11400000, guid: 1e221fee84296d44197e266146540906, type: 2}
+  - {fileID: 11400000, guid: 7d50472d217b9f94ab0f04378dd33e70, type: 2}
+  - {fileID: 11400000, guid: 6d2a7d087d8c33a4e8fcde1ce0b9c343, type: 2}
+  - {fileID: 11400000, guid: 3e10a47a00f89a540860f6f5f62584c5, type: 2}
+  - {fileID: 11400000, guid: 0d21123bc64dbee47b7093c45161be45, type: 2}
+  - {fileID: 11400000, guid: 26d6ffb830877124f910eabbf8007fe6, type: 2}
+  - {fileID: 11400000, guid: 79afb13f1938dff49b33ea7f23f2af52, type: 2}
+  - {fileID: 11400000, guid: 3ec2381f76e453a4eab39154e2d66aae, type: 2}
   windowGlassRenderers:
   - {fileID: 0}
   - {fileID: 0}
