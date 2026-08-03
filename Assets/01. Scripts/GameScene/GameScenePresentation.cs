@@ -393,6 +393,7 @@ namespace DiaBlackJack.GameScene
             int sourceCardId,
             CombatantSide actorSide,
             GameSceneHammerAnimationPhase phase,
+            int actionOrdinal,
             int? targetCardId = null)
         {
             if (roundNumber < 1)
@@ -420,10 +421,16 @@ namespace DiaBlackJack.GameScene
                 throw new ArgumentOutOfRangeException(nameof(targetCardId));
             }
 
+            if (actionOrdinal < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(actionOrdinal));
+            }
+
             RoundNumber = roundNumber;
             SourceCardId = sourceCardId;
             ActorSide = actorSide;
             Phase = phase;
+            ActionOrdinal = actionOrdinal;
             TargetCardId = targetCardId;
         }
 
@@ -434,6 +441,8 @@ namespace DiaBlackJack.GameScene
         public CombatantSide ActorSide { get; }
 
         public GameSceneHammerAnimationPhase Phase { get; }
+
+        public int ActionOrdinal { get; }
 
         public int? TargetCardId { get; }
     }
@@ -805,7 +814,8 @@ namespace DiaBlackJack.GameScene
                     battle.RoundNumber,
                     pendingPlayerEffect.SourceCardId,
                     CombatantSide.Player,
-                    GameSceneHammerAnimationPhase.Ready);
+                    GameSceneHammerAnimationPhase.Ready,
+                    battle.PublicActionHistory.Count);
             }
 
             if (battle.PendingEnemyCardEffect != null ||
@@ -828,6 +838,7 @@ namespace DiaBlackJack.GameScene
                 result.SourceCardId,
                 battle.LastCardEffectActorSide.Value,
                 GameSceneHammerAnimationPhase.Smash,
+                battle.PublicActionHistory.Count,
                 result.TargetCardId);
         }
 

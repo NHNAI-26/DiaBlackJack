@@ -64,6 +64,8 @@ namespace DiaBlackJack.GameScene
         [Header("Revolver animation")]
         [SerializeField] private Animator revolverAnimator;
         [SerializeField] private GameObject revolverRoot;
+        [SerializeField] private float revolverReadySeconds = 1.2666668f;
+        [SerializeField] private float revolverCameraReturnSeconds = 0.45f;
         [SerializeField] private float revolverAnimationSeconds = 8.8f;
         [SerializeField] private string revolverBaseStateName = "Revolver_Base";
         [SerializeField] private string playerReadyTrigger = "PlayerTurnStart";
@@ -134,6 +136,10 @@ namespace DiaBlackJack.GameScene
         private int _revolverReadySourceCardId;
         private CombatantSide _revolverReadyActorSide;
         private Coroutine _revolverHideRoutine;
+        private Coroutine _revolverReadyCameraRoutine;
+        private Coroutine _revolverShotRoutine;
+        private bool _revolverSelectionReady;
+        private bool _revolverSwitchInputLocked;
         private RevolverAnimationEventReceiver _revolverEventReceiver;
         private bool _revolverImpactPending;
         private CombatantSide _revolverImpactTargetSide;
@@ -391,7 +397,7 @@ namespace DiaBlackJack.GameScene
             _enemySpeechDirector = new EnemySpeechDirector(speechSeed);
             HideRevolverAnimation();
             HideKnifeAnimation();
-            ResolveHammerAnimation()?.Hide();
+            ResolveHammerAnimation()?.ResetPresentationState();
             _stageRuntime = StageProgressionRuntime.Instance;
             StageProgressionSession runtimeSession =
                 _stageRuntime?.FormalSession?.CombatSession ??
@@ -483,6 +489,10 @@ namespace DiaBlackJack.GameScene
 
         private void OnDisable()
         {
+            StopRevolverHideRoutine();
+            StopRevolverReadyCameraRoutine();
+            StopRevolverShotRoutine();
+            EndRevolverSwitchInputLock();
             UnbindRevolverImpactEvent();
             ClearPendingRevolverImpact();
             UnbindKnifeImpactEvent();
@@ -562,7 +572,7 @@ namespace DiaBlackJack.GameScene
             CloseCodex();
             EndEnemyCardSelectionCamera();
             EndHammerSwitchInputLock();
-            ResolveHammerAnimation()?.Hide();
+            ResolveHammerAnimation()?.ResetPresentationState();
             ResetRevolverAnimationState();
             ResetKnifeAnimationState();
             ResetShopUtilityAnimations();
@@ -1383,6 +1393,7 @@ namespace DiaBlackJack.GameScene
         {
             ResetRevolverAnimationState();
             ResetKnifeAnimationState();
+            ResolveHammerAnimation()?.ResetPresentationState();
             int battleSeed = seed + (_battleIndex * 2);
             _battleIndex++;
             int enemyDeckSeed = battleSeed + 1;
@@ -2327,6 +2338,14 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            if (_revolverReadyActive &&
+                !_revolverSelectionReady &&
+                command.Kind ==
+                    GameSceneCombatHudCommandKind.ResolveCardEffectChoice)
+            {
+                return;
+            }
+
             switch (command.Kind)
             {
                 case GameSceneCombatHudCommandKind.Hit:
@@ -2353,9 +2372,17 @@ namespace DiaBlackJack.GameScene
                         command.OptionId));
                     break;
                 case GameSceneCombatHudCommandKind.ResolveDemonContractChoice:
+                    bool animateBelphegorReinsert =
+                        ShouldAnimateBelphegorReinsert(command);
+                    Action onAccepted = null;
+                    if (animateBelphegorReinsert && remainingDeck != null)
+                    {
+                        onAccepted = remainingDeck.PlayReinsertAnimation;
+                    }
                     ProcessInput(() => TryResolvePlayerDemonContract(
                         command.InteractionId,
-                        command.OptionId));
+                        command.OptionId),
+                        onAccepted);
                     break;
                 case GameSceneCombatHudCommandKind.BeginActiveDemonContractAction:
                     ProcessInput(() => TryBeginPlayerActiveDemonContractAction(
@@ -2367,7 +2394,7 @@ namespace DiaBlackJack.GameScene
             }
         }
 
-        private void ProcessInput(Func<bool> action)
+        private void ProcessInput(Func<bool> action, Action onAccepted = null)
         {
             if (IsModalInputBlocked || _inputLocked || action == null)
             {
@@ -2390,6 +2417,10 @@ namespace DiaBlackJack.GameScene
             }
 
             bool accepted = action();
+            if (accepted)
+            {
+                onAccepted?.Invoke();
+            }
 
             if (battle != null)
             {
@@ -2481,6 +2512,18 @@ namespace DiaBlackJack.GameScene
                 : _session.TryResolvePlayerDemonContract(
                     interactionId,
                     optionId);
+        }
+
+        private bool ShouldAnimateBelphegorReinsert(
+            GameSceneCombatHudCommand command)
+        {
+            PendingDemonContractInteraction pending =
+                Battle?.PendingPlayerDemonContractInteraction;
+            return pending != null &&
+                pending.InteractionId == command.InteractionId &&
+                pending.Kind == DemonContractInteractionKind.BelphegorTopCard &&
+                command.OptionId ==
+                    BelphegorDemonContractHandler.MoveTopCardToBottomOptionId;
         }
 
         private bool TryBeginPlayerActiveDemonContractAction(
@@ -3064,6 +3107,7 @@ namespace DiaBlackJack.GameScene
             }
 
             StopRevolverHideRoutine();
+            StopRevolverShotRoutine();
             ResetRevolverTriggers();
 
             if (cue.Phase == GameSceneRevolverAnimationPhase.Ready)
@@ -3072,6 +3116,7 @@ namespace DiaBlackJack.GameScene
                 ResetRevolverAnimatorToBase();
                 revolverAnimator.SetTrigger(playerReadyTrigger);
                 RememberActiveRevolverReady(cue);
+                BeginRevolverReadyCameraSequence();
                 return false;
             }
 
@@ -3093,17 +3138,26 @@ namespace DiaBlackJack.GameScene
                 ClearPendingRevolverImpact();
             }
 
-            revolverAnimator.SetTrigger(ResolveRevolverTrigger(cue));
+            StopRevolverReadyCameraRoutine();
+            _revolverSelectionReady = false;
             _revolverReadyActive = false;
-            ApplyCinematicCamera(
-                GameSceneCameraView.Current,
-                revolverAnimationSeconds);
+            ResolveCameraViewController()?.SetView(GameSceneCameraView.Current);
+
+            if (Application.isPlaying && revolverCameraReturnSeconds > 0f)
+            {
+                _revolverShotRoutine = StartCoroutine(
+                    PlayRevolverShotAfterCameraReturn(cue));
+            }
+            else
+            {
+                PlayRevolverShot(cue);
+            }
 
             if (Application.isPlaying &&
                 cue.Phase == GameSceneRevolverAnimationPhase.ResolvedWithRetry &&
                 scheduleRevolverRetry)
             {
-                if (revolverAnimationSeconds > 0f)
+                if (RevolverResolvedSequenceSeconds > 0f)
                 {
                     _revolverHideRoutine =
                         StartCoroutine(PrepareRevolverRetryAfterDelay(cue));
@@ -3115,7 +3169,7 @@ namespace DiaBlackJack.GameScene
             }
             else if (Application.isPlaying &&
                 cue.Phase == GameSceneRevolverAnimationPhase.Resolved &&
-                revolverAnimationSeconds > 0f)
+                RevolverResolvedSequenceSeconds > 0f)
             {
                 _revolverHideRoutine =
                     StartCoroutine(HideRevolverAnimationAfterDelay());
@@ -3568,7 +3622,9 @@ namespace DiaBlackJack.GameScene
             float waitSeconds = 0f;
             if (playedRevolver)
             {
-                waitSeconds = Mathf.Max(waitSeconds, revolverAnimationSeconds);
+                waitSeconds = Mathf.Max(
+                    waitSeconds,
+                    RevolverResolvedSequenceSeconds);
             }
 
             if (playedKnife)
@@ -3717,7 +3773,7 @@ namespace DiaBlackJack.GameScene
 
         private IEnumerator HideRevolverAnimationAfterDelay()
         {
-            yield return new WaitForSeconds(revolverAnimationSeconds);
+            yield return new WaitForSeconds(RevolverResolvedSequenceSeconds);
             _revolverHideRoutine = null;
             ResetRevolverAnimatorToBase();
 
@@ -3729,12 +3785,13 @@ namespace DiaBlackJack.GameScene
 
             ClearActiveRevolverReady();
             ClearPendingRevolverImpact();
+            EndRevolverSwitchInputLock();
         }
 
         private IEnumerator PrepareRevolverRetryAfterDelay(
             GameSceneRevolverAnimationCue cue)
         {
-            yield return new WaitForSeconds(revolverAnimationSeconds);
+            yield return new WaitForSeconds(RevolverResolvedSequenceSeconds);
             _revolverHideRoutine = null;
             PrepareRevolverRetry(cue);
         }
@@ -3763,11 +3820,14 @@ namespace DiaBlackJack.GameScene
             }
 
             RememberActiveRevolverReady(cue);
+            BeginRevolverReadyCameraSequence();
         }
 
         private void HideRevolverAnimation()
         {
             StopRevolverHideRoutine();
+            StopRevolverReadyCameraRoutine();
+            StopRevolverShotRoutine();
             ClearPendingRevolverImpact();
             ResetRevolverAnimatorToBase();
 
@@ -3778,6 +3838,60 @@ namespace DiaBlackJack.GameScene
             }
 
             ClearActiveRevolverReady();
+            EndRevolverSwitchInputLock();
+        }
+
+        private float RevolverResolvedSequenceSeconds =>
+            Mathf.Max(0f, revolverCameraReturnSeconds) +
+            Mathf.Max(0f, revolverAnimationSeconds);
+
+        private void BeginRevolverReadyCameraSequence()
+        {
+            StopRevolverReadyCameraRoutine();
+            _revolverSelectionReady = false;
+            BeginRevolverSwitchInputLock();
+
+            if (Application.isPlaying && revolverReadySeconds > 0f)
+            {
+                _revolverReadyCameraRoutine = StartCoroutine(
+                    MoveRevolverSelectionCameraAfterReady());
+                return;
+            }
+
+            MoveRevolverSelectionCameraToTableTop();
+        }
+
+        private IEnumerator MoveRevolverSelectionCameraAfterReady()
+        {
+            yield return new WaitForSeconds(Mathf.Max(0f, revolverReadySeconds));
+            _revolverReadyCameraRoutine = null;
+            MoveRevolverSelectionCameraToTableTop();
+        }
+
+        private void MoveRevolverSelectionCameraToTableTop()
+        {
+            ResolveCameraViewController()?.SetView(GameSceneCameraView.TableTop);
+            _revolverSelectionReady = true;
+        }
+
+        private IEnumerator PlayRevolverShotAfterCameraReturn(
+            GameSceneRevolverAnimationCue cue)
+        {
+            yield return new WaitForSeconds(
+                Mathf.Max(0f, revolverCameraReturnSeconds));
+            _revolverShotRoutine = null;
+            PlayRevolverShot(cue);
+        }
+
+        private void PlayRevolverShot(GameSceneRevolverAnimationCue cue)
+        {
+            if (cue == null || revolverAnimator == null ||
+                !revolverAnimator.gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
+            revolverAnimator.SetTrigger(ResolveRevolverTrigger(cue));
         }
 
         internal static CharacterVisualState ResolveRevolverTimedVisual(
@@ -3969,6 +4083,57 @@ namespace DiaBlackJack.GameScene
             _revolverHideRoutine = null;
         }
 
+        private void StopRevolverReadyCameraRoutine()
+        {
+            if (_revolverReadyCameraRoutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(_revolverReadyCameraRoutine);
+            _revolverReadyCameraRoutine = null;
+        }
+
+        private void StopRevolverShotRoutine()
+        {
+            if (_revolverShotRoutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(_revolverShotRoutine);
+            _revolverShotRoutine = null;
+        }
+
+        private void BeginRevolverSwitchInputLock()
+        {
+            if (_revolverSwitchInputLocked)
+            {
+                return;
+            }
+
+            GameSceneCameraViewController controller =
+                ResolveCameraViewController();
+            if (controller == null)
+            {
+                return;
+            }
+
+            controller.LockSwitchInput();
+            _revolverSwitchInputLocked = true;
+        }
+
+        private void EndRevolverSwitchInputLock()
+        {
+            if (!_revolverSwitchInputLocked)
+            {
+                return;
+            }
+
+            ResolveCameraViewController()?.UnlockSwitchInput();
+            _revolverSwitchInputLocked = false;
+        }
+
         private void ResetRevolverAnimatorToBase()
         {
             if (revolverAnimator == null ||
@@ -4012,6 +4177,7 @@ namespace DiaBlackJack.GameScene
         private void ClearActiveRevolverReady()
         {
             _revolverReadyActive = false;
+            _revolverSelectionReady = false;
             _revolverReadyRoundNumber = 0;
             _revolverReadySourceCardId = 0;
             _revolverReadyActorSide = CombatantSide.Player;
