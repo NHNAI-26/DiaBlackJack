@@ -1,4 +1,5 @@
 using DiaBlackJack.GameScene;
+using DiaBlackJack.GameScene.Editor;
 using DiaBlackJack.Content;
 using DiaBlackJack.Bootstrap;
 using NUnit.Framework;
@@ -23,6 +24,12 @@ namespace DiaBlackJack.CoreLoop.Tests
             Shader.PropertyToID("_BaseSpriteUVRect");
         private static readonly int PixelOutlineVisibilityId =
             Shader.PropertyToID("_PixelOutlineVisibility");
+        private static readonly int PixelOutlineColorId =
+            Shader.PropertyToID("_PixelOutlineColor");
+        private static readonly int PixelOutlineWidthId =
+            Shader.PropertyToID("_PixelOutlineWidth");
+        private static readonly int PixelOutlineAlphaThresholdId =
+            Shader.PropertyToID("_PixelOutlineAlphaThreshold");
 
         private const string CardPrefabPath = "Assets/03. Prefabs/Card/Card.prefab";
         private const string DemonCardPrefabPath =
@@ -837,6 +844,356 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GSV09_U01_CardModelClassifiesFiveHoverOutlineStates()
+        {
+            GameSceneCardViewModel basic = CreateHoverOutlineCard(
+                CardDefinitionCatalog.GetDefaultForRank(2),
+                canUse: false);
+            GameSceneCardViewModel passive = CreateHoverOutlineCard(
+                CardDefinitionCatalog.GetDefaultForRank(1),
+                canUse: false);
+            GameSceneCardViewModel unavailable = CreateHoverOutlineCard(
+                CardDefinitionCatalog.GetDefaultForRank(5),
+                canUse: false);
+            GameSceneCardViewModel available = CreateHoverOutlineCard(
+                CardDefinitionCatalog.GetDefaultForRank(5),
+                canUse: true);
+            GameSceneCardViewModel automatic = CreateHoverOutlineCard(
+                CardDefinitionCatalog.GetByKey(CardDefinitionCatalog.PoisonKey),
+                canUse: false);
+            GameSceneCardViewModel used = CreateHoverOutlineCard(
+                CardDefinitionCatalog.GetDefaultForRank(7),
+                canUse: false,
+                isUsed: true);
+            var unknown = new GameSceneCardViewModel(
+                cardId: 99,
+                rank: 0,
+                isFaceUp: false,
+                revealRank: false,
+                canUse: false,
+                displayName: string.Empty,
+                definitionKey: "unknown-card");
+
+            Assert.That(basic.HoverOutlineState,
+                Is.EqualTo(GameSceneCardHoverOutlineState.Basic));
+            Assert.That(passive.HoverOutlineState,
+                Is.EqualTo(GameSceneCardHoverOutlineState.Basic));
+            Assert.That(unavailable.HoverOutlineState,
+                Is.EqualTo(GameSceneCardHoverOutlineState.ManualUnavailable));
+            Assert.That(available.HoverOutlineState,
+                Is.EqualTo(GameSceneCardHoverOutlineState.ManualAvailable));
+            Assert.That(automatic.HoverOutlineState,
+                Is.EqualTo(GameSceneCardHoverOutlineState.Automatic));
+            Assert.That(used.HoverOutlineState,
+                Is.EqualTo(GameSceneCardHoverOutlineState.Used));
+            Assert.That(unknown.HoverOutlineState,
+                Is.EqualTo(GameSceneCardHoverOutlineState.Basic));
+        }
+
+        [Test]
+        public void GSV09_U02_CardPrefabSerializesHoverOutlinePalette()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            CardView view = prefab.GetComponent<CardView>();
+            Assert.That(view, Is.Not.Null);
+            var serialized = new SerializedObject(view);
+
+            AssertColor(
+                serialized.FindProperty("basicHoverOutlineColor").colorValue,
+                new Color(3.9999995f, 3.9999995f, 3.9999995f, 1f));
+            AssertColor(
+                serialized.FindProperty("unavailableHoverOutlineColor").colorValue,
+                new Color(3.9999995f, 0f, 0f, 1f));
+            AssertColor(
+                serialized.FindProperty("availableHoverOutlineColor").colorValue,
+                new Color(0f, 3.9999995f, 0f, 1f));
+            AssertColor(
+                serialized.FindProperty("automaticHoverOutlineColor").colorValue,
+                new Color(3.9999995f, 3.3765495f, 0f, 1f));
+            AssertColor(
+                serialized.FindProperty("usedHoverOutlineColor").colorValue,
+                new Color(1.9999998f, 1.9999998f, 1.9999998f, 1f));
+        }
+
+        [Test]
+        public void GSV09_U03_CardHoverAppliesStateColorToVisibleFace()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                SpriteRenderer frontRenderer = GetFrontRenderer(view);
+                SpriteRenderer backRenderer = GetBackRenderer(view);
+                Shader originalShader = frontRenderer.sharedMaterial.shader;
+                float originalOutlineWidth =
+                    frontRenderer.sharedMaterial.GetFloat(PixelOutlineWidthId);
+                float originalAlphaThreshold = frontRenderer.sharedMaterial.GetFloat(
+                    PixelOutlineAlphaThresholdId);
+                var serialized = new SerializedObject(view);
+                GameSceneCardViewModel[] models =
+                {
+                    CreateHoverOutlineCard(
+                        CardDefinitionCatalog.GetDefaultForRank(2),
+                        canUse: false),
+                    CreateHoverOutlineCard(
+                        CardDefinitionCatalog.GetDefaultForRank(5),
+                        canUse: false),
+                    CreateHoverOutlineCard(
+                        CardDefinitionCatalog.GetDefaultForRank(5),
+                        canUse: true),
+                    CreateHoverOutlineCard(
+                        CardDefinitionCatalog.GetByKey(CardDefinitionCatalog.PoisonKey),
+                        canUse: false),
+                    CreateHoverOutlineCard(
+                        CardDefinitionCatalog.GetDefaultForRank(7),
+                        canUse: false,
+                        isUsed: true),
+                };
+                string[] colorProperties =
+                {
+                    "basicHoverOutlineColor",
+                    "unavailableHoverOutlineColor",
+                    "availableHoverOutlineColor",
+                    "automaticHoverOutlineColor",
+                    "usedHoverOutlineColor",
+                };
+                var properties = new MaterialPropertyBlock();
+
+                for (int i = 0; i < models.Length; i++)
+                {
+                    view.Bind(models[i]);
+                    view.SetHovered(true);
+                    frontRenderer.GetPropertyBlock(properties);
+                    AssertColor(
+                        properties.GetColor(PixelOutlineColorId),
+                        serialized.FindProperty(colorProperties[i]).colorValue);
+                    Assert.That(properties.GetFloat(PixelOutlineVisibilityId),
+                        Is.EqualTo(1f));
+                    Assert.That(frontRenderer.sharedMaterial.shader,
+                        Is.SameAs(originalShader));
+                    Assert.That(properties.GetFloat(PixelOutlineWidthId),
+                        Is.EqualTo(originalOutlineWidth));
+                    Assert.That(properties.GetFloat(PixelOutlineAlphaThresholdId),
+                        Is.EqualTo(originalAlphaThreshold));
+                    Assert.That(frontRenderer.sharedMaterial.IsKeywordEnabled(
+                        "_PIXEL_OUTLINE_ON"), Is.True);
+                    view.SetHovered(false);
+                }
+
+                CardDefinition hiddenDefinition =
+                    CardDefinitionCatalog.GetDefaultForRank(5);
+                view.Bind(new GameSceneCardViewModel(
+                    cardId: 101,
+                    rank: hiddenDefinition.Rank,
+                    isFaceUp: false,
+                    revealRank: true,
+                    canUse: true,
+                    displayName: hiddenDefinition.DisplayName,
+                    definitionKey: hiddenDefinition.Key));
+                view.SetHovered(true);
+                backRenderer.GetPropertyBlock(properties);
+                AssertColor(
+                    properties.GetColor(PixelOutlineColorId),
+                    serialized.FindProperty("availableHoverOutlineColor").colorValue);
+                Assert.That(properties.GetFloat(PixelOutlineVisibilityId),
+                    Is.EqualTo(1f));
+                Assert.That(backRenderer.sharedMaterial.shader,
+                    Is.SameAs(originalShader));
+                Assert.That(properties.GetFloat(PixelOutlineWidthId),
+                    Is.EqualTo(originalOutlineWidth));
+                Assert.That(properties.GetFloat(PixelOutlineAlphaThresholdId),
+                    Is.EqualTo(originalAlphaThreshold));
+                Assert.That(backRenderer.sharedMaterial.IsKeywordEnabled(
+                    "_PIXEL_OUTLINE_ON"), Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSV09_U04_EffectHighlightReturnsAfterStateHoverEnds()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                SpriteRenderer renderer = GetFrontRenderer(view);
+                Color effectHighlightColor =
+                    renderer.sharedMaterial.GetColor(PixelOutlineColorId);
+                GameSceneCardViewModel model = CreateHoverOutlineCard(
+                    CardDefinitionCatalog.GetDefaultForRank(5),
+                    canUse: true,
+                    isEffectSource: true);
+                var properties = new MaterialPropertyBlock();
+
+                view.Bind(model);
+                renderer.GetPropertyBlock(properties);
+                AssertColor(
+                    properties.GetColor(PixelOutlineColorId),
+                    effectHighlightColor);
+                Assert.That(properties.GetFloat(PixelOutlineVisibilityId),
+                    Is.EqualTo(1f));
+
+                view.SetHovered(true);
+                renderer.GetPropertyBlock(properties);
+                AssertColor(
+                    properties.GetColor(PixelOutlineColorId),
+                    GetPrivateField<Color>(view, "availableHoverOutlineColor"));
+
+                view.SetHovered(false);
+                renderer.GetPropertyBlock(properties);
+                AssertColor(
+                    properties.GetColor(PixelOutlineColorId),
+                    effectHighlightColor);
+                Assert.That(properties.GetFloat(PixelOutlineVisibilityId),
+                    Is.EqualTo(1f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSV10_U01_CardInspectorPreviewsEveryHoverOutlineState()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+            UnityEditor.Editor editor = null;
+            var originalBlocks =
+                new Dictionary<Renderer, MaterialPropertyBlock>();
+
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                SpriteRenderer frontRenderer = GetFrontRenderer(view);
+                SpriteRenderer backRenderer = GetBackRenderer(view);
+                Material frontMaterial = frontRenderer.sharedMaterial;
+                Material backMaterial = backRenderer.sharedMaterial;
+                var serialized = new SerializedObject(view);
+                GameSceneCardHoverOutlineState[] states =
+                {
+                    GameSceneCardHoverOutlineState.Basic,
+                    GameSceneCardHoverOutlineState.ManualUnavailable,
+                    GameSceneCardHoverOutlineState.ManualAvailable,
+                    GameSceneCardHoverOutlineState.Automatic,
+                    GameSceneCardHoverOutlineState.Used,
+                };
+                string[] colorProperties =
+                {
+                    "basicHoverOutlineColor",
+                    "unavailableHoverOutlineColor",
+                    "availableHoverOutlineColor",
+                    "automaticHoverOutlineColor",
+                    "usedHoverOutlineColor",
+                };
+                var properties = new MaterialPropertyBlock();
+
+                editor = UnityEditor.Editor.CreateEditor(view);
+                Assert.That(editor, Is.TypeOf<CardViewHoverAnchorEditor>());
+
+                for (int i = 0; i < states.Length; i++)
+                {
+                    CardHoverAnchorPreviewDrawer.ApplyHoverOutlinePreview(
+                        serialized,
+                        view,
+                        states[i],
+                        originalBlocks);
+                    Color expected = serialized.FindProperty(
+                        colorProperties[i]).colorValue;
+
+                    frontRenderer.GetPropertyBlock(properties);
+                    AssertColor(properties.GetColor(PixelOutlineColorId), expected);
+                    Assert.That(properties.GetFloat(PixelOutlineVisibilityId),
+                        Is.EqualTo(1f));
+                    Assert.That(properties.GetFloat(PixelOutlineWidthId),
+                        Is.EqualTo(frontMaterial.GetFloat(PixelOutlineWidthId)));
+                    Assert.That(properties.GetFloat(PixelOutlineAlphaThresholdId),
+                        Is.EqualTo(frontMaterial.GetFloat(
+                            PixelOutlineAlphaThresholdId)));
+
+                    backRenderer.GetPropertyBlock(properties);
+                    AssertColor(properties.GetColor(PixelOutlineColorId), expected);
+                    Assert.That(properties.GetFloat(PixelOutlineVisibilityId),
+                        Is.EqualTo(1f));
+                }
+
+                Assert.That(frontRenderer.sharedMaterial, Is.SameAs(frontMaterial));
+                Assert.That(backRenderer.sharedMaterial, Is.SameAs(backMaterial));
+            }
+            finally
+            {
+                CardHoverAnchorPreviewDrawer.RestoreHoverOutlinePreview(
+                    originalBlocks);
+                Object.DestroyImmediate(editor);
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSV10_U02_CardInspectorPreviewRestoresRendererState()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+            var originalBlocks =
+                new Dictionary<Renderer, MaterialPropertyBlock>();
+
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                SpriteRenderer frontRenderer = GetFrontRenderer(view);
+                SpriteRenderer backRenderer = GetBackRenderer(view);
+                var serialized = new SerializedObject(view);
+                Color frontColor = new Color(0.1f, 0.2f, 0.3f, 0.4f);
+                Color backColor = new Color(0.5f, 0.6f, 0.7f, 0.8f);
+                var frontOriginal = new MaterialPropertyBlock();
+                frontOriginal.SetColor(PixelOutlineColorId, frontColor);
+                frontOriginal.SetFloat(PixelOutlineVisibilityId, 0.25f);
+                frontRenderer.SetPropertyBlock(frontOriginal);
+                var backOriginal = new MaterialPropertyBlock();
+                backOriginal.SetColor(PixelOutlineColorId, backColor);
+                backOriginal.SetFloat(PixelOutlineVisibilityId, 0.75f);
+                backRenderer.SetPropertyBlock(backOriginal);
+
+                CardHoverAnchorPreviewDrawer.ApplyHoverOutlinePreview(
+                    serialized,
+                    view,
+                    GameSceneCardHoverOutlineState.ManualAvailable,
+                    originalBlocks);
+                CardHoverAnchorPreviewDrawer.RestoreHoverOutlinePreview(
+                    originalBlocks);
+
+                var restored = new MaterialPropertyBlock();
+                frontRenderer.GetPropertyBlock(restored);
+                AssertColor(restored.GetColor(PixelOutlineColorId), frontColor);
+                Assert.That(restored.GetFloat(PixelOutlineVisibilityId),
+                    Is.EqualTo(0.25f));
+                backRenderer.GetPropertyBlock(restored);
+                AssertColor(restored.GetColor(PixelOutlineColorId), backColor);
+                Assert.That(restored.GetFloat(PixelOutlineVisibilityId),
+                    Is.EqualTo(0.75f));
+                Assert.That(originalBlocks, Is.Empty);
+            }
+            finally
+            {
+                CardHoverAnchorPreviewDrawer.RestoreHoverOutlinePreview(
+                    originalBlocks);
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
         public void GSV03_U01_ShopNormalCardHoverMaterialIsIsolatedPerOffer()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
@@ -1094,6 +1451,33 @@ namespace DiaBlackJack.CoreLoop.Tests
                 displayName: "Revolver",
                 definitionKey: CardDefinitionCatalog.GetDefaultForRank(7).Key,
                 isUsed: isUsed);
+        }
+
+        private static GameSceneCardViewModel CreateHoverOutlineCard(
+            CardDefinition definition,
+            bool canUse,
+            bool isUsed = false,
+            bool isEffectSource = false)
+        {
+            return new GameSceneCardViewModel(
+                cardId: definition.Rank,
+                rank: definition.Rank,
+                isFaceUp: true,
+                revealRank: true,
+                canUse: canUse,
+                displayName: definition.DisplayName,
+                abilityDescription: definition.Description,
+                definitionKey: definition.Key,
+                isUsed: isUsed,
+                isEffectSource: isEffectSource);
+        }
+
+        private static void AssertColor(Color actual, Color expected)
+        {
+            Assert.That(actual.r, Is.EqualTo(expected.r).Within(0.0001f));
+            Assert.That(actual.g, Is.EqualTo(expected.g).Within(0.0001f));
+            Assert.That(actual.b, Is.EqualTo(expected.b).Within(0.0001f));
+            Assert.That(actual.a, Is.EqualTo(expected.a).Within(0.0001f));
         }
 
         private static SpriteRenderer GetRenderer(CardView view, string propertyName)

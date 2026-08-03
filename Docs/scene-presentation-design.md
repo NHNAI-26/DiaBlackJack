@@ -206,6 +206,7 @@
 - 선택 모달은 프리팹에 미리 배치한 스크롤 가능 슬롯 100개를 재사용한다. 계약 후보는 기존 테이블 월드 카드와 HUD 상세를 유지하며, 런타임 전용 UI 오브젝트를 생성하지 않는다.
 - `GameManager`는 New Input System 포인터 레이캐스트로 카드·덱과 함께 테이블 명령을 감지하고, 유효 클릭을 기존 `HandleCombatCommand` → `ProcessInput` → `Try*` 경로로 전달한다. 전투용 `OnGUI`·즉시형 그리기는 제거했고, 상점·라이터 선택 패널만 `OnGUI`로 유지한다.
 - 카드 호버 툴팁의 헤더·본문·스타일은 독립 `CardHoverTooltip.prefab`이 소유하고 `HUD.prefab`은 이를 중첩 프리팹으로 1개만 재사용한다. 일반·악마 카드 프리팹의 기존 상단/하단 Anchor를 화면 좌표로 투영하며 추가 Screen Offset 없이 해당 Anchor에 툴팁 피벗을 정확히 맞춘다. 카드마다 UI 인스턴스를 만들지 않으며, Card/DemonCard 프리팹 루트를 선택하면 Scene View에서 TOP은 청록색, BOTTOM은 주황색 Gizmo로 생성 위치를 미리 본다.
+- 일반 `CardView` 호버는 기존 픽셀 아웃라인 셰이더·키워드·폭·알파 임계값을 그대로 사용하고 `_PixelOutlineColor`만 바꾼다. 기본/패시브는 흰색, 수동 사용 불가는 빨강, 수동 사용 가능은 초록, 자동 사용은 기존 HDR 노랑, 이미 사용은 회색이며 다섯 HDR 색상은 `Card.prefab` Inspector에서 조정한다. 이미 사용 상태가 최우선이고, 호버가 없는 카드 효과 대상 강조는 기존 재질 노랑을 유지한다. Card 프리팹 루트 Inspector의 `Hover Outline Preview`에서 다섯 상태를 선택해 Scene View 결과를 확인하며, 미리보기는 임시 `MaterialPropertyBlock`만 사용하고 해제·선택 변경 시 원래 렌더 상태를 복구한다.
 - 검증: `GameSceneCombatHudPresentationTests` 18/18, 전체 EditMode 850/850 통과, GameScene validation 0 issues. 1280×720·1920×1080에서 세 영역·손패·합계·덱의 비겹침을 확인했고, 실제 포인터 입력으로 HIT 카드 2→3장, STAND 라운드 1→2, CHANGE 선택 상태 전환을 확인했다. 신규 컴파일·런타임 오류는 0건이며, 기존 `SettingsSystem` 비루트 `DontDestroyOnLoad`와 URP property drawer Console 오류는 별도 잔존한다.
 
 ## 11. 완료 기준

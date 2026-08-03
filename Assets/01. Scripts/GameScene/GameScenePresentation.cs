@@ -97,6 +97,15 @@ namespace DiaBlackJack.GameScene
         public int RoundNumber { get; }
     }
 
+    internal enum GameSceneCardHoverOutlineState
+    {
+        Basic,
+        ManualUnavailable,
+        ManualAvailable,
+        Automatic,
+        Used,
+    }
+
     /// <summary>
     /// A single card projected for world-space rendering. <see cref="IsFaceUp"/> is the *physical*
     /// orientation (drives the card back visual). <see cref="RevealRank"/> is whether the rank may be
@@ -138,6 +147,10 @@ namespace DiaBlackJack.GameScene
             IsUsed = isUsed;
             DirectSelectionCommand = directSelectionCommand;
             IsEffectSource = isEffectSource;
+            HoverOutlineState = ResolveHoverOutlineState(
+                DefinitionKey,
+                CanUse,
+                IsUsed);
         }
 
         public int CardId { get; }
@@ -189,11 +202,49 @@ namespace DiaBlackJack.GameScene
 
         public bool IsEffectSource { get; }
 
+        internal GameSceneCardHoverOutlineState HoverOutlineState { get; }
+
         /// <summary>
         /// Stable card archetype key used only to select authored visuals. It remains empty for an
         /// unrevealed enemy card so the presentation boundary does not leak hidden information.
         /// </summary>
         public string DefinitionKey { get; }
+
+        private static GameSceneCardHoverOutlineState ResolveHoverOutlineState(
+            string definitionKey,
+            bool canUse,
+            bool isUsed)
+        {
+            if (isUsed)
+            {
+                return GameSceneCardHoverOutlineState.Used;
+            }
+
+            CardActivationKind activation = CardActivationKind.None;
+            foreach (CardDefinition definition in CardDefinitionCatalog.All)
+            {
+                if (string.Equals(
+                    definition.Key,
+                    definitionKey,
+                    StringComparison.Ordinal))
+                {
+                    activation = definition.Activation;
+                    break;
+                }
+            }
+
+            switch (activation)
+            {
+                case CardActivationKind.Manual:
+                    return canUse
+                        ? GameSceneCardHoverOutlineState.ManualAvailable
+                        : GameSceneCardHoverOutlineState.ManualUnavailable;
+                case CardActivationKind.Automatic:
+                    return GameSceneCardHoverOutlineState.Automatic;
+                default:
+                    return GameSceneCardHoverOutlineState.Basic;
+            }
+        }
     }
 
     public sealed class GameSceneDeckCardGroupViewModel

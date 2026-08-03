@@ -604,9 +604,14 @@ MonoBehaviour:
     m_RotationOrder: 4
   hoverSfxId: cardHover
   useMaterialHoverOutlineSettings: 1
-  hoverOutlineColor: {r: 1, g: 0.72604626, b: 0, a: 1}
-  hoverOutlineWidth: 1
+  effectHighlightOutlineColor: {r: 1, g: 0.72604626, b: 0, a: 1}
+  hoverOutlineWidth: 1.5
   hoverOutlineAlphaThreshold: 0.5
+  basicHoverOutlineColor: {r: 5.3403134, g: 5.3403134, b: 5.3403134, a: 1}
+  unavailableHoverOutlineColor: {r: 2.1145804, g: 0.6420973, b: 0.6084406, a: 1}
+  availableHoverOutlineColor: {r: 1.9118087, g: 3.4278064, b: 0.48455897, a: 1}
+  automaticHoverOutlineColor: {r: 3.9999995, g: 3.3765495, b: 0, a: 1}
+  usedHoverOutlineColor: {r: 0, g: 0, b: 0, a: 1}
   hiddenCardBlendAmount: 0.5
   revealFlipDuration: 0.36
   usedMark: {fileID: 8467901782112210214}
@@ -866,7 +871,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fdc581742b122ac4abb1bcbba802ee78, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ShopCardOfferStatusView
 --- !u!4 &6980505170722215037 stripped
 Transform:

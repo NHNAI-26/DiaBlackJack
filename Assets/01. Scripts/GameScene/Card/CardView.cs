@@ -4,6 +4,7 @@ using Border.Audio;
 using DiaBlackJack.Content;
 using DiaBlackJack.CoreLoop;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DiaBlackJack.GameScene
 {
@@ -41,10 +42,30 @@ namespace DiaBlackJack.GameScene
         [Header("Hover outline")]
         [SerializeField] private bool useMaterialHoverOutlineSettings = true;
         [ColorUsage(true, true)]
-        [SerializeField] private Color hoverOutlineColor = new Color(1f, 0.685f, 0f, 1f);
+        [FormerlySerializedAs("hoverOutlineColor")]
+        [SerializeField] private Color effectHighlightOutlineColor =
+            new Color(1f, 0.685f, 0f, 1f);
         [SerializeField] private float hoverOutlineWidth = 1f;
         [Range(0f, 1f)]
         [SerializeField] private float hoverOutlineAlphaThreshold = 0.5f;
+
+        [Header("Hover outline state colors")]
+        [Tooltip("Only replaces the existing pixel-outline shader color. Width, threshold, keyword, and HDR glow path stay unchanged.")]
+        [ColorUsage(true, true)]
+        [SerializeField] private Color basicHoverOutlineColor =
+            new Color(4f, 4f, 4f, 1f);
+        [ColorUsage(true, true)]
+        [SerializeField] private Color unavailableHoverOutlineColor =
+            new Color(4f, 0f, 0f, 1f);
+        [ColorUsage(true, true)]
+        [SerializeField] private Color availableHoverOutlineColor =
+            new Color(0f, 4f, 0f, 1f);
+        [ColorUsage(true, true)]
+        [SerializeField] private Color automaticHoverOutlineColor =
+            new Color(3.9999995f, 3.3765495f, 0f, 1f);
+        [ColorUsage(true, true)]
+        [SerializeField] private Color usedHoverOutlineColor =
+            new Color(2f, 2f, 2f, 1f);
 
         [Header("Player hidden card")]
         [Tooltip("Blends the real face over the card back while only the player may see its rank.")]
@@ -87,6 +108,10 @@ namespace DiaBlackJack.GameScene
         private SpriteRenderer _frontSpriteRenderer;
         private SpriteRenderer _backSpriteRenderer;
         private Renderer _backRenderer;
+        private Color _frontEffectHighlightColor;
+        private Color _backEffectHighlightColor;
+        private bool _frontEffectHighlightColorCaptured;
+        private bool _backEffectHighlightColorCaptured;
         private Sprite _frontUvSprite;
         private Sprite _backUvSprite;
         private Tween _scaleTween;
@@ -102,6 +127,8 @@ namespace DiaBlackJack.GameScene
         private bool _hasBoundCard;
         private bool _isUsed;
         private bool _isEffectHighlighted;
+        private GameSceneCardHoverOutlineState _hoverOutlineState =
+            GameSceneCardHoverOutlineState.Basic;
         private bool _isShopSoldOut;
         private bool _shopColorsCaptured;
         private Color _shopFrontColor = Color.white;
@@ -238,6 +265,7 @@ namespace DiaBlackJack.GameScene
             _isEffectHighlighted = card.IsEffectSource ||
                 card.DirectSelectionCommand.HasValue;
             _isUsed = card.IsUsed;
+            _hoverOutlineState = card.HoverOutlineState;
             _hasBoundCard = true;
             bool showPlayerHiddenBlend = card.RevealRank && !card.IsFaceUp;
             _showingFrontFace = card.RevealRank && !showPlayerHiddenBlend;
@@ -678,7 +706,9 @@ namespace DiaBlackJack.GameScene
             EnsureCardMaterialInstance(renderer);
             EnablePixelOutlineKeyword(renderer);
 
-            Color outlineColor = ResolveOutlineColor(renderer);
+            Color outlineColor = _hovered
+                ? ResolveHoverOutlineColor()
+                : ResolveEffectHighlightOutlineColor(renderer);
             if (visible && outlineColor.a <= 0f)
             {
                 outlineColor.a = 1f;
@@ -701,17 +731,38 @@ namespace DiaBlackJack.GameScene
             renderer.SetPropertyBlock(propertyBlock);
         }
 
-        private Color ResolveOutlineColor(Renderer renderer)
+        private Color ResolveEffectHighlightOutlineColor(Renderer renderer)
         {
-            Material material = renderer.sharedMaterial;
-            if (useMaterialHoverOutlineSettings &&
-                material != null &&
-                material.HasProperty(PixelOutlineColorId))
+            if (renderer == _frontSpriteRenderer &&
+                _frontEffectHighlightColorCaptured)
             {
-                return material.GetColor(PixelOutlineColorId);
+                return _frontEffectHighlightColor;
             }
 
-            return hoverOutlineColor;
+            if (renderer == _backSpriteRenderer &&
+                _backEffectHighlightColorCaptured)
+            {
+                return _backEffectHighlightColor;
+            }
+
+            return effectHighlightOutlineColor;
+        }
+
+        private Color ResolveHoverOutlineColor()
+        {
+            switch (_hoverOutlineState)
+            {
+                case GameSceneCardHoverOutlineState.ManualUnavailable:
+                    return unavailableHoverOutlineColor;
+                case GameSceneCardHoverOutlineState.ManualAvailable:
+                    return availableHoverOutlineColor;
+                case GameSceneCardHoverOutlineState.Automatic:
+                    return automaticHoverOutlineColor;
+                case GameSceneCardHoverOutlineState.Used:
+                    return usedHoverOutlineColor;
+                default:
+                    return basicHoverOutlineColor;
+            }
         }
 
         private float ResolveOutlineWidth(Renderer renderer)
@@ -791,6 +842,10 @@ namespace DiaBlackJack.GameScene
                     renderer,
                     ref _cardFrontMaterial,
                     "Card Front Instance");
+                CaptureEffectHighlightColor(
+                    renderer,
+                    ref _frontEffectHighlightColor,
+                    ref _frontEffectHighlightColorCaptured);
                 RefreshMaterialSpriteUv(renderer);
                 return;
             }
@@ -801,8 +856,31 @@ namespace DiaBlackJack.GameScene
                     renderer,
                     ref _cardBackMaterial,
                     "Card Back Instance");
+                CaptureEffectHighlightColor(
+                    renderer,
+                    ref _backEffectHighlightColor,
+                    ref _backEffectHighlightColorCaptured);
                 RefreshMaterialSpriteUv(renderer);
             }
+        }
+
+        private void CaptureEffectHighlightColor(
+            Renderer renderer,
+            ref Color capturedColor,
+            ref bool captured)
+        {
+            if (captured)
+            {
+                return;
+            }
+
+            Material material = renderer.sharedMaterial;
+            capturedColor = useMaterialHoverOutlineSettings &&
+                material != null &&
+                material.HasProperty(PixelOutlineColorId)
+                    ? material.GetColor(PixelOutlineColorId)
+                    : effectHighlightOutlineColor;
+            captured = true;
         }
 
         private static void RefreshMaterialSpriteUv(Renderer renderer)

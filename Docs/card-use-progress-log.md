@@ -698,3 +698,18 @@ MCP가 Unity 창의 포커스를 가져가지 않은 상태에서는 게임 프�
 #### 권장 커밋 제목
 
 `fix : 중복 카드의 렌더 상태를 인스턴스별로 분리하다`
+
+### 2026-08-04 GSV09 카드 호버 상태별 HDR 아웃라인 색상
+
+- `GameSceneCardViewModel`이 카드 정의의 활성화 종류와 `CanUse`, `IsUsed`로 기본·수동 사용 불가·수동 사용 가능·자동 사용·이미 사용 상태를 내부 분류한다. 이미 사용 상태를 최우선으로 처리하고, 패시브·정의 없음·숨겨진 적 카드는 기본 상태를 사용한다.
+- `CardView`는 기존 픽셀 아웃라인 셰이더, `_PIXEL_OUTLINE_ON` 키워드, 폭, 알파 임계값, HDR 발광 경로를 그대로 유지하고 `_PixelOutlineColor`만 상태별 Inspector HDR 색상으로 교체한다. 자동 사용은 기존 재질의 HDR 노랑을 사용하며, 효과 대상의 지속 강조는 호버 해제 뒤 기존 재질 노랑으로 복구한다.
+- `Card.prefab`에 흰색·빨강·초록·기존 HDR 노랑·회색 팔레트를 직렬화했다. 기존 `hoverOutlineColor`는 `FormerlySerializedAs`로 효과 대상 강조 폴백 값에 이관했다. 셰이더와 카드 재질은 수정하지 않았다.
+- 신규 GSV09 회귀 4/4(job `ad6cd762685d44b2b7d4b720e8de8bba`) 통과. 앞면·뒷면의 상태 색상과 셰이더·키워드·폭·알파 임계값 불변, 효과 대상 노랑 복구를 검증했다. 카드 표시 전체는 45/45(job `847163cda02a4c0d91343800eac3c413`) 통과했다.
+- 전체 EditMode는 1003개 중 1000개(job `ca3ea4b3b903494dbdffe06bded3b367`)가 통과했다. 잔여 3건은 동시에 수정 중인 도감 영혼 아이콘, 망치 대상 순서, HUD 호버 반사 인자 회귀이며 GSV09와 무관하다. 스크립트 컴파일 오류는 0건이다.
+
+### 2026-08-04 GSV10 Card 프리팹 호버 아웃라인 미리보기
+
+- 기존 `CardView` Custom Inspector에 `Preview Hover Outline` 토글과 다섯 상태 선택 항목을 추가했다. Card 프리팹 루트를 Prefab Mode에서 선택하면 선택한 상태의 실제 HDR 아웃라인 색상을 Scene View에서 즉시 확인한다.
+- 미리보기는 런타임과 같은 `_PixelOutlineColor`, 폭, 알파 임계값, 표시 값을 앞면·뒷면 `MaterialPropertyBlock`에 임시 적용한다. 프리팹과 공유 재질은 변경하지 않으며 토글 해제·Inspector 종료 시 기존 PropertyBlock을 복구한다.
+- 신규 GSV10 회귀 2/2(job `30c5d24ee6984e6e8ed269f7a13a0b1e`)와 카드 표시 전체 47/47(job `cbff3825929a4876a1d84b6f6531eee8`) 통과. 스크립트 컴파일 오류와 확인 시점 Console 오류는 0건이다.
+- 전체 EditMode는 1005개 중 1000개(job `18140115253c454c9cc1b57989295bdf`)가 통과했다. 잔여 5건은 동시에 수정 중인 도감 영혼 아이콘, 망치 대상 순서, HUD 호버 반사 인자, 공유 버튼 브러시 2건이며 GSV10과 무관하다.

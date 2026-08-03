@@ -13,6 +13,11 @@ GameObject:
   - component: {fileID: 1580428981478613470}
   - component: {fileID: 3141592653589793238}
   - component: {fileID: 5993433653127054209}
+  - component: {fileID: 2681820618480984306}
+  - component: {fileID: 2737482733934021627}
+  - component: {fileID: 8549328659885099016}
+  - component: {fileID: 9135478435222243788}
+  - component: {fileID: 8419550313967010365}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -45,7 +50,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e3326a4551dba504d859a63138e44f24, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameManager
   seed: 20260719
   hud: {fileID: 0}
@@ -56,12 +61,15 @@ MonoBehaviour:
   remainingDeck: {fileID: 0}
   discardDeck: {fileID: 0}
   deckPreview: {fileID: 0}
+  codex: {fileID: 9135478435222243788}
   demonContractSelection: {fileID: 0}
+  tableCombatCommands: {fileID: 0}
+  contractPapers: {fileID: 0}
+  mammonDie: {fileID: 0}
   enemyProfileKey: gunslinger
   speechSeed: 20260804
   terminalSpeechHoldSeconds: 1.5
   shop: {fileID: 0}
-  uiFont: {fileID: 12800000, guid: 51ac31f4c09df134780e57e309afafcd, type: 3}
   stepSeconds: 0.8
   resolveHoldSeconds: 1.1
   revolverAnimator: {fileID: 0}
@@ -73,7 +81,24 @@ MonoBehaviour:
   playerFailTrigger: PlayerFail
   enemySuccessTrigger: EnemySuccess
   enemyFailTrigger: EnemyFail
+  knifeAnimator: {fileID: 0}
+  knifeRoot: {fileID: 0}
+  knifeReadySeconds: 0.7
+  knifeSuspenseSeconds: 2.5
+  knifeResultSeconds: 3.1
+  knifeBaseStateName: Knife_Empty
+  playerKnifeStartTrigger: PlayerStart
+  enemyKnifeStartTrigger: EnemyStart
+  knifeSuccessTrigger: Success
+  knifeFailTrigger: Fail
   hammerAnimation: {fileID: 0}
+  lighterAnimationRoot: {fileID: 0}
+  lighterAnimator: {fileID: 0}
+  whiskeyAnimationRoot: {fileID: 0}
+  whiskeyAnimator: {fileID: 0}
+  whiskeyAnimationSeconds: 5.6
+  whiskeyDrinkSfxDelaySeconds: 0.93333334
+  whiskeyDrinkSfxId: drinkWhiskey
   cameraViewController: {fileID: 0}
 --- !u!114 &1580428981478613470
 MonoBehaviour:
@@ -99,14 +124,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c9e4c9f08a33483c9df2c3ae9cd808a1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CardSelectionFanLayout
   twoCardProfile:
-    viewportCenter: {x: 0.5, y: 0}
+    viewportCenter: {x: 0.5, y: 0.04}
     cameraDistance: 1.5
-    halfViewportWidth: 0.075
+    halfViewportWidth: 0.065
     edgeLift: -0.025
-    maximumFanAngle: 10
+    maximumFanAngle: 5
     cardScale: 1
     hoverViewportLift: 0.18
     hoverCameraPull: 0.1
@@ -133,6 +158,110 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 385d157232d17e7459faad9769b355d6, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.DemonContractSelectionView
   candidatePrefab: {fileID: 2245145291204370677, guid: 45d32c4ca972f2243966a587c6684a0c, type: 3}
+--- !u!114 &2681820618480984306
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656724238517901587}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37c54f61d1fe70648a9908ed944981e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameFlowController
+  gameManager: {fileID: 0}
+  startingDemonReveal: {fileID: 0}
+  opponentSelection: {fileID: 0}
+  resultView: {fileID: 0}
+  codex: {fileID: 9135478435222243788}
+  hudRoot: {fileID: 0}
+  hud: {fileID: 0}
+  charactersRoot: {fileID: 0}
+  enemyCharacter: {fileID: 0}
+  moodController: {fileID: 8419550313967010365}
+  moodTransitionDuration: 1
+--- !u!114 &2737482733934021627
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656724238517901587}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 552f539df60a8fd418c6d57f2d71642f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.StartingDemonRevealView
+  demonCardPrefab: {fileID: 88746123954579456, guid: 45d32c4ca972f2243966a587c6684a0c, type: 3}
+  deckPosition: {x: 1.5, y: 3.58, z: 16.44}
+  firstCardPosition: {x: -0.55, y: 3.56, z: 17}
+  secondCardPosition: {x: 0.55, y: 3.56, z: 17}
+  cardEulerAngles: {x: 270, y: 0, z: 0}
+  deckVisualCardCount: 3
+  dealDuration: 0.55
+  faceDownHoldDuration: 0.35
+  flipDuration: 0.3
+  revealedHoldDuration: 1.2
+--- !u!114 &8549328659885099016
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656724238517901587}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7bec68913132c1c40852e2c5dd0d4e8d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.OpponentSelectionView
+  font: {fileID: 0}
+--- !u!114 &9135478435222243788
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656724238517901587}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b12ea96fd7a3fe84494c444dd3f4e059, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CodexController
+  view: {fileID: 0}
+  cardContentCatalog: {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a140001, type: 2}
+  enemyContentCatalog: {fileID: 11400000, guid: 35def8069acda204cb9c406b148add0f, type: 2}
+  tableBookRoot: {fileID: 0}
+--- !u!114 &8419550313967010365
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6656724238517901587}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5e4e587b5d04ef9a3dfe033d6c1ac93, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.MoodController
+  moodProfiles:
+  - {fileID: 11400000, guid: 1e221fee84296d44197e266146540906, type: 2}
+  - {fileID: 11400000, guid: 7d50472d217b9f94ab0f04378dd33e70, type: 2}
+  - {fileID: 11400000, guid: 6d2a7d087d8c33a4e8fcde1ce0b9c343, type: 2}
+  - {fileID: 11400000, guid: 3e10a47a00f89a540860f6f5f62584c5, type: 2}
+  - {fileID: 11400000, guid: 0d21123bc64dbee47b7093c45161be45, type: 2}
+  - {fileID: 11400000, guid: 26d6ffb830877124f910eabbf8007fe6, type: 2}
+  - {fileID: 11400000, guid: 79afb13f1938dff49b33ea7f23f2af52, type: 2}
+  - {fileID: 11400000, guid: 3ec2381f76e453a4eab39154e2d66aae, type: 2}
+  windowGlassRenderers:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  volumetricLight: {fileID: 0}
+  enemyLight: {fileID: 0}
+  enteranceLight: {fileID: 0}
+  transitionMode: 0
