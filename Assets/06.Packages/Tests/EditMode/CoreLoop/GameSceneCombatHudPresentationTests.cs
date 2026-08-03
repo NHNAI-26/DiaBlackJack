@@ -504,24 +504,30 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void GSH01_U02_ChangeCandidatesKeepActualCandidateIndicesAndRespectInputLock()
+        public void GSH01_U02_ChangeCandidatesUseWorldCardsWithoutCentralOptions()
         {
             CoreLoopBattle battle = CreateStartedBattle(10, 2, 4, 9);
             Assert.That(battle.TryBeginPlayerChange(), Is.True);
 
             CoreLoopViewModel core = CoreLoopPresenter.Create(battle);
-            GameSceneCombatHudViewModel unlocked = GameSceneCombatHudPresenter.Create(
+            GameSceneCombatHudViewModel hud = GameSceneCombatHudPresenter.Create(
                 core, false, false, false);
-            GameSceneCombatHudViewModel locked = GameSceneCombatHudPresenter.Create(
-                core, false, false, true);
+            GameSceneViewModel scene = GameScenePresenter.Create(battle);
 
-            Assert.That(unlocked.Mode, Is.EqualTo(GameSceneCombatHudMode.Options));
-            Assert.That(unlocked.OptionActions.Select(action => action.Command.OptionId),
+            Assert.That(
+                hud.Mode,
+                Is.EqualTo(GameSceneCombatHudMode.DiegeticSelection));
+            Assert.That(hud.Prompt, Is.Empty);
+            Assert.That(hud.OptionActions, Is.Empty);
+            Assert.That(scene.CrystalOrbCandidates, Has.Count.EqualTo(2));
+            Assert.That(
+                scene.CrystalOrbCandidates.Select(candidate =>
+                    candidate.DirectSelectionCommand.Value.OptionId),
                 Is.EqualTo(new[] { 0, 1 }));
-            Assert.That(unlocked.OptionActions.All(action =>
-                action.Command.Kind == GameSceneCombatHudCommandKind.SelectChangedCard &&
-                action.IsInteractable), Is.True);
-            Assert.That(locked.OptionActions.All(action => !action.IsInteractable), Is.True);
+            Assert.That(scene.CrystalOrbCandidates.All(candidate =>
+                candidate.DirectSelectionCommand.HasValue &&
+                candidate.DirectSelectionCommand.Value.Kind ==
+                    GameSceneCombatHudCommandKind.SelectChangedCard), Is.True);
         }
 
         [Test]

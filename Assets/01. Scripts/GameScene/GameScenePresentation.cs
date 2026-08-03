@@ -1414,6 +1414,32 @@ namespace DiaBlackJack.GameScene
         private static IReadOnlyList<GameSceneCardViewModel>
             CreateCrystalOrbCandidates(CoreLoopBattle battle)
         {
+            if (battle.State == CoreLoopState.PlayerChoosingChangeCard)
+            {
+                var changeCandidates = new List<GameSceneCardViewModel>(
+                    battle.PlayerChangeCandidates.Count);
+                for (int i = 0; i < battle.PlayerChangeCandidates.Count; i++)
+                {
+                    BlackjackCard card = battle.PlayerChangeCandidates[i];
+                    changeCandidates.Add(new GameSceneCardViewModel(
+                        card.Id,
+                        card.Rank,
+                        isFaceUp: true,
+                        revealRank: true,
+                        canUse: true,
+                        card.Definition.DisplayName,
+                        abilityDescription: ResolveAbilityDescription(card),
+                        suit: card.Suit,
+                        showHoverBadgeWhenUnavailable: true,
+                        definitionKey: card.DefinitionKey,
+                        directSelectionCommand: new GameSceneCombatHudCommand(
+                            GameSceneCombatHudCommandKind.SelectChangedCard,
+                            i)));
+                }
+
+                return changeCandidates.AsReadOnly();
+            }
+
             PendingCardEffect pendingEffect = battle.PendingPlayerCardEffect;
             if (pendingEffect == null ||
                 pendingEffect.EffectKind != CardEffectKind.CrystalOrb ||

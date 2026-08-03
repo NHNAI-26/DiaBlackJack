@@ -93,6 +93,36 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GSV07_U01_PurchasedUtilityItemDisappearsImmediately()
+        {
+            GameObject lighterObject = new GameObject("Lighter");
+            lighterObject.transform.SetParent(_root.transform);
+            ShopUtilityItemView lighter =
+                lighterObject.AddComponent<ShopUtilityItemView>();
+            GameObject whiskeyObject = new GameObject("Whiskey");
+            whiskeyObject.transform.SetParent(_root.transform);
+            ShopUtilityItemView whiskey =
+                whiskeyObject.AddComponent<ShopUtilityItemView>();
+            SetPrivateField("lighterItem", lighter);
+            SetPrivateField("whiskeyItem", whiskey);
+
+            _shop.Open();
+            _shop.RefreshUtilityItems(2, 5, 12);
+            Assert.That(lighterObject.activeSelf, Is.True);
+            Assert.That(whiskeyObject.activeSelf, Is.True);
+
+            Assert.That(_shop.TryPurchaseLighterRemoval(2), Is.True);
+            Assert.That(lighterObject.activeSelf, Is.False);
+            Assert.That(whiskeyObject.activeSelf, Is.True);
+
+            Assert.That(
+                _shop.TryPurchaseWhiskey(5, 12, out int restoredSoul),
+                Is.True);
+            Assert.That(restoredSoul, Is.EqualTo(2));
+            Assert.That(whiskeyObject.activeSelf, Is.False);
+        }
+
+        [Test]
         public void RFM01_U03_AllCardSlotsCanBePurchasedWithoutAVisitLimit()
         {
             GameObject holderObject = new GameObject("Normal Card Holder");
