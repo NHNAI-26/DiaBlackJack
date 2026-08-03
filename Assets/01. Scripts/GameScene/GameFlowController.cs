@@ -21,12 +21,15 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameHudView hud;
         [SerializeField] private GameObject charactersRoot;
         [SerializeField] private CharacterView enemyCharacter;
+        [SerializeField] private MoodController moodController;
+        [SerializeField] private float moodTransitionDuration = 1f;
 
         private StageProgressionRuntime _runtime;
         private FormalRunSession _session;
         private int? _focusedOpponentOfferId;
         private string _focusedOpponentProfileKey;
         private bool _isProcessingInput;
+        private string _currentMoodId;
 
         public event Action<GameFlowScreen, StageProgressionViewModel>
             ScreenChanged;
@@ -44,6 +47,7 @@ namespace DiaBlackJack.GameScene
             resultView ??= GetComponent<RunResultView>();
             resultView ??= gameObject.AddComponent<RunResultView>();
             codex ??= GetComponent<CodexController>();
+            moodController ??= GetComponent<MoodController>();
             ResolveSceneReferences();
 
             _runtime = StageProgressionRuntime.Instance;
@@ -91,6 +95,9 @@ namespace DiaBlackJack.GameScene
             ResolveSceneReferences();
             if (!TryAdoptFormalRun())
             {
+                ApplyMood(
+                    GameFlowScreen.Combat,
+                    gameManager?.CurrentEnemyProfileKey);
                 return;
             }
 
@@ -408,6 +415,7 @@ namespace DiaBlackJack.GameScene
                 _session,
                 _focusedOpponentProfileKey);
             CurrentScreen = nextScreen;
+            ApplyMood(nextScreen, ResolveCombatProfileKey());
 
             if (nextScreen == GameFlowScreen.Combat)
             {
@@ -520,6 +528,8 @@ namespace DiaBlackJack.GameScene
 
         private void ResolveSceneReferences()
         {
+            moodController ??= GetComponent<MoodController>();
+
             if (hudRoot == null)
             {
                 hudRoot = GameObject.Find("UIHUD");
@@ -551,6 +561,50 @@ namespace DiaBlackJack.GameScene
                     ? null
                     : enemy.GetComponent<CharacterView>();
             }
+        }
+
+        private string ResolveCombatProfileKey()
+        {
+            return _session?.CombatSession?.ActiveStage?.BattleProfileKey ??
+                gameManager?.CurrentEnemyProfileKey;
+        }
+
+        private void ApplyMood(
+            GameFlowScreen screen,
+            string enemyProfileKey)
+        {
+            string moodId = GameSceneMoodResolver.Resolve(
+                screen,
+                enemyProfileKey);
+            if (string.IsNullOrWhiteSpace(moodId) ||
+                string.Equals(
+                    moodId,
+                    _currentMoodId,
+                    StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            moodController ??= GetComponent<MoodController>();
+            if (moodController == null)
+            {
+                Debug.LogWarning(
+                    $"MoodController is missing for mood '{moodId}'.",
+                    this);
+                return;
+            }
+
+            if (!moodController.TryBlendToMood(
+                    moodId,
+                    Mathf.Max(0f, moodTransitionDuration)))
+            {
+                Debug.LogWarning(
+                    $"Mood profile '{moodId}' is not registered.",
+                    moodController);
+                return;
+            }
+
+            _currentMoodId = moodId;
         }
 
         internal static bool ShouldShowHudRoot(GameFlowScreen screen)

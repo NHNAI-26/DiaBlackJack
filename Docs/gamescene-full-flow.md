@@ -622,3 +622,20 @@ RF-05의 `StageTest ↔ GameScene` 결과는 당시 실제 완료 이력이다. 
 - 씬·프리팹·외부 에셋·오픈소스·패키지는 변경하지 않았다.
 
 GF-00~GF-06의 현재 계획 범위는 완료다. 이후 작업은 실제 빌드 입력 QA, 접근성 글자 크기 검토, 미구현 설정·도감 등 별도 기능 단위로 분리한다.
+
+## 11. GameScene 무드 전환 연결
+
+- `StartingDemonReveal`, `OpponentSelection`: `readyStage`
+- `Shop`: `shopStage`
+- `Combat`: 현재 상대 프로필에 대응하는 테마
+  - `cowardly-gambler`: `cowardlyGambler`
+  - `gunslinger`: `gunslinger`
+  - `cultist`: `fanatic`
+  - `trickster`: `fraud`
+  - `enforcer`: `executor`
+  - `final-boss`: `bossStage`
+- 승리·패배 화면처럼 별도 프로필이 없는 화면은 직전 무드를 유지한다.
+- 동일한 화면이 다시 렌더링돼도 같은 BGM을 재추첨하거나 재시작하지 않는다.
+- `GameFlowController`가 화면 상태와 현재 전투 프로필을 무드 ID로 변환하고, 씬의 `MoodController`가 창문·조명·BGM을 1초 동안 전환한다.
+
+담당자 이천서가 위 매핑과 최종 승인 책임을 가진다. 2026-08-03 기준 무드 집중 회귀 19/19, GameScene 프로필 등록 8/8, 기본 건슬링어 런타임 적용, 씬 검증 문제 0건, Console 오류·경고 0건을 확인했다. 전체 CoreLoop EditMode는 660/664이며 실패 4건은 기존 도감·망치 대상 순서·호버 반사 호출 회귀다.

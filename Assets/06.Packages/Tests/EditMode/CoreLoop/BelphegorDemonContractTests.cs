@@ -27,9 +27,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(DemonContractInteractionKind.BelphegorTopCard));
             Assert.That(pending.ContractKind, Is.EqualTo(DemonContractKind.Belphegor));
             Assert.That(pending.Options.Count, Is.EqualTo(2));
+            Assert.That(preview, Is.Not.Null);
+            Assert.That(
+                battle.Player.Deck.TryPeekTop(out BlackjackCard topCard),
+                Is.True);
+            Assert.That(preview.Suit, Is.EqualTo(topCard.Suit));
             Assert.That(pending.Options.All(option =>
                 !option.ContractCardId.HasValue && !option.NumericValue.HasValue), Is.True);
-            Assert.That(preview, Is.Not.Null);
             Assert.That(preview.InteractionId, Is.EqualTo(pending.InteractionId));
             Assert.That(preview.ContractKind, Is.EqualTo(DemonContractKind.Belphegor));
             Assert.That(battle.Player.Hand.Count, Is.EqualTo(handCount));

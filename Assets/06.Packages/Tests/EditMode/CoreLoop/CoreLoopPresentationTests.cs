@@ -679,7 +679,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 model.EnemyVisual,
                 Is.EqualTo(CharacterVisualState.UseCard));
-            Assert.That(model.EnemyActionLabel, Is.EqualTo("DISCARD"));
+            Assert.That(model.EnemyActionLabel, Is.Empty);
             Assert.That(
                 sourceModel.AbilityDescription,
                 Is.EqualTo("상대 공개 카드 1장을 버립니다. 상대가 스탠드했다면 스탠드를 취소하고 비공개 카드도 교체합니다."));
@@ -941,7 +941,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(resolvedModel, Is.Not.Null);
             Assert.That(resolvedModel.KnifeAnimationCue.Succeeded, Is.False);
             Assert.That(resolvedModel.EnemyVisual, Is.Not.EqualTo(CharacterVisualState.Attacked));
-            Assert.That(resolvedModel.EnemyActionLabel, Is.EqualTo("MISS"));
+            Assert.That(resolvedModel.EnemyActionLabel, Is.Empty);
         }
 
         [Test]
@@ -972,7 +972,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 resolvedModel.EnemyVisual,
                 Is.EqualTo(CharacterVisualState.Attacked));
-            Assert.That(resolvedModel.EnemyActionLabel, Is.EqualTo("HIT!"));
+            Assert.That(resolvedModel.EnemyActionLabel, Is.Empty);
         }
 
         [Test]

@@ -13,13 +13,15 @@ MonoBehaviour:
   m_Name: 03_auto
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
   key: lie-detector-3
-  displayName: 거짓말 탐지기
-  description: 숫자 하나를 선언합니다. 상대 비공개 카드가 선언한 숫자 이상인지 확인합니다.
+  displayName: "\uAC70\uC9D3\uB9D0 \uD0D0\uC9C0\uAE30"
+  description: "\uC22B\uC790 \uD558\uB098\uB97C \uC120\uC5B8\uD569\uB2C8\uB2E4. \uC0C1\uB300
+    \uBE44\uACF5\uAC1C \uCE74\uB4DC\uAC00 \uC120\uC5B8\uD55C \uC22B\uC790 \uC774\uC0C1\uC778\uC9C0
+    \uD655\uC778\uD569\uB2C8\uB2E4."
   basePurchasePrice: 3
   shopWeight: 1
   rank: 3
   activation: 3
   effect: 8
   isStandardDeckDefault: 0
-  spadeFaceSprite: {fileID: 21300000, guid: 08a8a36231d3ca1459e4d5080236463c, type: 3}
-  cloverFaceSprite: {fileID: 21300000, guid: 08a8a36231d3ca1459e4d5080236463c, type: 3}
+  spadeFaceSprite: {fileID: 21300000, guid: 5a73ddf569594244b9243b0a5c86fd68, type: 3}
+  cloverFaceSprite: {fileID: 21300000, guid: 5a73ddf569594244b9243b0a5c86fd68, type: 3}

@@ -36,7 +36,8 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: 7833122117494664109}
   - {fileID: 6123456789012345678}
-  m_RendererFeatureMap: ad6b866f10d7b46c4ef3889281e3fa54
+  - {fileID: 4567890123456789012}
+  m_RendererFeatureMap: ad6b866f10d7b46c4ef3889281e3fa54143aa895dd67643f
   m_UseNativeRenderPass: 1
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   m_AssetVersion: 2
@@ -114,3 +115,17 @@ MonoBehaviour:
   passIndex: 0
   bindDepthStencilAttachment: 0
   m_Version: 1
+--- !u!114 &4567890123456789012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdd3fce3a2e2e7a4a96690ac29698de5, type: 3}
+  m_Name: NHN Post Process Outline
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  injectionPoint: 600

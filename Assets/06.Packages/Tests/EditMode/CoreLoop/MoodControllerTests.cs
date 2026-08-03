@@ -11,6 +11,26 @@ namespace DiaBlackJack.CoreLoop.Tests
         private static readonly int GlassGlowColorId =
             Shader.PropertyToID("_GlassGlowColor");
 
+        [TestCase(GameFlowScreen.StartingDemonReveal, null, "readyStage")]
+        [TestCase(GameFlowScreen.OpponentSelection, null, "readyStage")]
+        [TestCase(GameFlowScreen.Shop, null, "shopStage")]
+        [TestCase(GameFlowScreen.Combat, "cowardly-gambler", "cowardlyGambler")]
+        [TestCase(GameFlowScreen.Combat, "gunslinger", "gunslinger")]
+        [TestCase(GameFlowScreen.Combat, "cultist", "fanatic")]
+        [TestCase(GameFlowScreen.Combat, "trickster", "fraud")]
+        [TestCase(GameFlowScreen.Combat, "enforcer", "executor")]
+        [TestCase(GameFlowScreen.Combat, "final-boss", "bossStage")]
+        [TestCase(GameFlowScreen.RunVictory, "final-boss", null)]
+        public void MOO02_U01_FlowScreenResolvesExpectedMood(
+            GameFlowScreen screen,
+            string profileKey,
+            string expectedMoodId)
+        {
+            Assert.That(
+                GameSceneMoodResolver.Resolve(screen, profileKey),
+                Is.EqualTo(expectedMoodId));
+        }
+
         [Test]
         public void MOO01_U01_MoodProfileRejectsEmptyId()
         {

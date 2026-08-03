@@ -235,6 +235,19 @@ namespace DiaBlackJack.GameScene
                                 : GameSceneCombatHudActionPlacement.Default));
                 }
 
+                if (interaction.EffectKind == CardEffectKind.LieDetector &&
+                    interaction.ChoiceKind ==
+                        AutomaticCardChoiceKind.LieDetectorNumber)
+                {
+                    return new GameSceneCombatHudViewModel(
+                        GameSceneCombatHudMode.RevolverNumberSelection,
+                        $"{interaction.SourceDisplayName}  |  {interaction.Prompt}",
+                        Array.Empty<GameSceneCombatHudActionViewModel>(),
+                        options,
+                        Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
+                        automaticCardResult);
+                }
+
                 bool usesDirectCardSelection = HasCardChoice(interaction.Choices);
                 if (usesDirectCardSelection)
                 {
@@ -522,11 +535,8 @@ namespace DiaBlackJack.GameScene
             switch (interactionKind)
             {
                 case DemonContractInteractionKind.BelphegorTopCard:
-                    return optionId ==
-                        BelphegorDemonContractHandler.MoveTopCardToBottomOptionId;
                 case DemonContractInteractionKind.AsmodeusForceOpponentHit:
-                    return optionId ==
-                        AsmodeusDemonContractHandler.SkipForcedHitOptionId;
+                    return true;
                 case DemonContractInteractionKind.MammonReroll:
                     return optionId ==
                         MammonDemonContractHandler.KeepDieOptionId;

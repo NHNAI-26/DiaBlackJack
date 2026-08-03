@@ -99,6 +99,7 @@ namespace DiaBlackJack.GameScene
         private Camera _camera;
         private CardView _hoveredCard;
         private DemonCardView _hoveredDemonCard;
+        private DeckStackView _hoveredDeckStack;
         private ShopUtilityItemView _hoveredShopUtilityItem;
         private TableCombatCommandView _hoveredCombatCommand;
         private object _hoverBadgeOwner;
@@ -158,6 +159,11 @@ namespace DiaBlackJack.GameScene
         public event Action<int> FormalShopCardRemovalRequested;
         public event Action FormalShopRestRequested;
         public event Action FormalShopLeaveRequested;
+
+        internal string CurrentEnemyProfileKey =>
+            string.IsNullOrWhiteSpace(_activeEnemyProfileKey)
+                ? ResolveEnemyProfileKey()
+                : _activeEnemyProfileKey;
 
         public CoreLoopBattle Battle => IsStageBattle
             ? _stageSession.Battle
@@ -256,6 +262,7 @@ namespace DiaBlackJack.GameScene
             _choosingLighterRemoval = false;
             UpdateHover(null);
             UpdateDemonCardHover(null);
+            UpdateDeckStackHover(null);
             UpdateShopUtilityItemHover(null);
             UpdateCombatCommandHover(null);
             hud?.HideCardHoverBadge();
@@ -275,6 +282,7 @@ namespace DiaBlackJack.GameScene
             UpdateHover(null);
             UpdateDemonCardHover(null);
             demonContractSelection?.SetHovered(null);
+            UpdateDeckStackHover(null);
             UpdateShopUtilityItemHover(null);
             UpdateCombatCommandHover(null);
             hud?.HideCardHoverBadge();
@@ -477,6 +485,7 @@ namespace DiaBlackJack.GameScene
             satanNumberSelection?.Hide();
             hud?.HideDemonContractDetail();
             hud?.SetShopLeaveState(visible: false, interactable: false);
+            UpdateDeckStackHover(null);
             UpdateCombatCommandHover(null);
             ResetShopUtilityAnimations();
         }
@@ -506,6 +515,7 @@ namespace DiaBlackJack.GameScene
             _choosingLighterRemoval = false;
             UpdateHover(null);
             UpdateDemonCardHover(null);
+            UpdateDeckStackHover(null);
             UpdateShopUtilityItemHover(null);
             UpdateCombatCommandHover(null);
             demonContractSelection?.SetHovered(null);
@@ -566,6 +576,7 @@ namespace DiaBlackJack.GameScene
 
             if (IsModalInputBlocked)
             {
+                UpdateDeckStackHover(null);
                 UpdateCombatCommandHover(null);
                 return;
             }
@@ -573,6 +584,7 @@ namespace DiaBlackJack.GameScene
             bool shopOpen = shop != null && shop.IsOpen;
             if (_core == null && !shopOpen)
             {
+                UpdateDeckStackHover(null);
                 UpdateCombatCommandHover(null);
                 return;
             }
@@ -581,6 +593,7 @@ namespace DiaBlackJack.GameScene
             {
                 UpdateHover(null);
                 UpdateDemonCardHover(null);
+                UpdateDeckStackHover(null);
                 UpdateShopUtilityItemHover(null);
                 UpdateCombatCommandHover(null);
                 demonContractSelection?.SetHovered(null);
@@ -595,6 +608,7 @@ namespace DiaBlackJack.GameScene
             {
                 UpdateHover(null);
                 UpdateDemonCardHover(null);
+                UpdateDeckStackHover(null);
                 UpdateShopUtilityItemHover(null);
                 demonContractSelection?.SetHovered(null);
                 crystalOrbSelection?.SetHovered(null);
@@ -608,6 +622,7 @@ namespace DiaBlackJack.GameScene
             {
                 UpdateHover(null);
                 UpdateDemonCardHover(null);
+                UpdateDeckStackHover(null);
                 UpdateShopUtilityItemHover(null);
                 UpdateCombatCommandHover(null);
                 demonContractSelection?.SetHovered(null);
@@ -654,11 +669,17 @@ namespace DiaBlackJack.GameScene
             TableCombatCommandView pointedCombatCommand = !shopOpen && hasHit
                 ? hit.collider.GetComponentInParent<TableCombatCommandView>()
                 : null;
+            DeckClickable pointedDeck = !shopOpen && hasHit
+                ? hit.collider.GetComponentInParent<DeckClickable>()
+                : null;
+            DeckStackView pointedDeckStack =
+                ResolvePointedDeckStack(pointedDeck);
 
             if (deckPreview != null && deckPreview.IsOpen)
             {
                 UpdateHover(null);
                 UpdateDemonCardHover(null);
+                UpdateDeckStackHover(null);
                 UpdateShopUtilityItemHover(null);
                 UpdateCombatCommandHover(null);
 
@@ -667,6 +688,7 @@ namespace DiaBlackJack.GameScene
 
             UpdateHover(shopOpen ? pointedShopCard : pointedBattleCard);
             UpdateDemonCardHover(pointedDemonCard);
+            UpdateDeckStackHover(pointedDeckStack);
             UpdateCardHoverBadge();
             UpdateShopUtilityItemHover(pointedShopUtilityItem);
             UpdateCombatCommandHover(pointedCombatCommand);
@@ -712,9 +734,6 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            DeckClickable pointedDeck = !shopOpen && hasHit
-                ? hit.collider.GetComponentInParent<DeckClickable>()
-                : null;
             if (pointedDeck != null)
             {
                 OpenDeckPreview(pointedDeck.Kind);
@@ -828,6 +847,7 @@ namespace DiaBlackJack.GameScene
 
             UpdateHover(null);
             UpdateDemonCardHover(null);
+            UpdateDeckStackHover(null);
             UpdateShopUtilityItemHover(null);
             UpdateCombatCommandHover(null);
             hud?.HideCardHoverBadge();
@@ -874,6 +894,7 @@ namespace DiaBlackJack.GameScene
 
             UpdateHover(pointed);
             UpdateDemonCardHover(null);
+            UpdateDeckStackHover(null);
             UpdateShopUtilityItemHover(null);
             UpdateCombatCommandHover(null);
             demonContractSelection?.SetHovered(null);
@@ -913,6 +934,7 @@ namespace DiaBlackJack.GameScene
 
             UpdateHover(pointed);
             UpdateDemonCardHover(null);
+            UpdateDeckStackHover(null);
             UpdateShopUtilityItemHover(null);
             UpdateCombatCommandHover(null);
             demonContractSelection?.SetHovered(null);
@@ -954,6 +976,49 @@ namespace DiaBlackJack.GameScene
             if (_hoveredCard != null)
             {
                 _hoveredCard.SetHovered(true);
+            }
+        }
+
+        private DeckStackView ResolvePointedDeckStack(DeckClickable pointedDeck)
+        {
+            if (pointedDeck == null)
+            {
+                return null;
+            }
+
+            DeckStackView pointedStack =
+                pointedDeck.GetComponentInParent<DeckStackView>();
+            if (pointedStack == null)
+            {
+                return null;
+            }
+
+            if (pointedDeck.Kind == DeckKind.Draw && pointedStack == remainingDeck)
+            {
+                return pointedStack;
+            }
+
+            return pointedDeck.Kind == DeckKind.Discard && pointedStack == discardDeck
+                ? pointedStack
+                : null;
+        }
+
+        private void UpdateDeckStackHover(DeckStackView pointed)
+        {
+            if (pointed == _hoveredDeckStack)
+            {
+                return;
+            }
+
+            if (_hoveredDeckStack != null)
+            {
+                _hoveredDeckStack.SetHovered(false);
+            }
+
+            _hoveredDeckStack = pointed;
+            if (_hoveredDeckStack != null)
+            {
+                _hoveredDeckStack.SetHovered(true);
             }
         }
 
@@ -1027,6 +1092,7 @@ namespace DiaBlackJack.GameScene
             }
 
             UpdateHover(null);
+            UpdateDeckStackHover(null);
             UpdateCombatCommandHover(null);
             deckPreview.Open(GameScenePresenter.CreateDeckPreview(battle, kind));
             BeginDeckPreviewSwitchInputLock();
@@ -1038,6 +1104,7 @@ namespace DiaBlackJack.GameScene
             {
                 deckPreview.Close();
                 UpdateHover(null);
+                UpdateDeckStackHover(null);
                 UpdateCombatCommandHover(null);
                 hud?.HideCardHoverBadge();
             }
@@ -1083,6 +1150,7 @@ namespace DiaBlackJack.GameScene
                 codex.Close();
             }
 
+            UpdateDeckStackHover(null);
             EndCodexSwitchInputLock();
         }
 
@@ -1090,6 +1158,7 @@ namespace DiaBlackJack.GameScene
         {
             UpdateHover(null);
             UpdateDemonCardHover(null);
+            UpdateDeckStackHover(null);
             UpdateShopUtilityItemHover(null);
             UpdateCombatCommandHover(null);
             hud?.HideCardHoverBadge();

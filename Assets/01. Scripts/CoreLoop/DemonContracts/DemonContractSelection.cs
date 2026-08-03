@@ -569,6 +569,7 @@ namespace DiaBlackJack.CoreLoop
             CardId = card.Id;
             DefinitionKey = card.DefinitionKey;
             Rank = card.Rank;
+            Suit = card.Suit;
         }
 
         public int CardId { get; }
@@ -582,6 +583,8 @@ namespace DiaBlackJack.CoreLoop
         public int Rank { get; }
 
         public int SourceContractCardId { get; }
+
+        public CardSuit Suit { get; }
     }
 
     public abstract class DemonContractRuntimeState

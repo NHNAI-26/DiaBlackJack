@@ -70,6 +70,10 @@ Shader "Shader/Uber Lit"
         [Sub(Dissolve_DISSOLVE_ON)] _DissolveEdgeIntensity("Edge Intensity", Range(0,16)) = 1
         [Sub(Dissolve_DISSOLVE_ON)] _DissolvePanning("Panning XY", Vector) = (0,0,0,0)
 
+        [Main(StencilOutline, _STENCIL_OUTLINE_ON, on)] _StencilOutlineEnabled("Stencil Outline", Float) = 0
+        [Sub(StencilOutline_STENCIL_OUTLINE_ON)] [HDR] _StencilOutlineColor("Outline Color", Color) = (1,0.72,0.08,1)
+        [Sub(StencilOutline_STENCIL_OUTLINE_ON)] _StencilOutlineWidth("Outline Width", Range(0,0.2)) = 0.025
+
         [HideInInspector] _SrcBlend("__src", Float) = 1
         [HideInInspector] _DstBlend("__dst", Float) = 0
         [HideInInspector] _SrcBlendAlpha("__srcA", Float) = 1
@@ -92,6 +96,13 @@ Shader "Shader/Uber Lit"
             ZWrite [_ZWrite]
             Cull [_Cull]
             AlphaToMask [_AlphaToMask]
+            Stencil
+            {
+                Ref 1
+                Comp Always
+                Pass Replace
+                WriteMask [_StencilOutlineEnabled]
+            }
             HLSLPROGRAM
             #pragma target 2.0
             #pragma vertex NHNUberLitVertex
@@ -128,6 +139,33 @@ Shader "Shader/Uber Lit"
             #pragma multi_compile_instancing
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
             #include "NHNUberLitForwardPass.hlsl"
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "StencilOutline"
+            Tags { "LightMode"="UniversalForwardOnly" }
+            Blend SrcAlpha OneMinusSrcAlpha
+            ZWrite Off
+            ZTest LEqual
+            Cull Front
+            Stencil
+            {
+                Ref 1
+                ReadMask 1
+                Comp NotEqual
+                Pass Keep
+            }
+            HLSLPROGRAM
+            #pragma target 2.0
+            #pragma vertex NHNStencilOutlineVertex
+            #pragma fragment NHNStencilOutlineFragment
+            #pragma shader_feature_local _STENCIL_OUTLINE_ON
+            #pragma multi_compile_instancing
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DOTS.hlsl"
+            #include "NHNUberLitInput.hlsl"
+            #include "NHNStencilOutlinePass.hlsl"
             ENDHLSL
         }
 

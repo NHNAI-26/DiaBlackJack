@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 
 namespace DiaBlackJack.GameScene
 {
-    /// <summary>Focused 1-10 dial used while the player declares a revolver number.</summary>
+    /// <summary>Focused 1-10 dial used for revolver predictions and lie-detector declarations.</summary>
     [DisallowMultipleComponent]
     public sealed class RevolverNumberSelectorView : MonoBehaviour
     {

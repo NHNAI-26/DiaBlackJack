@@ -521,6 +521,7 @@ namespace DiaBlackJack.GameScene
                 battle.LastResolution.HasValue;
             (CharacterVisualState enemyVisual, string enemyLabel) =
                 ResolveSide(battle, CombatantSide.Enemy);
+            enemyLabel = FilterEnemyActionLabel(enemyLabel);
             ActiveDemonContract playerMammon = FindMammonContract(
                 battle.ActivePlayerDemonContracts);
             GameSceneViewModel model = new GameSceneViewModel(
@@ -1357,7 +1358,7 @@ namespace DiaBlackJack.GameScene
                 pendingEffect.EffectKind != CardEffectKind.CrystalOrb ||
                 pendingEffect.ChoiceKind != CardEffectChoiceKind.TakePeekedCard)
             {
-                return Array.AsReadOnly(Array.Empty<GameSceneCardViewModel>());
+                return CreateBelphegorPreviewCandidate(battle);
             }
 
             var candidates = new List<GameSceneCardViewModel>(
@@ -1396,6 +1397,48 @@ namespace DiaBlackJack.GameScene
             }
 
             return candidates.AsReadOnly();
+        }
+
+        private static IReadOnlyList<GameSceneCardViewModel>
+            CreateBelphegorPreviewCandidate(CoreLoopBattle battle)
+        {
+            PlayerDemonContractPreview preview = battle.PlayerDemonContractPreview;
+            if (preview == null ||
+                preview.ContractKind != DemonContractKind.Belphegor)
+            {
+                return Array.AsReadOnly(Array.Empty<GameSceneCardViewModel>());
+            }
+
+            CardDefinition definition = CardDefinitionCatalog.GetByKey(
+                preview.DefinitionKey);
+            return Array.AsReadOnly(new[]
+            {
+                new GameSceneCardViewModel(
+                    preview.CardId,
+                    preview.Rank,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    definition.DisplayName,
+                    abilityDescription: definition.Description,
+                    suit: preview.Suit,
+                    showHoverBadgeWhenUnavailable: true,
+                    definitionKey: preview.DefinitionKey)
+            });
+        }
+
+        internal static string FilterEnemyActionLabel(string label)
+        {
+            switch (label)
+            {
+                case "HIT":
+                case "STAND":
+                case "CHANGE":
+                case "CONTRACT":
+                    return label;
+                default:
+                    return string.Empty;
+            }
         }
 
         private static IReadOnlyList<GameSceneCardViewModel>

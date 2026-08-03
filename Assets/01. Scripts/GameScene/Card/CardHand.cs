@@ -83,40 +83,13 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            int previousCount = _spawned.Count;
             int previousDemonCount = _spawnedDemonCards.Count;
 
-            var retainedCardIds = new HashSet<int>();
-            for (int i = 0; i < cards.Count; i++)
-            {
-                retainedCardIds.Add(cards[i].CardId);
-            }
-
-            for (int i = _spawned.Count - 1; i >= 0; i--)
-            {
-                CardView spawnedCard = _spawned[i];
-                if (spawnedCard != null &&
-                    !retainedCardIds.Contains(spawnedCard.CardId))
-                {
-                    RemoveCardAt(i, animateDiscard: true);
-                }
-            }
-
-            while (_spawned.Count < cards.Count)
-            {
-                _spawned.Add(Instantiate(cardPrefab, transform));
-                _moveTweens.Add(null);
-            }
-
-            while (_spawned.Count > cards.Count)
-            {
-                RemoveCardAt(_spawned.Count - 1, animateDiscard: true);
-            }
-
+            HashSet<int> newCardIds = SynchronizeCards(cards);
             HashSet<int> newDemonCardIds = SynchronizeDemonCards(demonCards);
             bool animateLayout = Application.isPlaying &&
                 _hasRenderedLayout &&
-                (cards.Count > previousCount ||
+                (newCardIds.Count > 0 ||
                  demonCards.Count != previousDemonCount ||
                  newDemonCardIds.Count > 0);
             int totalCardCount = cards.Count + demonCards.Count;
@@ -136,7 +109,7 @@ namespace DiaBlackJack.GameScene
                     i,
                     targetPosition,
                     animateLayout,
-                    i >= previousCount);
+                    newCardIds.Contains(cards[i].CardId));
             }
 
             for (int i = 0; i < _spawnedDemonCards.Count; i++)
@@ -270,6 +243,48 @@ namespace DiaBlackJack.GameScene
             _hasRenderedLayout = false;
         }
 
+        private HashSet<int> SynchronizeCards(
+            IReadOnlyList<GameSceneCardViewModel> cards)
+        {
+            var previousCards = new List<CardView>(_spawned);
+            var previousTweens = new List<Tween>(_moveTweens);
+            var newCardIds = new HashSet<int>();
+            _spawned.Clear();
+            _moveTweens.Clear();
+
+            for (int modelIndex = 0; modelIndex < cards.Count; modelIndex++)
+            {
+                GameSceneCardViewModel model = cards[modelIndex];
+                int previousIndex = FindCardIndex(previousCards, model.CardId);
+                if (previousIndex >= 0)
+                {
+                    _spawned.Add(previousCards[previousIndex]);
+                    _moveTweens.Add(previousTweens[previousIndex]);
+                    previousCards[previousIndex] = null;
+                    previousTweens[previousIndex] = null;
+                    continue;
+                }
+
+                CardView card = Instantiate(cardPrefab, transform);
+                _spawned.Add(card);
+                _moveTweens.Add(null);
+                newCardIds.Add(model.CardId);
+            }
+
+            for (int i = 0; i < previousCards.Count; i++)
+            {
+                if (previousCards[i] == null)
+                {
+                    continue;
+                }
+
+                previousTweens[i]?.Kill();
+                AnimateDiscard(previousCards[i]);
+            }
+
+            return newCardIds;
+        }
+
         private HashSet<int> SynchronizeDemonCards(
             IReadOnlyList<GameSceneDemonCardViewModel> demonCards)
         {
@@ -312,6 +327,21 @@ namespace DiaBlackJack.GameScene
             }
 
             return newCardIds;
+        }
+
+        private static int FindCardIndex(
+            IReadOnlyList<CardView> cards,
+            int cardId)
+        {
+            for (int i = 0; i < cards.Count; i++)
+            {
+                if (cards[i] != null && cards[i].CardId == cardId)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         private static int FindDemonCardIndex(

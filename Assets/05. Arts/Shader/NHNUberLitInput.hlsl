@@ -24,6 +24,7 @@ CBUFFER_START(UnityPerMaterial)
     half4 _HeightFadeTint;
     half4 _GlassGlowColor;
     half4 _DissolveEdgeColor;
+    half4 _StencilOutlineColor;
     half4 _DissolvePanning;
 #if defined(NHN_SPRITE_UBER)
     half _AlphaMultiplier;
@@ -62,6 +63,8 @@ CBUFFER_START(UnityPerMaterial)
     half _DissolveObjectNoiseStrength;
     half _DissolveEdgeWidth;
     half _DissolveEdgeIntensity;
+    half _StencilOutlineEnabled;
+    half _StencilOutlineWidth;
     half _Surface;
     half _Cull;
 CBUFFER_END

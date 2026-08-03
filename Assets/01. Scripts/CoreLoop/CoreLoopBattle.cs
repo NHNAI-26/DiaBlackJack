@@ -2016,12 +2016,12 @@ namespace DiaBlackJack.CoreLoop
                     BelphegorDemonContractHandler.KeepTopCardOptionId,
                     contractCardId: null,
                     numericValue: null,
-                    "확인한 카드를 공개 히트"),
+                    "히트하기"),
                 new DemonContractOption(
                     BelphegorDemonContractHandler.MoveTopCardToBottomOptionId,
                     contractCardId: null,
                     numericValue: null,
-                    "확인한 카드를 덱 아래로 이동")
+                    "히트하지 않기")
             };
 
             return new PendingDemonContractInteraction(
@@ -2153,12 +2153,12 @@ namespace DiaBlackJack.CoreLoop
                     AsmodeusDemonContractHandler.SkipForcedHitOptionId,
                     contractCardId: null,
                     numericValue: null,
-                    "강제 히트 사용 안 함"),
+                    "능력 사용 안 하기"),
                 new DemonContractOption(
                     AsmodeusDemonContractHandler.ForceHitOptionId,
                     contractCardId: null,
                     numericValue: null,
-                    "상대를 공개 히트")
+                    "능력 사용하기")
             };
 
             return new PendingDemonContractInteraction(
@@ -2696,6 +2696,7 @@ namespace DiaBlackJack.CoreLoop
             _activeAutomaticCardEffectContext =
                 new AutomaticCardEffectContext(this, ownerSide, sourceCard);
             _automaticCardContinuation = continuation;
+            CoreLoopState stateBeforeAutomaticChoice = State;
             _isBeginningAutomaticCardEffect = true;
             try
             {
@@ -2707,6 +2708,11 @@ namespace DiaBlackJack.CoreLoop
                     resumeContinuation: false);
                 if (!isWaitingForChoice)
                 {
+                    if (State == CoreLoopState.ResolvingAutomaticCardEffect)
+                    {
+                        State = stateBeforeAutomaticChoice;
+                    }
+
                     immediateResult = LastAutomaticCardResult;
                 }
 
