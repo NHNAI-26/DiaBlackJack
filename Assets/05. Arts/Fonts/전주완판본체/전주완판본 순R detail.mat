@@ -26,8 +26,8 @@ Material:
     m_Ints: []
     m_Floats:
     - _FaceDilate: -0.75
-    - _ScaleRatioB: 1.171875
-    - _ScaleRatioC: 1.171875
+    - _ScaleRatioB: 1.3888888
+    - _ScaleRatioC: 1.3888888
     m_Colors: []
   m_BuildTextureStacks: []
   m_AllowLocking: 1

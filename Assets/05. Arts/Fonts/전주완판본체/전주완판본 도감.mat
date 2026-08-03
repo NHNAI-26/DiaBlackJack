@@ -27,9 +27,9 @@ Material:
     m_Floats:
     - _FaceDilate: 0.36
     - _OutlineWidth: 1
-    - _ScaleRatioA: 0.48465267
-    - _ScaleRatioB: 0.339375
-    - _ScaleRatioC: 0.339375
+    - _ScaleRatioA: 0.57440317
+    - _ScaleRatioB: 0.40222222
+    - _ScaleRatioC: 0.40222222
     m_Colors:
     - _FaceColor: {r: 1, g: 1, b: 1, a: 1}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
