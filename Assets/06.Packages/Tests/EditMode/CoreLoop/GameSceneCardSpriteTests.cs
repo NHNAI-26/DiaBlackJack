@@ -773,6 +773,70 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GSV04_U02_DuplicateCombatCardsKeepIndependentRenderState()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject first = Object.Instantiate(prefab);
+            GameObject second = Object.Instantiate(prefab);
+
+            try
+            {
+                CardView firstView = first.GetComponent<CardView>();
+                CardView secondView = second.GetComponent<CardView>();
+                SpriteRenderer firstFront = GetFrontRenderer(firstView);
+                SpriteRenderer secondFront = GetFrontRenderer(secondView);
+                GameSceneCardViewModel firstModel = new GameSceneCardViewModel(
+                    cardId: 1,
+                    rank: 8,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: true,
+                    displayName: "Eight",
+                    definitionKey: "standard-plain-8");
+                GameSceneCardViewModel secondModel = new GameSceneCardViewModel(
+                    cardId: 2,
+                    rank: firstModel.Rank,
+                    isFaceUp: firstModel.IsFaceUp,
+                    revealRank: firstModel.RevealRank,
+                    canUse: firstModel.CanUse,
+                    displayName: firstModel.DisplayName,
+                    definitionKey: firstModel.DefinitionKey);
+
+                firstView.Bind(firstModel);
+                secondView.Bind(secondModel);
+
+                Assert.That(firstFront.sprite, Is.SameAs(secondFront.sprite));
+                Assert.That(
+                    firstFront.sharedMaterial,
+                    Is.Not.SameAs(secondFront.sharedMaterial));
+                Assert.That(
+                    firstFront.sharedMaterial.GetFloat(PixelOutlineVisibilityId),
+                    Is.Zero);
+                Assert.That(
+                    secondFront.sharedMaterial.GetFloat(PixelOutlineVisibilityId),
+                    Is.Zero);
+
+                firstView.SetHovered(true);
+
+                Assert.That(
+                    firstFront.sharedMaterial.GetFloat(PixelOutlineVisibilityId),
+                    Is.EqualTo(1f));
+                Assert.That(
+                    secondFront.sharedMaterial.GetFloat(PixelOutlineVisibilityId),
+                    Is.Zero);
+                Assert.That(
+                    secondFront.sharedMaterial.GetFloat("_Brightness"),
+                    Is.EqualTo(1f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(first);
+                Object.DestroyImmediate(second);
+            }
+        }
+
+        [Test]
         public void GSV03_U01_ShopNormalCardHoverMaterialIsIsolatedPerOffer()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);

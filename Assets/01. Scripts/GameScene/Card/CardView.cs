@@ -892,15 +892,7 @@ namespace DiaBlackJack.GameScene
 
             MaterialPropertyBlock propertyBlock = PropertyBlockFor(renderer);
             renderer.GetPropertyBlock(propertyBlock);
-            if (renderer == _backSpriteRenderer)
-            {
-                EnsureCardMaterialInstance(renderer);
-            }
-            else if (renderer == _frontSpriteRenderer)
-            {
-                EnsureCardMaterialInstance(renderer);
-            }
-
+            EnsureCardMaterialInstance(renderer);
             Material blendMaterial = renderer.sharedMaterial;
             SetCardBlendSpriteProperties(
                 propertyBlock,
