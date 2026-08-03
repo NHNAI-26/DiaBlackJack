@@ -60,6 +60,54 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void DCR03_U16_MammonPhysicalRerollUsesSuppliedLandedFace()
+        {
+            CoreLoopBattle battle = CreateMammonBattle(
+                playerRanks: new[] { 5, 5, 2, 3, 4, 5 },
+                enemyRanks: new[] { 10, 7, 2, 3, 4, 5 },
+                new SequenceEnemyPolicy(EnemyActionType.Stand),
+                dieValues: new[] { 2, 1 });
+            ActivateFirstContract(battle);
+            ActiveDemonContract mammon =
+                battle.ActivePlayerDemonContracts.Single();
+
+            Assert.That(
+                battle.TryBeginPlayerMammonReroll(
+                    mammon.SourceCardId,
+                    physicalDieValue: 5),
+                Is.True);
+
+            Assert.That(
+                ((MammonRuntimeState)mammon.RuntimeState).CurrentDieValue,
+                Is.EqualTo(5));
+        }
+
+        [TestCase(0)]
+        [TestCase(7)]
+        public void DCR03_U17_InvalidPhysicalMammonFaceLeavesStateUnchanged(
+            int invalidFace)
+        {
+            CoreLoopBattle battle = CreateMammonBattle(
+                playerRanks: new[] { 5, 5, 2, 3, 4, 5 },
+                enemyRanks: new[] { 10, 7, 2, 3, 4, 5 },
+                new SequenceEnemyPolicy(EnemyActionType.Stand),
+                dieValues: new[] { 2 });
+            ActivateFirstContract(battle);
+            ActiveDemonContract mammon =
+                battle.ActivePlayerDemonContracts.Single();
+
+            Assert.That(
+                battle.TryBeginPlayerMammonReroll(
+                    mammon.SourceCardId,
+                    invalidFace),
+                Is.False);
+            Assert.That(
+                ((MammonRuntimeState)mammon.RuntimeState).CurrentDieValue,
+                Is.EqualTo(2));
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+        }
+
+        [Test]
         public void DCR03_U03_MammonNormalActionKeepsCurrentDie()
         {
             CoreLoopBattle battle = CreateMammonBattle(

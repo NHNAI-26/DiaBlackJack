@@ -2899,7 +2899,23 @@ namespace DiaBlackJack.CoreLoop
         {
             return TryBeginMammonReroll(
                 CombatantSide.Player,
-                sourceContractCardId);
+                sourceContractCardId,
+                null);
+        }
+
+        public bool TryBeginPlayerMammonReroll(
+            int sourceContractCardId,
+            int physicalDieValue)
+        {
+            if (physicalDieValue < 1 || physicalDieValue > 6)
+            {
+                return false;
+            }
+
+            return TryBeginMammonReroll(
+                CombatantSide.Player,
+                sourceContractCardId,
+                physicalDieValue);
         }
 
         public bool CanBeginPlayerActiveDemonContractAction(
@@ -2976,7 +2992,8 @@ namespace DiaBlackJack.CoreLoop
 
         private bool TryBeginMammonReroll(
             CombatantSide ownerSide,
-            int sourceContractCardId)
+            int sourceContractCardId,
+            int? suppliedDieValue = null)
         {
             if (sourceContractCardId < 0)
             {
@@ -3006,9 +3023,14 @@ namespace DiaBlackJack.CoreLoop
                 ownerSide,
                 PublicCombatActionType.DemonContract,
                 activeContract.Definition.Key);
-            MammonRerollResult result = _demonContractResolver.RerollMammon(
-                this,
-                activeContract);
+            MammonRerollResult result = suppliedDieValue.HasValue
+                ? _demonContractResolver.RerollMammon(
+                    this,
+                    activeContract,
+                    suppliedDieValue.Value)
+                : _demonContractResolver.RerollMammon(
+                    this,
+                    activeContract);
             if (result.OwnerBusted)
             {
                 OwnerBustHandlingResult handling =

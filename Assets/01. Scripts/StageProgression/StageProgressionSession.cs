@@ -239,6 +239,22 @@ namespace DiaBlackJack.StageProgression
             return true;
         }
 
+        public bool TryBeginPlayerMammonReroll(
+            int sourceContractCardId,
+            int physicalDieValue)
+        {
+            if (!CanForwardBattleAction() ||
+                !_battleSession.TryBeginPlayerMammonReroll(
+                    sourceContractCardId,
+                    physicalDieValue))
+            {
+                return false;
+            }
+
+            SynchronizeFinishedBattle();
+            return true;
+        }
+
         public bool TryBeginPlayerSatanContractAction(int sourceContractCardId)
         {
             if (!CanForwardBattleAction() ||

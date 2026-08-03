@@ -68,6 +68,15 @@ namespace DiaBlackJack.CoreLoop
             return Battle.TryBeginPlayerMammonReroll(sourceContractCardId);
         }
 
+        public bool TryBeginPlayerMammonReroll(
+            int sourceContractCardId,
+            int physicalDieValue)
+        {
+            return Battle.TryBeginPlayerMammonReroll(
+                sourceContractCardId,
+                physicalDieValue);
+        }
+
         public bool TryBeginPlayerSatanContractAction(int sourceContractCardId)
         {
             return Battle.TryBeginPlayerSatanContractAction(sourceContractCardId);

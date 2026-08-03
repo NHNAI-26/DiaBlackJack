@@ -124,7 +124,6 @@ namespace DiaBlackJack.GameScene
         private string _activeEnemyProfileKey;
         private int? _playerMammonDieValue;
         private int? _enemyMammonDieValue;
-        private bool _mammonRollAnimationRequested;
         private bool _hasLastRevolverAnimationCue;
         private int _lastRevolverAnimationRoundNumber;
         private int _lastRevolverAnimationSourceCardId;
@@ -771,7 +770,7 @@ namespace DiaBlackJack.GameScene
                 : null;
             if (pointedMammonDie != null && pointedMammonDie.IsInteractable)
             {
-                ProcessInput(TryRollPlayerMammonDie);
+                TryStartPlayerMammonPhysicalRoll();
                 return;
             }
 
@@ -2536,21 +2535,44 @@ namespace DiaBlackJack.GameScene
                     sourceContractCardId);
         }
 
-        private bool TryRollPlayerMammonDie()
+        private void TryStartPlayerMammonPhysicalRoll()
         {
+            if (IsModalInputBlocked || _inputLocked || mammonDie == null)
+            {
+                return;
+            }
+
             GameSceneViewModel viewModel = Battle == null
                 ? null
                 : GameScenePresenter.Create(Battle, _activeEnemyProfileKey);
             if (viewModel?.PlayerMammonSourceCardId == null ||
                 !viewModel.CanPlayerRerollMammon)
             {
-                return false;
+                return;
             }
 
-            bool accepted = TryBeginPlayerActiveDemonContractAction(
-                viewModel.PlayerMammonSourceCardId.Value);
-            _mammonRollAnimationRequested = accepted;
-            return accepted;
+            int sourceContractCardId = viewModel.PlayerMammonSourceCardId.Value;
+            _inputLocked = true;
+            UpdateShopLeaveControl();
+            mammonDie.Render(viewModel.PlayerMammonDieValue, false);
+            mammonDie.PlayPhysicalRoll(
+                landedValue => ResolvePlayerMammonPhysicalRoll(
+                    sourceContractCardId,
+                    landedValue));
+        }
+
+        private void ResolvePlayerMammonPhysicalRoll(
+            int sourceContractCardId,
+            int landedValue)
+        {
+            _inputLocked = false;
+            ProcessInput(() => IsStageBattle
+                ? _stageSession.TryBeginPlayerMammonReroll(
+                    sourceContractCardId,
+                    landedValue)
+                : _session.TryBeginPlayerMammonReroll(
+                    sourceContractCardId,
+                    landedValue));
         }
 
         // Fires synchronously for each sub-step while the battle resolves the turn. Snapshots the
@@ -2681,10 +2703,9 @@ namespace DiaBlackJack.GameScene
                 !isShopOpen && !_inputLocked &&
                     vm.CanPlayerRerollMammon);
             if (!isShopOpen && vm.PlayerMammonDieValue.HasValue &&
-                (playInitialMammonRoll || _mammonRollAnimationRequested))
+                playInitialMammonRoll)
             {
                 mammonDie?.PlayRoll(vm.PlayerMammonDieValue.Value);
-                _mammonRollAnimationRequested = false;
             }
             bool hideCombatHudForPresentation =
                 _inputLocked &&
