@@ -434,6 +434,40 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CUM17_U01_MilitaryKnifeStagesCardBackBeforeRevealAndTotalChange()
+        {
+            CoreLoopBattle battle = CreateStartedBattle(
+                playerRanks: new[] { 2, 3, 9 },
+                enemyRanks: new[] { 5, 7, 2, 3 });
+            BlackjackCard sourceCard = battle.Player.Draw(faceUp: true);
+            int initialVisibleTotal = battle.Enemy.VisibleHandValue.Total;
+            var initialCardIds = new HashSet<int>(
+                battle.Enemy.Hand.Cards.Select(card => card.Id));
+            var stagedStates = new List<(bool IsFaceUp, int VisibleTotal)>();
+            battle.Stepped += () =>
+            {
+                BlackjackCard stagedCard = battle.Enemy.Hand.Cards
+                    .FirstOrDefault(card => !initialCardIds.Contains(card.Id));
+                if (stagedCard != null)
+                {
+                    stagedStates.Add((
+                        stagedCard.IsFaceUp,
+                        battle.Enemy.VisibleHandValue.Total));
+                }
+            };
+
+            Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
+
+            Assert.That(stagedStates.Count, Is.GreaterThanOrEqualTo(2));
+            Assert.That(stagedStates[0].IsFaceUp, Is.False);
+            Assert.That(stagedStates[0].VisibleTotal, Is.EqualTo(initialVisibleTotal));
+            Assert.That(stagedStates.Any(state =>
+                state.IsFaceUp &&
+                state.VisibleTotal != initialVisibleTotal), Is.True);
+            Assert.That(battle.Enemy.Deck.DiscardCount, Is.EqualTo(1));
+        }
+
+        [Test]
         public void CU04_U16_CoreLoopSessionUsesProductionCrystalOrbHandler()
         {
             var session = new CoreLoopSession(() => CreateBattle(

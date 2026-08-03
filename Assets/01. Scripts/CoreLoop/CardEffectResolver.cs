@@ -168,6 +168,36 @@ namespace DiaBlackJack.CoreLoop
             return drawnCard;
         }
 
+        public BlackjackCard ForceOpponentDrawConcealedThenReveal(
+            CardEffectContinuationKind continuationKind,
+            out bool isWaitingForAutomaticChoice,
+            out AutomaticCardResult? immediateAutomaticResult)
+        {
+            BlackjackCard drawnCard = Opponent.DrawConcealedPublicRole();
+            _battle.NotifyCardEffectVisualStep();
+            if (!Opponent.TryRevealCard(drawnCard.Id))
+            {
+                throw new InvalidOperationException(
+                    "Forced opponent card could not be revealed.");
+            }
+
+            _battle.NotifyCardEffectVisualStep();
+            var continuation = new CardEffectContinuation(
+                continuationKind,
+                drawnCard.Id);
+            isWaitingForAutomaticChoice =
+                _battle.TryBeginAutomaticCardEffect(
+                    ActorSide == CombatantSide.Player
+                        ? CombatantSide.Enemy
+                        : CombatantSide.Player,
+                    drawnCard,
+                    AutomaticCardContinuation.ForCardEffect(
+                        ActorSide,
+                        continuation),
+                    out immediateAutomaticResult);
+            return drawnCard;
+        }
+
         public RoundResolution CreateOpponentCardEffectBustResolution()
         {
             return RoundResolver.ResolveCardEffectBust(

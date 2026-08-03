@@ -61,6 +61,19 @@ namespace DiaBlackJack.CoreLoop
             FaceUpCardAdded?.Invoke(card);
         }
 
+        internal bool TryRevealCard(int cardId)
+        {
+            if (!Hand.TryGetCard(cardId, out BlackjackCard card) ||
+                card.IsFaceUp)
+            {
+                return false;
+            }
+
+            card.Reveal();
+            FaceUpCardAdded?.Invoke(card);
+            return true;
+        }
+
         internal BlackjackCard AddTemporaryFaceUpCard(
             int cardId,
             CardDefinition definition)
@@ -69,6 +82,14 @@ namespace DiaBlackJack.CoreLoop
             Deck.RegisterTemporaryCardInPlay(card);
             Hand.Add(card);
             FaceUpCardAdded?.Invoke(card);
+            return card;
+        }
+
+        internal BlackjackCard DrawConcealedPublicRole()
+        {
+            BlackjackCard card = Deck.Draw();
+            card.Conceal();
+            Hand.AddPublicRole(card);
             return card;
         }
 

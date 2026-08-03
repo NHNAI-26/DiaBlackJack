@@ -973,6 +973,54 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CUM17_U02_KnifeTimelinePairsRevealWithResolvedThrow()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 9, 2 },
+                enemyRanks: new[] { 5, 1, 2 },
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3);
+            Assert.That(battle.Start(), Is.True);
+            BlackjackCard sourceCard = battle.Player.Hand.Cards[0];
+            GameSceneViewModel baseline = GameScenePresenter.Create(battle);
+            var timeline = new List<GameSceneViewModel>();
+            battle.Stepped += () => timeline.Add(GameScenePresenter.Create(battle));
+
+            Assert.That(battle.TryBeginPlayerCardUse(sourceCard.Id), Is.True);
+
+            int concealedIndex = -1;
+            int revealIndex = -1;
+            for (int i = 0; i < timeline.Count; i++)
+            {
+                GameSceneViewModel previous = i == 0 ? baseline : timeline[i - 1];
+                if (GameManager.IsKnifeConcealedCardBeat(previous, timeline[i]))
+                {
+                    concealedIndex = i;
+                }
+
+                if (GameManager.IsKnifeRevealBeat(previous, timeline[i]))
+                {
+                    revealIndex = i;
+                }
+            }
+
+            Assert.That(concealedIndex, Is.GreaterThanOrEqualTo(0));
+            Assert.That(revealIndex, Is.EqualTo(concealedIndex + 1));
+            Assert.That(revealIndex + 1, Is.LessThan(timeline.Count));
+            Assert.That(
+                GameManager.IsMatchingKnifeResolvedBeat(
+                    timeline[revealIndex],
+                    timeline[revealIndex + 1]),
+                Is.True);
+            Assert.That(
+                timeline[concealedIndex].EnemyTotalsText,
+                Is.EqualTo(baseline.EnemyTotalsText));
+            Assert.That(
+                timeline[revealIndex].EnemyTotalsText,
+                Is.Not.EqualTo(baseline.EnemyTotalsText));
+        }
+
+        [Test]
         public void CU05_GameSceneCreatesRevolverAnimationCueWhenRevolverResolves()
         {
             CoreLoopBattle battle = CreateBattle(

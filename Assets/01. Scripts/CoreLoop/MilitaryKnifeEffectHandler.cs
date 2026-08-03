@@ -22,7 +22,7 @@ namespace DiaBlackJack.CoreLoop
                     "Military knife requires enemy visible total at most 16 and one deck card.");
             }
 
-            BlackjackCard drawnCard = context.ForceOpponentDrawFaceUp(
+            BlackjackCard drawnCard = context.ForceOpponentDrawConcealedThenReveal(
                 CardEffectContinuationKind.MilitaryKnifeAfterOpponentDraw,
                 out bool isWaitingForAutomaticChoice,
                 out AutomaticCardResult? immediateAutomaticResult);

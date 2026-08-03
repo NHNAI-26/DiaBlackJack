@@ -70,6 +70,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Animator knifeAnimator;
         [SerializeField] private GameObject knifeRoot;
         [SerializeField] private float knifeReadySeconds = 0.7f;
+        [SerializeField] private float knifeSuspenseSeconds = 2.5f;
         [SerializeField] private float knifeResultSeconds = 3.1f;
         [SerializeField] private string knifeBaseStateName = "Knife_Empty";
         [SerializeField] private string playerKnifeStartTrigger = "PlayerStart";
@@ -2068,6 +2069,9 @@ namespace DiaBlackJack.GameScene
             // The battle runs the whole turn synchronously; Stepped fires once per sub-step, so we
             // snapshot each into a timeline and then pace them out over PlayTimeline.
             CoreLoopBattle battle = Battle;
+            GameSceneViewModel timelineBaseline = battle == null
+                ? null
+                : GameScenePresenter.Create(battle, _activeEnemyProfileKey);
             _timeline.Clear();
             if (battle != null)
             {
@@ -2083,7 +2087,7 @@ namespace DiaBlackJack.GameScene
 
             if (accepted && Application.isPlaying && _timeline.Count > 0)
             {
-                StartCoroutine(PlayTimeline());
+                StartCoroutine(PlayTimeline(timelineBaseline));
             }
             else
             {
@@ -2185,23 +2189,53 @@ namespace DiaBlackJack.GameScene
             _timeline.Add(GameScenePresenter.Create(Battle, _activeEnemyProfileKey));
         }
 
-        private IEnumerator PlayTimeline()
+        private IEnumerator PlayTimeline(GameSceneViewModel timelineBaseline)
         {
             List<GameSceneViewModel> timeline =
                 new List<GameSceneViewModel>(_timeline);
             _timeline.Clear();
+            GameSceneViewModel pendingKnifeReveal = null;
 
-            foreach (GameSceneViewModel vm in timeline)
+            for (int index = 0; index < timeline.Count; index++)
             {
+                GameSceneViewModel vm = timeline[index];
+                GameSceneViewModel previous = index == 0
+                    ? timelineBaseline
+                    : timeline[index - 1];
+                if (IsKnifeRevealBeat(previous, vm) &&
+                    index + 1 < timeline.Count &&
+                    IsMatchingKnifeResolvedBeat(
+                        vm,
+                        timeline[index + 1]))
+                {
+                    pendingKnifeReveal = vm;
+                    continue;
+                }
+
+                bool revealKnifeCardWithThrow =
+                    pendingKnifeReveal != null &&
+                    IsMatchingKnifeResolvedBeat(pendingKnifeReveal, vm);
                 AppliedAnimationResult playedAnimation = ApplyView(
                     vm,
                     scheduleRevolverRetry: false,
-                    deferHammerSmashCardRender: true);
+                    deferHammerSmashCardRender: true,
+                    deferKnifeResultCardRender: revealKnifeCardWithThrow);
+
+                if (revealKnifeCardWithThrow)
+                {
+                    RenderHands(pendingKnifeReveal);
+                    RenderTotals(pendingKnifeReveal);
+                }
 
                 bool resolveBeat = vm.Core.State == CoreLoopState.ResolvingRound;
                 float waitSeconds = resolveBeat
                     ? Mathf.Max(resolveHoldSeconds, MinimumRoundResultHoldSeconds)
                     : stepSeconds;
+                if (IsKnifeConcealedCardBeat(previous, vm))
+                {
+                    waitSeconds = Mathf.Max(waitSeconds, knifeSuspenseSeconds);
+                }
+
                 if (playedAnimation.PlayedAny)
                 {
                     waitSeconds = Mathf.Max(
@@ -2216,7 +2250,10 @@ namespace DiaBlackJack.GameScene
                 if (playedAnimation.DeferredCardRender)
                 {
                     RenderHands(playedAnimation.DeferredViewModel);
+                    RenderTotals(playedAnimation.DeferredViewModel);
                 }
+
+                pendingKnifeReveal = null;
 
                 GameSceneRevolverAnimationCue revolverCue =
                     vm.RevolverAnimationCue;
@@ -2257,7 +2294,8 @@ namespace DiaBlackJack.GameScene
         private AppliedAnimationResult ApplyView(
             GameSceneViewModel vm,
             bool scheduleRevolverRetry = true,
-            bool deferHammerSmashCardRender = false)
+            bool deferHammerSmashCardRender = false,
+            bool deferKnifeResultCardRender = false)
         {
             _core = vm.Core;
             _playerMammonDieValue = vm.PlayerMammonDieValue;
@@ -2313,9 +2351,13 @@ namespace DiaBlackJack.GameScene
             UpdateEnemyCardSelectionCamera(
                 vm.FocusesEnemyCardsForSelection);
             bool deferredCardRender =
-                deferHammerSmashCardRender &&
-                playedHammerAnimation &&
-                IsHammerSmashCue(vm.HammerAnimationCue);
+                (deferHammerSmashCardRender &&
+                 playedHammerAnimation &&
+                 IsHammerSmashCue(vm.HammerAnimationCue)) ||
+                (deferKnifeResultCardRender &&
+                 playedKnifeAnimation &&
+                 vm.KnifeAnimationCue?.Phase ==
+                    GameSceneKnifeAnimationPhase.Resolved);
 
             // While the shop is open its presentation (merchant, hidden combat objects, goods) is owned
             // by ShopController; skip the combat re-render so it doesn't repaint the enemy over the merchant.
@@ -2348,11 +2390,9 @@ namespace DiaBlackJack.GameScene
                     vm.EnemyActionLabel);
             }
 
-            if (totals != null)
+            if (!deferredCardRender)
             {
-                totals.Render(
-                    vm.PlayerTotalsText,
-                    vm.EnemyTotalsText);
+                RenderTotals(vm);
             }
 
             return CreateAppliedAnimationResult(
@@ -2379,6 +2419,112 @@ namespace DiaBlackJack.GameScene
             {
                 enemyHand.Render(vm.EnemyCards, vm.EnemyDemonCards);
             }
+        }
+
+        private void RenderTotals(GameSceneViewModel vm)
+        {
+            if (totals == null || vm == null)
+            {
+                return;
+            }
+
+            totals.Render(vm.PlayerTotalsText, vm.EnemyTotalsText);
+        }
+
+        internal static bool IsKnifeConcealedCardBeat(
+            GameSceneViewModel previous,
+            GameSceneViewModel current)
+        {
+            return TryFindKnifeCardTransition(
+                previous,
+                current,
+                expectedPreviousFaceUp: null,
+                expectedCurrentFaceUp: false);
+        }
+
+        internal static bool IsKnifeRevealBeat(
+            GameSceneViewModel previous,
+            GameSceneViewModel current)
+        {
+            return TryFindKnifeCardTransition(
+                previous,
+                current,
+                expectedPreviousFaceUp: false,
+                expectedCurrentFaceUp: true);
+        }
+
+        private static bool TryFindKnifeCardTransition(
+            GameSceneViewModel previous,
+            GameSceneViewModel current,
+            bool? expectedPreviousFaceUp,
+            bool expectedCurrentFaceUp)
+        {
+            GameSceneKnifeAnimationCue cue = current?.KnifeAnimationCue;
+            if (previous == null || cue == null ||
+                cue.Phase != GameSceneKnifeAnimationPhase.Ready)
+            {
+                return false;
+            }
+
+            IReadOnlyList<GameSceneCardViewModel> previousCards =
+                cue.ActorSide == CombatantSide.Player
+                    ? previous.EnemyCards
+                    : previous.PlayerCards;
+            IReadOnlyList<GameSceneCardViewModel> currentCards =
+                cue.ActorSide == CombatantSide.Player
+                    ? current.EnemyCards
+                    : current.PlayerCards;
+            for (int i = 0; i < currentCards.Count; i++)
+            {
+                GameSceneCardViewModel currentCard = currentCards[i];
+                if (currentCard.IsFaceUp != expectedCurrentFaceUp)
+                {
+                    continue;
+                }
+
+                GameSceneCardViewModel previousCard = null;
+                for (int j = 0; j < previousCards.Count; j++)
+                {
+                    if (previousCards[j].CardId == currentCard.CardId)
+                    {
+                        previousCard = previousCards[j];
+                        break;
+                    }
+                }
+
+                if (!expectedPreviousFaceUp.HasValue)
+                {
+                    if (previousCard == null)
+                    {
+                        return true;
+                    }
+
+                    continue;
+                }
+
+                if (previousCard != null &&
+                    previousCard.IsFaceUp == expectedPreviousFaceUp.Value)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal static bool IsMatchingKnifeResolvedBeat(
+            GameSceneViewModel ready,
+            GameSceneViewModel resolved)
+        {
+            GameSceneKnifeAnimationCue readyCue = ready?.KnifeAnimationCue;
+            GameSceneKnifeAnimationCue resolvedCue = resolved?.KnifeAnimationCue;
+            return readyCue != null &&
+                resolvedCue != null &&
+                readyCue.Phase == GameSceneKnifeAnimationPhase.Ready &&
+                resolvedCue.Phase == GameSceneKnifeAnimationPhase.Resolved &&
+                readyCue.RoundNumber == resolvedCue.RoundNumber &&
+                readyCue.SourceCardId == resolvedCue.SourceCardId &&
+                readyCue.ActorSide == resolvedCue.ActorSide;
         }
 
         private void RenderCrystalOrbSelection(GameSceneViewModel vm)

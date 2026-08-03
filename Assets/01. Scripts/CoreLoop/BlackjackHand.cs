@@ -21,9 +21,24 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentNullException(nameof(card));
             }
 
+            Add(card, isHiddenRole: !card.IsFaceUp);
+        }
+
+        internal void AddPublicRole(BlackjackCard card)
+        {
+            Add(card, isHiddenRole: false);
+        }
+
+        private void Add(BlackjackCard card, bool isHiddenRole)
+        {
+            if (card == null)
+            {
+                throw new ArgumentNullException(nameof(card));
+            }
+
             card.PrepareForHand();
             _cards.Add(card);
-            if (!card.IsFaceUp)
+            if (isHiddenRole)
             {
                 _hiddenCardIds.Add(card.Id);
             }
