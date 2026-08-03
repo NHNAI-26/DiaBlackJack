@@ -231,6 +231,21 @@ MonoBehaviour:
     volume: 1
     pitch: 1
     loop: 0
+  - id: lightening01
+    clip: {fileID: 8300000, guid: 9d962c60a2aad7a4fb80ecba3f1ba361, type: 3}
+    volume: 0.7
+    pitch: 1
+    loop: 0
+  - id: lightening02
+    clip: {fileID: 8300000, guid: ee2aaf0b76a6bb640abd825aa0a0355e, type: 3}
+    volume: 0.7
+    pitch: 1
+    loop: 0
+  - id: lightening03
+    clip: {fileID: 8300000, guid: 2cac7505bb7343443a875b68bb2868f7, type: 3}
+    volume: 0.7
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1

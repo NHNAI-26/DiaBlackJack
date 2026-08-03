@@ -16,6 +16,6 @@ MonoBehaviour:
   bgmIds:
   - fanatic
   windowGlassGlowColor: {r: 0.2028302, g: 0, b: 0.003706001, a: 1}
-  volumetricLightColor: {r: 0.3962264, g: 0.0741367, b: 0.046724804, a: 1}
+  volumetricLightColor: {r: 0.38679248, g: 0.27765152, b: 0.27184942, a: 1}
   enemyLightColor: {r: 0.90588236, g: 0.5212781, b: 0.43137258, a: 1}
   enteranceLightColor: {r: 0.90588236, g: 0.49801728, b: 0.43137258, a: 1}

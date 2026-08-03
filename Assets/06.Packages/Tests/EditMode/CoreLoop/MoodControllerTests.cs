@@ -49,6 +49,44 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void MOO01_U06_MoodProfileDisablesAudioReactiveLightningByDefault()
+        {
+            MoodProfileSO profile = CreateProfile("round-1");
+            try
+            {
+                Assert.That(profile.EnableAudioReactiveLightning, Is.False);
+                Assert.That(profile.HasLightningSfxIds, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(profile);
+            }
+        }
+
+        [Test]
+        public void MOO01_U08_MoodProfileAcceptsLightningSfxIds()
+        {
+            MoodProfileSO profile = CreateProfile(
+                "boss",
+                lightningSfxIds: new[] { "lightning01", "lightning02" });
+            try
+            {
+                Assert.That(profile.HasLightningSfxIds, Is.True);
+                Assert.That(
+                    profile.TryGetRandomLightningSfxId(out string sfxId),
+                    Is.True);
+                Assert.That(
+                    sfxId == "lightning01" ||
+                    sfxId == "lightning02",
+                    Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(profile);
+            }
+        }
+
+        [Test]
         public void MOO01_U02_TryBlendToMoodReturnsOnlyRegisteredProfile()
         {
             MoodProfileSO profile = CreateProfile("round-1");
@@ -161,6 +199,90 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
         }
 
+        [Test]
+        public void MOO01_U07_AudioReactiveLightningBoostsAndRestoresLighting()
+        {
+            Color reactiveColor = new Color(0.2f, 0.1f, 0.05f, 1f);
+            Color restoredColor = new Color(0.05f, 0.2f, 0.1f, 1f);
+            MoodProfileSO reactiveProfile = CreateProfile(
+                "boss",
+                windowColor: reactiveColor,
+                lightningSfxIds: new[] { "lightning01" },
+                enableAudioReactiveLightning: true,
+                lightningMaxBoost: 0.5f);
+            MoodProfileSO normalProfile = CreateProfile(
+                "normal",
+                windowColor: restoredColor);
+            GameObject root = new GameObject("MoodControllerTest");
+            GameObject windowObject = new GameObject("Window");
+            GameObject volumetricObject = new GameObject("VolumetricLight");
+            GameObject enemyObject = new GameObject("EnemyLight");
+            GameObject enteranceObject = new GameObject("EnteranceLight");
+            MoodController controller = root.AddComponent<MoodController>();
+            MeshRenderer renderer = windowObject.AddComponent<MeshRenderer>();
+            Light volumetricLight = volumetricObject.AddComponent<Light>();
+            Light enemyLight = enemyObject.AddComponent<Light>();
+            Light enteranceLight = enteranceObject.AddComponent<Light>();
+            Shader shader = Shader.Find("Shader/Uber Lit");
+            Assert.That(shader, Is.Not.Null);
+            Material material = new Material(shader);
+            MaterialPropertyBlock properties = new MaterialPropertyBlock();
+            try
+            {
+                volumetricLight.intensity = 2f;
+                enemyLight.intensity = 3f;
+                enteranceLight.intensity = 4f;
+                material.SetColor(GlassGlowColorId, Color.white);
+                renderer.sharedMaterial = material;
+                SetPrivateField(
+                    controller,
+                    "windowGlassRenderers",
+                    new Renderer[] { renderer });
+                SetPrivateField(controller, "volumetricLight", volumetricLight);
+                SetPrivateField(controller, "enemyLight", enemyLight);
+                SetPrivateField(controller, "enteranceLight", enteranceLight);
+
+                controller.SetMoodImmediate(reactiveProfile);
+                bool pulsed = controller.TriggerAudioReactiveLightningPulse(0.5f);
+
+                Assert.That(controller.IsAudioReactiveLightningActive, Is.True);
+                Assert.That(pulsed, Is.True);
+                Assert.That(volumetricLight.intensity, Is.EqualTo(3f));
+                Assert.That(enemyLight.intensity, Is.EqualTo(4.5f));
+                Assert.That(enteranceLight.intensity, Is.EqualTo(6f));
+                renderer.GetPropertyBlock(properties);
+                AssertColorApproximately(
+                    properties.GetColor(GlassGlowColorId),
+                    new Color(
+                        reactiveColor.r * 1.5f,
+                        reactiveColor.g * 1.5f,
+                        reactiveColor.b * 1.5f,
+                        reactiveColor.a));
+
+                controller.SetMoodImmediate(normalProfile);
+
+                Assert.That(controller.IsAudioReactiveLightningActive, Is.False);
+                Assert.That(volumetricLight.intensity, Is.EqualTo(2f));
+                Assert.That(enemyLight.intensity, Is.EqualTo(3f));
+                Assert.That(enteranceLight.intensity, Is.EqualTo(4f));
+                renderer.GetPropertyBlock(properties);
+                AssertColorApproximately(
+                    properties.GetColor(GlassGlowColorId),
+                    restoredColor);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(windowObject);
+                Object.DestroyImmediate(volumetricObject);
+                Object.DestroyImmediate(enemyObject);
+                Object.DestroyImmediate(enteranceObject);
+                Object.DestroyImmediate(material);
+                Object.DestroyImmediate(reactiveProfile);
+                Object.DestroyImmediate(normalProfile);
+            }
+        }
+
         private static void AssertColorApproximately(Color actual, Color expected)
         {
             const float tolerance = 0.0001f;
@@ -173,10 +295,13 @@ namespace DiaBlackJack.CoreLoop.Tests
         private static MoodProfileSO CreateProfile(
             string id,
             IEnumerable<string> bgmIds = null,
+            IEnumerable<string> lightningSfxIds = null,
             Color? windowColor = null,
             Color? volumetricColor = null,
             Color? enemyColor = null,
-            Color? enteranceColor = null)
+            Color? enteranceColor = null,
+            bool enableAudioReactiveLightning = false,
+            float lightningMaxBoost = 0.8f)
         {
             MoodProfileSO profile = ScriptableObject.CreateInstance<MoodProfileSO>();
             SetPrivateField(profile, "id", id);
@@ -186,6 +311,17 @@ namespace DiaBlackJack.CoreLoop.Tests
                 bgmIds == null
                     ? new List<string>()
                     : new List<string>(bgmIds));
+            SetPrivateField(
+                profile,
+                "lightningSfxIds",
+                lightningSfxIds == null
+                    ? new List<string>()
+                    : new List<string>(lightningSfxIds));
+            SetPrivateField(
+                profile,
+                "enableAudioReactiveLightning",
+                enableAudioReactiveLightning);
+            SetPrivateField(profile, "lightningMaxBoost", lightningMaxBoost);
             SetPrivateField(
                 profile,
                 "windowGlassGlowColor",

@@ -15,7 +15,19 @@ MonoBehaviour:
   id: bossStage
   bgmIds:
   - bossStage
-  windowGlassGlowColor: {r: 0.2028302, g: 0, b: 0.003706001, a: 1}
-  volumetricLightColor: {r: 0.3962264, g: 0.0741367, b: 0.046724804, a: 1}
-  enemyLightColor: {r: 0.90588236, g: 0.5212781, b: 0.43137258, a: 1}
-  enteranceLightColor: {r: 0.90588236, g: 0.49801728, b: 0.43137258, a: 1}
+  enableAudioReactiveLightning: 1
+  lightningSfxIds:
+  - lightening01
+  - lightening02
+  - lightening03
+  lightningSfxPlayChance: 0.35
+  lightningSfxInterval: 1.5
+  lightningSensitivity: 100
+  lightningThreshold: 0.171
+  lightningMaxBoost: 0.8
+  lightningAttackSpeed: 100
+  lightningReleaseSpeed: 4
+  windowGlassGlowColor: {r: 0.4245283, g: 0.034697026, b: 0, a: 1}
+  volumetricLightColor: {r: 0.7921569, g: 0.09411762, b: 0.13638338, a: 1}
+  enemyLightColor: {r: 1.2205086, g: 0.6620683, b: 0.6620683, a: 1}
+  enteranceLightColor: {r: 1.3041189, g: 0.30444688, b: 0.12972912, a: 1}

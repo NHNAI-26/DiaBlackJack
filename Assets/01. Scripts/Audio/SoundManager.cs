@@ -10,6 +10,7 @@ namespace Border.Audio
     [DisallowMultipleComponent]
     public sealed class SoundManager : MonoBehaviour
     {
+        private const int AudioAnalysisSampleCount = 256;
         private const float MinPitch = 0.01f;
         private const float MaxPitch = 3f;
         [Serializable]
@@ -33,6 +34,8 @@ namespace Border.Audio
                 this.index = index;
                 this.generation = generation;
             }
+
+            public bool IsValid => owner != null;
         }
         private sealed class Voice
         {
@@ -59,6 +62,8 @@ namespace Border.Audio
         private string currentBgmId;
         private int activeBgm = -1;
         private ulong playOrder;
+        private readonly float[] audioAnalysisSamples =
+            new float[AudioAnalysisSampleCount];
         public static SoundManager Current { get; private set; }
         private void Awake()
         {
@@ -181,6 +186,45 @@ namespace Border.Audio
         public void SetMasterVolume(float value) { masterVolume = Gain(value); RefreshVolumes(); }
         public void SetMusicVolume(float value) { musicVolume = Gain(value); RefreshVolumes(); }
         public void SetSfxVolume(float value) { sfxVolume = Gain(value); RefreshVolumes(); }
+        public bool IsSfxPlaying(SoundHandle handle)
+        {
+            if (!TryGetSfxVoice(handle, out Voice voice))
+                return false;
+
+            return voice.Source.isPlaying;
+        }
+
+        public bool TryGetSfxRms(SoundHandle handle, out float rms)
+        {
+            rms = 0f;
+            if (!TryGetSfxVoice(handle, out Voice voice) ||
+                voice.Source.clip == null ||
+                !voice.Source.isPlaying)
+            {
+                return false;
+            }
+
+            float weight = voice.BaseVolume * masterVolume * sfxVolume;
+            if (weight <= 0f)
+                return false;
+
+            rms = Mathf.Clamp01(CalculateSourceRms(voice.Source) * weight);
+            return true;
+        }
+
+        public bool TryGetSfxId(SoundHandle handle, out string id)
+        {
+            id = null;
+            if (!TryGetSfxVoice(handle, out Voice voice) ||
+                !voice.Source.isPlaying ||
+                string.IsNullOrWhiteSpace(voice.Id))
+            {
+                return false;
+            }
+
+            id = voice.Id;
+            return true;
+        }
         private void Register(List<SoundEntry> entries, Dictionary<string, SoundEntry> catalog,
             HashSet<string> ids, string category)
         {
@@ -276,6 +320,43 @@ namespace Border.Audio
             for (int i = 0; i < bgmVoices.Length; i++)
                 ApplyVolume(bgmVoices[i], true);
         }
+
+        private bool TryGetSfxVoice(SoundHandle handle, out Voice voice)
+        {
+            voice = null;
+            if (handle.owner != this ||
+                sfxVoices == null ||
+                handle.index < 0 ||
+                handle.index >= sfxVoices.Length)
+            {
+                return false;
+            }
+
+            voice = sfxVoices[handle.index];
+            if (voice.Generation != handle.generation)
+            {
+                voice = null;
+                return false;
+            }
+
+            return true;
+        }
+
+        private float CalculateSourceRms(AudioSource source)
+        {
+            source.GetOutputData(audioAnalysisSamples, 0);
+            float sum = 0f;
+            for (int sampleIndex = 0;
+                 sampleIndex < audioAnalysisSamples.Length;
+                 sampleIndex++)
+            {
+                float sample = audioAnalysisSamples[sampleIndex];
+                sum += sample * sample;
+            }
+
+            return Mathf.Sqrt(sum / audioAnalysisSamples.Length);
+        }
+
         private void ApplyVolume(Voice voice, bool music) =>
             voice.Source.volume = voice.BaseVolume * voice.Fade * masterVolume *
                                   (music ? musicVolume : sfxVolume);
