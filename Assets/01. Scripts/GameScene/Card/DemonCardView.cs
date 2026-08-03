@@ -1,5 +1,6 @@
 using Border.Audio;
 using DiaBlackJack.Content;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 
@@ -21,6 +22,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float hoverScale = 1.15f;
         [SerializeField] private float scaleLerp = 12f;
         [SerializeField] private string hoverSfxId = "cardHover";
+        [Header("Satan orientation")]
+        [SerializeField] private float upsideDownTurnDuration = 0.35f;
         [Header("Shop sold out")]
         [Tooltip("Authored card-local price and sold-out display. Detached beside the card in shops.")]
         [SerializeField] private ShopCardOfferStatusView shopOfferStatus;
@@ -45,6 +48,9 @@ namespace DiaBlackJack.GameScene
         private bool _isShopSoldOut;
         private bool _shopColorCaptured;
         private Color _shopFrontColor = Color.white;
+        private Tween _orientationTween;
+        private bool _orientationInitialized;
+        private bool _isUpsideDown;
 
         public int CardId { get; private set; } = -1;
 
@@ -103,6 +109,7 @@ namespace DiaBlackJack.GameScene
 
         private void OnDestroy()
         {
+            _orientationTween?.Kill();
             if (_shopMaterial == null)
             {
                 return;
@@ -125,6 +132,10 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            bool animateOrientation = _orientationInitialized &&
+                CardId == card.CardId &&
+                _isUpsideDown != card.IsUpsideDown &&
+                Application.isPlaying;
             CardId = card.CardId;
             BoundCard = card;
             CanUse = card.CanUse;
@@ -161,6 +172,45 @@ namespace DiaBlackJack.GameScene
             _hovered = false;
             transform.localScale = _baseScale;
             _targetScale = _baseScale;
+            ApplyOrientation(card.IsUpsideDown, animateOrientation);
+        }
+
+        private void ApplyOrientation(bool isUpsideDown, bool animate)
+        {
+            _orientationTween?.Kill();
+            _orientationTween = null;
+            _isUpsideDown = isUpsideDown;
+            _orientationInitialized = true;
+
+            if (!animate || upsideDownTurnDuration <= 0f)
+            {
+                Vector3 euler = transform.localEulerAngles;
+                euler.z = isUpsideDown ? 180f : 0f;
+                transform.localEulerAngles = euler;
+                return;
+            }
+
+            Vector3 target = transform.localEulerAngles;
+            target.z += 180f;
+            _orientationTween = transform
+                .DOLocalRotate(
+                    target,
+                    upsideDownTurnDuration,
+                    RotateMode.FastBeyond360)
+                .SetEase(Ease.InOutQuad)
+                .SetLink(gameObject, LinkBehaviour.KillOnDestroy)
+                .OnComplete(() =>
+                {
+                    if (this == null)
+                    {
+                        return;
+                    }
+
+                    Vector3 settled = transform.localEulerAngles;
+                    settled.z = _isUpsideDown ? 180f : 0f;
+                    transform.localEulerAngles = settled;
+                    _orientationTween = null;
+                });
         }
 
         public void SetHovered(bool hovered)

@@ -658,6 +658,16 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            if (!shopOpen &&
+                pointedDemonCard != null &&
+                pointedDemonCard.CanUse)
+            {
+                int cardId = pointedDemonCard.CardId;
+                ProcessInput(() =>
+                    TryBeginPlayerActiveDemonContractAction(cardId));
+                return;
+            }
+
             if (pointedShopCard != null && pointedShopCard.CanUse)
             {
                 PurchaseShopNormalCard(pointedShopCard);

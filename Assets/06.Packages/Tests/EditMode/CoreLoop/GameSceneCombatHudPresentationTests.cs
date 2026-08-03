@@ -876,6 +876,18 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             ActiveDemonContract active =
                 battle.ActivePlayerDemonContracts.Single();
+            GameSceneViewModel activeScene = GameScenePresenter.Create(battle);
+            GameSceneCombatHudViewModel actionHud =
+                GameSceneCombatHudPresenter.Create(
+                    activeScene.Core,
+                    isStageBattle: false,
+                    isShopOpen: false,
+                    inputLocked: false);
+            GameSceneDemonCardViewModel activeSatan =
+                activeScene.PlayerDemonCards.Single();
+            Assert.That(actionHud.OptionActions, Is.Empty);
+            Assert.That(activeSatan.CanUse, Is.True);
+            Assert.That(activeSatan.IsUpsideDown, Is.False);
             Assert.That(battle.TryBeginPlayerActiveDemonContractAction(
                 active.SourceCardId), Is.True);
 
@@ -909,6 +921,18 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(branded.DirectSelectionCommand.HasValue, Is.False);
             Assert.That(second.SatanNumberCandidates.Count(card =>
                 card.DirectSelectionCommand.HasValue), Is.EqualTo(9));
+
+            PendingDemonContractInteraction secondDeclaration =
+                battle.PendingPlayerDemonContractInteraction;
+            DemonContractOption four = secondDeclaration.Options.Single(option =>
+                option.NumericValue == 4);
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                secondDeclaration.InteractionId,
+                four.OptionId), Is.True);
+            Assert.That(
+                GameScenePresenter.Create(battle)
+                    .PlayerDemonCards.Single().IsUpsideDown,
+                Is.True);
         }
 
         [Test]
@@ -950,6 +974,128 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(hud.OptionActions.Single().Label,
                 Is.EqualTo("추가하지 않기"));
             Assert.That(hud.OptionActions.Single().Command.OptionId, Is.EqualTo(0));
+            Assert.That(
+                hud.OptionActions.Single().Placement,
+                Is.EqualTo(GameSceneCombatHudActionPlacement.BottomRight));
+        }
+
+        [Test]
+        public void GSH01_U14_BottomRightChoiceAvoidsFullscreenOptionChrome()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                HudPrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                GameHudView hud = instance.GetComponent<GameHudView>();
+                CoreLoopViewModel core = CoreLoopPresenter.Create(
+                    CreateStartedBattle(2, 5, 7, 8, 9));
+                var action = new GameSceneCombatHudActionViewModel(
+                    new GameSceneCombatHudCommand(
+                        GameSceneCombatHudCommandKind.ResolveCardEffectChoice,
+                        optionId: 0),
+                    "선택하지 않기",
+                    true,
+                    placement: GameSceneCombatHudActionPlacement.BottomRight);
+                var model = new GameSceneCombatHudViewModel(
+                    GameSceneCombatHudMode.DiegeticSelection,
+                    "카드를 선택하십시오.",
+                    null,
+                    new[] { action },
+                    null,
+                    string.Empty);
+
+                hud.Render(core, model);
+
+                Transform optionPanel = instance
+                    .GetComponentsInChildren<Transform>(true)
+                    .Single(child => child.name == "OptionPanel");
+                Transform optionScroll = instance
+                    .GetComponentsInChildren<Transform>(true)
+                    .Single(child => child.name == "OptionScroll");
+                RectTransform slot = instance
+                    .GetComponentsInChildren<RectTransform>(true)
+                    .Single(child => child.name == "OptionSlot_001");
+                Assert.That(optionPanel.GetComponent<Graphic>().enabled, Is.False);
+                Assert.That(optionScroll.gameObject.activeSelf, Is.False);
+                Assert.That(slot.parent, Is.EqualTo(optionPanel));
+                Assert.That(slot.anchorMin, Is.EqualTo(new Vector2(1f, 0f)));
+                Assert.That(slot.anchorMax, Is.EqualTo(new Vector2(1f, 0f)));
+                Assert.That(slot.anchoredPosition, Is.EqualTo(new Vector2(-48f, 48f)));
+                Assert.That(slot.sizeDelta, Is.EqualTo(new Vector2(380f, 64f)));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [TestCase(
+            DemonContractInteractionKind.BelphegorTopCard,
+            BelphegorDemonContractHandler.MoveTopCardToBottomOptionId,
+            true)]
+        [TestCase(
+            DemonContractInteractionKind.BelphegorTopCard,
+            BelphegorDemonContractHandler.KeepTopCardOptionId,
+            false)]
+        [TestCase(
+            DemonContractInteractionKind.AsmodeusForceOpponentHit,
+            AsmodeusDemonContractHandler.SkipForcedHitOptionId,
+            true)]
+        [TestCase(
+            DemonContractInteractionKind.AsmodeusForceOpponentHit,
+            AsmodeusDemonContractHandler.ForceHitOptionId,
+            false)]
+        [TestCase(
+            DemonContractInteractionKind.MammonReroll,
+            MammonDemonContractHandler.KeepDieOptionId,
+            true)]
+        [TestCase(
+            DemonContractInteractionKind.MammonReroll,
+            MammonDemonContractHandler.RerollDieOptionId,
+            false)]
+        public void GSH01_U15_OnlySpecifiedContractChoicesUseBottomRight(
+            DemonContractInteractionKind interactionKind,
+            int optionId,
+            bool expected)
+        {
+            Assert.That(
+                GameSceneCombatHudPresenter.IsBottomRightContractAction(
+                    interactionKind,
+                    optionId),
+                Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void GSH01_U16_EmptyOptionListDoesNotShowTemporaryPanel()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                HudPrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                GameHudView hud = instance.GetComponent<GameHudView>();
+                CoreLoopViewModel core = CoreLoopPresenter.Create(
+                    CreateStartedBattle(2, 5, 7, 8, 9));
+                var model = new GameSceneCombatHudViewModel(
+                    GameSceneCombatHudMode.Options,
+                    "처리 중",
+                    null,
+                    System.Array.Empty<GameSceneCombatHudActionViewModel>(),
+                    null,
+                    string.Empty);
+
+                hud.Render(core, model);
+
+                Transform optionPanel = instance
+                    .GetComponentsInChildren<Transform>(true)
+                    .Single(child => child.name == "OptionPanel");
+                Assert.That(optionPanel.gameObject.activeSelf, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
         }
 
         [Test]
@@ -1093,6 +1239,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(hud.OptionActions, Has.Count.EqualTo(1));
             Assert.That(hud.OptionActions.Single().Command.OptionId,
                 Is.EqualTo(FlamethrowerEffectHandler.SkipOptionId));
+            Assert.That(
+                hud.OptionActions.Single().Placement,
+                Is.EqualTo(GameSceneCombatHudActionPlacement.BottomRight));
         }
 
         [Test]

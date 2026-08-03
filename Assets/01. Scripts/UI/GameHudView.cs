@@ -47,6 +47,7 @@ namespace DiaBlackJack.GameScene
         private Canvas _canvas;
         private bool _shopDemonDetailActivatedCombatControlsRoot;
         private RevolverNumberSelectorView _revolverNumberSelector;
+        private OptionSlotLayout[] _optionSlotLayouts = Array.Empty<OptionSlotLayout>();
 
         public event Action<GameSceneCombatHudCommand> CombatCommandRequested;
 
@@ -76,6 +77,7 @@ namespace DiaBlackJack.GameScene
                 GetComponent<RevolverNumberSelectorView>() ??
                 gameObject.AddComponent<RevolverNumberSelectorView>();
             _revolverNumberSelector.CommandRequested += RaiseCombatCommand;
+            CaptureOptionSlotLayouts();
             HideCardHoverBadge();
             HideDemonContractDetail();
             BindCombatControls();
@@ -425,19 +427,26 @@ namespace DiaBlackJack.GameScene
             bool isDiegeticSelection =
                 combat.Mode == GameSceneCombatHudMode.DiegeticSelection ||
                 combat.Mode == GameSceneCombatHudMode.SatanNumberSelection;
+            bool hasBottomRightAction = HasBottomRightAction(combat.OptionActions);
+            bool hasDefaultAction = HasDefaultAction(combat.OptionActions);
+            bool hasOptionAction = combat.OptionActions.Count > 0;
+            bool hasDiegeticPrompt =
+                isDiegeticSelection &&
+                !string.IsNullOrEmpty(combat.Prompt);
             SetActive(
                 optionPanel,
-                combat.Mode == GameSceneCombatHudMode.Options ||
-                isDiegeticSelection ||
-                combat.Mode == GameSceneCombatHudMode.ReturningToRun ||
-                combat.Mode == GameSceneCombatHudMode.Restart ||
-                (combat.Mode == GameSceneCombatHudMode.Actions &&
-                 combat.OptionActions.Count > 0));
-            SetOptionPanelChromeVisible(!isDiegeticSelection);
-            if (isDiegeticSelection && combat.OptionActions.Count > 0 &&
+                (hasOptionAction || hasDiegeticPrompt) &&
+                (combat.Mode == GameSceneCombatHudMode.Options ||
+                 isDiegeticSelection ||
+                 combat.Mode == GameSceneCombatHudMode.ReturningToRun ||
+                 combat.Mode == GameSceneCombatHudMode.Restart ||
+                 combat.Mode == GameSceneCombatHudMode.Actions));
+            SetOptionPanelChromeVisible(
+                !isDiegeticSelection && !hasBottomRightAction);
+            if ((isDiegeticSelection || hasBottomRightAction) &&
                 optionScrollRect != null)
             {
-                optionScrollRect.gameObject.SetActive(true);
+                optionScrollRect.gameObject.SetActive(hasDefaultAction);
             }
             SetActive(
                 contractDetailPanel,
@@ -478,6 +487,10 @@ namespace DiaBlackJack.GameScene
             if (optionScrollRect != null)
             {
                 optionScrollRect.gameObject.SetActive(isVisible);
+                if (optionScrollRect.TryGetComponent(out Graphic scrollBackground))
+                {
+                    scrollBackground.enabled = isVisible;
+                }
             }
         }
 
@@ -490,7 +503,9 @@ namespace DiaBlackJack.GameScene
                 CurrencyIconText.Set(combatPromptText, prompt);
             }
 
+            RestoreOptionSlotLayouts();
             int activeCount = actions == null ? 0 : Mathf.Min(actions.Count, optionSlots.Length);
+            int bottomRightIndex = 0;
             for (int i = 0; i < optionSlots.Length; i++)
             {
                 GameHudChoiceButton slot = optionSlots[i];
@@ -504,6 +519,11 @@ namespace DiaBlackJack.GameScene
                 if (isActive)
                 {
                     slot.Render(actions[i]);
+                    if (actions[i].Placement ==
+                        GameSceneCombatHudActionPlacement.BottomRight)
+                    {
+                        PositionBottomRight(slot, bottomRightIndex++);
+                    }
                 }
             }
 
@@ -513,6 +533,124 @@ namespace DiaBlackJack.GameScene
             }
 
             ResetOptionScroll();
+        }
+
+        private void CaptureOptionSlotLayouts()
+        {
+            _optionSlotLayouts = optionSlots == null
+                ? Array.Empty<OptionSlotLayout>()
+                : new OptionSlotLayout[optionSlots.Length];
+            for (int i = 0; i < _optionSlotLayouts.Length; i++)
+            {
+                RectTransform rect = optionSlots[i] == null
+                    ? null
+                    : optionSlots[i].transform as RectTransform;
+                _optionSlotLayouts[i] = new OptionSlotLayout(rect);
+            }
+        }
+
+        private void RestoreOptionSlotLayouts()
+        {
+            int count = Mathf.Min(optionSlots.Length, _optionSlotLayouts.Length);
+            for (int i = 0; i < count; i++)
+            {
+                _optionSlotLayouts[i].Restore(
+                    optionSlots[i] == null
+                        ? null
+                        : optionSlots[i].transform as RectTransform);
+            }
+        }
+
+        private void PositionBottomRight(GameHudChoiceButton slot, int index)
+        {
+            if (slot == null || optionPanel == null ||
+                !(slot.transform is RectTransform rect))
+            {
+                return;
+            }
+
+            rect.SetParent(optionPanel.transform, false);
+            rect.anchorMin = new Vector2(1f, 0f);
+            rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(1f, 0f);
+            rect.anchoredPosition = new Vector2(-48f, 48f + index * 76f);
+            rect.sizeDelta = new Vector2(380f, 64f);
+        }
+
+        private static bool HasBottomRightAction(
+            System.Collections.Generic.IReadOnlyList<GameSceneCombatHudActionViewModel> actions)
+        {
+            if (actions == null)
+            {
+                return false;
+            }
+
+            foreach (GameSceneCombatHudActionViewModel action in actions)
+            {
+                if (action.Placement == GameSceneCombatHudActionPlacement.BottomRight)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool HasDefaultAction(
+            System.Collections.Generic.IReadOnlyList<GameSceneCombatHudActionViewModel> actions)
+        {
+            if (actions == null)
+            {
+                return false;
+            }
+
+            foreach (GameSceneCombatHudActionViewModel action in actions)
+            {
+                if (action.Placement == GameSceneCombatHudActionPlacement.Default)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private readonly struct OptionSlotLayout
+        {
+            private readonly Transform _parent;
+            private readonly int _siblingIndex;
+            private readonly Vector2 _anchorMin;
+            private readonly Vector2 _anchorMax;
+            private readonly Vector2 _pivot;
+            private readonly Vector2 _anchoredPosition;
+            private readonly Vector2 _sizeDelta;
+
+            public OptionSlotLayout(RectTransform rect)
+            {
+                _parent = rect == null ? null : rect.parent;
+                _siblingIndex = rect == null ? 0 : rect.GetSiblingIndex();
+                _anchorMin = rect == null ? Vector2.zero : rect.anchorMin;
+                _anchorMax = rect == null ? Vector2.zero : rect.anchorMax;
+                _pivot = rect == null ? Vector2.zero : rect.pivot;
+                _anchoredPosition = rect == null ? Vector2.zero : rect.anchoredPosition;
+                _sizeDelta = rect == null ? Vector2.zero : rect.sizeDelta;
+            }
+
+            public void Restore(RectTransform rect)
+            {
+                if (rect == null || _parent == null)
+                {
+                    return;
+                }
+
+                rect.SetParent(_parent, false);
+                rect.SetSiblingIndex(_siblingIndex);
+                rect.anchorMin = _anchorMin;
+                rect.anchorMax = _anchorMax;
+                rect.pivot = _pivot;
+                rect.anchoredPosition = _anchoredPosition;
+                rect.sizeDelta = _sizeDelta;
+            }
         }
 
         private void ResetOptionScroll()

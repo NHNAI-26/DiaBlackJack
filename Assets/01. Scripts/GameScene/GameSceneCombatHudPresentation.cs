@@ -32,6 +32,12 @@ namespace DiaBlackJack.GameScene
         Restart
     }
 
+    public enum GameSceneCombatHudActionPlacement
+    {
+        Default,
+        BottomRight
+    }
+
     /// <summary>Immutable input payload emitted by the scene-authored combat HUD.</summary>
     public readonly struct GameSceneCombatHudCommand
     {
@@ -58,12 +64,15 @@ namespace DiaBlackJack.GameScene
             GameSceneCombatHudCommand command,
             string label,
             bool isInteractable,
-            string tooltip = "")
+            string tooltip = "",
+            GameSceneCombatHudActionPlacement placement =
+                GameSceneCombatHudActionPlacement.Default)
         {
             Command = command;
             Label = label ?? string.Empty;
             IsInteractable = isInteractable;
             Tooltip = tooltip ?? string.Empty;
+            Placement = placement;
         }
 
         public GameSceneCombatHudCommand Command { get; }
@@ -73,6 +82,8 @@ namespace DiaBlackJack.GameScene
         public bool IsInteractable { get; }
 
         public string Tooltip { get; }
+
+        public GameSceneCombatHudActionPlacement Placement { get; }
     }
 
     public sealed class GameSceneCombatHudContractCandidateViewModel
@@ -217,7 +228,11 @@ namespace DiaBlackJack.GameScene
                             choice.OptionId,
                             interaction.InteractionId),
                         choice.Label,
-                        !inputLocked));
+                        !inputLocked,
+                        placement: interaction.EffectKind ==
+                            CardEffectKind.Flamethrower
+                                ? GameSceneCombatHudActionPlacement.BottomRight
+                                : GameSceneCombatHudActionPlacement.Default));
                 }
 
                 bool usesDirectCardSelection = HasCardChoice(interaction.Choices);
@@ -280,7 +295,13 @@ namespace DiaBlackJack.GameScene
                                 GameSceneCombatHudCommandKind.ResolveCardEffectChoice,
                                 choice.OptionId),
                             choice.Label,
-                            !inputLocked));
+                            !inputLocked,
+                            placement: core.PendingCardEffectKind ==
+                                CardEffectKind.CrystalOrb ||
+                                core.PendingCardEffectKind ==
+                                CardEffectKind.Flamethrower
+                                    ? GameSceneCombatHudActionPlacement.BottomRight
+                                    : GameSceneCombatHudActionPlacement.Default));
                     }
 
                     return new GameSceneCombatHudViewModel(
@@ -393,7 +414,12 @@ namespace DiaBlackJack.GameScene
                             choice.OptionId,
                             contract.InteractionId ?? -1),
                         label,
-                        choice.CanSelect && !inputLocked));
+                        choice.CanSelect && !inputLocked,
+                        placement: IsBottomRightContractAction(
+                            contract.InteractionKind,
+                            choice.OptionId)
+                                ? GameSceneCombatHudActionPlacement.BottomRight
+                                : GameSceneCombatHudActionPlacement.Default));
                 }
 
                 return CreateOptions(
@@ -425,6 +451,11 @@ namespace DiaBlackJack.GameScene
             var activeContractActions = new List<GameSceneCombatHudActionViewModel>();
             foreach (ActiveDemonContractActionViewModel action in contract.ActiveActions)
             {
+                if (action.Kind == DemonContractKind.Satan)
+                {
+                    continue;
+                }
+
                 activeContractActions.Add(CreateAction(
                     GameSceneCombatHudCommandKind.BeginActiveDemonContractAction,
                     action.Label,
@@ -471,13 +502,36 @@ namespace DiaBlackJack.GameScene
             string label,
             bool isInteractable,
             string tooltip = "",
-            int optionId = -1)
+            int optionId = -1,
+            GameSceneCombatHudActionPlacement placement =
+                GameSceneCombatHudActionPlacement.Default)
         {
             return new GameSceneCombatHudActionViewModel(
                 new GameSceneCombatHudCommand(kind, optionId),
                 label,
                 isInteractable,
-                tooltip);
+                tooltip,
+                placement);
+        }
+
+        internal static bool IsBottomRightContractAction(
+            DemonContractInteractionKind? interactionKind,
+            int optionId)
+        {
+            switch (interactionKind)
+            {
+                case DemonContractInteractionKind.BelphegorTopCard:
+                    return optionId ==
+                        BelphegorDemonContractHandler.MoveTopCardToBottomOptionId;
+                case DemonContractInteractionKind.AsmodeusForceOpponentHit:
+                    return optionId ==
+                        AsmodeusDemonContractHandler.SkipForcedHitOptionId;
+                case DemonContractInteractionKind.MammonReroll:
+                    return optionId ==
+                        MammonDemonContractHandler.KeepDieOptionId;
+                default:
+                    return false;
+            }
         }
 
         private static string FormatChangeLabel(string changeActionText)

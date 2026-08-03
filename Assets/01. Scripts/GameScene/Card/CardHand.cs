@@ -149,7 +149,6 @@ namespace DiaBlackJack.GameScene
                     offset + combinedIndex * spacing,
                     0f,
                     combinedIndex * depthStagger);
-                card.transform.localRotation = Quaternion.identity;
                 card.SetSortingOrder(
                     sortingOrderBase + combinedIndex * sortingOrderStep);
                 card.Bind(model);

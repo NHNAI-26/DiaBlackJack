@@ -12,7 +12,8 @@ namespace DiaBlackJack.GameScene
             string displayName,
             string summary = "",
             string costSummary = "",
-            bool showHoverBadgeWhenUnavailable = false)
+            bool showHoverBadgeWhenUnavailable = false,
+            bool isUpsideDown = false)
         {
             if (cardId < 0)
             {
@@ -34,6 +35,7 @@ namespace DiaBlackJack.GameScene
             Summary = summary ?? string.Empty;
             CostSummary = costSummary ?? string.Empty;
             ShowHoverBadgeWhenUnavailable = showHoverBadgeWhenUnavailable;
+            IsUpsideDown = isUpsideDown;
         }
 
         public int CardId { get; }
@@ -47,6 +49,8 @@ namespace DiaBlackJack.GameScene
         public string DefinitionKey { get; }
 
         public bool IsFaceUp { get; }
+
+        public bool IsUpsideDown { get; }
 
         public bool ShowHoverBadgeWhenUnavailable { get; }
 

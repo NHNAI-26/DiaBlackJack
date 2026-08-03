@@ -471,8 +471,14 @@ namespace DiaBlackJack.GameScene
                 core,
                 CreatePlayerCards(core, battle, revealRoundResult),
                 CreateEnemyCards(battle, revealRoundResult),
-                CreateActiveDemonCards(battle.ActivePlayerDemonContracts),
-                CreateActiveDemonCards(battle.ActiveEnemyDemonContracts),
+                CreateActiveDemonCards(
+                    battle,
+                    battle.ActivePlayerDemonContracts,
+                    exposePlayerActions: true),
+                CreateActiveDemonCards(
+                    battle,
+                    battle.ActiveEnemyDemonContracts,
+                    exposePlayerActions: false),
                 enemyVisual,
                 enemyLabel,
                 CreateCrystalOrbCandidates(battle),
@@ -1053,21 +1059,31 @@ namespace DiaBlackJack.GameScene
         }
 
         private static IReadOnlyList<GameSceneDemonCardViewModel>
-            CreateActiveDemonCards(IReadOnlyList<ActiveDemonContract> contracts)
+            CreateActiveDemonCards(
+                CoreLoopBattle battle,
+                IReadOnlyList<ActiveDemonContract> contracts,
+                bool exposePlayerActions)
         {
             var cards = new List<GameSceneDemonCardViewModel>(contracts.Count);
             foreach (ActiveDemonContract contract in contracts)
             {
                 DemonContractDefinition definition = contract.Definition;
+                bool isSatan = contract.Kind == DemonContractKind.Satan;
+                bool isUpsideDown = isSatan &&
+                    contract.RuntimeState is SatanRuntimeState satanState &&
+                    satanState.CurrentFace == SatanContractFace.Lower;
                 cards.Add(new GameSceneDemonCardViewModel(
                     contract.SourceCardId,
                     definition.Key,
                     isFaceUp: true,
-                    canUse: false,
+                    canUse: exposePlayerActions &&
+                        battle.CanBeginPlayerActiveDemonContractAction(
+                            contract.SourceCardId),
                     definition.DisplayName,
                     definition.Summary,
                     definition.CostSummary,
-                    showHoverBadgeWhenUnavailable: true));
+                    showHoverBadgeWhenUnavailable: true,
+                    isUpsideDown: isUpsideDown));
             }
 
             return cards.AsReadOnly();

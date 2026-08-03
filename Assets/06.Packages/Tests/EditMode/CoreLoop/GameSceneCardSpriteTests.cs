@@ -363,6 +363,50 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GSV02_U10_SatanFaceRotatesInPlaneWithoutShowingCardBack()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                DemonCardPrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                DemonCardView view = instance.GetComponent<DemonCardView>();
+                DemonContractDefinition satan = DemonContractCatalog.Default
+                    .GetByKey(DemonContractCatalog.SatanKey);
+
+                view.Bind(new GameSceneDemonCardViewModel(
+                    cardId: 1,
+                    definitionKey: satan.Key,
+                    isFaceUp: true,
+                    canUse: true,
+                    displayName: satan.DisplayName,
+                    isUpsideDown: false));
+                Assert.That(
+                    Mathf.DeltaAngle(view.transform.localEulerAngles.z, 0f),
+                    Is.EqualTo(0f).Within(0.01f));
+
+                view.Bind(new GameSceneDemonCardViewModel(
+                    cardId: 1,
+                    definitionKey: satan.Key,
+                    isFaceUp: true,
+                    canUse: true,
+                    displayName: satan.DisplayName,
+                    isUpsideDown: true));
+                Assert.That(
+                    Mathf.Abs(Mathf.DeltaAngle(
+                        view.transform.localEulerAngles.z,
+                        180f)),
+                    Is.EqualTo(0f).Within(0.01f));
+                Assert.That(view.BoundCard.IsFaceUp, Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
         public void GSV02_U05_PlayerHiddenCardBlendsRealFaceOverBackOnlyWhileHovered()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
