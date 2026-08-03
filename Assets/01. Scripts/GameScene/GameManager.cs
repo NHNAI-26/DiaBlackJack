@@ -38,6 +38,7 @@ namespace DiaBlackJack.GameScene
         private SatanNumberSelectionView satanNumberSelection;
         [SerializeField] private TableCombatCommandGroup tableCombatCommands;
         [SerializeField] private ContractPaperView contractPapers;
+        [SerializeField] private MammonDieView mammonDie;
 
         [Header("Standalone enemy profile")]
         [SerializeField] private string enemyProfileKey =
@@ -114,9 +115,9 @@ namespace DiaBlackJack.GameScene
         private GUIStyle _labelStyle;
         private GUIStyle _shopPanelStyle;
         private GUIStyle _shopCardButtonStyle;
-        private GUIStyle _mammonDieStyle;
         private int? _playerMammonDieValue;
         private int? _enemyMammonDieValue;
+        private bool _mammonRollAnimationRequested;
         private Vector2 _lighterRemovalScroll;
         private bool _hasLastRevolverAnimationCue;
         private int _lastRevolverAnimationRoundNumber;
@@ -336,6 +337,9 @@ namespace DiaBlackJack.GameScene
                 FindObjectsInactive.Include);
             contractPapers ??= FindFirstObjectByType<ContractPaperView>(
                 FindObjectsInactive.Include);
+            mammonDie ??= FindFirstObjectByType<MammonDieView>(
+                FindObjectsInactive.Include);
+            EnsureMammonDie();
 
             if (hud != null)
             {
@@ -627,6 +631,15 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            MammonDieView pointedMammonDie = !shopOpen && hasHit
+                ? hit.collider.GetComponentInParent<MammonDieView>()
+                : null;
+            if (pointedMammonDie != null && pointedMammonDie.IsInteractable)
+            {
+                ProcessInput(TryRollPlayerMammonDie);
+                return;
+            }
+
             DeckClickable pointedDeck = !shopOpen && hasHit
                 ? hit.collider.GetComponentInParent<DeckClickable>()
                 : null;
@@ -705,6 +718,29 @@ namespace DiaBlackJack.GameScene
 
             Ray ray = _camera.ScreenPointToRay(mouse.position.ReadValue());
             return Physics.Raycast(ray, out hit, 200f);
+        }
+
+        private void EnsureMammonDie()
+        {
+            if (mammonDie != null || discardDeck == null)
+            {
+                return;
+            }
+
+            MammonDieView prefab = Resources.Load<MammonDieView>(
+                "Prefabs/MammonDie_Prototype");
+            if (prefab == null)
+            {
+                return;
+            }
+
+            mammonDie = Instantiate(
+                prefab,
+                discardDeck.transform.parent);
+            mammonDie.name = "MammonDie";
+            mammonDie.transform.position = discardDeck.transform.position +
+                new Vector3(0.85f, 0.2f, 0.08f);
+            mammonDie.transform.rotation = Quaternion.identity;
         }
 
         private void HandleDemonContractSelectionInput(
@@ -1601,8 +1637,6 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            DrawMammonDieStatus();
-
             if (shop == null ||
                 !shop.IsOpen ||
                 (_core == null && _formalShopModel == null))
@@ -1761,43 +1795,6 @@ namespace DiaBlackJack.GameScene
             }
 
             _shopUtilityAnimationPlaying = false;
-        }
-
-        private void DrawMammonDieStatus()
-        {
-            if ((shop != null && shop.IsOpen) ||
-                (!_playerMammonDieValue.HasValue &&
-                 !_enemyMammonDieValue.HasValue))
-            {
-                return;
-            }
-
-            _mammonDieStyle ??= new GUIStyle(GUI.skin.box)
-            {
-                font = uiFont,
-                fontSize = 20,
-                fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.MiddleCenter,
-                normal = { textColor = Color.white }
-            };
-
-            string label = "MAMMON DIE";
-            if (_playerMammonDieValue.HasValue)
-            {
-                label += "  YOU " + _playerMammonDieValue.Value;
-            }
-
-            if (_enemyMammonDieValue.HasValue)
-            {
-                label += "  ENEMY " + _enemyMammonDieValue.Value;
-            }
-
-            const float width = 330f;
-            const float height = 42f;
-            GUI.Box(
-                new Rect((Screen.width - width) * 0.5f, 48f, width, height),
-                label,
-                _mammonDieStyle);
         }
 
         private void DrawShopControls()
@@ -2182,6 +2179,23 @@ namespace DiaBlackJack.GameScene
                     sourceContractCardId);
         }
 
+        private bool TryRollPlayerMammonDie()
+        {
+            GameSceneViewModel viewModel = Battle == null
+                ? null
+                : GameScenePresenter.Create(Battle, _activeEnemyProfileKey);
+            if (viewModel?.PlayerMammonSourceCardId == null ||
+                !viewModel.CanPlayerRerollMammon)
+            {
+                return false;
+            }
+
+            bool accepted = TryBeginPlayerActiveDemonContractAction(
+                viewModel.PlayerMammonSourceCardId.Value);
+            _mammonRollAnimationRequested = accepted;
+            return accepted;
+        }
+
         // Fires synchronously for each sub-step while the battle resolves the turn. Snapshots the
         // public view state at that instant so PlayTimeline can reveal them one beat at a time.
         private void OnBattleStepped()
@@ -2297,10 +2311,24 @@ namespace DiaBlackJack.GameScene
             bool deferHammerSmashCardRender = false,
             bool deferKnifeResultCardRender = false)
         {
+            int? previousPlayerMammonDieValue = _playerMammonDieValue;
             _core = vm.Core;
             _playerMammonDieValue = vm.PlayerMammonDieValue;
             _enemyMammonDieValue = vm.EnemyMammonDieValue;
             bool isShopOpen = shop != null && shop.IsOpen;
+            bool playInitialMammonRoll =
+                !previousPlayerMammonDieValue.HasValue &&
+                vm.PlayerMammonDieValue.HasValue;
+            mammonDie?.Render(
+                isShopOpen ? null : vm.PlayerMammonDieValue,
+                !isShopOpen && !_inputLocked &&
+                    vm.CanPlayerRerollMammon);
+            if (!isShopOpen && vm.PlayerMammonDieValue.HasValue &&
+                (playInitialMammonRoll || _mammonRollAnimationRequested))
+            {
+                mammonDie?.PlayRoll(vm.PlayerMammonDieValue.Value);
+                _mammonRollAnimationRequested = false;
+            }
             bool hideCombatHudForPresentation =
                 _inputLocked &&
                 (vm.HammerAnimationCue != null ||

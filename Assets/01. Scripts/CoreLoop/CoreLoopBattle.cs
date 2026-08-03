@@ -2914,6 +2914,10 @@ namespace DiaBlackJack.CoreLoop
 
                 switch (activeContract.Kind)
                 {
+                    case DemonContractKind.Mammon:
+                        return _demonContractResolver.CanOwnerRerollMammon(
+                            this,
+                            activeContract);
                     case DemonContractKind.Satan:
                         if (!(activeContract.RuntimeState is SatanRuntimeState
                             satanState))
@@ -2950,6 +2954,9 @@ namespace DiaBlackJack.CoreLoop
 
                 switch (activeContract.Kind)
                 {
+                    case DemonContractKind.Mammon:
+                        return TryBeginPlayerMammonReroll(
+                            sourceContractCardId);
                     case DemonContractKind.Satan:
                         return TryBeginPlayerSatanContractAction(
                             sourceContractCardId);
@@ -3168,6 +3175,12 @@ namespace DiaBlackJack.CoreLoop
             }
 
             resolvedContractIds.Add(activeContract.SourceCardId);
+            if (ownerSide == CombatantSide.Player &&
+                activeContract.Kind == DemonContractKind.Mammon)
+            {
+                return TryBeginNextTurnStartChoice(ownerSide);
+            }
+
             PendingDemonContractInteraction pending;
             switch (activeContract.Kind)
             {

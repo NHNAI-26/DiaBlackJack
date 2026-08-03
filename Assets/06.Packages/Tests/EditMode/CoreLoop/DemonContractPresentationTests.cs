@@ -167,7 +167,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR05_U01_MammonUsesMandatoryTurnStartChoiceNotActiveAction()
+        public void DCR05_U01_MammonUsesActiveTableDieActionWithoutPrompt()
         {
             CoreLoopBattle battle = CreateStartedBattle(DemonContractKind.Mammon);
             SelectContract(battle, DemonContractKind.Mammon);
@@ -177,13 +177,14 @@ namespace DiaBlackJack.CoreLoop.Tests
             DemonContractPanelViewModel model =
                 DemonContractPresenter.Create(battle);
 
-            Assert.That(model.InteractionKind,
-                Is.EqualTo(DemonContractInteractionKind.MammonReroll));
-            Assert.That(model.ActiveActions, Is.Empty);
-            Assert.That(battle.PendingPlayerDemonContractInteraction
-                .SourceContractCardId, Is.EqualTo(activeContract.SourceCardId));
+            Assert.That(model.InteractionKind, Is.Null);
+            Assert.That(battle.PendingPlayerDemonContractInteraction, Is.Null);
+            Assert.That(model.ActiveActions.Single().Kind,
+                Is.EqualTo(DemonContractKind.Mammon));
+            Assert.That(model.ActiveActions.Single().SourceCardId,
+                Is.EqualTo(activeContract.SourceCardId));
             Assert.That(battle.TryBeginPlayerActiveDemonContractAction(
-                activeContract.SourceCardId), Is.False);
+                activeContract.SourceCardId), Is.True);
         }
 
         [Test]
@@ -210,7 +211,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR05_U03_ControllerForwardsMammonTurnStartChoice()
+        public void DCR05_U03_ControllerForwardsMammonTableDieAction()
         {
             GameObject gameObject = new GameObject("DCR05 Controller Test");
             gameObject.AddComponent<CoreLoopView>();
@@ -235,19 +236,16 @@ namespace DiaBlackJack.CoreLoop.Tests
                 controller.RequestResolveDemonContract(
                     pending.InteractionId,
                     pending.Options.Single().OptionId);
-                PendingDemonContractInteraction mammonChoice =
-                    controller.Battle.PendingPlayerDemonContractInteraction;
-                Assert.That(mammonChoice.Kind,
-                    Is.EqualTo(DemonContractInteractionKind.MammonReroll));
+                ActiveDemonContractActionViewModel mammonAction =
+                    controller.CurrentViewModel.DemonContract.ActiveActions.Single();
                 int playerContractActionsBefore =
                     controller.Battle.PublicActionHistory.Count(entry =>
                         entry.ActorSide == CombatantSide.Player &&
                         entry.ActionType ==
                             PublicCombatActionType.DemonContract);
 
-                controller.RequestResolveDemonContract(
-                    mammonChoice.InteractionId,
-                    MammonDemonContractHandler.RerollDieOptionId);
+                controller.RequestBeginActiveDemonContractAction(
+                    mammonAction.SourceCardId);
 
                 Assert.That(
                     controller.Battle.PublicActionHistory.Count(entry =>

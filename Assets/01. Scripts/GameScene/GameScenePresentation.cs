@@ -389,7 +389,9 @@ namespace DiaBlackJack.GameScene
             string enemyTotalsText = null,
             GameSceneKnifeAnimationCue knifeAnimationCue = null,
             int? playerMammonDieValue = null,
-            int? enemyMammonDieValue = null)
+            int? enemyMammonDieValue = null,
+            int? playerMammonSourceCardId = null,
+            bool canPlayerRerollMammon = false)
         {
             Core = core ?? throw new ArgumentNullException(nameof(core));
             PlayerCards = playerCards ?? throw new ArgumentNullException(nameof(playerCards));
@@ -413,6 +415,8 @@ namespace DiaBlackJack.GameScene
             KnifeAnimationCue = knifeAnimationCue;
             PlayerMammonDieValue = playerMammonDieValue;
             EnemyMammonDieValue = enemyMammonDieValue;
+            PlayerMammonSourceCardId = playerMammonSourceCardId;
+            CanPlayerRerollMammon = canPlayerRerollMammon;
         }
 
         public CoreLoopViewModel Core { get; }
@@ -451,6 +455,10 @@ namespace DiaBlackJack.GameScene
         public int? PlayerMammonDieValue { get; }
 
         public int? EnemyMammonDieValue { get; }
+
+        public int? PlayerMammonSourceCardId { get; }
+
+        public bool CanPlayerRerollMammon { get; }
     }
 
     public static class GameScenePresenter
@@ -467,6 +475,8 @@ namespace DiaBlackJack.GameScene
                 battle.LastResolution.HasValue;
             (CharacterVisualState enemyVisual, string enemyLabel) =
                 ResolveSide(battle, CombatantSide.Enemy);
+            ActiveDemonContract playerMammon = FindMammonContract(
+                battle.ActivePlayerDemonContracts);
             return new GameSceneViewModel(
                 core,
                 CreatePlayerCards(core, battle, revealRoundResult),
@@ -490,23 +500,34 @@ namespace DiaBlackJack.GameScene
                 CreatePlayerTotalsText(battle, core, revealRoundResult),
                 CreateEnemyTotalsText(battle, core, revealRoundResult),
                 CreateKnifeAnimationCue(battle),
-                FindMammonDieValue(battle.ActivePlayerDemonContracts),
-                FindMammonDieValue(battle.ActiveEnemyDemonContracts));
+                FindMammonDieValue(playerMammon),
+                FindMammonDieValue(FindMammonContract(
+                    battle.ActiveEnemyDemonContracts)),
+                playerMammon?.SourceCardId,
+                playerMammon != null &&
+                    battle.CanBeginPlayerActiveDemonContractAction(
+                        playerMammon.SourceCardId));
         }
 
-        private static int? FindMammonDieValue(
+        private static ActiveDemonContract FindMammonContract(
             IReadOnlyList<ActiveDemonContract> contracts)
         {
             foreach (ActiveDemonContract contract in contracts)
             {
-                if (contract.Kind == DemonContractKind.Mammon &&
-                    contract.RuntimeState is MammonRuntimeState mammon)
+                if (contract.Kind == DemonContractKind.Mammon)
                 {
-                    return mammon.CurrentDieValue;
+                    return contract;
                 }
             }
 
             return null;
+        }
+
+        private static int? FindMammonDieValue(ActiveDemonContract contract)
+        {
+            return contract?.RuntimeState is MammonRuntimeState mammon
+                ? mammon.CurrentDieValue
+                : (int?)null;
         }
 
         private static string CreatePlayerTotalsText(

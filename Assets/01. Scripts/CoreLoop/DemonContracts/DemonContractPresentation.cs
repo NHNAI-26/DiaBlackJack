@@ -348,6 +348,9 @@ namespace DiaBlackJack.CoreLoop.UI
                 string actionLabel;
                 switch (contract.Kind)
                 {
+                    case DemonContractKind.Mammon:
+                        actionLabel = "MAMMON REROLL";
+                        break;
                     case DemonContractKind.Satan:
                         SatanRuntimeState satan =
                             (SatanRuntimeState)contract.RuntimeState;

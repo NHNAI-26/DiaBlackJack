@@ -451,7 +451,8 @@ namespace DiaBlackJack.GameScene
             var activeContractActions = new List<GameSceneCombatHudActionViewModel>();
             foreach (ActiveDemonContractActionViewModel action in contract.ActiveActions)
             {
-                if (action.Kind == DemonContractKind.Satan)
+                if (action.Kind == DemonContractKind.Satan ||
+                    action.Kind == DemonContractKind.Mammon)
                 {
                     continue;
                 }
