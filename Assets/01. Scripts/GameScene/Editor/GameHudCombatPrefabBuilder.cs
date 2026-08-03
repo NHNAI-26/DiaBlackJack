@@ -13,7 +13,11 @@ namespace DiaBlackJack.GameScene.Editor
     internal static class GameHudCombatPrefabBuilder
     {
         private const string HudPrefabPath = "Assets/03. Prefabs/UI/HUD.prefab";
+        private const string DefaultButtonPrefabPath =
+            "Assets/03. Prefabs/UI/DefaultButton.prefab";
         private const string BrushAssetPath = "Assets/05. Arts/UI/Brush_UI.psd";
+        private const string DefaultFontAssetPath =
+            "Assets/05. Arts/Fonts/전주완판본체/전주완판본 순R SDF.asset";
         private const string CardContentCatalogPath =
             "Assets/02. ScriptableObjects/Cards/CardContentCatalog.asset";
         private const string ContractDetailTextMaterialPath =
@@ -54,7 +58,7 @@ namespace DiaBlackJack.GameScene.Editor
                 }
 
                 Sprite panelBrush = FindSprite("Brush_UI_8");
-                CreateShopLeaveControl(hudRoot, hud, font);
+                CreateShopLeaveControl(hudRoot, hud);
 
                 RectTransform controls = CreateRect("CombatControls", hudRoot.transform);
                 Stretch(controls);
@@ -140,15 +144,13 @@ namespace DiaBlackJack.GameScene.Editor
             try
             {
                 GameHudView hud = hudRoot.GetComponent<GameHudView>();
-                TMP_FontAsset font =
-                    hudRoot.GetComponentInChildren<TMP_Text>(true)?.font;
-                if (hud == null || font == null)
+                if (hud == null)
                 {
                     throw new InvalidOperationException(
-                        "HUD prefab is missing GameHudView or its TMP font.");
+                        "HUD prefab is missing GameHudView.");
                 }
 
-                CreateShopLeaveControl(hudRoot, hud, font);
+                CreateShopLeaveControl(hudRoot, hud);
                 PrefabUtility.SaveAsPrefabAsset(hudRoot, HudPrefabPath);
             }
             finally
@@ -157,10 +159,57 @@ namespace DiaBlackJack.GameScene.Editor
             }
         }
 
+        [MenuItem("DiaBlackJack/Build Default Button Prefab")]
+        private static void BuildDefaultButtonPrefab()
+        {
+            TMP_FontAsset font =
+                AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(DefaultFontAssetPath);
+            if (font == null)
+            {
+                throw new InvalidOperationException(
+                    "Default button TMP font asset was not found.");
+            }
+
+            GameObject root = new GameObject(
+                "DefaultButton",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image),
+                typeof(Button));
+            try
+            {
+                RectTransform rect = root.GetComponent<RectTransform>();
+                rect.sizeDelta = new Vector2(234f, 66f);
+
+                Image background = root.GetComponent<Image>();
+                background.sprite = FindSprite("Brush_UI_9");
+                background.type = Image.Type.Simple;
+                background.preserveAspect = true;
+
+                Button button = root.GetComponent<Button>();
+                button.targetGraphic = background;
+
+                TMP_Text label = CreateText(
+                    "Label",
+                    rect,
+                    font,
+                    28f,
+                    TextAlignmentOptions.Center);
+                label.text = "버튼";
+                label.fontStyle = FontStyles.Bold;
+                Stretch(label.rectTransform, 8f);
+
+                PrefabUtility.SaveAsPrefabAsset(root, DefaultButtonPrefabPath);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
         private static void CreateShopLeaveControl(
             GameObject hudRoot,
-            GameHudView hud,
-            TMP_FontAsset font)
+            GameHudView hud)
         {
             Transform existing = hudRoot.transform.Find("ShopLeaveRoot");
             if (existing != null)
@@ -175,29 +224,32 @@ namespace DiaBlackJack.GameScene.Editor
             canvas.sortingOrder = 150;
             layer.gameObject.AddComponent<GraphicRaycaster>();
 
-            RectTransform buttonRoot = CreateRect("ShopLeaveButton", layer);
+            GameObject defaultButtonPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(DefaultButtonPrefabPath);
+            if (defaultButtonPrefab == null)
+            {
+                throw new InvalidOperationException(
+                    "Default button prefab was not found. Build it before rebuilding the HUD.");
+            }
+
+            GameObject buttonObject =
+                (GameObject)PrefabUtility.InstantiatePrefab(defaultButtonPrefab, layer);
+            buttonObject.name = "ShopLeaveButton";
+            RectTransform buttonRoot = buttonObject.GetComponent<RectTransform>();
+            Button button = buttonObject.GetComponent<Button>();
+            TMP_Text label = buttonObject.transform.Find("Label")?.GetComponent<TMP_Text>();
+            if (buttonRoot == null || button == null || label == null)
+            {
+                throw new InvalidOperationException(
+                    "Default button prefab is missing RectTransform, Button, or Label.");
+            }
+
             buttonRoot.anchorMin = new Vector2(0.5f, 0f);
             buttonRoot.anchorMax = new Vector2(0.5f, 0f);
             buttonRoot.pivot = new Vector2(0.5f, 0f);
             buttonRoot.anchoredPosition = new Vector2(0f, 24f);
             buttonRoot.sizeDelta = new Vector2(234f, 66f);
-
-            Image background = buttonRoot.gameObject.AddComponent<Image>();
-            background.sprite = FindSprite("Brush_UI_9");
-            background.type = Image.Type.Simple;
-            background.preserveAspect = true;
-            Button button = buttonRoot.gameObject.AddComponent<Button>();
-            button.targetGraphic = background;
-
-            TMP_Text label = CreateText(
-                "Label",
-                buttonRoot,
-                font,
-                28f,
-                TextAlignmentOptions.Center);
             label.text = "상점 나가기";
-            label.fontStyle = FontStyles.Bold;
-            Stretch(label.rectTransform, 8f);
 
             SerializedObject serialized = new SerializedObject(hud);
             serialized.FindProperty("shopLeaveRoot").objectReferenceValue =

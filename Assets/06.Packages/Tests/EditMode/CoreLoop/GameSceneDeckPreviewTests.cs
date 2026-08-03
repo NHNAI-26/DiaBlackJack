@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using DiaBlackJack.GameScene;
 using NUnit.Framework;
 using UnityEditor;
@@ -17,6 +18,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/UI/CardHoverTooltip.prefab";
         private const string HudPrefabPath =
             "Assets/03. Prefabs/UI/HUD.prefab";
+        private const string DefaultButtonPrefabPath =
+            "Assets/03. Prefabs/UI/DefaultButton.prefab";
 
         [Test]
         public void GSV03_U03_DeckPreviewKeepsAllCardsInScrollableModelAndClearsOnClose()
@@ -265,6 +268,134 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 leaveButton.Find("Label"),
                 Is.Not.Null);
+        }
+
+        [Test]
+        public void GSV09_U01_DefaultButtonPrefabAuthorsSharedVisualStyle()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(DefaultButtonPrefabPath);
+
+            Assert.That(prefab, Is.Not.Null);
+            RectTransform rect = prefab.GetComponent<RectTransform>();
+            Image image = prefab.GetComponent<Image>();
+            Button button = prefab.GetComponent<Button>();
+            Transform labelTransform = prefab.transform.Find("Label");
+            Component label = labelTransform.GetComponents<Component>()
+                .Single(component => component.GetType().Name == "TextMeshProUGUI");
+            SerializedObject serializedLabel = new SerializedObject(label);
+
+            Assert.That(rect.sizeDelta, Is.EqualTo(new Vector2(234f, 66f)));
+            Assert.That(image.sprite.name, Is.EqualTo("Brush_UI_9"));
+            Assert.That(image.preserveAspect, Is.True);
+            Assert.That(button.targetGraphic, Is.SameAs(image));
+            Assert.That(button.transition, Is.EqualTo(Selectable.Transition.ColorTint));
+            Assert.That(label, Is.Not.Null);
+            Assert.That(
+                serializedLabel.FindProperty("m_text").stringValue,
+                Is.EqualTo("버튼"));
+            Assert.That(
+                serializedLabel.FindProperty("m_fontAsset")
+                    .objectReferenceValue.name,
+                Is.EqualTo("전주완판본 순R SDF"));
+            Assert.That(
+                serializedLabel.FindProperty("m_fontSize").floatValue,
+                Is.EqualTo(28f));
+            Assert.That(
+                serializedLabel.FindProperty("m_enableAutoSizing").boolValue,
+                Is.True);
+            Assert.That(
+                serializedLabel.FindProperty("m_fontStyle").intValue,
+                Is.EqualTo(1));
+        }
+
+        [Test]
+        public void GSV09_U02_ShopLeaveUsesNestedDefaultButtonPrefab()
+        {
+            GameObject hudPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
+            Transform leaveRoot = hudPrefab.transform.Find("ShopLeaveRoot");
+            Transform leaveButton = leaveRoot.Find("ShopLeaveButton");
+            GameObject source =
+                PrefabUtility.GetCorrespondingObjectFromSource(leaveButton.gameObject);
+            Component label = leaveButton.Find("Label").GetComponents<Component>()
+                .Single(component => component.GetType().Name == "TextMeshProUGUI");
+            SerializedObject serializedLabel = new SerializedObject(label);
+            Button button = leaveButton.GetComponent<Button>();
+            RectTransform buttonRect = leaveButton.GetComponent<RectTransform>();
+            Canvas leaveCanvas = leaveRoot.GetComponent<Canvas>();
+            SerializedObject serializedHud =
+                new SerializedObject(hudPrefab.GetComponent<GameHudView>());
+
+            Assert.That(source, Is.Not.Null);
+            Assert.That(
+                AssetDatabase.GetAssetPath(source),
+                Is.EqualTo(DefaultButtonPrefabPath));
+            Assert.That(
+                serializedLabel.FindProperty("m_text").stringValue,
+                Is.EqualTo("상점 나가기"));
+            Assert.That(buttonRect.sizeDelta, Is.EqualTo(new Vector2(234f, 66f)));
+            Assert.That(buttonRect.anchoredPosition, Is.EqualTo(new Vector2(0f, 24f)));
+            Assert.That(leaveCanvas.overrideSorting, Is.True);
+            Assert.That(leaveCanvas.sortingOrder, Is.EqualTo(150));
+            Assert.That(
+                serializedHud.FindProperty("shopLeaveRoot").objectReferenceValue,
+                Is.SameAs(leaveRoot.gameObject));
+            Assert.That(
+                serializedHud.FindProperty("shopLeaveButton").objectReferenceValue,
+                Is.SameAs(button));
+        }
+
+        [Test]
+        public void GSV09_U03_ShopLeaveClickRespectsInteractableAndHideState()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+            GameHudView hud = instance.GetComponent<GameHudView>();
+            Button button = instance.transform
+                .Find("ShopLeaveRoot/ShopLeaveButton")
+                .GetComponent<Button>();
+            int requestedCount = 0;
+            hud.ShopLeaveRequested += () => requestedCount++;
+            MethodInfo bind = typeof(GameHudView).GetMethod(
+                "BindShopLeaveControl",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(bind, Is.Not.Null);
+            bind.Invoke(hud, null);
+            PointerEventData click = new PointerEventData(null)
+            {
+                button = PointerEventData.InputButton.Left,
+            };
+            hud.SetShopLeaveState(visible: false, interactable: false);
+
+            try
+            {
+                Assert.That(hud.IsShopLeaveVisible, Is.False);
+                Assert.That(hud.IsShopLeaveInteractable, Is.False);
+                button.OnPointerClick(click);
+                Assert.That(requestedCount, Is.Zero);
+
+                hud.SetShopLeaveState(visible: true, interactable: false);
+                button.OnPointerClick(click);
+                Assert.That(hud.IsShopLeaveVisible, Is.True);
+                Assert.That(hud.IsShopLeaveInteractable, Is.False);
+                Assert.That(requestedCount, Is.Zero);
+
+                hud.SetShopLeaveState(visible: true, interactable: true);
+                button.OnPointerClick(click);
+                Assert.That(requestedCount, Is.EqualTo(1));
+
+                hud.SetShopLeaveState(visible: false, interactable: true);
+                button.OnPointerClick(click);
+                Assert.That(hud.IsShopLeaveVisible, Is.False);
+                Assert.That(hud.IsShopLeaveInteractable, Is.False);
+                Assert.That(requestedCount, Is.EqualTo(1));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
         }
 
         private static GameObject InstantiatePreviewPrefab()
