@@ -246,6 +246,11 @@ MonoBehaviour:
     volume: 0.7
     pitch: 1
     loop: 0
+  - id: drinkWhiskey
+    clip: {fileID: 8300000, guid: c66a0085fcdb1334292a6dbeda995aaf, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1
