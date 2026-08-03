@@ -23,6 +23,50 @@ namespace DiaBlackJack.GameScene
         Attacked,
     }
 
+    internal enum EnemySpeechActionKind
+    {
+        Hit,
+        Stand,
+        Change,
+        UseCard,
+        DemonContract,
+    }
+
+    internal sealed class EnemySpeechCue
+    {
+        public EnemySpeechCue(
+            CoreLoopBattle battle,
+            int roundNumber,
+            int actionOrdinal,
+            EnemySpeechActionKind kind,
+            string sourceDefinitionKey)
+        {
+            Battle = battle;
+            RoundNumber = roundNumber;
+            ActionOrdinal = actionOrdinal;
+            Kind = kind;
+            SourceDefinitionKey = sourceDefinitionKey ?? string.Empty;
+        }
+
+        public int ActionOrdinal { get; }
+
+        public CoreLoopBattle Battle { get; }
+
+        public EnemySpeechActionKind Kind { get; }
+
+        public int RoundNumber { get; }
+
+        public string SourceDefinitionKey { get; }
+
+        public bool IsSameActionAs(EnemySpeechCue other)
+        {
+            return other != null &&
+                ReferenceEquals(Battle, other.Battle) &&
+                RoundNumber == other.RoundNumber &&
+                ActionOrdinal == other.ActionOrdinal;
+        }
+    }
+
     /// <summary>
     /// A single card projected for world-space rendering. <see cref="IsFaceUp"/> is the *physical*
     /// orientation (drives the card back visual). <see cref="RevealRank"/> is whether the rank may be
@@ -459,6 +503,8 @@ namespace DiaBlackJack.GameScene
         public int? PlayerMammonSourceCardId { get; }
 
         public bool CanPlayerRerollMammon { get; }
+
+        internal EnemySpeechCue EnemySpeechCue { get; set; }
     }
 
     public static class GameScenePresenter
@@ -477,7 +523,7 @@ namespace DiaBlackJack.GameScene
                 ResolveSide(battle, CombatantSide.Enemy);
             ActiveDemonContract playerMammon = FindMammonContract(
                 battle.ActivePlayerDemonContracts);
-            return new GameSceneViewModel(
+            GameSceneViewModel model = new GameSceneViewModel(
                 core,
                 CreatePlayerCards(core, battle, revealRoundResult),
                 CreateEnemyCards(battle, revealRoundResult),
@@ -507,6 +553,64 @@ namespace DiaBlackJack.GameScene
                 playerMammon != null &&
                     battle.CanBeginPlayerActiveDemonContractAction(
                         playerMammon.SourceCardId));
+            model.EnemySpeechCue = CreateEnemySpeechCue(battle);
+            return model;
+        }
+
+        internal static EnemySpeechCue CreateEnemySpeechCue(
+            int roundNumber,
+            int actionOrdinal,
+            PublicCombatAction action,
+            CoreLoopBattle battle = null)
+        {
+            if (action == null ||
+                action.ActorSide != CombatantSide.Enemy ||
+                actionOrdinal <= 0)
+            {
+                return null;
+            }
+
+            EnemySpeechActionKind kind;
+            switch (action.ActionType)
+            {
+                case PublicCombatActionType.Hit:
+                    kind = EnemySpeechActionKind.Hit;
+                    break;
+                case PublicCombatActionType.Stand:
+                    kind = EnemySpeechActionKind.Stand;
+                    break;
+                case PublicCombatActionType.Change:
+                    kind = EnemySpeechActionKind.Change;
+                    break;
+                case PublicCombatActionType.UseCard:
+                    kind = EnemySpeechActionKind.UseCard;
+                    break;
+                case PublicCombatActionType.DemonContract:
+                    kind = EnemySpeechActionKind.DemonContract;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(action));
+            }
+
+            return new EnemySpeechCue(
+                battle,
+                roundNumber,
+                actionOrdinal,
+                kind,
+                action.SourceCardDefinitionKey);
+        }
+
+        private static EnemySpeechCue CreateEnemySpeechCue(CoreLoopBattle battle)
+        {
+            IReadOnlyList<PublicCombatAction> history = battle.PublicActionHistory;
+            int count = history.Count;
+            return count == 0
+                ? null
+                : CreateEnemySpeechCue(
+                    battle.RoundNumber,
+                    count,
+                    history[count - 1],
+                    battle);
         }
 
         private static ActiveDemonContract FindMammonContract(

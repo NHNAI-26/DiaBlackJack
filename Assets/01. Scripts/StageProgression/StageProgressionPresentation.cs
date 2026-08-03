@@ -197,7 +197,11 @@ namespace DiaBlackJack.StageProgression.UI
             IEnumerable<ShopCardOptionViewModel> shopCardOptions,
             IEnumerable<ShopOwnedCardViewModel> shopOwnedCards,
             string lighterLabel,
+            int lighterPriceAmount,
+            bool isLighterUsed,
             string whiskeyLabel,
+            int whiskeyPriceAmount,
+            bool isWhiskeyUsed,
             bool canRestAtShop,
             bool canLeaveShop,
             string shopTransactionResult)
@@ -246,7 +250,11 @@ namespace DiaBlackJack.StageProgression.UI
                 shopOwnedCards ?? throw new ArgumentNullException(
                     nameof(shopOwnedCards))).AsReadOnly();
             LighterLabel = lighterLabel;
+            LighterPriceAmount = lighterPriceAmount;
+            IsLighterUsed = isLighterUsed;
             WhiskeyLabel = whiskeyLabel;
+            WhiskeyPriceAmount = whiskeyPriceAmount;
+            IsWhiskeyUsed = isWhiskeyUsed;
             CanRestAtShop = canRestAtShop;
             CanLeaveShop = canLeaveShop;
             ShopTransactionResult = shopTransactionResult;
@@ -306,7 +314,10 @@ namespace DiaBlackJack.StageProgression.UI
         public bool CanRestAtShop { get; }
         public string GoldResult { get; }
         public bool IsShop { get; }
+        public bool IsLighterUsed { get; }
+        public bool IsWhiskeyUsed { get; }
         public string LighterLabel { get; }
+        public int LighterPriceAmount { get; }
         public string PlayerGold { get; }
         public IReadOnlyList<ShopCardOptionViewModel> ShopCardOptions =>
             _shopCardOptions;
@@ -315,6 +326,7 @@ namespace DiaBlackJack.StageProgression.UI
             _shopOwnedCards;
         public string ShopTransactionResult { get; }
         public string WhiskeyLabel { get; }
+        public int WhiskeyPriceAmount { get; }
     }
 
     public static class StageProgressionPresenter
@@ -476,12 +488,16 @@ namespace DiaBlackJack.StageProgression.UI
                         shop.Offer.LighterPrice,
                         shop.HasRemovedCard)
                     : string.Empty,
+                isShop ? shop.Offer.LighterPrice : 0,
+                isShop && shop.HasRemovedCard,
                 isShop
                     ? CreateUtilityLabel(
                         "WHISKEY",
                         shop.Offer.WhiskeyPrice,
                         shop.HasRested)
                     : string.Empty,
+                isShop ? shop.Offer.WhiskeyPrice : 0,
+                isShop && shop.HasRested,
                 isShop &&
                     !shop.HasRested &&
                     progress.Player.CurrentSoul < progress.Player.MaximumSoul &&

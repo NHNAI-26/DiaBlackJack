@@ -592,7 +592,20 @@ RF-05의 `StageTest ↔ GameScene` 결과는 당시 실제 완료 이력이다. 
 
 해당 문서의 `StageTest`, `CoreLoopTest`, 당시 테스트 수와 화면 왕복 기록은 역사적 증거다. 새 계획에 맞춰 소급 수정하지 않는다. 실제 구현 완료 후 현재 구조 요약과 새 검증 항목만 추가한다.
 
-## 10. GF-06 전체 QA 완료 기록
+## 10. 적·상인 월드 스페이스 말풍선
+
+- `SpeechBubble.prefab`은 World Space Canvas를 유지하며 `EnemyCharacter.prefab`의 스프라이트 우측 자식으로 배치한다. `SpeechBubbleView`가 카메라 정렬과 상인 축소 시 월드 크기 보정을 담당하고, 모든 UI Graphic의 raycast target은 꺼서 카드·상점 클릭을 차단하지 않는다.
+- 전투 대사는 `GameScenePresenter`가 만든 `EnemySpeechCue`만 사용한다. cue 식별자는 전투 인스턴스, 라운드 번호, 공개 행동 순번이며 적의 `Hit`, `Stand`, `Change`, `UseCard`, `DemonContract`만 대상이다. 플레이어 행동, 피격 반응, 명중·실패, 승패·라운드 결과는 새 대사를 만들지 않는다.
+- 같은 행동의 연출 프레임은 같은 cue로 판정해 한 번만 표시한다. 같은 행동명이 연속되어도 공개 행동 순번이 다르면 새 대사로 교체한다. 기존 `EnemyActionLabel` 프레젠테이션은 회귀 호환용으로 남기되 말풍선 판정에 사용하지 않는다.
+- 기본 전투 문구는 `CharacterView`에 직렬화하며, 각 `EnemySpriteProfile`의 행동별 문자열로 덮어쓸 수 있다. 프로필별 대사를 추가할 때 규칙 코드와 `SpeechBubbleView`는 변경하지 않는다.
+- 상인은 입장, 카드 구매 성공, 골드 부족, 판매 완료, 기타 구매 불가, 카드 제거, 회복, 퇴장 cue를 공통으로 사용한다. 독립 상점과 정식 런 상점 모두 실패한 상품 클릭은 도메인 상태를 바꾸지 않고 이유 대사만 표시하며, 성공 대사는 실제 `Try*` 성공이 확인된 뒤에만 표시한다.
+- 문구는 다음 cue가 올 때까지 유지한다. 전투 재바인딩, 런 재시작, 결과 화면 전환에서는 명시적으로 숨기고, 상점 입장 문구는 남아 있던 전투 문구를 교체한다. 자동 종료, 페이드, 타이핑, 클릭형 대화 진행은 범위 밖이다.
+
+- 말풍선 텍스트는 사용자 레이어 7 `TextUI`의 독립 중첩 Canvas에서 렌더한다. 기본 카메라는 이 레이어를 제외하고, 후처리 기능이 없는 `TextUI_Renderer`를 사용하는 Overlay Camera가 Camera Stack 마지막에서 텍스트만 합성한다. 배경과 꼬리는 Default 레이어에 남아 NHN 후처리를 유지한다.
+- `TextUIOverlayCameraSync`는 Cinemachine 전환과 블렌드 중 실제 카메라의 위치·회전·투영행렬을 Overlay Camera에 렌더 직전 복사한다. 따라서 월드 스페이스 텍스트와 말풍선 배경이 분리되어 움직이지 않는다.
+- `EnemyCharacter.prefab`의 `SpeechBubbleAnchor`만 캐릭터 기준 위치 `(-3.28, 0.69, 0)`를 소유한다. 그 아래 중첩된 `SpeechBubble.prefab`은 위치 0과 원본 크기·피벗·폰트·재질을 상속해 프리팹 수정이 씬 배치에도 그대로 반영된다.
+
+## 11. GF-06 전체 QA 완료 기록
 
 - 완료일: 2026-07-31
 - 담당: 이천서

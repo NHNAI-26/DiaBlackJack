@@ -151,9 +151,7 @@ namespace DiaBlackJack.GameScene
         private StageProgressionSession _completedStageSession;
         private StageProgressionViewModel _formalShopModel;
         private int _formalShopGold;
-        private CoreLoopBattle _lastEnemySpeechBattle;
-        private int _lastEnemySpeechRoundNumber = -1;
-        private int _lastEnemySpeechActionOrdinal = -1;
+        private EnemySpeechCue _lastEnemySpeechCue;
 
         public event Action FormalBattleCompleted;
         public event Action<int> FormalShopCardPurchaseRequested;
@@ -299,7 +297,10 @@ namespace DiaBlackJack.GameScene
                     deckPreview.OpenForSingleSelection(
                         CreateFormalLighterRemovalPreview());
                 }
+            }
 
+            if (!succeeded)
+            {
                 shop?.ShowMerchantSpeech(MerchantSpeechCue.Unavailable);
             }
 
@@ -1542,6 +1543,27 @@ namespace DiaBlackJack.GameScene
                 ShopController.ResolveAvailabilitySpeech(availability));
         }
 
+        internal static ShopPurchaseAvailability ResolveFormalUtilityAvailability(
+            bool canUse,
+            bool wasUsed,
+            int currentGold,
+            int price)
+        {
+            if (wasUsed)
+            {
+                return ShopPurchaseAvailability.Unavailable;
+            }
+
+            if (currentGold < price)
+            {
+                return ShopPurchaseAvailability.InsufficientGold;
+            }
+
+            return canUse
+                ? ShopPurchaseAvailability.Available
+                : ShopPurchaseAvailability.Unavailable;
+        }
+
         private bool HasFormalRemovableCard()
         {
             if (_formalShopModel == null)
@@ -1583,7 +1605,12 @@ namespace DiaBlackJack.GameScene
             }
             else if (!HasFormalRemovableCard())
             {
-                shop.ShowMerchantSpeech(MerchantSpeechCue.Unavailable);
+                ShowMerchantAvailability(
+                    ResolveFormalUtilityAvailability(
+                        false,
+                        _formalShopModel.IsLighterUsed,
+                        _formalShopGold,
+                        _formalShopModel.LighterPriceAmount));
                 return;
             }
 
@@ -1793,7 +1820,12 @@ namespace DiaBlackJack.GameScene
             {
                 if (!_formalShopModel.CanRestAtShop)
                 {
-                    shop?.ShowMerchantSpeech(MerchantSpeechCue.Unavailable);
+                    ShowMerchantAvailability(
+                        ResolveFormalUtilityAvailability(
+                            false,
+                            _formalShopModel.IsWhiskeyUsed,
+                            _formalShopGold,
+                            _formalShopModel.WhiskeyPriceAmount));
                     UpdateShopUtilityItemHover(null);
                     return;
                 }
@@ -2523,7 +2555,14 @@ namespace DiaBlackJack.GameScene
                         ResolveRevolverTimedVisual(
                             CombatantSide.Enemy,
                             vm.EnemyVisual)));
-                PresentEnemySpeech(vm.EnemySpeechCue);
+                if (vm.Core.State == CoreLoopState.BattleEnded)
+                {
+                    ResetEnemySpeech();
+                }
+                else
+                {
+                    PresentEnemySpeech(vm.EnemySpeechCue);
+                }
             }
 
             if (!deferredCardRender)
@@ -2541,30 +2580,23 @@ namespace DiaBlackJack.GameScene
 
         private void PresentEnemySpeech(EnemySpeechCue cue)
         {
-            CoreLoopBattle battle = Battle;
-            if (cue == null || battle == null || enemyCharacter == null)
+            if (cue == null || cue.Battle == null || enemyCharacter == null)
             {
                 return;
             }
 
-            if (ReferenceEquals(_lastEnemySpeechBattle, battle) &&
-                _lastEnemySpeechRoundNumber == cue.RoundNumber &&
-                _lastEnemySpeechActionOrdinal == cue.ActionOrdinal)
+            if (cue.IsSameActionAs(_lastEnemySpeechCue))
             {
                 return;
             }
 
-            _lastEnemySpeechBattle = battle;
-            _lastEnemySpeechRoundNumber = cue.RoundNumber;
-            _lastEnemySpeechActionOrdinal = cue.ActionOrdinal;
+            _lastEnemySpeechCue = cue;
             enemyCharacter.ShowEnemySpeech(cue.Kind);
         }
 
         private void ResetEnemySpeech()
         {
-            _lastEnemySpeechBattle = null;
-            _lastEnemySpeechRoundNumber = -1;
-            _lastEnemySpeechActionOrdinal = -1;
+            _lastEnemySpeechCue = null;
             enemyCharacter?.HideSpeech();
         }
 

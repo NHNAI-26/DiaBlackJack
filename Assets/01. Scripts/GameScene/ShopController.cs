@@ -7,6 +7,26 @@ using UnityEngine;
 
 namespace DiaBlackJack.GameScene
 {
+    internal enum MerchantSpeechCue
+    {
+        Greeting,
+        PurchaseSuccess,
+        InsufficientGold,
+        SoldOut,
+        Unavailable,
+        LighterSuccess,
+        WhiskeySuccess,
+        Farewell,
+    }
+
+    internal enum ShopPurchaseAvailability
+    {
+        Available,
+        InsufficientGold,
+        SoldOut,
+        Unavailable,
+    }
+
     /// <summary>
     /// GameScene-local shop for the MVP. It grants placeholder gold, hides combat table objects,
     /// shows merchant goods, and owns the temporary card offers on the table.
@@ -44,6 +64,18 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private int utilityPriceIncreasePerUsedVisit = 1;
         [SerializeField] private int whiskeySoulRestore = 2;
         [SerializeField] private int shopRandomSeed = 20260726;
+
+        [Header("Merchant speech")]
+        [SerializeField] private string greetingSpeech = "어서 오게.";
+        [SerializeField] private string purchaseSuccessSpeech = "좋은 선택이군.";
+        [SerializeField] private string insufficientGoldSpeech = "골드가 부족하군.";
+        [SerializeField] private string soldOutSpeech = "이미 팔린 물건일세.";
+        [SerializeField] private string unavailableSpeech = "지금은 팔 수 없네.";
+        [SerializeField] private string lighterSuccessSpeech =
+            "덱이 한결 가벼워졌군.";
+        [SerializeField] private string whiskeySuccessSpeech =
+            "기운이 좀 돌아왔겠지.";
+        [SerializeField] private string farewellSpeech = "다음에 또 보지.";
 
         private readonly List<DemonCardOffer> _demonOffers = new List<DemonCardOffer>();
         private readonly List<NormalCardOffer> _normalOffers = new List<NormalCardOffer>();
@@ -118,6 +150,7 @@ namespace DiaBlackJack.GameScene
             if (merchant != null)
             {
                 merchant.EnterMerchant();
+                ShowMerchantSpeech(MerchantSpeechCue.Greeting);
             }
 
             SetCombatTableActive(false);
@@ -136,6 +169,7 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            bool isEnteringShop = !IsOpen || !IsFormal;
             IsOpen = true;
             IsFormal = true;
             ClearFormalOffers();
@@ -143,6 +177,10 @@ namespace DiaBlackJack.GameScene
             BindFormalUtilityItems(model);
 
             merchant?.EnterMerchant();
+            if (isEnteringShop)
+            {
+                ShowMerchantSpeech(MerchantSpeechCue.Greeting);
+            }
             SetCombatTableActive(false);
             if (itemsRoot != null)
             {
@@ -162,6 +200,7 @@ namespace DiaBlackJack.GameScene
             ClearFormalOffers();
             lighterItem?.SetHovered(false);
             whiskeyItem?.SetHovered(false);
+            ShowMerchantSpeech(MerchantSpeechCue.Farewell);
             merchant?.ExitMerchant();
             if (itemsRoot != null)
             {
@@ -185,6 +224,8 @@ namespace DiaBlackJack.GameScene
 
             IsOpen = false;
             IsFormal = false;
+
+            ShowMerchantSpeech(MerchantSpeechCue.Farewell);
 
             if (merchant != null)
             {
@@ -244,6 +285,29 @@ namespace DiaBlackJack.GameScene
             return true;
         }
 
+        internal ShopPurchaseAvailability GetDemonCardAvailability(int offerId)
+        {
+            if (!IsOpen)
+            {
+                return ShopPurchaseAvailability.Unavailable;
+            }
+
+            DemonCardOffer offer = FindDemonOffer(offerId);
+            if (offer == null)
+            {
+                return ShopPurchaseAvailability.Unavailable;
+            }
+
+            if (offer.SoldOut)
+            {
+                return ShopPurchaseAvailability.SoldOut;
+            }
+
+            return Gold < offer.Price
+                ? ShopPurchaseAvailability.InsufficientGold
+                : ShopPurchaseAvailability.Available;
+        }
+
         public bool TryPurchaseNormalCard(
             int offerId,
             out string definitionKey,
@@ -274,6 +338,29 @@ namespace DiaBlackJack.GameScene
 
             RefreshOfferViews();
             return true;
+        }
+
+        internal ShopPurchaseAvailability GetNormalCardAvailability(int offerId)
+        {
+            if (!IsOpen)
+            {
+                return ShopPurchaseAvailability.Unavailable;
+            }
+
+            NormalCardOffer offer = FindNormalOffer(offerId);
+            if (offer == null)
+            {
+                return ShopPurchaseAvailability.Unavailable;
+            }
+
+            if (offer.SoldOut)
+            {
+                return ShopPurchaseAvailability.SoldOut;
+            }
+
+            return Gold < offer.Price
+                ? ShopPurchaseAvailability.InsufficientGold
+                : ShopPurchaseAvailability.Available;
         }
 
         public void RefreshUtilityItems(
@@ -352,6 +439,19 @@ namespace DiaBlackJack.GameScene
             return true;
         }
 
+        internal ShopPurchaseAvailability GetLighterAvailability(
+            int removableCardCount)
+        {
+            if (!IsOpen || _lighterPurchasedThisVisit || removableCardCount <= 1)
+            {
+                return ShopPurchaseAvailability.Unavailable;
+            }
+
+            return Gold < CurrentLighterPrice
+                ? ShopPurchaseAvailability.InsufficientGold
+                : ShopPurchaseAvailability.Available;
+        }
+
         public bool TryPurchaseWhiskey(
             int playerCurrentSoul,
             int playerMaximumSoul,
@@ -382,6 +482,81 @@ namespace DiaBlackJack.GameScene
             _utilityPurchasedThisVisit = true;
             RefreshOfferViews();
             return true;
+        }
+
+        internal ShopPurchaseAvailability GetWhiskeyAvailability(
+            int playerCurrentSoul,
+            int playerMaximumSoul)
+        {
+            if (!IsOpen ||
+                _whiskeyPurchasedThisVisit ||
+                playerCurrentSoul < 0 ||
+                playerMaximumSoul <= 0 ||
+                playerCurrentSoul >= playerMaximumSoul)
+            {
+                return ShopPurchaseAvailability.Unavailable;
+            }
+
+            return Gold < CurrentWhiskeyPrice
+                ? ShopPurchaseAvailability.InsufficientGold
+                : ShopPurchaseAvailability.Available;
+        }
+
+        internal void ShowMerchantSpeech(MerchantSpeechCue cue)
+        {
+            merchant?.ShowSpeech(ResolveMerchantSpeech(cue));
+        }
+
+        internal static MerchantSpeechCue ResolveAvailabilitySpeech(
+            ShopPurchaseAvailability availability)
+        {
+            switch (availability)
+            {
+                case ShopPurchaseAvailability.InsufficientGold:
+                    return MerchantSpeechCue.InsufficientGold;
+                case ShopPurchaseAvailability.SoldOut:
+                    return MerchantSpeechCue.SoldOut;
+                case ShopPurchaseAvailability.Available:
+                    return MerchantSpeechCue.PurchaseSuccess;
+                default:
+                    return MerchantSpeechCue.Unavailable;
+            }
+        }
+
+        internal string ResolveMerchantSpeech(MerchantSpeechCue cue)
+        {
+            switch (cue)
+            {
+                case MerchantSpeechCue.Greeting:
+                    return ResolveSpeech(greetingSpeech, "어서 오게.");
+                case MerchantSpeechCue.PurchaseSuccess:
+                    return ResolveSpeech(purchaseSuccessSpeech, "좋은 선택이군.");
+                case MerchantSpeechCue.InsufficientGold:
+                    return ResolveSpeech(
+                        insufficientGoldSpeech,
+                        "골드가 부족하군.");
+                case MerchantSpeechCue.SoldOut:
+                    return ResolveSpeech(soldOutSpeech, "이미 팔린 물건일세.");
+                case MerchantSpeechCue.Unavailable:
+                    return ResolveSpeech(unavailableSpeech, "지금은 팔 수 없네.");
+                case MerchantSpeechCue.LighterSuccess:
+                    return ResolveSpeech(
+                        lighterSuccessSpeech,
+                        "덱이 한결 가벼워졌군.");
+                case MerchantSpeechCue.WhiskeySuccess:
+                    return ResolveSpeech(
+                        whiskeySuccessSpeech,
+                        "기운이 좀 돌아왔겠지.");
+                case MerchantSpeechCue.Farewell:
+                    return ResolveSpeech(farewellSpeech, "다음에 또 보지.");
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(cue));
+            }
+        }
+
+        private static string ResolveSpeech(string configured, string fallback)
+        {
+            return string.IsNullOrWhiteSpace(configured) ? fallback : configured;
         }
 
         private int CalculateUtilityPrice(int basePrice)
