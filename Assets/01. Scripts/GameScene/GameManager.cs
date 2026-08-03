@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Border.Audio;
 using DiaBlackJack.CoreLoop;
 using DiaBlackJack.CoreLoop.UI;
 using DiaBlackJack.StageProgression;
@@ -85,6 +86,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameObject whiskeyAnimationRoot;
         [SerializeField] private Animator whiskeyAnimator;
         [SerializeField] private float whiskeyAnimationSeconds = 5.6f;
+        [SerializeField] private float whiskeyDrinkSfxDelaySeconds = 0.93333334f;
+        [SerializeField] private string whiskeyDrinkSfxId = "drinkWhiskey";
 
         private const string WhiskeyAnimationStateName =
             "Base Layer.DrinkWhiskey";
@@ -2145,7 +2148,23 @@ namespace DiaBlackJack.GameScene
             whiskeyAnimator.SetLayerWeight(0, 1f);
             whiskeyAnimator.Play(WhiskeyAnimationStateName, 0, 0f);
             whiskeyAnimator.Update(0f);
-            yield return new WaitForSecondsRealtime(whiskeyAnimationSeconds);
+            float sfxDelay = Mathf.Clamp(
+                whiskeyDrinkSfxDelaySeconds,
+                0f,
+                whiskeyAnimationSeconds);
+            if (sfxDelay > 0f)
+            {
+                yield return new WaitForSecondsRealtime(sfxDelay);
+            }
+
+            SoundManager.Current?.PlaySfx(whiskeyDrinkSfxId);
+
+            float remainingSeconds = whiskeyAnimationSeconds - sfxDelay;
+            if (remainingSeconds > 0f)
+            {
+                yield return new WaitForSecondsRealtime(remainingSeconds);
+            }
+
             whiskeyAnimationRoot.SetActive(false);
             _shopUtilityAnimationPlaying = false;
             UpdateShopLeaveControl();
