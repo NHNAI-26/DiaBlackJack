@@ -2696,6 +2696,7 @@ namespace DiaBlackJack.CoreLoop
             _activeAutomaticCardEffectContext =
                 new AutomaticCardEffectContext(this, ownerSide, sourceCard);
             _automaticCardContinuation = continuation;
+            CoreLoopState stateBeforeAutomaticChoice = State;
             _isBeginningAutomaticCardEffect = true;
             try
             {
@@ -2707,6 +2708,11 @@ namespace DiaBlackJack.CoreLoop
                     resumeContinuation: false);
                 if (!isWaitingForChoice)
                 {
+                    if (State == CoreLoopState.ResolvingAutomaticCardEffect)
+                    {
+                        State = stateBeforeAutomaticChoice;
+                    }
+
                     immediateResult = LastAutomaticCardResult;
                 }
 

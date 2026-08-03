@@ -691,6 +691,46 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void ACF01_U03_PlayerLieDetectorUsesFocusedNumberSelector()
+        {
+            CardDefinition lieDetector = CardDefinitionCatalog.GetByKey(
+                CardDefinitionCatalog.LieDetectorKey);
+            var battle = new CoreLoopBattle(
+                BlackjackDeck.CreateInDrawOrder(CreateCards(
+                    0,
+                    2,
+                    3,
+                    lieDetector)),
+                BlackjackDeck.CreateInDrawOrder(CreateCards(100, 10, 7, 5)),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 4,
+                enemyPolicy: new StandPolicy());
+            Assert.That(battle.Start(), Is.True);
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+
+            GameSceneViewModel scene = GameScenePresenter.Create(battle);
+            GameSceneCombatHudViewModel hud = GameSceneCombatHudPresenter.Create(
+                scene.Core,
+                isStageBattle: false,
+                isShopOpen: false,
+                inputLocked: false,
+                scene.UsesDiegeticCardEffectSelection);
+
+            Assert.That(
+                hud.Mode,
+                Is.EqualTo(GameSceneCombatHudMode.RevolverNumberSelection));
+            Assert.That(hud.OptionActions, Has.Count.EqualTo(10));
+            Assert.That(
+                hud.OptionActions.Select(action => action.Command.OptionId),
+                Is.EqualTo(Enumerable.Range(1, 10)));
+            Assert.That(hud.OptionActions.All(action =>
+                action.Command.Kind ==
+                    GameSceneCombatHudCommandKind.ResolveAutomaticCardChoice),
+                Is.True);
+        }
+
+        [Test]
         public void GSH01_U05_BattleEndDifferentiatesStageReturnAndStandaloneRestart()
         {
             CoreLoopSession session = new CoreLoopSession(() => new CoreLoopBattle(

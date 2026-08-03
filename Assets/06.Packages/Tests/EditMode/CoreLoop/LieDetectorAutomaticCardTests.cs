@@ -318,6 +318,48 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
         }
 
+        [Test]
+        public void AC03_U07_EnemyDeclarationAutoResolvesAndReturnsControl()
+        {
+            var enemyPolicy = new RecordingSequencePolicy(
+                EnemyActionType.Hit,
+                EnemyActionType.Stand);
+            CoreLoopBattle battle = CreateBattleWithEnemyAutomaticPolicy(
+                PlayerCards(2, 7, 2),
+                EnemyCards(4, 3, LieDetector),
+                enemyPolicy);
+            Assert.That(battle.Start(), Is.True);
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+
+            Assert.That(battle.PendingAutomaticInteraction, Is.Null);
+            Assert.That(battle.LastEnemyAutomaticCardDecision, Is.Not.Null);
+            Assert.That(battle.LastLieDetectorPublicResult.HasValue, Is.True);
+            Assert.That(
+                battle.LastLieDetectorPublicResult.Value.OwnerSide,
+                Is.EqualTo(CombatantSide.Enemy));
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+        }
+
+        [Test]
+        public void AC03_U08_PlayerDeclarationResumesAfterChoice()
+        {
+            CoreLoopBattle battle = CreateBattleWithEnemyAutomaticPolicy(
+                PlayerCards(2, 3, LieDetector),
+                EnemyCards(4, 7),
+                new StandPolicy());
+            Assert.That(battle.Start(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(
+                battle.State,
+                Is.EqualTo(CoreLoopState.ResolvingAutomaticCardEffect));
+
+            Assert.That(ResolvePlayerDeclaration(battle, 6), Is.True);
+
+            Assert.That(battle.PendingAutomaticInteraction, Is.Null);
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+        }
+
         private static bool ResolvePlayerDeclaration(
             CoreLoopBattle battle,
             int declaredNumber)
@@ -344,6 +386,20 @@ namespace DiaBlackJack.CoreLoop.Tests
                 enemyPolicy,
                 CardEffectResolver.CreateDefault(),
                 enemyAutomaticCardDecisionPolicy: null);
+        }
+
+        private static CoreLoopBattle CreateBattleWithEnemyAutomaticPolicy(
+            IReadOnlyList<BlackjackCard> playerCards,
+            IReadOnlyList<BlackjackCard> enemyCards,
+            IEnemyBehaviorPolicy enemyPolicy)
+        {
+            return new CoreLoopBattle(
+                BlackjackDeck.CreateInDrawOrder(playerCards),
+                BlackjackDeck.CreateInDrawOrder(enemyCards),
+                playerMaximumSoul: 12,
+                playerCurrentSoul: 12,
+                enemyMaximumSoul: 3,
+                enemyPolicy);
         }
 
         private static IReadOnlyList<BlackjackCard> PlayerCards(
