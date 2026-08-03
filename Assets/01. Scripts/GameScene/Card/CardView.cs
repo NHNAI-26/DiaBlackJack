@@ -80,6 +80,7 @@ namespace DiaBlackJack.GameScene
 
         private MaterialPropertyBlock _frontPropertyBlock;
         private MaterialPropertyBlock _backPropertyBlock;
+        private Material _cardFrontMaterial;
         private Material _cardBackMaterial;
         private Material _shopFrontMaterial;
         private Material _shopBackMaterial;
@@ -199,6 +200,7 @@ namespace DiaBlackJack.GameScene
 
         private void OnDestroy()
         {
+            DestroyMaterialInstance(_cardFrontMaterial);
             DestroyMaterialInstance(_cardBackMaterial);
             DestroyMaterialInstance(_shopFrontMaterial);
             DestroyMaterialInstance(_shopBackMaterial);
@@ -227,6 +229,7 @@ namespace DiaBlackJack.GameScene
 
             StopRevealSequence();
 
+            EnsureCardMaterialInstances();
             CardId = card.CardId;
             DefinitionKey = card.DefinitionKey;
             CanUse = card.CanUse;
@@ -672,6 +675,7 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            EnsureCardMaterialInstance(renderer);
             EnablePixelOutlineKeyword(renderer);
 
             Color outlineColor = ResolveOutlineColor(renderer);
@@ -688,6 +692,12 @@ namespace DiaBlackJack.GameScene
                 PixelOutlineAlphaThresholdId,
                 ResolveOutlineAlphaThreshold(renderer));
             propertyBlock.SetFloat(PixelOutlineVisibilityId, visible ? 1f : 0f);
+            SetOutlineMaterialProperties(
+                renderer.sharedMaterial,
+                outlineColor,
+                ResolveOutlineWidth(renderer),
+                ResolveOutlineAlphaThreshold(renderer),
+                visible ? 1f : 0f);
             renderer.SetPropertyBlock(propertyBlock);
         }
 
@@ -760,6 +770,53 @@ namespace DiaBlackJack.GameScene
                 name = source.name + " (" + instanceLabel + ")"
             };
             renderer.sharedMaterial = materialInstance;
+        }
+
+        private void EnsureCardMaterialInstances()
+        {
+            EnsureCardMaterialInstance(FrontSpriteRenderer());
+            EnsureCardMaterialInstance(BackSpriteRenderer());
+        }
+
+        private void EnsureCardMaterialInstance(Renderer renderer)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            if (renderer == _frontSpriteRenderer)
+            {
+                CreateMaterialInstance(
+                    renderer,
+                    ref _cardFrontMaterial,
+                    "Card Front Instance");
+                RefreshMaterialSpriteUv(renderer);
+                return;
+            }
+
+            if (renderer == _backSpriteRenderer)
+            {
+                CreateMaterialInstance(
+                    renderer,
+                    ref _cardBackMaterial,
+                    "Card Back Instance");
+                RefreshMaterialSpriteUv(renderer);
+            }
+        }
+
+        private static void RefreshMaterialSpriteUv(Renderer renderer)
+        {
+            SpriteRenderer spriteRenderer = renderer as SpriteRenderer;
+            if (spriteRenderer == null)
+            {
+                return;
+            }
+
+            SetVectorIfPresent(
+                renderer.sharedMaterial,
+                BaseSpriteUvRectId,
+                GetSpriteUvRect(spriteRenderer.sprite));
         }
 
         private static void DestroyMaterialInstance(Material material)
@@ -837,11 +894,14 @@ namespace DiaBlackJack.GameScene
             renderer.GetPropertyBlock(propertyBlock);
             if (renderer == _backSpriteRenderer)
             {
-                EnsureCardBackMaterialInstance(renderer);
+                EnsureCardMaterialInstance(renderer);
+            }
+            else if (renderer == _frontSpriteRenderer)
+            {
+                EnsureCardMaterialInstance(renderer);
             }
 
-            Material blendMaterial =
-                renderer == _backSpriteRenderer ? renderer.sharedMaterial : null;
+            Material blendMaterial = renderer.sharedMaterial;
             SetCardBlendSpriteProperties(
                 propertyBlock,
                 blendMaterial,
@@ -857,10 +917,7 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            CreateMaterialInstance(
-                renderer,
-                ref _cardBackMaterial,
-                "Card Back Instance");
+            EnsureCardMaterialInstance(renderer);
         }
 
         private static void SetCardBlendSpriteProperties(
@@ -955,7 +1012,52 @@ namespace DiaBlackJack.GameScene
 
             trackedSprite = currentSprite;
             propertyBlock.SetVector(BaseSpriteUvRectId, uvRect);
+            SetVectorIfPresent(renderer.sharedMaterial, BaseSpriteUvRectId, uvRect);
             renderer.SetPropertyBlock(propertyBlock);
+        }
+
+        private static void SetOutlineMaterialProperties(
+            Material material,
+            Color color,
+            float width,
+            float alphaThreshold,
+            float visibility)
+        {
+            if (material == null)
+            {
+                return;
+            }
+
+            if (material.HasProperty(PixelOutlineColorId))
+            {
+                material.SetColor(PixelOutlineColorId, color);
+            }
+
+            if (material.HasProperty(PixelOutlineWidthId))
+            {
+                material.SetFloat(PixelOutlineWidthId, width);
+            }
+
+            if (material.HasProperty(PixelOutlineAlphaThresholdId))
+            {
+                material.SetFloat(PixelOutlineAlphaThresholdId, alphaThreshold);
+            }
+
+            if (material.HasProperty(PixelOutlineVisibilityId))
+            {
+                material.SetFloat(PixelOutlineVisibilityId, visibility);
+            }
+        }
+
+        private static void SetVectorIfPresent(
+            Material material,
+            int propertyId,
+            Vector4 value)
+        {
+            if (material != null && material.HasProperty(propertyId))
+            {
+                material.SetVector(propertyId, value);
+            }
         }
 
         private static bool Approximately(Vector4 left, Vector4 right)

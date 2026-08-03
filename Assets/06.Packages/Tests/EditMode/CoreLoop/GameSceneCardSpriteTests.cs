@@ -616,6 +616,118 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GSV02_U11_SameFaceCardHoverStateStaysPerView()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject first = Object.Instantiate(prefab);
+            GameObject second = Object.Instantiate(prefab);
+
+            try
+            {
+                CardView firstView = first.GetComponent<CardView>();
+                CardView secondView = second.GetComponent<CardView>();
+                Assert.That(firstView, Is.Not.Null);
+                Assert.That(secondView, Is.Not.Null);
+                SpriteRenderer firstFront = GetFrontRenderer(firstView);
+                SpriteRenderer secondFront = GetFrontRenderer(secondView);
+
+                string definitionKey =
+                    CardDefinitionCatalog.GetDefaultForRank(2).Key;
+                firstView.Bind(new GameSceneCardViewModel(
+                    cardId: 10,
+                    rank: 2,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    displayName: "Two",
+                    definitionKey: definitionKey));
+                secondView.Bind(new GameSceneCardViewModel(
+                    cardId: 11,
+                    rank: 2,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    displayName: "Two",
+                    definitionKey: definitionKey));
+
+                Assert.That(firstFront.sprite, Is.SameAs(secondFront.sprite));
+                Assert.That(
+                    firstFront.sharedMaterial,
+                    Is.Not.SameAs(secondFront.sharedMaterial));
+
+                firstView.SetHovered(true);
+
+                var properties = new MaterialPropertyBlock();
+                firstFront.GetPropertyBlock(properties);
+                Assert.That(properties.GetFloat(PixelOutlineVisibilityId),
+                    Is.EqualTo(1f));
+                Assert.That(firstFront.sharedMaterial.GetFloat(
+                    PixelOutlineVisibilityId), Is.EqualTo(1f));
+                secondFront.GetPropertyBlock(properties);
+                Assert.That(properties.GetFloat(PixelOutlineVisibilityId),
+                    Is.Zero);
+                Assert.That(secondFront.sharedMaterial.GetFloat(
+                    PixelOutlineVisibilityId), Is.Zero);
+            }
+            finally
+            {
+                Object.DestroyImmediate(first);
+                Object.DestroyImmediate(second);
+            }
+        }
+
+        [Test]
+        public void GSV02_U12_CardHandReordersExistingViewsByCardId()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            var handObject = new GameObject("PlayerHand");
+
+            try
+            {
+                CardHand hand = handObject.AddComponent<CardHand>();
+                SetPrivateField(hand, "cardPrefab", prefab.GetComponent<CardView>());
+
+                var firstCard = new GameSceneCardViewModel(
+                    cardId: 20,
+                    rank: 2,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    displayName: "Two",
+                    definitionKey: CardDefinitionCatalog.GetDefaultForRank(2).Key);
+                var secondCard = new GameSceneCardViewModel(
+                    cardId: 21,
+                    rank: 3,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    displayName: "Three",
+                    definitionKey: CardDefinitionCatalog.GetDefaultForRank(3).Key);
+
+                hand.Render(new[] { firstCard, secondCard });
+                List<CardView> initialViews =
+                    GetPrivateField<List<CardView>>(hand, "_spawned");
+                CardView firstView = initialViews[0];
+                CardView secondView = initialViews[1];
+
+                hand.Render(new[] { secondCard, firstCard });
+                List<CardView> reorderedViews =
+                    GetPrivateField<List<CardView>>(hand, "_spawned");
+
+                Assert.That(reorderedViews[0], Is.SameAs(secondView));
+                Assert.That(reorderedViews[1], Is.SameAs(firstView));
+                Assert.That(reorderedViews[0].CardId, Is.EqualTo(secondCard.CardId));
+                Assert.That(reorderedViews[1].CardId, Is.EqualTo(firstCard.CardId));
+            }
+            finally
+            {
+                Object.DestroyImmediate(handObject);
+            }
+        }
+
+        [Test]
         public void GSV04_U01_CardViewRestoresLostSpriteUvStateWithoutSpriteChange()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);

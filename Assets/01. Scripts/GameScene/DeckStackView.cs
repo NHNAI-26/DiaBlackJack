@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Border.Audio;
+using DiaBlackJack.Rendering;
 using UnityEngine;
 
 namespace DiaBlackJack.GameScene
@@ -19,10 +20,27 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private string drawTrigger = "Draw";
         [SerializeField] private string insertTrigger = "Insert";
         [SerializeField] private string drawSfxId = "cardDraw";
+        [SerializeField] private bool useMaterialHoverOutlineSettings = true;
+        [SerializeField] private Color hoverOutlineColor =
+            new Color(1f, 0.72f, 0.08f, 1f);
+        [SerializeField] private float hoverOutlineWidth = 0.025f;
+        [SerializeField] private float hoverOutlineWidthPixels = 4f;
+
+        private const string StencilOutlineKeyword = "_STENCIL_OUTLINE_ON";
+        private const string StencilOutlineOnlyShaderName =
+            "Hidden/NHN/Stencil Outline Only";
+        private const int StencilOutlineRenderQueue = 3000;
+        private static readonly int StencilOutlineEnabledId =
+            Shader.PropertyToID("_StencilOutlineEnabled");
+        private static readonly int StencilOutlineColorId =
+            Shader.PropertyToID("_StencilOutlineColor");
+        private static readonly int StencilOutlineWidthId =
+            Shader.PropertyToID("_StencilOutlineWidth");
 
         private Vector3 _baseLocalScale;
         private Vector3 _baseLocalPosition;
         private bool _initialized;
+        private bool _isHovered;
         private bool _hasRenderedCount;
         private int _displayedCardCount;
         private int _targetCardCount;
@@ -30,6 +48,11 @@ namespace DiaBlackJack.GameScene
         private readonly Queue<CardStackAnimationKind> _animationQueue =
             new Queue<CardStackAnimationKind>();
         private readonly List<GameObject> _animationPool = new List<GameObject>();
+        private readonly List<Material> _hoverMaterialInstances =
+            new List<Material>();
+        private readonly List<Mesh> _outlineMeshes = new List<Mesh>();
+        private readonly List<OutlineRendererBinding> _outlineBindings =
+            new List<OutlineRendererBinding>();
 
         private void Awake()
         {
@@ -51,7 +74,20 @@ namespace DiaBlackJack.GameScene
             maximumHeight = Mathf.Max(minimumHeight, maximumHeight);
             cardAnimationIntervalSeconds = Mathf.Max(0f, cardAnimationIntervalSeconds);
             cardAnimationSeconds = Mathf.Max(0f, cardAnimationSeconds);
+            hoverOutlineWidth = Mathf.Max(0f, hoverOutlineWidth);
+            hoverOutlineWidthPixels = Mathf.Max(0f, hoverOutlineWidthPixels);
             AutoBindMissingReferences();
+        }
+
+        public void SetHovered(bool hovered)
+        {
+            if (_isHovered == hovered)
+            {
+                return;
+            }
+
+            _isHovered = hovered;
+            ApplyHoverOutline(hovered);
         }
 
         public void Render(int cardCount)
@@ -96,6 +132,7 @@ namespace DiaBlackJack.GameScene
             transform.localPosition = _baseLocalPosition;
             if (!visible)
             {
+                SetHovered(false);
                 return;
             }
 
@@ -319,6 +356,261 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        private void ApplyHoverOutline(bool visible)
+        {
+            AutoBindMissingReferences();
+            if (renderers == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                ApplyHoverOutline(renderers[i], visible);
+            }
+        }
+
+        private void ApplyHoverOutline(Renderer renderer, bool visible)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            if (!visible)
+            {
+                PostProcessOutlineRegistry.Unregister(renderer);
+                return;
+            }
+
+            Material material = renderer.sharedMaterial;
+            PostProcessOutlineRegistry.Register(
+                renderer,
+                ResolveOutlineColor(material),
+                ResolvePostProcessOutlineWidthPixels());
+        }
+
+        private OutlineRendererBinding EnsureOutlineBinding(Renderer renderer)
+        {
+            for (int i = 0; i < _outlineBindings.Count; i++)
+            {
+                if (_outlineBindings[i].SourceRenderer == renderer)
+                {
+                    return _outlineBindings[i];
+                }
+            }
+
+            Material baseMaterial = EnsureStencilWriterMaterialInstance(renderer);
+            if (baseMaterial == null ||
+                !baseMaterial.HasProperty(StencilOutlineEnabledId))
+            {
+                return null;
+            }
+
+            MeshFilter sourceFilter = renderer.GetComponent<MeshFilter>();
+            if (sourceFilter == null || sourceFilter.sharedMesh == null)
+            {
+                return null;
+            }
+
+            Shader outlineShader = Shader.Find(StencilOutlineOnlyShaderName);
+            if (outlineShader == null)
+            {
+                return null;
+            }
+
+            Mesh outlineMesh = CreateSmoothedOutlineMesh(sourceFilter.sharedMesh);
+            if (outlineMesh == null)
+            {
+                return null;
+            }
+
+            _outlineMeshes.Add(outlineMesh);
+
+            GameObject outlineObject = new GameObject(renderer.gameObject.name + " Outline");
+            outlineObject.transform.SetParent(renderer.transform, false);
+            outlineObject.layer = renderer.gameObject.layer;
+
+            MeshFilter outlineFilter = outlineObject.AddComponent<MeshFilter>();
+            outlineFilter.sharedMesh = outlineMesh;
+
+            Material outlineMaterial = new Material(outlineShader)
+            {
+                name = baseMaterial.name + " Outline",
+                renderQueue = StencilOutlineRenderQueue
+            };
+            _hoverMaterialInstances.Add(outlineMaterial);
+
+            MeshRenderer outlineRenderer = outlineObject.AddComponent<MeshRenderer>();
+            outlineRenderer.sharedMaterial = outlineMaterial;
+            outlineRenderer.shadowCastingMode =
+                UnityEngine.Rendering.ShadowCastingMode.Off;
+            outlineRenderer.receiveShadows = false;
+            outlineRenderer.enabled = false;
+            outlineRenderer.sortingLayerID = renderer.sortingLayerID;
+            outlineRenderer.sortingOrder = renderer.sortingOrder;
+
+            var binding = new OutlineRendererBinding(
+                renderer,
+                outlineRenderer,
+                baseMaterial,
+                outlineMaterial);
+            _outlineBindings.Add(binding);
+            return binding;
+        }
+
+        private Material EnsureStencilWriterMaterialInstance(Renderer renderer)
+        {
+            Material material = renderer.sharedMaterial;
+            if (material == null ||
+                _hoverMaterialInstances.Contains(material))
+            {
+                return material;
+            }
+
+            if (!material.HasProperty(StencilOutlineEnabledId))
+            {
+                return material;
+            }
+
+            Material instance = new Material(material)
+            {
+                name = material.name + " (DeckStack Hover)"
+            };
+            renderer.sharedMaterial = instance;
+            _hoverMaterialInstances.Add(instance);
+            return instance;
+        }
+
+        private Mesh CreateSmoothedOutlineMesh(Mesh sourceMesh)
+        {
+            if (!sourceMesh.isReadable)
+            {
+                return null;
+            }
+
+            Mesh outlineMesh = Instantiate(sourceMesh);
+            outlineMesh.name = sourceMesh.name + " Smooth Outline";
+
+            Vector3[] vertices = outlineMesh.vertices;
+            Vector3[] normals = outlineMesh.normals;
+            if (normals == null || normals.Length != vertices.Length)
+            {
+                outlineMesh.RecalculateNormals();
+                normals = outlineMesh.normals;
+            }
+
+            outlineMesh.normals = CreateSmoothedNormals(vertices, normals);
+            return outlineMesh;
+        }
+
+        private static Vector3[] CreateSmoothedNormals(
+            Vector3[] vertices,
+            Vector3[] normals)
+        {
+            var normalSums = new Dictionary<Vector3Key, Vector3>();
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                Vector3Key key = new Vector3Key(vertices[i]);
+                normalSums.TryGetValue(key, out Vector3 sum);
+                normalSums[key] = sum + normals[i];
+            }
+
+            Vector3[] smoothedNormals = new Vector3[normals.Length];
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                Vector3 sum = normalSums[new Vector3Key(vertices[i])];
+                smoothedNormals[i] = sum.sqrMagnitude > 0.000001f
+                    ? sum.normalized
+                    : normals[i];
+            }
+
+            return smoothedNormals;
+        }
+
+        private Color ResolveOutlineColor(Material material)
+        {
+            if (useMaterialHoverOutlineSettings &&
+                material != null &&
+                material.HasProperty(StencilOutlineColorId))
+            {
+                Color color = material.GetColor(StencilOutlineColorId);
+                if (color.a <= 0f)
+                {
+                    color.a = 1f;
+                }
+
+                return color;
+            }
+
+            return hoverOutlineColor;
+        }
+
+        private float ResolveOutlineWidth(Material material)
+        {
+            if (useMaterialHoverOutlineSettings &&
+                material != null &&
+                material.HasProperty(StencilOutlineWidthId))
+            {
+                return material.GetFloat(StencilOutlineWidthId);
+            }
+
+            return hoverOutlineWidth;
+        }
+
+        private float ResolvePostProcessOutlineWidthPixels()
+        {
+            return hoverOutlineWidthPixels;
+        }
+
+        private void OnDestroy()
+        {
+            if (renderers != null)
+            {
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    PostProcessOutlineRegistry.Unregister(renderers[i]);
+                }
+            }
+
+            for (int i = 0; i < _hoverMaterialInstances.Count; i++)
+            {
+                Material material = _hoverMaterialInstances[i];
+                if (material != null)
+                {
+                    if (Application.isPlaying)
+                    {
+                        Destroy(material);
+                    }
+                    else
+                    {
+                        DestroyImmediate(material);
+                    }
+                }
+            }
+
+            _hoverMaterialInstances.Clear();
+
+            for (int i = 0; i < _outlineMeshes.Count; i++)
+            {
+                Mesh mesh = _outlineMeshes[i];
+                if (mesh != null)
+                {
+                    if (Application.isPlaying)
+                    {
+                        Destroy(mesh);
+                    }
+                    else
+                    {
+                        DestroyImmediate(mesh);
+                    }
+                }
+            }
+
+            _outlineMeshes.Clear();
+            _outlineBindings.Clear();
+        }
+
         private void CaptureBaseTransform()
         {
             if (_initialized)
@@ -366,6 +658,64 @@ namespace DiaBlackJack.GameScene
         {
             Draw,
             Insert
+        }
+
+        private sealed class OutlineRendererBinding
+        {
+            public OutlineRendererBinding(
+                Renderer sourceRenderer,
+                MeshRenderer outlineRenderer,
+                Material baseMaterial,
+                Material outlineMaterial)
+            {
+                SourceRenderer = sourceRenderer;
+                OutlineRenderer = outlineRenderer;
+                BaseMaterial = baseMaterial;
+                OutlineMaterial = outlineMaterial;
+            }
+
+            public Renderer SourceRenderer { get; }
+            public MeshRenderer OutlineRenderer { get; }
+            public Material BaseMaterial { get; }
+            public Material OutlineMaterial { get; }
+        }
+
+        private readonly struct Vector3Key : System.IEquatable<Vector3Key>
+        {
+            private const float Scale = 100000f;
+            private readonly int _x;
+            private readonly int _y;
+            private readonly int _z;
+
+            public Vector3Key(Vector3 value)
+            {
+                _x = Mathf.RoundToInt(value.x * Scale);
+                _y = Mathf.RoundToInt(value.y * Scale);
+                _z = Mathf.RoundToInt(value.z * Scale);
+            }
+
+            public bool Equals(Vector3Key other)
+            {
+                return _x == other._x &&
+                    _y == other._y &&
+                    _z == other._z;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is Vector3Key other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    int hashCode = _x;
+                    hashCode = (hashCode * 397) ^ _y;
+                    hashCode = (hashCode * 397) ^ _z;
+                    return hashCode;
+                }
+            }
         }
     }
 }

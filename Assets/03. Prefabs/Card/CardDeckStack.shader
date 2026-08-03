@@ -19,6 +19,9 @@ Shader "DiaBlackJack/CardDeckStack"
         _HeightFadeStrength ("Height Fade Strength", Range(0, 1)) = 0.45
         _HeightFadeLower ("Height Fade Lower", Range(0, 1)) = 0.08
         _HeightFadeUpper ("Height Fade Upper", Range(0, 2)) = 0.95
+        [Toggle(_STENCIL_OUTLINE_ON)] _StencilOutlineEnabled ("Stencil Outline", Float) = 0
+        [HDR] _StencilOutlineColor ("Outline Color", Color) = (1, 0.72, 0.08, 1)
+        _StencilOutlineWidth ("Outline Width", Range(0, 0.2)) = 0.025
     }
 
     SubShader
@@ -37,6 +40,13 @@ Shader "DiaBlackJack/CardDeckStack"
 
             Cull Back
             ZWrite On
+            Stencil
+            {
+                Ref 1
+                Comp Always
+                Pass Replace
+                WriteMask [_StencilOutlineEnabled]
+            }
 
             HLSLPROGRAM
             #pragma target 3.0
@@ -84,6 +94,9 @@ Shader "DiaBlackJack/CardDeckStack"
                 half _HeightFadeStrength;
                 half _HeightFadeLower;
                 half _HeightFadeUpper;
+                half _StencilOutlineEnabled;
+                half4 _StencilOutlineColor;
+                half _StencilOutlineWidth;
                 CBUFFER_END
 
             Varyings vert(Attributes input)
@@ -158,6 +171,62 @@ Shader "DiaBlackJack/CardDeckStack"
                     lerp(1.0h.xxx, lightAmount * lightTint, _LightInfluence);
                 return half4(litColor, surfaceColor.a);
             }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "StencilOutline"
+            Tags { "LightMode" = "UniversalForwardOnly" }
+
+            Blend SrcAlpha OneMinusSrcAlpha
+            ZWrite Off
+            ZTest LEqual
+            Cull Front
+            Stencil
+            {
+                Ref 1
+                ReadMask 1
+                Comp NotEqual
+                Pass Keep
+            }
+
+            HLSLPROGRAM
+            #pragma target 2.0
+            #pragma vertex NHNStencilOutlineVertex
+            #pragma fragment NHNStencilOutlineFragment
+            #pragma shader_feature_local _STENCIL_OUTLINE_ON
+            #pragma multi_compile_instancing
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            TEXTURE2D(_TopTex);
+            SAMPLER(sampler_TopTex);
+
+            CBUFFER_START(UnityPerMaterial)
+                float4 _TopTex_ST;
+                half4 _TopColor;
+                half4 _SideColor;
+                half4 _LayerLineColor;
+                half4 _BottomColor;
+                half _LayerHeight;
+                half _LayerLineWidth;
+                half _TopNormalThreshold;
+                half _SideShade;
+                half _BottomShade;
+                half _MinimumLight;
+                half _LightInfluence;
+                half _LightColorInfluence;
+                half4 _HeightFadeColor;
+                half _HeightFadeStrength;
+                half _HeightFadeLower;
+                half _HeightFadeUpper;
+                half _StencilOutlineEnabled;
+                half4 _StencilOutlineColor;
+                half _StencilOutlineWidth;
+            CBUFFER_END
+
+            #include "Assets/05. Arts/Shader/NHNStencilOutlinePass.hlsl"
             ENDHLSL
         }
     }
