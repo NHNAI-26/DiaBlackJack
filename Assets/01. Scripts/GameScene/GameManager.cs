@@ -110,6 +110,7 @@ namespace DiaBlackJack.GameScene
         private bool _pauseInputBlocked;
         private bool _shopUtilityAnimationPlaying;
         private bool _choosingLighterRemoval;
+        private GameSceneCardViewModel _pendingLighterBurnCard;
         private int _battleIndex;
         private string _activeEnemyProfileKey;
         private int? _playerMammonDieValue;
@@ -312,6 +313,7 @@ namespace DiaBlackJack.GameScene
 
             if (!succeeded)
             {
+                _pendingLighterBurnCard = null;
                 shop?.ShowMerchantSpeech(MerchantSpeechCue.Unavailable);
             }
 
@@ -1786,6 +1788,9 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
+            _pendingLighterBurnCard = CreateLighterBurnCardModel(
+                option.DefinitionKey,
+                option.Suit);
             RemoveRunDeckCard(option);
             RemoveCurrentBattleAvailableCard(option);
             _choosingLighterRemoval = false;
@@ -1835,6 +1840,9 @@ namespace DiaBlackJack.GameScene
                     return;
                 }
 
+                _pendingLighterBurnCard = CreateLighterBurnCardModel(
+                    selected.DefinitionKey,
+                    selected.Suit);
                 FormalShopCardRemovalRequested?.Invoke(selectionId);
                 return;
             }
@@ -2098,6 +2106,25 @@ namespace DiaBlackJack.GameScene
             return true;
         }
 
+        private static GameSceneCardViewModel CreateLighterBurnCardModel(
+            string definitionKey,
+            CardSuit suit)
+        {
+            CardDefinition definition =
+                CardDefinitionCatalog.GetByKey(definitionKey);
+            return new GameSceneCardViewModel(
+                cardId: 0,
+                rank: definition.Rank,
+                isFaceUp: true,
+                revealRank: true,
+                canUse: false,
+                displayName: definition.DisplayName,
+                abilityDescription: definition.Description,
+                suit: suit,
+                showHoverBadgeWhenUnavailable: false,
+                definitionKey: definition.Key);
+        }
+
         internal bool PlayWhiskeyShopAnimation()
         {
             if (_shopUtilityAnimationPlaying || !TryResolveWhiskeyAnimation())
@@ -2119,6 +2146,18 @@ namespace DiaBlackJack.GameScene
             lighterAnimator.SetLayerWeight(0, 1f);
             LighterDragTriggerController interaction =
                 lighterAnimationRoot.GetComponent<LighterDragTriggerController>();
+            CardView cardVisualSource = playerHand == null
+                ? null
+                : playerHand.CardPrefab;
+            if (interaction != null &&
+                cardVisualSource != null &&
+                _pendingLighterBurnCard != null)
+            {
+                interaction.SetBurnCardSprite(
+                    cardVisualSource.GetFaceSprite(_pendingLighterBurnCard));
+            }
+
+            _pendingLighterBurnCard = null;
             lighterAnimator.SetTrigger("Start");
 
             if (interaction != null)

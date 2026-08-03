@@ -35,6 +35,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/Shop/ShopItem_Whiskey.prefab";
         private const string LighterOnlyModelPrefabPath =
             "Assets/03. Prefabs/Item/Lighter_OnlyModel.prefab";
+        private const string LighterAnimationPrefabPath =
+            "Assets/03. Prefabs/Item/Lighter_Anim.prefab";
         private const string WhiskeyOnlyModelPrefabPath =
             "Assets/03. Prefabs/Item/whiskey_onlymodel.prefab";
         private const string CardDeckModelPath = "Assets/05. Arts/FBX/CardDeck.fbx";
@@ -45,6 +47,49 @@ namespace DiaBlackJack.CoreLoop.Tests
             Shader.PropertyToID("_StencilOutlineColor");
         private static readonly int StencilOutlineWidthId =
             Shader.PropertyToID("_StencilOutlineWidth");
+
+        [Test]
+        public void GSV06_U01_LighterAnimationUsesSelectedCardSprite()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(LighterAnimationPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+
+            GameObject instance = Object.Instantiate(prefab);
+            var texture = new Texture2D(2, 2);
+            Sprite selectedSprite = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, 2f, 2f),
+                new Vector2(0.5f, 0.5f));
+            try
+            {
+                LighterDragTriggerController controller =
+                    instance.GetComponent<LighterDragTriggerController>();
+                Assert.That(controller, Is.Not.Null);
+
+                SpriteRenderer burnCardRenderer = null;
+                SpriteRenderer[] renderers =
+                    instance.GetComponentsInChildren<SpriteRenderer>(true);
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    if (renderers[i].name == "Square")
+                    {
+                        burnCardRenderer = renderers[i];
+                        break;
+                    }
+                }
+
+                Assert.That(burnCardRenderer, Is.Not.Null);
+                Assert.That(controller.SetBurnCardSprite(selectedSprite), Is.True);
+                Assert.That(burnCardRenderer.sprite, Is.SameAs(selectedSprite));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+                Object.DestroyImmediate(selectedSprite);
+                Object.DestroyImmediate(texture);
+            }
+        }
 
         [TestCase("Assets/05. Arts/Shader/NHNUberLit.shader", "Shader/Uber Lit")]
         [TestCase("Assets/03. Prefabs/Card/CardDeckStack.shader", "DiaBlackJack/CardDeckStack")]

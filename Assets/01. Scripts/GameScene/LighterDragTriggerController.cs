@@ -27,10 +27,12 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private LighterAnimationEventReceiver animationEvents;
         [SerializeField] private Renderer coverRenderer;
         [SerializeField] private Renderer wheelRenderer;
+        [SerializeField] private SpriteRenderer burnCardRenderer;
 
         [Header("Child lookup")]
         [SerializeField] private string coverRendererName = "cover";
         [SerializeField] private string wheelRendererName = "wheel";
+        [SerializeField] private string burnCardRendererName = "Square";
 
         [Header("Animator")]
         [SerializeField] private int baseLayerIndex;
@@ -75,6 +77,18 @@ namespace DiaBlackJack.GameScene
         public static bool BlocksBackgroundInteraction => _backgroundBlockCount > 0;
 
         public bool HasCompletedInteraction { get; private set; }
+
+        internal bool SetBurnCardSprite(Sprite sprite)
+        {
+            ResolveBurnCardRenderer();
+            if (burnCardRenderer == null || sprite == null)
+            {
+                return false;
+            }
+
+            burnCardRenderer.sprite = sprite;
+            return true;
+        }
 
         private void Awake()
         {
@@ -147,6 +161,7 @@ namespace DiaBlackJack.GameScene
             animationEvents ??= GetComponent<LighterAnimationEventReceiver>();
             coverRenderer ??= FindChildRenderer(coverRendererName);
             wheelRenderer ??= FindChildRenderer(wheelRendererName);
+            ResolveBurnCardRenderer();
 
             if (_camera == null)
             {
@@ -406,6 +421,27 @@ namespace DiaBlackJack.GameScene
             }
 
             return null;
+        }
+
+        private void ResolveBurnCardRenderer()
+        {
+            if (burnCardRenderer != null ||
+                string.IsNullOrWhiteSpace(burnCardRendererName))
+            {
+                return;
+            }
+
+            SpriteRenderer[] renderers =
+                GetComponentsInChildren<SpriteRenderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                SpriteRenderer candidate = renderers[i];
+                if (candidate != null && candidate.name == burnCardRendererName)
+                {
+                    burnCardRenderer = candidate;
+                    return;
+                }
+            }
         }
 
         private static bool TryReadPointer(
