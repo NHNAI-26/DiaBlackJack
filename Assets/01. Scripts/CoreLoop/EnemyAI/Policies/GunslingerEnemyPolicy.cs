@@ -5,6 +5,8 @@ namespace DiaBlackJack.CoreLoop
     public sealed class GunslingerEnemyPolicy : IEnemyBehaviorPolicy
     {
         public const int MinimumAutoPistolConfidencePercent = 50;
+        public const int LowConfidenceAutoPistolUsePercent = 25;
+        public const int StandThreshold = 17;
 
         public EnemyDecision Decide(EnemyObservation observation)
         {
@@ -65,14 +67,26 @@ namespace DiaBlackJack.CoreLoop
             bool hasEnoughConfidence = mostLikely.HasValue &&
                 mostLikely.Value.ProbabilityPercent >=
                     MinimumAutoPistolConfidencePercent;
+            bool firesBeforeStand = observation.OwnHandValue.Total >=
+                StandThreshold;
+            bool takesLowConfidenceShot =
+                (uint)observation.DecisionSeed % 100u <
+                    LowConfidenceAutoPistolUsePercent;
+            bool usesPistol = hasEnoughConfidence ||
+                firesBeforeStand ||
+                takesLowConfidenceShot;
+            int probability = mostLikely?.ProbabilityPercent ?? 0;
+            string reason = hasEnoughConfidence
+                ? "gunslinger-use-pistol-at-high-confidence"
+                : firesBeforeStand
+                    ? "gunslinger-fire-pistol-before-stand"
+                    : takesLowConfidenceShot
+                        ? "gunslinger-risk-low-confidence-shot"
+                        : "gunslinger-hold-pistol-at-low-confidence";
             return Score(
                 candidate,
-                hasEnoughConfidence
-                    ? 1500 + mostLikely.Value.ProbabilityPercent
-                    : -200,
-                hasEnoughConfidence
-                    ? "gunslinger-use-pistol-at-high-confidence"
-                    : "gunslinger-hold-pistol-at-low-confidence");
+                usesPistol ? 1500 + probability : -200,
+                reason);
         }
 
         private static EnemyNumberInference? FindMostLikely(EnemyObservation observation)

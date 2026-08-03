@@ -192,20 +192,12 @@ namespace DiaBlackJack.GameScene
 
             if (core.IsChoosingChangeCard)
             {
-                var options = new List<GameSceneCombatHudActionViewModel>();
-                for (int i = 0; i < core.ChangeCandidates.Count; i++)
-                {
-                    options.Add(new GameSceneCombatHudActionViewModel(
-                        new GameSceneCombatHudCommand(
-                            GameSceneCombatHudCommandKind.SelectChangedCard,
-                            optionId: i),
-                        $"[ {core.ChangeCandidates[i]} ]",
-                        !inputLocked));
-                }
-
-                return CreateOptions(
-                    "CHOOSE A NEW HIDDEN CARD",
-                    options,
+                return new GameSceneCombatHudViewModel(
+                    GameSceneCombatHudMode.DiegeticSelection,
+                    string.Empty,
+                    Array.Empty<GameSceneCombatHudActionViewModel>(),
+                    Array.Empty<GameSceneCombatHudActionViewModel>(),
+                    Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
                     automaticCardResult);
             }
 

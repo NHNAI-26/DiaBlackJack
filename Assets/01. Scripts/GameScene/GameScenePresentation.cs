@@ -444,6 +444,7 @@ namespace DiaBlackJack.GameScene
             int sourceCardId,
             CombatantSide actorSide,
             GameSceneHammerAnimationPhase phase,
+            int actionOrdinal,
             int? targetCardId = null)
         {
             if (roundNumber < 1)
@@ -471,10 +472,16 @@ namespace DiaBlackJack.GameScene
                 throw new ArgumentOutOfRangeException(nameof(targetCardId));
             }
 
+            if (actionOrdinal < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(actionOrdinal));
+            }
+
             RoundNumber = roundNumber;
             SourceCardId = sourceCardId;
             ActorSide = actorSide;
             Phase = phase;
+            ActionOrdinal = actionOrdinal;
             TargetCardId = targetCardId;
         }
 
@@ -485,6 +492,8 @@ namespace DiaBlackJack.GameScene
         public CombatantSide ActorSide { get; }
 
         public GameSceneHammerAnimationPhase Phase { get; }
+
+        public int ActionOrdinal { get; }
 
         public int? TargetCardId { get; }
     }
@@ -856,7 +865,8 @@ namespace DiaBlackJack.GameScene
                     battle.RoundNumber,
                     pendingPlayerEffect.SourceCardId,
                     CombatantSide.Player,
-                    GameSceneHammerAnimationPhase.Ready);
+                    GameSceneHammerAnimationPhase.Ready,
+                    battle.PublicActionHistory.Count);
             }
 
             if (battle.PendingEnemyCardEffect != null ||
@@ -879,6 +889,7 @@ namespace DiaBlackJack.GameScene
                 result.SourceCardId,
                 battle.LastCardEffectActorSide.Value,
                 GameSceneHammerAnimationPhase.Smash,
+                battle.PublicActionHistory.Count,
                 result.TargetCardId);
         }
 
@@ -1454,6 +1465,32 @@ namespace DiaBlackJack.GameScene
         private static IReadOnlyList<GameSceneCardViewModel>
             CreateCrystalOrbCandidates(CoreLoopBattle battle)
         {
+            if (battle.State == CoreLoopState.PlayerChoosingChangeCard)
+            {
+                var changeCandidates = new List<GameSceneCardViewModel>(
+                    battle.PlayerChangeCandidates.Count);
+                for (int i = 0; i < battle.PlayerChangeCandidates.Count; i++)
+                {
+                    BlackjackCard card = battle.PlayerChangeCandidates[i];
+                    changeCandidates.Add(new GameSceneCardViewModel(
+                        card.Id,
+                        card.Rank,
+                        isFaceUp: true,
+                        revealRank: true,
+                        canUse: true,
+                        card.Definition.DisplayName,
+                        abilityDescription: ResolveAbilityDescription(card),
+                        suit: card.Suit,
+                        showHoverBadgeWhenUnavailable: true,
+                        definitionKey: card.DefinitionKey,
+                        directSelectionCommand: new GameSceneCombatHudCommand(
+                            GameSceneCombatHudCommandKind.SelectChangedCard,
+                            i)));
+                }
+
+                return changeCandidates.AsReadOnly();
+            }
+
             PendingCardEffect pendingEffect = battle.PendingPlayerCardEffect;
             if (pendingEffect == null ||
                 pendingEffect.EffectKind != CardEffectKind.CrystalOrb ||

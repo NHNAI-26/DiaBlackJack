@@ -70,6 +70,19 @@ namespace DiaBlackJack.CoreLoop
             return CurrentDieValue;
         }
 
+        internal int Reroll(int dieValue)
+        {
+            if (!CanRerollThisTurn)
+            {
+                throw new InvalidOperationException(
+                    "Mammon die cannot be rerolled on this turn.");
+            }
+
+            SetDieValue(dieValue);
+            CanRerollThisTurn = false;
+            return CurrentDieValue;
+        }
+
         internal void ResolveFinalChoice()
         {
             if (FinalChoiceResolved)
@@ -119,6 +132,10 @@ namespace DiaBlackJack.CoreLoop
         void KeepCurrentValue(DemonContractContext context);
 
         MammonRerollResult Reroll(DemonContractContext context);
+
+        MammonRerollResult Reroll(
+            DemonContractContext context,
+            int dieValue);
     }
 
     internal interface IDemonContractFinalChoiceHandler
@@ -200,6 +217,24 @@ namespace DiaBlackJack.CoreLoop
 
             MammonRuntimeState state = GetState(context);
             state.Reroll(_dieRoller);
+
+            return new MammonRerollResult(
+                state.CurrentDieValue,
+                ownerBusted: state.CurrentDieValue == 6);
+        }
+
+        public MammonRerollResult Reroll(
+            DemonContractContext context,
+            int dieValue)
+        {
+            if (!CanReroll(context))
+            {
+                throw new InvalidOperationException(
+                    "Mammon cannot reroll outside an available owner turn.");
+            }
+
+            MammonRuntimeState state = GetState(context);
+            state.Reroll(dieValue);
 
             return new MammonRerollResult(
                 state.CurrentDieValue,

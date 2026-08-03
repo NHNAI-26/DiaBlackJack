@@ -125,6 +125,20 @@ namespace DiaBlackJack.GameScene
             ApplyStackCount(0);
         }
 
+        public void PlayReinsertAnimation()
+        {
+            if (!Application.isPlaying || !isActiveAndEnabled)
+            {
+                return;
+            }
+
+            _animationQueue.Enqueue(CardStackAnimationKind.Reinsert);
+            if (_animationQueueRoutine == null)
+            {
+                _animationQueueRoutine = StartCoroutine(PlayAnimationQueue());
+            }
+        }
+
         private void ApplyStackCount(int cardCount)
         {
             bool visible = cardCount > 0;
@@ -187,9 +201,16 @@ namespace DiaBlackJack.GameScene
                     PlayDrawSfx();
                     PlayCardAnimation(drawTrigger, null);
                 }
-                else
+                else if (kind == CardStackAnimationKind.Insert)
                 {
                     PlayCardAnimation(insertTrigger, ApplyCompletedInsert);
+                }
+                else
+                {
+                    PlayCardAnimation(
+                        insertTrigger,
+                        null,
+                        playAtDeckBottom: true);
                 }
 
                 if (_animationQueue.Count > 0 && cardAnimationIntervalSeconds > 0f)
@@ -221,7 +242,10 @@ namespace DiaBlackJack.GameScene
             SoundManager.Current?.PlaySfx(drawSfxId);
         }
 
-        private void PlayCardAnimation(string triggerName, System.Action onCompleted)
+        private void PlayCardAnimation(
+            string triggerName,
+            System.Action onCompleted,
+            bool playAtDeckBottom = false)
         {
             GameObject instance = GetAnimationInstance();
             if (instance == null)
@@ -232,7 +256,7 @@ namespace DiaBlackJack.GameScene
 
             Transform animationTransform = instance.transform;
             animationTransform.SetParent(
-                cardCase != null ? cardCase : transform,
+                playAtDeckBottom || cardCase == null ? transform : cardCase,
                 worldPositionStays: false);
             instance.SetActive(true);
 
@@ -657,7 +681,8 @@ namespace DiaBlackJack.GameScene
         private enum CardStackAnimationKind
         {
             Draw,
-            Insert
+            Insert,
+            Reinsert
         }
 
         private sealed class OutlineRendererBinding

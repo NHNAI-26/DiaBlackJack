@@ -29,6 +29,7 @@ namespace DiaBlackJack.GameScene
         private int _lastSourceCardId;
         private CombatantSide _lastActorSide;
         private GameSceneHammerAnimationPhase _lastPhase;
+        private int _lastActionOrdinal;
         private int? _lastTargetCardId;
         private Coroutine _hideRoutine;
         private bool _isSmashAnimationPlaying;
@@ -204,6 +205,21 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        public void ResetPresentationState()
+        {
+            Hide();
+            _hasLastCue = false;
+            _lastRoundNumber = 0;
+            _lastSourceCardId = 0;
+            _lastActorSide = CombatantSide.Player;
+            _lastPhase = GameSceneHammerAnimationPhase.Ready;
+            _lastActionOrdinal = 0;
+            _lastTargetCardId = null;
+            _queuedCue = null;
+            _queuedPlayerHand = null;
+            _queuedEnemyHand = null;
+        }
+
         private bool TryResolveTargetPosition(
             GameSceneHammerAnimationCue cue,
             out Vector3 position)
@@ -364,6 +380,7 @@ namespace DiaBlackJack.GameScene
                 _lastSourceCardId == cue.SourceCardId &&
                 _lastActorSide == cue.ActorSide &&
                 _lastPhase == cue.Phase &&
+                _lastActionOrdinal == cue.ActionOrdinal &&
                 _lastTargetCardId == cue.TargetCardId;
         }
 
@@ -374,6 +391,7 @@ namespace DiaBlackJack.GameScene
             _lastSourceCardId = cue.SourceCardId;
             _lastActorSide = cue.ActorSide;
             _lastPhase = cue.Phase;
+            _lastActionOrdinal = cue.ActionOrdinal;
             _lastTargetCardId = cue.TargetCardId;
         }
 

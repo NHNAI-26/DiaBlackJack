@@ -705,6 +705,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(cue.SourceCardId, Is.EqualTo(sourceCard.Id));
             Assert.That(cue.ActorSide, Is.EqualTo(CombatantSide.Player));
             Assert.That(cue.Phase, Is.EqualTo(GameSceneHammerAnimationPhase.Ready));
+            Assert.That(
+                cue.ActionOrdinal,
+                Is.GreaterThan(0));
             Assert.That(cue.TargetCardId, Is.Null);
         }
 
@@ -744,6 +747,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(cue.SourceCardId, Is.EqualTo(sourceCard.Id));
             Assert.That(cue.ActorSide, Is.EqualTo(CombatantSide.Player));
             Assert.That(cue.Phase, Is.EqualTo(GameSceneHammerAnimationPhase.Smash));
+            Assert.That(
+                cue.ActionOrdinal,
+                Is.GreaterThan(0));
             Assert.That(cue.TargetCardId, Is.EqualTo(targetCard.Id));
             Assert.That(
                 targetVisual,
@@ -784,6 +790,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(cue.SourceCardId, Is.EqualTo(sourceCard.Id));
             Assert.That(cue.ActorSide, Is.EqualTo(CombatantSide.Enemy));
             Assert.That(cue.Phase, Is.EqualTo(GameSceneHammerAnimationPhase.Smash));
+            Assert.That(
+                cue.ActionOrdinal,
+                Is.GreaterThan(0));
             Assert.That(cue.TargetCardId, Is.EqualTo(targetCard.Id));
         }
 

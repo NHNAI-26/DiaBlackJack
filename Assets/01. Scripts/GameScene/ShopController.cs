@@ -370,6 +370,7 @@ namespace DiaBlackJack.GameScene
                 ShopUtilityItemKind.Lighter,
                 "LIGHTER",
                 lighterDescription,
+                !_lighterPurchasedThisVisit,
                 IsOpen &&
                     !_lighterPurchasedThisVisit &&
                     Gold >= currentLighterPrice &&
@@ -397,6 +398,7 @@ namespace DiaBlackJack.GameScene
                 ShopUtilityItemKind.Whiskey,
                 "WHISKEY",
                 whiskeyDescription,
+                !_whiskeyPurchasedThisVisit,
                 IsOpen &&
                     !_whiskeyPurchasedThisVisit &&
                     Gold >= currentWhiskeyPrice &&
@@ -417,6 +419,7 @@ namespace DiaBlackJack.GameScene
             Gold -= price;
             _lighterPurchasedThisVisit = true;
             _utilityPurchasedThisVisit = true;
+            lighterItem?.gameObject.SetActive(false);
             RefreshOfferViews();
             return true;
         }
@@ -462,6 +465,7 @@ namespace DiaBlackJack.GameScene
             Gold -= price;
             _whiskeyPurchasedThisVisit = true;
             _utilityPurchasedThisVisit = true;
+            whiskeyItem?.gameObject.SetActive(false);
             RefreshOfferViews();
             return true;
         }
@@ -618,12 +622,14 @@ namespace DiaBlackJack.GameScene
                 ShopUtilityItemKind.Lighter,
                 "LIGHTER",
                 model.LighterLabel,
+                !model.IsLighterUsed,
                 canRemove);
             BindUtilityItem(
                 whiskeyItem,
                 ShopUtilityItemKind.Whiskey,
                 "WHISKEY",
                 model.WhiskeyLabel,
+                !model.IsWhiskeyUsed,
                 model.CanRestAtShop);
         }
 
@@ -878,6 +884,7 @@ namespace DiaBlackJack.GameScene
             ShopUtilityItemKind kind,
             string displayName,
             string description,
+            bool visible,
             bool canUse)
         {
             if (item == null)
@@ -885,7 +892,12 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            item.gameObject.SetActive(true);
+            item.gameObject.SetActive(visible);
+            if (!visible)
+            {
+                return;
+            }
+
             item.Bind(kind, displayName, description, canUse);
         }
 
