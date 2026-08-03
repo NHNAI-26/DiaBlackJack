@@ -11,6 +11,7 @@ namespace DiaBlackJack.GameScene.Editor
     {
         private const string MenuPath =
             "Tools/DiaBlackJack/Mood Controller Test";
+        private const float DefaultBlendDuration = 1f;
         private const double LightingPollInterval = 1.0;
 
         private static readonly int WindowGlassGlowColorId =
@@ -19,7 +20,7 @@ namespace DiaBlackJack.GameScene.Editor
         private MoodController _controller;
         private MoodProfileSO _profile;
         private string _profileId;
-        private float _duration;
+        private float _duration = DefaultBlendDuration;
         private float _testPulseStrength = 0.8f;
         private bool _pollLighting;
         private bool _writePolledLightingToProfile;
@@ -489,7 +490,9 @@ namespace DiaBlackJack.GameScene.Editor
             }
             else
             {
-                _controller.BlendToMood(profile, _duration);
+                _controller.BlendToMood(
+                    profile,
+                    ResolveBlendPreviewDuration());
             }
 
             RepaintScene(_controller);
@@ -506,7 +509,9 @@ namespace DiaBlackJack.GameScene.Editor
                 return;
             }
 
-            float duration = EditorApplication.isPlaying ? _duration : 0f;
+            float duration = EditorApplication.isPlaying
+                ? ResolveBlendPreviewDuration()
+                : 0f;
             bool applied = _controller.TryBlendToMood(_profileId, duration);
             RepaintScene(_controller);
             SetMessage(
@@ -683,6 +688,11 @@ namespace DiaBlackJack.GameScene.Editor
         {
             return $"{(immediate ? "Applied" : "Blending")} mood " +
                    $"'{profile.Id}'.";
+        }
+
+        private float ResolveBlendPreviewDuration()
+        {
+            return _duration <= 0f ? DefaultBlendDuration : _duration;
         }
 
         private static Color ResolveWindowGlassGlowColor(

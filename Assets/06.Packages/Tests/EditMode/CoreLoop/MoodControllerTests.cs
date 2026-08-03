@@ -283,6 +283,75 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
         }
 
+        [Test]
+        public void MOO01_U09_BlendFromAudioReactiveLightningKeepsBoostForSmoothFade()
+        {
+            Color startColor = Color.red;
+            Color targetColor = Color.blue;
+            MoodProfileSO reactiveProfile = CreateProfile(
+                "boss",
+                lightningSfxIds: new[] { "lightning01" },
+                volumetricColor: startColor,
+                enableAudioReactiveLightning: true,
+                lightningMaxBoost: 0.5f);
+            MoodProfileSO normalProfile = CreateProfile(
+                "normal",
+                volumetricColor: targetColor);
+            GameObject root = new GameObject("MoodControllerTest");
+            GameObject volumetricObject = new GameObject("VolumetricLight");
+            GameObject enemyObject = new GameObject("EnemyLight");
+            GameObject enteranceObject = new GameObject("EnteranceLight");
+            MoodController controller = root.AddComponent<MoodController>();
+            Light volumetricLight = volumetricObject.AddComponent<Light>();
+            Light enemyLight = enemyObject.AddComponent<Light>();
+            Light enteranceLight = enteranceObject.AddComponent<Light>();
+            try
+            {
+                volumetricLight.intensity = 2f;
+                enemyLight.intensity = 3f;
+                enteranceLight.intensity = 4f;
+                SetPrivateField(controller, "volumetricLight", volumetricLight);
+                SetPrivateField(controller, "enemyLight", enemyLight);
+                SetPrivateField(controller, "enteranceLight", enteranceLight);
+
+                controller.SetMoodImmediate(reactiveProfile);
+                controller.TriggerAudioReactiveLightningPulse(0.5f);
+                controller.BlendToMood(normalProfile, 1f);
+
+                Assert.That(controller.IsAudioReactiveLightningActive, Is.False);
+                Assert.That(
+                    controller.CurrentAudioReactiveLightningBoost,
+                    Is.EqualTo(0.5f));
+                Assert.That(volumetricLight.intensity, Is.EqualTo(3f));
+                Assert.That(enemyLight.intensity, Is.EqualTo(4.5f));
+                Assert.That(enteranceLight.intensity, Is.EqualTo(6f));
+
+                InvokeUpdate(controller, 30);
+
+                Assert.That(volumetricLight.color.r, Is.LessThan(startColor.r));
+                Assert.That(volumetricLight.color.b, Is.GreaterThan(startColor.b));
+                Assert.That(volumetricLight.color, Is.Not.EqualTo(targetColor));
+                Assert.That(volumetricLight.intensity, Is.LessThan(3f));
+                Assert.That(volumetricLight.intensity, Is.GreaterThan(2f));
+
+                InvokeUpdate(controller, 31);
+
+                AssertColorApproximately(volumetricLight.color, targetColor);
+                Assert.That(volumetricLight.intensity, Is.EqualTo(2f));
+
+                controller.SetMoodImmediate(normalProfile);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(volumetricObject);
+                Object.DestroyImmediate(enemyObject);
+                Object.DestroyImmediate(enteranceObject);
+                Object.DestroyImmediate(reactiveProfile);
+                Object.DestroyImmediate(normalProfile);
+            }
+        }
+
         private static void AssertColorApproximately(Color actual, Color expected)
         {
             const float tolerance = 0.0001f;
@@ -290,6 +359,18 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(actual.g, Is.EqualTo(expected.g).Within(tolerance));
             Assert.That(actual.b, Is.EqualTo(expected.b).Within(tolerance));
             Assert.That(actual.a, Is.EqualTo(expected.a).Within(tolerance));
+        }
+
+        private static void InvokeUpdate(MoodController controller, int count)
+        {
+            MethodInfo update = typeof(MoodController).GetMethod(
+                "Update",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(update, Is.Not.Null);
+            for (int i = 0; i < count; i++)
+            {
+                update.Invoke(controller, null);
+            }
         }
 
         private static MoodProfileSO CreateProfile(

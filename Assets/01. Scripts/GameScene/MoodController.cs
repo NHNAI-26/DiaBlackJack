@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Border.Audio;
-using DG.Tweening;
 using UnityEngine;
 
 namespace DiaBlackJack.GameScene
@@ -22,7 +21,19 @@ namespace DiaBlackJack.GameScene
             MoodTransitionMode.Fade;
 
         private MaterialPropertyBlock _windowProperties;
-        private Sequence _moodSequence;
+        private bool _isMoodBlendActive;
+        private float _moodBlendDuration;
+        private float _moodBlendElapsed;
+        private float _moodBlendStartLightningBoost;
+        private MoodProfileSO _pendingBlendProfile;
+        private Color _blendWindowStart;
+        private Color _blendWindowTarget;
+        private Color _blendVolumetricStart;
+        private Color _blendVolumetricTarget;
+        private Color _blendEnemyStart;
+        private Color _blendEnemyTarget;
+        private Color _blendEnteranceStart;
+        private Color _blendEnteranceTarget;
         private bool _hasWindowGlassGlowColor;
         private Color _currentWindowGlassGlowColor;
         private bool _audioReactiveLightningEnabled;
@@ -83,13 +94,12 @@ namespace DiaBlackJack.GameScene
             }
 
             KillMoodSequence();
-            DisableAudioReactiveLightning();
             ApplyBgm(profile);
-            ConfigureAudioReactiveLightning(profile);
 
             switch (transitionMode)
             {
                 case MoodTransitionMode.Fade:
+                    BeginAudioReactiveLightningBlendOut(resolvedDuration);
                     FadeToMood(profile, resolvedDuration);
                     break;
                 default:
@@ -145,14 +155,20 @@ namespace DiaBlackJack.GameScene
 
         private void Update()
         {
+            float deltaTime = Time.deltaTime > 0f
+                ? Time.deltaTime
+                : DefaultLightningDeltaTime;
+
+            if (_isMoodBlendActive)
+            {
+                UpdateMoodBlend(deltaTime);
+            }
+
             if (!_audioReactiveLightningEnabled)
             {
                 return;
             }
 
-            float deltaTime = Time.deltaTime > 0f
-                ? Time.deltaTime
-                : DefaultLightningDeltaTime;
             UpdateLightningSfxPlayback(deltaTime);
 
             float targetBoost = ResolveAudioReactiveLightningTarget();
@@ -193,34 +209,20 @@ namespace DiaBlackJack.GameScene
 
         private void FadeToMood(MoodProfileSO profile, float duration)
         {
-            Color windowStart = ResolveCurrentWindowGlassGlowColor();
-            Color volumetricStart = ResolveLightColor(volumetricLight);
-            Color enemyStart = ResolveLightColor(enemyLight);
-            Color enteranceStart = ResolveLightColor(enteranceLight);
-
-            _moodSequence = DOTween.Sequence()
-                .Join(DOVirtual.Color(
-                    windowStart,
-                    profile.WindowGlassGlowColor,
-                    duration,
-                    SetWindowGlassGlowColor))
-                .Join(DOVirtual.Color(
-                    volumetricStart,
-                    profile.VolumetricLightColor,
-                    duration,
-                    value => SetLightColor(volumetricLight, value)))
-                .Join(DOVirtual.Color(
-                    enemyStart,
-                    profile.EnemyLightColor,
-                    duration,
-                    value => SetLightColor(enemyLight, value)))
-                .Join(DOVirtual.Color(
-                    enteranceStart,
-                    profile.EnteranceLightColor,
-                    duration,
-                    value => SetLightColor(enteranceLight, value)))
-                .SetEase(Ease.Linear)
-                .OnComplete(() => _moodSequence = null);
+            _pendingBlendProfile = profile;
+            _moodBlendDuration = Mathf.Max(DefaultLightningDeltaTime, duration);
+            _moodBlendElapsed = 0f;
+            _moodBlendStartLightningBoost = _currentLightningBoost;
+            _blendWindowStart = ResolveCurrentWindowGlassGlowColor();
+            _blendWindowTarget = profile.WindowGlassGlowColor;
+            _blendVolumetricStart = ResolveLightColor(volumetricLight);
+            _blendVolumetricTarget = profile.VolumetricLightColor;
+            _blendEnemyStart = ResolveLightColor(enemyLight);
+            _blendEnemyTarget = profile.EnemyLightColor;
+            _blendEnteranceStart = ResolveLightColor(enteranceLight);
+            _blendEnteranceTarget = profile.EnteranceLightColor;
+            _isMoodBlendActive = true;
+            ApplyMoodBlend(0f);
         }
 
         private void ApplyColors(
@@ -333,6 +335,70 @@ namespace DiaBlackJack.GameScene
             _hasReactiveBaseline = false;
         }
 
+        private void BeginAudioReactiveLightningBlendOut(float duration)
+        {
+            if (!_audioReactiveLightningEnabled && !_hasReactiveBaseline)
+            {
+                return;
+            }
+
+            _audioReactiveLightningEnabled = false;
+            StopActiveLightningSfx(duration);
+            _audioReactiveLightningProfile = null;
+            _lightningSfxRollTimer = 0f;
+            _currentLightningSfxRms = 0f;
+        }
+
+        private void UpdateMoodBlend(float deltaTime)
+        {
+            _moodBlendElapsed += deltaTime;
+            float t = Mathf.Clamp01(_moodBlendElapsed / _moodBlendDuration);
+            ApplyMoodBlend(t);
+
+            if (t < 1f)
+            {
+                return;
+            }
+
+            MoodProfileSO completedProfile = _pendingBlendProfile;
+            _isMoodBlendActive = false;
+            _pendingBlendProfile = null;
+            FinishAudioReactiveLightningBlendOut();
+            ConfigureAudioReactiveLightning(completedProfile);
+        }
+
+        private void ApplyMoodBlend(float t)
+        {
+            ApplyColors(
+                Color.Lerp(_blendWindowStart, _blendWindowTarget, t),
+                Color.Lerp(_blendVolumetricStart, _blendVolumetricTarget, t),
+                Color.Lerp(_blendEnemyStart, _blendEnemyTarget, t),
+                Color.Lerp(_blendEnteranceStart, _blendEnteranceTarget, t));
+
+            if (!_hasReactiveBaseline && _moodBlendStartLightningBoost <= 0f)
+            {
+                return;
+            }
+
+            _currentLightningBoost = Mathf.Lerp(
+                _moodBlendStartLightningBoost,
+                0f,
+                t);
+            ApplyAudioReactiveLightningBoost();
+        }
+
+        private void FinishAudioReactiveLightningBlendOut()
+        {
+            if (!_hasReactiveBaseline && _currentLightningBoost <= 0f)
+            {
+                return;
+            }
+
+            _currentLightningBoost = 0f;
+            ApplyAudioReactiveLightningBoost();
+            _hasReactiveBaseline = false;
+        }
+
         private void CaptureReactiveBaseline()
         {
             _baseVolumetricLightIntensity = ResolveLightIntensity(volumetricLight);
@@ -393,11 +459,11 @@ namespace DiaBlackJack.GameScene
             return true;
         }
 
-        private void StopActiveLightningSfx()
+        private void StopActiveLightningSfx(float fadeDuration = 0f)
         {
             if (_activeLightningSfx.IsValid)
             {
-                SoundManager.Current?.StopSfx(_activeLightningSfx);
+                SoundManager.Current?.StopSfx(_activeLightningSfx, fadeDuration);
             }
 
             _activeLightningSfx = default;
@@ -513,8 +579,8 @@ namespace DiaBlackJack.GameScene
 
         private void KillMoodSequence()
         {
-            _moodSequence?.Kill();
-            _moodSequence = null;
+            _isMoodBlendActive = false;
+            _pendingBlendProfile = null;
         }
     }
 }

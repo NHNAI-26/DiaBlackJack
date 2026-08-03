@@ -44,6 +44,7 @@ namespace Border.Audio
             public float BaseVolume, Fade = 1f;
             public ulong Started;
             public uint Generation;
+            public Coroutine FadeRoutine;
         }
         [Header("Catalogs")]
         [SerializeField] private List<SoundEntry> bgmEntries = new();
@@ -101,7 +102,13 @@ namespace Border.Audio
             if (bgmVoices != null)
                 foreach (Voice voice in bgmVoices) voice.Source.Stop();
             if (sfxVoices != null)
-                foreach (Voice voice in sfxVoices) voice.Source.Stop();
+            {
+                foreach (Voice voice in sfxVoices)
+                {
+                    StopVoiceFade(voice);
+                    voice.Source.Stop();
+                }
+            }
             activeBgm = -1; currentBgmId = null;
         }
         public bool PlayBgm(string id, bool restart = false)
@@ -153,10 +160,30 @@ namespace Border.Audio
             Voice voice = sfxVoices[handle.index];
             if (voice.Generation != handle.generation || !voice.Source.isPlaying)
                 return false;
+            StopVoiceFade(voice);
             voice.Source.Stop();
             voice.Id = null;
+            voice.Fade = 1f;
             return true;
         }
+
+        public bool StopSfx(SoundHandle handle, float fadeDuration)
+        {
+            if (fadeDuration <= 0f)
+                return StopSfx(handle);
+
+            if (!TryGetSfxVoice(handle, out Voice voice) ||
+                !voice.Source.isPlaying)
+            {
+                return false;
+            }
+
+            StopVoiceFade(voice);
+            voice.FadeRoutine = StartCoroutine(
+                FadeOutSfx(handle, voice, fadeDuration));
+            return true;
+        }
+
         public bool StopSfx(string id)
         {
             string key = Key(id);
@@ -177,8 +204,10 @@ namespace Border.Audio
                 if (!voice.Source.isPlaying || voice.Id != key)
                     continue;
 
+                StopVoiceFade(voice);
                 voice.Source.Stop();
                 voice.Id = null;
+                voice.Fade = 1f;
                 stopped = true;
             }
             return stopped;
@@ -204,7 +233,8 @@ namespace Border.Audio
                 return false;
             }
 
-            float weight = voice.BaseVolume * masterVolume * sfxVolume;
+            float weight = voice.BaseVolume * voice.Fade * masterVolume *
+                           sfxVolume;
             if (weight <= 0f)
                 return false;
 
@@ -253,6 +283,7 @@ namespace Border.Audio
         }
         private void Configure(Voice voice, SoundEntry entry, string id, float fade, bool music)
         {
+            StopVoiceFade(voice);
             voice.Id = id;
             voice.Source.clip = entry.clip;
             voice.Source.pitch = entry.pitch;
@@ -309,6 +340,43 @@ namespace Border.Audio
             RefreshBgmVolumes();
             fadeRoutine = null;
         }
+
+        private IEnumerator FadeOutSfx(
+            SoundHandle handle,
+            Voice voice,
+            float duration)
+        {
+            float startFade = voice.Fade;
+            float elapsed = 0f;
+            duration = Mathf.Max(0f, duration);
+            while (elapsed < duration)
+            {
+                if (handle.owner != this ||
+                    voice.Generation != handle.generation ||
+                    !voice.Source.isPlaying)
+                {
+                    voice.FadeRoutine = null;
+                    yield break;
+                }
+
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                voice.Fade = Mathf.Lerp(startFade, 0f, t);
+                ApplyVolume(voice, false);
+                yield return null;
+            }
+
+            if (voice.Generation == handle.generation)
+            {
+                voice.Source.Stop();
+                voice.Id = null;
+                voice.Fade = 1f;
+                ApplyVolume(voice, false);
+            }
+
+            voice.FadeRoutine = null;
+        }
+
         private void RefreshVolumes()
         {
             RefreshBgmVolumes();
@@ -355,6 +423,15 @@ namespace Border.Audio
             }
 
             return Mathf.Sqrt(sum / audioAnalysisSamples.Length);
+        }
+
+        private void StopVoiceFade(Voice voice)
+        {
+            if (voice?.FadeRoutine == null)
+                return;
+
+            StopCoroutine(voice.FadeRoutine);
+            voice.FadeRoutine = null;
         }
 
         private void ApplyVolume(Voice voice, bool music) =>
