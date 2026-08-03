@@ -4,6 +4,7 @@ using System.Reflection;
 using DiaBlackJack.CoreLoop;
 using DiaBlackJack.CoreLoop.UI;
 using DiaBlackJack.GameScene;
+using DiaBlackJack.GameScene.Editor;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -22,6 +23,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/Card/Card.prefab";
         private const string DemonCardPrefabPath =
             "Assets/03. Prefabs/Card/DemonCard.prefab";
+        private const string DemonCardHoverDetailPrefabPath =
+            "Assets/03. Prefabs/UI/DemonCardHoverDetail.prefab";
         private const string TablePrefabPath =
             "Assets/03. Prefabs/TableObjects/Table Controller.prefab";
         private const string ContractPaperSpritePath =
@@ -1637,6 +1640,99 @@ namespace DiaBlackJack.CoreLoop.Tests
             {
                 Object.DestroyImmediate(hudInstance);
                 Object.DestroyImmediate(demonInstance);
+            }
+        }
+
+        [Test]
+        public void GSH01_U17_DemonHoverDetailPrefabPreviewRendersAndRestores()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                DemonCardHoverDetailPrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                DemonCardHoverDetailView view =
+                    instance.GetComponent<DemonCardHoverDetailView>();
+                Assert.That(view, Is.Not.Null);
+                Assert.That(view.HasRequiredReferences, Is.True);
+                Transform title = view.DetailView.transform.Find(
+                    "Title/txtTitle");
+                string originalTitle = GetRenderedText(title);
+
+                Assert.That(
+                    DemonCardHoverDetailPreviewSession.Show(view),
+                    Is.Null);
+                string firstTitle = GetRenderedText(title);
+                Assert.That(firstTitle, Is.Not.Empty);
+
+                DemonCardHoverDetailPreviewSession session =
+                    DemonCardHoverDetailPreviewSession.GetActive(view);
+                Assert.That(session, Is.Not.Null);
+                Assert.That(session.CanMoveNext, Is.True);
+                Assert.That(
+                    DemonCardHoverDetailPreviewSession.MoveNext(view),
+                    Is.Null);
+                Assert.That(
+                    GetRenderedText(title),
+                    Is.Not.EqualTo(firstTitle));
+
+                DemonCardHoverDetailPreviewSession.StopActive();
+                Assert.That(
+                    GetRenderedText(title),
+                    Is.EqualTo(originalTitle));
+            }
+            finally
+            {
+                DemonCardHoverDetailPreviewSession.StopActive();
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSH01_U18_DemonHoverDetailPreviewRestoresForSaveAndResumes()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                DemonCardHoverDetailPrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                DemonCardHoverDetailView view =
+                    instance.GetComponent<DemonCardHoverDetailView>();
+                Transform title = view.DetailView.transform.Find(
+                    "Title/txtTitle");
+                string originalTitle = GetRenderedText(title);
+
+                Assert.That(
+                    DemonCardHoverDetailPreviewSession.Show(view),
+                    Is.Null);
+                Assert.That(
+                    DemonCardHoverDetailPreviewSession.MoveNext(view),
+                    Is.Null);
+                int previewIndex = DemonCardHoverDetailPreviewSession
+                    .GetActive(view)
+                    .CurrentIndex;
+
+                DemonCardHoverDetailPreviewLifecycle.SuspendForPrefabSave(
+                    instance);
+                Assert.That(
+                    DemonCardHoverDetailPreviewSession.GetActive(view),
+                    Is.Null);
+                Assert.That(
+                    GetRenderedText(title),
+                    Is.EqualTo(originalTitle));
+
+                DemonCardHoverDetailPreviewLifecycle.ResumeAfterPrefabSave(
+                    instance);
+                DemonCardHoverDetailPreviewSession resumed =
+                    DemonCardHoverDetailPreviewSession.GetActive(view);
+                Assert.That(resumed, Is.Not.Null);
+                Assert.That(resumed.CurrentIndex, Is.EqualTo(previewIndex));
+                Assert.That(GetRenderedText(title), Is.Not.EqualTo(originalTitle));
+            }
+            finally
+            {
+                DemonCardHoverDetailPreviewSession.StopActive();
+                Object.DestroyImmediate(instance);
             }
         }
 
