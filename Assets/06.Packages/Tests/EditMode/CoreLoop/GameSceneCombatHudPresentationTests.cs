@@ -1280,48 +1280,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                     AssetDatabase.LoadAssetAtPath<GameObject>(ManagerPrefabPath);
                 DemonContractSelectionView contractView =
                     managerPrefab.GetComponent<DemonContractSelectionView>();
-                SerializedObject crystalLayout = new SerializedObject(view);
-                SerializedObject contractLayout = new SerializedObject(contractView);
-                string[] sharedLayoutFields =
-                {
-                    "cameraDistance",
-                    "viewportCenterY",
-                    "viewportSpacing",
-                    "hoverViewportLift",
-                    "hoverCameraPull",
-                    "fanAngle",
-                    "cardScale",
-                    "poseLerp",
-                    "baseSortingOrder"
-                };
-                foreach (string field in sharedLayoutFields)
-                {
-                    SerializedProperty crystalProperty =
-                        crystalLayout.FindProperty(field);
-                    SerializedProperty contractProperty =
-                        contractLayout.FindProperty(field);
-                    Assert.That(crystalProperty, Is.Not.Null, field);
-                    Assert.That(contractProperty, Is.Not.Null, field);
-                    Assert.That(
-                        crystalProperty.propertyType,
-                        Is.EqualTo(contractProperty.propertyType),
-                        field);
-                    if (crystalProperty.propertyType ==
-                        SerializedPropertyType.Integer)
-                    {
-                        Assert.That(
-                            crystalProperty.intValue,
-                            Is.EqualTo(contractProperty.intValue),
-                            field);
-                    }
-                    else
-                    {
-                        Assert.That(
-                            crystalProperty.floatValue,
-                            Is.EqualTo(contractProperty.floatValue),
-                            field);
-                    }
-                }
+                Assert.That(view.FanLayout, Is.Not.Null);
+                Assert.That(contractView.FanLayout, Is.Not.Null);
 
                 view.Hide();
                 Assert.That(view.IsOpen, Is.False);

@@ -9,22 +9,14 @@ namespace DiaBlackJack.GameScene
     /// Input remains routed by GameManager through each card's direct selection command.
     /// </summary>
     [DisallowMultipleComponent]
+    [RequireComponent(typeof(CardSelectionFanLayout))]
     public sealed class CrystalOrbSelectionView : MonoBehaviour
     {
         private const int MaximumCandidateCount = 2;
 
-        [SerializeField] private float cameraDistance = 1.5f;
-        [SerializeField] private float viewportCenterY = 0f;
-        [SerializeField] private float viewportSpacing = 0.11f;
-        [SerializeField] private float hoverViewportLift = 0.18f;
-        [SerializeField] private float hoverCameraPull = 0.1f;
-        [SerializeField] private float fanAngle = 7f;
-        [SerializeField] private float cardScale = 1f;
-        [SerializeField] private float poseLerp = 14f;
-        [SerializeField] private int baseSortingOrder = 80;
-
         private readonly CandidateSlot[] _slots =
             new CandidateSlot[MaximumCandidateCount];
+        private CardSelectionFanLayout _fanLayout;
         private CardView _candidatePrefab;
         private int _candidateCount;
         private int _hoveredIndex = -1;
@@ -41,6 +33,8 @@ namespace DiaBlackJack.GameScene
 
         internal int HoveredCandidateIndex => _hoveredIndex;
 
+        internal CardSelectionFanLayout FanLayout => ResolveFanLayout();
+
         public void Initialize(CardView candidatePrefab)
         {
             if (candidatePrefab == null)
@@ -48,6 +42,7 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            ResolveFanLayout();
             _candidatePrefab = candidatePrefab;
             EnsureSlots();
             Hide();
@@ -108,7 +103,7 @@ namespace DiaBlackJack.GameScene
 
                 slot.Candidate = candidates[i];
                 slot.Card.Bind(slot.Candidate);
-                slot.Card.SetSortingOrder(baseSortingOrder + i);
+                slot.Card.SetSortingOrder(BaseSortingOrder + i);
             }
 
             _snapPose = true;
@@ -139,7 +134,7 @@ namespace DiaBlackJack.GameScene
                 bool hovered = i == _hoveredIndex;
                 _slots[i].Card.SetHovered(hovered);
                 _slots[i].Card.SetSortingOrder(
-                    baseSortingOrder + i + (hovered ? 20 : 0));
+                    BaseSortingOrder + i + (hovered ? 20 : 0));
             }
         }
 
@@ -185,28 +180,26 @@ namespace DiaBlackJack.GameScene
         {
             CandidateSlot slot = _slots[index];
             bool hovered = index == _hoveredIndex;
-            float centerOffset = _candidateCount == 1
-                ? 0f
-                : index == 0 ? -viewportSpacing : viewportSpacing;
-            float viewportY = viewportCenterY +
-                (hovered ? hoverViewportLift : 0f);
-            float distance = cameraDistance -
-                (hovered ? hoverCameraPull : 0f);
+            CardSelectionFanLayout layout = ResolveFanLayout();
+            if (layout == null ||
+                !layout.TryGetPose(
+                    CardSelectionFanPreset.TwoCards,
+                    index,
+                    _candidateCount,
+                    hovered,
+                    out CardSelectionFanPose pose))
+            {
+                return;
+            }
+
             Vector3 targetPosition = _camera.ViewportToWorldPoint(
                 new Vector3(
-                    0.5f + centerOffset,
-                    viewportY,
-                    distance));
-            float angle = _candidateCount == 1
-                ? 0f
-                : index == 0 ? fanAngle : -fanAngle;
-            if (hovered)
-            {
-                angle = 0f;
-            }
+                    pose.ViewportPosition.x,
+                    pose.ViewportPosition.y,
+                    pose.CameraDistance));
             Quaternion targetRotation = _camera.transform.rotation *
-                Quaternion.Euler(0f, 180f, angle);
-            Vector3 targetScale = Vector3.one * cardScale;
+                Quaternion.Euler(0f, 180f, pose.Angle);
+            Vector3 targetScale = Vector3.one * pose.Scale;
             if (snap)
             {
                 slot.Anchor.SetPositionAndRotation(targetPosition, targetRotation);
@@ -214,10 +207,28 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            float t = 1f - Mathf.Exp(-poseLerp * Time.deltaTime);
+            float t = 1f - Mathf.Exp(-pose.PoseLerp * Time.deltaTime);
             slot.Anchor.position = Vector3.Lerp(slot.Anchor.position, targetPosition, t);
             slot.Anchor.rotation = Quaternion.Slerp(slot.Anchor.rotation, targetRotation, t);
             slot.Anchor.localScale = Vector3.Lerp(slot.Anchor.localScale, targetScale, t);
+        }
+
+        private int BaseSortingOrder
+        {
+            get
+            {
+                CardSelectionFanLayout layout = ResolveFanLayout();
+                return layout == null
+                    ? 80
+                    : layout.GetBaseSortingOrder(
+                        CardSelectionFanPreset.TwoCards);
+            }
+        }
+
+        private CardSelectionFanLayout ResolveFanLayout()
+        {
+            _fanLayout ??= GetComponent<CardSelectionFanLayout>();
+            return _fanLayout;
         }
 
         private int IndexOf(CardView card)

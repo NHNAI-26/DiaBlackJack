@@ -514,9 +514,11 @@ DC-M01에서는 표시 모델과 계약 처리 API를 유지한 채 `CoreLoopVie
 ### 11.2 DC-V01 GameScene 월드 후보 경계
 
 - `GameSceneCombatHudPresenter`는 `ChooseContract` 상호작용의 후보 수가 1~2장일 때만 `ContractCandidates` 모드를 만든다.
-- `DemonContractSelectionView`는 모델의 정의 키·제목·능력·대가와 `DemonCard` 프리팹을 받아 카메라 뷰포트 기준 하단 앵커를 생성한다. 도메인 상태와 난수는 읽거나 변경하지 않는다.
-- 두 후보는 뷰포트 X 간격과 반대 방향 회전으로 작은 호를 만들며, 기본 Y를 화면 아래 경계에 두어 절반만 보이게 한다.
-- 호버 후보는 카메라 쪽으로 당기고 위로 올리며 확대하고, 자식 Renderer의 정렬 순서를 높인다. 호버 해제 시 보간해 기본 포즈로 돌아간다.
+- `CardSelectionFanLayout`은 계약 후보·수정 구슬 후보·사탄 숫자 후보가 공통으로 사용하는 카메라 뷰포트 부채꼴 포즈를 계산한다. 카드 인덱스를 `-1..1`로 정규화하고 `edgeLift * t²`의 부호로 중앙이 낮거나 높은 곡선을 만들며, 도메인 상태와 난수는 읽거나 변경하지 않는다.
+- 계약과 수정 구슬의 1~2장은 큰 카드 프리셋, 사탄의 10장은 작은 카드 프리셋을 사용한다. 계산식은 같고 화면 중심·전체 폭·곡률·최대 회전·크기만 프리셋별로 직렬화한다.
+- `DemonContractSelectionView`, `CrystalOrbSelectionView`, `SatanNumberSelectionView`는 카드 생성·바인딩·입력만 소유하고 위치·회전·크기·보간·정렬 기준은 같은 `CardSelectionFanLayout`에서 받는다.
+- `GameManager.prefab`의 `CardSelectionFanLayout` Custom Editor는 2장/10장 미리보기를 전환하고 GameScene Main Camera 기준 중앙·거리·좌우 폭·곡률·회전·크기를 Scene 핸들로 수정한다. 변경은 좌우 대칭을 유지하며 Undo/Redo와 프리팹 override로 저장한다.
+- 호버 후보는 카메라 쪽으로 당기고 위로 올리며 회전을 0도로 펴고, 자식 Renderer의 정렬 순서를 높인다. 호버 해제 시 보간해 기본 포즈로 돌아간다.
 - `GameHudView`는 후보 버튼과 분리된 읽기 전용 `GameHudContractDetailView` 하나를 사용한다. 제목과 카드 앞면, `ACTIVE`, `COST`를 각각 표시하고 `CardContentCatalogSO`에서 정의 키에 맞는 스프라이트를 조회한다. 이 상세 뷰에는 클릭 명령, 버튼, 후보 배열, 프롬프트, 라벨을 두지 않으며 `ContractCandidates` HUD 모델의 공용 `Prompt` 값도 비워 둔다.
 - 상세 패널의 화면 비율·제목·카드·능력·대가 `RectTransform`과 TMP 글자 크기는 `HUD.prefab`의 `ContractDetailPanel/DetailLayout/ContractDetail` 아래에 작성한다. 런타임은 텍스트·이미지·활성 상태만 갱신하며 위치·크기·폰트 설정을 덮어쓰지 않는다. `DetailLayout`의 정규화 앵커로 해상도에 대응하고 전역 HUD `CanvasScaler`는 변경하지 않는다.
 - `GameManager`는 월드 후보가 열려 있으면 다른 카드·덱·상점·전투 명령으로 내려가지 않는다. 후보의 `InteractionId`와 `OptionId`를 클릭 시 다시 검증해 `TryResolvePlayerDemonContract`로 한 번 전달한다.
