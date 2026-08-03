@@ -25,9 +25,9 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _FaceDilate: -0.75
-    - _ScaleRatioB: 1.3888888
-    - _ScaleRatioC: 1.3888888
+    - _FaceDilate: -0.198
+    - _ScaleRatioB: 0.8982222
+    - _ScaleRatioC: 0.8982222
     m_Colors: []
   m_BuildTextureStacks: []
   m_AllowLocking: 1
