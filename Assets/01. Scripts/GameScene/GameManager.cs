@@ -165,6 +165,11 @@ namespace DiaBlackJack.GameScene
         public event Action FormalShopRestRequested;
         public event Action FormalShopLeaveRequested;
 
+        internal string CurrentEnemyProfileKey =>
+            string.IsNullOrWhiteSpace(_activeEnemyProfileKey)
+                ? ResolveEnemyProfileKey()
+                : _activeEnemyProfileKey;
+
         public CoreLoopBattle Battle => IsStageBattle
             ? _stageSession.Battle
             : _session?.Battle;

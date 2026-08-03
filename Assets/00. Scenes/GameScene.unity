@@ -2999,6 +2999,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 6656724238517901587, guid: 65b3779e515064540b9789c76687ef65, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6163863410494494798}
+    - targetCorrespondingSourceObject: {fileID: 6656724238517901587, guid: 65b3779e515064540b9789c76687ef65, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6163863410494494799}
   m_SourcePrefab: {fileID: 100100000, guid: 65b3779e515064540b9789c76687ef65, type: 3}
 --- !u!1 &6163863410494494792 stripped
 GameObject:
@@ -3026,6 +3029,8 @@ MonoBehaviour:
   hud: {fileID: 0}
   charactersRoot: {fileID: 0}
   enemyCharacter: {fileID: 0}
+  moodController: {fileID: 6163863410494494799}
+  moodTransitionDuration: 1
 --- !u!114 &6163863410494494794
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3077,6 +3082,36 @@ MonoBehaviour:
   cardContentCatalog: {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a140001, type: 2}
   enemyContentCatalog: {fileID: 11400000, guid: 35def8069acda204cb9c406b148add0f, type: 2}
   tableBookRoot: {fileID: 1267139983}
+--- !u!114 &6163863410494494799
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6163863410494494792}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5e4e587b5d04ef9a3dfe033d6c1ac93, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.MoodController
+  moodProfiles:
+  - {fileID: 11400000, guid: 1e221fee84296d44197e266146540906, type: 2}
+  - {fileID: 11400000, guid: 7d50472d217b9f94ab0f04378dd33e70, type: 2}
+  - {fileID: 11400000, guid: 6d2a7d087d8c33a4e8fcde1ce0b9c343, type: 2}
+  - {fileID: 11400000, guid: 3e10a47a00f89a540860f6f5f62584c5, type: 2}
+  - {fileID: 11400000, guid: 0d21123bc64dbee47b7093c45161be45, type: 2}
+  - {fileID: 11400000, guid: 26d6ffb830877124f910eabbf8007fe6, type: 2}
+  - {fileID: 11400000, guid: 79afb13f1938dff49b33ea7f23f2af52, type: 2}
+  - {fileID: 11400000, guid: 3ec2381f76e453a4eab39154e2d66aae, type: 2}
+  windowGlassRenderers:
+  - {fileID: 303449829}
+  - {fileID: 2122569595}
+  - {fileID: 90313060}
+  - {fileID: 991685244}
+  volumetricLight: {fileID: 639492092}
+  enemyLight: {fileID: 1570019867}
+  enteranceLight: {fileID: 356386089}
+  transitionMode: 0
 --- !u!1001 &6219715712046308512
 PrefabInstance:
   m_ObjectHideFlags: 0
