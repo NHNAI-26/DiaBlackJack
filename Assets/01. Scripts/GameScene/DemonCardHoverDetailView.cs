@@ -11,7 +11,9 @@ namespace DiaBlackJack.GameScene
         public GameHudContractDetailView DetailView => detailView;
 
         public bool HasRequiredReferences =>
-            detailView != null && detailView.HasRequiredReferences;
+            detailView != null &&
+            detailView.HasRequiredReferences &&
+            detailView.HasEnglishNameReference;
 
         public void Render(
             GameSceneDemonCardViewModel model,

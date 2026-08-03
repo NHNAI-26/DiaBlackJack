@@ -98,6 +98,7 @@ namespace DiaBlackJack.GameScene
         {
             Command = command;
             DefinitionKey = definitionKey ?? string.Empty;
+            EnglishName = DefinitionKey.ToUpperInvariant();
             Title = title ?? string.Empty;
             Ability = ability ?? string.Empty;
             Cost = cost ?? string.Empty;
@@ -107,6 +108,8 @@ namespace DiaBlackJack.GameScene
         public GameSceneCombatHudCommand Command { get; }
 
         public string DefinitionKey { get; }
+
+        public string EnglishName { get; }
 
         public string Title { get; }
 

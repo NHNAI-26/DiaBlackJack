@@ -29,6 +29,7 @@ namespace DiaBlackJack.GameScene
 
             CardId = cardId;
             DefinitionKey = definitionKey;
+            EnglishName = definitionKey.ToUpperInvariant();
             IsFaceUp = isFaceUp;
             CanUse = canUse;
             DisplayName = displayName ?? string.Empty;
@@ -45,6 +46,8 @@ namespace DiaBlackJack.GameScene
         public string CostSummary { get; }
 
         public string DisplayName { get; }
+
+        public string EnglishName { get; }
 
         public string DefinitionKey { get; }
 

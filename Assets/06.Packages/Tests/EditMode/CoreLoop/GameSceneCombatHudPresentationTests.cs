@@ -1831,6 +1831,15 @@ namespace DiaBlackJack.CoreLoop.Tests
                 DemonCardHoverDetailView view =
                     instance.GetComponent<DemonCardHoverDetailView>();
                 Assert.That(view, Is.Not.Null);
+                Transform englishName = view.DetailView.transform.Find(
+                    "Face/txtEnglishName");
+                Assert.That(englishName, Is.Not.Null);
+                SerializedObject detailSerialized = new SerializedObject(
+                    view.DetailView);
+                Assert.That(
+                    detailSerialized.FindProperty("englishNameText")
+                        .objectReferenceValue,
+                    Is.SameAs(englishName.GetComponent<Graphic>()));
                 Assert.That(view.HasRequiredReferences, Is.True);
                 Assert.That(instance.GetComponent<Canvas>(), Is.Null);
                 Transform title = view.DetailView.transform.Find(
@@ -1851,6 +1860,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(instance.GetComponent<CanvasScaler>(), Is.Not.Null);
                 string firstTitle = GetRenderedText(title);
                 Assert.That(firstTitle, Is.Not.Empty);
+                string firstEnglishName = GetRenderedText(englishName);
+                Assert.That(firstEnglishName, Is.EqualTo("SATAN"));
+                Assert.That(
+                    firstEnglishName,
+                    Is.EqualTo(firstEnglishName.ToUpperInvariant()));
                 Transform cost = view.DetailView.transform.Find(
                     "Cost/txtCost");
                 Assert.That(
@@ -1881,6 +1895,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(
                     GetRenderedText(title),
                     Is.Not.EqualTo(firstTitle));
+                Assert.That(
+                    GetRenderedText(englishName),
+                    Is.Not.EqualTo(firstEnglishName));
+                Assert.That(
+                    GetRenderedText(englishName),
+                    Is.EqualTo(GetRenderedText(englishName)
+                        .ToUpperInvariant()));
 
                 DemonCardHoverDetailPreviewSession.StopActive();
                 Assert.That(instance.GetComponent<Canvas>(), Is.Null);

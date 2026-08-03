@@ -10,6 +10,7 @@ namespace DiaBlackJack.GameScene
     {
         [SerializeField] private Image faceImage;
         [SerializeField] private TMP_Text titleText;
+        [SerializeField] private TMP_Text englishNameText;
         [SerializeField] private TMP_Text abilityLabelText;
         [SerializeField] private TMP_Text abilityText;
         [SerializeField] private TMP_Text costLabelText;
@@ -23,12 +24,15 @@ namespace DiaBlackJack.GameScene
             costLabelText != null &&
             costText != null;
 
+        public bool HasEnglishNameReference => englishNameText != null;
+
         public void Render(
             GameSceneCombatHudContractCandidateViewModel model,
             Sprite faceSprite)
         {
             Render(
                 model == null ? string.Empty : model.Title,
+                model == null ? string.Empty : model.EnglishName,
                 model == null ? string.Empty : model.Ability,
                 model == null ? string.Empty : model.Cost,
                 faceSprite,
@@ -41,6 +45,7 @@ namespace DiaBlackJack.GameScene
         {
             Render(
                 model == null ? string.Empty : model.DisplayName,
+                model == null ? string.Empty : model.EnglishName,
                 model == null ? string.Empty : model.Summary,
                 model == null ? string.Empty : model.CostSummary,
                 faceSprite,
@@ -49,6 +54,7 @@ namespace DiaBlackJack.GameScene
 
         private void Render(
             string title,
+            string englishName,
             string ability,
             string cost,
             Sprite faceSprite,
@@ -57,6 +63,11 @@ namespace DiaBlackJack.GameScene
             if (titleText != null)
             {
                 CurrencyIconText.Set(titleText, title);
+            }
+
+            if (englishNameText != null)
+            {
+                CurrencyIconText.Set(englishNameText, englishName);
             }
 
             if (abilityLabelText != null)

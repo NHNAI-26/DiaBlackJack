@@ -541,6 +541,8 @@ namespace DiaBlackJack.GameScene.Editor
         private readonly bool _faceEnabled;
         private readonly TMP_Text _titleText;
         private readonly string _title;
+        private readonly TMP_Text _englishNameText;
+        private readonly string _englishName;
         private readonly TMP_Text _abilityLabelText;
         private readonly string _abilityLabel;
         private readonly TMP_Text _abilityText;
@@ -553,6 +555,7 @@ namespace DiaBlackJack.GameScene.Editor
         private DemonCardHoverDetailPreviewSnapshot(
             Image faceImage,
             TMP_Text titleText,
+            TMP_Text englishNameText,
             TMP_Text abilityLabelText,
             TMP_Text abilityText,
             TMP_Text costLabelText,
@@ -563,6 +566,8 @@ namespace DiaBlackJack.GameScene.Editor
             _faceEnabled = faceImage.enabled;
             _titleText = titleText;
             _title = titleText.text;
+            _englishNameText = englishNameText;
+            _englishName = englishNameText.text;
             _abilityLabelText = abilityLabelText;
             _abilityLabel = abilityLabelText.text;
             _abilityText = abilityText;
@@ -590,6 +595,9 @@ namespace DiaBlackJack.GameScene.Editor
                 GetRequiredReference<TMP_Text>(detailSerialized, "titleText"),
                 GetRequiredReference<TMP_Text>(
                     detailSerialized,
+                    "englishNameText"),
+                GetRequiredReference<TMP_Text>(
+                    detailSerialized,
                     "abilityLabelText"),
                 GetRequiredReference<TMP_Text>(detailSerialized, "abilityText"),
                 GetRequiredReference<TMP_Text>(
@@ -603,6 +611,11 @@ namespace DiaBlackJack.GameScene.Editor
             if (_titleText != null)
             {
                 _titleText.text = _title;
+            }
+
+            if (_englishNameText != null)
+            {
+                _englishNameText.text = _englishName;
             }
 
             if (_abilityText != null)
