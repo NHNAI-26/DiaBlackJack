@@ -189,7 +189,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void EP03_U02_GunslingerKeepsPistolBelowConfidenceThreshold()
+        public void EP03_U02_GunslingerFiresPistolBeforeStandAtLowConfidence()
         {
             EnemyActionCandidate pistol = CreateCardCandidate(1, "auto-pistol-7");
             EnemyObservation observation = CreateObservation(
@@ -208,10 +208,44 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             EnemyDecision decision = new GunslingerEnemyPolicy().Decide(observation);
 
-            Assert.That(decision.ActionType, Is.EqualTo(EnemyActionType.Stand));
+            Assert.That(decision.ActionType, Is.EqualTo(EnemyActionType.UseCard));
+            Assert.That(decision.CardId, Is.EqualTo(pistol.CardId));
             Assert.That(
                 decision.CandidateScores.Single(score => score.Candidate == pistol).ReasonCode,
-                Is.EqualTo("gunslinger-hold-pistol-at-low-confidence"));
+                Is.EqualTo("gunslinger-fire-pistol-before-stand"));
+        }
+
+        [TestCase(24, EnemyActionType.UseCard,
+            "gunslinger-risk-low-confidence-shot")]
+        [TestCase(25, EnemyActionType.Hit,
+            "gunslinger-hold-pistol-at-low-confidence")]
+        public void EP03_U06_GunslingerSometimesFiresAtLowConfidence(
+            int decisionSeed,
+            EnemyActionType expectedAction,
+            string expectedPistolReason)
+        {
+            EnemyActionCandidate pistol = CreateCardCandidate(1, "auto-pistol-7");
+            EnemyObservation observation = CreateObservation(
+                total: 16,
+                candidates: new[]
+                {
+                    new EnemyActionCandidate(EnemyActionType.Hit),
+                    new EnemyActionCandidate(EnemyActionType.Stand),
+                    pistol
+                },
+                inferences: new[]
+                {
+                    new EnemyNumberInference(7, 20),
+                    new EnemyNumberInference(8, 20)
+                },
+                decisionSeed: decisionSeed);
+
+            EnemyDecision decision = new GunslingerEnemyPolicy().Decide(observation);
+
+            Assert.That(decision.ActionType, Is.EqualTo(expectedAction));
+            Assert.That(
+                decision.CandidateScores.Single(score => score.Candidate == pistol).ReasonCode,
+                Is.EqualTo(expectedPistolReason));
         }
 
         [Test]
@@ -367,7 +401,8 @@ namespace DiaBlackJack.CoreLoop.Tests
         private static EnemyObservation CreateObservation(
             int total,
             IReadOnlyList<EnemyActionCandidate> candidates,
-            IReadOnlyList<EnemyNumberInference> inferences = null)
+            IReadOnlyList<EnemyNumberInference> inferences = null,
+            int decisionSeed = 397)
         {
             return new EnemyObservation(
                 new HandValue(total),
@@ -387,7 +422,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 candidates,
                 inferences ?? Array.Empty<EnemyNumberInference>(),
                 pendingCardEffectKind: null,
-                decisionSeed: 397);
+                decisionSeed: decisionSeed);
         }
 
         private static BlackjackDeck CreateRankDeck(params int[] ranks)

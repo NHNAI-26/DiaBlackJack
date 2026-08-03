@@ -260,7 +260,7 @@ public interface IEnemyBehaviorPolicy
 
 | 정책 키 | 구현 타입 | 1차 기준 |
 | --- | --- | --- |
-| `gunslinger-public-inference` | `GunslingerEnemyPolicy` | 최상위 숫자 확률 50% 이상이면 리볼버, 아니면 16/17 기본 판단 |
+| `gunslinger-public-inference` | `GunslingerEnemyPolicy` | 최상위 숫자 확률 50% 이상이면 리볼버, 저확신에서도 25% 사용, 스탠드 전 남은 리볼버 우선 사용 |
 | `cultist-aggressive-risk` | `CultistEnemyPolicy` | 합계 18까지 히트, 19부터 스탠드 |
 | `trickster-information-control` | `TricksterEnemyPolicy` | 수정 구슬 우선, 버스트하지 않는 최고 합계 옵션 |
 
@@ -438,7 +438,8 @@ Selected BattleProfileKey
 | ID | 검증 내용 |
 | --- | --- |
 | EP03-U01 | 일반 적 세 프로필이 전용 정책을 사용하고 추론 확률 합계·정렬·정보 은닉을 지킨다 |
-| EP03-U02 | 총잡이가 고확신에서 리볼버과 최상위 숫자를 사용하고 저확신에서는 보류한다 |
+| EP03-U02 | 총잡이가 고확신에서 리볼버와 최상위 숫자를 사용하고 저확신이어도 스탠드 전에는 우선 발사한다 |
+| EP03-U06 | 총잡이가 저확신·히트 구간에서도 결정적 난수로 25% 확률로 리볼버를 사용한다 |
 | EP03-U03 | 광신도가 18까지 히트·19부터 스탠드하며 미구현 계약·거짓말 탐지기가 없다 |
 | EP03-U04 | 사기꾼이 수정 구슬의 최고 안전 카드를 자기 손에 넣고 나머지 덱 순서를 보존한다 |
 | EP03-U05 | 같은 관측에서 세 정책이 다른 행동을 고르고 반복 결정·점수가 일치한다 |
