@@ -16,6 +16,8 @@ namespace DiaBlackJack.GameScene.Editor
         private const string BrushAssetPath = "Assets/05. Arts/UI/Brush_UI.psd";
         private const string CardContentCatalogPath =
             "Assets/02. ScriptableObjects/Cards/CardContentCatalog.asset";
+        private const string ContractDetailTextMaterialPath =
+            "Assets/05. Arts/Material/Card/DemonCardHoverDetail_Text.mat";
         private const int OptionSlotCount = 100;
 
         [MenuItem("DiaBlackJack/Build GameScene Combat HUD")]
@@ -40,6 +42,15 @@ namespace DiaBlackJack.GameScene.Editor
                 if (font == null)
                 {
                     throw new InvalidOperationException("HUD prefab has no TMP font to reuse.");
+                }
+
+                Material contractDetailTextMaterial =
+                    AssetDatabase.LoadAssetAtPath<Material>(
+                        ContractDetailTextMaterialPath);
+                if (contractDetailTextMaterial == null)
+                {
+                    throw new InvalidOperationException(
+                        "Contract detail TMP material asset was not found.");
                 }
 
                 Sprite panelBrush = FindSprite("Brush_UI_8");
@@ -90,7 +101,8 @@ namespace DiaBlackJack.GameScene.Editor
                 GameHudContractDetailView contractDetail = CreateContractDetail(
                     contractDetailPanel,
                     font,
-                    panelBrush);
+                    panelBrush,
+                    contractDetailTextMaterial);
 
                 CardContentCatalogSO contentCatalog =
                     AssetDatabase.LoadAssetAtPath<CardContentCatalogSO>(CardContentCatalogPath);
@@ -266,7 +278,8 @@ namespace DiaBlackJack.GameScene.Editor
         private static GameHudContractDetailView CreateContractDetail(
             RectTransform parent,
             TMP_FontAsset font,
-            Sprite panelBrush)
+            Sprite panelBrush,
+            Material textMaterial)
         {
             RectTransform layout = CreateRect("DetailLayout", parent);
             layout.anchorMin = new Vector2(0.14f, 0.18f);
@@ -310,6 +323,7 @@ namespace DiaBlackJack.GameScene.Editor
                 TextAlignmentOptions.Center);
             title.fontSizeMin = 20f;
             title.fontStyle = FontStyles.Bold;
+            title.fontSharedMaterial = textMaterial;
             Stretch(title.rectTransform, 8f);
 
             RectTransform abilityPanel = CreatePanel(
@@ -320,6 +334,17 @@ namespace DiaBlackJack.GameScene.Editor
                 new Vector2(0.9728f, 0.8929f),
                 Vector2.zero,
                 Vector2.zero);
+            TMP_Text abilityLabel = CreateText(
+                "txtAbilityLabel",
+                abilityPanel,
+                font,
+                24f,
+                TextAlignmentOptions.TopLeft);
+            ConfigureDetailLabel(
+                abilityLabel,
+                "ACTIVE",
+                new Color(0.827f, 0.294f, 0.247f, 1f));
+            abilityLabel.fontSharedMaterial = textMaterial;
             TMP_Text ability = CreateText(
                 "txtAbility",
                 abilityPanel,
@@ -327,7 +352,8 @@ namespace DiaBlackJack.GameScene.Editor
                 24f,
                 TextAlignmentOptions.TopLeft);
             ability.fontSizeMin = 20f;
-            Stretch(ability.rectTransform, 12f);
+            ability.fontSharedMaterial = textMaterial;
+            ConfigureDetailBody(ability.rectTransform);
 
             RectTransform costPanel = CreatePanel(
                 "Cost", root, panelBrush, new Color(0.07f, 0.05f, 0.06f, 0.94f));
@@ -337,6 +363,17 @@ namespace DiaBlackJack.GameScene.Editor
                 new Vector2(0.9728f, 0.4286f),
                 Vector2.zero,
                 Vector2.zero);
+            TMP_Text costLabel = CreateText(
+                "txtCostLabel",
+                costPanel,
+                font,
+                24f,
+                TextAlignmentOptions.TopLeft);
+            ConfigureDetailLabel(
+                costLabel,
+                "COST",
+                new Color(0.843f, 0.647f, 0.231f, 1f));
+            costLabel.fontSharedMaterial = textMaterial;
             TMP_Text cost = CreateText(
                 "txtCost",
                 costPanel,
@@ -344,12 +381,47 @@ namespace DiaBlackJack.GameScene.Editor
                 24f,
                 TextAlignmentOptions.TopLeft);
             cost.fontSizeMin = 20f;
-            Stretch(cost.rectTransform, 12f);
+            cost.fontSharedMaterial = textMaterial;
+            ConfigureDetailBody(cost.rectTransform);
 
             GameHudContractDetailView detail =
                 root.gameObject.AddComponent<GameHudContractDetailView>();
-            AssignContractDetailReferences(detail, faceImage, title, ability, cost);
+            AssignContractDetailReferences(
+                detail,
+                faceImage,
+                title,
+                abilityLabel,
+                ability,
+                costLabel,
+                cost);
             return detail;
+        }
+
+        private static void ConfigureDetailLabel(
+            TMP_Text label,
+            string value,
+            Color color)
+        {
+            label.enableAutoSizing = false;
+            label.fontStyle = FontStyles.Bold;
+            label.color = color;
+            label.text = value;
+            SetRect(
+                label.rectTransform,
+                new Vector2(0f, 1f),
+                Vector2.one,
+                new Vector2(40f, -58f),
+                new Vector2(-40f, -30f));
+        }
+
+        private static void ConfigureDetailBody(RectTransform body)
+        {
+            SetRect(
+                body,
+                Vector2.zero,
+                Vector2.one,
+                new Vector2(40f, 30f),
+                new Vector2(-40f, -62f));
         }
 
         private static RectTransform CreateOverlay(string name, RectTransform parent)
@@ -464,13 +536,18 @@ namespace DiaBlackJack.GameScene.Editor
             GameHudContractDetailView detail,
             Image face,
             TMP_Text title,
+            TMP_Text abilityLabel,
             TMP_Text ability,
+            TMP_Text costLabel,
             TMP_Text cost)
         {
             SerializedObject serialized = new SerializedObject(detail);
             serialized.FindProperty("faceImage").objectReferenceValue = face;
             serialized.FindProperty("titleText").objectReferenceValue = title;
+            serialized.FindProperty("abilityLabelText").objectReferenceValue =
+                abilityLabel;
             serialized.FindProperty("abilityText").objectReferenceValue = ability;
+            serialized.FindProperty("costLabelText").objectReferenceValue = costLabel;
             serialized.FindProperty("costText").objectReferenceValue = cost;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }

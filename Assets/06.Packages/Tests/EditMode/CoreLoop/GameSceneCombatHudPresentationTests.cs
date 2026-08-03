@@ -1627,9 +1627,40 @@ namespace DiaBlackJack.CoreLoop.Tests
                 detail.GetComponent<GameHudContractDetailView>();
             Assert.That(detailView, Is.Not.Null);
             Assert.That(detailView.HasRequiredReferences, Is.True);
+            SerializedObject detailSerialized = new SerializedObject(detailView);
+            Material detailTextMaterial = null;
+            foreach (string propertyName in new[]
+                     {
+                         "titleText",
+                         "abilityLabelText",
+                         "abilityText",
+                         "costLabelText",
+                         "costText"
+                     })
+            {
+                UnityEngine.Object textComponent = detailSerialized
+                    .FindProperty(propertyName)
+                    .objectReferenceValue;
+                Material material = new SerializedObject(textComponent)
+                    .FindProperty("m_sharedMaterial")
+                    .objectReferenceValue as Material;
+                Assert.That(material, Is.Not.Null);
+                if (detailTextMaterial == null)
+                {
+                    detailTextMaterial = material;
+                }
+                Assert.That(material, Is.SameAs(detailTextMaterial));
+            }
+            Assert.That(detailTextMaterial.renderQueue, Is.EqualTo(3110));
+            Assert.That(
+                detailTextMaterial.renderQueue,
+                Is.GreaterThan(detail.Find("Ability").GetComponent<Image>()
+                    .material.renderQueue));
             Assert.That(detail.Find("Face"), Is.Not.Null);
             Assert.That(detail.Find("Title/txtTitle"), Is.Not.Null);
+            Assert.That(detail.Find("Ability/txtAbilityLabel"), Is.Not.Null);
             Assert.That(detail.Find("Ability/txtAbility"), Is.Not.Null);
+            Assert.That(detail.Find("Cost/txtCostLabel"), Is.Not.Null);
             Assert.That(detail.Find("Cost/txtCost"), Is.Not.Null);
         }
 
@@ -1751,13 +1782,29 @@ namespace DiaBlackJack.CoreLoop.Tests
                     Is.EqualTo("사탄"));
                 Assert.That(
                     GetRenderedText(panel.Find(
+                        "DetailLayout/ContractDetail/Ability/txtAbilityLabel")),
+                    Is.EqualTo("ACTIVE"));
+                Assert.That(
+                    GetRenderedText(panel.Find(
                         "DetailLayout/ContractDetail/Ability/txtAbility")),
                     Does.Contain("공개 카드 한 장을 사용한다."));
+                Assert.That(
+                    GetRenderedText(panel.Find(
+                        "DetailLayout/ContractDetail/Ability/txtAbility")),
+                    Does.Not.Contain("ACTIVE"));
+                Assert.That(
+                    GetRenderedText(panel.Find(
+                        "DetailLayout/ContractDetail/Cost/txtCostLabel")),
+                    Is.EqualTo("COST"));
                 Assert.That(
                     GetRenderedText(panel.Find(
                         "DetailLayout/ContractDetail/Cost/txtCost")),
                     Does.Contain(
                         $"PRICE 5 {CurrencyIconMarkup.GoldTag}"));
+                Assert.That(
+                    GetRenderedText(panel.Find(
+                        "DetailLayout/ContractDetail/Cost/txtCost")),
+                    Does.Not.Contain("COST"));
 
                 hud.HideDemonContractDetail();
                 Assert.That(panel.gameObject.activeSelf, Is.False);
@@ -1785,6 +1832,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                     instance.GetComponent<DemonCardHoverDetailView>();
                 Assert.That(view, Is.Not.Null);
                 Assert.That(view.HasRequiredReferences, Is.True);
+                Assert.That(instance.GetComponent<Canvas>(), Is.Null);
                 Transform title = view.DetailView.transform.Find(
                     "Title/txtTitle");
                 string originalTitle = GetRenderedText(title);
@@ -1792,8 +1840,36 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(
                     DemonCardHoverDetailPreviewSession.Show(view),
                     Is.Null);
+                Canvas previewCanvas = instance.GetComponent<Canvas>();
+                Assert.That(previewCanvas, Is.Not.Null);
+                Assert.That(
+                    previewCanvas.renderMode,
+                    Is.EqualTo(RenderMode.ScreenSpaceOverlay));
+                Assert.That(
+                    (int)previewCanvas.additionalShaderChannels,
+                    Is.EqualTo(25));
+                Assert.That(instance.GetComponent<CanvasScaler>(), Is.Not.Null);
                 string firstTitle = GetRenderedText(title);
                 Assert.That(firstTitle, Is.Not.Empty);
+                Transform cost = view.DetailView.transform.Find(
+                    "Cost/txtCost");
+                Assert.That(
+                    GetRenderedText(cost),
+                    Does.Contain(CurrencyIconMarkup.SoulTag));
+                Graphic soulIcon = cost
+                    .GetComponentsInChildren<Graphic>(true)
+                    .FirstOrDefault(component =>
+                        component.GetType().Name == "TMP_SubMeshUI");
+                Assert.That(soulIcon, Is.Not.Null);
+                Assert.That(soulIcon.material, Is.Not.Null);
+                Material costTextMaterial = new SerializedObject(
+                        cost.GetComponent<Graphic>())
+                    .FindProperty("m_sharedMaterial")
+                    .objectReferenceValue as Material;
+                Assert.That(costTextMaterial, Is.Not.Null);
+                Assert.That(
+                    soulIcon.material.renderQueue,
+                    Is.EqualTo(costTextMaterial.renderQueue));
 
                 DemonCardHoverDetailPreviewSession session =
                     DemonCardHoverDetailPreviewSession.GetActive(view);
@@ -1807,6 +1883,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                     Is.Not.EqualTo(firstTitle));
 
                 DemonCardHoverDetailPreviewSession.StopActive();
+                Assert.That(instance.GetComponent<Canvas>(), Is.Null);
+                Assert.That(instance.GetComponent<CanvasScaler>(), Is.Null);
                 Assert.That(
                     GetRenderedText(title),
                     Is.EqualTo(originalTitle));
@@ -1850,6 +1928,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(
                     GetRenderedText(title),
                     Is.EqualTo(originalTitle));
+                Assert.That(instance.GetComponent<Canvas>(), Is.Null);
 
                 DemonCardHoverDetailPreviewLifecycle.ResumeAfterPrefabSave(
                     instance);
@@ -1857,6 +1936,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                     DemonCardHoverDetailPreviewSession.GetActive(view);
                 Assert.That(resumed, Is.Not.Null);
                 Assert.That(resumed.CurrentIndex, Is.EqualTo(previewIndex));
+                Assert.That(instance.GetComponent<Canvas>(), Is.Not.Null);
                 Assert.That(GetRenderedText(title), Is.Not.EqualTo(originalTitle));
             }
             finally

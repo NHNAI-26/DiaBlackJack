@@ -124,7 +124,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _BaseSpriteUVRect: {r: 0, g: 0, b: 1, a: 1}
+    - _BaseSpriteUVRect: {r: 0.007936508, g: 0.005263158, b: 0.9841269, a: 0.9894737}
     - _CardBlendUVRect: {r: 0, g: 0, b: 1, a: 1}
     - _DissolveEdgeColor: {r: 1, g: 0.5, b: 0, a: 1}
     - _DissolvePanning: {r: 0, g: 0, b: 0, a: 0}

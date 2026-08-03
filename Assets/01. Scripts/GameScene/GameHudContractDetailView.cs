@@ -10,13 +10,17 @@ namespace DiaBlackJack.GameScene
     {
         [SerializeField] private Image faceImage;
         [SerializeField] private TMP_Text titleText;
+        [SerializeField] private TMP_Text abilityLabelText;
         [SerializeField] private TMP_Text abilityText;
+        [SerializeField] private TMP_Text costLabelText;
         [SerializeField] private TMP_Text costText;
 
         public bool HasRequiredReferences =>
             faceImage != null &&
             titleText != null &&
+            abilityLabelText != null &&
             abilityText != null &&
+            costLabelText != null &&
             costText != null;
 
         public void Render(
@@ -55,22 +59,32 @@ namespace DiaBlackJack.GameScene
                 CurrencyIconText.Set(titleText, title);
             }
 
+            if (abilityLabelText != null)
+            {
+                CurrencyIconText.Set(
+                    abilityLabelText,
+                    hasModel ? "ACTIVE" : string.Empty);
+            }
+
             if (abilityText != null)
             {
                 CurrencyIconText.Set(
                     abilityText,
-                    hasModel
-                        ? "<color=#D34B3F><b>ACTIVE</b></color>\n" + ability
-                        : string.Empty);
+                    hasModel ? ability : string.Empty);
+            }
+
+            if (costLabelText != null)
+            {
+                CurrencyIconText.Set(
+                    costLabelText,
+                    hasModel ? "COST" : string.Empty);
             }
 
             if (costText != null)
             {
                 CurrencyIconText.Set(
                     costText,
-                    hasModel
-                        ? "<color=#D7A53B><b>COST</b></color>\n" + cost
-                        : string.Empty);
+                    hasModel ? cost : string.Empty);
             }
 
             if (faceImage != null)

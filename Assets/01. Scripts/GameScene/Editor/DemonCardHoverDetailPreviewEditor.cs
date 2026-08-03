@@ -131,6 +131,7 @@ namespace DiaBlackJack.GameScene.Editor
 
         private readonly DemonCardHoverDetailView _view;
         private readonly DemonCardHoverDetailPreviewSnapshot _snapshot;
+        private readonly DemonCardHoverDetailPreviewCanvas _previewCanvas;
         private CardContentCatalogSO _catalog;
         private IReadOnlyList<DemonContractDefinition> _definitions;
         private int _index;
@@ -140,6 +141,7 @@ namespace DiaBlackJack.GameScene.Editor
         {
             _view = view;
             _snapshot = DemonCardHoverDetailPreviewSnapshot.Capture(view);
+            _previewCanvas = DemonCardHoverDetailPreviewCanvas.Attach(view);
         }
 
         internal bool CanMovePrevious => _index > 0;
@@ -202,7 +204,7 @@ namespace DiaBlackJack.GameScene.Editor
             catch (Exception exception)
             {
                 _active = null;
-                session._snapshot.Restore();
+                session.Restore();
                 return exception.Message;
             }
         }
@@ -270,7 +272,7 @@ namespace DiaBlackJack.GameScene.Editor
         {
             DemonCardHoverDetailPreviewSession session = _active;
             _active = null;
-            session?._snapshot.Restore();
+            session?.Restore();
             SceneView.RepaintAll();
         }
 
@@ -348,7 +350,159 @@ namespace DiaBlackJack.GameScene.Editor
                 model,
                 _catalog.GetDemonFaceSprite(definition.Key));
             Canvas.ForceUpdateCanvases();
+            _previewCanvas.MatchInlineSpriteMaterialQueues(
+                _view.DetailView);
+            Canvas.ForceUpdateCanvases();
             SceneView.RepaintAll();
+        }
+
+        private void Restore()
+        {
+            _previewCanvas.Restore();
+            _snapshot.Restore();
+        }
+    }
+
+    internal sealed class DemonCardHoverDetailPreviewCanvas
+    {
+        private readonly Canvas _canvas;
+        private readonly CanvasScaler _scaler;
+        private readonly List<InlineSpriteMaterialOverride>
+            _inlineSpriteMaterialOverrides =
+                new List<InlineSpriteMaterialOverride>();
+
+        private DemonCardHoverDetailPreviewCanvas(
+            Canvas canvas,
+            CanvasScaler scaler)
+        {
+            _canvas = canvas;
+            _scaler = scaler;
+        }
+
+        internal static DemonCardHoverDetailPreviewCanvas Attach(
+            DemonCardHoverDetailView view)
+        {
+            Canvas parentCanvas = view.GetComponentInParent<Canvas>();
+            if (parentCanvas != null)
+            {
+                return new DemonCardHoverDetailPreviewCanvas(null, null);
+            }
+
+            Canvas canvas = view.gameObject.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.additionalShaderChannels =
+                AdditionalCanvasShaderChannels.TexCoord1 |
+                AdditionalCanvasShaderChannels.Normal |
+                AdditionalCanvasShaderChannels.Tangent;
+
+            CanvasScaler scaler = view.gameObject.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
+            scaler.scaleFactor = 1f;
+            return new DemonCardHoverDetailPreviewCanvas(canvas, scaler);
+        }
+
+        internal void MatchInlineSpriteMaterialQueues(
+            GameHudContractDetailView detailView)
+        {
+            RestoreInlineSpriteMaterials();
+            if (detailView == null)
+            {
+                return;
+            }
+
+            TMP_Text[] texts =
+                detailView.GetComponentsInChildren<TMP_Text>(true);
+            foreach (TMP_Text text in texts)
+            {
+                Material textMaterial = text.fontSharedMaterial;
+                if (textMaterial == null)
+                {
+                    continue;
+                }
+
+                text.ForceMeshUpdate(ignoreActiveState: true);
+                TMP_SubMeshUI[] subMeshes =
+                    text.GetComponentsInChildren<TMP_SubMeshUI>(true);
+                foreach (TMP_SubMeshUI subMesh in subMeshes)
+                {
+                    Material sourceMaterial = subMesh.sharedMaterial;
+                    if (subMesh.spriteAsset == null ||
+                        sourceMaterial == null ||
+                        sourceMaterial.renderQueue >= textMaterial.renderQueue)
+                    {
+                        continue;
+                    }
+
+                    Material previewMaterial = new Material(sourceMaterial)
+                    {
+                        name = sourceMaterial.name + " (Demon Hover Preview)",
+                        hideFlags = HideFlags.HideAndDontSave
+                    };
+                    previewMaterial.renderQueue = textMaterial.renderQueue;
+                    subMesh.sharedMaterial = previewMaterial;
+                    _inlineSpriteMaterialOverrides.Add(
+                        new InlineSpriteMaterialOverride(
+                            subMesh,
+                            sourceMaterial,
+                            previewMaterial));
+                }
+            }
+        }
+
+        internal void Restore()
+        {
+            RestoreInlineSpriteMaterials();
+            if (_scaler != null)
+            {
+                UnityEngine.Object.DestroyImmediate(_scaler);
+            }
+
+            if (_canvas != null)
+            {
+                UnityEngine.Object.DestroyImmediate(_canvas);
+            }
+        }
+
+        private void RestoreInlineSpriteMaterials()
+        {
+            foreach (InlineSpriteMaterialOverride materialOverride in
+                     _inlineSpriteMaterialOverrides)
+            {
+                materialOverride.Restore();
+            }
+
+            _inlineSpriteMaterialOverrides.Clear();
+        }
+
+        private sealed class InlineSpriteMaterialOverride
+        {
+            private readonly TMP_SubMeshUI _subMesh;
+            private readonly Material _sourceMaterial;
+            private readonly Material _previewMaterial;
+
+            internal InlineSpriteMaterialOverride(
+                TMP_SubMeshUI subMesh,
+                Material sourceMaterial,
+                Material previewMaterial)
+            {
+                _subMesh = subMesh;
+                _sourceMaterial = sourceMaterial;
+                _previewMaterial = previewMaterial;
+            }
+
+            internal void Restore()
+            {
+                if (_subMesh != null &&
+                    _subMesh.sharedMaterial == _previewMaterial)
+                {
+                    _subMesh.sharedMaterial = _sourceMaterial;
+                }
+
+                if (_previewMaterial != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(_previewMaterial);
+                }
+            }
         }
     }
 
@@ -387,15 +541,21 @@ namespace DiaBlackJack.GameScene.Editor
         private readonly bool _faceEnabled;
         private readonly TMP_Text _titleText;
         private readonly string _title;
+        private readonly TMP_Text _abilityLabelText;
+        private readonly string _abilityLabel;
         private readonly TMP_Text _abilityText;
         private readonly string _ability;
+        private readonly TMP_Text _costLabelText;
+        private readonly string _costLabel;
         private readonly TMP_Text _costText;
         private readonly string _cost;
 
         private DemonCardHoverDetailPreviewSnapshot(
             Image faceImage,
             TMP_Text titleText,
+            TMP_Text abilityLabelText,
             TMP_Text abilityText,
+            TMP_Text costLabelText,
             TMP_Text costText)
         {
             _faceImage = faceImage;
@@ -403,8 +563,12 @@ namespace DiaBlackJack.GameScene.Editor
             _faceEnabled = faceImage.enabled;
             _titleText = titleText;
             _title = titleText.text;
+            _abilityLabelText = abilityLabelText;
+            _abilityLabel = abilityLabelText.text;
             _abilityText = abilityText;
             _ability = abilityText.text;
+            _costLabelText = costLabelText;
+            _costLabel = costLabelText.text;
             _costText = costText;
             _cost = costText.text;
         }
@@ -424,7 +588,13 @@ namespace DiaBlackJack.GameScene.Editor
             return new DemonCardHoverDetailPreviewSnapshot(
                 GetRequiredReference<Image>(detailSerialized, "faceImage"),
                 GetRequiredReference<TMP_Text>(detailSerialized, "titleText"),
+                GetRequiredReference<TMP_Text>(
+                    detailSerialized,
+                    "abilityLabelText"),
                 GetRequiredReference<TMP_Text>(detailSerialized, "abilityText"),
+                GetRequiredReference<TMP_Text>(
+                    detailSerialized,
+                    "costLabelText"),
                 GetRequiredReference<TMP_Text>(detailSerialized, "costText"));
         }
 
@@ -440,9 +610,19 @@ namespace DiaBlackJack.GameScene.Editor
                 _abilityText.text = _ability;
             }
 
+            if (_abilityLabelText != null)
+            {
+                _abilityLabelText.text = _abilityLabel;
+            }
+
             if (_costText != null)
             {
                 _costText.text = _cost;
+            }
+
+            if (_costLabelText != null)
+            {
+                _costLabelText.text = _costLabel;
             }
 
             if (_faceImage != null)
