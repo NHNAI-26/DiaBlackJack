@@ -13,6 +13,8 @@ namespace DiaBlackJack.GameScene
     [RequireComponent(typeof(SpriteRenderer))]
     public sealed class CharacterView : MonoBehaviour
     {
+        private const int ActionLabelSortingOffset = 10;
+
         [Serializable]
         private sealed class EnemySpriteProfile
         {
@@ -77,6 +79,7 @@ namespace DiaBlackJack.GameScene
 
             if (actionLabel != null)
             {
+                KeepActionLabelInFront();
                 bool hasLabel = !string.IsNullOrEmpty(label);
                 actionLabel.enabled = hasLabel;
                 if (hasLabel)
@@ -198,6 +201,24 @@ namespace DiaBlackJack.GameScene
             _baseColor = sprite != null ? sprite.color : Color.white;
             _defaultSprite = sprite != null ? sprite.sprite : null;
             _initialized = true;
+        }
+
+        private void KeepActionLabelInFront()
+        {
+            if (sprite == null || actionLabel == null)
+            {
+                return;
+            }
+
+            Renderer labelRenderer = actionLabel.GetComponent<Renderer>();
+            if (labelRenderer == null)
+            {
+                return;
+            }
+
+            labelRenderer.sortingLayerID = sprite.sortingLayerID;
+            labelRenderer.sortingOrder =
+                sprite.sortingOrder + ActionLabelSortingOffset;
         }
     }
 }

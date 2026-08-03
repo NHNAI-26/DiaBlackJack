@@ -126,6 +126,30 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GSV01_U05_ActionLabelAlwaysRendersInFrontOfEnemySprite()
+        {
+            CharacterView view = ConfigureView();
+            SpriteRenderer spriteRenderer = _root.GetComponent<SpriteRenderer>();
+            Component actionLabel = CreateActionLabel();
+            SerializedObject serialized = new SerializedObject(view);
+            serialized.FindProperty("actionLabel").objectReferenceValue = actionLabel;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            Renderer labelRenderer = actionLabel.GetComponent<Renderer>();
+            spriteRenderer.sortingLayerName = "Default";
+            spriteRenderer.sortingOrder = 7;
+            labelRenderer.sortingOrder = 0;
+
+            view.Render(CharacterVisualState.Idle, "HIT");
+
+            Assert.That(
+                labelRenderer.sortingLayerID,
+                Is.EqualTo(spriteRenderer.sortingLayerID));
+            Assert.That(
+                labelRenderer.sortingOrder,
+                Is.GreaterThan(spriteRenderer.sortingOrder));
+        }
+
+        [Test]
         public void CUM09_U01_RevolverHitStaysThreatenedUntilImpactEvent()
         {
             CharacterVisualState beforeImpact = GameManager.ResolveRevolverTimedVisual(

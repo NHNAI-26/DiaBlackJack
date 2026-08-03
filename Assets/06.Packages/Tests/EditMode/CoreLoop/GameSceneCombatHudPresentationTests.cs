@@ -1077,7 +1077,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         [TestCase(
             DemonContractInteractionKind.BelphegorTopCard,
             BelphegorDemonContractHandler.KeepTopCardOptionId,
-            false)]
+            true)]
         [TestCase(
             DemonContractInteractionKind.AsmodeusForceOpponentHit,
             AsmodeusDemonContractHandler.SkipForcedHitOptionId,
@@ -1085,7 +1085,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         [TestCase(
             DemonContractInteractionKind.AsmodeusForceOpponentHit,
             AsmodeusDemonContractHandler.ForceHitOptionId,
-            false)]
+            true)]
         [TestCase(
             DemonContractInteractionKind.MammonReroll,
             MammonDemonContractHandler.KeepDieOptionId,
@@ -1136,6 +1136,96 @@ namespace DiaBlackJack.CoreLoop.Tests
             {
                 Object.DestroyImmediate(instance);
             }
+        }
+
+        [Test]
+        public void GSH01_U17_BelphegorShowsOnePreviewCardAndTwoBottomRightActions()
+        {
+            CoreLoopBattle battle = CreateStartedContractBattle(
+                DemonContractKind.Belphegor,
+                DemonContractKind.Mammon);
+            Assert.That(battle.TryBeginPlayerDemonContract(), Is.True);
+            PendingDemonContractInteraction offer =
+                battle.PendingPlayerDemonContractInteraction;
+            DemonContractOption belphegor = offer.Options.Single(option =>
+                option.ContractDefinitionKey == DemonContractCatalog.BelphegorKey);
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                offer.InteractionId,
+                belphegor.OptionId), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+
+            PlayerDemonContractPreview preview = battle.PlayerDemonContractPreview;
+            GameSceneViewModel scene = GameScenePresenter.Create(battle);
+            GameSceneCombatHudViewModel hud = GameSceneCombatHudPresenter.Create(
+                scene.Core,
+                isStageBattle: false,
+                isShopOpen: false,
+                inputLocked: false,
+                scene.UsesDiegeticCardEffectSelection);
+
+            Assert.That(preview, Is.Not.Null);
+            Assert.That(scene.CrystalOrbCandidates, Has.Count.EqualTo(1));
+            GameSceneCardViewModel card = scene.CrystalOrbCandidates.Single();
+            Assert.That(card.CardId, Is.EqualTo(preview.CardId));
+            Assert.That(card.Rank, Is.EqualTo(preview.Rank));
+            Assert.That(card.Suit, Is.EqualTo(preview.Suit));
+            Assert.That(card.DirectSelectionCommand.HasValue, Is.False);
+            Assert.That(hud.OptionActions, Has.Count.EqualTo(2));
+            Assert.That(hud.OptionActions.Select(action => action.Label),
+                Is.EqualTo(new[] { "히트하기", "히트하지 않기" }));
+            Assert.That(hud.OptionActions.All(action =>
+                action.Placement ==
+                    GameSceneCombatHudActionPlacement.BottomRight), Is.True);
+        }
+
+        [TestCase("HIT", "HIT")]
+        [TestCase("STAND", "STAND")]
+        [TestCase("CHANGE", "CHANGE")]
+        [TestCase("CONTRACT", "CONTRACT")]
+        [TestCase("DISCARD", "")]
+        [TestCase("MISS", "")]
+        [TestCase("WIN", "")]
+        public void GSH01_U18_EnemyActionLabelAllowsOnlyFourActionTokens(
+            string label,
+            string expected)
+        {
+            Assert.That(
+                GameScenePresenter.FilterEnemyActionLabel(label),
+                Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void GSH01_U19_AsmodeusShowsTwoBottomRightActionsBeforeOpponentStand()
+        {
+            CoreLoopBattle battle = CreateStartedAsmodeusContractBattle();
+            Assert.That(battle.TryBeginPlayerDemonContract(), Is.True);
+            PendingDemonContractInteraction offer =
+                battle.PendingPlayerDemonContractInteraction;
+            DemonContractOption asmodeus = offer.Options.Single(option =>
+                option.ContractDefinitionKey == DemonContractCatalog.AsmodeusKey);
+
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                offer.InteractionId,
+                asmodeus.OptionId), Is.True);
+
+            Assert.That(battle.Enemy.IsStanding, Is.False);
+            Assert.That(
+                battle.PendingPlayerDemonContractInteraction.Kind,
+                Is.EqualTo(
+                    DemonContractInteractionKind.AsmodeusForceOpponentHit));
+            GameSceneViewModel scene = GameScenePresenter.Create(battle);
+            GameSceneCombatHudViewModel hud = GameSceneCombatHudPresenter.Create(
+                scene.Core,
+                isStageBattle: false,
+                isShopOpen: false,
+                inputLocked: false,
+                scene.UsesDiegeticCardEffectSelection);
+            Assert.That(hud.OptionActions, Has.Count.EqualTo(2));
+            Assert.That(hud.OptionActions.Select(action => action.Label),
+                Is.EqualTo(new[] { "능력 사용 안 하기", "능력 사용하기" }));
+            Assert.That(hud.OptionActions.All(action =>
+                action.Placement ==
+                    GameSceneCombatHudActionPlacement.BottomRight), Is.True);
         }
 
         [Test]
@@ -1740,6 +1830,29 @@ namespace DiaBlackJack.CoreLoop.Tests
             return battle;
         }
 
+        private static CoreLoopBattle CreateStartedAsmodeusContractBattle()
+        {
+            DemonContractDefinition definition = DemonContractCatalog.Default
+                .GetByKey(DemonContractCatalog.AsmodeusKey);
+            var battle = new CoreLoopBattle(
+                BlackjackDeck.CreateInDrawOrder(CreateCards(0, 7, 2, 3, 4, 5)),
+                BlackjackDeck.CreateInDrawOrder(CreateCards(
+                    100,
+                    4,
+                    5,
+                    2,
+                    3,
+                    4)),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 4,
+                enemyPolicy: new HitThenStandPolicy(),
+                playerDemonDeck: new DemonContractDeck(
+                    new[] { new DemonContractCard(0, definition) },
+                    seed: 73));
+            Assert.That(battle.Start(), Is.True);
+            return battle;
+        }
+
         private static CoreLoopBattle CreateEnemyContractBattle()
         {
             DemonContractDefinition definition = DemonContractCatalog.Default
@@ -1877,6 +1990,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                     return DemonContractCatalog.SatanKey;
                 case DemonContractKind.Lucifer:
                     return DemonContractCatalog.LuciferKey;
+                case DemonContractKind.Asmodeus:
+                    return DemonContractCatalog.AsmodeusKey;
                 default:
                     throw new System.ArgumentOutOfRangeException(nameof(kind));
             }

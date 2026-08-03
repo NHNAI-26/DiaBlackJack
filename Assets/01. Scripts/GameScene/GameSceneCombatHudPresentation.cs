@@ -535,11 +535,8 @@ namespace DiaBlackJack.GameScene
             switch (interactionKind)
             {
                 case DemonContractInteractionKind.BelphegorTopCard:
-                    return optionId ==
-                        BelphegorDemonContractHandler.MoveTopCardToBottomOptionId;
                 case DemonContractInteractionKind.AsmodeusForceOpponentHit:
-                    return optionId ==
-                        AsmodeusDemonContractHandler.SkipForcedHitOptionId;
+                    return true;
                 case DemonContractInteractionKind.MammonReroll:
                     return optionId ==
                         MammonDemonContractHandler.KeepDieOptionId;
