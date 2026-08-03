@@ -15,6 +15,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/UI/GameScene/DeckPreviewOverlay.prefab";
         private const string HoverTooltipPrefabPath =
             "Assets/03. Prefabs/UI/CardHoverTooltip.prefab";
+        private const string HudPrefabPath =
+            "Assets/03. Prefabs/UI/HUD.prefab";
 
         [Test]
         public void GSV03_U03_DeckPreviewKeepsAllCardsInScrollableModelAndClearsOnClose()
@@ -149,6 +151,174 @@ namespace DiaBlackJack.CoreLoop.Tests
             {
                 Object.DestroyImmediate(cardObject);
             }
+        }
+
+        [Test]
+        public void GSV08_U01_SingleSelectionWaitsForConfirmAndSwitchesHighlight()
+        {
+            GameObject instance = InstantiatePreviewPrefab();
+            DeckPreviewView preview = instance.GetComponent<DeckPreviewView>();
+            int confirmedCardId = -1;
+            int confirmationCount = 0;
+            preview.SelectionConfirmed += cardId =>
+            {
+                confirmedCardId = cardId;
+                confirmationCount++;
+            };
+
+            try
+            {
+                preview.OpenForSingleSelection(CreateSelectionCards());
+                DeckPreviewCardView first = FindSlot(instance, "CardSlot_01");
+                DeckPreviewCardView second = FindSlot(instance, "CardSlot_02");
+                Button confirm = instance.transform
+                    .Find("Panel/SelectionFooter")
+                    .GetComponent<Button>();
+
+                Click(first);
+                Assert.That(confirmationCount, Is.Zero);
+                Assert.That(first.IsSelected, Is.True);
+                Assert.That(second.IsSelected, Is.False);
+                Assert.That(preview.ConfirmButtonInteractable, Is.True);
+
+                Click(second);
+                Assert.That(first.IsSelected, Is.False);
+                Assert.That(second.IsSelected, Is.True);
+                Assert.That(confirmationCount, Is.Zero);
+
+                confirm.onClick.Invoke();
+                confirm.onClick.Invoke();
+
+                Assert.That(confirmedCardId, Is.EqualTo(202));
+                Assert.That(confirmationCount, Is.EqualTo(1));
+                Assert.That(preview.ConfirmButtonInteractable, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSV08_U02_SingleSelectionCancelAndUnavailableCardDoNotConfirm()
+        {
+            GameObject instance = InstantiatePreviewPrefab();
+            DeckPreviewView preview = instance.GetComponent<DeckPreviewView>();
+            int confirmationCount = 0;
+            int cancellationCount = 0;
+            preview.SelectionConfirmed += _ => confirmationCount++;
+            preview.SelectionCancelled += () => cancellationCount++;
+
+            try
+            {
+                preview.OpenForSingleSelection(CreateSelectionCards());
+                DeckPreviewCardView unavailable =
+                    FindSlot(instance, "CardSlot_03");
+                Click(unavailable);
+
+                Assert.That(unavailable.CanSelect, Is.False);
+                Assert.That(preview.HasSelection, Is.False);
+                Assert.That(preview.ConfirmButtonInteractable, Is.False);
+
+                Button close = instance.transform
+                    .Find("Panel/CloseButton")
+                    .GetComponent<Button>();
+                close.onClick.Invoke();
+
+                Assert.That(confirmationCount, Is.Zero);
+                Assert.That(cancellationCount, Is.EqualTo(1));
+                Assert.That(preview.IsOpen, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSV08_U03_PrefabsSerializeSelectionAndBrushShopLeaveControl()
+        {
+            GameObject previewPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(PreviewPrefabPath);
+            GameObject hudPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
+
+            Assert.That(previewPrefab, Is.Not.Null);
+            Assert.That(
+                previewPrefab.transform.Find("Panel/SelectionFooter"),
+                Is.Not.Null);
+            Assert.That(
+                previewPrefab.GetComponentsInChildren<DeckPreviewCardView>(true)
+                    .All(slot => slot.transform.Find("SelectedFrame") != null),
+                Is.True);
+
+            Assert.That(hudPrefab, Is.Not.Null);
+            Transform leaveRoot = hudPrefab.transform.Find("ShopLeaveRoot");
+            Assert.That(leaveRoot, Is.Not.Null);
+            Canvas leaveCanvas = leaveRoot.GetComponent<Canvas>();
+            Assert.That(leaveCanvas.overrideSorting, Is.True);
+            Assert.That(leaveCanvas.sortingOrder, Is.GreaterThan(100));
+            Transform leaveButton = leaveRoot.Find("ShopLeaveButton");
+            Assert.That(
+                leaveButton.GetComponent<Image>().sprite.name,
+                Is.EqualTo("Brush_UI_9"));
+            Assert.That(
+                leaveButton.Find("Label"),
+                Is.Not.Null);
+        }
+
+        private static GameObject InstantiatePreviewPrefab()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(PreviewPrefabPath);
+            return Object.Instantiate(prefab);
+        }
+
+        private static DeckPreviewCardView FindSlot(
+            GameObject root,
+            string name)
+        {
+            return root.GetComponentsInChildren<DeckPreviewCardView>(true)
+                .Single(slot => slot.name == name);
+        }
+
+        private static void Click(DeckPreviewCardView slot)
+        {
+            slot.OnPointerClick(new PointerEventData(null)
+            {
+                button = PointerEventData.InputButton.Left
+            });
+        }
+
+        private static GameSceneDeckViewModel CreateSelectionCards()
+        {
+            var groups = new List<GameSceneDeckCardGroupViewModel>
+            {
+                CreateSelectionCard(101, 2, true),
+                CreateSelectionCard(202, 3, true),
+                CreateSelectionCard(303, 4, false)
+            };
+            return new GameSceneDeckViewModel(
+                DeckKind.Draw,
+                "제거할 카드 선택",
+                groups.AsReadOnly());
+        }
+
+        private static GameSceneDeckCardGroupViewModel CreateSelectionCard(
+            int cardId,
+            int rank,
+            bool canUse)
+        {
+            return new GameSceneDeckCardGroupViewModel(
+                new GameSceneCardViewModel(
+                    cardId,
+                    rank,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse,
+                    "기본 카드",
+                    definitionKey: $"standard-plain-{rank}"),
+                1);
         }
 
         private static IReadOnlyList<GameSceneDeckCardGroupViewModel> CreateCards(

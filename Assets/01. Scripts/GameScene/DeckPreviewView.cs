@@ -17,6 +17,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GraphicRaycaster previewRaycaster;
         [SerializeField] private Button backgroundCloseButton;
         [SerializeField] private Button closeButton;
+        [SerializeField] private GameObject selectionFooter;
+        [SerializeField] private Button confirmButton;
         [SerializeField] private ScrollRect cardScrollRect;
         [SerializeField] private TMP_Text titleText;
         [SerializeField] private DeckPreviewCardView[] cardSlots = Array.Empty<DeckPreviewCardView>();
@@ -24,12 +26,19 @@ namespace DiaBlackJack.GameScene
         private GameSceneDeckViewModel _model;
         private CardView _cardVisualSource;
         private DeckPreviewCardView _hoveredSlot;
+        private DeckPreviewCardView _selectedSlot;
         private Coroutine _enableRaycasterRoutine;
         private bool _controlsBound;
+        private bool _confirmationPending;
+        private bool _isSingleSelection;
 
         public event Action<CardHoverBadgeRequest> HoverBadgeRequested;
 
         public event Action HoverBadgeCleared;
+
+        public event Action<int> SelectionConfirmed;
+
+        public event Action SelectionCancelled;
 
         public bool IsOpen { get; private set; }
 
@@ -38,6 +47,17 @@ namespace DiaBlackJack.GameScene
         public int GroupCount => IsOpen && _model != null ? _model.GroupCount : 0;
 
         public int CardSlotCount => cardSlots == null ? 0 : cardSlots.Length;
+
+        public bool ConfirmButtonInteractable =>
+            confirmButton != null && confirmButton.interactable;
+
+        public bool HasSelection => _selectedSlot != null;
+
+        public bool IsSingleSelection => IsOpen && _isSingleSelection;
+
+        public int? SelectedCardId => _selectedSlot == null
+            ? null
+            : _selectedSlot.CardId;
 
         private void Awake()
         {
@@ -48,7 +68,10 @@ namespace DiaBlackJack.GameScene
         private void OnDisable()
         {
             ClearHoveredSlot();
+            ClearSelectedSlot();
             IsOpen = false;
+            _confirmationPending = false;
+            _isSingleSelection = false;
             _model = null;
             _enableRaycasterRoutine = null;
         }
@@ -66,7 +89,23 @@ namespace DiaBlackJack.GameScene
 
         public void Open(GameSceneDeckViewModel model)
         {
+            OpenInternal(model, isSingleSelection: false);
+        }
+
+        public void OpenForSingleSelection(GameSceneDeckViewModel model)
+        {
+            OpenInternal(model, isSingleSelection: true);
+        }
+
+        private void OpenInternal(
+            GameSceneDeckViewModel model,
+            bool isSingleSelection)
+        {
+            BindControls();
             _model = model ?? throw new ArgumentNullException(nameof(model));
+            _confirmationPending = false;
+            _isSingleSelection = isSingleSelection;
+            ClearSelectedSlot();
             IsOpen = true;
 
             if (previewCanvas != null)
@@ -80,6 +119,12 @@ namespace DiaBlackJack.GameScene
             }
 
             gameObject.SetActive(true);
+            if (selectionFooter != null)
+            {
+                selectionFooter.SetActive(_isSingleSelection);
+            }
+
+            UpdateConfirmButton();
             RenderSlots();
             ResetScrollToTop();
 
@@ -98,8 +143,11 @@ namespace DiaBlackJack.GameScene
             }
 
             IsOpen = false;
+            _confirmationPending = false;
+            _isSingleSelection = false;
             _model = null;
             ClearHoveredSlot();
+            ClearSelectedSlot();
             if (_enableRaycasterRoutine != null)
             {
                 StopCoroutine(_enableRaycasterRoutine);
@@ -107,6 +155,11 @@ namespace DiaBlackJack.GameScene
             }
 
             SetSlotsVisible(false);
+            if (selectionFooter != null)
+            {
+                selectionFooter.SetActive(false);
+            }
+
             gameObject.SetActive(false);
         }
 
@@ -120,12 +173,17 @@ namespace DiaBlackJack.GameScene
             _controlsBound = true;
             if (backgroundCloseButton != null)
             {
-                backgroundCloseButton.onClick.AddListener(Close);
+                backgroundCloseButton.onClick.AddListener(RequestCancel);
             }
 
             if (closeButton != null)
             {
-                closeButton.onClick.AddListener(Close);
+                closeButton.onClick.AddListener(RequestCancel);
+            }
+
+            if (confirmButton != null)
+            {
+                confirmButton.onClick.AddListener(ConfirmSelection);
             }
 
             if (cardSlots == null)
@@ -138,6 +196,7 @@ namespace DiaBlackJack.GameScene
                 if (cardSlots[i] != null)
                 {
                     cardSlots[i].HoverChanged += HandleSlotHoverChanged;
+                    cardSlots[i].Clicked += HandleSlotClicked;
                 }
             }
         }
@@ -152,12 +211,17 @@ namespace DiaBlackJack.GameScene
             _controlsBound = false;
             if (backgroundCloseButton != null)
             {
-                backgroundCloseButton.onClick.RemoveListener(Close);
+                backgroundCloseButton.onClick.RemoveListener(RequestCancel);
             }
 
             if (closeButton != null)
             {
-                closeButton.onClick.RemoveListener(Close);
+                closeButton.onClick.RemoveListener(RequestCancel);
+            }
+
+            if (confirmButton != null)
+            {
+                confirmButton.onClick.RemoveListener(ConfirmSelection);
             }
 
             if (cardSlots == null)
@@ -170,6 +234,7 @@ namespace DiaBlackJack.GameScene
                 if (cardSlots[i] != null)
                 {
                     cardSlots[i].HoverChanged -= HandleSlotHoverChanged;
+                    cardSlots[i].Clicked -= HandleSlotClicked;
                 }
             }
         }
@@ -209,7 +274,10 @@ namespace DiaBlackJack.GameScene
                 Sprite faceSprite = _cardVisualSource == null
                     ? null
                     : _cardVisualSource.GetFaceSprite(card);
-                slot.Render(group, faceSprite);
+                slot.Render(
+                    group,
+                    faceSprite,
+                    _isSingleSelection ? card.CanUse : null);
             }
 
             if (slotCount > 0 && _model.GroupCount > slotCount)
@@ -282,6 +350,73 @@ namespace DiaBlackJack.GameScene
             {
                 _hoveredSlot = null;
                 HoverBadgeCleared?.Invoke();
+            }
+        }
+
+        private void HandleSlotClicked(DeckPreviewCardView slot)
+        {
+            if (!IsSingleSelection ||
+                _confirmationPending ||
+                slot == null ||
+                !slot.CanSelect)
+            {
+                return;
+            }
+
+            if (_selectedSlot != null && _selectedSlot != slot)
+            {
+                _selectedSlot.SetSelected(false);
+            }
+
+            _selectedSlot = slot;
+            _selectedSlot.SetSelected(true);
+            UpdateConfirmButton();
+        }
+
+        private void ConfirmSelection()
+        {
+            if (!IsSingleSelection ||
+                _confirmationPending ||
+                _selectedSlot == null)
+            {
+                return;
+            }
+
+            _confirmationPending = true;
+            UpdateConfirmButton();
+            SelectionConfirmed?.Invoke(_selectedSlot.CardId);
+        }
+
+        private void RequestCancel()
+        {
+            bool wasSingleSelection = IsSingleSelection;
+            Close();
+            if (wasSingleSelection)
+            {
+                SelectionCancelled?.Invoke();
+            }
+        }
+
+        private void ClearSelectedSlot()
+        {
+            if (_selectedSlot != null)
+            {
+                _selectedSlot.SetSelected(false);
+                _selectedSlot = null;
+            }
+
+            UpdateConfirmButton();
+        }
+
+        private void UpdateConfirmButton()
+        {
+            if (confirmButton != null)
+            {
+                confirmButton.interactable =
+                    IsOpen &&
+                    _isSingleSelection &&
+                    !_confirmationPending &&
+                    _selectedSlot != null;
             }
         }
 

@@ -329,40 +329,54 @@ namespace DiaBlackJack.GameScene
 
         private void HandleFormalShopCardPurchaseRequested(int optionId)
         {
+            bool succeeded = false;
             if (CurrentViewModel?.ShopOfferId is int offerId)
             {
-                RequestBuyShopCard(offerId, optionId);
+                succeeded = RequestBuyShopCard(offerId, optionId);
             }
+
+            gameManager?.CompleteFormalShopCardPurchase(succeeded);
         }
 
         private void HandleFormalShopCardRemovalRequested(int cardId)
         {
+            bool succeeded = false;
             if (CurrentViewModel?.ShopOfferId is int offerId)
             {
-                if (RequestRemoveShopCard(offerId, cardId))
+                succeeded = RequestRemoveShopCard(offerId, cardId);
+                if (succeeded)
                 {
                     gameManager?.PlayLighterShopAnimation();
                 }
             }
+
+            gameManager?.CompleteFormalLighterRemoval(succeeded);
         }
 
         private void HandleFormalShopRestRequested()
         {
+            bool succeeded = false;
             if (CurrentViewModel?.ShopOfferId is int offerId)
             {
-                if (RequestRestAtShop(offerId))
+                succeeded = RequestRestAtShop(offerId);
+                if (succeeded)
                 {
                     gameManager?.PlayWhiskeyShopAnimation();
                 }
             }
+
+            gameManager?.CompleteFormalShopRest(succeeded);
         }
 
         private void HandleFormalShopLeaveRequested()
         {
+            bool succeeded = false;
             if (CurrentViewModel?.ShopOfferId is int offerId)
             {
-                RequestLeaveShop(offerId);
+                succeeded = RequestLeaveShop(offerId);
             }
+
+            gameManager?.CompleteFormalShopLeave(succeeded);
         }
 
         private void HandleRestartRequested()

@@ -43,6 +43,7 @@ namespace DiaBlackJack.GameScene.Editor
                 }
 
                 Sprite panelBrush = FindSprite("Brush_UI_8");
+                CreateShopLeaveControl(hudRoot, hud, font);
 
                 RectTransform controls = CreateRect("CombatControls", hudRoot.transform);
                 Stretch(controls);
@@ -118,6 +119,81 @@ namespace DiaBlackJack.GameScene.Editor
             {
                 PrefabUtility.UnloadPrefabContents(hudRoot);
             }
+        }
+
+        [MenuItem("DiaBlackJack/Build Shop Leave Control")]
+        private static void BuildShopLeaveControl()
+        {
+            GameObject hudRoot = PrefabUtility.LoadPrefabContents(HudPrefabPath);
+            try
+            {
+                GameHudView hud = hudRoot.GetComponent<GameHudView>();
+                TMP_FontAsset font =
+                    hudRoot.GetComponentInChildren<TMP_Text>(true)?.font;
+                if (hud == null || font == null)
+                {
+                    throw new InvalidOperationException(
+                        "HUD prefab is missing GameHudView or its TMP font.");
+                }
+
+                CreateShopLeaveControl(hudRoot, hud, font);
+                PrefabUtility.SaveAsPrefabAsset(hudRoot, HudPrefabPath);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(hudRoot);
+            }
+        }
+
+        private static void CreateShopLeaveControl(
+            GameObject hudRoot,
+            GameHudView hud,
+            TMP_FontAsset font)
+        {
+            Transform existing = hudRoot.transform.Find("ShopLeaveRoot");
+            if (existing != null)
+            {
+                UnityEngine.Object.DestroyImmediate(existing.gameObject);
+            }
+
+            RectTransform layer = CreateRect("ShopLeaveRoot", hudRoot.transform);
+            Stretch(layer);
+            Canvas canvas = layer.gameObject.AddComponent<Canvas>();
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = 150;
+            layer.gameObject.AddComponent<GraphicRaycaster>();
+
+            RectTransform buttonRoot = CreateRect("ShopLeaveButton", layer);
+            buttonRoot.anchorMin = new Vector2(0.5f, 0f);
+            buttonRoot.anchorMax = new Vector2(0.5f, 0f);
+            buttonRoot.pivot = new Vector2(0.5f, 0f);
+            buttonRoot.anchoredPosition = new Vector2(0f, 24f);
+            buttonRoot.sizeDelta = new Vector2(234f, 66f);
+
+            Image background = buttonRoot.gameObject.AddComponent<Image>();
+            background.sprite = FindSprite("Brush_UI_9");
+            background.type = Image.Type.Simple;
+            background.preserveAspect = true;
+            Button button = buttonRoot.gameObject.AddComponent<Button>();
+            button.targetGraphic = background;
+
+            TMP_Text label = CreateText(
+                "Label",
+                buttonRoot,
+                font,
+                28f,
+                TextAlignmentOptions.Center);
+            label.text = "상점 나가기";
+            label.fontStyle = FontStyles.Bold;
+            Stretch(label.rectTransform, 8f);
+
+            SerializedObject serialized = new SerializedObject(hud);
+            serialized.FindProperty("shopLeaveRoot").objectReferenceValue =
+                layer.gameObject;
+            serialized.FindProperty("shopLeaveButton").objectReferenceValue =
+                button;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            layer.gameObject.SetActive(false);
         }
 
         private static ScrollRect CreateOptionScroll(

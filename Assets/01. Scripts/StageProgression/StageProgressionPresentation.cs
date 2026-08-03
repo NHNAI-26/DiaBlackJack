@@ -129,17 +129,29 @@ namespace DiaBlackJack.StageProgression.UI
     {
         public ShopOwnedCardViewModel(
             int cardId,
+            string definitionKey,
+            int rank,
             string displayName,
+            string abilityDescription,
+            CardSuit suit,
             bool canRemove)
         {
             CardId = cardId;
+            DefinitionKey = definitionKey ?? string.Empty;
+            Rank = rank;
             DisplayName = displayName;
+            AbilityDescription = abilityDescription ?? string.Empty;
+            Suit = suit;
             CanRemove = canRemove;
         }
 
+        public string AbilityDescription { get; }
         public int CardId { get; }
         public bool CanRemove { get; }
+        public string DefinitionKey { get; }
         public string DisplayName { get; }
+        public int Rank { get; }
+        public CardSuit Suit { get; }
     }
 
     public sealed class StageProgressionViewModel
@@ -581,7 +593,11 @@ namespace DiaBlackJack.StageProgression.UI
                     card.DefinitionKey);
                 cards.Add(new ShopOwnedCardViewModel(
                     card.Id,
+                    definition.Key,
+                    definition.Rank,
                     $"{definition.Rank} {definition.DisplayName}",
+                    definition.Description,
+                    card.Suit,
                     !shop.HasRemovedCard &&
                         player.CurrentGold >= shop.Offer.LighterPrice &&
                         player.CanRemoveCard(card.Id)));

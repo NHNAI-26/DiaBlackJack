@@ -47,9 +47,6 @@ namespace DiaBlackJack.GameScene
         [Header("Shop (MVP)")]
         [SerializeField] private ShopController shop;
 
-        [Tooltip("Font for the remaining shop/lighter IMGUI panels. Leave empty to use Unity's default.")]
-        [SerializeField] private Font uiFont;
-
         [Header("Presentation pacing")]
         [SerializeField] private float stepSeconds = 1.0f;
         [SerializeField] private float resolveHoldSeconds = 2.5f;
@@ -111,14 +108,9 @@ namespace DiaBlackJack.GameScene
         private bool _choosingLighterRemoval;
         private int _battleIndex;
         private string _activeEnemyProfileKey;
-        private GUIStyle _buttonStyle;
-        private GUIStyle _labelStyle;
-        private GUIStyle _shopPanelStyle;
-        private GUIStyle _shopCardButtonStyle;
         private int? _playerMammonDieValue;
         private int? _enemyMammonDieValue;
         private bool _mammonRollAnimationRequested;
-        private Vector2 _lighterRemovalScroll;
         private bool _hasLastRevolverAnimationCue;
         private int _lastRevolverAnimationRoundNumber;
         private int _lastRevolverAnimationSourceCardId;
@@ -158,6 +150,10 @@ namespace DiaBlackJack.GameScene
             new List<RemovedNormalCard>();
         private StageProgressionSession _completedStageSession;
         private StageProgressionViewModel _formalShopModel;
+        private int _formalShopGold;
+        private CoreLoopBattle _lastEnemySpeechBattle;
+        private int _lastEnemySpeechRoundNumber = -1;
+        private int _lastEnemySpeechActionOrdinal = -1;
 
         public event Action FormalBattleCompleted;
         public event Action<int> FormalShopCardPurchaseRequested;
@@ -230,12 +226,23 @@ namespace DiaBlackJack.GameScene
                 UnbindBattle();
             }
 
+            bool keepLighterSelection = _choosingLighterRemoval &&
+                deckPreview != null &&
+                deckPreview.IsSingleSelection;
             _formalShopModel = model;
+            _formalShopGold = currentGold;
             _inputLocked = false;
-            _choosingLighterRemoval = false;
+            _choosingLighterRemoval = keepLighterSelection;
             shop.OpenFormal(model);
+            if (keepLighterSelection)
+            {
+                deckPreview.OpenForSingleSelection(
+                    CreateFormalLighterRemovalPreview());
+            }
+
             hud?.SetGold(currentGold);
             hud?.SetEnemyStatusVisible(false);
+            UpdateShopLeaveControl();
             return true;
         }
 
@@ -247,6 +254,7 @@ namespace DiaBlackJack.GameScene
             }
 
             _formalShopModel = null;
+            _formalShopGold = 0;
             _choosingLighterRemoval = false;
             UpdateHover(null);
             UpdateDemonCardHover(null);
@@ -254,11 +262,13 @@ namespace DiaBlackJack.GameScene
             UpdateCombatCommandHover(null);
             hud?.HideCardHoverBadge();
             shop?.CloseFormal();
+            UpdateShopLeaveControl();
         }
 
         public void SetPauseInputBlocked(bool blocked)
         {
             _pauseInputBlocked = blocked;
+            UpdateShopLeaveControl();
             if (!blocked)
             {
                 return;
@@ -273,6 +283,51 @@ namespace DiaBlackJack.GameScene
             hud?.HideDemonContractDetail();
         }
 
+        internal void CompleteFormalLighterRemoval(bool succeeded)
+        {
+            if (succeeded)
+            {
+                _choosingLighterRemoval = false;
+                CloseDeckPreview();
+                shop?.ShowMerchantSpeech(MerchantSpeechCue.LighterSuccess);
+            }
+            else if (deckPreview != null && deckPreview.IsSingleSelection)
+            {
+                _choosingLighterRemoval = true;
+                if (_formalShopModel != null)
+                {
+                    deckPreview.OpenForSingleSelection(
+                        CreateFormalLighterRemovalPreview());
+                }
+
+                shop?.ShowMerchantSpeech(MerchantSpeechCue.Unavailable);
+            }
+
+            RefreshShopUtilityItems();
+            UpdateShopLeaveControl();
+        }
+
+        internal void CompleteFormalShopCardPurchase(bool succeeded)
+        {
+            shop?.ShowMerchantSpeech(succeeded
+                ? MerchantSpeechCue.PurchaseSuccess
+                : MerchantSpeechCue.Unavailable);
+        }
+
+        internal void CompleteFormalShopRest(bool succeeded)
+        {
+            shop?.ShowMerchantSpeech(succeeded
+                ? MerchantSpeechCue.WhiskeySuccess
+                : MerchantSpeechCue.Unavailable);
+        }
+
+        internal void CompleteFormalShopLeave(bool succeeded)
+        {
+            shop?.ShowMerchantSpeech(succeeded
+                ? MerchantSpeechCue.Farewell
+                : MerchantSpeechCue.Unavailable);
+        }
+
         public bool TryCloseTransientOverlay()
         {
             if (codex != null && codex.IsOpen)
@@ -284,6 +339,11 @@ namespace DiaBlackJack.GameScene
             if (deckPreview == null || !deckPreview.IsOpen)
             {
                 return false;
+            }
+
+            if (_choosingLighterRemoval)
+            {
+                return CancelLighterRemoval();
             }
 
             CloseDeckPreview();
@@ -344,6 +404,7 @@ namespace DiaBlackJack.GameScene
             if (hud != null)
             {
                 hud.CombatCommandRequested += HandleCombatCommand;
+                hud.ShopLeaveRequested += HandleShopLeaveRequested;
             }
         }
 
@@ -365,6 +426,10 @@ namespace DiaBlackJack.GameScene
                     HandleDeckPreviewHoverBadgeRequested;
                 deckPreview.HoverBadgeCleared +=
                     HandleDeckPreviewHoverBadgeCleared;
+                deckPreview.SelectionConfirmed +=
+                    HandleLighterSelectionConfirmed;
+                deckPreview.SelectionCancelled +=
+                    HandleLighterSelectionCancelled;
             }
 
             if (codex != null)
@@ -392,6 +457,10 @@ namespace DiaBlackJack.GameScene
                     HandleDeckPreviewHoverBadgeRequested;
                 deckPreview.HoverBadgeCleared -=
                     HandleDeckPreviewHoverBadgeCleared;
+                deckPreview.SelectionConfirmed -=
+                    HandleLighterSelectionConfirmed;
+                deckPreview.SelectionCancelled -=
+                    HandleLighterSelectionCancelled;
             }
 
             if (codex != null)
@@ -406,6 +475,7 @@ namespace DiaBlackJack.GameScene
             crystalOrbSelection?.Hide();
             satanNumberSelection?.Hide();
             hud?.HideDemonContractDetail();
+            hud?.SetShopLeaveState(visible: false, interactable: false);
             UpdateCombatCommandHover(null);
             ResetShopUtilityAnimations();
         }
@@ -416,6 +486,7 @@ namespace DiaBlackJack.GameScene
             if (hud != null)
             {
                 hud.CombatCommandRequested -= HandleCombatCommand;
+                hud.ShopLeaveRequested -= HandleShopLeaveRequested;
             }
         }
 
@@ -444,6 +515,7 @@ namespace DiaBlackJack.GameScene
             hud?.HideCardHoverBadge();
             hud?.HideDemonContractDetail();
             hud?.Render(null);
+            hud?.SetShopLeaveState(visible: false, interactable: false);
             tableCombatCommands?.ResetView();
             CloseDeckPreview();
             CloseCodex();
@@ -458,9 +530,8 @@ namespace DiaBlackJack.GameScene
             remainingDeck?.ResetView();
             discardDeck?.ResetView();
             totals?.Render(string.Empty, string.Empty);
-            enemyCharacter?.Render(
-                CharacterVisualState.Idle,
-                string.Empty);
+            enemyCharacter?.RenderVisual(CharacterVisualState.Idle);
+            ResetEnemySpeech();
             if (shop != null)
             {
                 if (shop.IsFormal)
@@ -682,21 +753,19 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            if (pointedShopCard != null && pointedShopCard.CanUse)
+            if (pointedShopCard != null)
             {
                 PurchaseShopNormalCard(pointedShopCard);
                 return;
             }
 
-            if (shopOpen &&
-                pointedDemonCard != null &&
-                pointedDemonCard.CanUse)
+            if (shopOpen && pointedDemonCard != null)
             {
                 PurchaseShopDemonCard(pointedDemonCard);
                 return;
             }
 
-            if (pointedShopUtilityItem != null && pointedShopUtilityItem.CanUse)
+            if (pointedShopUtilityItem != null)
             {
                 UseShopUtilityItem(pointedShopUtilityItem);
             }
@@ -1331,19 +1400,42 @@ namespace DiaBlackJack.GameScene
         {
             if (_formalShopModel != null && card != null)
             {
+                ShopPurchaseAvailability availability =
+                    GetFormalCardAvailability(card.CardId);
+                if (availability != ShopPurchaseAvailability.Available)
+                {
+                    ShowMerchantAvailability(availability);
+                    UpdateDemonCardHover(null);
+                    return;
+                }
+
                 FormalShopCardPurchaseRequested?.Invoke(card.CardId);
                 UpdateDemonCardHover(null);
                 return;
             }
 
-            if (shop == null || card == null ||
-                !shop.TryPurchaseDemonCard(card.CardId, out string definitionKey))
+            if (shop == null || card == null)
             {
+                return;
+            }
+
+            ShopPurchaseAvailability standaloneAvailability =
+                shop.GetDemonCardAvailability(card.CardId);
+            if (standaloneAvailability != ShopPurchaseAvailability.Available)
+            {
+                ShowMerchantAvailability(standaloneAvailability);
+                return;
+            }
+
+            if (!shop.TryPurchaseDemonCard(card.CardId, out string definitionKey))
+            {
+                shop.ShowMerchantSpeech(MerchantSpeechCue.Unavailable);
                 return;
             }
 
             _purchasedDemonContractKeys.Add(definitionKey);
             AddPurchasedDemonContractToCurrentBattle(definitionKey);
+            shop.ShowMerchantSpeech(MerchantSpeechCue.PurchaseSuccess);
             RefreshView();
             UpdateDemonCardHover(null);
         }
@@ -1352,22 +1444,45 @@ namespace DiaBlackJack.GameScene
         {
             if (_formalShopModel != null && card != null)
             {
+                ShopPurchaseAvailability availability =
+                    GetFormalCardAvailability(card.CardId);
+                if (availability != ShopPurchaseAvailability.Available)
+                {
+                    ShowMerchantAvailability(availability);
+                    UpdateHover(null);
+                    return;
+                }
+
                 FormalShopCardPurchaseRequested?.Invoke(card.CardId);
                 UpdateHover(null);
                 return;
             }
 
-            if (shop == null || card == null ||
-                !shop.TryPurchaseNormalCard(
+            if (shop == null || card == null)
+            {
+                return;
+            }
+
+            ShopPurchaseAvailability standaloneAvailability =
+                shop.GetNormalCardAvailability(card.CardId);
+            if (standaloneAvailability != ShopPurchaseAvailability.Available)
+            {
+                ShowMerchantAvailability(standaloneAvailability);
+                return;
+            }
+
+            if (!shop.TryPurchaseNormalCard(
                     card.CardId,
                     out string definitionKey,
                     out CardSuit suit))
             {
+                shop.ShowMerchantSpeech(MerchantSpeechCue.Unavailable);
                 return;
             }
 
             _purchasedNormalCards.Add(new PurchasedNormalCard(definitionKey, suit));
             AddPurchasedNormalCardToCurrentBattle(definitionKey, suit);
+            shop.ShowMerchantSpeech(MerchantSpeechCue.PurchaseSuccess);
             RefreshView();
             UpdateHover(null);
         }
@@ -1390,6 +1505,61 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        private ShopPurchaseAvailability GetFormalCardAvailability(int optionId)
+        {
+            if (_formalShopModel == null)
+            {
+                return ShopPurchaseAvailability.Unavailable;
+            }
+
+            foreach (ShopCardOptionViewModel option in
+                     _formalShopModel.ShopCardOptions)
+            {
+                if (option.OptionId != optionId)
+                {
+                    continue;
+                }
+
+                if (option.IsSold)
+                {
+                    return ShopPurchaseAvailability.SoldOut;
+                }
+
+                return _formalShopGold < option.PriceAmount
+                    ? ShopPurchaseAvailability.InsufficientGold
+                    : option.CanBuy
+                        ? ShopPurchaseAvailability.Available
+                        : ShopPurchaseAvailability.Unavailable;
+            }
+
+            return ShopPurchaseAvailability.Unavailable;
+        }
+
+        private void ShowMerchantAvailability(
+            ShopPurchaseAvailability availability)
+        {
+            shop?.ShowMerchantSpeech(
+                ShopController.ResolveAvailabilitySpeech(availability));
+        }
+
+        private bool HasFormalRemovableCard()
+        {
+            if (_formalShopModel == null)
+            {
+                return false;
+            }
+
+            foreach (ShopOwnedCardViewModel card in _formalShopModel.ShopOwnedCards)
+            {
+                if (card.CanRemove)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private void BeginLighterRemoval()
         {
             int removableCount = _formalShopModel == null
@@ -1397,12 +1567,101 @@ namespace DiaBlackJack.GameScene
                 : CountFormalRemovableCards();
             if (shop == null || !shop.IsOpen || removableCount <= 0)
             {
+                shop?.ShowMerchantSpeech(MerchantSpeechCue.Unavailable);
+                return;
+            }
+
+            if (_formalShopModel == null)
+            {
+                ShopPurchaseAvailability availability =
+                    shop.GetLighterAvailability(removableCount);
+                if (availability != ShopPurchaseAvailability.Available)
+                {
+                    ShowMerchantAvailability(availability);
+                    return;
+                }
+            }
+            else if (!HasFormalRemovableCard())
+            {
+                shop.ShowMerchantSpeech(MerchantSpeechCue.Unavailable);
+                return;
+            }
+
+            EnsureDeckPreview();
+            if (deckPreview == null)
+            {
                 return;
             }
 
             _choosingLighterRemoval = true;
             UpdateShopUtilityItemHover(null);
+            GameSceneDeckViewModel model = _formalShopModel == null
+                ? CreateStandaloneLighterRemovalPreview()
+                : CreateFormalLighterRemovalPreview();
+            deckPreview.OpenForSingleSelection(model);
+            BeginDeckPreviewSwitchInputLock();
             RefreshShopUtilityItems();
+            UpdateShopLeaveControl();
+        }
+
+        private GameSceneDeckViewModel CreateStandaloneLighterRemovalPreview()
+        {
+            List<RunDeckCardOption> options = BuildRunDeckCardOptions();
+            var groups = new List<GameSceneDeckCardGroupViewModel>(options.Count);
+            bool hasMinimumDeck = options.Count > 1;
+            for (int i = 0; i < options.Count; i++)
+            {
+                RunDeckCardOption option = options[i];
+                CardDefinition definition =
+                    CardDefinitionCatalog.GetByKey(option.DefinitionKey);
+                var card = new GameSceneCardViewModel(
+                    i,
+                    definition.Rank,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: hasMinimumDeck && CanRemoveRunDeckCard(option),
+                    definition.DisplayName,
+                    definition.Description,
+                    option.Suit,
+                    showHoverBadgeWhenUnavailable: true,
+                    definition.Key);
+                groups.Add(new GameSceneDeckCardGroupViewModel(card, 1));
+            }
+
+            return new GameSceneDeckViewModel(
+                DeckKind.Draw,
+                "제거할 카드 선택",
+                groups);
+        }
+
+        private GameSceneDeckViewModel CreateFormalLighterRemovalPreview()
+        {
+            IReadOnlyList<ShopOwnedCardViewModel> options =
+                _formalShopModel.ShopOwnedCards;
+            var groups = new List<GameSceneDeckCardGroupViewModel>(options.Count);
+            for (int i = 0; i < options.Count; i++)
+            {
+                ShopOwnedCardViewModel option = options[i];
+                CardDefinition definition =
+                    CardDefinitionCatalog.GetByKey(option.DefinitionKey);
+                var card = new GameSceneCardViewModel(
+                    option.CardId,
+                    option.Rank,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: option.CanRemove,
+                    definition.DisplayName,
+                    option.AbilityDescription,
+                    option.Suit,
+                    showHoverBadgeWhenUnavailable: true,
+                    option.DefinitionKey);
+                groups.Add(new GameSceneDeckCardGroupViewModel(card, 1));
+            }
+
+            return new GameSceneDeckViewModel(
+                DeckKind.Draw,
+                "제거할 카드 선택",
+                groups);
         }
 
         private bool RemoveCardWithLighter(int optionIndex)
@@ -1431,40 +1690,148 @@ namespace DiaBlackJack.GameScene
             RemoveRunDeckCard(option);
             RemoveCurrentBattleAvailableCard(option);
             _choosingLighterRemoval = false;
+            shop.ShowMerchantSpeech(MerchantSpeechCue.LighterSuccess);
             PlayLighterShopAnimation();
             RefreshView();
+            UpdateShopLeaveControl();
             return true;
         }
 
         private bool CancelLighterRemoval()
         {
+            bool wasChoosing = _choosingLighterRemoval;
+            _choosingLighterRemoval = false;
+            if (deckPreview != null && deckPreview.IsSingleSelection)
+            {
+                CloseDeckPreview();
+            }
+
+            RefreshShopUtilityItems();
+            UpdateShopLeaveControl();
+            return wasChoosing;
+        }
+
+        private void HandleLighterSelectionConfirmed(int selectionId)
+        {
+            if (!_choosingLighterRemoval || shop == null || !shop.IsOpen)
+            {
+                return;
+            }
+
+            if (_formalShopModel != null)
+            {
+                ShopOwnedCardViewModel selected = null;
+                foreach (ShopOwnedCardViewModel card in
+                         _formalShopModel.ShopOwnedCards)
+                {
+                    if (card.CardId == selectionId)
+                    {
+                        selected = card;
+                        break;
+                    }
+                }
+
+                if (selected == null || !selected.CanRemove)
+                {
+                    return;
+                }
+
+                FormalShopCardRemovalRequested?.Invoke(selectionId);
+                return;
+            }
+
+            if (RemoveCardWithLighter(selectionId))
+            {
+                CloseDeckPreview();
+            }
+        }
+
+        private void HandleLighterSelectionCancelled()
+        {
+            if (!_choosingLighterRemoval)
+            {
+                return;
+            }
+
             _choosingLighterRemoval = false;
             RefreshShopUtilityItems();
-            return true;
+            UpdateShopLeaveControl();
+        }
+
+        private void HandleShopLeaveRequested()
+        {
+            if (shop == null || !shop.IsOpen)
+            {
+                return;
+            }
+
+            CancelLighterRemoval();
+            if (_formalShopModel != null)
+            {
+                FormalShopLeaveRequested?.Invoke();
+                return;
+            }
+
+            ProcessInput(LeaveShop);
+        }
+
+        private void UpdateShopLeaveControl()
+        {
+            bool visible = shop != null && shop.IsOpen;
+            bool canLeave = visible &&
+                (_formalShopModel == null || _formalShopModel.CanLeaveShop);
+            bool interactable = canLeave &&
+                !_inputLocked &&
+                !_pauseInputBlocked &&
+                !_shopUtilityAnimationPlaying;
+            hud?.SetShopLeaveState(visible, interactable);
         }
 
         private void PurchaseWhiskey()
         {
             if (_formalShopModel != null)
             {
+                if (!_formalShopModel.CanRestAtShop)
+                {
+                    shop?.ShowMerchantSpeech(MerchantSpeechCue.Unavailable);
+                    UpdateShopUtilityItemHover(null);
+                    return;
+                }
+
                 FormalShopRestRequested?.Invoke();
                 UpdateShopUtilityItemHover(null);
                 return;
             }
 
             CoreLoopBattle battle = Battle;
-            if (shop == null ||
-                battle == null ||
-                !shop.TryPurchaseWhiskey(
-                    battle.Player.Soul.Current,
-                    battle.Player.Soul.Maximum,
-                    out int restoreAmount))
+            if (shop == null || battle == null)
             {
                 RefreshShopUtilityItems();
                 return;
             }
 
+            ShopPurchaseAvailability availability = shop.GetWhiskeyAvailability(
+                battle.Player.Soul.Current,
+                battle.Player.Soul.Maximum);
+            if (availability != ShopPurchaseAvailability.Available)
+            {
+                ShowMerchantAvailability(availability);
+                RefreshShopUtilityItems();
+                return;
+            }
+
+            if (!shop.TryPurchaseWhiskey(
+                    battle.Player.Soul.Current,
+                    battle.Player.Soul.Maximum,
+                    out int restoreAmount))
+            {
+                shop.ShowMerchantSpeech(MerchantSpeechCue.Unavailable);
+                RefreshShopUtilityItems();
+                return;
+            }
+
             battle.Player.Soul.Restore(restoreAmount);
+            shop.ShowMerchantSpeech(MerchantSpeechCue.WhiskeySuccess);
             PlayWhiskeyShopAnimation();
             RefreshView();
             UpdateShopUtilityItemHover(null);
@@ -1616,62 +1983,6 @@ namespace DiaBlackJack.GameScene
             return false;
         }
 
-        private string BuildRunDeckCardLabel(RunDeckCardOption option)
-        {
-            CardDefinition definition = CardDefinitionCatalog.GetByKey(option.DefinitionKey);
-            string source = option.IsPurchased ? "BOUGHT" : "BASE";
-            return definition.Rank + " " + FormatSuit(option.Suit) +
-                "\n" + definition.DisplayName +
-                "\n" + source;
-        }
-
-        private static string FormatSuit(CardSuit suit)
-        {
-            return suit == CardSuit.Clover ? "CLOVER" : "SPADE";
-        }
-
-        private void OnGUI()
-        {
-            if (IsModalInputBlocked)
-            {
-                return;
-            }
-
-            if (shop == null ||
-                !shop.IsOpen ||
-                (_core == null && _formalShopModel == null))
-            {
-                return;
-            }
-
-            _buttonStyle ??= new GUIStyle(GUI.skin.button)
-            {
-                font = uiFont,
-                fontSize = 18,
-                fontStyle = FontStyle.Bold
-            };
-            _labelStyle ??= new GUIStyle(GUI.skin.label)
-            {
-                font = uiFont,
-                fontSize = 20,
-                fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.MiddleCenter,
-                normal = { textColor = Color.white }
-            };
-
-            if (_choosingLighterRemoval)
-            {
-                DrawLighterRemovalPanel();
-                return;
-            }
-
-            if (_formalShopModel != null ||
-                _core.State == CoreLoopState.BattleEnded)
-            {
-                DrawShopControls();
-            }
-        }
-
         internal bool PlayLighterShopAnimation()
         {
             if (_shopUtilityAnimationPlaying || !TryResolveLighterAnimation())
@@ -1697,6 +2008,7 @@ namespace DiaBlackJack.GameScene
         private IEnumerator PlayLighterShopAnimationRoutine()
         {
             _shopUtilityAnimationPlaying = true;
+            UpdateShopLeaveControl();
             lighterAnimationRoot.SetActive(true);
             lighterAnimator.Rebind();
             lighterAnimator.Update(0f);
@@ -1719,11 +2031,13 @@ namespace DiaBlackJack.GameScene
 
             lighterAnimationRoot.SetActive(false);
             _shopUtilityAnimationPlaying = false;
+            UpdateShopLeaveControl();
         }
 
         private IEnumerator PlayWhiskeyShopAnimationRoutine()
         {
             _shopUtilityAnimationPlaying = true;
+            UpdateShopLeaveControl();
             whiskeyAnimationRoot.SetActive(true);
             whiskeyAnimator.Rebind();
             whiskeyAnimator.Update(0f);
@@ -1733,6 +2047,7 @@ namespace DiaBlackJack.GameScene
             yield return new WaitForSecondsRealtime(whiskeyAnimationSeconds);
             whiskeyAnimationRoot.SetActive(false);
             _shopUtilityAnimationPlaying = false;
+            UpdateShopLeaveControl();
         }
 
         private bool TryResolveLighterAnimation()
@@ -1797,216 +2112,6 @@ namespace DiaBlackJack.GameScene
             _shopUtilityAnimationPlaying = false;
         }
 
-        private void DrawShopControls()
-        {
-            if (_choosingLighterRemoval)
-            {
-                DrawLighterRemovalPanel();
-                return;
-            }
-
-            DrawHeading("SHOP - hover goods and click to buy");
-            if (_formalShopModel != null)
-            {
-                const float width = 160f;
-                const float height = 48f;
-                using (new GUIEnabledScope(
-                           !_inputLocked &&
-                           _formalShopModel.CanLeaveShop))
-                {
-                    if (GUI.Button(
-                            new Rect(
-                                (Screen.width - width) * 0.5f,
-                                Screen.height - height - 24f,
-                                width,
-                                height),
-                            "LEAVE",
-                            _buttonStyle))
-                    {
-                        FormalShopLeaveRequested?.Invoke();
-                    }
-                }
-
-                return;
-            }
-
-            DrawButtonRow(
-                new[] { "나가기" },
-                new[] { true },
-                new Func<bool>[] { LeaveShop });
-        }
-
-        private void DrawLighterRemovalPanel()
-        {
-            if (_formalShopModel != null)
-            {
-                DrawFormalLighterRemovalPanel();
-                return;
-            }
-
-            List<RunDeckCardOption> options = BuildRunDeckCardOptions();
-            EnsureShopStyles();
-
-            float width = Mathf.Min(760f, Screen.width - 40f);
-            float height = Mathf.Min(520f, Screen.height - 120f);
-            var panelRect = new Rect(
-                (Screen.width - width) * 0.5f,
-                70f,
-                width,
-                height);
-            GUI.Box(panelRect, string.Empty, _shopPanelStyle);
-
-            GUI.Label(
-                new Rect(panelRect.x + 18f, panelRect.y + 14f, width - 36f, 30f),
-                "LIGHTER - CHOOSE 1 CARD TO REMOVE",
-                _labelStyle);
-
-            int columns = Mathf.Clamp(Mathf.FloorToInt((width - 36f) / 132f), 3, 5);
-            const float gap = 8f;
-            float cardWidth = (width - 36f - (columns - 1) * gap) / columns;
-            const float cardHeight = 74f;
-            int rows = Mathf.CeilToInt(options.Count / (float)columns);
-            var scrollRect = new Rect(
-                panelRect.x + 18f,
-                panelRect.y + 58f,
-                width - 36f,
-                height - 122f);
-            var contentRect = new Rect(
-                0f,
-                0f,
-                scrollRect.width - 18f,
-                Mathf.Max(scrollRect.height, rows * (cardHeight + gap)));
-
-            _lighterRemovalScroll = GUI.BeginScrollView(
-                scrollRect,
-                _lighterRemovalScroll,
-                contentRect);
-            for (int i = 0; i < options.Count; i++)
-            {
-                int index = i;
-                int row = i / columns;
-                int column = i % columns;
-                var cardRect = new Rect(
-                    column * (cardWidth + gap),
-                    row * (cardHeight + gap),
-                    cardWidth,
-                    cardHeight);
-
-                using (new GUIEnabledScope(!_inputLocked && options.Count > 1))
-                {
-                    if (GUI.Button(
-                        cardRect,
-                        BuildRunDeckCardLabel(options[i]),
-                        _shopCardButtonStyle))
-                    {
-                        RemoveCardWithLighter(index);
-                    }
-                }
-            }
-
-            GUI.EndScrollView();
-
-            using (new GUIEnabledScope(!_inputLocked))
-            {
-                const float footerButtonWidth = 160f;
-                const float footerGap = 12f;
-                float footerX = panelRect.x +
-                    (width - footerButtonWidth * 2f - footerGap) * 0.5f;
-                if (GUI.Button(
-                    new Rect(
-                        footerX,
-                        panelRect.yMax - 52f,
-                        footerButtonWidth,
-                        38f),
-                    "CANCEL",
-                    _buttonStyle))
-                {
-                    CancelLighterRemoval();
-                }
-
-                if (GUI.Button(
-                    new Rect(
-                        footerX + footerButtonWidth + footerGap,
-                        panelRect.yMax - 52f,
-                        footerButtonWidth,
-                        38f),
-                    "나가기",
-                    _buttonStyle))
-                {
-                    ProcessInput(LeaveShop);
-                }
-            }
-        }
-
-        private void EnsureShopStyles()
-        {
-            _shopPanelStyle ??= new GUIStyle(GUI.skin.box)
-            {
-                font = uiFont,
-                fontSize = 16,
-                alignment = TextAnchor.UpperCenter,
-                padding = new RectOffset(14, 14, 14, 14),
-                normal = { textColor = Color.white }
-            };
-            _shopCardButtonStyle ??= new GUIStyle(GUI.skin.button)
-            {
-                font = uiFont,
-                fontSize = 13,
-                fontStyle = FontStyle.Bold,
-                alignment = TextAnchor.MiddleCenter,
-                wordWrap = true
-            };
-        }
-
-        // Bottom-anchored, screen-centered row. Width shrinks to always fit one row on screen.
-        private void DrawButtonRow(
-            string[] labels,
-            bool[] enabled,
-            Func<bool>[] actions,
-            float height = 48f,
-            float maxWidth = 160f)
-        {
-            int n = labels.Length;
-            if (n == 0)
-            {
-                return;
-            }
-
-            const float gap = 8f;
-            float w = Mathf.Min(
-                maxWidth,
-                (Screen.width - 40f - (n - 1) * gap) / n);
-            float totalWidth = n * w + (n - 1) * gap;
-            float x0 = (Screen.width - totalWidth) * 0.5f;
-            float y = Screen.height - height - 24f;
-
-            for (int i = 0; i < n; i++)
-            {
-                using (new GUIEnabledScope(!_inputLocked && enabled[i]))
-                {
-                    if (GUI.Button(
-                        new Rect(x0 + i * (w + gap), y, w, height),
-                        labels[i],
-                        _buttonStyle))
-                    {
-                        ProcessInput(actions[i]);
-                    }
-                }
-            }
-        }
-
-        private void DrawHeading(string text, float rowHeight = 48f)
-        {
-            if (string.IsNullOrEmpty(text))
-            {
-                return;
-            }
-
-            const float h = 30f;
-            float y = Screen.height - rowHeight - 24f - h - 6f;
-            GUI.Label(new Rect(0f, y, Screen.width, h), text, _labelStyle);
-        }
-
         private void HandleCombatCommand(GameSceneCombatHudCommand command)
         {
             if (IsModalInputBlocked)
@@ -2062,6 +2167,7 @@ namespace DiaBlackJack.GameScene
             }
 
             _inputLocked = true;
+            UpdateShopLeaveControl();
 
             // The battle runs the whole turn synchronously; Stepped fires once per sub-step, so we
             // snapshot each into a timeline and then pace them out over PlayTimeline.
@@ -2352,6 +2458,8 @@ namespace DiaBlackJack.GameScene
                 hud.SetGold(gold);
             }
 
+            UpdateShopLeaveControl();
+
             if (combat.Mode != GameSceneCombatHudMode.Actions)
             {
                 UpdateCombatCommandHover(null);
@@ -2409,13 +2517,13 @@ namespace DiaBlackJack.GameScene
 
             if (enemyCharacter != null)
             {
-                enemyCharacter.Render(
+                enemyCharacter.RenderVisual(
                     ResolveKnifeTimedVisual(
                         CombatantSide.Enemy,
                         ResolveRevolverTimedVisual(
                             CombatantSide.Enemy,
-                            vm.EnemyVisual)),
-                    vm.EnemyActionLabel);
+                            vm.EnemyVisual)));
+                PresentEnemySpeech(vm.EnemySpeechCue);
             }
 
             if (!deferredCardRender)
@@ -2429,6 +2537,35 @@ namespace DiaBlackJack.GameScene
                 playedHammerAnimation,
                 deferredCardRender,
                 deferredCardRender ? vm : null);
+        }
+
+        private void PresentEnemySpeech(EnemySpeechCue cue)
+        {
+            CoreLoopBattle battle = Battle;
+            if (cue == null || battle == null || enemyCharacter == null)
+            {
+                return;
+            }
+
+            if (ReferenceEquals(_lastEnemySpeechBattle, battle) &&
+                _lastEnemySpeechRoundNumber == cue.RoundNumber &&
+                _lastEnemySpeechActionOrdinal == cue.ActionOrdinal)
+            {
+                return;
+            }
+
+            _lastEnemySpeechBattle = battle;
+            _lastEnemySpeechRoundNumber = cue.RoundNumber;
+            _lastEnemySpeechActionOrdinal = cue.ActionOrdinal;
+            enemyCharacter.ShowEnemySpeech(cue.Kind);
+        }
+
+        private void ResetEnemySpeech()
+        {
+            _lastEnemySpeechBattle = null;
+            _lastEnemySpeechRoundNumber = -1;
+            _lastEnemySpeechActionOrdinal = -1;
+            enemyCharacter?.HideSpeech();
         }
 
         private void RenderHands(GameSceneViewModel vm)
@@ -3717,6 +3854,7 @@ namespace DiaBlackJack.GameScene
                 UpdateShopUtilityItemHover(null);
                 shop.Close();
                 shop.ResetRunEconomy();
+                ResetEnemySpeech();
             }
 
             return restarted;
@@ -3748,89 +3886,6 @@ namespace DiaBlackJack.GameScene
             _stageRuntime?.LoadProgressionScene();
         }
 
-        private void DrawFormalLighterRemovalPanel()
-        {
-            EnsureShopStyles();
-            IReadOnlyList<ShopOwnedCardViewModel> options =
-                _formalShopModel.ShopOwnedCards;
-            float width = Mathf.Min(760f, Screen.width - 40f);
-            float height = Mathf.Min(520f, Screen.height - 120f);
-            var panelRect = new Rect(
-                (Screen.width - width) * 0.5f,
-                70f,
-                width,
-                height);
-            GUI.Box(panelRect, string.Empty, _shopPanelStyle);
-            GUI.Label(
-                new Rect(panelRect.x + 18f, panelRect.y + 14f, width - 36f, 30f),
-                "LIGHTER - CHOOSE 1 CARD TO REMOVE",
-                _labelStyle);
-
-            int columns = Mathf.Clamp(
-                Mathf.FloorToInt((width - 36f) / 132f),
-                3,
-                5);
-            const float gap = 8f;
-            float cardWidth =
-                (width - 36f - (columns - 1) * gap) / columns;
-            const float cardHeight = 74f;
-            int rows = Mathf.CeilToInt(options.Count / (float)columns);
-            var scrollRect = new Rect(
-                panelRect.x + 18f,
-                panelRect.y + 58f,
-                width - 36f,
-                height - 122f);
-            var contentRect = new Rect(
-                0f,
-                0f,
-                scrollRect.width - 18f,
-                Mathf.Max(scrollRect.height, rows * (cardHeight + gap)));
-            _lighterRemovalScroll = GUI.BeginScrollView(
-                scrollRect,
-                _lighterRemovalScroll,
-                contentRect);
-            for (int i = 0; i < options.Count; i++)
-            {
-                ShopOwnedCardViewModel option = options[i];
-                int row = i / columns;
-                int column = i % columns;
-                var cardRect = new Rect(
-                    column * (cardWidth + gap),
-                    row * (cardHeight + gap),
-                    cardWidth,
-                    cardHeight);
-                using (new GUIEnabledScope(
-                           !_inputLocked && option.CanRemove))
-                {
-                    if (GUI.Button(
-                            cardRect,
-                            option.DisplayName,
-                            _shopCardButtonStyle))
-                    {
-                        _choosingLighterRemoval = false;
-                        FormalShopCardRemovalRequested?.Invoke(option.CardId);
-                    }
-                }
-            }
-
-            GUI.EndScrollView();
-            using (new GUIEnabledScope(!_inputLocked))
-            {
-                const float buttonWidth = 160f;
-                if (GUI.Button(
-                        new Rect(
-                            panelRect.center.x - buttonWidth * 0.5f,
-                            panelRect.yMax - 52f,
-                            buttonWidth,
-                            38f),
-                        "CANCEL",
-                        _buttonStyle))
-                {
-                    CancelLighterRemoval();
-                }
-            }
-        }
-
         private int CountFormalRemovableCards()
         {
             if (_formalShopModel == null)
@@ -3854,6 +3909,7 @@ namespace DiaBlackJack.GameScene
         private void UnlockInput()
         {
             _inputLocked = false;
+            UpdateShopLeaveControl();
         }
 
         private readonly struct PurchasedNormalCard
@@ -3917,20 +3973,5 @@ namespace DiaBlackJack.GameScene
             public int PurchasedIndex { get; }
         }
 
-        private readonly struct GUIEnabledScope : IDisposable
-        {
-            private readonly bool _previous;
-
-            public GUIEnabledScope(bool enabled)
-            {
-                _previous = GUI.enabled;
-                GUI.enabled = enabled;
-            }
-
-            public void Dispose()
-            {
-                GUI.enabled = _previous;
-            }
-        }
     }
 }

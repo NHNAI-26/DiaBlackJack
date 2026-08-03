@@ -187,7 +187,7 @@ namespace DiaBlackJack.GameScene.Editor
             GameObject scrollRoot = CreateUiObject("CardScroll", panel.transform);
             Stretch(
                 scrollRoot.GetComponent<RectTransform>(),
-                new Vector2(0.04f, 0.05f),
+                new Vector2(0.04f, 0.14f),
                 new Vector2(0.96f, 0.86f),
                 Vector2.zero,
                 Vector2.zero);
@@ -231,11 +231,40 @@ namespace DiaBlackJack.GameScene.Editor
                 slots.Add(slot.GetComponent<DeckPreviewCardView>());
             }
 
+            GameObject selectionFooter = CreateUiObject(
+                "SelectionFooter",
+                panel.transform);
+            Stretch(
+                selectionFooter.GetComponent<RectTransform>(),
+                new Vector2(0.42f, 0.035f),
+                new Vector2(0.58f, 0.115f),
+                Vector2.zero,
+                Vector2.zero);
+            Image confirmImage = selectionFooter.AddComponent<Image>();
+            confirmImage.color = new Color(0.38f, 0.09f, 0.09f, 1f);
+            Button confirmButton = selectionFooter.AddComponent<Button>();
+            confirmButton.targetGraphic = confirmImage;
+            TMP_Text confirmLabel = CreateText(
+                "Label",
+                selectionFooter.transform,
+                27,
+                TextAlignmentOptions.Center);
+            Stretch(
+                confirmLabel.rectTransform,
+                Vector2.zero,
+                Vector2.one,
+                Vector2.zero,
+                Vector2.zero);
+            confirmLabel.text = "확인";
+            selectionFooter.SetActive(false);
+
             SerializedObject serializedView = new SerializedObject(view);
             serializedView.FindProperty("previewCanvas").objectReferenceValue = canvas;
             serializedView.FindProperty("previewRaycaster").objectReferenceValue = raycaster;
             serializedView.FindProperty("backgroundCloseButton").objectReferenceValue = backgroundButton;
             serializedView.FindProperty("closeButton").objectReferenceValue = closeButton;
+            serializedView.FindProperty("selectionFooter").objectReferenceValue = selectionFooter;
+            serializedView.FindProperty("confirmButton").objectReferenceValue = confirmButton;
             serializedView.FindProperty("cardScrollRect").objectReferenceValue = scrollRect;
             serializedView.FindProperty("titleText").objectReferenceValue = title;
             SerializedProperty slotsProperty = serializedView.FindProperty("cardSlots");
@@ -282,6 +311,21 @@ namespace DiaBlackJack.GameScene.Editor
             CreateBorder("Right", hoverRoot.transform, new Vector2(1f, 0f), Vector2.one, new Vector2(-6f, 0f), Vector2.zero);
             hoverRoot.SetActive(false);
 
+            GameObject selectedRoot = CreateUiObject(
+                "SelectedFrame",
+                root.transform);
+            Stretch(
+                selectedRoot.GetComponent<RectTransform>(),
+                Vector2.zero,
+                Vector2.one,
+                new Vector2(0f, 32f),
+                Vector2.zero);
+            CreateBorder("Top", selectedRoot.transform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -9f), Vector2.zero);
+            CreateBorder("Bottom", selectedRoot.transform, Vector2.zero, new Vector2(1f, 0f), Vector2.zero, new Vector2(0f, 9f));
+            CreateBorder("Left", selectedRoot.transform, Vector2.zero, new Vector2(0f, 1f), Vector2.zero, new Vector2(9f, 0f));
+            CreateBorder("Right", selectedRoot.transform, new Vector2(1f, 0f), Vector2.one, new Vector2(-9f, 0f), Vector2.zero);
+            selectedRoot.SetActive(false);
+
             TMP_Text fallback = CreateText("Fallback", root.transform, 28, TextAlignmentOptions.Center);
             Stretch(
                 fallback.rectTransform,
@@ -308,6 +352,7 @@ namespace DiaBlackJack.GameScene.Editor
             SerializedObject serializedView = new SerializedObject(view);
             serializedView.FindProperty("faceImage").objectReferenceValue = face;
             serializedView.FindProperty("hoverFrame").objectReferenceValue = hoverRoot;
+            serializedView.FindProperty("selectedFrame").objectReferenceValue = selectedRoot;
             serializedView.FindProperty("fallbackText").objectReferenceValue = fallback;
             serializedView.FindProperty("countText").objectReferenceValue = count;
             serializedView.ApplyModifiedPropertiesWithoutUndo();

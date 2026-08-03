@@ -22,6 +22,10 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private TMP_Text roundText;
         [SerializeField] private TMP_Text goldText;
 
+        [Header("Shop controls")]
+        [SerializeField] private GameObject shopLeaveRoot;
+        [SerializeField] private Button shopLeaveButton;
+
         [Header("Card hover badge")]
         [Tooltip("Runtime moves only this anchor. Header/body layout stays authored in the prefab.")]
         [SerializeField] private RectTransform cardHoverTooltipRoot;
@@ -51,6 +55,8 @@ namespace DiaBlackJack.GameScene
 
         public event Action<GameSceneCombatHudCommand> CombatCommandRequested;
 
+        public event Action ShopLeaveRequested;
+
         public int CombatOptionSlotCount => optionSlots == null ? 0 : optionSlots.Length;
 
         public bool HasCombatTooltipReference =>
@@ -70,6 +76,12 @@ namespace DiaBlackJack.GameScene
         public bool IsRevolverNumberSelectionOpen =>
             _revolverNumberSelector != null && _revolverNumberSelector.IsOpen;
 
+        public bool IsShopLeaveVisible =>
+            shopLeaveRoot != null && shopLeaveRoot.activeSelf;
+
+        public bool IsShopLeaveInteractable =>
+            shopLeaveButton != null && shopLeaveButton.interactable;
+
         private void Awake()
         {
             _canvas = GetComponentInParent<Canvas>();
@@ -82,6 +94,8 @@ namespace DiaBlackJack.GameScene
             HideDemonContractDetail();
             BindCombatControls();
             HideCombatControls();
+            BindShopLeaveControl();
+            SetShopLeaveState(visible: false, interactable: false);
         }
 
         private void OnDestroy()
@@ -92,6 +106,7 @@ namespace DiaBlackJack.GameScene
             }
 
             UnbindCombatControls();
+            UnbindShopLeaveControl();
         }
 
         public void Render(CoreLoopViewModel core)
@@ -151,6 +166,40 @@ namespace DiaBlackJack.GameScene
             {
                 enemySoulText.gameObject.SetActive(isVisible);
             }
+        }
+
+        public void SetShopLeaveState(bool visible, bool interactable)
+        {
+            if (shopLeaveRoot != null)
+            {
+                shopLeaveRoot.SetActive(visible);
+            }
+
+            if (shopLeaveButton != null)
+            {
+                shopLeaveButton.interactable = visible && interactable;
+            }
+        }
+
+        private void BindShopLeaveControl()
+        {
+            if (shopLeaveButton != null)
+            {
+                shopLeaveButton.onClick.AddListener(RaiseShopLeaveRequested);
+            }
+        }
+
+        private void UnbindShopLeaveControl()
+        {
+            if (shopLeaveButton != null)
+            {
+                shopLeaveButton.onClick.RemoveListener(RaiseShopLeaveRequested);
+            }
+        }
+
+        private void RaiseShopLeaveRequested()
+        {
+            ShopLeaveRequested?.Invoke();
         }
 
         /// <summary>Shows the shared badge at a screen-space point supplied by a hovered card.</summary>
