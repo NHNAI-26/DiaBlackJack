@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: trickster
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.EnemyCombatProfileDefinitionSO
   key: trickster
-  displayName: 사기꾼
+  displayName: "\uC0AC\uAE30\uAFBC"
   portrait: {fileID: 2911093068676753536, guid: 22aa22444d6050045815396b307d8760, type: 3}
+  speechProfile: {fileID: 11400000, guid: 7da099c11a64dc24c8313dba0087c9be, type: 2}
   grade: 0
   maximumSoul: 5
   defeatGold: 7
@@ -38,7 +39,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120006, type: 2}
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120007, type: 2}
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120007, type: 2}
-  description: 직접 피해보다 덱과 정보 우위를 먼저 만든다.
+  description: "\uC9C1\uC811 \uD53C\uD574\uBCF4\uB2E4 \uB371\uACFC \uC815\uBCF4 \uC6B0\uC704\uB97C
+    \uBA3C\uC800 \uB9CC\uB4E0\uB2E4."
   playerInformationMode: 0
   changeCostMode: 1
   contractableDemons: []

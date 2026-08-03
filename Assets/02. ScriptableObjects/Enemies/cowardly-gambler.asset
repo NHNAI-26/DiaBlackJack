@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: cowardly-gambler
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.EnemyCombatProfileDefinitionSO
   key: cowardly-gambler
-  displayName: 겁쟁이 도박사
+  displayName: "\uAC81\uC7C1\uC774 \uB3C4\uBC15\uC0AC"
   portrait: {fileID: -6519568242785216333, guid: 22aa22444d6050045815396b307d8760, type: 3}
+  speechProfile: {fileID: 11400000, guid: 73d5f5e734b43cc4c94c44f9981587c4, type: 2}
   grade: 0
   maximumSoul: 3
   defeatGold: 3
@@ -38,7 +39,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120008, type: 2}
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120009, type: 2}
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a12000a, type: 2}
-  description: 낮은 숫자 중심의 덱으로 공개 합 15부터 빠르게 스탠드한다.
+  description: "\uB0AE\uC740 \uC22B\uC790 \uC911\uC2EC\uC758 \uB371\uC73C\uB85C \uACF5\uAC1C
+    \uD569 15\uBD80\uD130 \uBE60\uB974\uAC8C \uC2A4\uD0E0\uB4DC\uD55C\uB2E4."
   playerInformationMode: 0
   changeCostMode: 0
   contractableDemons: []

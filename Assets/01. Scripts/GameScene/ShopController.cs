@@ -1,24 +1,13 @@
 using System;
 using System.Collections.Generic;
 using Border.Core;
+using DiaBlackJack.Content;
 using DiaBlackJack.CoreLoop;
 using DiaBlackJack.StageProgression.UI;
 using UnityEngine;
 
 namespace DiaBlackJack.GameScene
 {
-    internal enum MerchantSpeechCue
-    {
-        Greeting,
-        PurchaseSuccess,
-        InsufficientGold,
-        SoldOut,
-        Unavailable,
-        LighterSuccess,
-        WhiskeySuccess,
-        Farewell,
-    }
-
     internal enum ShopPurchaseAvailability
     {
         Available,
@@ -66,16 +55,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private int shopRandomSeed = 20260726;
 
         [Header("Merchant speech")]
-        [SerializeField] private string greetingSpeech = "어서 오게.";
-        [SerializeField] private string purchaseSuccessSpeech = "좋은 선택이군.";
-        [SerializeField] private string insufficientGoldSpeech = "골드가 부족하군.";
-        [SerializeField] private string soldOutSpeech = "이미 팔린 물건일세.";
-        [SerializeField] private string unavailableSpeech = "지금은 팔 수 없네.";
-        [SerializeField] private string lighterSuccessSpeech =
-            "덱이 한결 가벼워졌군.";
-        [SerializeField] private string whiskeySuccessSpeech =
-            "기운이 좀 돌아왔겠지.";
-        [SerializeField] private string farewellSpeech = "다음에 또 보지.";
+        [SerializeField] private SpeechProfileSO merchantSpeechProfile;
+        [SerializeField] private int merchantSpeechSeed = 20260804;
 
         private readonly List<DemonCardOffer> _demonOffers = new List<DemonCardOffer>();
         private readonly List<NormalCardOffer> _normalOffers = new List<NormalCardOffer>();
@@ -88,6 +69,7 @@ namespace DiaBlackJack.GameScene
         private readonly List<ShopCardOfferStatusView> _formalNormalStatuses =
             new List<ShopCardOfferStatusView>();
         private readonly DeterministicRng _random = new DeterministicRng();
+        private SpeechLineResolver _speechResolver;
         private int _nextOfferId;
         private int _openCount;
         private int _utilityPriceLevel;
@@ -150,7 +132,7 @@ namespace DiaBlackJack.GameScene
             if (merchant != null)
             {
                 merchant.EnterMerchant();
-                ShowMerchantSpeech(MerchantSpeechCue.Greeting);
+                ShowMerchantSpeech(SpeechCueKeys.ShopGreeting);
             }
 
             SetCombatTableActive(false);
@@ -179,7 +161,7 @@ namespace DiaBlackJack.GameScene
             merchant?.EnterMerchant();
             if (isEnteringShop)
             {
-                ShowMerchantSpeech(MerchantSpeechCue.Greeting);
+                ShowMerchantSpeech(SpeechCueKeys.ShopGreeting);
             }
             SetCombatTableActive(false);
             if (itemsRoot != null)
@@ -200,7 +182,7 @@ namespace DiaBlackJack.GameScene
             ClearFormalOffers();
             lighterItem?.SetHovered(false);
             whiskeyItem?.SetHovered(false);
-            ShowMerchantSpeech(MerchantSpeechCue.Farewell);
+            ShowMerchantSpeech(SpeechCueKeys.ShopFarewell);
             merchant?.ExitMerchant();
             if (itemsRoot != null)
             {
@@ -225,7 +207,7 @@ namespace DiaBlackJack.GameScene
             IsOpen = false;
             IsFormal = false;
 
-            ShowMerchantSpeech(MerchantSpeechCue.Farewell);
+            ShowMerchantSpeech(SpeechCueKeys.ShopFarewell);
 
             if (merchant != null)
             {
@@ -502,61 +484,32 @@ namespace DiaBlackJack.GameScene
                 : ShopPurchaseAvailability.Available;
         }
 
-        internal void ShowMerchantSpeech(MerchantSpeechCue cue)
+        internal void ShowMerchantSpeech(string cueKey)
         {
-            merchant?.ShowSpeech(ResolveMerchantSpeech(cue));
+            if (merchant == null || string.IsNullOrWhiteSpace(cueKey))
+            {
+                return;
+            }
+
+            _speechResolver ??= new SpeechLineResolver(merchantSpeechSeed);
+            merchant.ShowSpeech(
+                _speechResolver.Resolve(merchantSpeechProfile, cueKey));
         }
 
-        internal static MerchantSpeechCue ResolveAvailabilitySpeech(
+        internal static string ResolveAvailabilitySpeech(
             ShopPurchaseAvailability availability)
         {
             switch (availability)
             {
                 case ShopPurchaseAvailability.InsufficientGold:
-                    return MerchantSpeechCue.InsufficientGold;
+                    return SpeechCueKeys.ShopInsufficientGold;
                 case ShopPurchaseAvailability.SoldOut:
-                    return MerchantSpeechCue.SoldOut;
+                    return SpeechCueKeys.ShopSoldOut;
                 case ShopPurchaseAvailability.Available:
-                    return MerchantSpeechCue.PurchaseSuccess;
+                    return SpeechCueKeys.ShopPurchaseSuccess;
                 default:
-                    return MerchantSpeechCue.Unavailable;
+                    return SpeechCueKeys.ShopUnavailable;
             }
-        }
-
-        internal string ResolveMerchantSpeech(MerchantSpeechCue cue)
-        {
-            switch (cue)
-            {
-                case MerchantSpeechCue.Greeting:
-                    return ResolveSpeech(greetingSpeech, "어서 오게.");
-                case MerchantSpeechCue.PurchaseSuccess:
-                    return ResolveSpeech(purchaseSuccessSpeech, "좋은 선택이군.");
-                case MerchantSpeechCue.InsufficientGold:
-                    return ResolveSpeech(
-                        insufficientGoldSpeech,
-                        "골드가 부족하군.");
-                case MerchantSpeechCue.SoldOut:
-                    return ResolveSpeech(soldOutSpeech, "이미 팔린 물건일세.");
-                case MerchantSpeechCue.Unavailable:
-                    return ResolveSpeech(unavailableSpeech, "지금은 팔 수 없네.");
-                case MerchantSpeechCue.LighterSuccess:
-                    return ResolveSpeech(
-                        lighterSuccessSpeech,
-                        "덱이 한결 가벼워졌군.");
-                case MerchantSpeechCue.WhiskeySuccess:
-                    return ResolveSpeech(
-                        whiskeySuccessSpeech,
-                        "기운이 좀 돌아왔겠지.");
-                case MerchantSpeechCue.Farewell:
-                    return ResolveSpeech(farewellSpeech, "다음에 또 보지.");
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(cue));
-            }
-        }
-
-        private static string ResolveSpeech(string configured, string fallback)
-        {
-            return string.IsNullOrWhiteSpace(configured) ? fallback : configured;
         }
 
         private int CalculateUtilityPrice(int basePrice)

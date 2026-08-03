@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: cultist
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.EnemyCombatProfileDefinitionSO
   key: cultist
-  displayName: 광신도
+  displayName: "\uAD11\uC2E0\uB3C4"
   portrait: {fileID: -6423348728433730566, guid: 22aa22444d6050045815396b307d8760, type: 3}
+  speechProfile: {fileID: 11400000, guid: b62ef220cb85f1b49b91dd22f8a01c70, type: 2}
   grade: 0
   maximumSoul: 5
   defeatGold: 6
@@ -40,7 +41,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120009, type: 2}
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a12000a, type: 2}
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a12000a, type: 2}
-  description: 계약을 성사시킬 때까지 집요하게 악마의 힘을 좇는다.
+  description: "\uACC4\uC57D\uC744 \uC131\uC0AC\uC2DC\uD0AC \uB54C\uAE4C\uC9C0 \uC9D1\uC694\uD558\uAC8C
+    \uC545\uB9C8\uC758 \uD798\uC744 \uC887\uB294\uB2E4."
   playerInformationMode: 0
   changeCostMode: 0
   contractableDemons:

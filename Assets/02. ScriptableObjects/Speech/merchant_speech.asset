@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a25b412ec1f43b984b88598293940c2, type: 3}
+  m_Name: merchant_speech
+  m_EditorClassIdentifier: Border::DiaBlackJack.Content.SpeechProfileSO
+  speakerKey: merchant
+  entries:
+  - cueKey: shop.greeting
+    lines:
+    - "\uC5B4\uC11C \uC624\uAC8C, \uD328\uB97C \uCC9C\uCC9C\uD788 \uBCF4\uAC8C\uB098."
+    - "\uC798 \uC654\uB124. \uC4F8 \uB9CC\uD55C \uBB3C\uAC74\uC774 \uC788\uC9C0."
+  - cueKey: shop.purchase_success
+    lines:
+    - "\uC88B\uC740 \uC120\uD0DD\uC774\uAD70."
+    - "\uC81C\uAC12\uC744 \uC544\uB294 \uC190\uB2D8\uC774\uB85C\uAD70."
+  - cueKey: shop.insufficient_gold
+    lines:
+    - "\uACE8\uB4DC\uAC00 \uBD80\uC871\uD558\uAD70."
+    - "\uC8FC\uBA38\uB2C8\uAC00 \uAC00\uBCBC\uC6B0\uBA74 \uAC70\uB798\uB3C4 \uC5B4\uB835\uC9C0."
+  - cueKey: shop.sold_out
+    lines:
+    - "\uC774\uBBF8 \uD314\uB9B0 \uBB3C\uAC74\uC77C\uC138."
+    - "\uADF8 \uBB3C\uAC74\uC740 \uBA3C\uC800 \uC628 \uC190\uB2D8 \uBAAB\uC774\uB124."
+  - cueKey: shop.unavailable
+    lines:
+    - "\uC9C0\uAE08\uC740 \uD314 \uC218 \uC5C6\uB124."
+    - "\uADF8 \uAC70\uB798\uB294 \uBC1B\uC544 \uC904 \uC218 \uC5C6\uAD70."
+  - cueKey: shop.lighter_success
+    lines:
+    - "\uB371\uC774 \uD55C\uACB0 \uAC00\uBCBC\uC6CC\uC84C\uAD70."
+    - "\uBD88\uD544\uC694\uD55C \uD328\uB294 \uC7AC\uAC00 \uB418\uC5C8\uB124."
+  - cueKey: shop.whiskey_success
+    lines:
+    - "\uAE30\uC6B4\uC774 \uC880 \uB3CC\uC544\uC654\uACA0\uC9C0."
+    - "\uD55C \uC794\uC774\uBA74 \uC601\uD63C\uB3C4 \uC228\uC744 \uACE0\uB974\uC9C0."
+  - cueKey: shop.farewell
+    lines:
+    - "\uB2E4\uC74C\uC5D0 \uB610 \uBCF4\uC9C0."
+    - "\uAE38\uC774 \uD5C8\uB77D\uD558\uBA74 \uB2E4\uC2DC \uB9CC\uB098\uC138."

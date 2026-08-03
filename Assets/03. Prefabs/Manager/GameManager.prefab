@@ -57,6 +57,8 @@ MonoBehaviour:
   deckPreview: {fileID: 0}
   demonContractSelection: {fileID: 0}
   enemyProfileKey: gunslinger
+  speechSeed: 20260804
+  terminalSpeechHoldSeconds: 1.5
   shop: {fileID: 0}
   uiFont: {fileID: 12800000, guid: 51ac31f4c09df134780e57e309afafcd, type: 3}
   stepSeconds: 0.8

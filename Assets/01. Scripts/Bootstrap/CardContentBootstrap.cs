@@ -20,6 +20,8 @@ namespace DiaBlackJack.Bootstrap
 
         public GoldRewardCatalog RuntimeGoldRewardCatalog { get; private set; }
 
+        public EnemyContentCatalogSO EnemyCatalog => enemyCatalog;
+
         private void Awake()
         {
             if (transform.parent != null && HasSceneRootBootstrap())

@@ -39,6 +39,7 @@ namespace DiaBlackJack.Content
         [SerializeField] private string key;
         [SerializeField] private string displayName;
         [SerializeField] private Sprite portrait;
+        [SerializeField] private SpeechProfileSO speechProfile;
         [SerializeField] private EnemyGrade grade;
         [Min(1)]
         [SerializeField] private int maximumSoul = 1;
@@ -66,6 +67,8 @@ namespace DiaBlackJack.Content
         public string Key => key;
 
         public Sprite Portrait => portrait;
+
+        public SpeechProfileSO SpeechProfile => speechProfile;
 
         internal EnemyCombatProfile CreateRuntimeProfile()
         {
@@ -154,6 +157,7 @@ namespace DiaBlackJack.Content
             if (string.IsNullOrWhiteSpace(key) ||
                 string.IsNullOrWhiteSpace(displayName) ||
                 portrait == null ||
+                speechProfile == null ||
                 !Enum.IsDefined(typeof(EnemyGrade), grade) ||
                 maximumSoul <= 0 ||
                 defeatGold <= 0 ||
@@ -171,6 +175,16 @@ namespace DiaBlackJack.Content
             {
                 throw new InvalidOperationException(
                     $"Enemy asset '{name}' contains invalid content.");
+            }
+
+            speechProfile.ValidateOrThrow();
+            if (!string.Equals(
+                speechProfile.SpeakerKey,
+                key,
+                StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException(
+                    $"Enemy asset '{name}' speech profile key must match '{key}'.");
             }
         }
     }

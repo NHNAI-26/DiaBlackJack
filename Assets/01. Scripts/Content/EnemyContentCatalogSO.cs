@@ -74,6 +74,11 @@ namespace DiaBlackJack.Content
             return GetByKey(profileKey).Portrait;
         }
 
+        public SpeechProfileSO GetSpeechProfile(string profileKey)
+        {
+            return GetByKey(profileKey).SpeechProfile;
+        }
+
         public void ValidateOrThrow()
         {
             BuildRuntimeCatalog();

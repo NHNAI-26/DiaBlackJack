@@ -1,10 +1,14 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using DiaBlackJack.Content;
 using DiaBlackJack.GameScene;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 using UnityEngine.UI;
 
 namespace DiaBlackJack.CoreLoop.Tests
@@ -21,17 +25,21 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/02. ScriptableObjects/Settings/PC_RPAsset.asset";
         private const string TextUiRendererPath =
             "Assets/02. ScriptableObjects/Settings/TextUI_Renderer.asset";
+        private const string EnemyCatalogPath =
+            "Assets/02. ScriptableObjects/Enemies/EnemyContentCatalog.asset";
+        private const string MerchantSpeechPath =
+            "Assets/02. ScriptableObjects/Speech/merchant_speech.asset";
 
-        [TestCase(PublicCombatActionType.Hit, "Hit", null)]
-        [TestCase(PublicCombatActionType.Stand, "Stand", null)]
-        [TestCase(PublicCombatActionType.Change, "Change", null)]
-        [TestCase(PublicCombatActionType.UseCard, "UseCard",
+        [TestCase(PublicCombatActionType.Hit, SpeechCueKeys.ActionHit, null)]
+        [TestCase(PublicCombatActionType.Stand, SpeechCueKeys.ActionStand, null)]
+        [TestCase(PublicCombatActionType.Change, SpeechCueKeys.ActionChange, null)]
+        [TestCase(PublicCombatActionType.UseCard, SpeechCueKeys.ActionUseCard,
             "card-revolver")]
         [TestCase(PublicCombatActionType.DemonContract,
-            "DemonContract", "demon-lucifer")]
-        public void GSB01_U01_EnemyPublicActionsCreateTypedCues(
+            SpeechCueKeys.ActionDemonContract, "demon-lucifer")]
+        public void GSB01_U01_EnemyPublicActionsCreateKeyedCues(
             PublicCombatActionType actionType,
-            string expectedKind,
+            string expectedKey,
             string definitionKey)
         {
             PublicCombatAction action = new PublicCombatAction(
@@ -47,7 +55,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(cue, Is.Not.Null);
             Assert.That(cue.RoundNumber, Is.EqualTo(3));
             Assert.That(cue.ActionOrdinal, Is.EqualTo(7));
-            Assert.That(cue.Kind.ToString(), Is.EqualTo(expectedKind));
+            Assert.That(cue.CueKey, Is.EqualTo(expectedKey));
             Assert.That(cue.SourceDefinitionKey,
                 Is.EqualTo(definitionKey ?? string.Empty));
         }
@@ -157,25 +165,18 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void GSB01_U06_ProfileSpeechOverrideDoesNotChangeBubbleView()
+        public void GSB01_U06_ProfileSpeechResolvesWithoutChangingBubbleView()
         {
             GameObject enemy = InstantiatePrefab(EnemyCharacterPrefabPath);
+            SpeechProfileSO profile = CreateSpeechProfile(
+                "speech-test-profile",
+                (SpeechCueKeys.ActionHit, new[] { "커스텀 히트." }));
             try
             {
                 CharacterView character = enemy.GetComponent<CharacterView>();
-                SerializedObject serialized = new SerializedObject(character);
-                SerializedProperty profiles =
-                    serialized.FindProperty("enemySpriteProfiles");
-                SerializedProperty profile = profiles.GetArrayElementAtIndex(0);
-                profile.FindPropertyRelative("profileKey").stringValue =
-                    "speech-test-profile";
-                profile.FindPropertyRelative("hitSpeech").stringValue =
-                    "커스텀 히트.";
-                serialized.ApplyModifiedPropertiesWithoutUndo();
-
-                Assert.That(character.TrySetEnemyProfile("speech-test-profile"),
-                    Is.True);
-                character.ShowEnemySpeech(EnemySpeechActionKind.Hit);
+                var resolver = new SpeechLineResolver(17);
+                character.ShowSpeech(
+                    resolver.Resolve(profile, SpeechCueKeys.ActionHit));
 
                 SpeechBubbleView bubble =
                     enemy.GetComponentInChildren<SpeechBubbleView>(true);
@@ -183,6 +184,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
             finally
             {
+                UnityEngine.Object.DestroyImmediate(profile);
                 UnityEngine.Object.DestroyImmediate(enemy);
             }
         }
@@ -192,11 +194,22 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             GameObject root = new GameObject("Merchant Speech Test");
             GameObject enemy = InstantiatePrefab(EnemyCharacterPrefabPath);
+            SpeechProfileSO profile = CreateSpeechProfile(
+                "merchant",
+                (SpeechCueKeys.ShopGreeting, new[] { "어서 오게." }),
+                (SpeechCueKeys.ShopPurchaseSuccess, new[] { "좋은 선택이군." }),
+                (SpeechCueKeys.ShopInsufficientGold, new[] { "골드가 부족하군." }),
+                (SpeechCueKeys.ShopSoldOut, new[] { "이미 팔린 물건일세." }),
+                (SpeechCueKeys.ShopUnavailable, new[] { "지금은 팔 수 없네." }),
+                (SpeechCueKeys.ShopLighterSuccess, new[] { "덱이 한결 가벼워졌군." }),
+                (SpeechCueKeys.ShopWhiskeySuccess, new[] { "기운이 좀 돌아왔겠지." }),
+                (SpeechCueKeys.ShopFarewell, new[] { "다음에 또 보지." }));
             try
             {
                 ShopController shop = root.AddComponent<ShopController>();
                 CharacterView merchant = enemy.GetComponent<CharacterView>();
                 SetPrivateField(shop, "merchant", merchant);
+                SetPrivateField(shop, "merchantSpeechProfile", profile);
                 SetPrivateField(shop, "goldPerWin", 0);
                 SpeechBubbleView bubble =
                     enemy.GetComponentInChildren<SpeechBubbleView>(true);
@@ -205,23 +218,24 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(bubble.DisplayedText, Is.EqualTo("어서 오게."));
 
                 AssertMerchantLine(shop, bubble,
-                    MerchantSpeechCue.PurchaseSuccess, "좋은 선택이군.");
+                    SpeechCueKeys.ShopPurchaseSuccess, "좋은 선택이군.");
                 AssertMerchantLine(shop, bubble,
-                    MerchantSpeechCue.InsufficientGold, "골드가 부족하군.");
+                    SpeechCueKeys.ShopInsufficientGold, "골드가 부족하군.");
                 AssertMerchantLine(shop, bubble,
-                    MerchantSpeechCue.SoldOut, "이미 팔린 물건일세.");
+                    SpeechCueKeys.ShopSoldOut, "이미 팔린 물건일세.");
                 AssertMerchantLine(shop, bubble,
-                    MerchantSpeechCue.Unavailable, "지금은 팔 수 없네.");
+                    SpeechCueKeys.ShopUnavailable, "지금은 팔 수 없네.");
                 AssertMerchantLine(shop, bubble,
-                    MerchantSpeechCue.LighterSuccess, "덱이 한결 가벼워졌군.");
+                    SpeechCueKeys.ShopLighterSuccess, "덱이 한결 가벼워졌군.");
                 AssertMerchantLine(shop, bubble,
-                    MerchantSpeechCue.WhiskeySuccess, "기운이 좀 돌아왔겠지.");
+                    SpeechCueKeys.ShopWhiskeySuccess, "기운이 좀 돌아왔겠지.");
 
                 shop.Close();
                 Assert.That(bubble.DisplayedText, Is.EqualTo("다음에 또 보지."));
             }
             finally
             {
+                UnityEngine.Object.DestroyImmediate(profile);
                 UnityEngine.Object.DestroyImmediate(enemy);
                 UnityEngine.Object.DestroyImmediate(root);
             }
@@ -251,7 +265,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(
                     ShopController.ResolveAvailabilitySpeech(
                         ShopPurchaseAvailability.SoldOut),
-                    Is.EqualTo(MerchantSpeechCue.SoldOut));
+                    Is.EqualTo(SpeechCueKeys.ShopSoldOut));
                 Assert.That(
                     GameManager.ResolveFormalUtilityAvailability(
                         false, false, 0, 3),
@@ -474,6 +488,371 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
         }
 
+        [Test]
+        public void GSB02_U01_SpeechProfileRejectsInvalidKeysAndLines()
+        {
+            SpeechProfileSO emptySpeaker = CreateSpeechProfile(
+                string.Empty,
+                ("valid", new[] { "line" }));
+            SpeechProfileSO emptyKey = CreateSpeechProfile(
+                "speaker",
+                (string.Empty, new[] { "line" }));
+            SpeechProfileSO duplicateKey = CreateSpeechProfile(
+                "speaker",
+                ("same", new[] { "first" }),
+                ("same", new[] { "second" }));
+            SpeechProfileSO emptyLine = CreateSpeechProfile(
+                "speaker",
+                ("valid", new[] { " " }));
+            try
+            {
+                Assert.Throws<InvalidOperationException>(
+                    emptySpeaker.ValidateOrThrow);
+                Assert.Throws<InvalidOperationException>(
+                    emptyKey.ValidateOrThrow);
+                Assert.Throws<InvalidOperationException>(
+                    duplicateKey.ValidateOrThrow);
+                Assert.Throws<InvalidOperationException>(
+                    emptyLine.ValidateOrThrow);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(emptyLine);
+                UnityEngine.Object.DestroyImmediate(duplicateKey);
+                UnityEngine.Object.DestroyImmediate(emptyKey);
+                UnityEngine.Object.DestroyImmediate(emptySpeaker);
+            }
+        }
+
+        [Test]
+        public void GSB02_U02_EnemyAndMerchantAssetsContainTwoUniqueKoreanLinesPerCue()
+        {
+            EnemyContentCatalogSO catalog =
+                AssetDatabase.LoadAssetAtPath<EnemyContentCatalogSO>(
+                    EnemyCatalogPath);
+            SpeechProfileSO merchant =
+                AssetDatabase.LoadAssetAtPath<SpeechProfileSO>(
+                    MerchantSpeechPath);
+
+            Assert.That(catalog, Is.Not.Null);
+            Assert.That(merchant, Is.Not.Null);
+            Assert.That(catalog.EnemyCount, Is.EqualTo(6));
+            catalog.ValidateOrThrow();
+
+            var enemyLines = new HashSet<string>(StringComparer.Ordinal);
+            foreach (EnemyCombatProfileDefinitionSO enemy in catalog.Enemies)
+            {
+                SpeechProfileSO profile = enemy.SpeechProfile;
+                Assert.That(profile, Is.Not.Null, enemy.Key);
+                Assert.That(profile.SpeakerKey, Is.EqualTo(enemy.Key));
+                Assert.That(profile.EntryCount,
+                    Is.EqualTo(SpeechCueKeys.RequiredEnemyKeys.Count));
+                foreach (string cueKey in SpeechCueKeys.RequiredEnemyKeys)
+                {
+                    Assert.That(profile.TryGetLines(
+                        cueKey,
+                        out IReadOnlyList<string> lines), Is.True,
+                        enemy.Key + ":" + cueKey);
+                    Assert.That(lines.Count, Is.EqualTo(2));
+                    Assert.That(lines.All(ContainsKorean), Is.True);
+                    Assert.That(lines.All(enemyLines.Add), Is.True,
+                        "Enemy lines must not be reused: " + cueKey);
+                }
+            }
+
+            Assert.That(merchant.SpeakerKey, Is.EqualTo("merchant"));
+            Assert.That(merchant.EntryCount,
+                Is.EqualTo(SpeechCueKeys.RequiredShopKeys.Count));
+            foreach (string cueKey in SpeechCueKeys.RequiredShopKeys)
+            {
+                Assert.That(merchant.TryGetLines(
+                    cueKey,
+                    out IReadOnlyList<string> lines), Is.True, cueKey);
+                Assert.That(lines.Count, Is.EqualTo(2));
+                Assert.That(lines.All(ContainsKorean), Is.True);
+            }
+        }
+
+        [Test]
+        public void GSB02_U03_EnemyProfileRejectsMismatchedSpeakerKey()
+        {
+            EnemyContentCatalogSO catalog =
+                AssetDatabase.LoadAssetAtPath<EnemyContentCatalogSO>(
+                    EnemyCatalogPath);
+            EnemyCombatProfileDefinitionSO enemy =
+                UnityEngine.Object.Instantiate(catalog.Enemies[0]);
+            enemy.hideFlags = HideFlags.DontSave;
+            SpeechProfileSO mismatch = CreateSpeechProfile(
+                "different-speaker",
+                (SpeechCueKeys.BattleStart, new[] { "line" }));
+            try
+            {
+                SetSerializedReference(enemy, "speechProfile", mismatch);
+                InvalidOperationException exception =
+                    Assert.Throws<InvalidOperationException>(
+                        () => enemy.CreateRuntimeProfile());
+                Assert.That(exception.Message, Does.Contain("must match"));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(mismatch);
+                UnityEngine.Object.DestroyImmediate(enemy);
+            }
+        }
+
+        [Test]
+        public void GSB02_U04_ResolverSelectsConfiguredLinesAndFallsBackToKeyOnce()
+        {
+            SpeechProfileSO profile = CreateSpeechProfile(
+                "resolver",
+                (SpeechCueKeys.ActionHit, new[] { "alpha", "beta" }));
+            GameObject enemy = InstantiatePrefab(EnemyCharacterPrefabPath);
+            try
+            {
+                var resolver = new SpeechLineResolver(91);
+                for (int index = 0; index < 20; index++)
+                {
+                    Assert.That(
+                        resolver.Resolve(profile, SpeechCueKeys.ActionHit),
+                        Is.EqualTo("alpha").Or.EqualTo("beta"));
+                }
+
+                const string missingKey = "combat.custom.missing";
+                LogAssert.Expect(
+                    LogType.Warning,
+                    "Speech cue 'combat.custom.missing' is missing for " +
+                    "speaker 'resolver'.");
+                string fallback = resolver.Resolve(profile, missingKey);
+                Assert.That(resolver.Resolve(profile, missingKey),
+                    Is.EqualTo(missingKey));
+
+                const string missingProfileKey = "combat.custom.no_profile";
+                LogAssert.Expect(
+                    LogType.Warning,
+                    "Speech cue 'combat.custom.no_profile' is missing for " +
+                    "speaker '<missing>'.");
+                Assert.That(resolver.Resolve(null, missingProfileKey),
+                    Is.EqualTo(missingProfileKey));
+                Assert.That(resolver.Resolve(null, missingProfileKey),
+                    Is.EqualTo(missingProfileKey));
+
+                CharacterView character = enemy.GetComponent<CharacterView>();
+                character.ShowSpeech("previous");
+                character.ShowSpeech(fallback);
+                SpeechBubbleView bubble =
+                    enemy.GetComponentInChildren<SpeechBubbleView>(true);
+                Assert.That(bubble.DisplayedText, Is.EqualTo(missingKey));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(enemy);
+                UnityEngine.Object.DestroyImmediate(profile);
+            }
+        }
+
+        [Test]
+        public void GSB02_U05_DirectorDeduplicatesBattleRoundActionLowSoulAndTerminalCues()
+        {
+            CoreLoopBattle battle = CreateBattle(301);
+            SpeechProfileSO profile = CreateCompleteSpeechProfile("director");
+            try
+            {
+                var director = new EnemySpeechDirector(33);
+                EnemySpeechObservation initial = CreateObservation(
+                    battle, 1, 0, 9, 9, null,
+                    BattleOutcome.InProgress, null);
+                AssertResolved(director, profile, initial,
+                    SpeechCueKeys.BattleStart);
+                Assert.That(director.TryResolve(initial, profile, out _),
+                    Is.False);
+
+                EnemySpeechCue firstAction = new EnemySpeechCue(
+                    battle, 1, 1, SpeechCueKeys.ActionHit, null);
+                EnemySpeechObservation firstActionObservation =
+                    CreateObservation(
+                        battle, 1, 1, 9, 9, null,
+                        BattleOutcome.InProgress, firstAction);
+                AssertResolved(director, profile, firstActionObservation,
+                    SpeechCueKeys.ActionHit);
+                Assert.That(director.TryResolve(
+                    firstActionObservation, profile, out _), Is.False);
+
+                EnemySpeechCue repeatedAction = new EnemySpeechCue(
+                    battle, 1, 2, SpeechCueKeys.ActionHit, null);
+                AssertResolved(
+                    director,
+                    profile,
+                    CreateObservation(
+                        battle, 1, 2, 9, 9, null,
+                        BattleOutcome.InProgress, repeatedAction),
+                    SpeechCueKeys.ActionHit);
+
+                EnemySpeechObservation lowSoul = CreateObservation(
+                    battle, 1, 2, 3, 9, null,
+                    BattleOutcome.InProgress, repeatedAction);
+                AssertResolved(director, profile, lowSoul,
+                    SpeechCueKeys.LowSoul);
+                Assert.That(director.TryResolve(lowSoul, profile, out _),
+                    Is.False);
+
+                EnemySpeechObservation terminal = CreateObservation(
+                    battle, 1, 2, 0, 9, null,
+                    BattleOutcome.PlayerVictory, repeatedAction);
+                AssertResolved(director, profile, terminal,
+                    SpeechCueKeys.Defeat);
+                Assert.That(director.TryResolve(terminal, profile, out _),
+                    Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(profile);
+            }
+        }
+
+        [Test]
+        public void GSB02_U06_DirectorUsesDamageClassificationAndTransitionPriority()
+        {
+            CoreLoopBattle battle = CreateBattle(401);
+            SpeechProfileSO profile = CreateCompleteSpeechProfile("priority");
+            try
+            {
+                var director = new EnemySpeechDirector(44);
+                EnemySpeechCue action = new EnemySpeechCue(
+                    battle, 1, 1, SpeechCueKeys.ActionStand, null);
+                RoundResolution cardDamage = new RoundResolution(
+                    1, RoundOutcome.EnemyBust, 0, 2,
+                    RoundEndCause.CardEffectBust, "card-revolver");
+                AssertResolved(
+                    director,
+                    profile,
+                    CreateObservation(
+                        battle, 1, 1, 8, 10, cardDamage,
+                        BattleOutcome.InProgress, action),
+                    SpeechCueKeys.DamageCard);
+
+                RoundResolution roundDamage = new RoundResolution(
+                    2, RoundOutcome.PlayerWin, 0, 2,
+                    RoundEndCause.TotalComparison);
+                AssertResolved(
+                    director,
+                    profile,
+                    CreateObservation(
+                        battle, 1, 1, 6, 10, roundDamage,
+                        BattleOutcome.InProgress, action),
+                    SpeechCueKeys.DamageRound);
+
+                RoundResolution otherDamage = new RoundResolution(
+                    3, RoundOutcome.EnemyBust, 0, 2,
+                    RoundEndCause.ContractEffectBust);
+                AssertResolved(
+                    director,
+                    profile,
+                    CreateObservation(
+                        battle, 1, 1, 4, 10, otherDamage,
+                        BattleOutcome.InProgress, action),
+                    SpeechCueKeys.DamageOther);
+
+                RoundResolution finalDamage = new RoundResolution(
+                    4, RoundOutcome.PlayerBust, 2, 0,
+                    RoundEndCause.NumericBust);
+                AssertResolved(
+                    director,
+                    profile,
+                    CreateObservation(
+                        battle, 1, 1, 1, 10, finalDamage,
+                        BattleOutcome.PlayerDefeat, action),
+                    SpeechCueKeys.Victory);
+
+                Assert.That(EnemySpeechDirector.ResolveDamageCueKey(
+                    RoundEndCause.NumericBust),
+                    Is.EqualTo(SpeechCueKeys.DamageRound));
+                Assert.That(EnemySpeechDirector.ResolveDamageCueKey(
+                    RoundEndCause.ContractEffectBust),
+                    Is.EqualTo(SpeechCueKeys.DamageOther));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(profile);
+            }
+        }
+
+        [Test]
+        public void GSB02_U07_RoundCueOccursOncePerNewRound()
+        {
+            CoreLoopBattle battle = CreateBattle(501);
+            SpeechProfileSO profile = CreateCompleteSpeechProfile("rounds");
+            try
+            {
+                var director = new EnemySpeechDirector(55);
+                AssertResolved(
+                    director,
+                    profile,
+                    CreateObservation(
+                        battle, 1, 0, 10, 10, null,
+                        BattleOutcome.InProgress, null),
+                    SpeechCueKeys.BattleStart);
+                EnemySpeechObservation secondRound = CreateObservation(
+                    battle, 2, 0, 10, 10, null,
+                    BattleOutcome.InProgress, null);
+                AssertResolved(director, profile, secondRound,
+                    SpeechCueKeys.RoundStart);
+                Assert.That(director.TryResolve(secondRound, profile, out _),
+                    Is.False);
+                AssertResolved(
+                    director,
+                    profile,
+                    CreateObservation(
+                        battle, 3, 0, 10, 10, null,
+                        BattleOutcome.InProgress, null),
+                    SpeechCueKeys.RoundStart);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(profile);
+            }
+        }
+
+        [Test]
+        public void GSB02_U08_TerminalHoldDefaultsToOnePointFiveSecondsAndBlocksExit()
+        {
+            GameObject root = new GameObject("Terminal Speech Hold Test");
+            try
+            {
+                GameManager manager = root.AddComponent<GameManager>();
+                SerializedObject serialized = new SerializedObject(manager);
+                Assert.That(
+                    serialized.FindProperty("terminalSpeechHoldSeconds")
+                        .floatValue,
+                    Is.EqualTo(1.5f));
+                Assert.That(GameManager.DefaultTerminalSpeechHoldSeconds,
+                    Is.EqualTo(1.5f));
+                Assert.That(GameManager.IsTerminalSpeechHoldBlocking(
+                    true, false), Is.True);
+                Assert.That(GameManager.IsTerminalSpeechHoldBlocking(
+                    true, true), Is.False);
+                Assert.That(GameManager.IsTerminalSpeechHoldBlocking(
+                    false, false), Is.False);
+
+                MethodInfo method = typeof(GameManager).GetMethod(
+                    "CompleteTerminalSpeechHold",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(method, Is.Not.Null);
+                IEnumerator routine = (IEnumerator)method.Invoke(
+                    manager,
+                    new object[] { CreateBattle(601) });
+                Assert.That(routine.MoveNext(), Is.True);
+                Assert.That(routine.Current,
+                    Is.TypeOf<WaitForSecondsRealtime>());
+                Assert.That(
+                    ((WaitForSecondsRealtime)routine.Current).waitTime,
+                    Is.EqualTo(1.5f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
         private static CoreLoopBattle CreateBattle(int seed)
         {
             return new CoreLoopBattle(
@@ -509,11 +888,110 @@ namespace DiaBlackJack.CoreLoop.Tests
         private static void AssertMerchantLine(
             ShopController shop,
             SpeechBubbleView bubble,
-            MerchantSpeechCue cue,
+            string cueKey,
             string expected)
         {
-            shop.ShowMerchantSpeech(cue);
+            shop.ShowMerchantSpeech(cueKey);
             Assert.That(bubble.DisplayedText, Is.EqualTo(expected));
+        }
+
+        private static SpeechProfileSO CreateSpeechProfile(
+            string speakerKey,
+            params (string CueKey, string[] Lines)[] entries)
+        {
+            SpeechProfileSO profile =
+                ScriptableObject.CreateInstance<SpeechProfileSO>();
+            profile.hideFlags = HideFlags.DontSave;
+            SerializedObject serialized = new SerializedObject(profile);
+            serialized.FindProperty("speakerKey").stringValue = speakerKey;
+            SerializedProperty serializedEntries =
+                serialized.FindProperty("entries");
+            serializedEntries.arraySize = entries.Length;
+            for (int entryIndex = 0; entryIndex < entries.Length; entryIndex++)
+            {
+                SerializedProperty entry =
+                    serializedEntries.GetArrayElementAtIndex(entryIndex);
+                entry.FindPropertyRelative("cueKey").stringValue =
+                    entries[entryIndex].CueKey;
+                SerializedProperty lines = entry.FindPropertyRelative("lines");
+                lines.arraySize = entries[entryIndex].Lines.Length;
+                for (int lineIndex = 0;
+                     lineIndex < entries[entryIndex].Lines.Length;
+                     lineIndex++)
+                {
+                    lines.GetArrayElementAtIndex(lineIndex).stringValue =
+                        entries[entryIndex].Lines[lineIndex];
+                }
+            }
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return profile;
+        }
+
+        private static SpeechProfileSO CreateCompleteSpeechProfile(
+            string speakerKey)
+        {
+            (string CueKey, string[] Lines)[] entries =
+                SpeechCueKeys.RequiredEnemyKeys
+                    .Select(key => (key, new[] { key + ".line" }))
+                    .ToArray();
+            return CreateSpeechProfile(speakerKey, entries);
+        }
+
+        private static EnemySpeechObservation CreateObservation(
+            CoreLoopBattle battle,
+            int roundNumber,
+            int actionOrdinal,
+            int currentSoul,
+            int maximumSoul,
+            RoundResolution? resolution,
+            BattleOutcome outcome,
+            EnemySpeechCue actionCue)
+        {
+            return new EnemySpeechObservation(
+                battle,
+                roundNumber,
+                actionOrdinal,
+                currentSoul,
+                maximumSoul,
+                resolution,
+                outcome,
+                actionCue);
+        }
+
+        private static void AssertResolved(
+            EnemySpeechDirector director,
+            SpeechProfileSO profile,
+            EnemySpeechObservation observation,
+            string expectedCueKey)
+        {
+            Assert.That(director.TryResolve(
+                observation,
+                profile,
+                out EnemySpeechPresentation presentation), Is.True);
+            Assert.That(presentation.CueKey, Is.EqualTo(expectedCueKey));
+            Assert.That(presentation.Message,
+                Is.EqualTo(expectedCueKey + ".line"));
+        }
+
+        private static bool ContainsKorean(string value)
+        {
+            return !string.IsNullOrWhiteSpace(value) &&
+                value.Any(character => character >= '\uAC00' &&
+                    character <= '\uD7A3');
+        }
+
+        private static void SetSerializedReference(
+            UnityEngine.Object target,
+            string propertyName,
+            UnityEngine.Object value)
+        {
+            SerializedObject serialized = new SerializedObject(target);
+            SerializedProperty property =
+                serialized.FindProperty(propertyName);
+            Assert.That(property, Is.Not.Null, propertyName);
+            property.objectReferenceValue = value;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void SetPrivateField(

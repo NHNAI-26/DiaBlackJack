@@ -22,11 +22,6 @@ namespace DiaBlackJack.GameScene
             [SerializeField] private Sprite defaultState;
             [SerializeField] private Sprite attackThreatened;
             [SerializeField] private Sprite attacked;
-            [SerializeField] private string hitSpeech;
-            [SerializeField] private string standSpeech;
-            [SerializeField] private string changeSpeech;
-            [SerializeField] private string useCardSpeech;
-            [SerializeField] private string demonContractSpeech;
 
             public string ProfileKey => profileKey;
 
@@ -45,34 +40,6 @@ namespace DiaBlackJack.GameScene
                 }
             }
 
-            public string ResolveSpeech(
-                EnemySpeechActionKind kind,
-                string fallback)
-            {
-                string speech;
-                switch (kind)
-                {
-                    case EnemySpeechActionKind.Hit:
-                        speech = hitSpeech;
-                        break;
-                    case EnemySpeechActionKind.Stand:
-                        speech = standSpeech;
-                        break;
-                    case EnemySpeechActionKind.Change:
-                        speech = changeSpeech;
-                        break;
-                    case EnemySpeechActionKind.UseCard:
-                        speech = useCardSpeech;
-                        break;
-                    case EnemySpeechActionKind.DemonContract:
-                        speech = demonContractSpeech;
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(kind));
-                }
-
-                return string.IsNullOrWhiteSpace(speech) ? fallback : speech;
-            }
         }
 
         [SerializeField] private SpriteRenderer sprite;
@@ -82,13 +49,6 @@ namespace DiaBlackJack.GameScene
         [Header("Enemy profile sprites")]
         [SerializeField] private EnemySpriteProfile[] enemySpriteProfiles =
             Array.Empty<EnemySpriteProfile>();
-
-        [Header("Enemy speech defaults")]
-        [SerializeField] private string hitSpeech = "한 장 더 뽑는다.";
-        [SerializeField] private string standSpeech = "스탠드.";
-        [SerializeField] private string changeSpeech = "카드를 바꾼다.";
-        [SerializeField] private string useCardSpeech = "카드를 사용한다.";
-        [SerializeField] private string demonContractSpeech = "계약을 사용한다.";
 
         [Header("Merchant (shop mode)")]
         [Tooltip("Optional. When assigned, the enemy swaps to this sprite in the shop; otherwise the dark tint + shrink alone reads as the merchant.")]
@@ -135,16 +95,6 @@ namespace DiaBlackJack.GameScene
             {
                 ApplyEnemySprite(state);
             }
-        }
-
-        internal void ShowEnemySpeech(EnemySpeechActionKind kind)
-        {
-            EnsureInitialized();
-            string fallback = ResolveDefaultSpeech(kind);
-            string message = _activeEnemySpriteProfile == null
-                ? fallback
-                : _activeEnemySpriteProfile.ResolveSpeech(kind, fallback);
-            speechBubble?.Show(message);
         }
 
         internal void ShowSpeech(string message)
@@ -279,40 +229,6 @@ namespace DiaBlackJack.GameScene
             _baseColor = sprite != null ? sprite.color : Color.white;
             _defaultSprite = sprite != null ? sprite.sprite : null;
             _initialized = true;
-        }
-
-        private string ResolveDefaultSpeech(EnemySpeechActionKind kind)
-        {
-            switch (kind)
-            {
-                case EnemySpeechActionKind.Hit:
-                    return ResolveSpeechOrFallback(
-                        hitSpeech,
-                        "한 장 더 뽑는다.");
-                case EnemySpeechActionKind.Stand:
-                    return ResolveSpeechOrFallback(standSpeech, "스탠드.");
-                case EnemySpeechActionKind.Change:
-                    return ResolveSpeechOrFallback(
-                        changeSpeech,
-                        "카드를 바꾼다.");
-                case EnemySpeechActionKind.UseCard:
-                    return ResolveSpeechOrFallback(
-                        useCardSpeech,
-                        "카드를 사용한다.");
-                case EnemySpeechActionKind.DemonContract:
-                    return ResolveSpeechOrFallback(
-                        demonContractSpeech,
-                        "계약을 사용한다.");
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(kind));
-            }
-        }
-
-        private static string ResolveSpeechOrFallback(
-            string configured,
-            string fallback)
-        {
-            return string.IsNullOrWhiteSpace(configured) ? fallback : configured;
         }
 
         private void KeepActionLabelInFront()

@@ -23,28 +23,19 @@ namespace DiaBlackJack.GameScene
         Attacked,
     }
 
-    internal enum EnemySpeechActionKind
-    {
-        Hit,
-        Stand,
-        Change,
-        UseCard,
-        DemonContract,
-    }
-
     internal sealed class EnemySpeechCue
     {
         public EnemySpeechCue(
             CoreLoopBattle battle,
             int roundNumber,
             int actionOrdinal,
-            EnemySpeechActionKind kind,
+            string cueKey,
             string sourceDefinitionKey)
         {
             Battle = battle;
             RoundNumber = roundNumber;
             ActionOrdinal = actionOrdinal;
-            Kind = kind;
+            CueKey = cueKey ?? throw new ArgumentNullException(nameof(cueKey));
             SourceDefinitionKey = sourceDefinitionKey ?? string.Empty;
         }
 
@@ -52,7 +43,7 @@ namespace DiaBlackJack.GameScene
 
         public CoreLoopBattle Battle { get; }
 
-        public EnemySpeechActionKind Kind { get; }
+        public string CueKey { get; }
 
         public int RoundNumber { get; }
 
@@ -65,6 +56,45 @@ namespace DiaBlackJack.GameScene
                 RoundNumber == other.RoundNumber &&
                 ActionOrdinal == other.ActionOrdinal;
         }
+    }
+
+    internal sealed class EnemySpeechObservation
+    {
+        public EnemySpeechObservation(
+            CoreLoopBattle battle,
+            int roundNumber,
+            int actionOrdinal,
+            int enemySoulCurrent,
+            int enemySoulMaximum,
+            RoundResolution? lastResolution,
+            BattleOutcome outcome,
+            EnemySpeechCue actionCue)
+        {
+            Battle = battle ?? throw new ArgumentNullException(nameof(battle));
+            RoundNumber = roundNumber;
+            ActionOrdinal = actionOrdinal;
+            EnemySoulCurrent = enemySoulCurrent;
+            EnemySoulMaximum = enemySoulMaximum;
+            LastResolution = lastResolution;
+            Outcome = outcome;
+            ActionCue = actionCue;
+        }
+
+        public int ActionOrdinal { get; }
+
+        public EnemySpeechCue ActionCue { get; }
+
+        public CoreLoopBattle Battle { get; }
+
+        public int EnemySoulCurrent { get; }
+
+        public int EnemySoulMaximum { get; }
+
+        public RoundResolution? LastResolution { get; }
+
+        public BattleOutcome Outcome { get; }
+
+        public int RoundNumber { get; }
     }
 
     /// <summary>
@@ -505,6 +535,8 @@ namespace DiaBlackJack.GameScene
         public bool CanPlayerRerollMammon { get; }
 
         internal EnemySpeechCue EnemySpeechCue { get; set; }
+
+        internal EnemySpeechObservation EnemySpeechObservation { get; set; }
     }
 
     public static class GameScenePresenter
@@ -555,6 +587,9 @@ namespace DiaBlackJack.GameScene
                     battle.CanBeginPlayerActiveDemonContractAction(
                         playerMammon.SourceCardId));
             model.EnemySpeechCue = CreateEnemySpeechCue(battle);
+            model.EnemySpeechObservation = CreateEnemySpeechObservation(
+                battle,
+                model.EnemySpeechCue);
             return model;
         }
 
@@ -571,23 +606,23 @@ namespace DiaBlackJack.GameScene
                 return null;
             }
 
-            EnemySpeechActionKind kind;
+            string cueKey;
             switch (action.ActionType)
             {
                 case PublicCombatActionType.Hit:
-                    kind = EnemySpeechActionKind.Hit;
+                    cueKey = SpeechCueKeys.ActionHit;
                     break;
                 case PublicCombatActionType.Stand:
-                    kind = EnemySpeechActionKind.Stand;
+                    cueKey = SpeechCueKeys.ActionStand;
                     break;
                 case PublicCombatActionType.Change:
-                    kind = EnemySpeechActionKind.Change;
+                    cueKey = SpeechCueKeys.ActionChange;
                     break;
                 case PublicCombatActionType.UseCard:
-                    kind = EnemySpeechActionKind.UseCard;
+                    cueKey = SpeechCueKeys.ActionUseCard;
                     break;
                 case PublicCombatActionType.DemonContract:
-                    kind = EnemySpeechActionKind.DemonContract;
+                    cueKey = SpeechCueKeys.ActionDemonContract;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(action));
@@ -597,8 +632,23 @@ namespace DiaBlackJack.GameScene
                 battle,
                 roundNumber,
                 actionOrdinal,
-                kind,
+                cueKey,
                 action.SourceCardDefinitionKey);
+        }
+
+        private static EnemySpeechObservation CreateEnemySpeechObservation(
+            CoreLoopBattle battle,
+            EnemySpeechCue actionCue)
+        {
+            return new EnemySpeechObservation(
+                battle,
+                battle.RoundNumber,
+                battle.PublicActionHistory.Count,
+                battle.Enemy.Soul.Current,
+                battle.Enemy.Soul.Maximum,
+                battle.LastResolution,
+                battle.Outcome,
+                actionCue);
         }
 
         private static EnemySpeechCue CreateEnemySpeechCue(CoreLoopBattle battle)

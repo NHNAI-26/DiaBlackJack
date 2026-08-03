@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: enforcer
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.EnemyCombatProfileDefinitionSO
   key: enforcer
-  displayName: 집행자
+  displayName: "\uC9D1\uD589\uC790"
   portrait: {fileID: -404268745147865992, guid: 22aa22444d6050045815396b307d8760, type: 3}
+  speechProfile: {fileID: 11400000, guid: 263dd0715d4af1f41803b9e9cfbad17a, type: 2}
   grade: 1
   maximumSoul: 5
   defeatGold: 9
@@ -39,7 +40,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120008, type: 2}
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120009, type: 2}
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a12000a, type: 2}
-  description: 독극물과 강제 행동으로 장기전의 안전 지대를 무너뜨린다.
+  description: "\uB3C5\uADF9\uBB3C\uACFC \uAC15\uC81C \uD589\uB3D9\uC73C\uB85C \uC7A5\uAE30\uC804\uC758
+    \uC548\uC804 \uC9C0\uB300\uB97C \uBB34\uB108\uB728\uB9B0\uB2E4."
   playerInformationMode: 1
   changeCostMode: 0
   contractableDemons: []

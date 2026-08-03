@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a25b412ec1f43b984b88598293940c2, type: 3}
+  m_Name: final_boss_speech
+  m_EditorClassIdentifier: Border::DiaBlackJack.Content.SpeechProfileSO
+  speakerKey: final-boss
+  entries:
+  - cueKey: combat.battle_start
+    lines:
+    - "\uACE0\uAC1C\uB97C \uB4E4\uC5B4\uB77C, \uB124 \uC885\uB9D0\uC744 \uD5C8\uB77D\uD558\uB9C8."
+    - "\uC655\uC88C \uC55E\uC5D0 \uC120 \uC6A9\uAE30\uB97C \uCE6D\uCC2C\uD558\uB9C8."
+  - cueKey: combat.round_start
+    lines:
+    - "\uB2E4\uC2DC \uC6B4\uBA85\uC744 \uC7AC\uB2E8\uD574 \uC8FC\uC9C0."
+    - "\uB2E4\uC74C \uB9C9\uB3C4 \uB0B4 \uB73B\uB300\uB85C \uD750\uB978\uB2E4."
+  - cueKey: combat.action.hit
+    lines:
+    - "\uC9D0\uC774 \uD328 \uD558\uB098\uB97C \uB354 \uCDE8\uD558\uB178\uB77C."
+    - "\uC6B4\uBA85 \uD55C \uC870\uAC01\uC744 \uB354 \uBC14\uCCD0\uB77C."
+  - cueKey: combat.action.stand
+    lines:
+    - "\uC774 \uD328\uB85C\uB3C4 \uB108\uB97C \uB204\uB974\uAE30\uC5D0 \uC871\uD558\uB2E4."
+    - "\uC9D0\uC758 \uC120\uD0DD\uC740 \uC774\uBBF8 \uC644\uC804\uD558\uB2E4."
+  - cueKey: combat.action.change
+    lines:
+    - "\uD558\uCC2E\uC740 \uD328\uB294 \uC655\uC88C\uC5D0 \uC5B4\uC6B8\uB9AC\uC9C0
+      \uC54A\uB294\uB2E4."
+    - "\uB354 \uB098\uC740 \uC6B4\uBA85\uC744 \uACE8\uB77C \uC8FC\uB9C8."
+  - cueKey: combat.action.use_card
+    lines:
+    - "\uC655\uC758 \uAD8C\uB2A5\uC744 \uBAA9\uB3C4\uD558\uB77C."
+    - "\uBCF4\uBB3C\uC744 \uC4F0\uB294 \uC601\uAD11\uC744 \uD5C8\uB77D\uD558\uB9C8."
+  - cueKey: combat.action.demon_contract
+    lines:
+    - "\uC545\uB9C8\uC870\uCC28 \uC9D0\uC758 \uBA85\uC744 \uB530\uB978\uB2E4."
+    - "\uACC4\uC57D\uC740 \uC655\uBA85 \uC544\uB798 \uAD74\uBCF5\uD55C\uB2E4."
+  - cueKey: combat.damage.card
+    lines:
+    - "\uCC9C\uD55C \uCE74\uB4DC\uAC00 \uC625\uCCB4\uB97C \uC2A4\uCCE4\uAD6C\uB098."
+    - "\uADF8 \uBCF4\uC798\uAC83\uC5C6\uB294 \uC218\uB97C \uAE30\uC5B5\uD558\uB9C8."
+  - cueKey: combat.damage.round
+    lines:
+    - "\uC22B\uC790 \uB530\uC704\uAC00 \uC7A0\uC2DC \uC9D0\uC744 \uAC70\uC2AC\uB800\uAD70."
+    - "\uD55C \uBC88\uC758 \uD310\uC815\uC73C\uB85C \uC6B0\uCB50\uB300\uC9C0 \uB9C8\uB77C."
+  - cueKey: combat.damage.other
+    lines:
+    - "\uC774\uB984 \uC5C6\uB294 \uD798\uC774 \uAC10\uD788 \uB2FF\uB294\uAD6C\uB098."
+    - "\uAE30\uBB18\uD55C \uC7AC\uC8FC\uB85C \uC655\uC744 \uC2DC\uD5D8\uD558\uB294\uAC00."
+  - cueKey: combat.low_soul
+    lines:
+    - "\uC655\uAD00\uC740 \uD53C\uBCF4\uB2E4 \uBB34\uAC81\uB2E4."
+    - "\uC9D0\uC744 \uC57D\uD558\uB2E4 \uBD80\uB97C \uB54C\uAC00 \uAC00\uC7A5 \uC704\uD5D8\uD558\uB2E4."
+  - cueKey: combat.victory
+    lines:
+    - "\uBB34\uB98E \uAFC7\uC5B4\uB77C, \uD328\uC790\uB294 \uB9D0\uC774 \uC5C6\uB2E4."
+    - "\uC5ED\uC2DC \uC655\uC88C\uC5D0 \uC624\uB97C \uC790\uB294 \uC9D0\uBFD0\uC774\uB2E4."
+  - cueKey: combat.defeat
+    lines:
+    - "\uC624\uB298\uB9CC\uC740 \uC655\uC88C\uAC00 \uB108\uB97C \uC778\uC815\uD55C\uB2E4."
+    - "\uC9D0\uC758 \uD328\uBC30\uB97C \uC601\uAD11\uC73C\uB85C \uAC04\uC9C1\uD558\uB77C."

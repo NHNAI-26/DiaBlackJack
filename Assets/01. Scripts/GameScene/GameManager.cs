@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Border.Audio;
+using DiaBlackJack.Bootstrap;
+using DiaBlackJack.Content;
 using DiaBlackJack.CoreLoop;
 using DiaBlackJack.CoreLoop.UI;
 using DiaBlackJack.StageProgression;
@@ -44,6 +46,11 @@ namespace DiaBlackJack.GameScene
         [Header("Standalone enemy profile")]
         [SerializeField] private string enemyProfileKey =
             EnemyCombatProfileCatalog.GunslingerKey;
+
+        [Header("Enemy speech")]
+        [SerializeField] private int speechSeed = 20260804;
+        [SerializeField] private float terminalSpeechHoldSeconds =
+            DefaultTerminalSpeechHoldSeconds;
 
         [Header("Shop (MVP)")]
         [SerializeField] private ShopController shop;
@@ -156,7 +163,21 @@ namespace DiaBlackJack.GameScene
         private StageProgressionSession _completedStageSession;
         private StageProgressionViewModel _formalShopModel;
         private int _formalShopGold;
-        private EnemySpeechCue _lastEnemySpeechCue;
+        private EnemySpeechDirector _enemySpeechDirector;
+        private SpeechProfileSO _activeEnemySpeechProfile;
+        private Coroutine _terminalSpeechHoldRoutine;
+        private CoreLoopBattle _terminalSpeechBattle;
+        private bool _terminalSpeechHoldActive;
+        private bool _terminalSpeechHoldCompleted;
+
+        internal const float DefaultTerminalSpeechHoldSeconds = 1.5f;
+
+        internal static bool IsTerminalSpeechHoldBlocking(
+            bool isActive,
+            bool isCompleted)
+        {
+            return isActive && !isCompleted;
+        }
 
         public event Action FormalBattleCompleted;
         public event Action<int> FormalShopCardPurchaseRequested;
@@ -200,6 +221,7 @@ namespace DiaBlackJack.GameScene
             _activeEnemyProfileKey =
                 session.ActiveStage?.BattleProfileKey ??
                 ResolveEnemyProfileKey();
+            _activeEnemySpeechProfile = ResolveActiveEnemySpeechProfile();
             enemyCharacter?.ExitMerchant();
             enemyCharacter?.TrySetEnemyProfile(_activeEnemyProfileKey);
             _inputLocked = false;
@@ -299,7 +321,7 @@ namespace DiaBlackJack.GameScene
             {
                 _choosingLighterRemoval = false;
                 CloseDeckPreview();
-                shop?.ShowMerchantSpeech(MerchantSpeechCue.LighterSuccess);
+                shop?.ShowMerchantSpeech(SpeechCueKeys.ShopLighterSuccess);
             }
             else if (deckPreview != null && deckPreview.IsSingleSelection)
             {
@@ -314,7 +336,7 @@ namespace DiaBlackJack.GameScene
             if (!succeeded)
             {
                 _pendingLighterBurnCard = null;
-                shop?.ShowMerchantSpeech(MerchantSpeechCue.Unavailable);
+                shop?.ShowMerchantSpeech(SpeechCueKeys.ShopUnavailable);
             }
 
             RefreshShopUtilityItems();
@@ -324,22 +346,22 @@ namespace DiaBlackJack.GameScene
         internal void CompleteFormalShopCardPurchase(bool succeeded)
         {
             shop?.ShowMerchantSpeech(succeeded
-                ? MerchantSpeechCue.PurchaseSuccess
-                : MerchantSpeechCue.Unavailable);
+                ? SpeechCueKeys.ShopPurchaseSuccess
+                : SpeechCueKeys.ShopUnavailable);
         }
 
         internal void CompleteFormalShopRest(bool succeeded)
         {
             shop?.ShowMerchantSpeech(succeeded
-                ? MerchantSpeechCue.WhiskeySuccess
-                : MerchantSpeechCue.Unavailable);
+                ? SpeechCueKeys.ShopWhiskeySuccess
+                : SpeechCueKeys.ShopUnavailable);
         }
 
         internal void CompleteFormalShopLeave(bool succeeded)
         {
             shop?.ShowMerchantSpeech(succeeded
-                ? MerchantSpeechCue.Farewell
-                : MerchantSpeechCue.Unavailable);
+                ? SpeechCueKeys.ShopFarewell
+                : SpeechCueKeys.ShopUnavailable);
         }
 
         public bool TryCloseTransientOverlay()
@@ -366,6 +388,7 @@ namespace DiaBlackJack.GameScene
 
         private void Awake()
         {
+            _enemySpeechDirector = new EnemySpeechDirector(speechSeed);
             HideRevolverAnimation();
             HideKnifeAnimation();
             ResolveHammerAnimation()?.Hide();
@@ -388,6 +411,8 @@ namespace DiaBlackJack.GameScene
                 _activeEnemyProfileKey = ResolveEnemyProfileKey();
                 _session = new CoreLoopSession(CreateBattle);
             }
+
+            _activeEnemySpeechProfile = ResolveActiveEnemySpeechProfile();
 
             if (enemyCharacter != null)
             {
@@ -547,7 +572,6 @@ namespace DiaBlackJack.GameScene
             discardDeck?.ResetView();
             totals?.Render(string.Empty, string.Empty);
             enemyCharacter?.RenderVisual(CharacterVisualState.Idle);
-            ResetEnemySpeech();
             if (shop != null)
             {
                 if (shop.IsFormal)
@@ -559,6 +583,8 @@ namespace DiaBlackJack.GameScene
                     shop.Close();
                 }
             }
+
+            ResetEnemySpeech();
         }
 
         // Diegetic input: hover any card to enlarge it (usable cards also show a HUD badge), click a
@@ -1403,6 +1429,29 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        private SpeechProfileSO ResolveActiveEnemySpeechProfile()
+        {
+            EnemyContentCatalogSO catalog =
+                CardContentBootstrap.Instance?.EnemyCatalog;
+            if (catalog == null ||
+                string.IsNullOrWhiteSpace(_activeEnemyProfileKey))
+            {
+                return null;
+            }
+
+            try
+            {
+                return catalog.GetSpeechProfile(_activeEnemyProfileKey);
+            }
+            catch (Exception exception)
+                when (exception is ArgumentException ||
+                      exception is KeyNotFoundException)
+            {
+                Debug.LogWarning(exception.Message, this);
+                return null;
+            }
+        }
+
         private BlackjackDeck CreatePlayerDeck(int deckSeed)
         {
             var cards = new List<BlackjackCard>(20 + _purchasedNormalCards.Count);
@@ -1504,13 +1553,13 @@ namespace DiaBlackJack.GameScene
 
             if (!shop.TryPurchaseDemonCard(card.CardId, out string definitionKey))
             {
-                shop.ShowMerchantSpeech(MerchantSpeechCue.Unavailable);
+                shop.ShowMerchantSpeech(SpeechCueKeys.ShopUnavailable);
                 return;
             }
 
             _purchasedDemonContractKeys.Add(definitionKey);
             AddPurchasedDemonContractToCurrentBattle(definitionKey);
-            shop.ShowMerchantSpeech(MerchantSpeechCue.PurchaseSuccess);
+            shop.ShowMerchantSpeech(SpeechCueKeys.ShopPurchaseSuccess);
             RefreshView();
             UpdateDemonCardHover(null);
         }
@@ -1551,13 +1600,13 @@ namespace DiaBlackJack.GameScene
                     out string definitionKey,
                     out CardSuit suit))
             {
-                shop.ShowMerchantSpeech(MerchantSpeechCue.Unavailable);
+                shop.ShowMerchantSpeech(SpeechCueKeys.ShopUnavailable);
                 return;
             }
 
             _purchasedNormalCards.Add(new PurchasedNormalCard(definitionKey, suit));
             AddPurchasedNormalCardToCurrentBattle(definitionKey, suit);
-            shop.ShowMerchantSpeech(MerchantSpeechCue.PurchaseSuccess);
+            shop.ShowMerchantSpeech(SpeechCueKeys.ShopPurchaseSuccess);
             RefreshView();
             UpdateHover(null);
         }
@@ -1663,7 +1712,7 @@ namespace DiaBlackJack.GameScene
                 : CountFormalRemovableCards();
             if (shop == null || !shop.IsOpen || removableCount <= 0)
             {
-                shop?.ShowMerchantSpeech(MerchantSpeechCue.Unavailable);
+                shop?.ShowMerchantSpeech(SpeechCueKeys.ShopUnavailable);
                 return;
             }
 
@@ -1794,7 +1843,7 @@ namespace DiaBlackJack.GameScene
             RemoveRunDeckCard(option);
             RemoveCurrentBattleAvailableCard(option);
             _choosingLighterRemoval = false;
-            shop.ShowMerchantSpeech(MerchantSpeechCue.LighterSuccess);
+            shop.ShowMerchantSpeech(SpeechCueKeys.ShopLighterSuccess);
             PlayLighterShopAnimation();
             RefreshView();
             UpdateShopLeaveControl();
@@ -1937,13 +1986,13 @@ namespace DiaBlackJack.GameScene
                     battle.Player.Soul.Maximum,
                     out int restoreAmount))
             {
-                shop.ShowMerchantSpeech(MerchantSpeechCue.Unavailable);
+                shop.ShowMerchantSpeech(SpeechCueKeys.ShopUnavailable);
                 RefreshShopUtilityItems();
                 return;
             }
 
             battle.Player.Soul.Restore(restoreAmount);
-            shop.ShowMerchantSpeech(MerchantSpeechCue.WhiskeySuccess);
+            shop.ShowMerchantSpeech(SpeechCueKeys.ShopWhiskeySuccess);
             PlayWhiskeyShopAnimation();
             RefreshView();
             UpdateShopUtilityItemHover(null);
@@ -2566,8 +2615,8 @@ namespace DiaBlackJack.GameScene
 
             GameSceneViewModel vm =
                 GameScenePresenter.Create(battle, _activeEnemyProfileKey);
-            MaybeOpenShop(vm);
             ApplyView(vm);
+            MaybeOpenShop(vm);
         }
 
         private AppliedAnimationResult ApplyView(
@@ -2682,14 +2731,7 @@ namespace DiaBlackJack.GameScene
                         ResolveRevolverTimedVisual(
                             CombatantSide.Enemy,
                             vm.EnemyVisual)));
-                if (vm.Core.State == CoreLoopState.BattleEnded)
-                {
-                    ResetEnemySpeech();
-                }
-                else
-                {
-                    PresentEnemySpeech(vm.EnemySpeechCue);
-                }
+                PresentEnemySpeech(vm.EnemySpeechObservation);
             }
 
             if (!deferredCardRender)
@@ -2705,26 +2747,87 @@ namespace DiaBlackJack.GameScene
                 deferredCardRender ? vm : null);
         }
 
-        private void PresentEnemySpeech(EnemySpeechCue cue)
+        private void PresentEnemySpeech(EnemySpeechObservation observation)
         {
-            if (cue == null || cue.Battle == null || enemyCharacter == null)
+            if (observation == null || enemyCharacter == null)
             {
                 return;
             }
 
-            if (cue.IsSameActionAs(_lastEnemySpeechCue))
+            _enemySpeechDirector ??= new EnemySpeechDirector(speechSeed);
+            if (!_enemySpeechDirector.TryResolve(
+                observation,
+                _activeEnemySpeechProfile,
+                out EnemySpeechPresentation presentation))
             {
                 return;
             }
 
-            _lastEnemySpeechCue = cue;
-            enemyCharacter.ShowEnemySpeech(cue.Kind);
+            enemyCharacter.ShowSpeech(presentation.Message);
+            if (presentation.IsTerminal)
+            {
+                BeginTerminalSpeechHold(observation.Battle);
+            }
         }
 
         private void ResetEnemySpeech()
         {
-            _lastEnemySpeechCue = null;
+            if (_terminalSpeechHoldRoutine != null)
+            {
+                StopCoroutine(_terminalSpeechHoldRoutine);
+                _terminalSpeechHoldRoutine = null;
+            }
+
+            _terminalSpeechBattle = null;
+            _terminalSpeechHoldActive = false;
+            _terminalSpeechHoldCompleted = false;
+            _enemySpeechDirector?.Reset();
             enemyCharacter?.HideSpeech();
+        }
+
+        private void BeginTerminalSpeechHold(CoreLoopBattle battle)
+        {
+            if (battle == null ||
+                (ReferenceEquals(_terminalSpeechBattle, battle) &&
+                 (_terminalSpeechHoldActive || _terminalSpeechHoldCompleted)))
+            {
+                return;
+            }
+
+            _terminalSpeechBattle = battle;
+            _terminalSpeechHoldActive = true;
+            _terminalSpeechHoldCompleted = false;
+            _inputLocked = true;
+            _terminalSpeechHoldRoutine = StartCoroutine(
+                CompleteTerminalSpeechHold(battle));
+        }
+
+        private IEnumerator CompleteTerminalSpeechHold(CoreLoopBattle battle)
+        {
+            yield return new WaitForSecondsRealtime(
+                Mathf.Max(0f, terminalSpeechHoldSeconds));
+
+            _terminalSpeechHoldRoutine = null;
+            if (!ReferenceEquals(Battle, battle))
+            {
+                yield break;
+            }
+
+            _terminalSpeechHoldActive = false;
+            _terminalSpeechHoldCompleted = true;
+            if (IsStageBattle)
+            {
+                ReturnToProgressionIfStageBattleEnded();
+                yield break;
+            }
+
+            GameSceneViewModel vm =
+                GameScenePresenter.Create(battle, _activeEnemyProfileKey);
+            MaybeOpenShop(vm);
+            if (shop == null || !shop.IsOpen)
+            {
+                UnlockInput();
+            }
         }
 
         private void RenderHands(GameSceneViewModel vm)
@@ -3958,7 +4061,10 @@ namespace DiaBlackJack.GameScene
         {
             if (IsStageBattle || shop == null || shop.IsOpen ||
                 vm.Core.State != CoreLoopState.BattleEnded ||
-                vm.Core.Outcome != BattleOutcome.PlayerVictory)
+                vm.Core.Outcome != BattleOutcome.PlayerVictory ||
+                IsTerminalSpeechHoldBlocking(
+                    _terminalSpeechHoldActive,
+                    _terminalSpeechHoldCompleted))
             {
                 return;
             }
@@ -4024,7 +4130,10 @@ namespace DiaBlackJack.GameScene
         private void ReturnToProgressionIfStageBattleEnded()
         {
             if (!IsStageBattle ||
-                _stageSession.Progress.State == StageProgressionState.InBattle)
+                _stageSession.Progress.State == StageProgressionState.InBattle ||
+                IsTerminalSpeechHoldBlocking(
+                    _terminalSpeechHoldActive,
+                    _terminalSpeechHoldCompleted))
             {
                 return;
             }

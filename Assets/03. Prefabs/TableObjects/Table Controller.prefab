@@ -1806,6 +1806,8 @@ MonoBehaviour:
   utilityPriceIncreasePerUsedVisit: 1
   whiskeySoulRestore: 2
   shopRandomSeed: 20260726
+  merchantSpeechProfile: {fileID: 11400000, guid: 0fb23cb8f2399b54cb64d57d5dec38bf, type: 2}
+  merchantSpeechSeed: 20260804
 --- !u!114 &8460495607259845532
 MonoBehaviour:
   m_ObjectHideFlags: 0
