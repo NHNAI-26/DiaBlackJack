@@ -103,11 +103,11 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void GameSceneProjectsNewPlayerDrawsAtScreenRightWithoutMutatingHandOrder()
+        public void CUM18_U01_GameSceneProjectsBothSidesNewestDrawAtScreenRight()
         {
             CoreLoopBattle battle = CreateBattle(
                 playerRanks: new[] { 10, 2, 4 },
-                enemyRanks: new[] { 10, 7, 5 },
+                enemyRanks: new[] { 10, 7, 5, 6 },
                 playerMaximumSoul: 12,
                 enemyMaximumSoul: 3);
             battle.Start();
@@ -117,6 +117,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             int enemyFaceUpCardId = battle.Enemy.Hand.Cards[0].Id;
             int enemyHiddenCardId = battle.Enemy.Hand.Cards[1].Id;
             int enemyDrawnFaceUpCardId = battle.Enemy.Draw(faceUp: true).Id;
+            int enemySecondDrawnFaceUpCardId = battle.Enemy.Draw(faceUp: true).Id;
 
             GameSceneViewModel model = GameScenePresenter.Create(battle);
 
@@ -135,6 +136,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                     enemyFaceUpCardId,
                     enemyHiddenCardId,
                     enemyDrawnFaceUpCardId,
+                    enemySecondDrawnFaceUpCardId,
                 }));
             Assert.That(
                 model.PlayerCards.Select(card => card.CardId),
@@ -148,8 +150,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 model.EnemyCards.Select(card => card.CardId),
                 Is.EqualTo(new[]
                 {
-                    enemyFaceUpCardId,
+                    enemySecondDrawnFaceUpCardId,
                     enemyDrawnFaceUpCardId,
+                    enemyFaceUpCardId,
                     enemyHiddenCardId,
                 }));
             Assert.That(

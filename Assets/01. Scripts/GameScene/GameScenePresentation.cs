@@ -1174,7 +1174,6 @@ namespace DiaBlackJack.GameScene
             IReadOnlyList<BlackjackCard> hand = battle.Enemy.Hand.Cards;
             PendingCardEffect pendingEffect = battle.PendingPlayerCardEffect;
             var cards = new List<GameSceneCardViewModel>(hand.Count);
-            int hiddenCardCount = 0;
             foreach (BlackjackCard card in hand)
             {
                 // Face-down enemy card: emit no rank. This is the information-hiding boundary.
@@ -1200,17 +1199,16 @@ namespace DiaBlackJack.GameScene
                     directSelectionCommand:
                         FindEnemyDirectSelectionCommand(battle, card.Id));
 
-                // Both sides' hidden cards sit on the screen LEFT (each player's own right, mirrored
-                // across the table). The camera mirrors local X, so screen-left = highest index →
-                // append the enemy's hidden card last too (face-ups first).
+                // EnemyHand is mirrored by the camera just like PlayerHand: its highest model index
+                // lands at screen-left. Keep hidden cards last and prepend each public draw so the
+                // newest card always lands at the protagonist's screen-right edge.
                 if (!isHiddenCard)
                 {
-                    cards.Insert(cards.Count - hiddenCardCount, projectedCard);
+                    cards.Insert(0, projectedCard);
                 }
                 else
                 {
                     cards.Add(projectedCard);
-                    hiddenCardCount++;
                 }
             }
 
