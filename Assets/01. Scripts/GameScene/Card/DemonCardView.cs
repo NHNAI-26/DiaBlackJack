@@ -19,6 +19,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Transform topPosition;
 
         [Header("Hover feel")]
+        [Tooltip("Visual-only pivot used by hand and selection cards so hover feedback does not move or resize the collider.")]
+        [SerializeField] private Transform hoverVisualRoot;
         [SerializeField] private float hoverScale = 1.15f;
         [SerializeField] private float scaleLerp = 12f;
         [SerializeField] private string hoverSfxId = "cardHover";
@@ -41,10 +43,12 @@ namespace DiaBlackJack.GameScene
         private SpriteRenderer _frontSpriteRenderer;
         private Material _shopMaterial;
         private Vector3 _baseScale = Vector3.one;
+        private Vector3 _hoverVisualBaseScale = Vector3.one;
         private Vector3 _targetScale = Vector3.one;
         private bool _showingFrontFace = true;
         private bool _showBadgeOnHover;
         private bool _hovered;
+        private bool _useHandHoverVisual;
         private bool _isShopSoldOut;
         private bool _shopColorCaptured;
         private Color _shopFrontColor = Color.white;
@@ -95,16 +99,31 @@ namespace DiaBlackJack.GameScene
             }
 
             _baseScale = transform.localScale;
-            _targetScale = _baseScale;
+            if (hoverVisualRoot != null)
+            {
+                _hoverVisualBaseScale = hoverVisualRoot.localScale;
+            }
+            _targetScale = HoverRestingScale();
         }
 
         private void Update()
         {
-            Vector3 current = transform.localScale;
+            Transform scaleTarget = HoverScaleTarget();
+            Vector3 current = scaleTarget.localScale;
             if ((current - _targetScale).sqrMagnitude > 0.0000001f)
             {
-                transform.localScale = Vector3.Lerp(current, _targetScale, Time.deltaTime * scaleLerp);
+                scaleTarget.localScale = Vector3.Lerp(
+                    current,
+                    _targetScale,
+                    Time.deltaTime * scaleLerp);
             }
+        }
+
+        private void OnDisable()
+        {
+            _hovered = false;
+            ResetHoverScales();
+            _targetScale = HoverRestingScale();
         }
 
         private void OnDestroy()
@@ -170,8 +189,8 @@ namespace DiaBlackJack.GameScene
                 : FormatBadgeDescription(card);
 
             _hovered = false;
-            transform.localScale = _baseScale;
-            _targetScale = _baseScale;
+            ResetHoverScales();
+            _targetScale = HoverRestingScale();
             ApplyOrientation(card.IsUpsideDown, animateOrientation);
         }
 
@@ -227,7 +246,47 @@ namespace DiaBlackJack.GameScene
 
             _hovered = hovered;
             PlayHoverSfx(hovered);
-            _targetScale = hovered ? _baseScale * hoverScale : _baseScale;
+            Vector3 restingScale = HoverRestingScale();
+            _targetScale = hovered ? restingScale * hoverScale : restingScale;
+        }
+
+        internal Transform HoverVisualTransform =>
+            hoverVisualRoot != null ? hoverVisualRoot : transform;
+
+        internal void EnableHoverVisualOnly()
+        {
+            ResetHoverScales();
+            _useHandHoverVisual = hoverVisualRoot != null;
+            _hovered = false;
+            _targetScale = HoverRestingScale();
+        }
+
+        internal void EnableHandHoverVisualOnly()
+        {
+            EnableHoverVisualOnly();
+        }
+
+        private Transform HoverScaleTarget()
+        {
+            return _useHandHoverVisual && hoverVisualRoot != null
+                ? hoverVisualRoot
+                : transform;
+        }
+
+        private Vector3 HoverRestingScale()
+        {
+            return _useHandHoverVisual && hoverVisualRoot != null
+                ? _hoverVisualBaseScale
+                : _baseScale;
+        }
+
+        private void ResetHoverScales()
+        {
+            transform.localScale = _baseScale;
+            if (hoverVisualRoot != null)
+            {
+                hoverVisualRoot.localScale = _hoverVisualBaseScale;
+            }
         }
 
         internal void SetShopPresentation()

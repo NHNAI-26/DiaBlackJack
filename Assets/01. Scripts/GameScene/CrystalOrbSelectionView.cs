@@ -172,45 +172,79 @@ namespace DiaBlackJack.GameScene
                 anchor.SetParent(transform, false);
                 CardView card = Instantiate(_candidatePrefab, anchor);
                 card.name = "Card";
-                _slots[i] = new CandidateSlot(anchor, card);
+                card.EnableHoverVisualOnly();
+                _slots[i] = new CandidateSlot(
+                    anchor,
+                    card.HoverVisualTransform,
+                    card);
             }
         }
 
         private void UpdateSlotPose(int index, bool snap)
         {
             CandidateSlot slot = _slots[index];
-            bool hovered = index == _hoveredIndex;
             CardSelectionFanLayout layout = ResolveFanLayout();
             if (layout == null ||
                 !layout.TryGetPose(
                     CardSelectionFanPreset.TwoCards,
                     index,
                     _candidateCount,
-                    hovered,
-                    out CardSelectionFanPose pose))
+                    hovered: false,
+                    out CardSelectionFanPose restingPose) ||
+                !layout.TryGetPose(
+                    CardSelectionFanPreset.TwoCards,
+                    index,
+                    _candidateCount,
+                    index == _hoveredIndex,
+                    out CardSelectionFanPose visualPose))
             {
                 return;
             }
 
-            Vector3 targetPosition = _camera.ViewportToWorldPoint(
+            Vector3 restingPosition = _camera.ViewportToWorldPoint(
                 new Vector3(
-                    pose.ViewportPosition.x,
-                    pose.ViewportPosition.y,
-                    pose.CameraDistance));
-            Quaternion targetRotation = _camera.transform.rotation *
-                Quaternion.Euler(0f, 180f, pose.Angle);
-            Vector3 targetScale = Vector3.one * pose.Scale;
+                    restingPose.ViewportPosition.x,
+                    restingPose.ViewportPosition.y,
+                    restingPose.CameraDistance));
+            Vector3 visualPosition = _camera.ViewportToWorldPoint(
+                new Vector3(
+                    visualPose.ViewportPosition.x,
+                    visualPose.ViewportPosition.y,
+                    visualPose.CameraDistance));
+            Quaternion restingRotation = _camera.transform.rotation *
+                Quaternion.Euler(0f, 180f, restingPose.Angle);
+            Quaternion visualRotation = _camera.transform.rotation *
+                Quaternion.Euler(0f, 180f, visualPose.Angle);
+            Vector3 restingScale = Vector3.one * restingPose.Scale;
             if (snap)
             {
-                slot.Anchor.SetPositionAndRotation(targetPosition, targetRotation);
-                slot.Anchor.localScale = targetScale;
+                slot.Anchor.SetPositionAndRotation(restingPosition, restingRotation);
+                slot.Anchor.localScale = restingScale;
+                slot.Visual.SetPositionAndRotation(visualPosition, visualRotation);
                 return;
             }
 
-            float t = 1f - Mathf.Exp(-pose.PoseLerp * Time.deltaTime);
-            slot.Anchor.position = Vector3.Lerp(slot.Anchor.position, targetPosition, t);
-            slot.Anchor.rotation = Quaternion.Slerp(slot.Anchor.rotation, targetRotation, t);
-            slot.Anchor.localScale = Vector3.Lerp(slot.Anchor.localScale, targetScale, t);
+            float t = 1f - Mathf.Exp(-visualPose.PoseLerp * Time.deltaTime);
+            slot.Anchor.position = Vector3.Lerp(
+                slot.Anchor.position,
+                restingPosition,
+                t);
+            slot.Anchor.rotation = Quaternion.Slerp(
+                slot.Anchor.rotation,
+                restingRotation,
+                t);
+            slot.Anchor.localScale = Vector3.Lerp(
+                slot.Anchor.localScale,
+                restingScale,
+                t);
+            slot.Visual.position = Vector3.Lerp(
+                slot.Visual.position,
+                visualPosition,
+                t);
+            slot.Visual.rotation = Quaternion.Slerp(
+                slot.Visual.rotation,
+                visualRotation,
+                t);
         }
 
         private int BaseSortingOrder
@@ -251,13 +285,19 @@ namespace DiaBlackJack.GameScene
 
         private sealed class CandidateSlot
         {
-            public CandidateSlot(Transform anchor, CardView card)
+            public CandidateSlot(
+                Transform anchor,
+                Transform visual,
+                CardView card)
             {
                 Anchor = anchor ?? throw new ArgumentNullException(nameof(anchor));
+                Visual = visual ?? throw new ArgumentNullException(nameof(visual));
                 Card = card ?? throw new ArgumentNullException(nameof(card));
             }
 
             public Transform Anchor { get; }
+
+            public Transform Visual { get; }
 
             public CardView Card { get; }
 

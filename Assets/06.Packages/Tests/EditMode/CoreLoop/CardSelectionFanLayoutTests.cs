@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Reflection;
 using DiaBlackJack.GameScene;
 using NUnit.Framework;
 using UnityEditor;
@@ -12,6 +13,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/Card/Card.prefab";
         private const string ManagerPrefabPath =
             "Assets/03. Prefabs/Manager/GameManager.prefab";
+        private const string DemonCardPrefabPath =
+            "Assets/03. Prefabs/Card/DemonCard.prefab";
         private const string SatanBrandSpritePath =
             "Assets/05. Arts/UI/DevilShape.png";
 
@@ -309,6 +312,246 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(layouts, Has.Length.EqualTo(1));
             Assert.That(contract, Is.Not.Null);
             Assert.That(contract.FanLayout, Is.SameAs(layouts[0]));
+        }
+
+        [Test]
+        public void GSH02_U09_SatanHoverMovesVisualButKeepsColliderPose()
+        {
+            GameObject cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                CardPrefabPath);
+            GameObject root = new GameObject("SatanHoverColliderTest");
+            GameObject cameraObject = new GameObject("Camera");
+            try
+            {
+                Camera camera = CreateTestCamera(cameraObject);
+                root.AddComponent<CardSelectionFanLayout>();
+                SatanNumberSelectionView view =
+                    root.AddComponent<SatanNumberSelectionView>();
+                view.Initialize(cardPrefab.GetComponent<CardView>());
+                GameSceneCardViewModel[] candidates = Enumerable.Range(1, 10)
+                    .Select(rank => new GameSceneCardViewModel(
+                        200 + rank,
+                        rank,
+                        isFaceUp: true,
+                        revealRank: true,
+                        canUse: true,
+                        displayName: rank.ToString(),
+                        isSatanBranded: rank == 2))
+                    .ToArray();
+                view.Render(candidates, camera);
+
+                const int hoveredIndex = 1;
+                InvokeUpdateSlotPose(view, hoveredIndex);
+                CardView card = root.GetComponentsInChildren<CardView>(true)
+                    .Single(candidate => candidate.CardId == 202);
+                BoxCollider collider = card.GetComponent<BoxCollider>();
+                Vector3 rootPosition = card.transform.position;
+                Quaternion rootRotation = card.transform.rotation;
+                Bounds colliderBounds = collider.bounds;
+                Vector3 visualPosition = card.HoverVisualTransform.position;
+
+                view.SetHovered(card);
+                InvokeUpdateSlotPose(view, hoveredIndex);
+
+                AssertFixedColliderAndLiftedVisual(
+                    card.transform,
+                    card.HoverVisualTransform,
+                    collider,
+                    rootPosition,
+                    rootRotation,
+                    colliderBounds,
+                    visualPosition);
+                SpriteRenderer brand = card
+                    .GetComponentsInChildren<SpriteRenderer>(true)
+                    .Single(renderer => renderer.gameObject.name == "DevilShape");
+                Assert.That(brand.transform.IsChildOf(card.HoverVisualTransform),
+                    Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(cameraObject);
+            }
+        }
+
+        [Test]
+        public void GSH02_U10_CrystalHoverMovesVisualButKeepsColliderPose()
+        {
+            GameObject cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                CardPrefabPath);
+            GameObject root = new GameObject("CrystalHoverColliderTest");
+            GameObject cameraObject = new GameObject("Camera");
+            try
+            {
+                Camera camera = CreateTestCamera(cameraObject);
+                root.AddComponent<CardSelectionFanLayout>();
+                CrystalOrbSelectionView view =
+                    root.AddComponent<CrystalOrbSelectionView>();
+                view.Initialize(cardPrefab.GetComponent<CardView>());
+                var candidates = new[]
+                {
+                    new GameSceneCardViewModel(
+                        301, 3, true, true, true, "3"),
+                    new GameSceneCardViewModel(
+                        302, 7, true, true, true, "7")
+                };
+                view.Render(candidates, camera);
+
+                InvokeUpdateSlotPose(view, 0);
+                CardView card = root.GetComponentsInChildren<CardView>(true)
+                    .Single(candidate => candidate.CardId == 301);
+                BoxCollider collider = card.GetComponent<BoxCollider>();
+                Vector3 rootPosition = card.transform.position;
+                Quaternion rootRotation = card.transform.rotation;
+                Bounds colliderBounds = collider.bounds;
+                Vector3 visualPosition = card.HoverVisualTransform.position;
+
+                view.SetHovered(card);
+                InvokeUpdateSlotPose(view, 0);
+
+                AssertFixedColliderAndLiftedVisual(
+                    card.transform,
+                    card.HoverVisualTransform,
+                    collider,
+                    rootPosition,
+                    rootRotation,
+                    colliderBounds,
+                    visualPosition);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(cameraObject);
+            }
+        }
+
+        [Test]
+        public void GSH02_U11_ContractHoverMovesVisualButKeepsColliderPose()
+        {
+            GameObject demonPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                DemonCardPrefabPath);
+            GameObject root = new GameObject("ContractHoverColliderTest");
+            GameObject cameraObject = new GameObject("Camera");
+            try
+            {
+                Camera camera = CreateTestCamera(cameraObject);
+                root.AddComponent<CardSelectionFanLayout>();
+                DemonContractSelectionView view =
+                    root.AddComponent<DemonContractSelectionView>();
+                SetPrivateField(
+                    view,
+                    "candidatePrefab",
+                    demonPrefab.GetComponent<DemonCardView>());
+                InvokePrivateMethod(view, "EnsureSlots");
+                var candidates = new[]
+                {
+                    CreateContractCandidate(1, "mammon"),
+                    CreateContractCandidate(2, "satan")
+                };
+                view.Render(candidates, camera);
+
+                InvokeUpdateSlotPose(view, 0);
+                DemonCardView card = root
+                    .GetComponentsInChildren<DemonCardView>(true)
+                    .Single(candidate => candidate.CardId == 1);
+                BoxCollider collider = card.GetComponent<BoxCollider>();
+                Vector3 rootPosition = card.transform.position;
+                Quaternion rootRotation = card.transform.rotation;
+                Bounds colliderBounds = collider.bounds;
+                Vector3 visualPosition = card.HoverVisualTransform.position;
+
+                view.SetHovered(card);
+                InvokeUpdateSlotPose(view, 0);
+
+                AssertFixedColliderAndLiftedVisual(
+                    card.transform,
+                    card.HoverVisualTransform,
+                    collider,
+                    rootPosition,
+                    rootRotation,
+                    colliderBounds,
+                    visualPosition);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(cameraObject);
+            }
+        }
+
+        private static Camera CreateTestCamera(GameObject cameraObject)
+        {
+            Camera camera = cameraObject.AddComponent<Camera>();
+            camera.orthographic = true;
+            camera.orthographicSize = 5f;
+            camera.transform.position = new Vector3(0f, 0f, -10f);
+            return camera;
+        }
+
+        private static GameSceneCombatHudContractCandidateViewModel
+            CreateContractCandidate(int optionId, string definitionKey)
+        {
+            return new GameSceneCombatHudContractCandidateViewModel(
+                new GameSceneCombatHudCommand(
+                    GameSceneCombatHudCommandKind.ResolveDemonContractChoice,
+                    optionId),
+                definitionKey,
+                definitionKey,
+                "Ability",
+                "Cost",
+                isInteractable: true);
+        }
+
+        private static void AssertFixedColliderAndLiftedVisual(
+            Transform cardRoot,
+            Transform visual,
+            BoxCollider collider,
+            Vector3 rootPosition,
+            Quaternion rootRotation,
+            Bounds colliderBounds,
+            Vector3 visualPosition)
+        {
+            Assert.That(visual, Is.Not.SameAs(cardRoot));
+            Assert.That(Vector3.Distance(cardRoot.position, rootPosition),
+                Is.LessThan(0.0001f));
+            Assert.That(Quaternion.Angle(cardRoot.rotation, rootRotation),
+                Is.LessThan(0.0001f));
+            Assert.That(Vector3.Distance(collider.bounds.center, colliderBounds.center),
+                Is.LessThan(0.0001f));
+            Assert.That(Vector3.Distance(collider.bounds.size, colliderBounds.size),
+                Is.LessThan(0.0001f));
+            Assert.That(visual.position.y, Is.GreaterThan(visualPosition.y));
+            Assert.That(visual.position.z, Is.LessThan(visualPosition.z));
+        }
+
+        private static void InvokeUpdateSlotPose(MonoBehaviour view, int index)
+        {
+            MethodInfo method = view.GetType().GetMethod(
+                "UpdateSlotPose",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
+            method.Invoke(view, new object[] { index, true });
+        }
+
+        private static void InvokePrivateMethod(object target, string methodName)
+        {
+            MethodInfo method = target.GetType().GetMethod(
+                methodName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null);
+            method.Invoke(target, null);
+        }
+
+        private static void SetPrivateField(
+            object target,
+            string fieldName,
+            object value)
+        {
+            FieldInfo field = target.GetType().GetField(
+                fieldName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null);
+            field.SetValue(target, value);
         }
 
     }

@@ -75,6 +75,8 @@ MonoBehaviour:
   resolveHoldSeconds: 1.1
   revolverAnimator: {fileID: 0}
   revolverRoot: {fileID: 0}
+  revolverReadySeconds: 1.2666668
+  revolverCameraReturnSeconds: 0.45
   revolverAnimationSeconds: 8.8
   revolverBaseStateName: Revolver_Base
   playerReadyTrigger: PlayerTurnStart
@@ -139,13 +141,13 @@ MonoBehaviour:
     poseLerp: 14
     baseSortingOrder: 80
   tenCardProfile:
-    viewportCenter: {x: 0.5, y: 0.13}
+    viewportCenter: {x: 0.5, y: 0.1}
     cameraDistance: 1.55
-    halfViewportWidth: 0.25
-    edgeLift: -0.05
+    halfViewportWidth: 0.31
+    edgeLift: -0.08
     maximumFanAngle: 16
     cardScale: 0.58
-    hoverViewportLift: 0.15
+    hoverViewportLift: 0.07
     hoverCameraPull: 0.08
     poseLerp: 14
     baseSortingOrder: 90

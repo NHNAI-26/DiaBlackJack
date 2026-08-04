@@ -266,6 +266,7 @@ namespace DiaBlackJack.GameScene
                 }
 
                 CardView card = Instantiate(cardPrefab, transform);
+                card.EnableHandHoverVisualOnly();
                 _spawned.Add(card);
                 _moveTweens.Add(null);
                 newCardIds.Add(model.CardId);
@@ -310,6 +311,7 @@ namespace DiaBlackJack.GameScene
                 }
 
                 DemonCardView card = Instantiate(demonCardPrefab, transform);
+                card.EnableHandHoverVisualOnly();
                 _spawnedDemonCards.Add(card);
                 _demonMoveTweens.Add(null);
                 newCardIds.Add(model.CardId);

@@ -30,7 +30,7 @@ RectTransform:
   m_LocalScale: {x: 0.18, y: 0.18, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8413696433971576580}
+  m_Father: {fileID: 6402748276528183579}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -261,7 +261,7 @@ PrefabInstance:
     - {fileID: 2250541817930894918, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 1859650830208200288, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 3879458989783492735, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1278396405946814622}
     m_AddedComponents:
@@ -291,9 +291,11 @@ MonoBehaviour:
   englishNameText: {fileID: 5351297430032860447}
   cardContentCatalog: {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a140001, type: 2}
   topPosition: {fileID: 5217502089744215780}
+  hoverVisualRoot: {fileID: 6402748276528183579}
   hoverScale: 1.15
   scaleLerp: 12
   hoverSfxId: cardHover
+  upsideDownTurnDuration: 0.35
   shopOfferStatus: {fileID: 3469392917929214280}
   shopSoldOutTint: {r: 0.35, g: 0.35, b: 0.35, a: 1}
 --- !u!1 &805380802697689471 stripped
@@ -322,8 +324,8 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2694824136228126592, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
   m_PrefabInstance: {fileID: 7858142292954665316}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &8413696433971576580 stripped
+--- !u!4 &6402748276528183579 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 1859650830208200288, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
+  m_CorrespondingSourceObject: {fileID: 3879458989783492735, guid: f1c533b6369da3a43a661a372b761d01, type: 3}
   m_PrefabInstance: {fileID: 7858142292954665316}
   m_PrefabAsset: {fileID: 0}

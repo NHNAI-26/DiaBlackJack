@@ -32,6 +32,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Transform bottomPosition;
 
         [Header("Hover feel")]
+        [Tooltip("Visual-only pivot used by hand and selection cards so hover feedback does not move or resize the collider.")]
+        [SerializeField] private Transform hoverVisualRoot;
         [SerializeField] private float hoverScale = 1.15f;
         [Min(0.01f)]
         [SerializeField] private float hoverScaleDuration = 0.08f;
@@ -118,12 +120,14 @@ namespace DiaBlackJack.GameScene
         private Sequence _revealSequence;
         private Sequence _usedMarkSequence;
         private Vector3 _baseScale = Vector3.one;
+        private Vector3 _hoverVisualBaseScale = Vector3.one;
         private Vector3 _usedMarkFirstStrokeScale = Vector3.one;
         private Vector3 _usedMarkSecondStrokeScale = Vector3.one;
         private bool _showingFrontFace = true;
         private bool _usesHoverCardBlend;
         private bool _showBadgeOnHover;
         private bool _hovered;
+        private bool _useHandHoverVisual;
         private bool _hasBoundCard;
         private bool _isUsed;
         private bool _isEffectHighlighted;
@@ -200,6 +204,10 @@ namespace DiaBlackJack.GameScene
             }
 
             _baseScale = transform.localScale;
+            if (hoverVisualRoot != null)
+            {
+                _hoverVisualBaseScale = hoverVisualRoot.localScale;
+            }
             CaptureUsedMarkScales();
 
             HideRankText();
@@ -218,7 +226,7 @@ namespace DiaBlackJack.GameScene
             StopRevealSequence();
             StopScaleTween();
             StopUsedMarkSequence();
-            transform.localScale = _baseScale;
+            ResetHoverScales();
             _hovered = false;
             ApplyHoverOutline(false);
             ApplyHoverCardBlend(false);
@@ -304,7 +312,7 @@ namespace DiaBlackJack.GameScene
             // Pooled cards are reused; clear any prior hover state and snap to base size.
             _hovered = false;
             StopScaleTween();
-            transform.localScale = _baseScale;
+            ResetHoverScales();
             ApplyHoverOutline(_isEffectHighlighted);
             ApplyUsedMark(animateUsedMark);
             if (animateReveal)
@@ -333,9 +341,26 @@ namespace DiaBlackJack.GameScene
 
             _hovered = hovered;
             PlayHoverSfx(hovered);
-            PlayHoverScaleTween(hovered ? _baseScale * hoverScale : _baseScale);
+            Vector3 restingScale = HoverRestingScale();
+            PlayHoverScaleTween(hovered ? restingScale * hoverScale : restingScale);
             ApplyHoverOutline(hovered || _isEffectHighlighted);
             ApplyHoverCardBlend(hovered);
+        }
+
+        internal Transform HoverVisualTransform =>
+            hoverVisualRoot != null ? hoverVisualRoot : transform;
+
+        internal void EnableHoverVisualOnly()
+        {
+            StopScaleTween();
+            ResetHoverScales();
+            _useHandHoverVisual = hoverVisualRoot != null;
+            _hovered = false;
+        }
+
+        internal void EnableHandHoverVisualOnly()
+        {
+            EnableHoverVisualOnly();
         }
 
         /// <summary>
@@ -347,13 +372,13 @@ namespace DiaBlackJack.GameScene
             _baseScale = baseScale;
             StopRevealSequence();
             StopScaleTween();
-            transform.localScale = _baseScale;
+            ResetHoverScales();
         }
 
         private void PlayRevealFlip()
         {
             StopScaleTween();
-            transform.localScale = _baseScale;
+            ResetHoverScales();
             SetFaceObjects(showFront: false);
 
             float halfDuration = Mathf.Max(revealFlipDuration, 0.1f) * 0.5f;
@@ -370,6 +395,7 @@ namespace DiaBlackJack.GameScene
             sequence.OnComplete(() =>
             {
                 transform.localScale = _baseScale;
+                ResetHoverVisualScale();
                 SetFaceObjects(showFront: true);
             });
             sequence.OnKill(() =>
@@ -391,6 +417,7 @@ namespace DiaBlackJack.GameScene
             }
 
             transform.localScale = _baseScale;
+            ResetHoverVisualScale();
             SetFaceObjects(_showingFrontFace);
         }
 
@@ -663,9 +690,37 @@ namespace DiaBlackJack.GameScene
             StopScaleTween();
 
             float duration = Mathf.Max(hoverScaleDuration, 0.01f);
-            _scaleTween = transform.DOScale(targetScale, duration)
+            _scaleTween = HoverScaleTarget().DOScale(targetScale, duration)
                 .SetEase(hoverScaleCurve)
                 .SetTarget(this);
+        }
+
+        private Transform HoverScaleTarget()
+        {
+            return _useHandHoverVisual && hoverVisualRoot != null
+                ? hoverVisualRoot
+                : transform;
+        }
+
+        private Vector3 HoverRestingScale()
+        {
+            return _useHandHoverVisual && hoverVisualRoot != null
+                ? _hoverVisualBaseScale
+                : _baseScale;
+        }
+
+        private void ResetHoverScales()
+        {
+            transform.localScale = _baseScale;
+            ResetHoverVisualScale();
+        }
+
+        private void ResetHoverVisualScale()
+        {
+            if (hoverVisualRoot != null)
+            {
+                hoverVisualRoot.localScale = _hoverVisualBaseScale;
+            }
         }
 
         private void StopScaleTween()

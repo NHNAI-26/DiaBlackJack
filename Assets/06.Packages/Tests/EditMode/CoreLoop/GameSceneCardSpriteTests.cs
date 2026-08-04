@@ -1310,6 +1310,169 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GSV12_U01_CardPrefabsKeepCollidersOutsideHoverVisualRoot()
+        {
+            GameObject cardPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            GameObject demonPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(DemonCardPrefabPath);
+
+            Assert.That(cardPrefab, Is.Not.Null);
+            Assert.That(demonPrefab, Is.Not.Null);
+            AssertHoverVisualRoot(cardPrefab, cardPrefab.GetComponent<CardView>());
+            AssertHoverVisualRoot(demonPrefab, demonPrefab.GetComponent<DemonCardView>());
+        }
+
+        [Test]
+        public void GSV12_U02_NormalHandHoverScalesVisualWithoutMovingCollider()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            var handObject = new GameObject("Normal Hand Hover Test");
+
+            try
+            {
+                CardHand hand = handObject.AddComponent<CardHand>();
+                SetPrivateField(hand, "cardPrefab", prefab.GetComponent<CardView>());
+                hand.Render(new[]
+                {
+                    CreateHoverOutlineCard(
+                        CardDefinitionCatalog.GetDefaultForRank(5),
+                        canUse: true),
+                });
+
+                CardView card = GetPrivateField<List<CardView>>(hand, "_spawned")[0];
+                Transform visualRoot = GetPrivateField<Transform>(
+                    card,
+                    "hoverVisualRoot");
+                BoxCollider collider = card.GetComponent<BoxCollider>();
+                Vector3 rootScale = card.transform.localScale;
+                Vector3 visualScale = visualRoot.localScale;
+                Bounds colliderBounds = collider.bounds;
+
+                Assert.That(GetPrivateField<bool>(card, "_useHandHoverVisual"),
+                    Is.True);
+                Assert.That(InvokePrivate<Transform>(card, "HoverScaleTarget"),
+                    Is.SameAs(visualRoot));
+
+                card.SetHovered(true);
+                Physics.SyncTransforms();
+
+                Assert.That(card.transform.localScale, Is.EqualTo(rootScale));
+                Assert.That(GetTweenEndScale(card),
+                    Is.EqualTo(visualScale * GetPrivateField<float>(card, "hoverScale")));
+                Assert.That(collider.bounds.center, Is.EqualTo(colliderBounds.center));
+                Assert.That(collider.bounds.size, Is.EqualTo(colliderBounds.size));
+
+                card.SetHovered(false);
+                Assert.That(GetTweenEndScale(card), Is.EqualTo(visualScale));
+                Assert.That(card.transform.localScale, Is.EqualTo(rootScale));
+            }
+            finally
+            {
+                Object.DestroyImmediate(handObject);
+            }
+        }
+
+        [Test]
+        public void GSV12_U03_DemonHandHoverTargetsVisualWithoutMovingCollider()
+        {
+            GameObject cardPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            GameObject demonPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(DemonCardPrefabPath);
+            var handObject = new GameObject("Demon Hand Hover Test");
+
+            try
+            {
+                CardHand hand = handObject.AddComponent<CardHand>();
+                SetPrivateField(
+                    hand,
+                    "cardPrefab",
+                    cardPrefab.GetComponent<CardView>());
+                SetPrivateField(
+                    hand,
+                    "demonCardPrefab",
+                    demonPrefab.GetComponent<DemonCardView>());
+                DemonContractDefinition definition = DemonContractCatalog.Default
+                    .GetByKey(DemonContractCatalog.SatanKey);
+                hand.Render(
+                    new GameSceneCardViewModel[0],
+                    new[]
+                    {
+                        new GameSceneDemonCardViewModel(
+                            cardId: 101,
+                            definitionKey: definition.Key,
+                            isFaceUp: true,
+                            canUse: true,
+                            displayName: definition.DisplayName),
+                    });
+
+                DemonCardView card = GetPrivateField<List<DemonCardView>>(
+                    hand,
+                    "_spawnedDemonCards")[0];
+                Transform visualRoot = GetPrivateField<Transform>(
+                    card,
+                    "hoverVisualRoot");
+                BoxCollider collider = card.GetComponent<BoxCollider>();
+                Vector3 rootScale = card.transform.localScale;
+                Vector3 visualScale = visualRoot.localScale;
+                Bounds colliderBounds = collider.bounds;
+
+                card.SetHovered(true);
+
+                Assert.That(GetPrivateField<bool>(card, "_useHandHoverVisual"),
+                    Is.True);
+                Assert.That(InvokePrivate<Transform>(card, "HoverScaleTarget"),
+                    Is.SameAs(visualRoot));
+                Assert.That(card.transform.localScale, Is.EqualTo(rootScale));
+                Assert.That(GetPrivateField<Vector3>(card, "_targetScale"),
+                    Is.EqualTo(
+                        visualScale * GetPrivateField<float>(card, "hoverScale")));
+                Assert.That(collider.bounds.center, Is.EqualTo(colliderBounds.center));
+                Assert.That(collider.bounds.size, Is.EqualTo(colliderBounds.size));
+
+                card.SetHovered(false);
+                Assert.That(GetPrivateField<Vector3>(card, "_targetScale"),
+                    Is.EqualTo(visualScale));
+            }
+            finally
+            {
+                Object.DestroyImmediate(handObject);
+            }
+        }
+
+        [Test]
+        public void GSV12_U04_DirectCardsKeepExistingRootHoverTarget()
+        {
+            GameObject cardPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            GameObject demonPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(DemonCardPrefabPath);
+            GameObject cardObject = Object.Instantiate(cardPrefab);
+            GameObject demonObject = Object.Instantiate(demonPrefab);
+
+            try
+            {
+                CardView card = cardObject.GetComponent<CardView>();
+                DemonCardView demon = demonObject.GetComponent<DemonCardView>();
+
+                Assert.That(InvokePrivate<Transform>(card, "HoverScaleTarget"),
+                    Is.SameAs(card.transform));
+                Assert.That(InvokePrivate<Transform>(demon, "HoverScaleTarget"),
+                    Is.SameAs(demon.transform));
+                Assert.That(GetPrivateField<bool>(card, "_useHandHoverVisual"),
+                    Is.False);
+                Assert.That(GetPrivateField<bool>(demon, "_useHandHoverVisual"),
+                    Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(cardObject);
+                Object.DestroyImmediate(demonObject);
+            }
+        }
+
+        [Test]
         public void GSV03_U01_ShopNormalCardHoverMaterialIsIsolatedPerOffer()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
@@ -1664,6 +1827,47 @@ namespace DiaBlackJack.CoreLoop.Tests
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, fieldName);
             return (T)field.GetValue(target);
+        }
+
+        private static T InvokePrivate<T>(object target, string methodName)
+        {
+            MethodInfo method = target.GetType().GetMethod(
+                methodName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null, methodName);
+            return (T)method.Invoke(target, null);
+        }
+
+        private static Vector3 GetTweenEndScale(CardView view)
+        {
+            object tween = GetPrivateField<object>(view, "_scaleTween");
+            Assert.That(tween, Is.Not.Null);
+            FieldInfo endValue = tween.GetType().GetField(
+                "endValue",
+                BindingFlags.Instance | BindingFlags.Public);
+            Assert.That(endValue, Is.Not.Null);
+            return (Vector3)endValue.GetValue(tween);
+        }
+
+        private static void AssertHoverVisualRoot(
+            GameObject prefab,
+            Component view)
+        {
+            Assert.That(view, Is.Not.Null);
+            SerializedObject serialized = new SerializedObject(view);
+            Transform visualRoot = serialized.FindProperty("hoverVisualRoot")
+                .objectReferenceValue as Transform;
+            BoxCollider collider = prefab.GetComponent<BoxCollider>();
+
+            Assert.That(visualRoot, Is.Not.Null);
+            Assert.That(visualRoot.parent, Is.SameAs(prefab.transform));
+            Assert.That(prefab.transform.childCount, Is.EqualTo(1));
+            Assert.That(collider, Is.Not.Null);
+            Assert.That(collider.transform, Is.SameAs(prefab.transform));
+            Assert.That(visualRoot.GetComponentsInChildren<BoxCollider>(true),
+                Is.Empty);
+            Assert.That(visualRoot.GetComponentsInChildren<Renderer>(true),
+                Is.Not.Empty);
         }
 
         private static void SetPrivateField(object target, string fieldName, object value)
