@@ -13,7 +13,8 @@ namespace DiaBlackJack.GameScene
             string summary = "",
             string costSummary = "",
             bool showHoverBadgeWhenUnavailable = false,
-            bool isUpsideDown = false)
+            bool isUpsideDown = false,
+            int? satanDoomCount = null)
         {
             if (cardId < 0)
             {
@@ -27,6 +28,13 @@ namespace DiaBlackJack.GameScene
                     nameof(definitionKey));
             }
 
+            if (satanDoomCount.HasValue && satanDoomCount.Value < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(satanDoomCount),
+                    "Satan doom count cannot be negative.");
+            }
+
             CardId = cardId;
             DefinitionKey = definitionKey;
             EnglishName = definitionKey.ToUpperInvariant();
@@ -37,6 +45,7 @@ namespace DiaBlackJack.GameScene
             CostSummary = costSummary ?? string.Empty;
             ShowHoverBadgeWhenUnavailable = showHoverBadgeWhenUnavailable;
             IsUpsideDown = isUpsideDown;
+            SatanDoomCount = satanDoomCount;
         }
 
         public int CardId { get; }
@@ -54,6 +63,8 @@ namespace DiaBlackJack.GameScene
         public bool IsFaceUp { get; }
 
         public bool IsUpsideDown { get; }
+
+        public int? SatanDoomCount { get; }
 
         public bool ShowHoverBadgeWhenUnavailable { get; }
 

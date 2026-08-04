@@ -724,3 +724,12 @@ Assets/06.Packages/Tests/EditMode/StageProgression/
 - 첫 선언은 10장 모두 선택 가능하다. 두 번째 선언은 `ContextNumericValue`와 같은 카드에 표식을 표시하고 직접 선택 명령을 제거한다.
 - `SatanNumberSelectionView`는 기존 `CardView` 프리팹을 런타임 복제해 하단 한 줄에 배치한다.
 - 전용 낙인 스프라이트가 저장소에 들어오기 전에는 기존 교차 표식을 임시 낙인으로 사용한다.
+
+## DC-UI09 사탄 종말 카운트 표시 명세
+
+- `GameSceneDemonCardViewModel`은 활성 사탄에만 nullable `SatanDoomCount`를 투영한다.
+- 값은 `SatanRuntimeState.RemainingDoomCount`를 단일 기준으로 사용하며 0도 숨기지 않는다.
+- `DemonCardView`는 기존 카드 이름 TMP 글꼴과 재질을 복제한 전용 런타임 텍스트를 카드 앞면 상단 영역에 직접 겹쳐 생성한다.
+- 전용 재질은 핏빛 본문·짙은 외곽선·언더레이를 사용하며 뷰 파괴 시 함께 정리한다.
+- 숫자는 카드 로컬 위치·회전을 사용해 사탄 방향이 바뀌어도 카드 앞면의 같은 영역에 붙어 함께 회전한다.
+- 사탄이 아니거나 비공개이거나 런타임 카운트가 없는 카드는 카운터를 표시하지 않는다.
