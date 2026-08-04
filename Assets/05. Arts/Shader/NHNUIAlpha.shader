@@ -7,6 +7,15 @@ Shader "Shader/UI Alpha"
         _AlphaMultiplier ("Alpha Multiplier", Range(0,1)) = 1
         [Toggle] _UseRgbOverride ("Use RGB Override", Float) = 0
         _RgbOverrideColor ("RGB Override Color", Color) = (1,1,1,1)
+        [Toggle(_UV_ALPHA_FADE_ON)] _UVAlphaFadeEnabled ("UV Fade", Float) = 0
+        [Enum(U,0,V,1,Radial,2)] _UVAlphaFadeAxis ("UV Fade Mode", Float) = 1
+        [HideInInspector] [PerRendererData] _UVAlphaFadeUVRect ("UV Fade UV Rect", Vector) = (0,0,1,1)
+        _UVAlphaFadeUVOffset ("UV Fade UV Offset XY", Vector) = (0,0,0,0)
+        _UVAlphaFadeLower ("UV Fade Low Point", Range(0,1)) = 0
+        _UVAlphaFadeUpper ("UV Fade High Point", Range(0,1)) = 1
+        _UVAlphaFadeOffset ("UV Fade Offset", Range(-1,1)) = 0
+        [Toggle] _UVAlphaFadeInvert ("Invert UV Fade", Float) = 0
+        _UVAlphaFadeColor ("UV Fade Color", Color) = (1,1,1,0)
 
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
@@ -61,6 +70,7 @@ Shader "Shader/UI Alpha"
 
             #pragma multi_compile_local _ UNITY_UI_CLIP_RECT
             #pragma multi_compile_local _ UNITY_UI_ALPHACLIP
+            #pragma shader_feature_local_fragment _UV_ALPHA_FADE_ON
 
             struct appdata_t
             {
@@ -86,6 +96,14 @@ Shader "Shader/UI Alpha"
             float _AlphaMultiplier;
             float _UseRgbOverride;
             fixed4 _RgbOverrideColor;
+            float _UVAlphaFadeAxis;
+            float4 _UVAlphaFadeUVRect;
+            float4 _UVAlphaFadeUVOffset;
+            float _UVAlphaFadeLower;
+            float _UVAlphaFadeUpper;
+            float _UVAlphaFadeOffset;
+            float _UVAlphaFadeInvert;
+            fixed4 _UVAlphaFadeColor;
             float _Cutoff;
 
             v2f vert(appdata_t input)
@@ -101,6 +119,59 @@ Shader "Shader/UI Alpha"
                 return output;
             }
 
+            half Bayer4x4(float2 screenPosition)
+            {
+                float2 pixel = floor(frac(screenPosition * 0.25) * 4.0);
+                half threshold = 0.0h;
+
+                if (pixel.y < 1.0)
+                {
+                    if (pixel.x < 1.0)
+                        threshold = 0.0h;
+                    else if (pixel.x < 2.0)
+                        threshold = 8.0h;
+                    else if (pixel.x < 3.0)
+                        threshold = 2.0h;
+                    else
+                        threshold = 10.0h;
+                }
+                else if (pixel.y < 2.0)
+                {
+                    if (pixel.x < 1.0)
+                        threshold = 12.0h;
+                    else if (pixel.x < 2.0)
+                        threshold = 4.0h;
+                    else if (pixel.x < 3.0)
+                        threshold = 14.0h;
+                    else
+                        threshold = 6.0h;
+                }
+                else if (pixel.y < 3.0)
+                {
+                    if (pixel.x < 1.0)
+                        threshold = 3.0h;
+                    else if (pixel.x < 2.0)
+                        threshold = 11.0h;
+                    else if (pixel.x < 3.0)
+                        threshold = 1.0h;
+                    else
+                        threshold = 9.0h;
+                }
+                else
+                {
+                    if (pixel.x < 1.0)
+                        threshold = 15.0h;
+                    else if (pixel.x < 2.0)
+                        threshold = 7.0h;
+                    else if (pixel.x < 3.0)
+                        threshold = 13.0h;
+                    else
+                        threshold = 5.0h;
+                }
+
+                return (threshold + 0.5h) / 16.0h;
+            }
+
             fixed4 frag(v2f input) : SV_Target
             {
                 fixed4 color = (tex2D(_MainTex, input.texcoord) + _TextureSampleAdd) * input.color;
@@ -111,6 +182,24 @@ Shader "Shader/UI Alpha"
                     color.rgb = _RgbOverrideColor.rgb;
                     color.a *= _RgbOverrideColor.a;
                 }
+
+                #ifdef _UV_ALPHA_FADE_ON
+                float2 localUV = (input.texcoord - _UVAlphaFadeUVRect.xy)
+                    / max(_UVAlphaFadeUVRect.zw, float2(0.00001, 0.00001));
+                localUV = saturate(localUV);
+                float2 fadeUV = localUV + _UVAlphaFadeUVOffset.xy;
+                float linearCoordinate = lerp(fadeUV.x, fadeUV.y, step(0.5, _UVAlphaFadeAxis));
+                float radialCoordinate = length(fadeUV - 0.5) * 1.41421356;
+                float coordinate = lerp(linearCoordinate, radialCoordinate, step(1.5, _UVAlphaFadeAxis));
+                coordinate -= _UVAlphaFadeOffset;
+                float fadeUpper = _UVAlphaFadeUpper;
+                if (abs(fadeUpper - _UVAlphaFadeLower) < 0.0001)
+                    fadeUpper = _UVAlphaFadeLower + 0.0001;
+                half fade = smoothstep(_UVAlphaFadeLower, fadeUpper, coordinate);
+                fade = lerp(fade, 1.0h - fade, step(0.5, _UVAlphaFadeInvert));
+                color.rgb = lerp(_UVAlphaFadeColor.rgb, color.rgb, fade);
+                clip(lerp(_UVAlphaFadeColor.a, 1.0h, fade) - Bayer4x4(input.vertex.xy));
+                #endif
 
                 #ifdef UNITY_UI_CLIP_RECT
                 color.a *= UnityGet2DClipping(input.worldPosition.xy, _ClipRect);
