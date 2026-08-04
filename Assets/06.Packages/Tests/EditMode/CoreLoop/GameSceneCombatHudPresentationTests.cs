@@ -939,6 +939,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(actionHud.OptionActions, Is.Empty);
             Assert.That(activeSatan.CanUse, Is.True);
             Assert.That(activeSatan.IsUpsideDown, Is.False);
+            Assert.That(activeSatan.SatanDoomCount, Is.EqualTo(3));
             Assert.That(battle.TryBeginPlayerActiveDemonContractAction(
                 active.SourceCardId), Is.True);
 
@@ -987,6 +988,89 @@ namespace DiaBlackJack.CoreLoop.Tests
                 GameScenePresenter.Create(battle)
                     .PlayerDemonCards.Single().IsUpsideDown,
                 Is.True);
+        }
+
+        [Test]
+        public void DCUI09_U01_SatanDoomCounterRendersBloodRedOnCardFace()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                DemonCardPrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                DemonCardView view = instance.GetComponent<DemonCardView>();
+                view.Bind(new GameSceneDemonCardViewModel(
+                    cardId: 1,
+                    definitionKey: DemonContractCatalog.SatanKey,
+                    isFaceUp: true,
+                    canUse: true,
+                    displayName: "사탄",
+                    satanDoomCount: 4));
+
+                Assert.That(view.IsSatanDoomCountVisible, Is.True);
+                Assert.That(view.SatanDoomCountLabel, Is.EqualTo("4"));
+                Assert.That(
+                    view.SatanDoomCountTextColor.r,
+                    Is.GreaterThan(view.SatanDoomCountTextColor.g * 10f));
+                Assert.That(view.SatanDoomCountOutlineWidth, Is.GreaterThan(0f));
+                Assert.That(view.SatanDoomCountFontSize, Is.EqualTo(11f));
+                Assert.That(view.SatanDoomCountLocalScale.x, Is.EqualTo(0.4f));
+                Assert.That(
+                    view.SatanDoomCountRectSize.x *
+                    view.SatanDoomCountLocalScale.x,
+                    Is.LessThanOrEqualTo(0.65f));
+                Assert.That(
+                    view.SatanDoomCountLocalPosition.y +
+                    view.SatanDoomCountRectSize.y *
+                    view.SatanDoomCountLocalScale.y * 0.5f,
+                    Is.LessThanOrEqualTo(0.35f));
+                Assert.That(
+                    view.SatanDoomCountLocalPosition.y,
+                    Is.GreaterThan(0f));
+                Assert.That(
+                    view.SatanDoomCountLocalPosition.y,
+                    Is.LessThan(0.4f));
+                Assert.That(
+                    view.SatanDoomCountLocalPosition.z,
+                    Is.GreaterThan(0f));
+
+                view.Bind(new GameSceneDemonCardViewModel(
+                    cardId: 1,
+                    definitionKey: DemonContractCatalog.SatanKey,
+                    isFaceUp: true,
+                    canUse: true,
+                    displayName: "사탄",
+                    isUpsideDown: true,
+                    satanDoomCount: 0));
+                view.AlignSatanDoomCount();
+
+                Assert.That(view.SatanDoomCountLabel, Is.EqualTo("0"));
+                Assert.That(
+                    view.SatanDoomCountLocalPosition.y,
+                    Is.GreaterThan(0f));
+                float worldFacingAngle = instance.transform.localEulerAngles.z +
+                    view.SatanDoomCountLocalEulerAngles.z;
+                Assert.That(
+                    Mathf.Abs(Mathf.DeltaAngle(worldFacingAngle, -4f)),
+                    Is.EqualTo(180f).Within(0.1f));
+                Assert.That(
+                    Mathf.DeltaAngle(
+                        view.SatanDoomCountLocalEulerAngles.z,
+                        -4f),
+                    Is.EqualTo(0f).Within(0.1f));
+
+                view.Bind(new GameSceneDemonCardViewModel(
+                    cardId: 2,
+                    definitionKey: DemonContractCatalog.BelphegorKey,
+                    isFaceUp: true,
+                    canUse: false,
+                    displayName: "벨페고르"));
+                Assert.That(view.IsSatanDoomCountVisible, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
         }
 
         [Test]

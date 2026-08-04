@@ -13,11 +13,11 @@ namespace DiaBlackJack.GameScene
     internal static class CurrencyIconMarkup
     {
         public const string GoldSpriteAssetName = "GoldIcon";
-        public const string SoulSpriteAssetName = "SoulIcon-v5";
+        public const string SoulSpriteAssetName = "SoulIcon";
         public const string GoldTag =
             "<size=115%><sprite=\"GoldIcon\" index=0></size>";
         public const string SoulTag =
-            "<size=135%><sprite=\"SoulIcon-v5\" index=0></size>";
+            "<size=135%><sprite=\"SoulIcon\" index=0></size>";
 
         private static readonly Regex GoldWord = new Regex(
             @"\bGOLD\b",
