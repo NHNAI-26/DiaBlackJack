@@ -27,7 +27,7 @@ namespace DiaBlackJack.CoreLoop
             IReadOnlyList<BlackjackCard> peekedCards = context.TakeActorTopCards(2);
             var options = new[]
             {
-                new CardEffectChoiceOption(TakeNoneOptionId, "추가하지 않기"),
+                new CardEffectChoiceOption(TakeNoneOptionId, "선택하지 않기"),
                 CreateTakeOption(1, peekedCards[0]),
                 CreateTakeOption(2, peekedCards[1])
             };

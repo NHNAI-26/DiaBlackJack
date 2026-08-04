@@ -224,8 +224,9 @@ namespace DiaBlackJack.GameScene
                             interaction.InteractionId),
                         choice.Label,
                         !inputLocked,
-                        placement: interaction.EffectKind ==
-                            CardEffectKind.Flamethrower
+                        placement: IsBottomRightAutomaticCardAction(
+                            interaction.ChoiceKind,
+                            choice.OptionId)
                                 ? GameSceneCombatHudActionPlacement.BottomRight
                                 : GameSceneCombatHudActionPlacement.Default));
                 }
@@ -536,6 +537,28 @@ namespace DiaBlackJack.GameScene
                 case DemonContractInteractionKind.MammonReroll:
                     return optionId ==
                         MammonDemonContractHandler.KeepDieOptionId;
+                default:
+                    return false;
+            }
+        }
+
+        internal static bool IsBottomRightAutomaticCardAction(
+            AutomaticCardChoiceKind choiceKind,
+            int optionId)
+        {
+            switch (choiceKind)
+            {
+                case AutomaticCardChoiceKind.PoisonDecision:
+                case AutomaticCardChoiceKind.ResurrectionHerbDecision:
+                case AutomaticCardChoiceKind.ResurrectionHerbOpponentDecision:
+                case AutomaticCardChoiceKind.PocketWatchSourceDisposition:
+                    return true;
+                case AutomaticCardChoiceKind.FlamethrowerOwnerDiscard:
+                case AutomaticCardChoiceKind.FlamethrowerOpponentDiscard:
+                    return optionId == FlamethrowerEffectHandler.SkipOptionId;
+                case AutomaticCardChoiceKind.PocketWatchManualCard:
+                    return optionId ==
+                        PocketWatchEffectHandler.SkipManualCardOptionId;
                 default:
                     return false;
             }

@@ -2043,12 +2043,12 @@ namespace DiaBlackJack.CoreLoop
                     MammonDemonContractHandler.DoNotApplyDieOptionId,
                     contractCardId: null,
                     numericValue: null,
-                    "주사위 눈 포함하지 않기"),
+                    "주사위 값 포함하지 않기"),
                 new DemonContractOption(
                     MammonDemonContractHandler.ApplyDieOptionId,
                     contractCardId: null,
                     numericValue: null,
-                    "주사위 눈 포함하기")
+                    "주사위 값 포함하기")
             };
 
             return new PendingDemonContractInteraction(
@@ -2056,7 +2056,7 @@ namespace DiaBlackJack.CoreLoop
                 DemonContractInteractionKind.MammonApplyDie,
                 DemonContractKind.Mammon,
                 options,
-                "최종 승부에 현재 주사위 눈을 포함할지 선택하십시오.",
+                "최종 승부에 현재 주사위 값을 포함할지 선택하십시오.",
                 activeContract.SourceCardId);
         }
 
@@ -2153,7 +2153,7 @@ namespace DiaBlackJack.CoreLoop
                     AsmodeusDemonContractHandler.SkipForcedHitOptionId,
                     contractCardId: null,
                     numericValue: null,
-                    "능력 사용 안 하기"),
+                    "능력 사용하지 않기"),
                 new DemonContractOption(
                     AsmodeusDemonContractHandler.ForceHitOptionId,
                     contractCardId: null,

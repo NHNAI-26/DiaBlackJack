@@ -262,9 +262,11 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(leaveCanvas.overrideSorting, Is.True);
             Assert.That(leaveCanvas.sortingOrder, Is.GreaterThan(100));
             Transform leaveButton = leaveRoot.Find("ShopLeaveButton");
+            GameObject defaultButtonPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(DefaultButtonPrefabPath);
             Assert.That(
-                leaveButton.GetComponent<Image>().sprite.name,
-                Is.EqualTo("Brush_UI_9"));
+                leaveButton.GetComponent<Image>().sprite,
+                Is.SameAs(defaultButtonPrefab.GetComponent<Image>().sprite));
             Assert.That(
                 leaveButton.Find("Label"),
                 Is.Not.Null);
@@ -286,7 +288,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             SerializedObject serializedLabel = new SerializedObject(label);
 
             Assert.That(rect.sizeDelta, Is.EqualTo(new Vector2(234f, 66f)));
-            Assert.That(image.sprite.name, Is.EqualTo("Brush_UI_9"));
+            Assert.That(image.sprite, Is.Not.Null);
             Assert.That(image.preserveAspect, Is.True);
             Assert.That(button.targetGraphic, Is.SameAs(image));
             Assert.That(button.transition, Is.EqualTo(Selectable.Transition.ColorTint));
@@ -344,6 +346,27 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 serializedHud.FindProperty("shopLeaveButton").objectReferenceValue,
                 Is.SameAs(button));
+        }
+
+        [Test]
+        public void GSV09_U04_CombatOptionsUseNestedDefaultButtonPrefab()
+        {
+            GameObject hudPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
+            GameHudChoiceButton[] choices =
+                hudPrefab.GetComponentsInChildren<GameHudChoiceButton>(true);
+
+            Assert.That(choices, Has.Length.EqualTo(100));
+            foreach (GameHudChoiceButton choice in choices)
+            {
+                GameObject source = PrefabUtility.GetCorrespondingObjectFromSource(
+                    choice.gameObject);
+                Assert.That(source, Is.Not.Null, choice.name);
+                Assert.That(
+                    AssetDatabase.GetAssetPath(source),
+                    Is.EqualTo(DefaultButtonPrefabPath),
+                    choice.name);
+            }
         }
 
         [Test]

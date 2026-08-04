@@ -20,13 +20,13 @@ namespace DiaBlackJack.CoreLoop
             {
                 options.Add(new AutomaticCardChoiceOption(
                     StandNowOptionId,
-                    "지금 즉시 스탠드"));
+                    "스탠드하기"));
             }
 
             int soulLoss = Math.Min(SoulCost, context.OwnerCurrentSoul);
             options.Add(new AutomaticCardChoiceOption(
                 PaySoulOptionId,
-                $"영혼 {soulLoss}개 잃기"));
+                $"영혼 {soulLoss}개 걸기"));
 
             return AutomaticCardEffectStep.AwaitChoice(
                 context.OwnerSide,

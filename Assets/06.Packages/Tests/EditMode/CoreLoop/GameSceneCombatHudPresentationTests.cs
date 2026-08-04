@@ -1026,7 +1026,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 GameSceneCombatHudMode.DiegeticSelection));
             Assert.That(hud.OptionActions, Has.Count.EqualTo(1));
             Assert.That(hud.OptionActions.Single().Label,
-                Is.EqualTo("추가하지 않기"));
+                Is.EqualTo("선택하지 않기"));
             Assert.That(hud.OptionActions.Single().Command.OptionId, Is.EqualTo(0));
             Assert.That(
                 hud.OptionActions.Single().Placement,
@@ -1124,6 +1124,35 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 GameSceneCombatHudPresenter.IsBottomRightContractAction(
                     interactionKind,
+                    optionId),
+                Is.EqualTo(expected));
+        }
+
+        [TestCase(AutomaticCardChoiceKind.PoisonDecision, 0, true)]
+        [TestCase(AutomaticCardChoiceKind.PoisonDecision, 1, true)]
+        [TestCase(AutomaticCardChoiceKind.ResurrectionHerbDecision, 0, true)]
+        [TestCase(AutomaticCardChoiceKind.ResurrectionHerbDecision, 1, true)]
+        [TestCase(AutomaticCardChoiceKind.ResurrectionHerbOpponentDecision, 0, true)]
+        [TestCase(AutomaticCardChoiceKind.ResurrectionHerbOpponentDecision, 1, true)]
+        [TestCase(AutomaticCardChoiceKind.FlamethrowerOwnerDiscard,
+            FlamethrowerEffectHandler.SkipOptionId, true)]
+        [TestCase(AutomaticCardChoiceKind.FlamethrowerOwnerDiscard, 100, false)]
+        [TestCase(AutomaticCardChoiceKind.FlamethrowerOpponentDiscard,
+            FlamethrowerEffectHandler.SkipOptionId, true)]
+        [TestCase(AutomaticCardChoiceKind.PocketWatchManualCard,
+            PocketWatchEffectHandler.SkipManualCardOptionId, true)]
+        [TestCase(AutomaticCardChoiceKind.PocketWatchManualCard, 100, false)]
+        [TestCase(AutomaticCardChoiceKind.PocketWatchSourceDisposition, 0, true)]
+        [TestCase(AutomaticCardChoiceKind.PocketWatchSourceDisposition, 1, true)]
+        [TestCase(AutomaticCardChoiceKind.LieDetectorNumber, 1, false)]
+        public void GSH01_U20_GeneralAutomaticChoicesUseBottomRight(
+            AutomaticCardChoiceKind choiceKind,
+            int optionId,
+            bool expected)
+        {
+            Assert.That(
+                GameSceneCombatHudPresenter.IsBottomRightAutomaticCardAction(
+                    choiceKind,
                     optionId),
                 Is.EqualTo(expected));
         }
@@ -1244,7 +1273,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 scene.UsesDiegeticCardEffectSelection);
             Assert.That(hud.OptionActions, Has.Count.EqualTo(2));
             Assert.That(hud.OptionActions.Select(action => action.Label),
-                Is.EqualTo(new[] { "능력 사용 안 하기", "능력 사용하기" }));
+                Is.EqualTo(new[] { "능력 사용하지 않기", "능력 사용하기" }));
             Assert.That(hud.OptionActions.All(action =>
                 action.Placement ==
                     GameSceneCombatHudActionPlacement.BottomRight), Is.True);

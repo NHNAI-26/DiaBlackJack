@@ -30,7 +30,7 @@ namespace DiaBlackJack.CoreLoop
             {
                 new AutomaticCardChoiceOption(
                     SkipManualCardOptionId,
-                    "Skip reactivation")
+                    "선택하지 않기")
             };
 
             foreach (BlackjackCard card in candidates)
@@ -127,10 +127,10 @@ namespace DiaBlackJack.CoreLoop
             {
                 new AutomaticCardChoiceOption(
                     DiscardSourceOptionId,
-                    "Discard pocket watch"),
+                    "회중시계 버리기"),
                 new AutomaticCardChoiceOption(
                     RetainSourceOptionId,
-                    "Retain pocket watch face-up")
+                    "회중시계 버리지 않기")
             };
         }
     }

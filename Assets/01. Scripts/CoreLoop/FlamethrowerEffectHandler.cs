@@ -114,7 +114,7 @@ namespace DiaBlackJack.CoreLoop
             {
                 new AutomaticCardChoiceOption(
                     SkipOptionId,
-                    "Skip")
+                    "버리지 않기")
             };
 
             foreach (BlackjackCard card in candidates)

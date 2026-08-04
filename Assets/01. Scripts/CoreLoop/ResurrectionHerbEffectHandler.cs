@@ -73,13 +73,15 @@ namespace DiaBlackJack.CoreLoop
         {
             var options = new List<AutomaticCardChoiceOption>(2)
             {
-                new AutomaticCardChoiceOption(DeclineOptionId, "Decline")
+                new AutomaticCardChoiceOption(
+                    DeclineOptionId,
+                    "부활하지 않기")
             };
             if (context.CanPayResurrectionHerbSoul(decisionSide))
             {
                 options.Add(new AutomaticCardChoiceOption(
                     PaySoulAndRedealOptionId,
-                    "Pay 1 soul and redeal your hand"));
+                    "부활하기"));
             }
 
             return options.AsReadOnly();

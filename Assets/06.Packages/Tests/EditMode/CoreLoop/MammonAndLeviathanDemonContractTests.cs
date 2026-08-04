@@ -179,8 +179,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 pending.Options.Select(option => option.PublicLabel),
                 Is.EqualTo(new[]
                 {
-                    "주사위 눈 포함하지 않기",
-                    "주사위 눈 포함하기"
+                    "주사위 값 포함하지 않기",
+                    "주사위 값 포함하기"
                 }));
 
             int optionId = applyDie

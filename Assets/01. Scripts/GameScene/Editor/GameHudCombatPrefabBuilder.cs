@@ -95,7 +95,6 @@ namespace DiaBlackJack.GameScene.Editor
 
                 ScrollRect optionScroll = CreateOptionScroll(
                     optionPanel,
-                    font,
                     panelBrush,
                     out GameHudChoiceButton[] optionSlots);
 
@@ -262,7 +261,6 @@ namespace DiaBlackJack.GameScene.Editor
 
         private static ScrollRect CreateOptionScroll(
             RectTransform parent,
-            TMP_FontAsset font,
             Sprite panelBrush,
             out GameHudChoiceButton[] slots)
         {
@@ -297,10 +295,21 @@ namespace DiaBlackJack.GameScene.Editor
             ContentSizeFitter fitter = content.gameObject.AddComponent<ContentSizeFitter>();
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
+            GameObject defaultButtonPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(DefaultButtonPrefabPath);
+            if (defaultButtonPrefab == null)
+            {
+                throw new InvalidOperationException(
+                    "Default button prefab was not found. Build it before rebuilding the HUD.");
+            }
+
             slots = new GameHudChoiceButton[OptionSlotCount];
             for (int i = 0; i < slots.Length; i++)
             {
-                slots[i] = CreateOptionSlot($"OptionSlot_{i + 1:000}", content, font);
+                slots[i] = CreateOptionSlot(
+                    $"OptionSlot_{i + 1:000}",
+                    content,
+                    defaultButtonPrefab);
             }
 
             scroll.viewport = viewport;
@@ -311,18 +320,27 @@ namespace DiaBlackJack.GameScene.Editor
         private static GameHudChoiceButton CreateOptionSlot(
             string name,
             RectTransform parent,
-            TMP_FontAsset font)
+            GameObject defaultButtonPrefab)
         {
-            RectTransform root = CreateRect(name, parent);
-            Image image = root.gameObject.AddComponent<Image>();
-            image.color = new Color(0.28f, 0.12f, 0.14f, 1f);
-            LayoutElement layout = root.gameObject.AddComponent<LayoutElement>();
-            layout.preferredHeight = 78f;
-            Button button = root.gameObject.AddComponent<Button>();
-            button.targetGraphic = image;
-            TMP_Text label = CreateText("Label", root, font, 21f, TextAlignmentOptions.Center);
-            Stretch(label.rectTransform, 12f);
-            GameHudChoiceButton choice = root.gameObject.AddComponent<GameHudChoiceButton>();
+            GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(
+                defaultButtonPrefab,
+                parent);
+            instance.name = name;
+            RectTransform root = instance.GetComponent<RectTransform>();
+            Button button = instance.GetComponent<Button>();
+            TMP_Text label = instance.transform.Find("Label")?.GetComponent<TMP_Text>();
+            if (root == null || button == null || label == null)
+            {
+                throw new InvalidOperationException(
+                    "Default button prefab is missing RectTransform, Button, or Label.");
+            }
+
+            LayoutElement layout = instance.GetComponent<LayoutElement>() ??
+                instance.AddComponent<LayoutElement>();
+            layout.preferredHeight = 66f;
+            GameHudChoiceButton choice =
+                instance.GetComponent<GameHudChoiceButton>() ??
+                instance.AddComponent<GameHudChoiceButton>();
             AssignChoiceButtonReferences(choice, button, label);
             return choice;
         }
