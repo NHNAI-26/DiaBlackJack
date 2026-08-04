@@ -120,34 +120,46 @@ namespace DiaBlackJack.GameScene
 
         public bool PreviousPage()
         {
-            if (!IsOpen || !_navigation.TryMovePrevious())
+            if (!IsOpen ||
+                view.IsTransitioning ||
+                !_navigation.TryMovePrevious())
             {
                 return false;
             }
 
-            view.Render(CreateCurrentBook());
-            return true;
+            return view.TryRenderTransition(
+                CreateCurrentBook(),
+                CodexPageTurnDirection.Previous);
         }
 
         public bool NextPage()
         {
-            if (!IsOpen || !_navigation.TryMoveNext())
+            if (!IsOpen ||
+                view.IsTransitioning ||
+                !_navigation.TryMoveNext())
             {
                 return false;
             }
 
-            view.Render(CreateCurrentBook());
-            return true;
+            return view.TryRenderTransition(
+                CreateCurrentBook(),
+                CodexPageTurnDirection.Next);
         }
 
         public void ShowCategory(CodexCategory category)
         {
-            if (!IsOpen || !_navigation.TryShowCategory(category))
+            if (!IsOpen ||
+                view.IsTransitioning ||
+                !_navigation.TryShowCategory(category))
             {
                 return;
             }
 
-            view.Render(CreateCurrentBook());
+            CodexPageTurnDirection direction =
+                category == CodexCategory.DemonCard
+                    ? CodexPageTurnDirection.Next
+                    : CodexPageTurnDirection.Previous;
+            view.TryRenderTransition(CreateCurrentBook(), direction);
         }
 
         public void SetAvailable(bool available)

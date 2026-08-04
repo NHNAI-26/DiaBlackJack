@@ -25,6 +25,9 @@ namespace DiaBlackJack.GameScene
             new Vector2(16f, 0f);
 
         private GameSceneCardViewModel _card;
+        private bool _hoverEnabled;
+        private string _hoverTitle = string.Empty;
+        private string _hoverDescription = string.Empty;
 
         public event Action<DeckPreviewCardView> Clicked;
 
@@ -44,6 +47,11 @@ namespace DiaBlackJack.GameScene
             GameSceneCardViewModel card = group?.Card;
             _card = card;
             CanSelect = card != null && canSelect == true;
+            _hoverEnabled = card != null;
+            _hoverTitle = card == null
+                ? string.Empty
+                : $"{card.Rank}. {card.DisplayName}";
+            _hoverDescription = card?.AbilityDescription ?? string.Empty;
             if (faceImage != null)
             {
                 faceImage.sprite = faceSprite;
@@ -70,6 +78,48 @@ namespace DiaBlackJack.GameScene
             SetSelected(false);
         }
 
+        internal void RenderCodex(
+            Sprite faceSprite,
+            int? count,
+            string hoverTitle,
+            string hoverDescription)
+        {
+            if (count.HasValue && count.Value < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+
+            _card = null;
+            CanSelect = false;
+            _hoverEnabled = !string.IsNullOrWhiteSpace(hoverTitle);
+            _hoverTitle = hoverTitle ?? string.Empty;
+            _hoverDescription = hoverDescription ?? string.Empty;
+
+            if (faceImage != null)
+            {
+                faceImage.sprite = faceSprite;
+                faceImage.enabled = faceSprite != null;
+                faceImage.color = Color.white;
+            }
+
+            if (fallbackText != null)
+            {
+                fallbackText.text = string.Empty;
+                fallbackText.gameObject.SetActive(false);
+            }
+
+            if (countText != null)
+            {
+                countText.text = count.HasValue
+                    ? $"x{count.Value}"
+                    : string.Empty;
+                countText.gameObject.SetActive(count.HasValue);
+            }
+
+            SetHoverFrame(false);
+            SetSelected(false);
+        }
+
         public void SetSelected(bool selected)
         {
             IsSelected = CanSelect && selected;
@@ -81,18 +131,18 @@ namespace DiaBlackJack.GameScene
 
         public CardHoverBadgeRequest CreateHoverBadgeRequest()
         {
-            return _card == null
+            return !_hoverEnabled
                 ? null
                 : CardHoverBadgeRequest.CreateForDeckRect(
                     transform as RectTransform,
-                    $"{_card.Rank}. {_card.DisplayName}",
-                    _card.AbilityDescription,
+                    _hoverTitle,
+                    _hoverDescription,
                     deckCardHoverBadgeOffset);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (_card == null)
+            if (!_hoverEnabled)
             {
                 return;
             }

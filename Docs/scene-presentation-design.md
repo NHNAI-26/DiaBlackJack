@@ -193,7 +193,7 @@
 - 카드 목록은 정의·숫자·무늬·ID의 안정 순서를 먼저 만든 뒤 `(DefinitionKey, Suit)`가 같은 카드만 한 항목으로 묶는다. 대표 이미지는 각 묶음의 첫 안정 정렬 카드이며 개별 ID만 무시한다. 같은 정의라도 스페이드·클로버는 분리하고 같은 숫자라도 정의가 다르면 분리한다. 내부 더미 및 다음 드로우 순서는 표시하지 않는다.
 - `GameSceneDeckViewModel`은 묶음 목록 `CardGroups`, 실제 총 장수 `CardCount`, 표시 묶음 수 `GroupCount`를 제공한다. 모든 슬롯 아래 중복 여부와 무관하게 `x1`, `x2` 형식 수량을 표시하고, 슬롯·Grid 높이는 수량 줄을 포함한다.
 - 열린 동안 전투 입력과 `W`·`S` 카메라 전환을 차단한다. 검사창 상단 설명은 두지 않는다. 카드 호버는 제목 `"{Rank}. {DisplayName}"`과 효과 설명을 GameHUD 공용 카드 뱃지로 전달하고, 배경 클릭·`ESC`·닫기 버튼으로 닫는다.
-- 도감과 덱 검사창의 덱 카드는 우측 중앙에 공용 뱃지의 왼쪽 중앙 피벗을 붙인다. `DeckPreviewCardView`와 `CodexCardThumbnailView`의 Inspector에서 덱 전용 `Deck Card Hover Badge Offset`을 카드 로컬 UI 좌표로 조정하며 기본값은 `(16, 0)`이다. 전투 손패 카드의 기존 상·하 Anchor 배치는 유지한다. `CardHoverTooltip` 중첩 Canvas는 `overrideSorting=true`, `sortingOrder=200`이고 Raycast를 차단하지 않는다. 덱 검사창은 100, 도감은 120 정렬 순서를 유지한다.
+- 도감과 덱 검사창의 덱 카드는 공용 `DeckPreviewCard.prefab`과 `DeckPreviewCardView`를 사용하며 우측 중앙에 공용 뱃지의 왼쪽 중앙 피벗을 붙인다. Inspector의 `Deck Card Hover Badge Offset`을 카드 로컬 UI 좌표로 조정하며 기본값은 `(16, 0)`이다. 도감 계약 카드는 같은 프리팹을 쓰되 호버·수량·Fallback·선택 표시를 끈다. 전투 손패 카드의 기존 상·하 Anchor 배치는 유지한다. `CardHoverTooltip` 중첩 Canvas는 `overrideSorting=true`, `sortingOrder=200`이고 Raycast를 차단하지 않는다. 덱 검사창은 100, 도감은 120 정렬 순서를 유지한다.
 - 슬롯 전환·페이지 변경·창 닫기·비활성화 때 현재 호버 소유자를 확인하고 공용 뱃지를 즉시 숨긴다.
 - 검증: 전용 `GameSceneDeckPreviewTests` 3/3, 전체 EditMode 749/749 통과. GameScene Play Mode에서 단일 `UIDeckPreview`가 뽑을 카드 18장으로 활성화되고 카메라 입력 잠금 수가 1이 되는지, 직접 닫은 뒤 오브젝트가 비활성화되고 다음 프레임 잠금 수가 0으로 복구되는지 확인했다. Console Error/Warning 0.
 
@@ -231,6 +231,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-08-04 | HONG | DX-M06에서 도감 시작 덱·계약 악마를 공용 `DeckPreviewCard.prefab`으로 통합하고 계약 6열, 분리 페이지 문구, 닫기·탭 상태 색상, Remake 0~4 기반 정·역 책장 전환과 콘텐츠 Fade를 적용했다. 신규 5/5(job `3a06782e726b4f4b8f291eea49506df0`), 대상 24/24(job `2e38823b97a94f41a1746c77833dadf0`), GameScene validation 0 issues와 Console Error 0을 확인했다. 전체는 병행 변경 5건 때문에 1054/1059이다. GameScene 병행 저장 완료 뒤 Codex Content의 낡은 높이·Y override 2개만 제거했으며 수동 해상도 검증은 동시 에디터 사용을 방해하지 않기 위해 보류했다. |
 | 2026-08-04 | HONG | GSV12에서 전투 손패와 계약·수정 구슬·사탄 숫자 선택 카드의 콜라이더와 호버 시각 루트를 분리했다. 손패 신규 4/4와 공통 부채꼴 11/11, 전체 EditMode 1027/1035 및 C# Console Error 0을 확인했다. 런타임 일반·악마 호버와 1280×720·1920×1080에서 루트·콜라이더 변화량 0을 검증했으며 잔여 테스트 실패 8건은 기존 병행 변경이다. |
 | 2026-08-04 | HONG | GSV11에서 일반 카드의 호버 정보와 사용 가능 판정을 분리했다. 미공개 적 카드는 안전 안내만 표시하고, 판매 완료 상점 카드와 사탄 전용 숫자 후보는 정보 표시 예외로 유지했다. 신규 3/3과 변경 대상 6/6 통과, 전체 EditMode 1005/1014 및 비관련 실패 9건을 실제 결과로 기록했다. |
 | 2026-08-03 | HONG | GSV-03·DX-M04에서 도감 시작 덱과 뽑기·버림 목록을 정의+무늬로 묶고 모든 항목에 `xN`을 표시했다. GameHUD 공용 카드 호버 뱃지를 도감·덱 검사창에도 연결하고 중첩 Canvas 정렬 200·비차단을 적용했다. 필터 58/58(job `6692a6688e1c4b2f80172ef66d0dbf8f`), 전체 EditMode 907/907(job `52f09303e89347fb894d757610bc69b8`), GameScene validation 0 issues, 최종 Console Error 0과 1920×1080·1280×720 도감·뽑기·버림 화면 및 닫은 뒤 뱃지 해제를 확인했다. |

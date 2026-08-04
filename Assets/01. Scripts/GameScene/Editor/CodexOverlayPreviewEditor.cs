@@ -517,7 +517,10 @@ namespace DiaBlackJack.GameScene.Editor
 
             string[] textProperties =
             {
-                "pageNumberText",
+                "enemyTabText",
+                "demonTabText",
+                "previousPageText",
+                "nextPageText",
                 "enemyNameText",
                 "enemySoulText",
                 "enemyGoldText",
@@ -562,10 +565,10 @@ namespace DiaBlackJack.GameScene.Editor
             snapshot.CaptureButton(GetReference<Button>(
                 serialized,
                 "demonTabButton"));
-            snapshot.CaptureThumbnail(GetReference<CodexCardThumbnailView>(
+            snapshot.CaptureDeckCard(GetReference<DeckPreviewCardView>(
                 serialized,
                 "contractTemplate"));
-            snapshot.CaptureThumbnail(GetReference<CodexCardThumbnailView>(
+            snapshot.CaptureDeckCard(GetReference<DeckPreviewCardView>(
                 serialized,
                 "deckTemplate"));
             return snapshot;
@@ -594,25 +597,30 @@ namespace DiaBlackJack.GameScene.Editor
             }
         }
 
-        private void CaptureThumbnail(CodexCardThumbnailView thumbnail)
+        private void CaptureDeckCard(DeckPreviewCardView card)
         {
-            if (thumbnail == null)
+            if (card == null)
             {
                 return;
             }
 
-            CaptureGameObject(thumbnail.gameObject);
-            var serialized = new SerializedObject(thumbnail);
+            CaptureGameObject(card.gameObject);
+            var serialized = new SerializedObject(card);
             CaptureImage(GetReference<Image>(serialized, "faceImage"));
             TMP_Text fallback = GetReference<TMP_Text>(
                 serialized,
                 "fallbackText");
             CaptureText(fallback);
             CaptureGameObject(fallback?.gameObject);
-            CaptureText(GetReference<TMP_Text>(serialized, "nameText"));
             TMP_Text count = GetReference<TMP_Text>(serialized, "countText");
             CaptureText(count);
             CaptureGameObject(count?.gameObject);
+            CaptureGameObject(GetReference<GameObject>(
+                serialized,
+                "hoverFrame"));
+            CaptureGameObject(GetReference<GameObject>(
+                serialized,
+                "selectedFrame"));
         }
 
         private void CaptureGameObject(

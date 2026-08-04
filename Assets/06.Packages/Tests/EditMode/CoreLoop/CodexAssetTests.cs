@@ -30,6 +30,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/05. Arts/UI/Icons/SoulIcon.png";
         private const string GoldIconPath =
             "Assets/05. Arts/UI/Icons/GoldIcon.png";
+        private const string DeckPreviewCardPrefabPath =
+            "Assets/03. Prefabs/UI/GameScene/DeckPreviewCard.prefab";
+        private const string OpenBookRemakePathPrefix =
+            "Assets/05. Arts/Texture/Codex/Codex_OpenBook_Remake_";
 
         [Test]
         public void DX02_U01_ContentCatalogCoversEveryEnemyAndDemon()
@@ -130,7 +134,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 prefab.GetComponentInChildren<ScrollRect>(true),
                 Is.Not.Null);
             Assert.That(
-                prefab.GetComponentsInChildren<CodexCardThumbnailView>(true)
+                prefab.GetComponentsInChildren<DeckPreviewCardView>(true)
                     .Length,
                 Is.EqualTo(2));
             Assert.That(
@@ -166,8 +170,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 }
             }
 
-            CodexCardThumbnailView deckTemplate =
-                GetReference<CodexCardThumbnailView>(view, "deckTemplate");
+            DeckPreviewCardView deckTemplate =
+                GetReference<DeckPreviewCardView>(view, "deckTemplate");
             RectTransform deckRect = deckTemplate.transform as RectTransform;
             Assert.That(deckRect, Is.Not.Null);
             Assert.That(deckRect.anchorMin, Is.EqualTo(new Vector2(0f, 1f)));
@@ -190,22 +194,22 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Image portraitFrame = GetImageAtPath(
                 prefab,
-                "EnemyPage/LeftPage/PortraitPanel/PortraitFrame");
+                "Book/EnemyPage/LeftPage/PortraitPanel/PortraitFrame");
             Image soulOutline = GetImageAtPath(
                 prefab,
-                "EnemyPage/LeftPage/SoulPanel/Outline");
+                "Book/EnemyPage/LeftPage/SoulPanel/Outline");
             Image soulIcon = GetImageAtPath(
                 prefab,
-                "EnemyPage/LeftPage/SoulPanel/Icon");
+                "Book/EnemyPage/LeftPage/SoulPanel/Icon");
             Image goldIcon = GetImageAtPath(
                 prefab,
-                "EnemyPage/LeftPage/GoldPanel/Icon");
+                "Book/EnemyPage/LeftPage/GoldPanel/Icon");
             Image deckBanner = GetImageAtPath(
                 prefab,
-                "EnemyPage/RightPage/DeckTitleBanner");
+                "Book/EnemyPage/RightPage/DeckTitleBanner");
             Image deckOutline = GetImageAtPath(
                 prefab,
-                "EnemyPage/RightPage/DeckPanel/Outline");
+                "Book/EnemyPage/RightPage/DeckPanel/Outline");
 
             Assert.That(
                 portraitFrame.sprite,
@@ -281,12 +285,12 @@ namespace DiaBlackJack.CoreLoop.Tests
                 AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
             GameObject overlay = UnityEngine.Object.Instantiate(prefab);
             CodexOverlayView view = overlay.GetComponent<CodexOverlayView>();
-            CodexCardThumbnailView contractTemplate =
-                GetReference<CodexCardThumbnailView>(
+            DeckPreviewCardView contractTemplate =
+                GetReference<DeckPreviewCardView>(
                     view,
                     "contractTemplate");
-            CodexCardThumbnailView deckTemplate =
-                GetReference<CodexCardThumbnailView>(view, "deckTemplate");
+            DeckPreviewCardView deckTemplate =
+                GetReference<DeckPreviewCardView>(view, "deckTemplate");
             Component noContractText = GetReference<Component>(
                 view,
                 "noContractText");
@@ -305,20 +309,16 @@ namespace DiaBlackJack.CoreLoop.Tests
             Image deckFace = GetReference<Image>(
                 deckTemplate,
                 "faceImage");
-            Component deckName = GetReference<Component>(
-                deckTemplate,
-                "nameText");
             Component deckCount = GetReference<Component>(
                 deckTemplate,
                 "countText");
-            int thumbnailCount = overlay
-                .GetComponentsInChildren<CodexCardThumbnailView>(true)
+            int cardViewCount = overlay
+                .GetComponentsInChildren<DeckPreviewCardView>(true)
                 .Length;
             bool contractActive = contractTemplate.gameObject.activeSelf;
             bool deckActive = deckTemplate.gameObject.activeSelf;
             bool noContractActive = noContractText.gameObject.activeSelf;
             Sprite deckSprite = deckFace.sprite;
-            string deckLabel = GetText(deckName);
             string deckCountLabel = GetText(deckCount);
             string soulLabel = GetText(enemySoulText);
             string goldLabel = GetText(enemyGoldText);
@@ -347,9 +347,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 EnemyCodexPageViewModel page = pages[emptyContractIndex];
                 CodexDeckCardViewModel firstCard = page.StartingDeck[0];
                 Assert.That(
-                    overlay.GetComponentsInChildren<CodexCardThumbnailView>(true)
+                    overlay.GetComponentsInChildren<DeckPreviewCardView>(true)
                         .Length,
-                    Is.EqualTo(thumbnailCount));
+                    Is.EqualTo(cardViewCount));
                 Assert.That(contractTemplate.gameObject.activeSelf, Is.False);
                 Assert.That(deckTemplate.gameObject.activeSelf, Is.True);
                 Assert.That(noContractText.gameObject.activeSelf, Is.True);
@@ -370,9 +370,6 @@ namespace DiaBlackJack.CoreLoop.Tests
                     Is.EqualTo(cardCatalog.GetNormalFaceSprite(
                         firstCard.DefinitionKey,
                         firstCard.Suit)));
-                Assert.That(
-                    GetText(deckName),
-                    Is.EqualTo($"{firstCard.Rank}  {firstCard.DisplayName}"));
                 Assert.That(
                     GetText(deckCount),
                     Is.EqualTo($"x{firstCard.Count}"));
@@ -399,7 +396,6 @@ namespace DiaBlackJack.CoreLoop.Tests
                     noContractText.gameObject.activeSelf,
                     Is.EqualTo(noContractActive));
                 Assert.That(deckFace.sprite, Is.EqualTo(deckSprite));
-                Assert.That(GetText(deckName), Is.EqualTo(deckLabel));
                 Assert.That(GetText(deckCount), Is.EqualTo(deckCountLabel));
                 Assert.That(GetText(enemySoulText), Is.EqualTo(soulLabel));
                 Assert.That(GetText(enemyGoldText), Is.EqualTo(goldLabel));
@@ -422,12 +418,12 @@ namespace DiaBlackJack.CoreLoop.Tests
                 AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
             GameObject overlay = UnityEngine.Object.Instantiate(prefab);
             CodexOverlayView view = overlay.GetComponent<CodexOverlayView>();
-            CodexCardThumbnailView contractTemplate =
-                GetReference<CodexCardThumbnailView>(
+            DeckPreviewCardView contractTemplate =
+                GetReference<DeckPreviewCardView>(
                     view,
                     "contractTemplate");
-            CodexCardThumbnailView deckTemplate =
-                GetReference<CodexCardThumbnailView>(view, "deckTemplate");
+            DeckPreviewCardView deckTemplate =
+                GetReference<DeckPreviewCardView>(view, "deckTemplate");
             Image contractFace = GetReference<Image>(
                 contractTemplate,
                 "faceImage");
@@ -513,7 +509,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             GameObject overlay = UnityEngine.Object.Instantiate(prefab);
             CodexOverlayView view = overlay.GetComponent<CodexOverlayView>();
             RectTransform leftPage = overlay.transform.Find(
-                "EnemyPage/LeftPage") as RectTransform;
+                "Book/EnemyPage/LeftPage") as RectTransform;
             Assert.That(leftPage, Is.Not.Null);
 
             try
@@ -558,6 +554,215 @@ namespace DiaBlackJack.CoreLoop.Tests
                 CodexOverlayPreviewSession.StopActive();
                 UnityEngine.Object.DestroyImmediate(overlay);
             }
+        }
+
+        [Test]
+        public void DXM06_U01_PageLabelsCloseAlphaAndInactiveTabTextAreAuthored()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
+            GameObject overlay = UnityEngine.Object.Instantiate(prefab);
+            CodexOverlayView view = overlay.GetComponent<CodexOverlayView>();
+            Component previousText = GetReference<Component>(
+                view,
+                "previousPageText");
+            Component nextText = GetReference<Component>(view, "nextPageText");
+            Graphic enemyTabText = GetReference<Graphic>(
+                view,
+                "enemyTabText");
+            Graphic demonTabText = GetReference<Graphic>(
+                view,
+                "demonTabText");
+            Button closeButton = GetReference<Button>(view, "closeButton");
+            SerializedObject serialized = new SerializedObject(view);
+            Color activeColor = serialized.FindProperty("activeTabColor")
+                .colorValue;
+            Color inactiveColor = serialized.FindProperty("inactiveTabColor")
+                .colorValue;
+
+            try
+            {
+                Assert.That(
+                    CodexOverlayPreviewSession.ShowCategory(
+                        view,
+                        CodexCategory.Enemy),
+                    Is.Null);
+                Assert.That(GetText(previousText), Is.EqualTo("Q Previous"));
+                Assert.That(GetText(nextText), Is.EqualTo("1/6 Next E"));
+                Assert.That(enemyTabText.color, Is.EqualTo(activeColor));
+                Assert.That(demonTabText.color, Is.EqualTo(inactiveColor));
+
+                Assert.That(closeButton.colors.normalColor.a, Is.EqualTo(0.5f));
+                Assert.That(
+                    closeButton.colors.highlightedColor.a,
+                    Is.EqualTo(1f));
+                Assert.That(closeButton.colors.pressedColor.a, Is.EqualTo(0.8f));
+
+                Assert.That(
+                    CodexOverlayPreviewSession.MoveNext(view),
+                    Is.Null);
+                Assert.That(GetText(nextText), Is.EqualTo("2/6 Next E"));
+
+                Assert.That(
+                    CodexOverlayPreviewSession.ShowCategory(
+                        view,
+                        CodexCategory.DemonCard),
+                    Is.Null);
+                Assert.That(enemyTabText.color, Is.EqualTo(inactiveColor));
+                Assert.That(demonTabText.color, Is.EqualTo(activeColor));
+            }
+            finally
+            {
+                CodexOverlayPreviewSession.StopActive();
+                UnityEngine.Object.DestroyImmediate(overlay);
+            }
+        }
+
+        [Test]
+        public void DXM06_U02_CodexUsesDeckPreviewTemplatesAndSixColumnGrid()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
+            CodexOverlayView view = prefab.GetComponent<CodexOverlayView>();
+            DeckPreviewCardView contractTemplate =
+                GetReference<DeckPreviewCardView>(
+                    view,
+                    "contractTemplate");
+            DeckPreviewCardView deckTemplate =
+                GetReference<DeckPreviewCardView>(view, "deckTemplate");
+
+            Assert.That(
+                AssetDatabase.GetAssetPath(
+                    PrefabUtility.GetCorrespondingObjectFromSource(
+                        contractTemplate.gameObject)),
+                Is.EqualTo(DeckPreviewCardPrefabPath));
+            Assert.That(
+                AssetDatabase.GetAssetPath(
+                    PrefabUtility.GetCorrespondingObjectFromSource(
+                        deckTemplate.gameObject)),
+                Is.EqualTo(DeckPreviewCardPrefabPath));
+
+            Transform contractGrid = GetReference<Transform>(
+                view,
+                "contractGrid");
+            GridLayoutGroup grid = contractGrid.GetComponent<GridLayoutGroup>();
+            Assert.That(grid, Is.Not.Null);
+            Assert.That(
+                grid.constraint,
+                Is.EqualTo(GridLayoutGroup.Constraint.FixedColumnCount));
+            Assert.That(grid.constraintCount, Is.EqualTo(6));
+            Assert.That(grid.cellSize, Is.EqualTo(new Vector2(70f, 112f)));
+            Assert.That(grid.spacing, Is.EqualTo(new Vector2(7f, 0f)));
+            Assert.That(grid.padding.left, Is.EqualTo(4));
+            Assert.That(grid.padding.right, Is.EqualTo(4));
+        }
+
+        [Test]
+        public void DXM06_U03_CodexCardRenderingKeepsDeckCountAndHidesContractChrome()
+        {
+            GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(
+                DeckPreviewCardPrefabPath);
+            GameObject instance = UnityEngine.Object.Instantiate(source);
+            DeckPreviewCardView card = instance.GetComponent<DeckPreviewCardView>();
+            Component fallback = GetReference<Component>(card, "fallbackText");
+            Component count = GetReference<Component>(card, "countText");
+            GameObject hover = GetReference<GameObject>(card, "hoverFrame");
+            GameObject selected = GetReference<GameObject>(card, "selectedFrame");
+
+            try
+            {
+                card.RenderCodex(
+                    null,
+                    3,
+                    "3. Test Card",
+                    "Test description");
+                Assert.That(count.gameObject.activeSelf, Is.True);
+                Assert.That(GetText(count), Is.EqualTo("x3"));
+                Assert.That(fallback.gameObject.activeSelf, Is.False);
+                Assert.That(GetText(fallback), Is.Empty);
+                Assert.That(card.CreateHoverBadgeRequest(), Is.Not.Null);
+                Assert.That(hover.activeSelf, Is.False);
+                Assert.That(selected.activeSelf, Is.False);
+
+                card.RenderCodex(null, null, null, null);
+                Assert.That(count.gameObject.activeSelf, Is.False);
+                Assert.That(GetText(count), Is.Empty);
+                Assert.That(fallback.gameObject.activeSelf, Is.False);
+                Assert.That(card.CreateHoverBadgeRequest(), Is.Null);
+                Assert.That(card.CanSelect, Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void DXM06_U04_PageTurnSpritesAndFrameDirectionsAreStable()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
+            CodexOverlayView view = prefab.GetComponent<CodexOverlayView>();
+            CanvasGroup group = GetReference<CanvasGroup>(
+                view,
+                "bookContentGroup");
+            Image openBook = GetReference<Image>(view, "openBookImage");
+            SerializedObject serialized = new SerializedObject(view);
+            SerializedProperty frames = serialized.FindProperty(
+                "pageTurnFrames");
+
+            Assert.That(group.transform.name, Is.EqualTo("Book"));
+            Assert.That(openBook.transform.name, Is.EqualTo("OpenBook"));
+            Assert.That(openBook.transform.IsChildOf(group.transform), Is.False);
+            Assert.That(frames.arraySize, Is.EqualTo(5));
+            Assert.That(
+                serialized.FindProperty("contentFadeDuration").floatValue,
+                Is.EqualTo(0.12f));
+            Assert.That(
+                serialized.FindProperty("pageTurnFrameDuration").floatValue,
+                Is.EqualTo(0.08f));
+            for (int index = 0; index < frames.arraySize; index++)
+            {
+                Sprite sprite = frames.GetArrayElementAtIndex(index)
+                    .objectReferenceValue as Sprite;
+                Assert.That(sprite, Is.Not.Null);
+                Assert.That(
+                    AssetDatabase.GetAssetPath(sprite),
+                    Is.EqualTo($"{OpenBookRemakePathPrefix}{index}.png"));
+            }
+
+            Assert.That(
+                CodexPageTurnSequence.GetFrames(
+                    CodexPageTurnDirection.Next),
+                Is.EqualTo(new[] { 0, 1, 2, 3, 4 }));
+            Assert.That(
+                CodexPageTurnSequence.GetFrames(
+                    CodexPageTurnDirection.Previous),
+                Is.EqualTo(new[] { 4, 3, 2, 1, 0 }));
+        }
+
+        [Test]
+        public void DXM06_U05_BossSixContractsFitOneGridRow()
+        {
+            CardContentCatalogSO cardCatalog = LoadCardCatalog();
+            IReadOnlyList<EnemyCodexPageViewModel> pages =
+                CreateEnemyPages(cardCatalog);
+            EnemyCodexPageViewModel bossPage = pages[pages.Count - 1];
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
+            CodexOverlayView view = prefab.GetComponent<CodexOverlayView>();
+            Transform contractGrid = GetReference<Transform>(
+                view,
+                "contractGrid");
+            GridLayoutGroup grid = contractGrid.GetComponent<GridLayoutGroup>();
+
+            Assert.That(bossPage.ContractableDemons.Count, Is.EqualTo(6));
+            Assert.That(grid.constraintCount, Is.EqualTo(6));
+            Assert.That(
+                Mathf.CeilToInt(
+                    bossPage.ContractableDemons.Count /
+                    (float)grid.constraintCount),
+                Is.EqualTo(1));
         }
 
         [Test]

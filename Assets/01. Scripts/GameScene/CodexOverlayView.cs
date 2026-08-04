@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using DiaBlackJack.Content;
 using DiaBlackJack.CoreLoop;
@@ -8,9 +9,34 @@ using UnityEngine.UI;
 
 namespace DiaBlackJack.GameScene
 {
+    internal enum CodexPageTurnDirection
+    {
+        Previous,
+        Next
+    }
+
+    internal static class CodexPageTurnSequence
+    {
+        private static readonly int[] PreviousFrames = { 4, 3, 2, 1, 0 };
+        private static readonly int[] NextFrames = { 0, 1, 2, 3, 4 };
+
+        internal static IReadOnlyList<int> GetFrames(
+            CodexPageTurnDirection direction)
+        {
+            return direction switch
+            {
+                CodexPageTurnDirection.Previous => PreviousFrames,
+                CodexPageTurnDirection.Next => NextFrames,
+                _ => throw new ArgumentOutOfRangeException(nameof(direction))
+            };
+        }
+    }
+
     [DisallowMultipleComponent]
     public sealed class CodexOverlayView : MonoBehaviour
     {
+        private const int RequiredPageTurnFrameCount = 5;
+
         [Header("Overlay")]
         [SerializeField] private Canvas overlayCanvas;
         [SerializeField] private GraphicRaycaster overlayRaycaster;
@@ -19,7 +45,19 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Button demonTabButton;
         [SerializeField] private Image enemyTabImage;
         [SerializeField] private Image demonTabImage;
-        [SerializeField] private TMP_Text pageNumberText;
+        [SerializeField] private TMP_Text enemyTabText;
+        [SerializeField] private TMP_Text demonTabText;
+        [SerializeField] private TMP_Text previousPageText;
+        [SerializeField] private TMP_Text nextPageText;
+
+        [Header("Page turn")]
+        [SerializeField] private Image openBookImage;
+        [SerializeField] private CanvasGroup bookContentGroup;
+        [SerializeField] private Sprite[] pageTurnFrames = Array.Empty<Sprite>();
+        [Min(0f)]
+        [SerializeField] private float contentFadeDuration = 0.12f;
+        [Min(0f)]
+        [SerializeField] private float pageTurnFrameDuration = 0.08f;
 
         [Header("Enemy page")]
         [SerializeField] private GameObject enemyPageRoot;
@@ -30,10 +68,10 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private TMP_Text enemyDescriptionText;
         [SerializeField] private TMP_Text noContractText;
         [SerializeField] private Transform contractGrid;
-        [SerializeField] private CodexCardThumbnailView contractTemplate;
+        [SerializeField] private DeckPreviewCardView contractTemplate;
         [SerializeField] private ScrollRect deckScrollRect;
         [SerializeField] private Transform deckGrid;
-        [SerializeField] private CodexCardThumbnailView deckTemplate;
+        [SerializeField] private DeckPreviewCardView deckTemplate;
 
         [Header("Demon page")]
         [SerializeField] private GameObject demonPageRoot;
@@ -50,14 +88,15 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Color inactiveTabColor =
             new Color(0.55f, 0.42f, 0.38f, 1f);
 
-        private readonly List<CodexCardThumbnailView> _contractItems =
-            new List<CodexCardThumbnailView>();
-        private readonly List<CodexCardThumbnailView> _deckItems =
-            new List<CodexCardThumbnailView>();
+        private readonly List<DeckPreviewCardView> _contractItems =
+            new List<DeckPreviewCardView>();
+        private readonly List<DeckPreviewCardView> _deckItems =
+            new List<DeckPreviewCardView>();
         private CardContentCatalogSO _cardContentCatalog;
         private EnemyContentCatalogSO _enemyContentCatalog;
         private CardContentCatalog _runtimeCardCatalog;
-        private CodexCardThumbnailView _hoveredDeckItem;
+        private DeckPreviewCardView _hoveredDeckItem;
+        private Coroutine _pageTransition;
         private bool _controlsBound;
 
         public event Action CloseRequested;
@@ -70,15 +109,25 @@ namespace DiaBlackJack.GameScene
 
         public bool IsOpen { get; private set; }
 
+        internal bool IsTransitioning => _pageTransition != null;
+
         private void Awake()
         {
             BindControls();
             ApplyVisibility(false);
             SetTemplatesVisible(false);
+            ResetTransitionVisuals();
+        }
+
+        private void OnDisable()
+        {
+            CancelPageTransition();
+            ClearHoveredDeckItem();
         }
 
         private void OnDestroy()
         {
+            CancelPageTransition();
             ClearHoveredDeckItem();
             UnbindControls();
         }
@@ -103,13 +152,15 @@ namespace DiaBlackJack.GameScene
             }
 
             EnsureConfigured();
+            CancelPageTransition();
             IsOpen = true;
             ApplyVisibility(true);
-            Render(model);
+            RenderImmediate(model);
         }
 
         public void Close()
         {
+            CancelPageTransition();
             IsOpen = false;
             ClearSpawnedItems(_contractItems);
             ClearDeckItems();
@@ -124,16 +175,29 @@ namespace DiaBlackJack.GameScene
             }
 
             EnsureConfigured();
+            CancelPageTransition();
+            RenderImmediate(model);
+        }
+
+        internal bool TryRenderTransition(
+            CodexBookViewModel model,
+            CodexPageTurnDirection direction)
+        {
+            if (model == null)
+            {
+                throw new ArgumentNullException(nameof(model));
+            }
+
+            EnsureConfigured();
+            if (!IsOpen || IsTransitioning)
+            {
+                return false;
+            }
+
             ClearHoveredDeckItem();
-            bool showEnemy = RenderBookFrame(model);
-            if (showEnemy)
-            {
-                RenderEnemy(model.EnemyPage);
-            }
-            else
-            {
-                RenderDemon(model.DemonPage);
-            }
+            _pageTransition = StartCoroutine(
+                RenderTransition(model, direction));
+            return true;
         }
 
 #if UNITY_EDITOR
@@ -145,6 +209,7 @@ namespace DiaBlackJack.GameScene
             }
 
             EnsureConfigured();
+            CancelPageTransition();
             ClearSpawnedItems(_contractItems);
             ClearDeckItems();
             bool showEnemy = RenderBookFrame(model);
@@ -160,30 +225,93 @@ namespace DiaBlackJack.GameScene
         }
 #endif
 
+        private IEnumerator RenderTransition(
+            CodexBookViewModel model,
+            CodexPageTurnDirection direction)
+        {
+            SetContentInteraction(false);
+            yield return FadeContent(1f, 0f);
+
+            IReadOnlyList<int> frameIndices =
+                CodexPageTurnSequence.GetFrames(direction);
+            foreach (int frameIndex in frameIndices)
+            {
+                openBookImage.sprite = pageTurnFrames[frameIndex];
+                yield return WaitUnscaled(pageTurnFrameDuration);
+            }
+
+            RenderImmediate(model);
+            SetRestingBookFrame();
+            yield return FadeContent(0f, 1f);
+            SetContentInteraction(true);
+            _pageTransition = null;
+        }
+
+        private IEnumerator FadeContent(float from, float to)
+        {
+            if (contentFadeDuration <= 0f)
+            {
+                bookContentGroup.alpha = to;
+                yield break;
+            }
+
+            float elapsed = 0f;
+            bookContentGroup.alpha = from;
+            while (elapsed < contentFadeDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                bookContentGroup.alpha = Mathf.Lerp(
+                    from,
+                    to,
+                    Mathf.Clamp01(elapsed / contentFadeDuration));
+                yield return null;
+            }
+
+            bookContentGroup.alpha = to;
+        }
+
+        private static IEnumerator WaitUnscaled(float duration)
+        {
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                yield return null;
+            }
+        }
+
+        private void RenderImmediate(CodexBookViewModel model)
+        {
+            ClearHoveredDeckItem();
+            bool showEnemy = RenderBookFrame(model);
+            if (showEnemy)
+            {
+                RenderEnemy(model.EnemyPage);
+            }
+            else
+            {
+                RenderDemon(model.DemonPage);
+            }
+        }
+
         private bool RenderBookFrame(CodexBookViewModel model)
         {
             bool showEnemy = model.Category == CodexCategory.Enemy;
-            if (enemyPageRoot != null)
-            {
-                enemyPageRoot.SetActive(showEnemy);
-            }
+            enemyPageRoot?.SetActive(showEnemy);
+            demonPageRoot?.SetActive(!showEnemy);
 
-            if (demonPageRoot != null)
-            {
-                demonPageRoot.SetActive(!showEnemy);
-            }
-
-            if (enemyTabImage != null)
-            {
-                enemyTabImage.color =
-                    showEnemy ? activeTabColor : inactiveTabColor;
-            }
-
-            if (demonTabImage != null)
-            {
-                demonTabImage.color =
-                    showEnemy ? inactiveTabColor : activeTabColor;
-            }
+            SetGraphicColor(
+                enemyTabImage,
+                showEnemy ? activeTabColor : inactiveTabColor);
+            SetGraphicColor(
+                demonTabImage,
+                showEnemy ? inactiveTabColor : activeTabColor);
+            SetGraphicColor(
+                enemyTabText,
+                showEnemy ? activeTabColor : inactiveTabColor);
+            SetGraphicColor(
+                demonTabText,
+                showEnemy ? inactiveTabColor : activeTabColor);
 
             if (enemyTabButton != null)
             {
@@ -195,12 +323,10 @@ namespace DiaBlackJack.GameScene
                 demonTabButton.interactable = showEnemy;
             }
 
-            if (pageNumberText != null)
-            {
-                pageNumberText.text =
-                    $"Q  이전    {model.PageIndex + 1} / {model.PageCount}    다음  E";
-            }
-
+            SetText(previousPageText, "Q Previous");
+            SetText(
+                nextPageText,
+                $"{model.PageIndex + 1}/{model.PageCount} Next E");
             return showEnemy;
         }
 
@@ -211,11 +337,10 @@ namespace DiaBlackJack.GameScene
             ClearSpawnedItems(_contractItems);
             bool hasContracts = page.ContractableDemons.Count > 0;
             RenderNoContractMessage(hasContracts);
-
             foreach (CodexDemonReferenceViewModel demon in
                 page.ContractableDemons)
             {
-                CodexCardThumbnailView item = CreateItem(
+                DeckPreviewCardView item = CreateItem(
                     contractTemplate,
                     contractGrid,
                     _contractItems);
@@ -225,7 +350,7 @@ namespace DiaBlackJack.GameScene
             ClearDeckItems();
             foreach (CodexDeckCardViewModel card in page.StartingDeck)
             {
-                CodexCardThumbnailView item = CreateItem(
+                DeckPreviewCardView item = CreateItem(
                     deckTemplate,
                     deckGrid,
                     _deckItems);
@@ -259,30 +384,32 @@ namespace DiaBlackJack.GameScene
 
         private void RenderNoContractMessage(bool hasContracts)
         {
-            if (noContractText != null)
+            if (noContractText == null)
             {
-                noContractText.gameObject.SetActive(!hasContracts);
-                noContractText.text = "계약 가능한 악마 없음";
+                return;
             }
+
+            noContractText.gameObject.SetActive(!hasContracts);
+            noContractText.text = "계약 가능한 악마 없음";
         }
 
         private void RenderDemonThumbnail(
-            CodexCardThumbnailView target,
+            DeckPreviewCardView target,
             CodexDemonReferenceViewModel demon)
         {
-            target.Render(
-                demon.DisplayName,
+            target.RenderCodex(
                 _cardContentCatalog.GetDemonFaceSprite(
-                    demon.DefinitionKey));
+                    demon.DefinitionKey),
+                count: null,
+                hoverTitle: null,
+                hoverDescription: null);
         }
 
         private void RenderDeckThumbnail(
-            CodexCardThumbnailView target,
+            DeckPreviewCardView target,
             CodexDeckCardViewModel card)
         {
-            string cardName = $"{card.Rank}  {card.DisplayName}";
-            target.RenderDeck(
-                cardName,
+            target.RenderCodex(
                 _cardContentCatalog.GetNormalFaceSprite(
                     card.DefinitionKey,
                     card.Suit),
@@ -390,7 +517,7 @@ namespace DiaBlackJack.GameScene
         }
 
         private void HandleDeckItemHoverChanged(
-            CodexCardThumbnailView item,
+            DeckPreviewCardView item,
             bool hovered)
         {
             if (!IsOpen)
@@ -432,7 +559,7 @@ namespace DiaBlackJack.GameScene
         private void ClearDeckItems()
         {
             ClearHoveredDeckItem();
-            foreach (CodexCardThumbnailView item in _deckItems)
+            foreach (DeckPreviewCardView item in _deckItems)
             {
                 if (item != null)
                 {
@@ -458,15 +585,8 @@ namespace DiaBlackJack.GameScene
 
         private void SetTemplatesVisible(bool visible)
         {
-            if (contractTemplate != null)
-            {
-                contractTemplate.gameObject.SetActive(visible);
-            }
-
-            if (deckTemplate != null)
-            {
-                deckTemplate.gameObject.SetActive(visible);
-            }
+            contractTemplate?.gameObject.SetActive(visible);
+            deckTemplate?.gameObject.SetActive(visible);
         }
 
         private void EnsureConfigured()
@@ -477,6 +597,25 @@ namespace DiaBlackJack.GameScene
             {
                 throw new InvalidOperationException(
                     "CodexOverlayView must be configured before rendering.");
+            }
+
+            if (openBookImage == null ||
+                bookContentGroup == null ||
+                pageTurnFrames == null ||
+                pageTurnFrames.Length != RequiredPageTurnFrameCount)
+            {
+                throw new MissingReferenceException(
+                    "Codex page-turn references must contain the book image, " +
+                    "content group, and exactly five frames.");
+            }
+
+            foreach (Sprite frame in pageTurnFrames)
+            {
+                if (frame == null)
+                {
+                    throw new MissingReferenceException(
+                        "Codex page-turn frames cannot contain null.");
+                }
             }
         }
 
@@ -492,10 +631,53 @@ namespace DiaBlackJack.GameScene
             deckScrollRect.velocity = Vector2.zero;
         }
 
-        private static CodexCardThumbnailView CreateItem(
-            CodexCardThumbnailView template,
+        private void CancelPageTransition()
+        {
+            if (_pageTransition != null)
+            {
+                StopCoroutine(_pageTransition);
+                _pageTransition = null;
+            }
+
+            ResetTransitionVisuals();
+        }
+
+        private void ResetTransitionVisuals()
+        {
+            SetRestingBookFrame();
+            if (bookContentGroup != null)
+            {
+                bookContentGroup.alpha = 1f;
+                SetContentInteraction(true);
+            }
+        }
+
+        private void SetRestingBookFrame()
+        {
+            if (openBookImage != null &&
+                pageTurnFrames != null &&
+                pageTurnFrames.Length > 0 &&
+                pageTurnFrames[0] != null)
+            {
+                openBookImage.sprite = pageTurnFrames[0];
+            }
+        }
+
+        private void SetContentInteraction(bool enabled)
+        {
+            if (bookContentGroup == null)
+            {
+                return;
+            }
+
+            bookContentGroup.interactable = enabled;
+            bookContentGroup.blocksRaycasts = enabled;
+        }
+
+        private static DeckPreviewCardView CreateItem(
+            DeckPreviewCardView template,
             Transform parent,
-            ICollection<CodexCardThumbnailView> items)
+            ICollection<DeckPreviewCardView> items)
         {
             if (template == null || parent == null)
             {
@@ -503,7 +685,7 @@ namespace DiaBlackJack.GameScene
                     "Codex card template or parent is missing.");
             }
 
-            CodexCardThumbnailView item =
+            DeckPreviewCardView item =
                 Instantiate(template, parent, false);
             item.gameObject.SetActive(true);
             items.Add(item);
@@ -511,9 +693,9 @@ namespace DiaBlackJack.GameScene
         }
 
         private static void ClearSpawnedItems(
-            ICollection<CodexCardThumbnailView> items)
+            ICollection<DeckPreviewCardView> items)
         {
-            foreach (CodexCardThumbnailView item in items)
+            foreach (DeckPreviewCardView item in items)
             {
                 if (item == null)
                 {
@@ -531,6 +713,14 @@ namespace DiaBlackJack.GameScene
             }
 
             items.Clear();
+        }
+
+        private static void SetGraphicColor(Graphic target, Color value)
+        {
+            if (target != null)
+            {
+                target.color = value;
+            }
         }
 
         private static void SetText(TMP_Text target, string value)

@@ -1,5 +1,15 @@
 # 테이블 도감 진행 기록
 
+## DX-M06: 공용 카드·페이지 전환 개선
+
+- 페이지 문구를 `Q Previous`와 `{현재}/{전체} Next E`로 분리하고, 닫기 버튼 alpha와 비활성 탭 Label 색상을 확정했다.
+- 시작 덱·계약 악마 템플릿을 실제 `DeckPreviewCard.prefab` 중첩 인스턴스로 교체했다. 시작 덱은 `xN`과 공용 호버를 유지하고 이름·랭크 Overlay를 제거했으며, 계약 악마는 수량·Fallback·호버·선택 표시를 끈다. 사용처가 사라진 `CodexCardThumbnailView`는 제거했다.
+- 계약 Grid를 70×112 셀의 6열로 조정해 최종 보스 계약 6장을 한 행에 배치했다.
+- `Book` 콘텐츠 `CanvasGroup`과 Remake 0~4 Sprite를 연결하고, Q/E·탭 전환에 0.12초 Fade-out → 방향별 5프레임(각 0.08초) → 렌더·0번 복원 → 0.12초 Fade-in을 적용했다. 전환 중 입력·Raycast를 차단하고 닫기·비활성화 때 전환·호버·표시 상태를 초기화한다.
+- 신규 DXM06 5건은 최종 job `3a06782e726b4f4b8f291eea49506df0`에서 5/5 통과했다. Codex 표시 모델·덱 미리보기 포함 대상 job `2e38823b97a94f41a1746c77833dadf0`은 24/24 통과했다.
+- 전체 EditMode job `a2d40697a4bf4f94b5db8d04894589dc`는 1059개 중 1054개 통과, 5개 실패다. DX-M06 외 기존/병행 자산·표시 상태 실패 4건과, 열려 있던 프리팹 편집 상태에서 `PortraitFrame`이 `circle_brush`로 저장된 Codex 기존 아트 계약 실패 1건이다. 해당 동시 편집 상태는 덮어쓰지 않았다.
+- GameScene validation은 override 정리 전 issue 0, missing script 0, broken prefab 0이고 컴파일 및 최종 Console Error는 0이다. 병행 작업의 GameScene 저장 완료와 dirty=false를 확인한 뒤 Codex 루트/name/font override는 유지하고, 덱 Content의 낡은 높이·Y 위치 override 2개만 제거해 재임포트했다. 정리 후 validation 재호출은 MCP bridge timeout으로 결과를 받지 못했다. 1920×1080·1280×720 Play Mode 수동 검증은 동시 에디터 사용을 방해하지 않기 위해 수행하지 않았다. 앞서 만든 미저장 씬 진단 복사본은 `Temp/DXM06_GameScene_DirtyBackup.unity`에 보존했다.
+
 ## DX-M05: 프로토타입 악마 도감 범위 정리
 
 - 도감 악마 페이지를 전체 12종이 아닌 `DemonContractCatalog.PrototypeEnabledDemonKeys`의 6종만 생성하도록 변경했다.

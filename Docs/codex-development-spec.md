@@ -1,5 +1,15 @@
 # 테이블 도감 개발 명세
 
+## DX-M06: 공용 카드와 페이지 전환
+
+- 페이지 안내는 왼쪽 `Q Previous`, 오른쪽 `{현재}/{전체} Next E`로 분리한다. 적 정보·악마 카드 탭의 비활성 Label은 기존 비활성 색상으로 어둡게 표시하며 배경 색상 전환도 유지한다.
+- 닫기 버튼은 Normal alpha 0.5, Highlighted 1.0, Pressed 0.8을 사용한다.
+- 계약 악마와 시작 덱은 `DeckPreviewCard.prefab` 중첩 인스턴스를 공용 템플릿으로 사용한다. 시작 덱은 카드 위 이름·랭크 Overlay 없이 앞면과 `xN`, 공용 호버 뱃지만 표시한다. 계약 악마는 수량·Fallback·호버·선택 프레임을 표시하지 않는다.
+- 계약 Grid는 6열, 셀 70×112, 가로 간격 7, 좌우 패딩 4로 고정해 보스 계약 6장을 한 행에 표시한다. 시작 덱의 기존 4열 구성은 유지한다.
+- `Q/E`와 탭 직접 선택은 동일한 전환 잠금을 사용한다. 콘텐츠 0.12초 Fade-out 뒤 다음은 Remake `0→1→2→3→4`, 이전은 `4→3→2→1→0`을 프레임당 0.08초 재생하고, 새 모델 렌더·0번 복원·0.12초 Fade-in 순으로 처리한다.
+- Fade 대상 `Book`의 `CanvasGroup`은 펼친 책 배경과 Backdrop을 제외한 콘텐츠만 감싼다. 전환 중 상호작용과 Raycast를 차단하며 닫기·비활성화 때 Coroutine, 호버 뱃지, Sprite, alpha와 입력 잠금을 즉시 초기화한다.
+- Inspector 프리뷰는 애니메이션 없이 즉시 렌더하고 저장 전후 스냅샷 복원 계약을 유지한다. `CodexOverlayView`의 기존 public API와 표시 모델은 변경하지 않는다.
+
 ## DX-M03: 미리보기 저장 수명주기
 
 - `PrefabStage.prefabSaving`/`prefabSaved`와 `EditorSceneManager.sceneSaving`/`sceneSaved`을 저장 전 중단·저장 후 재개 쌍으로 처리한다.
@@ -13,7 +23,7 @@
 - 초상화는 `RectMask2D` 뷰포트 안에서 비율 유지·중앙 크롭하고 `CodexFrame_0`으로 감싼다.
 - 영혼/골드·설명·계약·덱 패널 외곽선은 Sliced `CodexOutline_0`을 사용한다.
 - 시작 덱 `ScrollRect`는 세로 전용, Clamped, 스크롤바 없음이다. Content는 4열 고정 Grid, 셀 116×184, 간격 8×12, 좌우 패딩 8이다. 카드 아래 20px 수량 줄을 포함한다.
-- 계약 카드는 기존 템플릿과 3열을 유지하며 최대 6개를 2행으로 책 안에 표시한다.
+- 계약 카드는 `DeckPreviewCard.prefab` 템플릿과 6열을 사용하며 최대 6개를 1행으로 책 안에 표시한다.
 - `GameScene`의 덱 Content 인스턴스 `m_SizeDelta.y`, `m_AnchoredPosition.y` 오버라이드는 제거한다.
 - 프리팹 테스트는 아트 연결, Sliced 타입, 별도 아이콘, 필수 참조, Grid/ScrollRect 설정과 모델 렌더 값을 검증한다.
 
@@ -37,10 +47,10 @@
 ## DX-02: uGUI와 씬 연결
 
 - `CodexOverlayView`: 전체 화면 Canvas, 차단막, 펼친 책, 닫기 버튼, 페이지 번호, 책갈피 두 개, 적/악마 페이지를 렌더링한다.
-- 적 시작 덱은 `ScrollRect + GridLayoutGroup`, 계약 악마는 3열 미니 카드 그리드를 사용한다.
+- 적 시작 덱은 `ScrollRect + GridLayoutGroup`, 계약 악마는 6열 미니 카드 그리드를 사용한다.
 - 적 시작 덱은 원래 프로필 순서에서 suit를 확정한 뒤 `(DefinitionKey, Suit)`가 같은 카드만 묶는다. 개별 카드 ID는 표시 모델에 넣지 않으며 같은 숫자라도 정의가 다르거나 같은 정의라도 스페이드·클로버가 다르면 별도 항목이다.
 - 시작 덱 모든 항목 아래 `xN` 수량을 항상 표시한다. 계약 악마 템플릿과 악마 상세 페이지에는 수량을 추가하지 않는다.
-- 시작 덱 카드 호버는 `"{Rank}. {DisplayName}"` 제목과 카드 효과 설명을 `CardHoverBadgeRequest`로 전달해 GameHUD 공용 카드 호버 뱃지를 사용한다. 뱃지는 카드 우측 중앙에 왼쪽 중앙 피벗으로 붙고, `CodexCardThumbnailView`의 `Deck Card Hover Badge Offset`을 카드 로컬 UI 좌표로 더한다.
+- 시작 덱 카드 호버는 `"{Rank}. {DisplayName}"` 제목과 카드 효과 설명을 `CardHoverBadgeRequest`로 전달해 GameHUD 공용 카드 호버 뱃지를 사용한다. 뱃지는 카드 우측 중앙에 왼쪽 중앙 피벗으로 붙고, 공용 `DeckPreviewCardView`의 `Deck Card Hover Badge Offset`을 카드 로컬 UI 좌표로 더한다.
 - `CodexController`: 열림 상태, 카테고리별 마지막 페이지, `Q/E`, 책갈피, 닫기를 소유한다.
 - `CodexClickable`: GameManager의 기존 포인터 raycast로 여는 테이블 책 표식이다.
 - 기준 해상도는 1920×1080이며 Canvas Scaler와 앵커로 1280×720을 지원한다.
