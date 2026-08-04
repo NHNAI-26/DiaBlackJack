@@ -277,6 +277,8 @@ namespace DiaBlackJack.GameScene.Editor
             {
                 RestoreHoverOutlinePreview();
             }
+
+            DrawRevealFlipTest();
         }
 
         private void OnDisable()
@@ -298,6 +300,105 @@ namespace DiaBlackJack.GameScene.Editor
             CardHoverAnchorPreviewDrawer.RestoreHoverOutlinePreview(
                 _originalHoverOutlineBlocks);
             SceneView.RepaintAll();
+        }
+
+        private void DrawRevealFlipTest()
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField(
+                "Animation Test",
+                EditorStyles.boldLabel);
+
+            bool canPlay = CanPlayRevealFlipTest(targets);
+            if (!EditorApplication.isPlaying)
+            {
+                EditorGUILayout.HelpBox(
+                    "Reveal flip test is available only in Play Mode.",
+                    MessageType.Info);
+            }
+            else if (!canPlay)
+            {
+                EditorGUILayout.HelpBox(
+                    "Select an active scene CardView while in Play Mode.",
+                    MessageType.Warning);
+            }
+
+            using (new EditorGUI.DisabledScope(!canPlay))
+            {
+                if (GUILayout.Button("Play Reveal Flip"))
+                {
+                    PlayRevealFlipTest(targets);
+                }
+            }
+        }
+
+        [MenuItem(
+            "Tools/DiaBlackJack/Card Animation Test/Play Selected Reveal Flip",
+            priority = 240)]
+        private static void PlaySelectedRevealFlipTest()
+        {
+            PlayRevealFlipTest(Selection.objects);
+        }
+
+        [MenuItem(
+            "Tools/DiaBlackJack/Card Animation Test/Play Selected Reveal Flip",
+            true)]
+        private static bool CanPlaySelectedRevealFlipTest()
+        {
+            return CanPlayRevealFlipTest(Selection.objects);
+        }
+
+        private static bool CanPlayRevealFlipTest(Object[] objects)
+        {
+            if (!EditorApplication.isPlaying || objects == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < objects.Length; i++)
+            {
+                CardView view = ResolveCardView(objects[i]);
+                if (view != null && view.CanPlayRevealFlipAnimationTest)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void PlayRevealFlipTest(Object[] objects)
+        {
+            if (objects == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < objects.Length; i++)
+            {
+                CardView view = ResolveCardView(objects[i]);
+                if (view != null)
+                {
+                    view.PlayRevealFlipAnimationTest();
+                }
+            }
+
+            SceneView.RepaintAll();
+        }
+
+        private static CardView ResolveCardView(Object source)
+        {
+            if (source is CardView view)
+            {
+                return view;
+            }
+
+            if (source is GameObject gameObject)
+            {
+                return gameObject.GetComponentInParent<CardView>();
+            }
+
+            return null;
         }
     }
 

@@ -131,12 +131,34 @@ inline half NHNGetSpriteUVInside(float2 baseSpriteUV)
 inline half4 NHNSampleBase(float2 rawUV, out float2 surfaceUV)
 {
 #if defined(NHN_SPRITE_UBER)
+    // 스프라이트 내부의 0~1 UV를 구하고 Flip을 적용한다.
     float2 baseSpriteUV = NHNGetBaseSpriteUV(rawUV);
-    surfaceUV = rawUV;
-    half4 baseSample = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, rawUV);
-    float2 blendSpriteUV = NHNGetCardBlendAtlasUV(baseSpriteUV);
-    half4 blendSample = SAMPLE_TEXTURE2D(_CardBlendTex, sampler_CardBlendTex, blendSpriteUV);
-    return lerp(baseSample, blendSample, saturate(_CardBlendAmount));
+
+    // Flip이 적용된 UV를 다시 아틀라스 UV로 변환한다.
+    float2 baseAtlasUV =
+        NHNGetBaseSpriteAtlasUV(baseSpriteUV);
+
+    surfaceUV = baseAtlasUV;
+
+    half4 baseSample =
+        SAMPLE_TEXTURE2D(
+            _MainTex,
+            sampler_MainTex,
+            baseAtlasUV);
+
+    float2 blendSpriteUV =
+        NHNGetCardBlendAtlasUV(baseSpriteUV);
+
+    half4 blendSample =
+        SAMPLE_TEXTURE2D(
+            _CardBlendTex,
+            sampler_CardBlendTex,
+            blendSpriteUV);
+
+    return lerp(
+        baseSample,
+        blendSample,
+        saturate(_CardBlendAmount));
 #else
     surfaceUV = TRANSFORM_TEX(rawUV, _BaseMap);
     return SampleAlbedoAlpha(surfaceUV, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap));
