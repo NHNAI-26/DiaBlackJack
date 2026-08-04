@@ -29,7 +29,7 @@ MonoBehaviour:
   - cueKey: shop.sold_out
     lines:
     - "\uC774\uBBF8 \uD314\uB9B0 \uBB3C\uAC74\uC77C\uC138."
-    - "\uADF8 \uBB3C\uAC74\uC740 \uBA3C\uC800 \uC628 \uC190\uB2D8 \uBAAB\uC774\uB124."
+    - "\uB354 \uC774\uC0C1 \uC7AC\uACE0\uAC00 \uC5C6\uB2E4\uB124."
   - cueKey: shop.unavailable
     lines:
     - "\uC9C0\uAE08\uC740 \uD314 \uC218 \uC5C6\uB124."
@@ -37,11 +37,11 @@ MonoBehaviour:
   - cueKey: shop.lighter_success
     lines:
     - "\uB371\uC774 \uD55C\uACB0 \uAC00\uBCBC\uC6CC\uC84C\uAD70."
-    - "\uBD88\uD544\uC694\uD55C \uD328\uB294 \uC7AC\uAC00 \uB418\uC5C8\uB124."
+    - "\uADF8 \uCE74\uB4DC\uB294 \uC7AC\uAC00 \uB418\uC5C8\uB124."
   - cueKey: shop.whiskey_success
     lines:
     - "\uAE30\uC6B4\uC774 \uC880 \uB3CC\uC544\uC654\uACA0\uC9C0."
-    - "\uD55C \uC794\uC774\uBA74 \uC601\uD63C\uB3C4 \uC228\uC744 \uACE0\uB974\uC9C0."
+    - "\uD55C \uC794\uC774\uBA74 \uCDA9\uBD84\uD558\uACA0\uC9C0."
   - cueKey: shop.farewell
     lines:
     - "\uB2E4\uC74C\uC5D0 \uB610 \uBCF4\uC9C0."
