@@ -109,6 +109,7 @@ Shader "Shader/UI Alpha"
                 if (_UseRgbOverride > 0.5)
                 {
                     color.rgb = _RgbOverrideColor.rgb;
+                    color.a *= _RgbOverrideColor.a;
                 }
 
                 #ifdef UNITY_UI_CLIP_RECT
