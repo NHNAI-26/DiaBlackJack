@@ -280,6 +280,7 @@ MonoBehaviour:
   closeButton: {fileID: 4151346974126861184}
   selectionFooter: {fileID: 6871532850504560092}
   confirmButton: {fileID: 5189801851992876130}
+  confirmButtonGroup: {fileID: 8769740513013357431}
   cardScrollRect: {fileID: 3893380249231270682}
   titleText: {fileID: 7840925731411638103}
   cardSlots:
@@ -827,6 +828,7 @@ GameObject:
   - component: {fileID: 6614768137715402939}
   - component: {fileID: 7378837022824587068}
   - component: {fileID: 5189801851992876130}
+  - component: {fileID: 8769740513013357431}
   m_Layer: 5
   m_Name: SelectionFooter
   m_TagString: Untagged
@@ -874,7 +876,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 2100000, guid: f3103118f7bb9ca409da23ad4817900a, type: 2}
+  m_Material: {fileID: 2100000, guid: d79b81b589a9b014aab52ec7089eab75, type: 2}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
@@ -914,10 +916,10 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
-    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_HighlightedColor: {r: 0.78, g: 0.78, b: 0.78, a: 1}
+    m_PressedColor: {r: 0.65, g: 0.65, b: 0.65, a: 1}
+    m_SelectedColor: {r: 1, g: 1, b: 1, a: 1}
+    m_DisabledColor: {r: 1, g: 1, b: 1, a: 1}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
@@ -936,6 +938,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!225 &8769740513013357431
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6871532850504560092}
+  m_Enabled: 1
+  m_Alpha: 0.5
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &7871059126423558101
 GameObject:
   m_ObjectHideFlags: 0

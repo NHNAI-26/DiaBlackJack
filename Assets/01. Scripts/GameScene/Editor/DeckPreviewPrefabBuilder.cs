@@ -19,6 +19,13 @@ namespace DiaBlackJack.GameScene.Editor
         public const string CardSlotPrefabPath =
             "Assets/03. Prefabs/UI/GameScene/DeckPreviewCard.prefab";
 
+        private const string CardHoverOutlineMaterialPath =
+            "Assets/05. Arts/Material/Card/UI_DeckCardHoverOutline.mat";
+        private const string CombatCardPrefabPath =
+            "Assets/03. Prefabs/Card/Card.prefab";
+        private const string ConfirmButtonMaterialPath =
+            "Assets/05. Arts/Material/Card/UI_Brush_Red_Confirm.mat";
+
         private const string GameScenePath = "Assets/00. Scenes/GameScene.unity";
         private const int CardSlotCount = 100;
 
@@ -242,8 +249,19 @@ namespace DiaBlackJack.GameScene.Editor
                 Vector2.zero);
             Image confirmImage = selectionFooter.AddComponent<Image>();
             confirmImage.color = new Color(0.38f, 0.09f, 0.09f, 1f);
+            confirmImage.material = AssetDatabase.LoadAssetAtPath<Material>(
+                ConfirmButtonMaterialPath);
             Button confirmButton = selectionFooter.AddComponent<Button>();
             confirmButton.targetGraphic = confirmImage;
+            ColorBlock confirmColors = confirmButton.colors;
+            confirmColors.normalColor = Color.white;
+            confirmColors.highlightedColor = new Color(0.78f, 0.78f, 0.78f, 1f);
+            confirmColors.pressedColor = new Color(0.65f, 0.65f, 0.65f, 1f);
+            confirmColors.selectedColor = Color.white;
+            confirmColors.disabledColor = Color.white;
+            confirmButton.colors = confirmColors;
+            CanvasGroup confirmGroup = selectionFooter.AddComponent<CanvasGroup>();
+            confirmGroup.alpha = 0.5f;
             TMP_Text confirmLabel = CreateText(
                 "Label",
                 selectionFooter.transform,
@@ -265,6 +283,7 @@ namespace DiaBlackJack.GameScene.Editor
             serializedView.FindProperty("closeButton").objectReferenceValue = closeButton;
             serializedView.FindProperty("selectionFooter").objectReferenceValue = selectionFooter;
             serializedView.FindProperty("confirmButton").objectReferenceValue = confirmButton;
+            serializedView.FindProperty("confirmButtonGroup").objectReferenceValue = confirmGroup;
             serializedView.FindProperty("cardScrollRect").objectReferenceValue = scrollRect;
             serializedView.FindProperty("titleText").objectReferenceValue = title;
             SerializedProperty slotsProperty = serializedView.FindProperty("cardSlots");
@@ -297,19 +316,6 @@ namespace DiaBlackJack.GameScene.Editor
             Image face = faceRoot.AddComponent<Image>();
             face.preserveAspect = true;
             face.raycastTarget = true;
-
-            GameObject hoverRoot = CreateUiObject("HoverFrame", root.transform);
-            Stretch(
-                hoverRoot.GetComponent<RectTransform>(),
-                Vector2.zero,
-                Vector2.one,
-                new Vector2(0f, 32f),
-                Vector2.zero);
-            CreateBorder("Top", hoverRoot.transform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -6f), Vector2.zero);
-            CreateBorder("Bottom", hoverRoot.transform, Vector2.zero, new Vector2(1f, 0f), Vector2.zero, new Vector2(0f, 6f));
-            CreateBorder("Left", hoverRoot.transform, Vector2.zero, new Vector2(0f, 1f), Vector2.zero, new Vector2(6f, 0f));
-            CreateBorder("Right", hoverRoot.transform, new Vector2(1f, 0f), Vector2.one, new Vector2(-6f, 0f), Vector2.zero);
-            hoverRoot.SetActive(false);
 
             GameObject selectedRoot = CreateUiObject(
                 "SelectedFrame",
@@ -351,12 +357,38 @@ namespace DiaBlackJack.GameScene.Editor
 
             SerializedObject serializedView = new SerializedObject(view);
             serializedView.FindProperty("faceImage").objectReferenceValue = face;
-            serializedView.FindProperty("hoverFrame").objectReferenceValue = hoverRoot;
+            serializedView.FindProperty("hoverOutlineMaterial").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<Material>(CardHoverOutlineMaterialPath);
             serializedView.FindProperty("selectedFrame").objectReferenceValue = selectedRoot;
             serializedView.FindProperty("fallbackText").objectReferenceValue = fallback;
             serializedView.FindProperty("countText").objectReferenceValue = count;
+            CopyCombatHoverFeel(serializedView);
             serializedView.ApplyModifiedPropertiesWithoutUndo();
             return root;
+        }
+
+        private static void CopyCombatHoverFeel(SerializedObject target)
+        {
+            GameObject combatCardPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(CombatCardPrefabPath);
+            CardView combatCard = combatCardPrefab == null
+                ? null
+                : combatCardPrefab.GetComponent<CardView>();
+            if (combatCard == null)
+            {
+                throw new MissingReferenceException(
+                    $"Combat card prefab was not found at {CombatCardPrefabPath}.");
+            }
+
+            SerializedObject source = new SerializedObject(combatCard);
+            target.FindProperty("hoverScale").floatValue =
+                source.FindProperty("hoverScale").floatValue;
+            target.FindProperty("hoverScaleDuration").floatValue =
+                source.FindProperty("hoverScaleDuration").floatValue;
+            target.FindProperty("hoverScaleCurve").animationCurveValue =
+                source.FindProperty("hoverScaleCurve").animationCurveValue;
+            target.FindProperty("hoverSfxId").stringValue =
+                source.FindProperty("hoverSfxId").stringValue;
         }
 
         private static TMP_Text CreateText(

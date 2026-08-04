@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using DiaBlackJack.Content;
 using DiaBlackJack.GameScene;
 using NUnit.Framework;
 using UnityEditor;
@@ -14,6 +15,16 @@ namespace DiaBlackJack.CoreLoop.Tests
     {
         private const string PreviewPrefabPath =
             "Assets/03. Prefabs/UI/GameScene/DeckPreviewOverlay.prefab";
+        private const string CardSlotPrefabPath =
+            "Assets/03. Prefabs/UI/GameScene/DeckPreviewCard.prefab";
+        private const string CombatCardPrefabPath =
+            "Assets/03. Prefabs/Card/Card.prefab";
+        private const string CardCatalogPath =
+            "Assets/02. ScriptableObjects/Cards/CardContentCatalog.asset";
+        private const string HoverOutlineMaterialPath =
+            "Assets/05. Arts/Material/Card/UI_DeckCardHoverOutline.mat";
+        private const string ConfirmButtonMaterialPath =
+            "Assets/05. Arts/Material/Card/UI_Brush_Red_Confirm.mat";
         private const string HoverTooltipPrefabPath =
             "Assets/03. Prefabs/UI/CardHoverTooltip.prefab";
         private const string HudPrefabPath =
@@ -178,11 +189,15 @@ namespace DiaBlackJack.CoreLoop.Tests
                     .Find("Panel/SelectionFooter")
                     .GetComponent<Button>();
 
+                Assert.That(preview.ConfirmButtonInteractable, Is.False);
+                Assert.That(preview.ConfirmButtonAlpha, Is.EqualTo(0.5f));
+
                 Click(first);
                 Assert.That(confirmationCount, Is.Zero);
                 Assert.That(first.IsSelected, Is.True);
                 Assert.That(second.IsSelected, Is.False);
                 Assert.That(preview.ConfirmButtonInteractable, Is.True);
+                Assert.That(preview.ConfirmButtonAlpha, Is.EqualTo(1f));
 
                 Click(second);
                 Assert.That(first.IsSelected, Is.False);
@@ -195,6 +210,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(confirmedCardId, Is.EqualTo(202));
                 Assert.That(confirmationCount, Is.EqualTo(1));
                 Assert.That(preview.ConfirmButtonInteractable, Is.False);
+                Assert.That(preview.ConfirmButtonAlpha, Is.EqualTo(0.5f));
             }
             finally
             {
@@ -270,6 +286,217 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 leaveButton.Find("Label"),
                 Is.Not.Null);
+        }
+
+        [Test]
+        public void GSV13_U01_DeckCardHoverOutlineMatchesCombatStateColors()
+        {
+            GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(
+                CardSlotPrefabPath);
+            GameObject combatCard = AssetDatabase.LoadAssetAtPath<GameObject>(
+                CombatCardPrefabPath);
+            CardContentCatalogSO catalog =
+                AssetDatabase.LoadAssetAtPath<CardContentCatalogSO>(CardCatalogPath);
+            SerializedObject combatView = new SerializedObject(
+                combatCard.GetComponent<CardView>());
+            GameObject instance = Object.Instantiate(source);
+            DeckPreviewCardView slot = instance.GetComponent<DeckPreviewCardView>();
+
+            try
+            {
+                AssertOutlineState(
+                    slot,
+                    catalog,
+                    CreateCardModel("standard-plain-2", 2, false, false),
+                    combatView,
+                    "basicHoverOutlineColor");
+                AssertOutlineState(
+                    slot,
+                    catalog,
+                    CreateCardModel("crystal-orb-5", 5, false, false),
+                    combatView,
+                    "unavailableHoverOutlineColor");
+                AssertOutlineState(
+                    slot,
+                    catalog,
+                    CreateCardModel("crystal-orb-5", 5, true, false),
+                    combatView,
+                    "availableHoverOutlineColor");
+                AssertOutlineState(
+                    slot,
+                    catalog,
+                    CreateCardModel(CardDefinitionCatalog.PoisonKey, 1, false, false),
+                    combatView,
+                    "automaticHoverOutlineColor");
+                AssertOutlineState(
+                    slot,
+                    catalog,
+                    CreateCardModel("crystal-orb-5", 5, false, true),
+                    combatView,
+                    "usedHoverOutlineColor");
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSV13_U02_HoverOutlineVisibilityIsIsolatedPerCardSlot()
+        {
+            GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(
+                CardSlotPrefabPath);
+            CardContentCatalogSO catalog =
+                AssetDatabase.LoadAssetAtPath<CardContentCatalogSO>(CardCatalogPath);
+            Sprite sprite = catalog.GetNormalFaceSprite(
+                "standard-plain-2",
+                CardSuit.Spade);
+            GameObject firstObject = Object.Instantiate(source);
+            GameObject secondObject = Object.Instantiate(source);
+            DeckPreviewCardView first =
+                firstObject.GetComponent<DeckPreviewCardView>();
+            DeckPreviewCardView second =
+                secondObject.GetComponent<DeckPreviewCardView>();
+            GameSceneDeckCardGroupViewModel group =
+                new GameSceneDeckCardGroupViewModel(
+                    CreateCardModel("standard-plain-2", 2, false, false),
+                    1);
+
+            try
+            {
+                first.Render(group, sprite);
+                second.Render(group, sprite);
+
+                first.OnPointerEnter(null);
+
+                Assert.That(first.CurrentHoverOutlineVisibility, Is.EqualTo(1f));
+                Assert.That(second.CurrentHoverOutlineVisibility, Is.Zero);
+                Assert.That(
+                    GetReference<Image>(first, "faceImage").material,
+                    Is.Not.SameAs(GetReference<Image>(second, "faceImage").material));
+
+                first.OnPointerExit(null);
+
+                Assert.That(first.CurrentHoverOutlineVisibility, Is.Zero);
+                Assert.That(second.CurrentHoverOutlineVisibility, Is.Zero);
+            }
+            finally
+            {
+                Object.DestroyImmediate(firstObject);
+                Object.DestroyImmediate(secondObject);
+            }
+        }
+
+        [Test]
+        public void GSV13_U03_DeckPreviewPrefabsSerializeOutlineAndConfirmVisuals()
+        {
+            GameObject cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                CardSlotPrefabPath);
+            GameObject previewPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                PreviewPrefabPath);
+            Material outlineMaterial = AssetDatabase.LoadAssetAtPath<Material>(
+                HoverOutlineMaterialPath);
+            Material confirmMaterial = AssetDatabase.LoadAssetAtPath<Material>(
+                ConfirmButtonMaterialPath);
+            DeckPreviewCardView card = cardPrefab.GetComponent<DeckPreviewCardView>();
+            DeckPreviewView preview = previewPrefab.GetComponent<DeckPreviewView>();
+            Transform footer = previewPrefab.transform.Find("Panel/SelectionFooter");
+            Button confirm = footer.GetComponent<Button>();
+            CanvasGroup confirmGroup = footer.GetComponent<CanvasGroup>();
+
+            Assert.That(outlineMaterial, Is.Not.Null);
+            Assert.That(outlineMaterial.IsKeywordEnabled("_PIXEL_OUTLINE_ON"), Is.True);
+            Assert.That(outlineMaterial.GetFloat("_UseUIAlphaClip"), Is.Zero);
+            Assert.That(
+                GetReference<Material>(card, "hoverOutlineMaterial"),
+                Is.SameAs(outlineMaterial));
+            Assert.That(cardPrefab.transform.Find("HoverFrame"), Is.Null);
+
+            Assert.That(confirmMaterial, Is.Not.Null);
+            Assert.That(confirmMaterial.GetFloat("_UseUIAlphaClip"), Is.Zero);
+            Assert.That(confirmMaterial.GetFloat("_RespectVertexRgbTint"), Is.EqualTo(1f));
+            Assert.That(footer.GetComponent<Image>().material, Is.SameAs(confirmMaterial));
+            Assert.That(confirmGroup, Is.Not.Null);
+            Assert.That(confirmGroup.alpha, Is.EqualTo(0.5f));
+            Assert.That(
+                GetReference<CanvasGroup>(preview, "confirmButtonGroup"),
+                Is.SameAs(confirmGroup));
+            Assert.That(confirm.colors.normalColor, Is.EqualTo(Color.white));
+            Assert.That(
+                confirm.colors.highlightedColor,
+                Is.EqualTo(new Color(0.78f, 0.78f, 0.78f, 1f)));
+            Assert.That(
+                confirm.colors.pressedColor,
+                Is.EqualTo(new Color(0.65f, 0.65f, 0.65f, 1f)));
+            Assert.That(confirm.colors.disabledColor, Is.EqualTo(Color.white));
+        }
+
+        [Test]
+        public void GSV14_U01_DeckHoverMatchesCombatFeelAndKeepsGlowOutsideSprite()
+        {
+            GameObject cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                CardSlotPrefabPath);
+            GameObject combatPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                CombatCardPrefabPath);
+            Material outlineMaterial = AssetDatabase.LoadAssetAtPath<Material>(
+                HoverOutlineMaterialPath);
+            SerializedObject deckData = new SerializedObject(
+                cardPrefab.GetComponent<DeckPreviewCardView>());
+            SerializedObject combatData = new SerializedObject(
+                combatPrefab.GetComponent<CardView>());
+
+            Assert.That(
+                deckData.FindProperty("hoverScale").floatValue,
+                Is.EqualTo(combatData.FindProperty("hoverScale").floatValue));
+            Assert.That(
+                deckData.FindProperty("hoverScaleDuration").floatValue,
+                Is.EqualTo(combatData.FindProperty("hoverScaleDuration").floatValue));
+            Assert.That(
+                deckData.FindProperty("hoverSfxId").stringValue,
+                Is.EqualTo(combatData.FindProperty("hoverSfxId").stringValue));
+            AnimationCurve deckCurve =
+                deckData.FindProperty("hoverScaleCurve").animationCurveValue;
+            AnimationCurve combatCurve =
+                combatData.FindProperty("hoverScaleCurve").animationCurveValue;
+            Assert.That(deckCurve.keys, Is.EqualTo(combatCurve.keys));
+            Assert.That(outlineMaterial.GetFloat("_PixelOutlineGlowWidth"),
+                Is.EqualTo(4f));
+            Assert.That(outlineMaterial.GetFloat("_PixelOutlineGlowAlpha"),
+                Is.EqualTo(0.35f));
+
+            CardContentCatalogSO catalog =
+                AssetDatabase.LoadAssetAtPath<CardContentCatalogSO>(CardCatalogPath);
+            Sprite sprite = catalog.GetNormalFaceSprite(
+                "standard-plain-2",
+                CardSuit.Spade);
+            GameObject instance = Object.Instantiate(cardPrefab);
+            DeckPreviewCardView card = instance.GetComponent<DeckPreviewCardView>();
+            Vector3 restingScale = instance.transform.localScale;
+            try
+            {
+                card.Render(
+                    new GameSceneDeckCardGroupViewModel(
+                        CreateCardModel("standard-plain-2", 2, false, false),
+                        1),
+                    sprite);
+
+                Vector4 padding = card.CurrentHoverOutlineMeshPadding;
+                Assert.That(padding.x, Is.GreaterThan(0f));
+                Assert.That(padding.y, Is.GreaterThan(0f));
+                Assert.That(padding.z, Is.GreaterThan(0f));
+                Assert.That(padding.w, Is.GreaterThan(0f));
+
+                card.OnPointerEnter(null);
+                Assert.That(instance.transform.localScale,
+                    Is.EqualTo(restingScale * 1.02f));
+                card.OnPointerExit(null);
+                Assert.That(instance.transform.localScale,
+                    Is.EqualTo(restingScale));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
         }
 
         [Test]
@@ -442,6 +669,53 @@ namespace DiaBlackJack.CoreLoop.Tests
             {
                 button = PointerEventData.InputButton.Left
             });
+        }
+
+        private static void AssertOutlineState(
+            DeckPreviewCardView slot,
+            CardContentCatalogSO catalog,
+            GameSceneCardViewModel card,
+            SerializedObject combatView,
+            string colorPropertyName)
+        {
+            Sprite sprite = catalog.GetNormalFaceSprite(
+                card.DefinitionKey,
+                card.Suit);
+            Assert.That(sprite, Is.Not.Null, card.DefinitionKey);
+            slot.Render(
+                new GameSceneDeckCardGroupViewModel(card, 1),
+                sprite);
+
+            Color expected = combatView.FindProperty(colorPropertyName).colorValue;
+            Assert.That(slot.CurrentHoverOutlineColor, Is.EqualTo(expected));
+            slot.OnPointerEnter(null);
+            Assert.That(slot.CurrentHoverOutlineVisibility, Is.EqualTo(1f));
+            slot.OnPointerExit(null);
+            Assert.That(slot.CurrentHoverOutlineVisibility, Is.Zero);
+        }
+
+        private static GameSceneCardViewModel CreateCardModel(
+            string definitionKey,
+            int rank,
+            bool canUse,
+            bool isUsed)
+        {
+            return new GameSceneCardViewModel(
+                cardId: rank,
+                rank: rank,
+                isFaceUp: true,
+                revealRank: true,
+                canUse: canUse,
+                displayName: definitionKey,
+                definitionKey: definitionKey,
+                isUsed: isUsed);
+        }
+
+        private static T GetReference<T>(Object owner, string propertyName)
+            where T : Object
+        {
+            SerializedObject serialized = new SerializedObject(owner);
+            return serialized.FindProperty(propertyName).objectReferenceValue as T;
         }
 
         private static GameSceneDeckViewModel CreateSelectionCards()

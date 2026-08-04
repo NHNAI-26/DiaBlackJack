@@ -19,6 +19,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Button closeButton;
         [SerializeField] private GameObject selectionFooter;
         [SerializeField] private Button confirmButton;
+        [SerializeField] private CanvasGroup confirmButtonGroup;
         [SerializeField] private ScrollRect cardScrollRect;
         [SerializeField] private TMP_Text titleText;
         [SerializeField] private DeckPreviewCardView[] cardSlots = Array.Empty<DeckPreviewCardView>();
@@ -50,6 +51,9 @@ namespace DiaBlackJack.GameScene
 
         public bool ConfirmButtonInteractable =>
             confirmButton != null && confirmButton.interactable;
+
+        internal float ConfirmButtonAlpha =>
+            confirmButtonGroup == null ? 1f : confirmButtonGroup.alpha;
 
         public bool HasSelection => _selectedSlot != null;
 
@@ -410,13 +414,19 @@ namespace DiaBlackJack.GameScene
 
         private void UpdateConfirmButton()
         {
+            bool canConfirm =
+                IsOpen &&
+                _isSingleSelection &&
+                !_confirmationPending &&
+                _selectedSlot != null;
             if (confirmButton != null)
             {
-                confirmButton.interactable =
-                    IsOpen &&
-                    _isSingleSelection &&
-                    !_confirmationPending &&
-                    _selectedSlot != null;
+                confirmButton.interactable = canConfirm;
+            }
+
+            if (confirmButtonGroup != null)
+            {
+                confirmButtonGroup.alpha = canConfirm ? 1f : 0.5f;
             }
         }
 

@@ -218,7 +218,7 @@ namespace DiaBlackJack.GameScene
         /// </summary>
         public string DefinitionKey { get; }
 
-        private static GameSceneCardHoverOutlineState ResolveHoverOutlineState(
+        internal static GameSceneCardHoverOutlineState ResolveHoverOutlineState(
             string definitionKey,
             bool canUse,
             bool isUsed)
