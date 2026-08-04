@@ -91,6 +91,135 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
         }
 
+        [Test]
+        public void GSV06_U02_LighterAnimationResetsBurnAndPreservesAuthoredCardFootprint()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(LighterAnimationPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+
+            GameObject instance = Object.Instantiate(prefab);
+            Texture2D texture = new Texture2D(40, 20);
+            Sprite wideSprite = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, 40f, 20f),
+                new Vector2(0.5f, 0.5f),
+                10f);
+            try
+            {
+                LighterDragTriggerController controller =
+                    instance.GetComponent<LighterDragTriggerController>();
+                SpriteRenderer burnCardRenderer =
+                    FindSpriteRenderer(instance, "Square");
+                Assert.That(controller, Is.Not.Null);
+                Assert.That(burnCardRenderer, Is.Not.Null);
+
+                Vector3 originalPosition = burnCardRenderer.transform.localPosition;
+                Quaternion originalRotation = burnCardRenderer.transform.localRotation;
+                Vector2 originalFootprint = GetLocalSpriteFootprint(burnCardRenderer);
+                Material burnMaterial = burnCardRenderer.sharedMaterial;
+                int dissolveAmountId = Shader.PropertyToID("_DissolveAmount");
+                int dissolveEnabledId = Shader.PropertyToID("_DissolveEnabled");
+                Assert.That(burnMaterial.HasProperty(dissolveAmountId), Is.True);
+                burnMaterial.SetFloat(dissolveAmountId, 0.75f);
+                burnCardRenderer.color = Color.gray;
+
+                Assert.That(controller.SetBurnCardSprite(wideSprite), Is.True);
+
+                Assert.That(burnCardRenderer.sprite, Is.SameAs(wideSprite));
+                burnMaterial = burnCardRenderer.sharedMaterial;
+                Assert.That(
+                    burnMaterial.GetFloat(dissolveAmountId),
+                    Is.EqualTo(0f).Within(0.0001f));
+                Assert.That(
+                    burnMaterial.GetFloat(dissolveEnabledId),
+                    Is.EqualTo(0f).Within(0.0001f));
+                Assert.That(burnMaterial.IsKeywordEnabled("_DISSOLVE_ON"), Is.False);
+                Assert.That(burnCardRenderer.color, Is.EqualTo(Color.white));
+                Assert.That(
+                    GetLocalSpriteFootprint(burnCardRenderer).x,
+                    Is.EqualTo(originalFootprint.x).Within(0.0001f));
+                Assert.That(
+                    GetLocalSpriteFootprint(burnCardRenderer).y,
+                    Is.EqualTo(originalFootprint.y).Within(0.0001f));
+                Assert.That(
+                    burnCardRenderer.transform.localPosition,
+                    Is.EqualTo(originalPosition));
+                Assert.That(
+                    burnCardRenderer.transform.localRotation,
+                    Is.EqualTo(originalRotation));
+
+                LighterAnimationEventReceiver animationEvents =
+                    instance.GetComponent<LighterAnimationEventReceiver>();
+                Assert.That(animationEvents, Is.Not.Null);
+                animationEvents.SetAnimatorTrigger("CardFire");
+                Assert.That(
+                    burnMaterial.GetFloat(dissolveEnabledId),
+                    Is.EqualTo(1f).Within(0.0001f));
+                Assert.That(burnMaterial.IsKeywordEnabled("_DISSOLVE_ON"), Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+                Object.DestroyImmediate(wideSprite);
+                Object.DestroyImmediate(texture);
+            }
+        }
+
+        [Test]
+        public void GSV06_U03_LighterAnimationHidesBurnCardBeforeCoverCloses()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(LighterAnimationPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                SpriteRenderer burnCardRenderer =
+                    FindSpriteRenderer(instance, "Square");
+                LighterAnimationEventReceiver animationEvents =
+                    instance.GetComponent<LighterAnimationEventReceiver>();
+                Assert.That(burnCardRenderer, Is.Not.Null);
+                Assert.That(animationEvents, Is.Not.Null);
+                Assert.That(burnCardRenderer.enabled, Is.True);
+
+                animationEvents.SetAnimatorTrigger("CoverClose");
+
+                Assert.That(burnCardRenderer.enabled, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        private static SpriteRenderer FindSpriteRenderer(
+            GameObject root,
+            string objectName)
+        {
+            SpriteRenderer[] renderers =
+                root.GetComponentsInChildren<SpriteRenderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                if (renderers[i].name == objectName)
+                {
+                    return renderers[i];
+                }
+            }
+
+            return null;
+        }
+
+        private static Vector2 GetLocalSpriteFootprint(SpriteRenderer renderer)
+        {
+            Vector3 size = renderer.sprite.bounds.size;
+            Vector3 scale = renderer.transform.localScale;
+            return new Vector2(
+                Mathf.Abs(size.x * scale.x),
+                Mathf.Abs(size.y * scale.y));
+        }
+
         [TestCase("Assets/05. Arts/Shader/NHNUberLit.shader", "Shader/Uber Lit")]
         [TestCase("Assets/03. Prefabs/Card/CardDeckStack.shader", "DiaBlackJack/CardDeckStack")]
         public void StencilOutlineShadersExposeMaterialControls(

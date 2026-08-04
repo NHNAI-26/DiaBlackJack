@@ -1,5 +1,6 @@
 using Border.Audio;
 using DiaBlackJack.Content;
+using DiaBlackJack.CoreLoop;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -26,6 +27,13 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private string hoverSfxId = "cardHover";
         [Header("Satan orientation")]
         [SerializeField] private float upsideDownTurnDuration = 0.35f;
+        [Header("Satan doom counter")]
+        [SerializeField] private TMP_Text satanDoomCountText;
+        [SerializeField] private float satanDoomCountTilt = -4f;
+        [SerializeField] private Color satanDoomCountColor =
+            new Color(0.68f, 0.015f, 0.025f, 1f);
+        [SerializeField] private Color satanDoomOutlineColor =
+            new Color(0.12f, 0f, 0f, 0.95f);
         [Header("Shop sold out")]
         [Tooltip("Authored card-local price and sold-out display. Detached beside the card in shops.")]
         [SerializeField] private ShopCardOfferStatusView shopOfferStatus;
@@ -39,9 +47,28 @@ namespace DiaBlackJack.GameScene
             Shader.PropertyToID("_PixelOutlineVisibility");
         private const string UnlitKeyword = "_UNLIT_ON";
         private const string PixelOutlineKeyword = "_PIXEL_OUTLINE_ON";
+        private const string UnderlayKeyword = "UNDERLAY_ON";
+        private const float SatanDoomOutlineWidthValue = 0.22f;
+        private const float SatanDoomCountFontSizeValue = 11f;
+        private const float SatanDoomCountScaleValue = 0.4f;
+        private static readonly Vector3 SatanDoomCountOffset =
+            new Vector3(0f, 0.12f, 0.002f);
+        private static readonly int TextOutlineColorId =
+            Shader.PropertyToID("_OutlineColor");
+        private static readonly int TextOutlineWidthId =
+            Shader.PropertyToID("_OutlineWidth");
+        private static readonly int TextUnderlayColorId =
+            Shader.PropertyToID("_UnderlayColor");
+        private static readonly int TextUnderlayOffsetXId =
+            Shader.PropertyToID("_UnderlayOffsetX");
+        private static readonly int TextUnderlayOffsetYId =
+            Shader.PropertyToID("_UnderlayOffsetY");
+        private static readonly int TextUnderlayDilateId =
+            Shader.PropertyToID("_UnderlayDilate");
 
         private SpriteRenderer _frontSpriteRenderer;
         private Material _shopMaterial;
+        private Material _satanDoomMaterial;
         private Vector3 _baseScale = Vector3.one;
         private Vector3 _hoverVisualBaseScale = Vector3.one;
         private Vector3 _targetScale = Vector3.one;
@@ -61,6 +88,41 @@ namespace DiaBlackJack.GameScene
         public bool CanUse { get; private set; }
 
         internal bool IsShopSoldOut => _isShopSoldOut;
+
+        internal bool IsSatanDoomCountVisible =>
+            satanDoomCountText != null && satanDoomCountText.gameObject.activeSelf;
+
+        internal string SatanDoomCountLabel =>
+            satanDoomCountText != null ? satanDoomCountText.text : string.Empty;
+
+        internal Color SatanDoomCountTextColor =>
+            satanDoomCountText != null ? satanDoomCountText.color : Color.clear;
+
+        internal float SatanDoomCountOutlineWidth =>
+            satanDoomCountText != null ? SatanDoomOutlineWidthValue : 0f;
+
+        internal float SatanDoomCountFontSize =>
+            satanDoomCountText != null ? satanDoomCountText.fontSize : 0f;
+
+        internal Vector3 SatanDoomCountLocalScale =>
+            satanDoomCountText != null
+                ? satanDoomCountText.rectTransform.localScale
+                : Vector3.zero;
+
+        internal Vector2 SatanDoomCountRectSize =>
+            satanDoomCountText != null
+                ? satanDoomCountText.rectTransform.sizeDelta
+                : Vector2.zero;
+
+        internal Vector3 SatanDoomCountLocalPosition =>
+            satanDoomCountText != null
+                ? satanDoomCountText.rectTransform.localPosition
+                : Vector3.zero;
+
+        internal Vector3 SatanDoomCountLocalEulerAngles =>
+            satanDoomCountText != null
+                ? satanDoomCountText.rectTransform.localEulerAngles
+                : Vector3.zero;
 
         internal ShopCardOfferStatusView DetachShopOfferStatus(Transform holder)
         {
@@ -93,6 +155,7 @@ namespace DiaBlackJack.GameScene
 
         private void Awake()
         {
+            EnsureSatanDoomCountText();
             if (shopOfferStatus != null)
             {
                 shopOfferStatus.gameObject.SetActive(false);
@@ -119,6 +182,11 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        private void LateUpdate()
+        {
+            AlignSatanDoomCount();
+        }
+
         private void OnDisable()
         {
             _hovered = false;
@@ -129,19 +197,8 @@ namespace DiaBlackJack.GameScene
         private void OnDestroy()
         {
             _orientationTween?.Kill();
-            if (_shopMaterial == null)
-            {
-                return;
-            }
-
-            if (Application.isPlaying)
-            {
-                Destroy(_shopMaterial);
-            }
-            else
-            {
-                DestroyImmediate(_shopMaterial);
-            }
+            DestroyOwnedMaterial(_shopMaterial);
+            DestroyOwnedMaterial(_satanDoomMaterial);
         }
 
         public void Bind(GameSceneDemonCardViewModel card)
@@ -183,6 +240,8 @@ namespace DiaBlackJack.GameScene
                 englishNameText.gameObject.SetActive(_showingFrontFace);
             }
 
+            UpdateSatanDoomCount(card);
+
             HoverBadgeTitle = !card.IsFaceUp ? string.Empty : englishName;
             HoverBadgeDescription = !card.IsFaceUp
                 ? string.Empty
@@ -192,6 +251,7 @@ namespace DiaBlackJack.GameScene
             ResetHoverScales();
             _targetScale = HoverRestingScale();
             ApplyOrientation(card.IsUpsideDown, animateOrientation);
+            AlignSatanDoomCount();
         }
 
         private void ApplyOrientation(bool isUpsideDown, bool animate)
@@ -374,6 +434,13 @@ namespace DiaBlackJack.GameScene
             {
                 englishNameText.GetComponent<Renderer>().sortingOrder = sortingOrder + 1;
             }
+
+            if (satanDoomCountText != null &&
+                satanDoomCountText.GetComponent<Renderer>() != null)
+            {
+                satanDoomCountText.GetComponent<Renderer>().sortingOrder =
+                    sortingOrder + 2;
+            }
         }
 
         public Sprite GetFaceSprite(string definitionKey)
@@ -447,6 +514,128 @@ namespace DiaBlackJack.GameScene
             }
 
             return _frontSpriteRenderer;
+        }
+
+        private void EnsureSatanDoomCountText()
+        {
+            if (satanDoomCountText != null || englishNameText == null)
+            {
+                return;
+            }
+
+            Transform parent = hoverVisualRoot != null
+                ? hoverVisualRoot
+                : transform;
+            GameObject counter = Instantiate(
+                englishNameText.gameObject,
+                parent,
+                worldPositionStays: false);
+            counter.name = "SatanDoomCount";
+            satanDoomCountText = counter.GetComponent<TMP_Text>();
+            satanDoomCountText.text = string.Empty;
+            satanDoomCountText.enableAutoSizing = false;
+            satanDoomCountText.fontSize = SatanDoomCountFontSizeValue;
+            satanDoomCountText.fontStyle = FontStyles.Bold;
+            satanDoomCountText.characterSpacing = -5f;
+            satanDoomCountText.color = satanDoomCountColor;
+            satanDoomCountText.alignment = TextAlignmentOptions.Center;
+            satanDoomCountText.raycastTarget = false;
+
+            if (englishNameText.fontSharedMaterial != null)
+            {
+                _satanDoomMaterial = new Material(
+                    englishNameText.fontSharedMaterial)
+                {
+                    name = "Satan Doom Count (Instance)"
+                };
+                _satanDoomMaterial.SetColor(
+                    TextOutlineColorId,
+                    satanDoomOutlineColor);
+                _satanDoomMaterial.SetFloat(
+                    TextOutlineWidthId,
+                    SatanDoomOutlineWidthValue);
+                _satanDoomMaterial.SetColor(
+                    TextUnderlayColorId,
+                    new Color(0.22f, 0f, 0f, 0.8f));
+                _satanDoomMaterial.SetFloat(TextUnderlayOffsetXId, 0.12f);
+                _satanDoomMaterial.SetFloat(TextUnderlayOffsetYId, -0.12f);
+                _satanDoomMaterial.SetFloat(TextUnderlayDilateId, 0.18f);
+                _satanDoomMaterial.EnableKeyword(UnderlayKeyword);
+                satanDoomCountText.fontSharedMaterial = _satanDoomMaterial;
+            }
+
+            RectTransform rect = satanDoomCountText.rectTransform;
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(1.6f, 1.1f);
+            rect.localScale = new Vector3(
+                SatanDoomCountScaleValue,
+                SatanDoomCountScaleValue,
+                1f);
+            Renderer counterRenderer = satanDoomCountText.GetComponent<Renderer>();
+            SpriteRenderer frontRenderer = FrontSpriteRenderer();
+            if (counterRenderer != null && frontRenderer != null)
+            {
+                counterRenderer.sortingLayerID = frontRenderer.sortingLayerID;
+                counterRenderer.sortingOrder = frontRenderer.sortingOrder + 2;
+            }
+            counter.SetActive(false);
+        }
+
+        private void UpdateSatanDoomCount(GameSceneDemonCardViewModel card)
+        {
+            EnsureSatanDoomCountText();
+            if (satanDoomCountText == null)
+            {
+                return;
+            }
+
+            bool visible = card.IsFaceUp &&
+                string.Equals(
+                    card.DefinitionKey,
+                    DemonContractCatalog.SatanKey,
+                    System.StringComparison.Ordinal) &&
+                card.SatanDoomCount.HasValue;
+            satanDoomCountText.gameObject.SetActive(visible);
+            satanDoomCountText.text = visible
+                ? card.SatanDoomCount.Value.ToString()
+                : string.Empty;
+        }
+
+        internal void AlignSatanDoomCount()
+        {
+            if (satanDoomCountText == null ||
+                !satanDoomCountText.gameObject.activeSelf)
+            {
+                return;
+            }
+
+            RectTransform rect = satanDoomCountText.rectTransform;
+            rect.anchoredPosition3D = SatanDoomCountOffset;
+
+            Vector3 euler = englishNameText != null
+                ? englishNameText.rectTransform.localEulerAngles
+                : Vector3.zero;
+            euler.z = satanDoomCountTilt;
+            rect.localEulerAngles = euler;
+        }
+
+        private static void DestroyOwnedMaterial(Material material)
+        {
+            if (material == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(material);
+            }
+            else
+            {
+                DestroyImmediate(material);
+            }
         }
     }
 }

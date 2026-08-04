@@ -12,6 +12,7 @@ namespace DiaBlackJack.GameScene
 
         [Header("Fire Shader")]
         [SerializeField] private Renderer fireRenderer;
+        [SerializeField] private LighterDragTriggerController interaction;
 
         private static readonly int IgnitionRevealId = Shader.PropertyToID("_IgnitionReveal");
         private static readonly int IgnitionRevealHeightId = Shader.PropertyToID("_IgnitionRevealHeight");
@@ -22,6 +23,7 @@ namespace DiaBlackJack.GameScene
         {
             base.Awake();
             animator ??= GetComponent<Animator>();
+            interaction ??= GetComponent<LighterDragTriggerController>();
             firePropertyBlock = new MaterialPropertyBlock();
             fireRenderer ??= transform.Find("fire")?.GetComponent<Renderer>();
         }
@@ -40,6 +42,17 @@ namespace DiaBlackJack.GameScene
             {
                 Log.W($"[LighterAnimationEventReceiver] Animator is unavailable for trigger '{id}'.", this);
                 return;
+            }
+
+            if (id == "CardFire")
+            {
+                interaction ??= GetComponent<LighterDragTriggerController>();
+                interaction?.EnableBurnCardDissolve();
+            }
+            else if (id == "CoverClose")
+            {
+                interaction ??= GetComponent<LighterDragTriggerController>();
+                interaction?.CompleteBurnCardDissolve();
             }
 
             resolvedAnimator.SetTrigger(id);

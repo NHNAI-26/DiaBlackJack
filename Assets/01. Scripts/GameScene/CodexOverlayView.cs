@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using DiaBlackJack.Content;
 using DiaBlackJack.CoreLoop;
 using TMPro;
@@ -29,6 +30,67 @@ namespace DiaBlackJack.GameScene
                 CodexPageTurnDirection.Next => NextFrames,
                 _ => throw new ArgumentOutOfRangeException(nameof(direction))
             };
+        }
+    }
+
+    internal static class CodexQuantityText
+    {
+        internal const string PurpleHex = "#8E44AD";
+
+        private const RegexOptions PatternOptions =
+            RegexOptions.Compiled |
+            RegexOptions.CultureInvariant |
+            RegexOptions.IgnoreCase;
+
+        private static readonly Regex PrefixedQuantityPattern = new Regex(
+            @"(?<prefix>영혼|골드|카드|SOULS?|GOLD|CARDS?)(?<spacing>\s*)" +
+            @"(?<quantity>\d+\s*(?:개|장)?)",
+            PatternOptions);
+
+        private static readonly Regex SuffixedQuantityPattern = new Regex(
+            @"(?<quantity>\d+\s*(?:개|장)?)(?<suffix>\s*(?:의\s*)?" +
+            @"(?:영혼|골드|카드|SOULS?|GOLD|CARDS?))",
+            PatternOptions);
+
+        private static readonly Regex QuantityValuePattern = new Regex(
+            @"\d+\s*(?:개|장)?",
+            PatternOptions);
+
+        internal static string ColorizeRelevantQuantities(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return value ?? string.Empty;
+            }
+
+            string formatted = PrefixedQuantityPattern.Replace(
+                value,
+                match =>
+                    $"{match.Groups["prefix"].Value}" +
+                    $"{match.Groups["spacing"].Value}" +
+                    Colorize(match.Groups["quantity"].Value));
+            return SuffixedQuantityPattern.Replace(
+                formatted,
+                match =>
+                    Colorize(match.Groups["quantity"].Value) +
+                    match.Groups["suffix"].Value);
+        }
+
+        internal static string ColorizeQuantityValue(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return value ?? string.Empty;
+            }
+
+            return QuantityValuePattern.Replace(
+                value,
+                match => Colorize(match.Value));
+        }
+
+        private static string Colorize(string value)
+        {
+            return $"<color={PurpleHex}>{value}</color>";
         }
     }
 
@@ -361,8 +423,8 @@ namespace DiaBlackJack.GameScene
             }
 
             SetText(enemyNameText, page.DisplayName);
-            SetText(enemySoulText, page.MaximumSoul.ToString());
-            SetText(enemyGoldText, page.DefeatGold.ToString());
+            SetQuantityText(enemySoulText, page.MaximumSoul.ToString());
+            SetQuantityText(enemyGoldText, page.DefeatGold.ToString());
             SetText(enemyDescriptionText, page.Description);
 
             if (enemyPortraitImage != null)
@@ -405,7 +467,8 @@ namespace DiaBlackJack.GameScene
                     card.Suit),
                 card.Count,
                 $"{card.Rank}. {card.DisplayName}",
-                card.Description,
+                CodexQuantityText.ColorizeRelevantQuantities(
+                    card.Description),
                 GameSceneCardViewModel.ResolveHoverOutlineState(
                     card.DefinitionKey,
                     canUse: false,
@@ -735,7 +798,16 @@ namespace DiaBlackJack.GameScene
 
         private static void SetText(TMP_Text target, string value)
         {
-            CurrencyIconText.Set(target, value);
+            CurrencyIconText.Set(
+                target,
+                CodexQuantityText.ColorizeRelevantQuantities(value));
+        }
+
+        private static void SetQuantityText(TMP_Text target, string value)
+        {
+            CurrencyIconText.Set(
+                target,
+                CodexQuantityText.ColorizeQuantityValue(value));
         }
     }
 }

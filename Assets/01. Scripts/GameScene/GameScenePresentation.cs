@@ -1318,6 +1318,10 @@ namespace DiaBlackJack.GameScene
                 bool isUpsideDown = isSatan &&
                     contract.RuntimeState is SatanRuntimeState satanState &&
                     satanState.CurrentFace == SatanContractFace.Lower;
+                int? satanDoomCount = isSatan &&
+                    contract.RuntimeState is SatanRuntimeState doomState
+                        ? doomState.RemainingDoomCount
+                        : (int?)null;
                 cards.Add(new GameSceneDemonCardViewModel(
                     contract.SourceCardId,
                     definition.Key,
@@ -1329,7 +1333,8 @@ namespace DiaBlackJack.GameScene
                     definition.Summary,
                     definition.CostSummary,
                     showHoverBadgeWhenUnavailable: true,
-                    isUpsideDown: isUpsideDown));
+                    isUpsideDown: isUpsideDown,
+                    satanDoomCount: satanDoomCount));
             }
 
             return cards.AsReadOnly();

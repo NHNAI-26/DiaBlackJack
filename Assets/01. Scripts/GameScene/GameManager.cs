@@ -2186,11 +2186,14 @@ namespace DiaBlackJack.GameScene
 
         internal bool PlayLighterShopAnimation()
         {
-            if (_shopUtilityAnimationPlaying || !TryResolveLighterAnimation())
+            if (_shopUtilityAnimationPlaying ||
+                _pendingLighterBurnCard == null ||
+                !TryResolveLighterAnimation())
             {
                 return false;
             }
 
+            _shopUtilityAnimationPlaying = true;
             StartCoroutine(PlayLighterShopAnimationRoutine());
             return true;
         }
@@ -2227,7 +2230,6 @@ namespace DiaBlackJack.GameScene
 
         private IEnumerator PlayLighterShopAnimationRoutine()
         {
-            _shopUtilityAnimationPlaying = true;
             UpdateShopLeaveControl();
             lighterAnimationRoot.SetActive(true);
             lighterAnimator.Rebind();
@@ -2238,15 +2240,22 @@ namespace DiaBlackJack.GameScene
             CardView cardVisualSource = playerHand == null
                 ? null
                 : playerHand.CardPrefab;
-            if (interaction != null &&
-                cardVisualSource != null &&
-                _pendingLighterBurnCard != null)
+            Sprite selectedCardSprite = cardVisualSource == null
+                ? null
+                : cardVisualSource.GetFaceSprite(_pendingLighterBurnCard);
+            bool prepared = interaction != null &&
+                interaction.SetBurnCardSprite(selectedCardSprite);
+            _pendingLighterBurnCard = null;
+            if (!prepared)
             {
-                interaction.SetBurnCardSprite(
-                    cardVisualSource.GetFaceSprite(_pendingLighterBurnCard));
+                Debug.LogError(
+                    "Lighter animation could not resolve the selected card sprite.");
+                lighterAnimationRoot.SetActive(false);
+                _shopUtilityAnimationPlaying = false;
+                UpdateShopLeaveControl();
+                yield break;
             }
 
-            _pendingLighterBurnCard = null;
             lighterAnimator.SetTrigger("Start");
 
             if (interaction != null)

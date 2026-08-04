@@ -60,6 +60,13 @@ namespace DiaBlackJack.GameScene
 
         private static readonly int DefaultFresnelIntensityId =
             Shader.PropertyToID("_RimIntensity");
+        private static readonly int DissolveAmountId =
+            Shader.PropertyToID("_DissolveAmount");
+        private static readonly int DissolveEnabledId =
+            Shader.PropertyToID("_DissolveEnabled");
+        private static readonly int BaseSpriteUvRectId =
+            Shader.PropertyToID("_BaseSpriteUVRect");
+        private const string DissolveKeyword = "_DISSOLVE_ON";
         private static int _backgroundBlockCount;
         private InteractionState _state;
         private DragTarget _dragTarget;
@@ -73,6 +80,11 @@ namespace DiaBlackJack.GameScene
         private MaterialPropertyBlock _coverPropertyBlock;
         private MaterialPropertyBlock _wheelPropertyBlock;
         private int _fresnelIntensityId;
+        private Sprite _authoredBurnCardSprite;
+        private Vector3 _authoredBurnCardScale = Vector3.one;
+        private Vector2 _authoredBurnCardSize = Vector2.one;
+        private bool _burnCardVisualCached;
+        private Material _burnCardMaterial;
 
         public static bool BlocksBackgroundInteraction => _backgroundBlockCount > 0;
 
@@ -86,8 +98,38 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
+            CacheBurnCardVisual();
             burnCardRenderer.sprite = sprite;
+            burnCardRenderer.enabled = true;
+            burnCardRenderer.color = Color.white;
+            NormalizeBurnCardSize(sprite);
+            ResetBurnCardMaterial(sprite);
             return true;
+        }
+
+        internal void EnableBurnCardDissolve()
+        {
+            Material material = EnsureBurnCardMaterialInstance();
+            if (material == null)
+            {
+                return;
+            }
+
+            if (material.HasProperty(DissolveEnabledId))
+            {
+                material.SetFloat(DissolveEnabledId, 1f);
+            }
+
+            material.EnableKeyword(DissolveKeyword);
+        }
+
+        internal void CompleteBurnCardDissolve()
+        {
+            ResolveBurnCardRenderer();
+            if (burnCardRenderer != null)
+            {
+                burnCardRenderer.enabled = false;
+            }
         }
 
         private void Awake()
@@ -95,6 +137,7 @@ namespace DiaBlackJack.GameScene
             ResolveBindings();
             CacheStateHashes();
             CacheShaderProperties();
+            CacheBurnCardVisual();
         }
 
         private void OnEnable()
@@ -104,6 +147,7 @@ namespace DiaBlackJack.GameScene
             _startSequenceSeen = false;
             _blocksBackground = false;
             HasCompletedInteraction = false;
+            ResetBurnCardVisual();
         }
 
         private void OnDisable()
@@ -111,6 +155,23 @@ namespace DiaBlackJack.GameScene
             _dragTarget = DragTarget.None;
             ResetHoverHighlights();
             EndBackgroundBlock();
+        }
+
+        private void OnDestroy()
+        {
+            if (_burnCardMaterial == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(_burnCardMaterial);
+            }
+            else
+            {
+                DestroyImmediate(_burnCardMaterial);
+            }
         }
 
         private void Update()
@@ -442,6 +503,131 @@ namespace DiaBlackJack.GameScene
                     return;
                 }
             }
+        }
+
+        private void CacheBurnCardVisual()
+        {
+            if (_burnCardVisualCached || burnCardRenderer == null)
+            {
+                return;
+            }
+
+            _authoredBurnCardSprite = burnCardRenderer.sprite;
+            _authoredBurnCardScale = burnCardRenderer.transform.localScale;
+            _authoredBurnCardSize = GetSpriteSize(_authoredBurnCardSprite);
+            _burnCardVisualCached = true;
+        }
+
+        private void ResetBurnCardVisual()
+        {
+            ResolveBurnCardRenderer();
+            CacheBurnCardVisual();
+            if (burnCardRenderer == null)
+            {
+                return;
+            }
+
+            burnCardRenderer.sprite = _authoredBurnCardSprite;
+            burnCardRenderer.transform.localScale = _authoredBurnCardScale;
+            burnCardRenderer.enabled = true;
+            burnCardRenderer.color = Color.white;
+            ResetBurnCardMaterial(_authoredBurnCardSprite);
+        }
+
+        private void NormalizeBurnCardSize(Sprite sprite)
+        {
+            Vector2 selectedSize = GetSpriteSize(sprite);
+            Vector3 scale = _authoredBurnCardScale;
+            if (_authoredBurnCardSize.x > 0f && selectedSize.x > 0f)
+            {
+                scale.x *= _authoredBurnCardSize.x / selectedSize.x;
+            }
+
+            if (_authoredBurnCardSize.y > 0f && selectedSize.y > 0f)
+            {
+                scale.y *= _authoredBurnCardSize.y / selectedSize.y;
+            }
+
+            burnCardRenderer.transform.localScale = scale;
+        }
+
+        private void ResetBurnCardMaterial(Sprite sprite)
+        {
+            burnCardRenderer.SetPropertyBlock(null);
+            Material material = EnsureBurnCardMaterialInstance();
+            if (material == null)
+            {
+                return;
+            }
+
+            if (material.HasProperty(DissolveAmountId))
+            {
+                material.SetFloat(DissolveAmountId, 0f);
+            }
+
+            if (material.HasProperty(DissolveEnabledId))
+            {
+                material.SetFloat(DissolveEnabledId, 0f);
+            }
+
+            material.DisableKeyword(DissolveKeyword);
+
+            if (material.HasProperty(BaseSpriteUvRectId))
+            {
+                material.SetVector(BaseSpriteUvRectId, GetSpriteUvRect(sprite));
+            }
+        }
+
+        private Material EnsureBurnCardMaterialInstance()
+        {
+            if (_burnCardMaterial != null)
+            {
+                return _burnCardMaterial;
+            }
+
+            Material source = burnCardRenderer.sharedMaterial;
+            if (source == null)
+            {
+                return null;
+            }
+
+            _burnCardMaterial = new Material(source)
+            {
+                name = source.name + " (Lighter Burn Card Instance)"
+            };
+            burnCardRenderer.sharedMaterial = _burnCardMaterial;
+            return _burnCardMaterial;
+        }
+
+        private static Vector2 GetSpriteSize(Sprite sprite)
+        {
+            return sprite == null
+                ? Vector2.one
+                : new Vector2(sprite.bounds.size.x, sprite.bounds.size.y);
+        }
+
+        private static Vector4 GetSpriteUvRect(Sprite sprite)
+        {
+            if (sprite == null || sprite.uv == null || sprite.uv.Length == 0)
+            {
+                return new Vector4(0f, 0f, 1f, 1f);
+            }
+
+            Vector2[] uvs = sprite.uv;
+            Vector2 minimum = uvs[0];
+            Vector2 maximum = uvs[0];
+            for (int i = 1; i < uvs.Length; i++)
+            {
+                minimum = Vector2.Min(minimum, uvs[i]);
+                maximum = Vector2.Max(maximum, uvs[i]);
+            }
+
+            Vector2 size = maximum - minimum;
+            return new Vector4(
+                minimum.x,
+                minimum.y,
+                Mathf.Max(size.x, 0.00001f),
+                Mathf.Max(size.y, 0.00001f));
         }
 
         private static bool TryReadPointer(

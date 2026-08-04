@@ -193,7 +193,8 @@ namespace DiaBlackJack.GameScene
             if (countText != null)
             {
                 countText.text = count.HasValue
-                    ? $"x{count.Value}"
+                    ? CodexQuantityText.ColorizeQuantityValue(
+                        $"x{count.Value}")
                     : string.Empty;
                 countText.gameObject.SetActive(count.HasValue);
             }

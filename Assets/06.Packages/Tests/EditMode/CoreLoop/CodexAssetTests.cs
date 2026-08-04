@@ -25,7 +25,9 @@ namespace DiaBlackJack.CoreLoop.Tests
         private const string CodexOutlinePath =
             "Assets/05. Arts/Texture/Codex/CodexOutline.png";
         private const string SoulIconPath =
-            "Assets/05. Arts/UI/Icons/SoulIcon-v5.png";
+            "Assets/05. Arts/UI/Icons/SoulIcon.png";
+        private const string SoulSpriteAssetPath =
+            "Assets/TextMesh Pro/Resources/Sprite Assets/SoulIcon.asset";
         private const string GoldIconPath =
             "Assets/05. Arts/UI/Icons/GoldIcon.png";
         private const string CircleBrushPath =
@@ -234,7 +236,18 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(deckOutline.type, Is.EqualTo(Image.Type.Sliced));
             Assert.That(
                 soulIcon.sprite,
-                Is.EqualTo(LoadSprite(SoulIconPath, "SoulIcon-v5_0")));
+                Is.EqualTo(AssetDatabase.LoadAssetAtPath<Sprite>(SoulIconPath)));
+            UnityEngine.Object soulSpriteAsset =
+                AssetDatabase.LoadMainAssetAtPath(SoulSpriteAssetPath);
+            Assert.That(soulSpriteAsset, Is.Not.Null);
+            Assert.That(soulSpriteAsset.name, Is.EqualTo("SoulIcon"));
+            SerializedObject serializedSoulSpriteAsset =
+                new SerializedObject(soulSpriteAsset);
+            Assert.That(
+                serializedSoulSpriteAsset.FindProperty("spriteSheet")
+                    .objectReferenceValue,
+                Is.EqualTo(AssetDatabase.LoadAssetAtPath<Texture2D>(
+                    SoulIconPath)));
             Assert.That(
                 goldIcon.sprite,
                 Is.EqualTo(AssetDatabase.LoadAssetAtPath<Sprite>(GoldIconPath)));
@@ -361,13 +374,17 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(noContractText.gameObject.activeSelf, Is.True);
                 Assert.That(
                     GetText(enemySoulText),
-                    Is.EqualTo(page.MaximumSoul.ToString()));
+                    Is.EqualTo(CodexQuantityText.ColorizeQuantityValue(
+                        page.MaximumSoul.ToString())));
                 Assert.That(
                     GetText(enemyGoldText),
-                    Is.EqualTo(page.DefeatGold.ToString()));
+                    Is.EqualTo(CodexQuantityText.ColorizeQuantityValue(
+                        page.DefeatGold.ToString())));
                 Assert.That(
                     GetText(enemyDescriptionText),
-                    Is.EqualTo(page.Description));
+                    Is.EqualTo(
+                        CodexQuantityText.ColorizeRelevantQuantities(
+                            page.Description)));
                 Assert.That(
                     enemyPortraitImage.sprite,
                     Is.EqualTo(enemyCatalog.GetPortrait(page.ProfileKey)));
@@ -378,14 +395,17 @@ namespace DiaBlackJack.CoreLoop.Tests
                         firstCard.Suit)));
                 Assert.That(
                     GetText(deckCount),
-                    Is.EqualTo($"x{firstCard.Count}"));
+                    Is.EqualTo(CodexQuantityText.ColorizeQuantityValue(
+                        $"x{firstCard.Count}")));
 
                 MovePreviewToIndex(view, longestDescriptionIndex);
                 EnemyCodexPageViewModel longestDescriptionPage =
                     pages[longestDescriptionIndex];
                 Assert.That(
                     GetText(enemyDescriptionText),
-                    Is.EqualTo(longestDescriptionPage.Description));
+                    Is.EqualTo(
+                        CodexQuantityText.ColorizeRelevantQuantities(
+                        longestDescriptionPage.Description)));
                 Assert.That(
                     enemyPortraitImage.sprite,
                     Is.EqualTo(enemyCatalog.GetPortrait(
@@ -887,7 +907,10 @@ namespace DiaBlackJack.CoreLoop.Tests
                     "Test description",
                     GameSceneCardHoverOutlineState.Basic);
                 Assert.That(count.gameObject.activeSelf, Is.True);
-                Assert.That(GetText(count), Is.EqualTo("x3"));
+                Assert.That(
+                    GetText(count),
+                    Is.EqualTo(
+                        CodexQuantityText.ColorizeQuantityValue("x3")));
                 Assert.That(fallback.gameObject.activeSelf, Is.False);
                 Assert.That(GetText(fallback), Is.Empty);
                 Assert.That(card.CreateHoverBadgeRequest(), Is.Not.Null);
@@ -1009,6 +1032,52 @@ namespace DiaBlackJack.CoreLoop.Tests
                     bossPage.ContractableDemons.Count /
                     (float)grid.constraintCount),
                 Is.EqualTo(1));
+        }
+
+        [Test]
+        public void DXM06_U06_SoulIconsAndCodexNumbersUseRequestedVisuals()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
+            Image soulIcon = GetImageAtPath(
+                prefab,
+                "Book/FadingContent/EnemyPage/LeftPage/SoulPanel/Icon");
+
+            Assert.That(
+                soulIcon.sprite,
+                Is.EqualTo(AssetDatabase.LoadAssetAtPath<Sprite>(SoulIconPath)));
+            Assert.That(CurrencyIconMarkup.SoulSpriteAssetName,
+                Is.EqualTo("SoulIcon"));
+            Assert.That(CurrencyIconMarkup.SoulTag,
+                Does.Contain("sprite=\"SoulIcon\""));
+            Assert.That(CurrencyIconMarkup.SoulTag,
+                Does.Not.Contain("SoulIcon-v5"));
+
+            UnityEngine.Object soulSpriteAsset =
+                AssetDatabase.LoadMainAssetAtPath(SoulSpriteAssetPath);
+            Assert.That(soulSpriteAsset, Is.Not.Null);
+            Assert.That(soulSpriteAsset.name, Is.EqualTo("SoulIcon"));
+            SerializedObject serializedSoulSpriteAsset =
+                new SerializedObject(soulSpriteAsset);
+            Assert.That(
+                serializedSoulSpriteAsset.FindProperty("spriteSheet")
+                    .objectReferenceValue,
+                Is.EqualTo(AssetDatabase.LoadAssetAtPath<Texture2D>(
+                    SoulIconPath)));
+
+            Assert.That(
+                CodexQuantityText.ColorizeRelevantQuantities(
+                    "페이지 1/6 | 영혼 1개 | 골드 2개 | 카드 3장 | 숫자 7"),
+                Is.EqualTo(
+                    "페이지 1/6 | 영혼 <color=#8E44AD>1개</color> | " +
+                    "골드 <color=#8E44AD>2개</color> | " +
+                    "카드 <color=#8E44AD>3장</color> | 숫자 7"));
+            Assert.That(
+                CodexQuantityText.ColorizeRelevantQuantities(
+                    "1개의 영혼과 2장의 카드"),
+                Is.EqualTo(
+                    "<color=#8E44AD>1개</color>의 영혼과 " +
+                    "<color=#8E44AD>2장</color>의 카드"));
         }
 
         [Test]
