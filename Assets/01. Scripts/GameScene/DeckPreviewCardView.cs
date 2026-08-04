@@ -148,6 +148,7 @@ namespace DiaBlackJack.GameScene
 
             if (countText != null)
             {
+                countText.richText = false;
                 countText.text = group == null ? string.Empty : $"x{group.Count}";
             }
 
@@ -192,9 +193,9 @@ namespace DiaBlackJack.GameScene
 
             if (countText != null)
             {
+                countText.richText = false;
                 countText.text = count.HasValue
-                    ? CodexQuantityText.ColorizeQuantityValue(
-                        $"x{count.Value}")
+                    ? $"x{count.Value}"
                     : string.Empty;
                 countText.gameObject.SetActive(count.HasValue);
             }

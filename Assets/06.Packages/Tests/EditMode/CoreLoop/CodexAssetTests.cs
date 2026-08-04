@@ -395,8 +395,12 @@ namespace DiaBlackJack.CoreLoop.Tests
                         firstCard.Suit)));
                 Assert.That(
                     GetText(deckCount),
-                    Is.EqualTo(CodexQuantityText.ColorizeQuantityValue(
-                        $"x{firstCard.Count}")));
+                    Is.EqualTo($"x{firstCard.Count}"));
+                Assert.That(
+                    new SerializedObject(deckCount)
+                        .FindProperty("m_isRichText")
+                        .boolValue,
+                    Is.False);
 
                 MovePreviewToIndex(view, longestDescriptionIndex);
                 EnemyCodexPageViewModel longestDescriptionPage =
@@ -950,8 +954,12 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(count.gameObject.activeSelf, Is.True);
                 Assert.That(
                     GetText(count),
-                    Is.EqualTo(
-                        CodexQuantityText.ColorizeQuantityValue("x3")));
+                    Is.EqualTo("x3"));
+                Assert.That(
+                    new SerializedObject(count)
+                        .FindProperty("m_isRichText")
+                        .boolValue,
+                    Is.False);
                 Assert.That(fallback.gameObject.activeSelf, Is.False);
                 Assert.That(GetText(fallback), Is.Empty);
                 Assert.That(card.CreateHoverBadgeRequest(), Is.Not.Null);
