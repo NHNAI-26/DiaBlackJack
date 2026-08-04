@@ -16,6 +16,16 @@ namespace DiaBlackJack.GameScene
             detailView.HasEnglishNameReference;
 
         public void Render(
+            GameSceneCombatHudContractCandidateViewModel model,
+            Sprite faceSprite)
+        {
+            if (detailView != null)
+            {
+                detailView.Render(model, faceSprite);
+            }
+        }
+
+        public void Render(
             GameSceneDemonCardViewModel model,
             Sprite faceSprite)
         {

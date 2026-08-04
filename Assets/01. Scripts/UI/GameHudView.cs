@@ -42,8 +42,6 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private TMP_Text combatPromptText;
         [SerializeField] private ScrollRect optionScrollRect;
         [SerializeField] private GameHudChoiceButton[] optionSlots = Array.Empty<GameHudChoiceButton>();
-        [SerializeField] private GameObject contractDetailPanel;
-        [SerializeField] private GameHudContractDetailView contractDetailView;
         [SerializeField] private DemonCardHoverDetailView demonCardHoverDetail;
         [SerializeField] private GameObject automaticCardResultPanel;
         [SerializeField] private TMP_Text automaticCardResultText;
@@ -65,13 +63,10 @@ namespace DiaBlackJack.GameScene
         public bool HasCombatCandidateContentReference => cardContentCatalog != null;
 
         public bool HasCombatContractDetailReference =>
-            contractDetailPanel != null &&
-            contractDetailView != null &&
-            contractDetailView.HasRequiredReferences;
+            demonCardHoverDetail != null &&
+            demonCardHoverDetail.HasRequiredReferences;
 
         public bool IsDemonContractDetailVisible =>
-            (contractDetailPanel != null &&
-             contractDetailPanel.activeInHierarchy) ||
             (demonCardHoverDetail != null &&
              demonCardHoverDetail.gameObject.activeInHierarchy);
 
@@ -289,29 +284,24 @@ namespace DiaBlackJack.GameScene
         public void ShowDemonContractDetail(
             GameSceneCombatHudContractCandidateViewModel candidate)
         {
-            SetActive(demonCardHoverDetail == null
-                ? null
-                : demonCardHoverDetail.gameObject, false);
             if (candidate == null ||
-                contractDetailPanel == null ||
-                contractDetailView == null)
+                demonCardHoverDetail == null)
             {
                 HideDemonContractDetail();
                 return;
             }
 
-            contractDetailView.Render(
+            demonCardHoverDetail.Render(
                 candidate,
                 cardContentCatalog == null
                     ? null
                     : cardContentCatalog.GetDemonFaceSprite(
                         candidate.DefinitionKey));
-            contractDetailPanel.SetActive(true);
+            demonCardHoverDetail.gameObject.SetActive(true);
         }
 
         public void ShowDemonContractDetail(GameSceneDemonCardViewModel card)
         {
-            SetActive(contractDetailPanel, false);
             if (card == null ||
                 demonCardHoverDetail == null)
             {
@@ -329,7 +319,6 @@ namespace DiaBlackJack.GameScene
 
         public void HideDemonContractDetail()
         {
-            SetActive(contractDetailPanel, false);
             SetActive(demonCardHoverDetail == null
                 ? null
                 : demonCardHoverDetail.gameObject, false);
@@ -448,7 +437,6 @@ namespace DiaBlackJack.GameScene
                 }
 
                 SetActive(optionPanel, false);
-                SetActive(contractDetailPanel, false);
                 _revolverNumberSelector?.Render(
                     combat.Prompt,
                     combat.OptionActions);
@@ -492,9 +480,6 @@ namespace DiaBlackJack.GameScene
             {
                 optionScrollRect.gameObject.SetActive(hasDefaultAction);
             }
-            SetActive(
-                contractDetailPanel,
-                false);
             SetActive(
                 automaticCardResultPanel,
                 !string.IsNullOrEmpty(combat.AutomaticCardResult));
@@ -714,7 +699,6 @@ namespace DiaBlackJack.GameScene
             _revolverNumberSelector?.Hide();
             SetActive(combatControlsRoot, false);
             SetActive(optionPanel, false);
-            SetActive(contractDetailPanel, false);
             SetActive(automaticCardResultPanel, false);
         }
 

@@ -1663,62 +1663,83 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void GSH01_U07_ContractDetailLayoutIsAuthoredInHudPrefab()
+        public void GSH01_U07_ContractHoverUsesDedicatedPrefabOnly()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
             Assert.That(prefab, Is.Not.Null);
-            Transform panel = prefab.transform.Find(
-                "CombatControls/ContractDetailPanel");
-            Assert.That(panel, Is.Not.Null);
-            Assert.That(panel.Find("Prompt"), Is.Null);
-
-            Transform layout = panel.Find("DetailLayout");
-            Assert.That(layout, Is.Not.Null);
-            Transform detail = layout.Find("ContractDetail");
-            Assert.That(detail, Is.Not.Null);
-            Assert.That(layout.Find("CandidateSlot_2"), Is.Null);
-            Assert.That(detail.GetComponent<Button>(), Is.Null);
-            Assert.That(detail.GetComponent<GameHudChoiceButton>(), Is.Null);
-
-            GameHudContractDetailView detailView =
-                detail.GetComponent<GameHudContractDetailView>();
-            Assert.That(detailView, Is.Not.Null);
-            Assert.That(detailView.HasRequiredReferences, Is.True);
-            SerializedObject detailSerialized = new SerializedObject(detailView);
-            Material detailTextMaterial = null;
-            foreach (string propertyName in new[]
-                     {
-                         "titleText",
-                         "abilityLabelText",
-                         "abilityText",
-                         "costLabelText",
-                         "costText"
-                     })
-            {
-                UnityEngine.Object textComponent = detailSerialized
-                    .FindProperty(propertyName)
-                    .objectReferenceValue;
-                Material material = new SerializedObject(textComponent)
-                    .FindProperty("m_sharedMaterial")
-                    .objectReferenceValue as Material;
-                Assert.That(material, Is.Not.Null);
-                if (detailTextMaterial == null)
-                {
-                    detailTextMaterial = material;
-                }
-                Assert.That(material, Is.SameAs(detailTextMaterial));
-            }
-            Assert.That(detailTextMaterial.renderQueue, Is.EqualTo(3110));
             Assert.That(
-                detailTextMaterial.renderQueue,
-                Is.GreaterThan(detail.Find("Ability").GetComponent<Image>()
-                    .material.renderQueue));
-            Assert.That(detail.Find("Face"), Is.Not.Null);
-            Assert.That(detail.Find("Title/txtTitle"), Is.Not.Null);
-            Assert.That(detail.Find("Ability/txtAbilityLabel"), Is.Not.Null);
-            Assert.That(detail.Find("Ability/txtAbility"), Is.Not.Null);
-            Assert.That(detail.Find("Cost/txtCostLabel"), Is.Not.Null);
-            Assert.That(detail.Find("Cost/txtCost"), Is.Not.Null);
+                prefab.transform.Find("CombatControls/ContractDetailPanel"),
+                Is.Null);
+            Assert.That(
+                prefab.GetComponentsInChildren<
+                    GameHudContractDetailView>(true),
+                Has.Length.EqualTo(1));
+
+            DemonCardHoverDetailView authoredHoverDetail =
+                prefab.GetComponentInChildren<
+                    DemonCardHoverDetailView>(true);
+            GameObject hoverDetailPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(
+                    DemonCardHoverDetailPrefabPath);
+            Assert.That(authoredHoverDetail, Is.Not.Null);
+            Assert.That(authoredHoverDetail.HasRequiredReferences, Is.True);
+            Assert.That(
+                PrefabUtility.GetCorrespondingObjectFromSource(
+                    authoredHoverDetail.gameObject),
+                Is.SameAs(hoverDetailPrefab));
+
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                CoreLoopBattle battle = CreateStartedContractBattle(
+                    DemonContractKind.Mammon,
+                    DemonContractKind.Belphegor);
+                Assert.That(
+                    battle.TryBeginPlayerDemonContract(),
+                    Is.True);
+                GameSceneCombatHudContractCandidateViewModel candidate =
+                    GameSceneCombatHudPresenter.Create(
+                        CoreLoopPresenter.Create(battle),
+                        false,
+                        false,
+                        false).ContractCandidates[0];
+                GameHudView hud = instance.GetComponent<GameHudView>();
+                DemonCardHoverDetailView hoverDetail =
+                    instance.GetComponentInChildren<
+                        DemonCardHoverDetailView>(true);
+
+                hud.Render((CoreLoopViewModel)null);
+                hud.ShowDemonContractDetail(candidate);
+
+                Transform detail = hoverDetail.DetailView.transform;
+                Transform title = GetSerializedTransform(
+                    hoverDetail.DetailView,
+                    "titleText");
+                Assert.That(hoverDetail.gameObject.activeInHierarchy, Is.True);
+                Assert.That(hud.IsDemonContractDetailVisible, Is.True);
+                Assert.That(
+                    GetRenderedText(title),
+                    Is.EqualTo(candidate.Title));
+                Assert.That(
+                    GetRenderedText(detail.Find("Face/txtEnglishName")),
+                    Is.EqualTo(candidate.EnglishName));
+                Assert.That(
+                    GetRenderedText(detail.Find("Ability/txtAbility")),
+                    Is.EqualTo(
+                        CurrencyIconMarkup.FormatForTmp(candidate.Ability)));
+                Assert.That(
+                    GetRenderedText(detail.Find("Cost/txtCost")),
+                    Is.EqualTo(
+                        CurrencyIconMarkup.FormatForTmp(candidate.Cost)));
+
+                hud.HideDemonContractDetail();
+                Assert.That(hoverDetail.gameObject.activeSelf, Is.False);
+                Assert.That(hud.IsDemonContractDetailVisible, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
         }
 
         [Test]
@@ -1847,14 +1868,18 @@ namespace DiaBlackJack.CoreLoop.Tests
                 hud.ShowDemonContractDetail(demon.BoundCard);
 
                 Transform detail = hoverDetail.DetailView.transform;
-                Transform combatPanel = hudInstance.transform.Find(
-                    "CombatControls/ContractDetailPanel");
+                Transform title = GetSerializedTransform(
+                    hoverDetail.DetailView,
+                    "titleText");
                 Assert.That(hoverDetail.gameObject.activeSelf, Is.True);
                 Assert.That(hoverDetail.gameObject.activeInHierarchy, Is.True);
-                Assert.That(combatPanel.gameObject.activeSelf, Is.False);
+                Assert.That(
+                    hudInstance.transform.Find(
+                        "CombatControls/ContractDetailPanel"),
+                    Is.Null);
                 Assert.That(hud.IsDemonContractDetailVisible, Is.True);
                 Assert.That(
-                    GetRenderedText(detail.Find("Title/txtTitle")),
+                    GetRenderedText(title),
                     Is.EqualTo(definition.DisplayName));
                 Assert.That(
                     GetRenderedText(detail.Find("Face/txtEnglishName")),
@@ -1905,8 +1930,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 DemonCardHoverDetailView view =
                     instance.GetComponent<DemonCardHoverDetailView>();
                 Assert.That(view, Is.Not.Null);
-                Transform englishName = view.DetailView.transform.Find(
-                    "Face/txtEnglishName");
+                Transform englishName = GetSerializedTransform(
+                    view.DetailView,
+                    "englishNameText");
                 Assert.That(englishName, Is.Not.Null);
                 SerializedObject detailSerialized = new SerializedObject(
                     view.DetailView);
@@ -1916,8 +1942,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                     Is.SameAs(englishName.GetComponent<Graphic>()));
                 Assert.That(view.HasRequiredReferences, Is.True);
                 Assert.That(instance.GetComponent<Canvas>(), Is.Null);
-                Transform title = view.DetailView.transform.Find(
-                    "Title/txtTitle");
+                Transform title = GetSerializedTransform(
+                    view.DetailView,
+                    "titleText");
                 string originalTitle = GetRenderedText(title);
 
                 Assert.That(
@@ -1939,8 +1966,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(
                     firstEnglishName,
                     Is.EqualTo(firstEnglishName.ToUpperInvariant()));
-                Transform cost = view.DetailView.transform.Find(
-                    "Cost/txtCost");
+                Transform cost = GetSerializedTransform(
+                    view.DetailView,
+                    "costText");
                 Assert.That(
                     GetRenderedText(cost),
                     Does.Contain(CurrencyIconMarkup.SoulTag));
@@ -2001,8 +2029,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             {
                 DemonCardHoverDetailView view =
                     instance.GetComponent<DemonCardHoverDetailView>();
-                Transform title = view.DetailView.transform.Find(
-                    "Title/txtTitle");
+                Transform title = GetSerializedTransform(
+                    view.DetailView,
+                    "titleText");
                 string originalTitle = GetRenderedText(title);
 
                 Assert.That(
@@ -2052,6 +2081,18 @@ namespace DiaBlackJack.CoreLoop.Tests
             return (string)textComponent.GetType()
                 .GetProperty("text")
                 .GetValue(textComponent);
+        }
+
+        private static Transform GetSerializedTransform(
+            UnityEngine.Object target,
+            string propertyName)
+        {
+            SerializedProperty property = new SerializedObject(target)
+                .FindProperty(propertyName);
+            Assert.That(property, Is.Not.Null);
+            Component component = property.objectReferenceValue as Component;
+            Assert.That(component, Is.Not.Null);
+            return component.transform;
         }
 
         private static CoreLoopBattle CreateStartedBattle(params int[] playerRanks)
