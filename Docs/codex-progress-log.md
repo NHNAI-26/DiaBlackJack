@@ -1,5 +1,20 @@
 # 테이블 도감 진행 기록
 
+## DX-M08: 공용 픽셀 호버 외곽선
+
+- 도감 시작 덱의 공용 `DeckPreviewCardView`와 계약 악마의 전용 `CodexDemonCardPreviewView`에 전투 카드와 같은 상태색 픽셀 실루엣 외곽선을 적용했다. 계약 악마는 툴팁 없이도 기본 흰색 외곽선을 표시하고, 일반 카드는 기본/패시브 흰색·수동 사용 불가 빨강·수동 사용 가능 초록·자동 HDR 노랑·사용 완료 회색을 사용한다.
+- 슬롯마다 전용 UI 머티리얼 인스턴스를 만들어 외곽선 visibility·색·스프라이트 UV가 다른 슬롯에 번지지 않게 했으며, 기존 금색 사각 `HoverFrame`은 제거하고 선택 프레임은 유지했다.
+- 신규 도감·덱 외곽선 검증을 포함한 5/5(job `560a9e487c97402a8cd67b0cf9de87a3`)가 통과했다. 전체 EditMode는 1066/1072(job `05c1856140ec4523b0e842ad646b767c`)이며 도감 관련 잔여 실패 1건은 병행 편집 중인 `PortraitFrame` 스프라이트 상태다. GameScene validation 0 issues와 C# 컴파일 오류 0을 확인했다. 최종 Console에는 기존 셰이더·URP Material Drawer 오류 2건이 남았고 1280×720·1920×1080 수동 확인은 공유 Editor 사용 때문에 완료로 기록하지 않는다.
+
+## DX-M07: 도감 탭·카드 시각 개선
+
+- 책장 Fade용 `CanvasGroup`을 `Book/FadingContent`로 옮기고 닫기·적/악마 페이지·Previous/Next만 그 아래에 배치했다. 두 탭은 `Book` 직속으로 유지하며 전환 중 양쪽 입력을 잠그고 완료·취소 때 현재 카테고리에 맞게 복원한다.
+- 계약 악마를 72×120 전용 `CodexDemonCardPreview.prefab`으로 교체했다. 앞면은 2px inset과 비율 유지를 사용하고 하단에 정의 key의 대문자 English Name을 8~14 자동 크기로 표시한다. Grid는 6열, 간격 5, 좌우 패딩 3이며 레거시 `DeckPreviewCard` 계약 템플릿은 제거했다. 수량·Fallback·선택·툴팁은 없고 후속 DX-M08의 픽셀 외곽선만 함께 유지한다.
+- 시작 덱은 공용 `DeckPreviewCard.prefab`, `xN`, 호버를 유지하며 도감 중첩 `Count`만 32pt로 축소했다. 원본 프리팹과 덱 검사창은 64pt다. Inspector Preview는 계약 카드의 활성 상태·앞면·영문명을 저장 전후 복원한다.
+- DX-M07 및 Preview 회귀 8/8(job `28a5349006504ac5a683e9b7aeabb0f9`), Codex·DeckPreview 대상군 36/36(job `c7a7e454d86d41d8bc32be040ca6ae92`)가 통과했다.
+- 전체 EditMode는 CoreLoop 788/793(job `8d2c9784ccb44a818dd7e79bdaf6f1f6`)과 StageProgression·Settings 279/279(job `2948390179804192b5a2c24cbee4c1dc`)다. 실패 5건은 적 설명·전투 카드 외곽선 팔레트·해머 대상·호버 오프셋·대사 중복의 병행 영역이다. GameScene validation issue 0, missing script 0, broken prefab 0과 컴파일 오류 0을 확인했고 Console을 비운 뒤 Error 0이다.
+- Play Mode에서 Controller·View·Overlay Canvas가 열린 상태와 탭 잠금 상태는 런타임으로 확인했다. 자동 Game View 캡처는 Screen Space Overlay를 포함하지 않았고 Editor 해상도도 2560×1440에서 고정되어 1920×1080·1280×720 육안 검증은 완료로 기록하지 않는다.
+
 ## DX-M06: 공용 카드·페이지 전환 개선
 
 - 페이지 문구를 `Q Previous`와 `{현재}/{전체} Next E`로 분리하고, 닫기 버튼 alpha와 비활성 탭 Label 색상을 확정했다.

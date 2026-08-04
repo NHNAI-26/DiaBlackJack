@@ -7,6 +7,16 @@ Shader "Shader/UI Alpha"
         _AlphaMultiplier ("Alpha Multiplier", Range(0,1)) = 1
         [Toggle] _UseRgbOverride ("Use RGB Override", Float) = 0
         _RgbOverrideColor ("RGB Override Color", Color) = (1,1,1,1)
+        [Toggle] _RespectVertexRgbTint ("Respect UI RGB Tint", Float) = 0
+        [Toggle(_PIXEL_OUTLINE_ON)] _PixelOutlineEnabled ("Pixel Outline", Float) = 0
+        [HDR] _PixelOutlineColor ("Outline Color", Color) = (1,1,1,1)
+        _PixelOutlineWidth ("Outline Width (Pixels)", Range(0,4)) = 1
+        _PixelOutlineAlphaThreshold ("Outline Alpha Threshold", Range(0,1)) = 0.5
+        _PixelOutlineGlowWidth ("Outline Glow Width (Pixels)", Range(0,8)) = 4
+        _PixelOutlineGlowAlpha ("Outline Glow Alpha", Range(0,1)) = 0.35
+        [HideInInspector] _PixelOutlineVisibility ("Outline Visibility", Range(0,1)) = 0
+        [HideInInspector] _BaseSpriteUVRect ("Base Sprite UV Rect", Vector) = (0,0,1,1)
+        [HideInInspector] _PixelOutlineMeshPadding ("Outline Mesh Padding", Vector) = (0,0,0,0)
         [Toggle(_UV_ALPHA_FADE_ON)] _UVAlphaFadeEnabled ("UV Fade", Float) = 0
         [Enum(U,0,V,1,Radial,2)] _UVAlphaFadeAxis ("UV Fade Mode", Float) = 1
         [HideInInspector] [PerRendererData] _UVAlphaFadeUVRect ("UV Fade UV Rect", Vector) = (0,0,1,1)
@@ -70,6 +80,7 @@ Shader "Shader/UI Alpha"
 
             #pragma multi_compile_local _ UNITY_UI_CLIP_RECT
             #pragma multi_compile_local _ UNITY_UI_ALPHACLIP
+            #pragma shader_feature_local _PIXEL_OUTLINE_ON
             #pragma shader_feature_local_fragment _UV_ALPHA_FADE_ON
 
             struct appdata_t
@@ -90,12 +101,22 @@ Shader "Shader/UI Alpha"
             };
 
             sampler2D _MainTex;
+            float4 _MainTex_TexelSize;
             fixed4 _Color;
             fixed4 _TextureSampleAdd;
             float4 _ClipRect;
             float _AlphaMultiplier;
             float _UseRgbOverride;
             fixed4 _RgbOverrideColor;
+            float _RespectVertexRgbTint;
+            half4 _PixelOutlineColor;
+            half _PixelOutlineWidth;
+            half _PixelOutlineAlphaThreshold;
+            half _PixelOutlineGlowWidth;
+            half _PixelOutlineGlowAlpha;
+            half _PixelOutlineVisibility;
+            float4 _BaseSpriteUVRect;
+            float4 _PixelOutlineMeshPadding;
             float _UVAlphaFadeAxis;
             float4 _UVAlphaFadeUVRect;
             float4 _UVAlphaFadeUVOffset;
@@ -112,11 +133,97 @@ Shader "Shader/UI Alpha"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
+                #if defined(_PIXEL_OUTLINE_ON)
+                float2 spriteCenter = _BaseSpriteUVRect.xy +
+                    _BaseSpriteUVRect.zw * 0.5;
+                float2 expandDirection = sign(input.texcoord - spriteCenter);
+                input.vertex.xy += expandDirection * _PixelOutlineMeshPadding.xy;
+                input.texcoord += expandDirection * _PixelOutlineMeshPadding.zw;
+                #endif
+
                 output.worldPosition = input.vertex;
                 output.vertex = UnityObjectToClipPos(input.vertex);
                 output.texcoord = input.texcoord;
                 output.color = input.color * _Color;
                 return output;
+            }
+
+            half4 SampleSpriteColor(float2 uv)
+            {
+                float2 minimum = _BaseSpriteUVRect.xy;
+                float2 maximum = minimum + _BaseSpriteUVRect.zw;
+                half inside = step(minimum.x, uv.x) *
+                    step(minimum.y, uv.y) *
+                    step(uv.x, maximum.x) *
+                    step(uv.y, maximum.y);
+                float2 clampedUv = clamp(uv, minimum, maximum);
+                return (tex2D(_MainTex, clampedUv) + _TextureSampleAdd) * inside;
+            }
+
+            half SampleSpriteAlpha(float2 uv)
+            {
+                return SampleSpriteColor(uv).a;
+            }
+
+            void GetPixelOutlineMasks(
+                float2 uv,
+                half baseAlpha,
+                out half outline,
+                out half glow)
+            {
+                outline = 0.0h;
+                glow = 0.0h;
+                #if defined(_PIXEL_OUTLINE_ON)
+                half visibility = saturate(_PixelOutlineVisibility);
+                if (visibility <= 0.0h)
+                {
+                    return;
+                }
+
+                half threshold = saturate(_PixelOutlineAlphaThreshold);
+                half centerOpaque = step(threshold, baseAlpha);
+                half outsideMask = 1.0h - centerOpaque;
+                float2 texel = _MainTex_TexelSize.xy;
+                half glowWidth = max(_PixelOutlineGlowWidth, _PixelOutlineWidth);
+                half glowRange = max(glowWidth - _PixelOutlineWidth, 1.0h);
+
+                [unroll]
+                for (int i = 1; i <= 8; i++)
+                {
+                    half outlineRingEnabled =
+                        step((half)i - 0.5h, _PixelOutlineWidth);
+                    half glowRingEnabled = step((half)i - 0.5h, glowWidth);
+                    float2 offset = texel * (float)i;
+                    half ringAlpha = 0.0h;
+                    ringAlpha = max(ringAlpha,
+                        SampleSpriteAlpha(uv + float2(offset.x, 0.0)));
+                    ringAlpha = max(ringAlpha,
+                        SampleSpriteAlpha(uv - float2(offset.x, 0.0)));
+                    ringAlpha = max(ringAlpha,
+                        SampleSpriteAlpha(uv + float2(0.0, offset.y)));
+                    ringAlpha = max(ringAlpha,
+                        SampleSpriteAlpha(uv - float2(0.0, offset.y)));
+                    ringAlpha = max(ringAlpha, SampleSpriteAlpha(uv + offset));
+                    ringAlpha = max(ringAlpha, SampleSpriteAlpha(uv - offset));
+                    ringAlpha = max(ringAlpha,
+                        SampleSpriteAlpha(uv + float2(offset.x, -offset.y)));
+                    ringAlpha = max(ringAlpha,
+                        SampleSpriteAlpha(uv + float2(-offset.x, offset.y)));
+
+                    half ringMask = outsideMask * step(threshold, ringAlpha);
+                    outline = max(outline, ringMask * outlineRingEnabled);
+
+                    half glowDistance = max((half)i - _PixelOutlineWidth, 0.0h);
+                    half glowFalloff = saturate(
+                        1.0h - glowDistance / (glowRange + 1.0h));
+                    glow = max(
+                        glow,
+                        ringMask * glowRingEnabled * glowFalloff);
+                }
+
+                outline *= visibility;
+                glow *= (1.0h - outline) * visibility;
+                #endif
             }
 
             half Bayer4x4(float2 screenPosition)
@@ -172,16 +279,35 @@ Shader "Shader/UI Alpha"
                 return (threshold + 0.5h) / 16.0h;
             }
 
-            fixed4 frag(v2f input) : SV_Target
+            half4 frag(v2f input) : SV_Target
             {
-                fixed4 color = (tex2D(_MainTex, input.texcoord) + _TextureSampleAdd) * input.color;
+                half4 sampleColor = SampleSpriteColor(input.texcoord);
+                half4 color = sampleColor * input.color;
                 color.a *= _AlphaMultiplier;
 
                 if (_UseRgbOverride > 0.5)
                 {
-                    color.rgb = _RgbOverrideColor.rgb;
+                    color.rgb = _RgbOverrideColor.rgb *
+                        lerp(fixed3(1.0, 1.0, 1.0), input.color.rgb,
+                            saturate(_RespectVertexRgbTint));
                     color.a *= _RgbOverrideColor.a;
                 }
+
+                half outline;
+                half glow;
+                GetPixelOutlineMasks(
+                    input.texcoord,
+                    sampleColor.a,
+                    outline,
+                    glow);
+                half glowAlpha = glow * _PixelOutlineGlowAlpha *
+                    _PixelOutlineColor.a * input.color.a;
+                color.rgb = lerp(color.rgb, _PixelOutlineColor.rgb, glowAlpha);
+                color.a = max(color.a, glowAlpha);
+                color.rgb = lerp(color.rgb, _PixelOutlineColor.rgb, outline);
+                color.a = max(
+                    color.a,
+                    outline * _PixelOutlineColor.a * input.color.a);
 
                 #ifdef _UV_ALPHA_FADE_ON
                 float2 localUV = (input.texcoord - _UVAlphaFadeUVRect.xy)

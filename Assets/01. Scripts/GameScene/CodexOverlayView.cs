@@ -68,7 +68,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private TMP_Text enemyDescriptionText;
         [SerializeField] private TMP_Text noContractText;
         [SerializeField] private Transform contractGrid;
-        [SerializeField] private DeckPreviewCardView contractTemplate;
+        [SerializeField] private CodexDemonCardPreviewView contractTemplate;
         [SerializeField] private ScrollRect deckScrollRect;
         [SerializeField] private Transform deckGrid;
         [SerializeField] private DeckPreviewCardView deckTemplate;
@@ -88,8 +88,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Color inactiveTabColor =
             new Color(0.55f, 0.42f, 0.38f, 1f);
 
-        private readonly List<DeckPreviewCardView> _contractItems =
-            new List<DeckPreviewCardView>();
+        private readonly List<CodexDemonCardPreviewView> _contractItems =
+            new List<CodexDemonCardPreviewView>();
         private readonly List<DeckPreviewCardView> _deckItems =
             new List<DeckPreviewCardView>();
         private CardContentCatalogSO _cardContentCatalog;
@@ -243,8 +243,8 @@ namespace DiaBlackJack.GameScene
             RenderImmediate(model);
             SetRestingBookFrame();
             yield return FadeContent(0f, 1f);
-            SetContentInteraction(true);
             _pageTransition = null;
+            SetContentInteraction(true);
         }
 
         private IEnumerator FadeContent(float from, float to)
@@ -313,15 +313,7 @@ namespace DiaBlackJack.GameScene
                 demonTabText,
                 showEnemy ? inactiveTabColor : activeTabColor);
 
-            if (enemyTabButton != null)
-            {
-                enemyTabButton.interactable = !showEnemy;
-            }
-
-            if (demonTabButton != null)
-            {
-                demonTabButton.interactable = showEnemy;
-            }
+            ApplyTabInteraction(showEnemy, !IsTransitioning);
 
             SetText(previousPageText, "Q Previous");
             SetText(
@@ -340,7 +332,7 @@ namespace DiaBlackJack.GameScene
             foreach (CodexDemonReferenceViewModel demon in
                 page.ContractableDemons)
             {
-                DeckPreviewCardView item = CreateItem(
+                CodexDemonCardPreviewView item = CreateItem(
                     contractTemplate,
                     contractGrid,
                     _contractItems);
@@ -394,15 +386,13 @@ namespace DiaBlackJack.GameScene
         }
 
         private void RenderDemonThumbnail(
-            DeckPreviewCardView target,
+            CodexDemonCardPreviewView target,
             CodexDemonReferenceViewModel demon)
         {
-            target.RenderCodex(
+            target.Render(
                 _cardContentCatalog.GetDemonFaceSprite(
                     demon.DefinitionKey),
-                count: null,
-                hoverTitle: null,
-                hoverDescription: null);
+                demon.EnglishName);
         }
 
         private void RenderDeckThumbnail(
@@ -415,7 +405,11 @@ namespace DiaBlackJack.GameScene
                     card.Suit),
                 card.Count,
                 $"{card.Rank}. {card.DisplayName}",
-                card.Description);
+                card.Description,
+                GameSceneCardViewModel.ResolveHoverOutlineState(
+                    card.DefinitionKey,
+                    canUse: false,
+                    isUsed: false));
         }
 
 #if UNITY_EDITOR
@@ -665,19 +659,35 @@ namespace DiaBlackJack.GameScene
 
         private void SetContentInteraction(bool enabled)
         {
-            if (bookContentGroup == null)
+            if (bookContentGroup != null)
             {
-                return;
+                bookContentGroup.interactable = enabled;
+                bookContentGroup.blocksRaycasts = enabled;
             }
 
-            bookContentGroup.interactable = enabled;
-            bookContentGroup.blocksRaycasts = enabled;
+            bool showEnemy = enemyPageRoot == null ||
+                enemyPageRoot.activeSelf;
+            ApplyTabInteraction(showEnemy, enabled);
         }
 
-        private static DeckPreviewCardView CreateItem(
-            DeckPreviewCardView template,
+        private void ApplyTabInteraction(bool showEnemy, bool enabled)
+        {
+            if (enemyTabButton != null)
+            {
+                enemyTabButton.interactable = enabled && !showEnemy;
+            }
+
+            if (demonTabButton != null)
+            {
+                demonTabButton.interactable = enabled && showEnemy;
+            }
+        }
+
+        private static T CreateItem<T>(
+            T template,
             Transform parent,
-            ICollection<DeckPreviewCardView> items)
+            ICollection<T> items)
+            where T : Component
         {
             if (template == null || parent == null)
             {
@@ -685,17 +695,17 @@ namespace DiaBlackJack.GameScene
                     "Codex card template or parent is missing.");
             }
 
-            DeckPreviewCardView item =
+            T item =
                 Instantiate(template, parent, false);
             item.gameObject.SetActive(true);
             items.Add(item);
             return item;
         }
 
-        private static void ClearSpawnedItems(
-            ICollection<DeckPreviewCardView> items)
+        private static void ClearSpawnedItems<T>(ICollection<T> items)
+            where T : Component
         {
-            foreach (DeckPreviewCardView item in items)
+            foreach (T item in items)
             {
                 if (item == null)
                 {

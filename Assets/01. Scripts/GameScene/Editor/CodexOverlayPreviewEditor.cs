@@ -565,7 +565,8 @@ namespace DiaBlackJack.GameScene.Editor
             snapshot.CaptureButton(GetReference<Button>(
                 serialized,
                 "demonTabButton"));
-            snapshot.CaptureDeckCard(GetReference<DeckPreviewCardView>(
+            snapshot.CaptureDemonCard(
+                GetReference<CodexDemonCardPreviewView>(
                 serialized,
                 "contractTemplate"));
             snapshot.CaptureDeckCard(GetReference<DeckPreviewCardView>(
@@ -621,6 +622,23 @@ namespace DiaBlackJack.GameScene.Editor
             CaptureGameObject(GetReference<GameObject>(
                 serialized,
                 "selectedFrame"));
+        }
+
+        private void CaptureDemonCard(CodexDemonCardPreviewView card)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            CaptureGameObject(card.gameObject);
+            var serialized = new SerializedObject(card);
+            CaptureImage(GetReference<Image>(serialized, "faceImage"));
+            TMP_Text englishName = GetReference<TMP_Text>(
+                serialized,
+                "englishNameText");
+            CaptureText(englishName);
+            CaptureGameObject(englishName?.gameObject);
         }
 
         private void CaptureGameObject(

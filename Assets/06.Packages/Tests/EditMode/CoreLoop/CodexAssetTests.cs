@@ -22,16 +22,20 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/UI/GameScene/CodexOverlay.prefab";
         private const string BookPrefabPath =
             "Assets/03. Prefabs/Props/CodexBook.prefab";
-        private const string CodexFramePath =
-            "Assets/05. Arts/Texture/Codex/CodexFrame.png";
         private const string CodexOutlinePath =
             "Assets/05. Arts/Texture/Codex/CodexOutline.png";
         private const string SoulIconPath =
-            "Assets/05. Arts/UI/Icons/SoulIcon.png";
+            "Assets/05. Arts/UI/Icons/SoulIcon-v5.png";
         private const string GoldIconPath =
             "Assets/05. Arts/UI/Icons/GoldIcon.png";
+        private const string CircleBrushPath =
+            "Assets/05. Arts/UI/circle_brush.png";
+        private const string BrushUiPath =
+            "Assets/05. Arts/UI/Brush_UI.psd";
         private const string DeckPreviewCardPrefabPath =
             "Assets/03. Prefabs/UI/GameScene/DeckPreviewCard.prefab";
+        private const string DemonCardPreviewPrefabPath =
+            "Assets/03. Prefabs/UI/GameScene/CodexDemonCardPreview.prefab";
         private const string OpenBookRemakePathPrefix =
             "Assets/05. Arts/Texture/Codex/Codex_OpenBook_Remake_";
 
@@ -136,7 +140,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 prefab.GetComponentsInChildren<DeckPreviewCardView>(true)
                     .Length,
-                Is.EqualTo(2));
+                Is.EqualTo(1));
             Assert.That(
                 prefab.GetComponentInChildren<EventSystem>(true),
                 Is.Null);
@@ -194,30 +198,32 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Image portraitFrame = GetImageAtPath(
                 prefab,
-                "Book/EnemyPage/LeftPage/PortraitPanel/PortraitFrame");
+                "Book/FadingContent/EnemyPage/LeftPage/PortraitPanel/" +
+                "PortraitViewport/PortraitFrame");
             Image soulOutline = GetImageAtPath(
                 prefab,
-                "Book/EnemyPage/LeftPage/SoulPanel/Outline");
+                "Book/FadingContent/EnemyPage/LeftPage/SoulPanel/Outline");
             Image soulIcon = GetImageAtPath(
                 prefab,
-                "Book/EnemyPage/LeftPage/SoulPanel/Icon");
+                "Book/FadingContent/EnemyPage/LeftPage/SoulPanel/Icon");
             Image goldIcon = GetImageAtPath(
                 prefab,
-                "Book/EnemyPage/LeftPage/GoldPanel/Icon");
+                "Book/FadingContent/EnemyPage/LeftPage/GoldPanel/Icon");
             Image deckBanner = GetImageAtPath(
                 prefab,
-                "Book/EnemyPage/RightPage/DeckTitleBanner");
+                "Book/FadingContent/EnemyPage/RightPage/DeckTitleBanner");
             Image deckOutline = GetImageAtPath(
                 prefab,
-                "Book/EnemyPage/RightPage/DeckPanel/Outline");
+                "Book/FadingContent/EnemyPage/RightPage/DeckPanel/Outline");
 
             Assert.That(
                 portraitFrame.sprite,
-                Is.EqualTo(LoadSprite(CodexFramePath, "CodexFrame_0")));
+                Is.EqualTo(
+                    AssetDatabase.LoadAssetAtPath<Sprite>(CircleBrushPath)));
             Assert.That(portraitFrame.type, Is.EqualTo(Image.Type.Sliced));
             Assert.That(
                 deckBanner.sprite,
-                Is.EqualTo(LoadSprite(CodexFramePath, "CodexFrame_2")));
+                Is.EqualTo(LoadSprite(BrushUiPath, "Brush_UI_1")));
             Assert.That(
                 soulOutline.sprite,
                 Is.EqualTo(LoadSprite(CodexOutlinePath, "CodexOutline_0")));
@@ -228,7 +234,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(deckOutline.type, Is.EqualTo(Image.Type.Sliced));
             Assert.That(
                 soulIcon.sprite,
-                Is.EqualTo(AssetDatabase.LoadAssetAtPath<Sprite>(SoulIconPath)));
+                Is.EqualTo(LoadSprite(SoulIconPath, "SoulIcon-v5_0")));
             Assert.That(
                 goldIcon.sprite,
                 Is.EqualTo(AssetDatabase.LoadAssetAtPath<Sprite>(GoldIconPath)));
@@ -285,8 +291,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
             GameObject overlay = UnityEngine.Object.Instantiate(prefab);
             CodexOverlayView view = overlay.GetComponent<CodexOverlayView>();
-            DeckPreviewCardView contractTemplate =
-                GetReference<DeckPreviewCardView>(
+            CodexDemonCardPreviewView contractTemplate =
+                GetReference<CodexDemonCardPreviewView>(
                     view,
                     "contractTemplate");
             DeckPreviewCardView deckTemplate =
@@ -418,8 +424,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
             GameObject overlay = UnityEngine.Object.Instantiate(prefab);
             CodexOverlayView view = overlay.GetComponent<CodexOverlayView>();
-            DeckPreviewCardView contractTemplate =
-                GetReference<DeckPreviewCardView>(
+            CodexDemonCardPreviewView contractTemplate =
+                GetReference<CodexDemonCardPreviewView>(
                     view,
                     "contractTemplate");
             DeckPreviewCardView deckTemplate =
@@ -427,6 +433,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Image contractFace = GetReference<Image>(
                 contractTemplate,
                 "faceImage");
+            Component contractEnglishName = GetReference<Component>(
+                contractTemplate,
+                "englishNameText");
             Image demonCard = GetReference<Image>(view, "demonCardImage");
             GameObject enemyPage = GetReference<GameObject>(
                 view,
@@ -445,6 +454,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             int contractIndex = FindEnemyPageIndex(
                 enemyPages,
                 hasContracts: true);
+            bool contractActive = contractTemplate.gameObject.activeSelf;
+            Sprite contractSprite = contractFace.sprite;
+            string contractEnglishLabel = GetText(contractEnglishName);
 
             try
             {
@@ -461,6 +473,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                     contractFace.sprite,
                     Is.EqualTo(cardCatalog.GetDemonFaceSprite(
                         firstContract.DefinitionKey)));
+                Assert.That(
+                    GetText(contractEnglishName),
+                    Is.EqualTo(firstContract.EnglishName));
 
                 Assert.That(
                     CodexOverlayPreviewSession.ShowCategory(
@@ -493,6 +508,15 @@ namespace DiaBlackJack.CoreLoop.Tests
                     Is.Null);
                 Assert.That(session.CurrentPageIndex, Is.EqualTo(lastIndex));
                 Assert.That(session.CanMoveNext, Is.False);
+
+                CodexOverlayPreviewSession.StopActive();
+                Assert.That(
+                    contractTemplate.gameObject.activeSelf,
+                    Is.EqualTo(contractActive));
+                Assert.That(contractFace.sprite, Is.EqualTo(contractSprite));
+                Assert.That(
+                    GetText(contractEnglishName),
+                    Is.EqualTo(contractEnglishLabel));
             }
             finally
             {
@@ -509,7 +533,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             GameObject overlay = UnityEngine.Object.Instantiate(prefab);
             CodexOverlayView view = overlay.GetComponent<CodexOverlayView>();
             RectTransform leftPage = overlay.transform.Find(
-                "Book/EnemyPage/LeftPage") as RectTransform;
+                "Book/FadingContent/EnemyPage/LeftPage") as RectTransform;
             Assert.That(leftPage, Is.Not.Null);
 
             try
@@ -619,13 +643,13 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DXM06_U02_CodexUsesDeckPreviewTemplatesAndSixColumnGrid()
+        public void DXM07_U02_CodexUsesDedicatedDemonPreviewAndSixColumnGrid()
         {
             GameObject prefab =
                 AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
             CodexOverlayView view = prefab.GetComponent<CodexOverlayView>();
-            DeckPreviewCardView contractTemplate =
-                GetReference<DeckPreviewCardView>(
+            CodexDemonCardPreviewView contractTemplate =
+                GetReference<CodexDemonCardPreviewView>(
                     view,
                     "contractTemplate");
             DeckPreviewCardView deckTemplate =
@@ -635,7 +659,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 AssetDatabase.GetAssetPath(
                     PrefabUtility.GetCorrespondingObjectFromSource(
                         contractTemplate.gameObject)),
-                Is.EqualTo(DeckPreviewCardPrefabPath));
+                Is.EqualTo(DemonCardPreviewPrefabPath));
             Assert.That(
                 AssetDatabase.GetAssetPath(
                     PrefabUtility.GetCorrespondingObjectFromSource(
@@ -648,13 +672,190 @@ namespace DiaBlackJack.CoreLoop.Tests
             GridLayoutGroup grid = contractGrid.GetComponent<GridLayoutGroup>();
             Assert.That(grid, Is.Not.Null);
             Assert.That(
+                contractGrid.GetComponentsInChildren<DeckPreviewCardView>(true)
+                    .Length,
+                Is.Zero);
+            Assert.That(
+                contractGrid.GetComponentsInChildren<
+                    CodexDemonCardPreviewView>(true).Length,
+                Is.EqualTo(1));
+            Assert.That(
                 grid.constraint,
                 Is.EqualTo(GridLayoutGroup.Constraint.FixedColumnCount));
             Assert.That(grid.constraintCount, Is.EqualTo(6));
-            Assert.That(grid.cellSize, Is.EqualTo(new Vector2(70f, 112f)));
-            Assert.That(grid.spacing, Is.EqualTo(new Vector2(7f, 0f)));
-            Assert.That(grid.padding.left, Is.EqualTo(4));
-            Assert.That(grid.padding.right, Is.EqualTo(4));
+            Assert.That(grid.cellSize, Is.EqualTo(new Vector2(72f, 120f)));
+            Assert.That(grid.spacing, Is.EqualTo(new Vector2(5f, 0f)));
+            Assert.That(grid.padding.left, Is.EqualTo(3));
+            Assert.That(grid.padding.right, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void DXM07_U03_DemonPreviewRendersFaceAndUppercaseEnglishName()
+        {
+            GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(
+                DemonCardPreviewPrefabPath);
+            GameObject instance = UnityEngine.Object.Instantiate(source);
+            CodexDemonCardPreviewView preview =
+                instance.GetComponent<CodexDemonCardPreviewView>();
+            Image face = GetReference<Image>(preview, "faceImage");
+            Material outlineMaterial = GetReference<Material>(
+                preview,
+                "hoverOutlineMaterial");
+            Component englishName = GetReference<Component>(
+                preview,
+                "englishNameText");
+            CardContentCatalogSO catalog = LoadCardCatalog();
+            string definitionKey = catalog.BuildRuntimeCatalog()
+                .DemonDefinitions[0]
+                .Key;
+            Sprite sprite = catalog.GetDemonFaceSprite(definitionKey);
+            CodexDemonReferenceViewModel model =
+                new CodexDemonReferenceViewModel(definitionKey, "Demon");
+
+            try
+            {
+                preview.Render(sprite, model.EnglishName);
+
+                Assert.That(
+                    model.EnglishName,
+                    Is.EqualTo(definitionKey.ToUpperInvariant()));
+                Assert.That(face.enabled, Is.True);
+                Assert.That(face.sprite, Is.EqualTo(sprite));
+                Assert.That(GetText(englishName), Is.EqualTo(model.EnglishName));
+                Assert.That(instance.GetComponent<RectTransform>().sizeDelta,
+                    Is.EqualTo(new Vector2(72f, 120f)));
+                RectTransform faceRect = face.rectTransform;
+                Assert.That(faceRect.offsetMin, Is.EqualTo(new Vector2(2f, 2f)));
+                Assert.That(faceRect.offsetMax, Is.EqualTo(new Vector2(-2f, -2f)));
+                Assert.That(face.preserveAspect, Is.True);
+                Assert.That(face.raycastTarget, Is.True);
+                Assert.That(
+                    AssetDatabase.GetAssetPath(outlineMaterial),
+                    Is.EqualTo(
+                        "Assets/05. Arts/Material/Card/UI_DeckCardHoverOutline.mat"));
+                Assert.That(preview.CurrentHoverOutlineVisibility, Is.Zero);
+                Vector4 padding = preview.CurrentHoverOutlineMeshPadding;
+                Assert.That(padding.x, Is.GreaterThan(0f));
+                Assert.That(padding.y, Is.GreaterThan(0f));
+                Vector3 restingScale = instance.transform.localScale;
+                preview.OnPointerEnter(null);
+                Assert.That(
+                    preview.CurrentHoverOutlineVisibility,
+                    Is.EqualTo(1f));
+                Assert.That(
+                    preview.CurrentHoverOutlineColor,
+                    Is.EqualTo(new Color(
+                        5.3403134f,
+                        5.3403134f,
+                        5.3403134f,
+                        1f)));
+                Assert.That(
+                    instance.transform.localScale,
+                    Is.EqualTo(restingScale * 1.02f));
+                preview.OnPointerExit(null);
+                Assert.That(preview.CurrentHoverOutlineVisibility, Is.Zero);
+                Assert.That(instance.transform.localScale, Is.EqualTo(restingScale));
+
+                SerializedObject textData = new SerializedObject(englishName);
+                Assert.That(
+                    textData.FindProperty("m_enableAutoSizing").boolValue,
+                    Is.True);
+                Assert.That(
+                    textData.FindProperty("m_fontSizeMin").floatValue,
+                    Is.EqualTo(8f));
+                Assert.That(
+                    textData.FindProperty("m_fontSizeMax").floatValue,
+                    Is.EqualTo(14f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void DXM07_U04_CodexCountIs32WithoutChangingSourcePrefab()
+        {
+            GameObject overlayPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
+            CodexOverlayView overlayView =
+                overlayPrefab.GetComponent<CodexOverlayView>();
+            DeckPreviewCardView codexTemplate =
+                GetReference<DeckPreviewCardView>(overlayView, "deckTemplate");
+            Component codexCount = GetReference<Component>(
+                codexTemplate,
+                "countText");
+
+            GameObject sourcePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                DeckPreviewCardPrefabPath);
+            DeckPreviewCardView sourceView =
+                sourcePrefab.GetComponent<DeckPreviewCardView>();
+            Component sourceCount = GetReference<Component>(
+                sourceView,
+                "countText");
+            SerializedObject codexCountData = new SerializedObject(codexCount);
+            SerializedObject sourceCountData = new SerializedObject(sourceCount);
+
+            Assert.That(
+                codexCountData.FindProperty("m_fontSize").floatValue,
+                Is.EqualTo(32f));
+            Assert.That(
+                codexCountData.FindProperty("m_fontSizeBase").floatValue,
+                Is.EqualTo(32f));
+            Assert.That(
+                sourceCountData.FindProperty("m_fontSize").floatValue,
+                Is.EqualTo(64f));
+            Assert.That(
+                sourceCountData.FindProperty("m_fontSizeBase").floatValue,
+                Is.EqualTo(64f));
+        }
+
+        [Test]
+        public void DXM07_U05_TabInputLocksAndRestoresForCurrentCategory()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
+            GameObject overlay = UnityEngine.Object.Instantiate(prefab);
+            CodexOverlayView view = overlay.GetComponent<CodexOverlayView>();
+            Button enemyTab = GetReference<Button>(view, "enemyTabButton");
+            Button demonTab = GetReference<Button>(view, "demonTabButton");
+            GameObject enemyPage = GetReference<GameObject>(
+                view,
+                "enemyPageRoot");
+            GameObject demonPage = GetReference<GameObject>(
+                view,
+                "demonPageRoot");
+            MethodInfo setInteraction = typeof(CodexOverlayView).GetMethod(
+                "SetContentInteraction",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo resetTransition = typeof(CodexOverlayView).GetMethod(
+                "ResetTransitionVisuals",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+
+            try
+            {
+                Assert.That(setInteraction, Is.Not.Null);
+                Assert.That(resetTransition, Is.Not.Null);
+                enemyPage.SetActive(true);
+                demonPage.SetActive(false);
+                setInteraction.Invoke(view, new object[] { false });
+                Assert.That(enemyTab.interactable, Is.False);
+                Assert.That(demonTab.interactable, Is.False);
+                setInteraction.Invoke(view, new object[] { true });
+                Assert.That(enemyTab.interactable, Is.False);
+                Assert.That(demonTab.interactable, Is.True);
+
+                enemyPage.SetActive(false);
+                demonPage.SetActive(true);
+                setInteraction.Invoke(view, new object[] { false });
+                resetTransition.Invoke(view, null);
+                Assert.That(enemyTab.interactable, Is.True);
+                Assert.That(demonTab.interactable, Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(overlay);
+            }
         }
 
         [Test]
@@ -666,30 +867,55 @@ namespace DiaBlackJack.CoreLoop.Tests
             DeckPreviewCardView card = instance.GetComponent<DeckPreviewCardView>();
             Component fallback = GetReference<Component>(card, "fallbackText");
             Component count = GetReference<Component>(card, "countText");
-            GameObject hover = GetReference<GameObject>(card, "hoverFrame");
             GameObject selected = GetReference<GameObject>(card, "selectedFrame");
+            CardContentCatalogSO catalog = LoadCardCatalog();
+            Sprite deckSprite = catalog.GetNormalFaceSprite(
+                "standard-plain-3",
+                CardSuit.Spade);
+            string demonKey = catalog.BuildRuntimeCatalog()
+                .DemonDefinitions[0]
+                .Key;
+            Sprite demonSprite = catalog.GetDemonFaceSprite(demonKey);
+            SerializedObject serializedCard = new SerializedObject(card);
 
             try
             {
                 card.RenderCodex(
-                    null,
+                    deckSprite,
                     3,
                     "3. Test Card",
-                    "Test description");
+                    "Test description",
+                    GameSceneCardHoverOutlineState.Basic);
                 Assert.That(count.gameObject.activeSelf, Is.True);
                 Assert.That(GetText(count), Is.EqualTo("x3"));
                 Assert.That(fallback.gameObject.activeSelf, Is.False);
                 Assert.That(GetText(fallback), Is.Empty);
                 Assert.That(card.CreateHoverBadgeRequest(), Is.Not.Null);
-                Assert.That(hover.activeSelf, Is.False);
+                Assert.That(card.CurrentHoverOutlineVisibility, Is.Zero);
                 Assert.That(selected.activeSelf, Is.False);
+                card.OnPointerEnter(null);
+                Assert.That(card.CurrentHoverOutlineVisibility, Is.EqualTo(1f));
+                card.OnPointerExit(null);
 
-                card.RenderCodex(null, null, null, null);
+                card.RenderCodex(
+                    demonSprite,
+                    null,
+                    null,
+                    null,
+                    GameSceneCardHoverOutlineState.Basic);
                 Assert.That(count.gameObject.activeSelf, Is.False);
                 Assert.That(GetText(count), Is.Empty);
                 Assert.That(fallback.gameObject.activeSelf, Is.False);
                 Assert.That(card.CreateHoverBadgeRequest(), Is.Null);
                 Assert.That(card.CanSelect, Is.False);
+                card.OnPointerEnter(null);
+                Assert.That(card.CurrentHoverOutlineVisibility, Is.EqualTo(1f));
+                Assert.That(
+                    card.CurrentHoverOutlineColor,
+                    Is.EqualTo(
+                        serializedCard.FindProperty("basicHoverOutlineColor")
+                            .colorValue));
+                card.OnPointerExit(null);
             }
             finally
             {
@@ -698,7 +924,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DXM06_U04_PageTurnSpritesAndFrameDirectionsAreStable()
+        public void DXM07_U01_TabsStayOutsideFadingContent()
         {
             GameObject prefab =
                 AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
@@ -711,9 +937,29 @@ namespace DiaBlackJack.CoreLoop.Tests
             SerializedProperty frames = serialized.FindProperty(
                 "pageTurnFrames");
 
-            Assert.That(group.transform.name, Is.EqualTo("Book"));
+            Assert.That(group.transform.name, Is.EqualTo("FadingContent"));
             Assert.That(openBook.transform.name, Is.EqualTo("OpenBook"));
             Assert.That(openBook.transform.IsChildOf(group.transform), Is.False);
+            Button enemyTab = GetReference<Button>(view, "enemyTabButton");
+            Button demonTab = GetReference<Button>(view, "demonTabButton");
+            Assert.That(enemyTab.transform.IsChildOf(group.transform), Is.False);
+            Assert.That(demonTab.transform.IsChildOf(group.transform), Is.False);
+            Assert.That(
+                GetReference<GameObject>(view, "enemyPageRoot")
+                    .transform.IsChildOf(group.transform),
+                Is.True);
+            Assert.That(
+                GetReference<GameObject>(view, "demonPageRoot")
+                    .transform.IsChildOf(group.transform),
+                Is.True);
+            Assert.That(
+                GetReference<Component>(view, "previousPageText")
+                    .transform.IsChildOf(group.transform),
+                Is.True);
+            Assert.That(
+                GetReference<Component>(view, "nextPageText")
+                    .transform.IsChildOf(group.transform),
+                Is.True);
             Assert.That(frames.arraySize, Is.EqualTo(5));
             Assert.That(
                 serialized.FindProperty("contentFadeDuration").floatValue,

@@ -1,4 +1,3 @@
-using System;
 using Border.Audio;
 using DG.Tweening;
 using TMPro;
@@ -8,12 +7,10 @@ using UnityEngine.UI;
 
 namespace DiaBlackJack.GameScene
 {
-    /// <summary>One pre-authored scroll-grid slot in <see cref="DeckPreviewView"/>.</summary>
     [DisallowMultipleComponent]
-    public sealed class DeckPreviewCardView : MonoBehaviour,
+    public sealed class CodexDemonCardPreviewView : MonoBehaviour,
         IPointerEnterHandler,
-        IPointerExitHandler,
-        IPointerClickHandler
+        IPointerExitHandler
     {
         private const string PixelOutlineKeyword = "_PIXEL_OUTLINE_ON";
         private static readonly int PixelOutlineColorId =
@@ -30,11 +27,8 @@ namespace DiaBlackJack.GameScene
             Shader.PropertyToID("_PixelOutlineMeshPadding");
 
         [SerializeField] private Image faceImage;
+        [SerializeField] private TMP_Text englishNameText;
         [SerializeField] private Material hoverOutlineMaterial;
-        [SerializeField] private GameObject selectedFrame;
-        [SerializeField] private TMP_Text fallbackText;
-        [SerializeField] private TMP_Text countText;
-
         [Header("Hover feel")]
         [SerializeField] private float hoverScale = 1.02f;
         [Min(0.01f)]
@@ -42,57 +36,24 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private AnimationCurve hoverScaleCurve =
             AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
         [SerializeField] private string hoverSfxId = "cardHover";
-
-        [Header("Hover outline state colors")]
         [ColorUsage(true, true)]
         [SerializeField] private Color basicHoverOutlineColor =
             new Color(5.3403134f, 5.3403134f, 5.3403134f, 1f);
-        [ColorUsage(true, true)]
-        [SerializeField] private Color unavailableHoverOutlineColor =
-            new Color(2.1145804f, 0.6420973f, 0.6084406f, 1f);
-        [ColorUsage(true, true)]
-        [SerializeField] private Color availableHoverOutlineColor =
-            new Color(1.9118087f, 3.4278064f, 0.48455897f, 1f);
-        [ColorUsage(true, true)]
-        [SerializeField] private Color automaticHoverOutlineColor =
-            new Color(3.9999995f, 3.3765495f, 0f, 1f);
-        [ColorUsage(true, true)]
-        [SerializeField] private Color usedHoverOutlineColor = Color.black;
 
-        [Header("Deck card hover badge")]
-        [Tooltip("Local UI offset from the deck card's right-center edge.")]
-        [SerializeField] private Vector2 deckCardHoverBadgeOffset =
-            new Vector2(16f, 0f);
-
-        private GameSceneCardViewModel _card;
         private Material _hoverOutlineMaterialInstance;
-        private GameSceneCardHoverOutlineState _hoverOutlineState =
-            GameSceneCardHoverOutlineState.Basic;
         private bool _outlineEnabled;
-        private bool _hoverEnabled;
-        private string _hoverTitle = string.Empty;
-        private string _hoverDescription = string.Empty;
         private Vector3 _hoverRestingScale;
         private Tween _hoverScaleTween;
         private bool _hovered;
         private bool _hasHoverRestingScale;
 
-        public event Action<DeckPreviewCardView> Clicked;
-
-        public event Action<DeckPreviewCardView, bool> HoverChanged;
-
-        public bool CanSelect { get; private set; }
-
-        public int CardId => _card == null ? -1 : _card.CardId;
-
-        public bool IsSelected { get; private set; }
-
-        internal Color CurrentHoverOutlineColor => ResolveHoverOutlineColor();
+        internal Color CurrentHoverOutlineColor => basicHoverOutlineColor;
 
         internal float CurrentHoverOutlineVisibility =>
             _hoverOutlineMaterialInstance == null
                 ? 0f
-                : _hoverOutlineMaterialInstance.GetFloat(PixelOutlineVisibilityId);
+                : _hoverOutlineMaterialInstance.GetFloat(
+                    PixelOutlineVisibilityId);
 
         internal Vector4 CurrentHoverOutlineMeshPadding =>
             _hoverOutlineMaterialInstance == null
@@ -111,153 +72,36 @@ namespace DiaBlackJack.GameScene
             _hovered = false;
         }
 
-        public void Render(
-            GameSceneDeckCardGroupViewModel group,
-            Sprite faceSprite,
-            bool? canSelect = null)
+        internal void Render(Sprite faceSprite, string englishName)
         {
-            GameSceneCardViewModel card = group?.Card;
-            _card = card;
-            CanSelect = card != null && canSelect == true;
-            _hoverOutlineState = card == null
-                ? GameSceneCardHoverOutlineState.Basic
-                : card.HoverOutlineState;
-            _hoverEnabled = card != null;
-            _hoverTitle = card == null
-                ? string.Empty
-                : $"{card.Rank}. {card.DisplayName}";
-            _hoverDescription = card?.AbilityDescription ?? string.Empty;
             if (faceImage != null)
             {
                 faceImage.sprite = faceSprite;
                 faceImage.enabled = faceSprite != null;
-                faceImage.color = !canSelect.HasValue || CanSelect
-                    ? Color.white
-                    : new Color(0.45f, 0.45f, 0.45f, 1f);
             }
 
             ConfigureHoverOutline(faceSprite);
-
-            if (fallbackText != null)
-            {
-                fallbackText.text = card == null
-                    ? string.Empty
-                    : $"{card.Rank}\n{card.DisplayName}";
-                fallbackText.gameObject.SetActive(faceSprite == null && card != null);
-            }
-
-            if (countText != null)
-            {
-                countText.text = group == null ? string.Empty : $"x{group.Count}";
-            }
-
             SetHoverFeedback(false);
             SetHoverOutline(false);
-            SetSelected(false);
-        }
 
-        internal void RenderCodex(
-            Sprite faceSprite,
-            int? count,
-            string hoverTitle,
-            string hoverDescription,
-            GameSceneCardHoverOutlineState hoverOutlineState)
-        {
-            if (count.HasValue && count.Value < 1)
+            if (englishNameText != null)
             {
-                throw new ArgumentOutOfRangeException(nameof(count));
+                CurrencyIconText.Set(englishNameText, englishName);
+                englishNameText.gameObject.SetActive(
+                    !string.IsNullOrWhiteSpace(englishName));
             }
-
-            _card = null;
-            CanSelect = false;
-            _hoverOutlineState = hoverOutlineState;
-            _hoverEnabled = !string.IsNullOrWhiteSpace(hoverTitle);
-            _hoverTitle = hoverTitle ?? string.Empty;
-            _hoverDescription = hoverDescription ?? string.Empty;
-
-            if (faceImage != null)
-            {
-                faceImage.sprite = faceSprite;
-                faceImage.enabled = faceSprite != null;
-                faceImage.color = Color.white;
-            }
-
-            ConfigureHoverOutline(faceSprite);
-
-            if (fallbackText != null)
-            {
-                fallbackText.text = string.Empty;
-                fallbackText.gameObject.SetActive(false);
-            }
-
-            if (countText != null)
-            {
-                countText.text = count.HasValue
-                    ? $"x{count.Value}"
-                    : string.Empty;
-                countText.gameObject.SetActive(count.HasValue);
-            }
-
-            SetHoverFeedback(false);
-            SetHoverOutline(false);
-            SetSelected(false);
-        }
-
-        public void SetSelected(bool selected)
-        {
-            IsSelected = CanSelect && selected;
-            if (selectedFrame != null)
-            {
-                selectedFrame.SetActive(IsSelected);
-            }
-        }
-
-        public CardHoverBadgeRequest CreateHoverBadgeRequest()
-        {
-            return !_hoverEnabled
-                ? null
-                : CardHoverBadgeRequest.CreateForDeckRect(
-                    transform as RectTransform,
-                    _hoverTitle,
-                    _hoverDescription,
-                    deckCardHoverBadgeOffset);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (!_hoverEnabled && !_outlineEnabled)
-            {
-                return;
-            }
-
             SetHoverFeedback(true);
             SetHoverOutline(true);
-            if (_hoverEnabled)
-            {
-                HoverChanged?.Invoke(this, true);
-            }
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             SetHoverFeedback(false);
             SetHoverOutline(false);
-            if (_hoverEnabled)
-            {
-                HoverChanged?.Invoke(this, false);
-            }
-        }
-
-        public void OnPointerClick(PointerEventData eventData)
-        {
-            if (!CanSelect ||
-                eventData == null ||
-                eventData.button != PointerEventData.InputButton.Left)
-            {
-                return;
-            }
-
-            Clicked?.Invoke(this);
         }
 
         private void OnDisable()
@@ -269,7 +113,6 @@ namespace DiaBlackJack.GameScene
             }
             _hovered = false;
             SetHoverOutline(false);
-            SetSelected(false);
         }
 
         private void OnDestroy()
@@ -294,8 +137,11 @@ namespace DiaBlackJack.GameScene
 
         private void ConfigureHoverOutline(Sprite sprite)
         {
-            _outlineEnabled = sprite != null && hoverOutlineMaterial != null;
-            if (!_outlineEnabled || faceImage == null)
+            _outlineEnabled =
+                sprite != null &&
+                faceImage != null &&
+                hoverOutlineMaterial != null;
+            if (!_outlineEnabled)
             {
                 return;
             }
@@ -306,7 +152,7 @@ namespace DiaBlackJack.GameScene
                 GetSpriteUvRect(sprite));
             _hoverOutlineMaterialInstance.SetColor(
                 PixelOutlineColorId,
-                ResolveHoverOutlineColor());
+                basicHoverOutlineColor);
             _hoverOutlineMaterialInstance.SetVector(
                 PixelOutlineMeshPaddingId,
                 GetOutlineMeshPadding(sprite));
@@ -329,7 +175,6 @@ namespace DiaBlackJack.GameScene
                 ? _hoverOutlineMaterialInstance.GetFloat(PixelOutlineGlowWidthId)
                 : outlineWidth;
             float paddingPixels = Mathf.Max(outlineWidth, glowWidth);
-
             Vector2 drawingSize = faceImage.rectTransform.rect.size;
             Vector2 spriteSize = sprite.rect.size;
             if (faceImage.preserveAspect &&
@@ -350,15 +195,13 @@ namespace DiaBlackJack.GameScene
                 }
             }
 
-            float localPaddingX = spriteSize.x <= 0f
-                ? 0f
-                : paddingPixels * drawingSize.x / spriteSize.x;
-            float localPaddingY = spriteSize.y <= 0f
-                ? 0f
-                : paddingPixels * drawingSize.y / spriteSize.y;
             return new Vector4(
-                localPaddingX,
-                localPaddingY,
+                spriteSize.x <= 0f
+                    ? 0f
+                    : paddingPixels * drawingSize.x / spriteSize.x,
+                spriteSize.y <= 0f
+                    ? 0f
+                    : paddingPixels * drawingSize.y / spriteSize.y,
                 paddingPixels / sprite.texture.width,
                 paddingPixels / sprite.texture.height);
         }
@@ -423,10 +266,12 @@ namespace DiaBlackJack.GameScene
 
             _hoverOutlineMaterialInstance = new Material(hoverOutlineMaterial)
             {
-                name = hoverOutlineMaterial.name + " (Deck Card Instance)"
+                name = hoverOutlineMaterial.name + " (Codex Demon Instance)"
             };
             _hoverOutlineMaterialInstance.EnableKeyword(PixelOutlineKeyword);
-            _hoverOutlineMaterialInstance.SetFloat(PixelOutlineVisibilityId, 0f);
+            _hoverOutlineMaterialInstance.SetFloat(
+                PixelOutlineVisibilityId,
+                0f);
             faceImage.material = _hoverOutlineMaterialInstance;
         }
 
@@ -439,37 +284,15 @@ namespace DiaBlackJack.GameScene
 
             _hoverOutlineMaterialInstance.SetColor(
                 PixelOutlineColorId,
-                ResolveHoverOutlineColor());
+                basicHoverOutlineColor);
             _hoverOutlineMaterialInstance.SetFloat(
                 PixelOutlineVisibilityId,
                 visible && _outlineEnabled ? 1f : 0f);
             faceImage.SetMaterialDirty();
         }
 
-        private Color ResolveHoverOutlineColor()
-        {
-            switch (_hoverOutlineState)
-            {
-                case GameSceneCardHoverOutlineState.ManualUnavailable:
-                    return unavailableHoverOutlineColor;
-                case GameSceneCardHoverOutlineState.ManualAvailable:
-                    return availableHoverOutlineColor;
-                case GameSceneCardHoverOutlineState.Automatic:
-                    return automaticHoverOutlineColor;
-                case GameSceneCardHoverOutlineState.Used:
-                    return usedHoverOutlineColor;
-                default:
-                    return basicHoverOutlineColor;
-            }
-        }
-
         private static Vector4 GetSpriteUvRect(Sprite sprite)
         {
-            if (sprite == null)
-            {
-                return new Vector4(0f, 0f, 1f, 1f);
-            }
-
             Vector2[] uvs = sprite.uv;
             if (uvs == null || uvs.Length == 0)
             {
@@ -478,10 +301,10 @@ namespace DiaBlackJack.GameScene
 
             Vector2 minimum = uvs[0];
             Vector2 maximum = uvs[0];
-            for (int i = 1; i < uvs.Length; i++)
+            for (int index = 1; index < uvs.Length; index++)
             {
-                minimum = Vector2.Min(minimum, uvs[i]);
-                maximum = Vector2.Max(maximum, uvs[i]);
+                minimum = Vector2.Min(minimum, uvs[index]);
+                maximum = Vector2.Max(maximum, uvs[index]);
             }
 
             Vector2 size = maximum - minimum;

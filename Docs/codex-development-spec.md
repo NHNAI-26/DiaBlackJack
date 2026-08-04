@@ -1,5 +1,14 @@
 # 테이블 도감 개발 명세
 
+## DX-M07: 탭과 카드 시각 개선
+
+- 책장 전환 Fade는 `Book/FadingContent`의 `CanvasGroup`에만 적용한다. 닫기, 적·악마 페이지, Previous/Next는 이 그룹 아래에 두고 적 정보·악마 카드 탭은 `Book` 직속 형제로 유지해 항상 불투명하게 표시한다.
+- 전환 중 두 탭 입력은 모두 잠근다. 전환 완료·취소·비활성화 때 현재 카테고리 탭은 비활성, 반대 카테고리 탭은 활성 상태로 복원한다. 기존 0.12초 Fade와 Remake 0~4의 프레임당 0.08초 재생 계약은 유지한다.
+- 계약 악마는 Screen Space Overlay 전용 `CodexDemonCardPreview.prefab`과 `CodexDemonCardPreviewView`를 사용한다. 72×120 셀 안에서 앞면은 2px inset과 `PreserveAspect`를 사용하고, 하단 18px 영역에 `DefinitionKey.ToUpperInvariant()`로 만든 English Name을 8~14 자동 크기로 표시한다.
+- 계약 Grid는 6열, 셀 72×120, 가로 간격 5, 좌우 패딩 3으로 고정해 보스 계약 6장을 한 행에 표시한다. 계약 카드에는 수량·Fallback·호버·선택 기능을 추가하지 않는다.
+- 시작 덱은 공용 `DeckPreviewCard.prefab`, `xN`, 호버를 유지한다. 도감의 `DeckTemplate/Count` 중첩 override만 32pt로 사용하고 원본 프리팹과 덱 검사창의 64pt는 변경하지 않는다.
+- Inspector 프리뷰 스냅샷은 계약 템플릿의 활성 상태, 앞면 Sprite, English Name을 저장·복원한다. `CodexOverlayView`의 기존 public API와 이벤트는 유지하고 `CodexDemonReferenceViewModel.EnglishName`만 추가한다.
+
 ## DX-M06: 공용 카드와 페이지 전환
 
 - 페이지 안내는 왼쪽 `Q Previous`, 오른쪽 `{현재}/{전체} Next E`로 분리한다. 적 정보·악마 카드 탭의 비활성 Label은 기존 비활성 색상으로 어둡게 표시하며 배경 색상 전환도 유지한다.
