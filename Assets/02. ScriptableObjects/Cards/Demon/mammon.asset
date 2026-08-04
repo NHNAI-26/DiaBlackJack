@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.DemonCardDefinitionSO
   key: mammon
   displayName: 마몬
-  activeEffectDescription: 차례 시작 시 주사위를 유지하거나 다시 굴립니다. 승부 전에 주사위 값을 카드 합에 더할 수 있습니다.
-  costDescription: 다시 굴리면 차례가 끝납니다. 주사위가 6이면 버스트합니다.
+  activeEffectDescription: "계약 직후 주사위를 굴립니다.\n자신의 차례에 일반 행동 대신, 주사위를 다시 굴리고 차례를 끝낼 수 있습니다.\n승부 전에 주사위 값을 카드 합에 더할 수 있습니다.\n새 라운드 시작 시, 주사위를 다시 굴립니다."
+  costDescription: 주사위가 (해골 그림)이 나오면 버스트합니다.
   codexLoreDescription: 모든 운을 값으로 매기는 탐욕의 악마. 약속된 이득은 언제나 파멸의 숫자와 맞닿아 있다.
   baseSoulCost: 1
   basePurchasePrice: 3

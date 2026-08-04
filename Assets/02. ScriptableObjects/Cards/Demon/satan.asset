@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.DemonCardDefinitionSO
   key: satan
   displayName: 사탄
-  activeEffectDescription: 스탠드할 수 없으며 버스트하지 않습니다. 일반 행동은 현재 면을 유지합니다. 현재 면 능력을 완료하면 반대 면으로 전환됩니다.
-  costDescription: 종말 카운트가 0이 되면 영혼 2를 잃습니다.
+  activeEffectDescription: "스탠드할 수 없으며 어떤 이유로도 버스트하지 않습니다.\n자신의 차례에 일반 행동 대신, 사탄의 능력을 사용하고 차례를 끝낼 수 있습니다.\n사탄의 능력은 사탄이 향하는 방향에 따라 달라지며, 능력을 쓸 때마다 방향을 바꿉니다.\n\n정방향: 숫자 2개를 선언합니다. 둘 중 하나라도 상대 비공개 카드와 일치하면 상대를 버스트시킵니다.\n역방향: 상대에게 히트를 강제합니다. 버스트하지 않으면 뽑은 카드를 버립니다."
+  costDescription: "계약 직후 종말 카운트를 4 얻습니다. 자신의 차례를 시작할 때마다 종말 카운트가 1 감소합니다.\n자신의 차례를 시작할 때마다 종말 카운트가 0 이하라면, 영혼 2를 잃습니다."
   codexLoreDescription: 종말의 문턱에서 패배라는 말조차 거부하는 지옥의 왕. 그의 계약은 끝나야 할 승부를 억지로 이어 간다.
   baseSoulCost: 1
   basePurchasePrice: 3

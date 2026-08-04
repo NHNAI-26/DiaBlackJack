@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.DemonCardDefinitionSO
   key: belphegor
   displayName: 벨페고르
-  activeEffectDescription: 히트 전에 덱 위 카드를 확인합니다. 그대로 뽑거나 덱 아래로 보내고 차례를 끝냅니다.
+  activeEffectDescription: "히트 전에 덱 위 카드를 확인합니다.\n그 카드를 그대로 뽑거나 덱 아래로 보내고 차례를 끝냅니다."
   costDescription: 상대가 스탠드하면 다음 자신의 차례 종료 시 강제로 스탠드합니다.
   codexLoreDescription: 불길한 예지 속에서 가장 편안한 길만 고르는 나태의 악마. 다음 패를 보여 주지만 결단의 자유까지 주지는 않는다.
   baseSoulCost: 1

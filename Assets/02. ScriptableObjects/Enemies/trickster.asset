@@ -39,8 +39,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120006, type: 2}
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120007, type: 2}
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120007, type: 2}
-  description: "\uC9C1\uC811 \uD53C\uD574\uBCF4\uB2E4 \uB371\uACFC \uC815\uBCF4 \uC6B0\uC704\uB97C
-    \uBA3C\uC800 \uB9CC\uB4E0\uB2E4."
+  description: "\uADF8\uC758 \uC190\uC744 \uC720\uC2EC\uD788 \uBCF4\uC2ED\uC2DC\uC624.\n\uC0AC\uAE30\uAFBC\uC758
+    \uCCB4\uC778\uC9C0 \uBE44\uC6A9\uC740 \uD56D\uC0C1 \uC601\uD63C 1\uAC1C\uC785\uB2C8\uB2E4."
   playerInformationMode: 0
   changeCostMode: 1
   contractableDemons: []
