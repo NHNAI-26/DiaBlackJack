@@ -49,6 +49,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float edgeLift;
         [SerializeField] private float maximumFanAngle;
         [SerializeField] private float cardScale;
+        [Min(0f)]
+        [SerializeField] private float depthStep;
         [SerializeField] private float hoverViewportLift;
         [SerializeField] private float hoverCameraPull;
         [SerializeField] private float poseLerp;
@@ -61,6 +63,7 @@ namespace DiaBlackJack.GameScene
             float edgeLift,
             float maximumFanAngle,
             float cardScale,
+            float depthStep,
             float hoverViewportLift,
             float hoverCameraPull,
             float poseLerp,
@@ -72,6 +75,7 @@ namespace DiaBlackJack.GameScene
             this.edgeLift = edgeLift;
             this.maximumFanAngle = maximumFanAngle;
             this.cardScale = cardScale;
+            this.depthStep = depthStep;
             this.hoverViewportLift = hoverViewportLift;
             this.hoverCameraPull = hoverCameraPull;
             this.poseLerp = poseLerp;
@@ -87,6 +91,7 @@ namespace DiaBlackJack.GameScene
                 edgeLift: -0.025f,
                 maximumFanAngle: 10f,
                 cardScale: 1f,
+                depthStep: 0.002f,
                 hoverViewportLift: 0.18f,
                 hoverCameraPull: 0.1f,
                 poseLerp: 14f,
@@ -102,6 +107,7 @@ namespace DiaBlackJack.GameScene
                 edgeLift: -0.05f,
                 maximumFanAngle: 16f,
                 cardScale: 0.58f,
+                depthStep: 0.002f,
                 hoverViewportLift: 0.15f,
                 hoverCameraPull: 0.08f,
                 poseLerp: 14f,
@@ -114,6 +120,7 @@ namespace DiaBlackJack.GameScene
             halfViewportWidth = Mathf.Max(0f, halfViewportWidth);
             maximumFanAngle = Mathf.Clamp(maximumFanAngle, 0f, 180f);
             cardScale = Mathf.Max(0.01f, cardScale);
+            depthStep = Mathf.Max(0f, depthStep);
             hoverViewportLift = Mathf.Max(0f, hoverViewportLift);
             hoverCameraPull = Mathf.Clamp(
                 hoverCameraPull,
@@ -133,13 +140,16 @@ namespace DiaBlackJack.GameScene
             Vector2 position = new Vector2(
                 viewportCenter.x + normalized * halfViewportWidth,
                 viewportCenter.y + edgeLift * normalized * normalized);
-            float distance = cameraDistance;
+            float centeredIndex = index - (count - 1f) * 0.5f;
+            float distance = Mathf.Max(
+                0.01f,
+                cameraDistance - centeredIndex * depthStep);
             float curveDirection = edgeLift < 0f ? -1f : 1f;
             float angle = -normalized * maximumFanAngle * curveDirection;
             if (hovered)
             {
                 position.y += hoverViewportLift;
-                distance -= hoverCameraPull;
+                distance = Mathf.Max(0.01f, distance - hoverCameraPull);
                 angle = 0f;
             }
 

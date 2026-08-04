@@ -227,6 +227,24 @@ namespace DiaBlackJack.StageProgression
             return true;
         }
 
+        public bool TryResolvePlayerSatanNumbers(
+            int interactionId,
+            int firstNumber,
+            int secondNumber)
+        {
+            if (!CanForwardBattleAction() ||
+                !_battleSession.TryResolvePlayerSatanNumbers(
+                    interactionId,
+                    firstNumber,
+                    secondNumber))
+            {
+                return false;
+            }
+
+            SynchronizeFinishedBattle();
+            return true;
+        }
+
         public bool TryBeginPlayerMammonReroll(int sourceContractCardId)
         {
             if (!CanForwardBattleAction() ||

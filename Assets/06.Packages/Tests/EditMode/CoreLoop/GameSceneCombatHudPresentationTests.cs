@@ -951,6 +951,37 @@ namespace DiaBlackJack.CoreLoop.Tests
                     inputLocked: false);
             Assert.That(firstHud.Mode,
                 Is.EqualTo(GameSceneCombatHudMode.SatanNumberSelection));
+            Assert.That(firstHud.Prompt, Does.Contain("(0/2)"));
+            Assert.That(firstHud.OptionActions.Count, Is.EqualTo(1));
+            Assert.That(firstHud.OptionActions[0].Command.Kind,
+                Is.EqualTo(GameSceneCombatHudCommandKind
+                    .ConfirmSatanNumberSelection));
+            Assert.That(firstHud.OptionActions[0].Command.InteractionId,
+                Is.EqualTo(first.Core.DemonContract.InteractionId));
+            Assert.That(firstHud.OptionActions[0].IsInteractable, Is.False);
+            Assert.That(firstHud.OptionActions[0].Placement,
+                Is.EqualTo(GameSceneCombatHudActionPlacement.BottomRight));
+
+            GameSceneCombatHudViewModel oneSelectedHud =
+                GameSceneCombatHudPresenter.Create(
+                    first.Core,
+                    isStageBattle: false,
+                    isShopOpen: false,
+                    inputLocked: false,
+                    satanSelectedNumberCount: 1);
+            GameSceneCombatHudViewModel twoSelectedHud =
+                GameSceneCombatHudPresenter.Create(
+                    first.Core,
+                    isStageBattle: false,
+                    isShopOpen: false,
+                    inputLocked: false,
+                    satanSelectedNumberCount: 2);
+            Assert.That(oneSelectedHud.Prompt, Does.Contain("(1/2)"));
+            Assert.That(oneSelectedHud.OptionActions[0].IsInteractable,
+                Is.False);
+            Assert.That(twoSelectedHud.Prompt, Does.Contain("(2/2)"));
+            Assert.That(twoSelectedHud.OptionActions[0].IsInteractable,
+                Is.True);
             Assert.That(first.SatanNumberCandidates, Has.Count.EqualTo(10));
             Assert.That(first.SatanNumberCandidates.All(card =>
                 card.DirectSelectionCommand.HasValue), Is.True);

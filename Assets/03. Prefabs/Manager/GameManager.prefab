@@ -136,6 +136,7 @@ MonoBehaviour:
     edgeLift: -0.025
     maximumFanAngle: 5
     cardScale: 1
+    depthStep: 0.002
     hoverViewportLift: 0.18
     hoverCameraPull: 0.1
     poseLerp: 14
@@ -147,6 +148,7 @@ MonoBehaviour:
     edgeLift: -0.08
     maximumFanAngle: 16
     cardScale: 0.58
+    depthStep: 0.002
     hoverViewportLift: 0.07
     hoverCameraPull: 0.08
     poseLerp: 14

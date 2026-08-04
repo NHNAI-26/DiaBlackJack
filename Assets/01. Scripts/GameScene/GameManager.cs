@@ -975,7 +975,7 @@ namespace DiaBlackJack.GameScene
                 pointed = null;
             }
 
-            UpdateHover(pointed);
+            UpdateHover(pointed, updateCardVisual: false);
             UpdateDemonCardHover(null);
             UpdateDeckStackHover(null);
             UpdateShopUtilityItemHover(null);
@@ -1000,10 +1000,31 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            HandleCombatCommand(candidate.DirectSelectionCommand.Value);
+            PendingDemonContractInteraction pending =
+                Battle?.PendingPlayerDemonContractInteraction;
+            if (pending == null)
+            {
+                return;
+            }
+
+            if (pending.Kind ==
+                DemonContractInteractionKind.SatanDeclareSecondNumber)
+            {
+                HandleCombatCommand(candidate.DirectSelectionCommand.Value);
+                return;
+            }
+
+            if (pending.Kind ==
+                    DemonContractInteractionKind.SatanDeclareFirstNumber &&
+                satanNumberSelection.TryToggleSelection(pointed))
+            {
+                RefreshSatanSelectionHud();
+            }
         }
 
-        private void UpdateHover(CardView pointed)
+        private void UpdateHover(
+            CardView pointed,
+            bool updateCardVisual = true)
         {
             if (pointed == _hoveredCard)
             {
@@ -1012,11 +1033,17 @@ namespace DiaBlackJack.GameScene
 
             if (_hoveredCard != null)
             {
-                _hoveredCard.SetHovered(false);
+                bool previousIsSatanSelectionCard =
+                    satanNumberSelection != null &&
+                    satanNumberSelection.Contains(_hoveredCard);
+                if (updateCardVisual || !previousIsSatanSelectionCard)
+                {
+                    _hoveredCard.SetHovered(false);
+                }
             }
 
             _hoveredCard = pointed;
-            if (_hoveredCard != null)
+            if (_hoveredCard != null && updateCardVisual)
             {
                 _hoveredCard.SetHovered(true);
             }
@@ -2393,6 +2420,18 @@ namespace DiaBlackJack.GameScene
                 case GameSceneCombatHudCommandKind.Restart:
                     ProcessInput(RestartRun);
                     break;
+                case GameSceneCombatHudCommandKind.ConfirmSatanNumberSelection:
+                    if (satanNumberSelection != null &&
+                        satanNumberSelection.TryGetSelectedNumbers(
+                            out int firstNumber,
+                            out int secondNumber))
+                    {
+                        ProcessInput(() => TryResolvePlayerSatanNumbers(
+                            command.InteractionId,
+                            firstNumber,
+                            secondNumber));
+                    }
+                    break;
             }
         }
 
@@ -2514,6 +2553,22 @@ namespace DiaBlackJack.GameScene
                 : _session.TryResolvePlayerDemonContract(
                     interactionId,
                     optionId);
+        }
+
+        private bool TryResolvePlayerSatanNumbers(
+            int interactionId,
+            int firstNumber,
+            int secondNumber)
+        {
+            return IsStageBattle
+                ? _stageSession.TryResolvePlayerSatanNumbers(
+                    interactionId,
+                    firstNumber,
+                    secondNumber)
+                : _session.TryResolvePlayerSatanNumbers(
+                    interactionId,
+                    firstNumber,
+                    secondNumber);
         }
 
         private bool ShouldAnimateBelphegorReinsert(
@@ -2722,7 +2777,9 @@ namespace DiaBlackJack.GameScene
                     isShopOpen,
                     _inputLocked,
                     vm.UsesDiegeticCardEffectSelection,
-                    hideForPresentation: hideCombatHudForPresentation);
+                    hideForPresentation: hideCombatHudForPresentation,
+                    satanSelectedNumberCount:
+                        satanNumberSelection?.SelectedCount ?? 0);
 
             if (hud != null)
             {
@@ -3056,7 +3113,30 @@ namespace DiaBlackJack.GameScene
             }
 
             _camera ??= Camera.main;
-            satanNumberSelection.Render(vm.SatanNumberCandidates, _camera);
+            satanNumberSelection.Render(
+                vm.SatanNumberCandidates,
+                _camera,
+                vm.Core?.DemonContract.InteractionId ?? -1);
+        }
+
+        private void RefreshSatanSelectionHud()
+        {
+            if (_core == null)
+            {
+                return;
+            }
+
+            bool isShopOpen = shop != null && shop.IsOpen;
+            GameSceneCombatHudViewModel combat =
+                GameSceneCombatHudPresenter.Create(
+                    _core,
+                    IsStageBattle,
+                    isShopOpen,
+                    _inputLocked,
+                    satanSelectedNumberCount:
+                        satanNumberSelection?.SelectedCount ?? 0);
+            hud?.Render(_core, combat);
+            tableCombatCommands?.Render(combat);
         }
 
         private void RefreshDeckStacks()

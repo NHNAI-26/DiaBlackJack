@@ -29,7 +29,8 @@ namespace DiaBlackJack.GameScene
         ResolveAutomaticCardChoice,
         ResolveDemonContractChoice,
         BeginActiveDemonContractAction,
-        Restart
+        Restart,
+        ConfirmSatanNumberSelection
     }
 
     public enum GameSceneCombatHudActionPlacement
@@ -161,7 +162,8 @@ namespace DiaBlackJack.GameScene
             bool isShopOpen,
             bool inputLocked,
             bool usesDiegeticCardEffectSelection = false,
-            bool hideForPresentation = false)
+            bool hideForPresentation = false,
+            int satanSelectedNumberCount = 0)
         {
             if (core == null || isShopOpen || hideForPresentation)
             {
@@ -340,9 +342,36 @@ namespace DiaBlackJack.GameScene
             if (contract.IsResolving)
             {
                 if (contract.InteractionKind ==
-                        DemonContractInteractionKind.SatanDeclareFirstNumber ||
-                    contract.InteractionKind ==
-                        DemonContractInteractionKind.SatanDeclareSecondNumber)
+                    DemonContractInteractionKind.SatanDeclareFirstNumber)
+                {
+                    int selectedCount = Math.Max(
+                        0,
+                        Math.Min(2, satanSelectedNumberCount));
+                    return new GameSceneCombatHudViewModel(
+                        GameSceneCombatHudMode.SatanNumberSelection,
+                        BuildContractPrompt(contract) +
+                            $" ({selectedCount}/2)",
+                        Array.Empty<GameSceneCombatHudActionViewModel>(),
+                        new[]
+                        {
+                            new GameSceneCombatHudActionViewModel(
+                                new GameSceneCombatHudCommand(
+                                    GameSceneCombatHudCommandKind
+                                        .ConfirmSatanNumberSelection,
+                                    interactionId:
+                                        contract.InteractionId ?? -1),
+                                "선택 완료",
+                                selectedCount == 2 && !inputLocked,
+                                placement:
+                                    GameSceneCombatHudActionPlacement
+                                        .BottomRight)
+                        },
+                        Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
+                        automaticCardResult);
+                }
+
+                if (contract.InteractionKind ==
+                    DemonContractInteractionKind.SatanDeclareSecondNumber)
                 {
                     return new GameSceneCombatHudViewModel(
                         GameSceneCombatHudMode.SatanNumberSelection,

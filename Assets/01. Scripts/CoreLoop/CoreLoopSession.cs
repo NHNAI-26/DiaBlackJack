@@ -63,6 +63,17 @@ namespace DiaBlackJack.CoreLoop
             return Battle.TryResolvePlayerDemonContract(interactionId, optionId);
         }
 
+        public bool TryResolvePlayerSatanNumbers(
+            int interactionId,
+            int firstNumber,
+            int secondNumber)
+        {
+            return Battle.TryResolvePlayerSatanNumbers(
+                interactionId,
+                firstNumber,
+                secondNumber);
+        }
+
         public bool TryBeginPlayerMammonReroll(int sourceContractCardId)
         {
             return Battle.TryBeginPlayerMammonReroll(sourceContractCardId);

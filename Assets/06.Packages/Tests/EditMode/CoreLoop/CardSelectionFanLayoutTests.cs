@@ -145,7 +145,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(
                     hovered.ViewportPosition.y - resting.ViewportPosition.y,
                     Is.EqualTo(0.18f).Within(0.0001f));
-                Assert.That(hovered.CameraDistance, Is.EqualTo(1.4f));
+                Assert.That(
+                    resting.CameraDistance - hovered.CameraDistance,
+                    Is.EqualTo(0.1f).Within(0.0001f));
                 Assert.That(hovered.Angle, Is.Zero);
             }
             finally
@@ -291,7 +293,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(
                     selectable.GetComponentsInChildren<SpriteRenderer>(true)
                         .Max(renderer => renderer.sortingOrder),
-                    Is.EqualTo(restingSortingOrder + 20));
+                    Is.EqualTo(restingSortingOrder + 40));
             }
             finally
             {
@@ -312,6 +314,13 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(layouts, Has.Length.EqualTo(1));
             Assert.That(contract, Is.Not.Null);
             Assert.That(contract.FanLayout, Is.SameAs(layouts[0]));
+            var serializedLayout = new SerializedObject(layouts[0]);
+            Assert.That(serializedLayout.FindProperty(
+                "twoCardProfile.depthStep").floatValue,
+                Is.EqualTo(0.002f));
+            Assert.That(serializedLayout.FindProperty(
+                "tenCardProfile.depthStep").floatValue,
+                Is.EqualTo(0.002f));
         }
 
         [Test]
@@ -476,6 +485,219 @@ namespace DiaBlackJack.CoreLoop.Tests
             {
                 Object.DestroyImmediate(root);
                 Object.DestroyImmediate(cameraObject);
+            }
+        }
+
+        [TestCase((int)CardSelectionFanPreset.TwoCards, 2, 1.5f)]
+        [TestCase((int)CardSelectionFanPreset.TenCards, 10, 1.55f)]
+        public void GSH02_U12_DepthIsUniqueCenteredAndMatchesSortingDirection(
+            int presetValue,
+            int count,
+            float expectedCenterDistance)
+        {
+            GameObject root = new GameObject("FanDepthTest");
+            try
+            {
+                CardSelectionFanLayout layout =
+                    root.AddComponent<CardSelectionFanLayout>();
+                CardSelectionFanPreset preset =
+                    (CardSelectionFanPreset)presetValue;
+                var distances = new float[count];
+                for (int i = 0; i < count; i++)
+                {
+                    Assert.That(layout.TryGetPose(
+                        preset,
+                        i,
+                        count,
+                        hovered: false,
+                        out CardSelectionFanPose pose), Is.True);
+                    distances[i] = pose.CameraDistance;
+                    if (i > 0)
+                    {
+                        Assert.That(distances[i], Is.LessThan(distances[i - 1]));
+                    }
+                }
+
+                Assert.That(distances.Distinct().Count(), Is.EqualTo(count));
+                Assert.That(distances.Average(),
+                    Is.EqualTo(expectedCenterDistance).Within(0.0001f));
+                for (int i = 0; i < count / 2; i++)
+                {
+                    Assert.That(
+                        (distances[i] + distances[count - 1 - i]) * 0.5f,
+                        Is.EqualTo(expectedCenterDistance).Within(0.0001f));
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void GSH02_U13_SatanSelectionUsesFifoToggleAndHoverSuppression()
+        {
+            GameObject cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                CardPrefabPath);
+            GameObject root = new GameObject("SatanMultiSelectionTest");
+            GameObject cameraObject = new GameObject("Camera");
+            try
+            {
+                Camera camera = CreateTestCamera(cameraObject);
+                root.AddComponent<CardSelectionFanLayout>();
+                SatanNumberSelectionView view =
+                    root.AddComponent<SatanNumberSelectionView>();
+                view.Initialize(cardPrefab.GetComponent<CardView>());
+                GameSceneCardViewModel[] candidates = Enumerable.Range(1, 10)
+                    .Select(rank => new GameSceneCardViewModel(
+                        400 + rank,
+                        rank,
+                        isFaceUp: true,
+                        revealRank: true,
+                        canUse: true,
+                        displayName: rank.ToString(),
+                        directSelectionCommand:
+                            new GameSceneCombatHudCommand(
+                                GameSceneCombatHudCommandKind
+                                    .ResolveDemonContractChoice,
+                                rank,
+                                interactionId: 77)))
+                    .ToArray();
+                view.Render(candidates, camera, interactionId: 77);
+                CardView[] cards = root.GetComponentsInChildren<CardView>(true);
+                CardView two = cards.Single(card => card.CardId == 402);
+                CardView four = cards.Single(card => card.CardId == 404);
+                CardView six = cards.Single(card => card.CardId == 406);
+
+                Assert.That(view.TryToggleSelection(two), Is.True);
+                Assert.That(view.SelectedCount, Is.EqualTo(1));
+                Assert.That(view.TryToggleSelection(four), Is.True);
+                Assert.That(view.TryGetSelectedNumbers(
+                    out int first,
+                    out int second), Is.True);
+                Assert.That((first, second), Is.EqualTo((2, 4)));
+
+                Assert.That(view.TryToggleSelection(six), Is.True);
+                Assert.That(view.TryGetSelectedNumbers(out first, out second),
+                    Is.True);
+                Assert.That((first, second), Is.EqualTo((4, 6)));
+
+                view.SetHovered(four);
+                Assert.That(view.TryToggleSelection(four), Is.True);
+                InvokeUpdateSlotPose(view, 3);
+                Vector3 suppressedPosition = four.HoverVisualTransform.position;
+                view.SetHovered(four);
+                InvokeUpdateSlotPose(view, 3);
+                Assert.That(Vector3.Distance(
+                    four.HoverVisualTransform.position,
+                    suppressedPosition), Is.LessThan(0.0001f));
+
+                view.Render(candidates, camera, interactionId: 77);
+                view.SetHovered(four);
+                InvokeUpdateSlotPose(view, 3);
+                Assert.That(Vector3.Distance(
+                    four.HoverVisualTransform.position,
+                    suppressedPosition), Is.LessThan(0.0001f));
+
+                view.SetHovered(null);
+                view.SetHovered(four);
+                InvokeUpdateSlotPose(view, 3);
+                Assert.That(four.HoverVisualTransform.position.y,
+                    Is.GreaterThan(suppressedPosition.y));
+                Assert.That(view.SelectedCount, Is.EqualTo(1));
+
+                view.Render(candidates, camera, interactionId: 78);
+                Assert.That(view.SelectedCount, Is.Zero);
+                Assert.That(view.TryGetSelectedNumbers(out _, out _), Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(cameraObject);
+            }
+        }
+
+        [Test]
+        public void GSH02_U14_SatanSelectedAndHoveredSortingStayAboveRestingCards()
+        {
+            GameObject cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                CardPrefabPath);
+            GameObject root = new GameObject("SatanSelectionSortingTest");
+            try
+            {
+                root.AddComponent<CardSelectionFanLayout>();
+                SatanNumberSelectionView view =
+                    root.AddComponent<SatanNumberSelectionView>();
+                view.Initialize(cardPrefab.GetComponent<CardView>());
+                GameSceneCardViewModel[] candidates = Enumerable.Range(1, 10)
+                    .Select(rank => new GameSceneCardViewModel(
+                        500 + rank,
+                        rank,
+                        true,
+                        true,
+                        true,
+                        rank.ToString(),
+                        directSelectionCommand:
+                            new GameSceneCombatHudCommand(
+                                GameSceneCombatHudCommandKind
+                                    .ResolveDemonContractChoice,
+                                rank)))
+                    .ToArray();
+                view.Render(candidates, null, interactionId: 91);
+                CardView[] cards = root.GetComponentsInChildren<CardView>(true);
+                CardView selected = cards.Single(card => card.CardId == 502);
+                CardView hovered = cards.Single(card => card.CardId == 504);
+                int selectedRestingOrder = selected
+                    .GetComponentsInChildren<SpriteRenderer>(true)
+                    .Max(renderer => renderer.sortingOrder);
+                int hoveredRestingOrder = hovered
+                    .GetComponentsInChildren<SpriteRenderer>(true)
+                    .Max(renderer => renderer.sortingOrder);
+
+                Assert.That(view.TryToggleSelection(selected), Is.True);
+                view.SetHovered(hovered);
+
+                Assert.That(selected
+                    .GetComponentsInChildren<SpriteRenderer>(true)
+                    .Max(renderer => renderer.sortingOrder),
+                    Is.EqualTo(selectedRestingOrder + 20));
+                Assert.That(hovered
+                    .GetComponentsInChildren<SpriteRenderer>(true)
+                    .Max(renderer => renderer.sortingOrder),
+                    Is.EqualTo(hoveredRestingOrder + 40));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void GSH02_U15_InvalidCameraDistanceIsClampedAboveZero()
+        {
+            GameObject root = new GameObject("FanDistanceClampTest");
+            try
+            {
+                CardSelectionFanLayout layout =
+                    root.AddComponent<CardSelectionFanLayout>();
+                var serializedLayout = new SerializedObject(layout);
+                serializedLayout.FindProperty(
+                    "twoCardProfile.cameraDistance").floatValue = -10f;
+                serializedLayout.ApplyModifiedPropertiesWithoutUndo();
+                InvokePrivateMethod(layout, "OnValidate");
+
+                Assert.That(layout.TryGetPose(
+                    CardSelectionFanPreset.TwoCards,
+                    0,
+                    2,
+                    hovered: true,
+                    out CardSelectionFanPose pose), Is.True);
+                Assert.That(pose.CameraDistance,
+                    Is.GreaterThanOrEqualTo(0.01f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
             }
         }
 

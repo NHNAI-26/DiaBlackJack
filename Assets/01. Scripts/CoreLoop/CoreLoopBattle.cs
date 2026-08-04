@@ -726,6 +726,39 @@ namespace DiaBlackJack.CoreLoop
             }
         }
 
+        public bool TryResolvePlayerSatanNumbers(
+            int interactionId,
+            int firstNumber,
+            int secondNumber)
+        {
+            PendingDemonContractInteraction pending =
+                _pendingPlayerDemonContractInteraction;
+            if (State != CoreLoopState.PlayerResolvingDemonContract ||
+                pending == null ||
+                pending.InteractionId != interactionId ||
+                pending.Kind !=
+                    DemonContractInteractionKind.SatanDeclareFirstNumber ||
+                firstNumber == secondNumber ||
+                !ContainsSatanNumberOption(pending, firstNumber) ||
+                !ContainsSatanNumberOption(pending, secondNumber) ||
+                !TryGetSatanUpperResolutionContext(
+                    CombatantSide.Player,
+                    pending,
+                    out SatanRuntimeState satanState,
+                    out BlackjackCard hiddenCard))
+            {
+                return false;
+            }
+
+            return ResolveSatanNumberPair(
+                CombatantSide.Player,
+                satanState,
+                hiddenCard,
+                firstNumber,
+                secondNumber,
+                out _);
+        }
+
         private bool TryBeginEnemyDemonContract()
         {
             DemonContractAvailability availability = EnemyDemonContractAvailability;
@@ -4072,8 +4105,74 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
-            bool succeeded = hiddenCard.Rank == pending.ContextNumericValue.Value ||
-                hiddenCard.Rank == selectedNumber;
+            return ResolveSatanNumberPair(
+                ownerSide,
+                satanState,
+                hiddenCard,
+                pending.ContextNumericValue.Value,
+                selectedNumber,
+                out completedOwnerAction);
+        }
+
+        private static bool ContainsSatanNumberOption(
+            PendingDemonContractInteraction pending,
+            int number)
+        {
+            if (number < 1 || number > 10)
+            {
+                return false;
+            }
+
+            foreach (DemonContractOption option in pending.Options)
+            {
+                if (option.NumericValue == number)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool TryGetSatanUpperResolutionContext(
+            CombatantSide ownerSide,
+            PendingDemonContractInteraction pending,
+            out SatanRuntimeState satanState,
+            out BlackjackCard hiddenCard)
+        {
+            satanState = null;
+            hiddenCard = null;
+            if (pending.ContractKind != DemonContractKind.Satan ||
+                !pending.SourceContractCardId.HasValue ||
+                !TryGetActiveDemonContract(
+                    ownerSide,
+                    pending.SourceContractCardId.Value,
+                    DemonContractKind.Satan,
+                    out ActiveDemonContract activeContract) ||
+                !(activeContract.RuntimeState is SatanRuntimeState activeState) ||
+                activeState.CurrentFace != SatanContractFace.Upper ||
+                !TryGetSingleHiddenCard(
+                    GetOpponent(ownerSide),
+                    out hiddenCard))
+            {
+                return false;
+            }
+
+            satanState = activeState;
+            return true;
+        }
+
+        private bool ResolveSatanNumberPair(
+            CombatantSide ownerSide,
+            SatanRuntimeState satanState,
+            BlackjackCard hiddenCard,
+            int firstNumber,
+            int secondNumber,
+            out bool completedOwnerAction)
+        {
+            completedOwnerAction = false;
+            bool succeeded = hiddenCard.Rank == firstNumber ||
+                hiddenCard.Rank == secondNumber;
             SetPendingDemonContractInteraction(ownerSide, pending: null);
             satanState.CompleteCurrentFaceAbility();
             OwnerBustHandlingResult handling = OwnerBustHandlingResult.NotHandled;

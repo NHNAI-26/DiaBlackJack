@@ -10,17 +10,26 @@ namespace DiaBlackJack.GameScene
     public sealed class SatanNumberSelectionView : MonoBehaviour
     {
         private const int CandidateCount = 10;
+        private const int MaximumSelectionCount = 2;
+        private const int SelectedSortingBoost = 20;
+        private const int HoveredSortingBoost = 40;
 
         private readonly CandidateSlot[] _slots = new CandidateSlot[CandidateCount];
+        private readonly List<int> _selectedIndices =
+            new List<int>(MaximumSelectionCount);
         private CardSelectionFanLayout _fanLayout;
         private CardView _candidatePrefab;
         private Sprite _brandSprite;
         private Camera _camera;
         private int _hoveredIndex = -1;
+        private int _suppressedHoverIndex = -1;
+        private int _interactionId = -1;
         private bool _isOpen;
         private bool _snapPose;
 
         public bool IsOpen => _isOpen;
+
+        public int SelectedCount => _selectedIndices.Count;
 
         internal int HoveredCandidateIndex => _hoveredIndex;
 
@@ -44,7 +53,8 @@ namespace DiaBlackJack.GameScene
 
         public void Render(
             IReadOnlyList<GameSceneCardViewModel> candidates,
-            Camera worldCamera)
+            Camera worldCamera,
+            int interactionId = -1)
         {
             if (candidates == null || candidates.Count != CandidateCount ||
                 _candidatePrefab == null)
@@ -54,6 +64,14 @@ namespace DiaBlackJack.GameScene
             }
 
             EnsureSlots();
+            if (_interactionId != interactionId)
+            {
+                _hoveredIndex = -1;
+                _suppressedHoverIndex = -1;
+                ClearSelectionState();
+                _interactionId = interactionId;
+            }
+
             _camera = worldCamera != null ? worldCamera : Camera.main;
             _hoveredIndex = -1;
             _isOpen = true;
@@ -70,6 +88,7 @@ namespace DiaBlackJack.GameScene
                 slot.BrandRenderer.sortingOrder = BaseSortingOrder + i;
             }
 
+            ApplyVisualStates();
             _snapPose = true;
         }
 
@@ -92,21 +111,68 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            _hoveredIndex = nextIndex;
-            for (int i = 0; i < CandidateCount; i++)
+            if (_suppressedHoverIndex >= 0 &&
+                nextIndex != _suppressedHoverIndex)
             {
-                bool hovered = i == _hoveredIndex;
-                _slots[i].Card.SetHovered(hovered);
-                _slots[i].Card.SetSortingOrder(
-                    BaseSortingOrder + i + (hovered ? 20 : 0));
-                _slots[i].BrandRenderer.sortingOrder =
-                    BaseSortingOrder + i + (hovered ? 20 : 0);
+                _suppressedHoverIndex = -1;
             }
+
+            _hoveredIndex = nextIndex;
+            ApplyVisualStates();
+        }
+
+        public bool TryToggleSelection(CardView card)
+        {
+            int index = IndexOf(card);
+            if (!_isOpen ||
+                index < 0 ||
+                !_slots[index].Card.DirectSelectionCommand.HasValue)
+            {
+                return false;
+            }
+
+            int selectedPosition = _selectedIndices.IndexOf(index);
+            if (selectedPosition >= 0)
+            {
+                _selectedIndices.RemoveAt(selectedPosition);
+                _suppressedHoverIndex = index;
+                ApplyVisualStates();
+                return true;
+            }
+
+            if (_selectedIndices.Count == MaximumSelectionCount)
+            {
+                _selectedIndices.RemoveAt(0);
+            }
+
+            _selectedIndices.Add(index);
+            _suppressedHoverIndex = -1;
+            ApplyVisualStates();
+            return true;
+        }
+
+        public bool TryGetSelectedNumbers(
+            out int firstNumber,
+            out int secondNumber)
+        {
+            if (_selectedIndices.Count != MaximumSelectionCount)
+            {
+                firstNumber = 0;
+                secondNumber = 0;
+                return false;
+            }
+
+            firstNumber = _slots[_selectedIndices[0]].Candidate.Rank;
+            secondNumber = _slots[_selectedIndices[1]].Candidate.Rank;
+            return true;
         }
 
         public void Hide()
         {
-            SetHovered(null);
+            _hoveredIndex = -1;
+            _suppressedHoverIndex = -1;
+            ClearSelectionState();
+            _interactionId = -1;
             _isOpen = false;
             for (int i = 0; i < _slots.Length; i++)
             {
@@ -191,6 +257,7 @@ namespace DiaBlackJack.GameScene
         private void UpdateSlotPose(int index, bool snap)
         {
             CandidateSlot slot = _slots[index];
+            bool raised = IsSelected(index) || IsPointerHovered(index);
             CardSelectionFanLayout layout = ResolveFanLayout();
             if (layout == null ||
                 !layout.TryGetPose(
@@ -203,7 +270,7 @@ namespace DiaBlackJack.GameScene
                     CardSelectionFanPreset.TenCards,
                     index,
                     CandidateCount,
-                    index == _hoveredIndex,
+                    raised,
                     out CardSelectionFanPose visualPose))
             {
                 return;
@@ -290,6 +357,47 @@ namespace DiaBlackJack.GameScene
             }
 
             return -1;
+        }
+
+        private bool IsSelected(int index)
+        {
+            return _selectedIndices.Contains(index);
+        }
+
+        private bool IsPointerHovered(int index)
+        {
+            return index == _hoveredIndex && index != _suppressedHoverIndex;
+        }
+
+        private void ApplyVisualStates()
+        {
+            for (int i = 0; i < CandidateCount; i++)
+            {
+                CandidateSlot slot = _slots[i];
+                if (slot == null)
+                {
+                    continue;
+                }
+
+                bool selected = IsSelected(i);
+                bool hovered = IsPointerHovered(i);
+                bool raised = selected || hovered;
+                int sortingBoost = hovered
+                    ? HoveredSortingBoost
+                    : selected
+                        ? SelectedSortingBoost
+                        : 0;
+                slot.Card.SetHovered(raised);
+                int sortingOrder = BaseSortingOrder + i + sortingBoost;
+                slot.Card.SetSortingOrder(sortingOrder);
+                slot.BrandRenderer.sortingOrder = sortingOrder;
+            }
+        }
+
+        private void ClearSelectionState()
+        {
+            _selectedIndices.Clear();
+            ApplyVisualStates();
         }
 
         private sealed class CandidateSlot

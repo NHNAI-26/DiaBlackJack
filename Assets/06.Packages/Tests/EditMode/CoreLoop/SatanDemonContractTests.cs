@@ -239,6 +239,74 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void DCR02_U13_AtomicUpperFaceNumbersResolveTogetherOnMatch()
+        {
+            CoreLoopBattle battle = CreateSatanBattle(
+                LowRanks(10),
+                new[] { 10, 7, 2, 2, 2, 2 },
+                new StandPolicy(),
+                enemyMaximumSoul: 3);
+            ActivateSatan(battle);
+            ActiveDemonContract satan = battle.ActivePlayerDemonContracts.Single();
+            Assert.That(battle.TryBeginPlayerSatanContractAction(
+                satan.SourceCardId), Is.True);
+            PendingDemonContractInteraction pending =
+                battle.PendingPlayerDemonContractInteraction;
+
+            Assert.That(battle.TryResolvePlayerSatanNumbers(
+                pending.InteractionId,
+                3,
+                7), Is.True);
+
+            Assert.That(battle.PendingPlayerDemonContractInteraction, Is.Null);
+            Assert.That(battle.LastResolution.Value.Cause,
+                Is.EqualTo(RoundEndCause.ContractEffectBust));
+            Assert.That(battle.LastResolution.Value.Outcome,
+                Is.EqualTo(RoundOutcome.EnemyBust));
+            Assert.That(GetSatanState(battle).CurrentFace,
+                Is.EqualTo(SatanContractFace.Lower));
+        }
+
+        [Test]
+        public void DCR02_U14_InvalidAtomicNumbersPreservePendingInteraction()
+        {
+            CoreLoopBattle battle = CreateSatanBattle(
+                LowRanks(10),
+                new[] { 10, 7, 2, 2, 2, 2 },
+                new StandPolicy());
+            ActivateSatan(battle);
+            ActiveDemonContract satan = battle.ActivePlayerDemonContracts.Single();
+            Assert.That(battle.TryBeginPlayerSatanContractAction(
+                satan.SourceCardId), Is.True);
+            PendingDemonContractInteraction pending =
+                battle.PendingPlayerDemonContractInteraction;
+            SatanRuntimeState state = GetSatanState(battle);
+            DemonContractEffectResult previousResult =
+                battle.LastDemonContractEffectResult;
+
+            Assert.That(battle.TryResolvePlayerSatanNumbers(
+                pending.InteractionId,
+                3,
+                3), Is.False);
+            Assert.That(battle.TryResolvePlayerSatanNumbers(
+                pending.InteractionId,
+                0,
+                4), Is.False);
+            Assert.That(battle.TryResolvePlayerSatanNumbers(
+                pending.InteractionId + 1,
+                3,
+                4), Is.False);
+
+            Assert.That(battle.State,
+                Is.EqualTo(CoreLoopState.PlayerResolvingDemonContract));
+            Assert.That(battle.PendingPlayerDemonContractInteraction,
+                Is.SameAs(pending));
+            Assert.That(state.CurrentFace, Is.EqualTo(SatanContractFace.Upper));
+            Assert.That(battle.LastDemonContractEffectResult,
+                Is.SameAs(previousResult));
+        }
+
+        [Test]
         public void DCR02_U08_LowerFaceForcesSafeHitThenDiscardsNewCard()
         {
             CoreLoopBattle battle = CreateSatanBattle(
