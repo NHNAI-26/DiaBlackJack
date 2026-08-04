@@ -1,5 +1,12 @@
 # 테이블 도감 진행 기록
 
+## DX-M05: 프로토타입 악마 도감 범위 정리
+
+- 도감 악마 페이지를 전체 12종이 아닌 `DemonContractCatalog.PrototypeEnabledDemonKeys`의 6종만 생성하도록 변경했다.
+- 제외 악마의 정의·SO·에셋은 삭제하지 않았다. 프로토타입 출현 범위와 도감 표시 범위만 일치시켰다.
+- 구현·검증 책임자는 이천서이며 AI는 코드 추적·테스트·문서 동기화를 보조했다.
+- 대상 EditMode job `917cb1d9f68640b09f932ae8cdb19ae3` 17/17 통과. 전체 CoreLoop EditMode job `8d3dacde7ae541e4abed3f7c1ec2fcf0`은 750개 중 743개 통과했으며 실패 7건은 기존 UI·에셋 회귀다. 컴파일과 Console Error는 0건이다.
+
 ## DX-M04: 시작 덱 수량 묶음·공용 호버 뱃지
 
 - 도감·덱 검사 관련 필터 EditMode job `6692a6688e1c4b2f80172ef66d0dbf8f` 58/58, 전체 EditMode job `52f09303e89347fb894d757610bc69b8` 907/907 통과.

@@ -23,7 +23,7 @@ namespace DiaBlackJack.CoreLoop
 
         public SatanContractFace CurrentFace { get; private set; }
 
-        public bool PenaltyApplied { get; private set; }
+        public bool DoomPenaltyActive => RemainingDoomCount <= 0;
 
         public int RemainingDoomCount { get; private set; }
 
@@ -34,12 +34,7 @@ namespace DiaBlackJack.CoreLoop
                 RemainingDoomCount--;
             }
 
-            return RemainingDoomCount == 0 && !PenaltyApplied;
-        }
-
-        internal void MarkPenaltyApplied()
-        {
-            PenaltyApplied = true;
+            return DoomPenaltyActive;
         }
 
         internal void CompleteCurrentFaceAbility()
@@ -78,7 +73,6 @@ namespace DiaBlackJack.CoreLoop
             }
 
             context.ApplyOwnerSoulDamage(DoomSoulCost);
-            state.MarkPenaltyApplied();
             return false;
         }
 

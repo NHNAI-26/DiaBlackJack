@@ -42,7 +42,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR02_U02_OnlyOwnerTurnStartDecrementsAndDoomCostIsPaidOnce()
+        public void DCR02_U02_DoomCostRepeatsAtEveryOwnerTurnStartAtZero()
         {
             CoreLoopBattle battle = CreateSatanBattle(
                 LowRanks(14),
@@ -59,14 +59,14 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.TryPlayerHit(), Is.True);
 
             Assert.That(state.RemainingDoomCount, Is.Zero);
-            Assert.That(state.PenaltyApplied, Is.True);
+            Assert.That(state.DoomPenaltyActive, Is.True);
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(9));
             Assert.That(battle.ActivePlayerDemonContracts.Single().RuntimeState,
                 Is.SameAs(state));
 
             Assert.That(battle.TryPlayerHit(), Is.True);
             Assert.That(state.RemainingDoomCount, Is.Zero);
-            Assert.That(battle.Player.Soul.Current, Is.EqualTo(9));
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(7));
         }
 
         [Test]
@@ -365,7 +365,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             DemonContractPanelViewModel model = DemonContractPresenter.Create(battle);
 
             Assert.That(model.ActiveContracts.Single(), Does.Contain("종말 카운트 3"));
-            Assert.That(model.ActiveContracts.Single(), Does.Contain("윗면"));
+            Assert.That(model.ActiveContracts.Single(), Does.Contain("정방향"));
             Assert.That(model.ActiveContracts.Single(), Does.Not.Contain("권능"));
         }
 

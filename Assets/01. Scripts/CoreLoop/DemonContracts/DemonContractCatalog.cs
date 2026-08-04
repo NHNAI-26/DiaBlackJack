@@ -38,7 +38,6 @@ namespace DiaBlackJack.CoreLoop
                     BeelzebubKey,
                     AsmodeusKey,
                     MammonKey,
-                    BaphometKey,
                     AzazelKey
                 }.AsReadOnly();
 

@@ -354,11 +354,15 @@ namespace DiaBlackJack.GameScene
                 throw new ArgumentNullException(nameof(loreByDefinitionKey));
             }
 
+            IReadOnlyList<string> prototypeKeys =
+                DemonContractCatalog.PrototypeEnabledDemonKeys;
             var pages = new List<DemonCodexPageViewModel>(
-                cardCatalog.DemonDefinitions.Count);
-            foreach (DemonContractDefinition definition in
-                cardCatalog.DemonDefinitions)
+                prototypeKeys.Count);
+            foreach (string definitionKey in prototypeKeys)
             {
+                DemonContractDefinition definition =
+                    cardCatalog.GetDemonByKey(definitionKey);
+
                 if (!loreByDefinitionKey.TryGetValue(
                         definition.Key,
                         out string lore) ||

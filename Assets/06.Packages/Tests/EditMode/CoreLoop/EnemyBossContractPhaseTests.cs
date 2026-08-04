@@ -24,7 +24,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                     phase.ActiveDefinitionKey),
                 Is.EqualTo(new[]
                 {
-                    DemonContractCatalog.BaphometKey,
+                    DemonContractCatalog.BeelzebubKey,
                     DemonContractCatalog.AsmodeusKey,
                     DemonContractCatalog.AzazelKey
                 }));
@@ -34,13 +34,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(new[]
                 {
                     DemonContractCatalog.MammonKey,
-                    DemonContractCatalog.BeelzebubKey,
-                    DemonContractCatalog.SatanKey
+                    DemonContractCatalog.SatanKey,
+                    DemonContractCatalog.BelphegorKey
                 }));
         }
 
         [Test]
-        public void EPR06_U02_BattleStartActivatesBaphometWithoutSoulOrBaseUseCost()
+        public void EPR06_U02_BattleStartActivatesBeelzebubWithoutSoulOrBaseUseCost()
         {
             CoreLoopBattle battle = CreateBossBattle();
 
@@ -51,7 +51,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.UsedEnemyBaseDemonContractCount, Is.Zero);
             Assert.That(
                 battle.ActiveEnemyDemonContracts.Single().Kind,
-                Is.EqualTo(DemonContractKind.Baphomet));
+                Is.EqualTo(DemonContractKind.Beelzebub));
             Assert.That(
                 battle.EnemyDemonDeck.ContainsDiscardedDefinitionKey(
                     DemonContractCatalog.MammonKey),
@@ -73,7 +73,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(DemonContractKind.Asmodeus));
             Assert.That(
                 battle.EnemyDemonDeck.ContainsDiscardedDefinitionKey(
-                    DemonContractCatalog.BeelzebubKey),
+                    DemonContractCatalog.SatanKey),
                 Is.True);
 
             battle.ApplySoulDamage(CombatantSide.Enemy, 3);
@@ -85,7 +85,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(DemonContractKind.Azazel));
             Assert.That(
                 battle.EnemyDemonDeck.ContainsDiscardedDefinitionKey(
-                    DemonContractCatalog.SatanKey),
+                    DemonContractCatalog.BelphegorKey),
                 Is.True);
             Assert.That(battle.UsedEnemyBaseDemonContractCount, Is.Zero);
         }
@@ -209,7 +209,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.FixedEnemyDemonContractPhaseNumber, Is.EqualTo(1));
             Assert.That(
                 battle.ActiveEnemyDemonContracts.Single().Kind,
-                Is.EqualTo(DemonContractKind.Baphomet));
+                Is.EqualTo(DemonContractKind.Beelzebub));
             Assert.That(
                 battle.PublicActionHistory.Count(action =>
                     action.ActionType == PublicCombatActionType.DemonContract),
@@ -224,7 +224,8 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(
                 DemonContractPresenter.Create(battle).ActiveContracts.Single(),
-                Is.EqualTo("상대 · 바포메트 · 오망성 덱 적용"));
+                Is.EqualTo(
+                    "상대 · 바알제붑 · 버스트 시 영혼 1 · 양측 공개 카드 선택 폐기"));
 
             battle.ApplySoulDamage(CombatantSide.Enemy, 3);
 

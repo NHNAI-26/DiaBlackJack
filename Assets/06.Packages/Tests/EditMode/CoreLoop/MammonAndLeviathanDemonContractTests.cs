@@ -18,7 +18,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 playerRanks: new[] { 10, 5, 2, 3 },
                 enemyRanks: new[] { 10, 7, 2, 3 },
                 enemyPolicy,
-                dieValues: new[] { 6 });
+                dieValues: new[] { 6, 2 });
 
             ActivateFirstContract(battle);
 
@@ -29,6 +29,10 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(RoundOutcome.PlayerBust));
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(9));
             Assert.That(battle.RoundNumber, Is.EqualTo(2));
+            Assert.That(
+                ((MammonRuntimeState)battle.ActivePlayerDemonContracts.Single()
+                    .RuntimeState).CurrentDieValue,
+                Is.EqualTo(2));
             Assert.That(battle.LastDemonContractEffectResult.BustedTarget,
                 Is.EqualTo(CombatantSide.Player));
         }
@@ -41,7 +45,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 playerRanks: new[] { 10, 5, 2, 3 },
                 enemyRanks: new[] { 10, 7, 2, 3 },
                 enemyPolicy,
-                dieValues: new[] { 2, 6 });
+                dieValues: new[] { 2, 6, 3 });
             ActivateFirstContract(battle);
             ActiveDemonContract mammon = battle.ActivePlayerDemonContracts.Single();
             Assert.That(battle.PendingPlayerDemonContractInteraction, Is.Null);
@@ -55,8 +59,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.LastResolution.Value.Cause,
                 Is.EqualTo(RoundEndCause.ContractEffectBust));
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(9));
+            Assert.That(battle.RoundNumber, Is.EqualTo(2));
             Assert.That(((MammonRuntimeState)mammon.RuntimeState).CurrentDieValue,
-                Is.EqualTo(6));
+                Is.EqualTo(3));
         }
 
         [Test]
@@ -114,7 +119,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 playerRanks: new[] { 5, 5, 2, 3, 4, 5 },
                 enemyRanks: new[] { 10, 7, 2, 3, 4, 5 },
                 new SequenceEnemyPolicy(EnemyActionType.Stand),
-                dieValues: new[] { 3 });
+                dieValues: new[] { 3, 2 });
             ActivateFirstContract(battle);
 
             Assert.That(battle.PendingPlayerDemonContractInteraction, Is.Null);
@@ -161,7 +166,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 playerRanks: new[] { 10, 5, 2, 3 },
                 enemyRanks: new[] { 10, 7, 2, 3 },
                 new SequenceEnemyPolicy(EnemyActionType.Stand),
-                dieValues: new[] { 3 });
+                dieValues: new[] { 3, 2 });
             ActivateFirstContract(battle);
             KeepMammonAndContinue(battle);
 
@@ -170,6 +175,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                 battle.PendingPlayerDemonContractInteraction;
             Assert.That(pending.Kind,
                 Is.EqualTo(DemonContractInteractionKind.MammonApplyDie));
+            Assert.That(
+                pending.Options.Select(option => option.PublicLabel),
+                Is.EqualTo(new[]
+                {
+                    "주사위 눈 포함하지 않기",
+                    "주사위 눈 포함하기"
+                }));
 
             int optionId = applyDie
                 ? MammonDemonContractHandler.ApplyDieOptionId
@@ -191,7 +203,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 playerRanks: new[] { 10, 10, 2, 3 },
                 enemyRanks: new[] { 10, 7, 2, 3 },
                 new SequenceEnemyPolicy(EnemyActionType.Stand),
-                dieValues: new[] { 3 });
+                dieValues: new[] { 3, 2 });
             ActivateFirstContract(battle);
             KeepMammonAndContinue(battle);
             Assert.That(battle.TryPlayerStand(), Is.True);
@@ -207,6 +219,33 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.LastResolution.Value.Cause,
                 Is.EqualTo(RoundEndCause.NumericBust));
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(9));
+        }
+
+        [Test]
+        public void DCR10_U01_NewRoundRerollSkullBustsBeforeCardsAreDealt()
+        {
+            CoreLoopBattle battle = CreateMammonBattle(
+                playerRanks: new[] { 10, 5, 2, 3, 4, 5 },
+                enemyRanks: new[] { 10, 7, 2, 3, 4, 5 },
+                new SequenceEnemyPolicy(EnemyActionType.Stand),
+                dieValues: new[] { 3, 6, 2 });
+            ActivateFirstContract(battle);
+
+            Assert.That(battle.TryPlayerStand(), Is.True);
+            PendingDemonContractInteraction pending =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                pending.InteractionId,
+                MammonDemonContractHandler.DoNotApplyDieOptionId), Is.True);
+
+            Assert.That(battle.RoundNumber, Is.EqualTo(3));
+            Assert.That(battle.LastResolution.Value.Cause,
+                Is.EqualTo(RoundEndCause.ContractEffectBust));
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(8));
+            Assert.That(
+                ((MammonRuntimeState)battle.ActivePlayerDemonContracts.Single()
+                    .RuntimeState).CurrentDieValue,
+                Is.EqualTo(2));
         }
 
         [Test]

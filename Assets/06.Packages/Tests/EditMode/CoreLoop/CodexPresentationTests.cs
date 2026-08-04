@@ -64,7 +64,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             IReadOnlyList<DemonCodexPageViewModel> pages =
                 CodexPresenter.CreateDemonPages(cards, lore);
 
-            Assert.That(pages.Count, Is.EqualTo(12));
+            Assert.That(
+                pages.Select(page => page.DefinitionKey),
+                Is.EquivalentTo(DemonContractCatalog.PrototypeEnabledDemonKeys));
+            Assert.That(pages.Count, Is.EqualTo(6));
             DemonCodexPageViewModel satan = pages.Single(
                 page => page.DefinitionKey == DemonContractCatalog.SatanKey);
             DemonContractDefinition definition =
@@ -85,6 +88,24 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.Throws<KeyNotFoundException>(() =>
                 CodexPresenter.CreateDemonPages(cards, lore));
+        }
+
+        [Test]
+        public void DXM05_U01_DemonPagesIgnoreNonPrototypeDefinitionsAndLore()
+        {
+            CardContentCatalog cards = CreateCardCatalog();
+            Dictionary<string, string> lore = CreateLore(cards);
+            lore.Remove(DemonContractCatalog.BaphometKey);
+
+            IReadOnlyList<DemonCodexPageViewModel> pages =
+                CodexPresenter.CreateDemonPages(cards, lore);
+
+            Assert.That(
+                pages.Select(page => page.DefinitionKey),
+                Is.EqualTo(DemonContractCatalog.PrototypeEnabledDemonKeys));
+            Assert.That(pages.Any(page =>
+                page.DefinitionKey == DemonContractCatalog.BaphometKey),
+                Is.False);
         }
 
         [Test]

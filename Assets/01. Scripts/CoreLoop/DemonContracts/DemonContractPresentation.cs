@@ -282,10 +282,10 @@ namespace DiaBlackJack.CoreLoop.UI
                 else if (contract.RuntimeState is SatanRuntimeState satan)
                 {
                     string face = satan.CurrentFace == SatanContractFace.Upper
-                        ? "윗면"
-                        : "아랫면";
-                    string penalty = satan.PenaltyApplied
-                        ? " · 대가 적용 완료"
+                        ? "정방향"
+                        : "역방향";
+                    string penalty = satan.DoomPenaltyActive
+                        ? " · 매 턴 영혼 2 감소"
                         : string.Empty;
                     status =
                         $"종말 카운트 {satan.RemainingDoomCount} · {face}{penalty}";

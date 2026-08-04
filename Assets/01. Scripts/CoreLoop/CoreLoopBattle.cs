@@ -2043,12 +2043,12 @@ namespace DiaBlackJack.CoreLoop
                     MammonDemonContractHandler.DoNotApplyDieOptionId,
                     contractCardId: null,
                     numericValue: null,
-                    "주사위 값 적용 안 함"),
+                    "주사위 눈 포함하지 않기"),
                 new DemonContractOption(
                     MammonDemonContractHandler.ApplyDieOptionId,
                     contractCardId: null,
                     numericValue: null,
-                    "주사위 값 적용")
+                    "주사위 눈 포함하기")
             };
 
             return new PendingDemonContractInteraction(
@@ -2056,7 +2056,7 @@ namespace DiaBlackJack.CoreLoop
                 DemonContractInteractionKind.MammonApplyDie,
                 DemonContractKind.Mammon,
                 options,
-                "최종 승부에 현재 주사위 값을 적용할지 선택하십시오.",
+                "최종 승부에 현재 주사위 눈을 포함할지 선택하십시오.",
                 activeContract.SourceCardId);
         }
 
@@ -5129,7 +5129,8 @@ namespace DiaBlackJack.CoreLoop
 
         private bool ApplyRoundStartContracts(
             CombatantSide ownerSide,
-            IReadOnlyList<ActiveDemonContract> activeContracts)
+            IReadOnlyList<ActiveDemonContract> activeContracts,
+            Action resumeAfterBustPrevention)
         {
             BattleParticipant owner = GetParticipant(ownerSide);
             int soulBefore = owner.Soul.Current;
@@ -5148,13 +5149,55 @@ namespace DiaBlackJack.CoreLoop
                 RaiseStepped();
             }
 
-            if (!owner.Soul.IsDepleted)
+            if (owner.Soul.IsDepleted)
+            {
+                EndBattleWithoutRound();
+                return false;
+            }
+
+            ActiveDemonContract mammonContract = null;
+            foreach (ActiveDemonContract contract in activeContracts)
+            {
+                if (contract.Kind == DemonContractKind.Mammon &&
+                    contract.RuntimeState is MammonRuntimeState mammon &&
+                    mammon.CurrentDieValue == 6)
+                {
+                    mammonContract = contract;
+                    break;
+                }
+            }
+            if (mammonContract == null)
             {
                 return true;
             }
 
-            EndBattleWithoutRound();
-            return false;
+            OwnerBustHandlingResult handling = ownerSide == CombatantSide.Player
+                ? HandlePlayerBust(resumeAfterBustPrevention)
+                : HandleEnemyBust(resumeAfterBustPrevention);
+            if (handling == OwnerBustHandlingResult.NotHandled)
+            {
+                LastDemonContractEffectResult = new DemonContractEffectResult(
+                    triggered: true,
+                    bustedTarget: ownerSide,
+                    paidSoulCost: 0);
+                RaiseStepped();
+                CompleteRound(RoundResolver.ResolveContractEffectBust(
+                    RoundNumber,
+                    playerIsTarget: ownerSide == CombatantSide.Player));
+                return false;
+            }
+
+            if (handling != OwnerBustHandlingResult.Prevented)
+            {
+                return false;
+            }
+
+            LastDemonContractEffectResult = new DemonContractEffectResult(
+                triggered: true,
+                bustedTarget: null,
+                paidSoulCost: 0);
+            RaiseStepped();
+            return true;
         }
 
         private void StartRound()
@@ -5185,14 +5228,30 @@ namespace DiaBlackJack.CoreLoop
 
             if (!ApplyRoundStartContracts(
                     CombatantSide.Player,
-                    _activePlayerDemonContracts) ||
-                !ApplyRoundStartContracts(
-                    CombatantSide.Enemy,
-                    _activeEnemyDemonContracts))
+                    _activePlayerDemonContracts,
+                    ContinueStartingRoundWithEnemyContracts))
             {
                 return;
             }
 
+            ContinueStartingRoundWithEnemyContracts();
+        }
+
+        private void ContinueStartingRoundWithEnemyContracts()
+        {
+            if (!ApplyRoundStartContracts(
+                    CombatantSide.Enemy,
+                    _activeEnemyDemonContracts,
+                    DealStartingRoundCards))
+            {
+                return;
+            }
+
+            DealStartingRoundCards();
+        }
+
+        private void DealStartingRoundCards()
+        {
             InjectPoisonIntoPlayerDeck();
 
             Player.Draw(faceUp: true);

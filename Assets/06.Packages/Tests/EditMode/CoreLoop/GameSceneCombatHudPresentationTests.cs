@@ -1108,6 +1108,14 @@ namespace DiaBlackJack.CoreLoop.Tests
             DemonContractInteractionKind.MammonReroll,
             MammonDemonContractHandler.RerollDieOptionId,
             false)]
+        [TestCase(
+            DemonContractInteractionKind.MammonApplyDie,
+            MammonDemonContractHandler.DoNotApplyDieOptionId,
+            true)]
+        [TestCase(
+            DemonContractInteractionKind.MammonApplyDie,
+            MammonDemonContractHandler.ApplyDieOptionId,
+            true)]
         public void GSH01_U15_OnlySpecifiedContractChoicesUseBottomRight(
             DemonContractInteractionKind interactionKind,
             int optionId,

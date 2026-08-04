@@ -100,6 +100,19 @@ namespace DiaBlackJack.CoreLoop
             FinalChoiceResolved = false;
         }
 
+        internal int RollForNewRound(IDemonDieRoller dieRoller)
+        {
+            if (dieRoller == null)
+            {
+                throw new ArgumentNullException(nameof(dieRoller));
+            }
+
+            SetDieValue(dieRoller.RollD6());
+            CanRerollThisTurn = false;
+            FinalChoiceResolved = false;
+            return CurrentDieValue;
+        }
+
         private void SetDieValue(int value)
         {
             if (value < 1 || value > 6)
@@ -149,6 +162,7 @@ namespace DiaBlackJack.CoreLoop
         IDemonContractHandler,
         IDemonContractOwnerTurnHandler,
         IDemonContractOwnerTurnStartChoiceHandler,
+        IDemonContractRoundStartHandler,
         IDemonContractMammonRerollHandler,
         IDemonContractFinalChoiceHandler
     {
@@ -189,6 +203,11 @@ namespace DiaBlackJack.CoreLoop
         public void OnRoundEnded(DemonContractContext context)
         {
             GetState(context).ResetRound();
+        }
+
+        public void OnRoundStarted(DemonContractContext context)
+        {
+            GetState(context).RollForNewRound(_dieRoller);
         }
 
         public bool CanReroll(DemonContractContext context)

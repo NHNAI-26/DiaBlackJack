@@ -208,7 +208,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             var resolver = new DemonContractResolver(
                 new SatanDemonContractHandler(),
                 new BelphegorDemonContractHandler(),
-                new MammonDemonContractHandler(new SequenceDieRoller(3)),
+                new MammonDemonContractHandler(new SequenceDieRoller(3, 2)),
                 new LeviathanDemonContractHandler());
             CoreLoopBattle battle = CreateBattle(
                 new ForcedMammonStandPolicy(),
@@ -285,7 +285,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR07_U01_DefaultEnemyProfilesUseOnlyAllSevenPrototypeDemons()
+        public void DCR07_U01_DefaultEnemyProfilesUseOnlyEnabledPrototypeDemons()
         {
             var configuredKeys = new HashSet<string>(StringComparer.Ordinal);
             foreach (EnemyCombatProfile profile in
@@ -307,7 +307,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR07_I01_SevenPrototypeEnemyContractsActivateWithoutStall()
+        public void DCR07_I01_EnabledPrototypeEnemyContractsActivateWithoutStall()
         {
             foreach (DemonContractKind kind in new[]
             {
@@ -316,7 +316,6 @@ namespace DiaBlackJack.CoreLoop.Tests
                 DemonContractKind.Beelzebub,
                 DemonContractKind.Asmodeus,
                 DemonContractKind.Mammon,
-                DemonContractKind.Baphomet,
                 DemonContractKind.Azazel
             })
             {

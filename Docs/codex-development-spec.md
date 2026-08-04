@@ -32,7 +32,7 @@
 - `CodexDeckCardViewModel`: 정의 key, 숫자, 표시 이름, 설명, suit, 1 이상 수량 `Count`.
 - `CodexNavigationState`: 카테고리별 현재 인덱스와 책 전체 경계 이동. 적 마지막 장에서 `E`를 누르면 악마 카드 첫 장으로, 악마 카드 첫 장에서 `Q`를 누르면 적 마지막 장으로 이동한다. 책 전체의 첫 장과 마지막 장에서는 더 이동하지 않는다.
 
-적 정보는 `EnemyContentCatalogSO`가 생성한 `EnemyCombatProfileCatalog`, `GoldRewardCatalog`과 `CardContentCatalog`을 읽는다. 악마 정보는 `DemonCardDefinitionSO`에서 생성한 카드 정의와 서사 사전을 읽는다.
+적 정보는 `EnemyContentCatalogSO`가 생성한 `EnemyCombatProfileCatalog`, `GoldRewardCatalog`과 `CardContentCatalog`을 읽는다. 악마 정보는 `DemonCardDefinitionSO`에서 생성한 카드 정의와 서사 사전을 읽는다. `CodexPresenter.CreateDemonPages`는 `DemonContractCatalog.PrototypeEnabledDemonKeys`의 순서와 범위만 사용한다. 제외 악마의 정의·서사·에셋은 도감 생성 조건이 아니다.
 
 ## DX-02: uGUI와 씬 연결
 
@@ -59,7 +59,8 @@
 
 ## 검증 계약
 
-- 적 6종, 악마 12종이 누락·중복 없이 생성된다.
+- 적 6종, 프로토타입 악마 6종이 누락·중복 없이 생성된다.
+- 프로토타입 제외 악마의 정의나 서사가 남아 있어도 해당 도감 페이지는 생성되지 않는다.
 - 현재 영혼·골드·설명·계약 목록·덱 순서와 카드 가격·효과·대가가 일치한다.
 - 시작 덱의 묶음 수와 `StartingDeckCardCount`가 각각 표시 항목 수와 실제 카드 장수에 일치하고, 모든 묶음 수량이 1 이상이다.
 - 카테고리를 직접 전환하면 카테고리별 마지막 페이지를 복원하고, `Q/E` 순차 이동은 적→악마 카드 경계를 끊김 없이 넘는 것이 보장된다.

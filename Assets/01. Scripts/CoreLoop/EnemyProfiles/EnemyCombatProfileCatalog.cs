@@ -236,28 +236,28 @@ namespace DiaBlackJack.CoreLoop
                     EnemyInformationMode.PhaseDependent,
                     demonContractDefinitionKeys: new[]
                     {
-                        DemonContractCatalog.BaphometKey,
+                        DemonContractCatalog.BeelzebubKey,
                         DemonContractCatalog.MammonKey,
                         DemonContractCatalog.AsmodeusKey,
-                        DemonContractCatalog.BeelzebubKey,
+                        DemonContractCatalog.SatanKey,
                         DemonContractCatalog.AzazelKey,
-                        DemonContractCatalog.SatanKey
+                        DemonContractCatalog.BelphegorKey
                     },
                     demonContractCandidateCount: 1,
                     fixedDemonContractPhases: new[]
                     {
                         new FixedDemonContractPhaseDefinition(
                             activationSoulThreshold: null,
-                            DemonContractCatalog.BaphometKey,
+                            DemonContractCatalog.BeelzebubKey,
                             DemonContractCatalog.MammonKey),
                         new FixedDemonContractPhaseDefinition(
                             activationSoulThreshold: 5,
                             DemonContractCatalog.AsmodeusKey,
-                            DemonContractCatalog.BeelzebubKey),
+                            DemonContractCatalog.SatanKey),
                         new FixedDemonContractPhaseDefinition(
                             activationSoulThreshold: 2,
                             DemonContractCatalog.AzazelKey,
-                            DemonContractCatalog.SatanKey)
+                            DemonContractCatalog.BelphegorKey)
                     })
             };
         }
