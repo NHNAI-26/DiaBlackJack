@@ -825,14 +825,18 @@ namespace DiaBlackJack.GameScene
             target.richText = true;
             target.text =
                 $"{label}  {iconTag}  " +
-                CodexQuantityText.ColorizeQuantityValue(value.ToString());
+                value.ToString();
         }
 
         private static void SetQuantityText(TMP_Text target, string value)
         {
-            CurrencyIconText.Set(
-                target,
-                CodexQuantityText.ColorizeQuantityValue(value));
+            if (target == null)
+            {
+                return;
+            }
+
+            target.richText = false;
+            target.text = value ?? string.Empty;
         }
     }
 }

@@ -374,12 +374,20 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(noContractText.gameObject.activeSelf, Is.True);
                 Assert.That(
                     GetText(enemySoulText),
-                    Is.EqualTo(CodexQuantityText.ColorizeQuantityValue(
-                        page.MaximumSoul.ToString())));
+                    Is.EqualTo(page.MaximumSoul.ToString()));
                 Assert.That(
                     GetText(enemyGoldText),
-                    Is.EqualTo(CodexQuantityText.ColorizeQuantityValue(
-                        page.DefeatGold.ToString())));
+                    Is.EqualTo(page.DefeatGold.ToString()));
+                Assert.That(
+                    new SerializedObject(enemySoulText)
+                        .FindProperty("m_isRichText")
+                        .boolValue,
+                    Is.False);
+                Assert.That(
+                    new SerializedObject(enemyGoldText)
+                        .FindProperty("m_isRichText")
+                        .boolValue,
+                    Is.False);
                 Assert.That(
                     GetText(enemyDescriptionText),
                     Is.EqualTo(
@@ -541,14 +549,12 @@ namespace DiaBlackJack.CoreLoop.Tests
                     GetText(demonGold),
                     Is.EqualTo(
                         $"상점 구매 가격  {CurrencyIconMarkup.GoldTag}  " +
-                        CodexQuantityText.ColorizeQuantityValue(
-                            firstDemon.PurchaseGold.ToString())));
+                        firstDemon.PurchaseGold));
                 Assert.That(
                     GetText(demonSoul),
                     Is.EqualTo(
                         $"계약 영혼  {CurrencyIconMarkup.SoulTag}  " +
-                        CodexQuantityText.ColorizeQuantityValue(
-                            firstDemon.SoulPrice.ToString())));
+                        firstDemon.SoulPrice));
                 Assert.That(
                     GetText(demonActiveSkill),
                     Is.EqualTo(CurrencyIconMarkup.FormatForTmp(
