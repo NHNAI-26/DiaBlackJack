@@ -29,6 +29,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/TableObjects/Table Controller.prefab";
         private const string ContractPaperSpritePath =
             "Assets/05. Arts/Texture/ContractPaper/ContractPaper.png";
+        private const string TableCommandFrameSpritePath =
+            "Assets/05. Arts/UI/button.png";
         private const string GoldSpriteAssetPath =
             "Assets/TextMesh Pro/Resources/Sprite Assets/GoldIcon.asset";
         private const string SoulSpriteAssetPath =
@@ -965,8 +967,9 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             GameSceneViewModel second = GameScenePresenter.Create(battle);
             GameSceneCardViewModel branded = second.SatanNumberCandidates.Single(
-                card => card.IsUsed);
+                card => card.IsSatanBranded);
             Assert.That(branded.Rank, Is.EqualTo(3));
+            Assert.That(branded.IsUsed, Is.False);
             Assert.That(branded.DirectSelectionCommand.HasValue, Is.False);
             Assert.That(second.SatanNumberCandidates.Count(card =>
                 card.DirectSelectionCommand.HasValue), Is.EqualTo(9));
@@ -1489,6 +1492,24 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(commands.All(command => command.HasRequiredReferences), Is.True);
             Assert.That(commands.All(command =>
                 command.GetComponent<Collider>() != null), Is.True);
+            Sprite commandFrame = AssetDatabase.LoadAssetAtPath<Sprite>(
+                TableCommandFrameSpritePath);
+            Assert.That(commandFrame, Is.Not.Null);
+            Assert.That(commands.All(command =>
+                command.GetComponent<SpriteRenderer>().sprite == commandFrame),
+                Is.True);
+            Assert.That(commands.All(command =>
+                command.GetComponent<SpriteRenderer>().drawMode ==
+                    SpriteDrawMode.Simple), Is.True);
+            Assert.That(commands.All(command =>
+                command.GetComponent<SpriteRenderer>().size ==
+                    new Vector2(3.5f, 3.5f)), Is.True);
+            Assert.That(commands.All(command =>
+                command.transform.localScale ==
+                    new Vector3(0.2f, 0.2f, 0.82f)), Is.True);
+            Assert.That(commands.All(command =>
+                ((BoxCollider)command.GetComponent<Collider>()).size ==
+                    new Vector3(3.5f, 3.5f, 0.1f)), Is.True);
         }
 
         [Test]

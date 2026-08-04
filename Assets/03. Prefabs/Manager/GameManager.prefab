@@ -63,6 +63,7 @@ MonoBehaviour:
   deckPreview: {fileID: 0}
   codex: {fileID: 9135478435222243788}
   demonContractSelection: {fileID: 0}
+  satanBrandSprite: {fileID: 21300000, guid: 4f0c7c9a3514d144a92d372b0043f4c1, type: 3}
   tableCombatCommands: {fileID: 0}
   contractPapers: {fileID: 0}
   mammonDie: {fileID: 0}

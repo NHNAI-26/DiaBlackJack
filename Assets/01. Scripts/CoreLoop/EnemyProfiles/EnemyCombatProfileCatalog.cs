@@ -114,7 +114,8 @@ namespace DiaBlackJack.CoreLoop
                         "auto-pistol-7", "auto-pistol-8", "auto-pistol-8",
                         "auto-pistol-8", "auto-pistol-8"
                     },
-                    "공개 정보로 숫자를 추측하고 공격 기회를 노린다.",
+                    "백발백중을 자처하는 승부사입니다.\n" +
+                    "덱에 다수의 리볼버가 있으며, 틈이 보이면 주저 없이 방아쇠를 당깁니다.",
                     EnemyInformationMode.Standard),
                 new EnemyCombatProfile(
                     CultistKey,
@@ -135,7 +136,8 @@ namespace DiaBlackJack.CoreLoop
                         "military-knife-9", "military-knife-9",
                         "military-knife-10", "military-knife-10"
                     },
-                    "계약을 성사시킬 때까지 집요하게 악마의 힘을 좇는다.",
+                    "악마에게 영혼을 바치길 서슴지 않습니다.\n" +
+                    "첫 기회가 오면 곧바로 악마와 계약합니다.",
                     EnemyInformationMode.Standard,
                     demonContractDefinitionKeys: new[]
                     {
@@ -160,7 +162,8 @@ namespace DiaBlackJack.CoreLoop
                         "crystal-orb-5", "crystal-orb-5", "crystal-orb-5",
                         "threat-hammer-6", "auto-pistol-7", "auto-pistol-7"
                     },
-                    "직접 피해보다 덱과 정보 우위를 먼저 만든다.",
+                    "그의 손을 유심히 보십시오.\n" +
+                    "사기꾼의 체인지 비용은 항상 영혼 1개입니다.",
                     EnemyInformationMode.Standard,
                     changeCostMode: EnemyChangeCostMode.FixedOne),
                 new EnemyCombatProfile(
@@ -179,7 +182,8 @@ namespace DiaBlackJack.CoreLoop
                         "threat-hammer-6", "auto-pistol-7", "auto-pistol-8",
                         "military-knife-9", "military-knife-10"
                     },
-                    "낮은 숫자 중심의 덱으로 공개 합 15부터 빠르게 스탠드한다.",
+                    "강철다리조차 두들겨 보고 건넙니다.\n" +
+                    "버스트를 크게 경계하며 빠르게 스탠드합니다.",
                     EnemyInformationMode.Standard),
                 new EnemyCombatProfile(
                     EnforcerKey,
@@ -203,7 +207,8 @@ namespace DiaBlackJack.CoreLoop
                         "threat-hammer-6", "auto-pistol-7", "auto-pistol-8",
                         "military-knife-9", "military-knife-10"
                     },
-                    "독극물과 강제 행동으로 장기전의 안전 지대를 무너뜨린다.",
+                    "시간이 지날수록 당신을 옥죄어 옵니다.\n" +
+                    "라운드가 시작될 때마다 당신의 덱에 독극물을 섞어 넣습니다.",
                     EnemyInformationMode.Condensed,
                     injectsPoisonIntoPlayerDeckEachRound: true),
                 new EnemyCombatProfile(
@@ -226,7 +231,8 @@ namespace DiaBlackJack.CoreLoop
                         "military-knife-9", "military-knife-9",
                         "military-knife-9", "military-knife-9"
                     },
-                    "영혼 구간마다 계약과 강행동의 양상을 바꾸는 최종 상대다.",
+                    "악마의 힘을 직접 목도할 시간입니다.\n" +
+                    "영혼이 줄어들수록 계약할 악마를 바꾸며 더욱 위험해집니다.",
                     EnemyInformationMode.PhaseDependent,
                     demonContractDefinitionKeys: new[]
                     {

@@ -12,6 +12,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/Card/Card.prefab";
         private const string ManagerPrefabPath =
             "Assets/03. Prefabs/Manager/GameManager.prefab";
+        private const string SatanBrandSpritePath =
+            "Assets/05. Arts/UI/DevilShape.png";
 
         [Test]
         public void GSH02_U01_OneCardUsesProfileCenterWithoutCurveOrRotation()
@@ -223,7 +225,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                     root.AddComponent<CardSelectionFanLayout>();
                 SatanNumberSelectionView view =
                     root.AddComponent<SatanNumberSelectionView>();
-                view.Initialize(cardPrefab.GetComponent<CardView>());
+                Sprite brandSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
+                    SatanBrandSpritePath);
+                view.Initialize(cardPrefab.GetComponent<CardView>(), brandSprite);
                 GameSceneCardViewModel[] candidates = Enumerable.Range(1, 10)
                     .Select(rank => new GameSceneCardViewModel(
                         cardId: 100 + rank,
@@ -232,7 +236,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                         revealRank: true,
                         canUse: rank != 1,
                         displayName: rank.ToString(),
-                        isUsed: rank == 1,
+                        isSatanBranded: rank == 1,
                         directSelectionCommand: rank == 1
                             ? null
                             : new GameSceneCombatHudCommand(
@@ -250,6 +254,24 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(view.FanLayout, Is.SameAs(layout));
                 Assert.That(cards.Single(card => card.CardId == 101).CanUse,
                     Is.False);
+                CardView branded = cards.Single(card => card.CardId == 101);
+                SpriteRenderer brand = branded
+                    .GetComponentsInChildren<SpriteRenderer>(true)
+                    .Single(renderer => renderer.gameObject.name == "DevilShape");
+                Assert.That(brand.sprite, Is.SameAs(brandSprite));
+                Assert.That(brand.gameObject.activeSelf, Is.True);
+                Assert.That(branded.IsUsedMarkVisible, Is.False);
+                SpriteRenderer brandedFront = branded
+                    .GetComponentsInChildren<SpriteRenderer>(true)
+                    .Single(renderer => renderer.gameObject.name == "Front");
+                Assert.That(brand.sortingOrder,
+                    Is.EqualTo(brandedFront.sortingOrder));
+                CardView following = cards.Single(card => card.CardId == 102);
+                SpriteRenderer followingFront = following
+                    .GetComponentsInChildren<SpriteRenderer>(true)
+                    .Single(renderer => renderer.gameObject.name == "Front");
+                Assert.That(followingFront.sortingOrder,
+                    Is.GreaterThan(brand.sortingOrder));
                 Assert.That(cards.Single(card => card.CardId == 101)
                     .DirectSelectionCommand.HasValue, Is.False);
                 CardView selectable = cards.Single(card => card.CardId == 102);

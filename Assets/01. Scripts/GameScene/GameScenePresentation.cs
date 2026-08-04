@@ -130,7 +130,8 @@ namespace DiaBlackJack.GameScene
             int? cardEffectChoiceOptionId = null,
             bool isUsed = false,
             GameSceneCombatHudCommand? directSelectionCommand = null,
-            bool isEffectSource = false)
+            bool isEffectSource = false,
+            bool isSatanBranded = false)
         {
             CardId = cardId;
             Rank = rank;
@@ -147,6 +148,7 @@ namespace DiaBlackJack.GameScene
             IsUsed = isUsed;
             DirectSelectionCommand = directSelectionCommand;
             IsEffectSource = isEffectSource;
+            IsSatanBranded = isSatanBranded;
             HoverOutlineState = ResolveHoverOutlineState(
                 DefinitionKey,
                 CanUse,
@@ -201,6 +203,12 @@ namespace DiaBlackJack.GameScene
         public GameSceneCombatHudCommand? DirectSelectionCommand { get; }
 
         public bool IsEffectSource { get; }
+
+        /// <summary>
+        /// Whether Satan's upper-face declaration has branded this rank candidate.
+        /// Kept separate from <see cref="IsUsed"/> so the normal used-card X mark is not shown.
+        /// </summary>
+        public bool IsSatanBranded { get; }
 
         internal GameSceneCardHoverOutlineState HoverOutlineState { get; }
 
@@ -1624,8 +1632,9 @@ namespace DiaBlackJack.GameScene
                     definition.DisplayName,
                     suit: CardSuit.Spade,
                     definitionKey: definition.Key,
-                    isUsed: isBranded,
-                    directSelectionCommand: command));
+                    isUsed: false,
+                    directSelectionCommand: command,
+                    isSatanBranded: isBranded));
             }
 
             return candidates.AsReadOnly();

@@ -39,6 +39,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private DemonContractSelectionView demonContractSelection;
         private CrystalOrbSelectionView crystalOrbSelection;
         private SatanNumberSelectionView satanNumberSelection;
+        [SerializeField] private Sprite satanBrandSprite;
         [SerializeField] private TableCombatCommandGroup tableCombatCommands;
         [SerializeField] private ContractPaperView contractPapers;
         [SerializeField] private MammonDieView mammonDie;
@@ -436,7 +437,9 @@ namespace DiaBlackJack.GameScene
                 GetComponent<SatanNumberSelectionView>();
             satanNumberSelection ??=
                 gameObject.AddComponent<SatanNumberSelectionView>();
-            satanNumberSelection.Initialize(playerHand?.CardPrefab);
+            satanNumberSelection.Initialize(
+                playerHand?.CardPrefab,
+                satanBrandSprite);
             tableCombatCommands ??= FindFirstObjectByType<TableCombatCommandGroup>(
                 FindObjectsInactive.Include);
             contractPapers ??= FindFirstObjectByType<ContractPaperView>(

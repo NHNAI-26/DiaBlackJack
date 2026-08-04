@@ -14,6 +14,7 @@ namespace DiaBlackJack.GameScene
         private readonly CandidateSlot[] _slots = new CandidateSlot[CandidateCount];
         private CardSelectionFanLayout _fanLayout;
         private CardView _candidatePrefab;
+        private Sprite _brandSprite;
         private Camera _camera;
         private int _hoveredIndex = -1;
         private bool _isOpen;
@@ -25,7 +26,9 @@ namespace DiaBlackJack.GameScene
 
         internal CardSelectionFanLayout FanLayout => ResolveFanLayout();
 
-        public void Initialize(CardView candidatePrefab)
+        public void Initialize(
+            CardView candidatePrefab,
+            Sprite brandSprite = null)
         {
             if (candidatePrefab == null)
             {
@@ -34,6 +37,7 @@ namespace DiaBlackJack.GameScene
 
             ResolveFanLayout();
             _candidatePrefab = candidatePrefab;
+            _brandSprite = brandSprite;
             EnsureSlots();
             Hide();
         }
@@ -60,6 +64,10 @@ namespace DiaBlackJack.GameScene
                 slot.Candidate = candidates[i];
                 slot.Card.Bind(slot.Candidate);
                 slot.Card.SetSortingOrder(BaseSortingOrder + i);
+                slot.BrandRenderer.sprite = _brandSprite;
+                slot.BrandRenderer.gameObject.SetActive(
+                    _brandSprite != null && slot.Candidate.IsSatanBranded);
+                slot.BrandRenderer.sortingOrder = BaseSortingOrder + i;
             }
 
             _snapPose = true;
@@ -91,6 +99,8 @@ namespace DiaBlackJack.GameScene
                 _slots[i].Card.SetHovered(hovered);
                 _slots[i].Card.SetSortingOrder(
                     BaseSortingOrder + i + (hovered ? 20 : 0));
+                _slots[i].BrandRenderer.sortingOrder =
+                    BaseSortingOrder + i + (hovered ? 20 : 0);
             }
         }
 
@@ -107,6 +117,7 @@ namespace DiaBlackJack.GameScene
                 }
 
                 slot.Candidate = null;
+                slot.BrandRenderer.gameObject.SetActive(false);
                 slot.Anchor.gameObject.SetActive(false);
             }
         }
@@ -151,8 +162,24 @@ namespace DiaBlackJack.GameScene
                 anchor.SetParent(transform, false);
                 CardView card = Instantiate(_candidatePrefab, anchor);
                 card.name = "Card";
-                _slots[i] = new CandidateSlot(anchor, card);
+                SpriteRenderer brandRenderer = CreateBrandRenderer(card);
+                _slots[i] = new CandidateSlot(anchor, card, brandRenderer);
             }
+        }
+
+        private SpriteRenderer CreateBrandRenderer(CardView card)
+        {
+            var brandObject = new GameObject("DevilShape");
+            Transform brandTransform = brandObject.transform;
+            brandTransform.SetParent(card.transform, false);
+            brandTransform.localPosition = new Vector3(0f, 0f, 0.003f);
+            brandTransform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            brandTransform.localScale = Vector3.one * 0.38f;
+
+            SpriteRenderer renderer = brandObject.AddComponent<SpriteRenderer>();
+            renderer.sprite = _brandSprite;
+            brandObject.SetActive(false);
+            return renderer;
         }
 
         private void UpdateSlotPose(int index, bool snap)
@@ -231,15 +258,22 @@ namespace DiaBlackJack.GameScene
 
         private sealed class CandidateSlot
         {
-            public CandidateSlot(Transform anchor, CardView card)
+            public CandidateSlot(
+                Transform anchor,
+                CardView card,
+                SpriteRenderer brandRenderer)
             {
                 Anchor = anchor ?? throw new ArgumentNullException(nameof(anchor));
                 Card = card ?? throw new ArgumentNullException(nameof(card));
+                BrandRenderer = brandRenderer ??
+                    throw new ArgumentNullException(nameof(brandRenderer));
             }
 
             public Transform Anchor { get; }
 
             public CardView Card { get; }
+
+            public SpriteRenderer BrandRenderer { get; }
 
             public GameSceneCardViewModel Candidate { get; set; }
         }
