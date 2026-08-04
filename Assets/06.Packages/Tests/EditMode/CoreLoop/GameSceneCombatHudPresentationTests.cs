@@ -1804,67 +1804,84 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void GSH01_U12_ShopDemonReusesContractDetailPanel()
+        public void GSH01_U12_ShopDemonUsesDedicatedHoverDetailPrefab()
         {
             GameObject hudPrefab =
                 AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
             GameObject demonPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 "Assets/03. Prefabs/Card/DemonCard.prefab");
+            GameObject hoverDetailPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(
+                    DemonCardHoverDetailPrefabPath);
+            DemonCardHoverDetailView authoredHoverDetail =
+                hudPrefab.GetComponentInChildren<
+                    DemonCardHoverDetailView>(true);
+            Assert.That(authoredHoverDetail, Is.Not.Null);
+            Assert.That(
+                PrefabUtility.GetCorrespondingObjectFromSource(
+                    authoredHoverDetail.gameObject),
+                Is.SameAs(hoverDetailPrefab));
             GameObject hudInstance = Object.Instantiate(hudPrefab);
             GameObject demonInstance = Object.Instantiate(demonPrefab);
             try
             {
                 GameHudView hud = hudInstance.GetComponent<GameHudView>();
                 DemonCardView demon = demonInstance.GetComponent<DemonCardView>();
+                DemonCardHoverDetailView hoverDetail =
+                    hudInstance.GetComponentInChildren<
+                        DemonCardHoverDetailView>(true);
+                Assert.That(hoverDetail, Is.Not.Null);
+                DemonContractDefinition definition =
+                    DemonContractCatalog.Default.GetByKey(
+                        DemonContractCatalog.SatanKey);
                 demon.Bind(new GameSceneDemonCardViewModel(
                     cardId: 7,
-                    definitionKey: DemonContractCatalog.SatanKey,
+                    definitionKey: definition.Key,
                     isFaceUp: true,
                     canUse: true,
-                    displayName: "사탄",
-                    summary: "공개 카드 한 장을 사용한다.",
-                    costSummary: "PRICE 5 GOLD"));
+                    displayName: definition.DisplayName,
+                    summary: definition.Summary,
+                    costSummary: definition.CostSummary));
 
                 hud.Render((CoreLoopViewModel)null);
                 hud.ShowDemonContractDetail(demon.BoundCard);
 
-                Transform panel = hudInstance.transform.Find(
+                Transform detail = hoverDetail.DetailView.transform;
+                Transform combatPanel = hudInstance.transform.Find(
                     "CombatControls/ContractDetailPanel");
-                Assert.That(panel.gameObject.activeSelf, Is.True);
-                Assert.That(panel.gameObject.activeInHierarchy, Is.True);
+                Assert.That(hoverDetail.gameObject.activeSelf, Is.True);
+                Assert.That(hoverDetail.gameObject.activeInHierarchy, Is.True);
+                Assert.That(combatPanel.gameObject.activeSelf, Is.False);
                 Assert.That(hud.IsDemonContractDetailVisible, Is.True);
                 Assert.That(
-                    GetRenderedText(panel.Find(
-                        "DetailLayout/ContractDetail/Title/txtTitle")),
-                    Is.EqualTo("사탄"));
+                    GetRenderedText(detail.Find("Title/txtTitle")),
+                    Is.EqualTo(definition.DisplayName));
                 Assert.That(
-                    GetRenderedText(panel.Find(
-                        "DetailLayout/ContractDetail/Ability/txtAbilityLabel")),
+                    GetRenderedText(detail.Find("Face/txtEnglishName")),
+                    Is.EqualTo(definition.Key.ToUpperInvariant()));
+                Assert.That(
+                    GetRenderedText(detail.Find("Ability/txtAbilityLabel")),
                     Is.EqualTo("ACTIVE"));
                 Assert.That(
-                    GetRenderedText(panel.Find(
-                        "DetailLayout/ContractDetail/Ability/txtAbility")),
-                    Does.Contain("공개 카드 한 장을 사용한다."));
+                    GetRenderedText(detail.Find("Ability/txtAbility")),
+                    Does.Contain(definition.Summary));
                 Assert.That(
-                    GetRenderedText(panel.Find(
-                        "DetailLayout/ContractDetail/Ability/txtAbility")),
+                    GetRenderedText(detail.Find("Ability/txtAbility")),
                     Does.Not.Contain("ACTIVE"));
                 Assert.That(
-                    GetRenderedText(panel.Find(
-                        "DetailLayout/ContractDetail/Cost/txtCostLabel")),
+                    GetRenderedText(detail.Find("Cost/txtCostLabel")),
                     Is.EqualTo("COST"));
                 Assert.That(
-                    GetRenderedText(panel.Find(
-                        "DetailLayout/ContractDetail/Cost/txtCost")),
-                    Does.Contain(
-                        $"PRICE 5 {CurrencyIconMarkup.GoldTag}"));
+                    GetRenderedText(detail.Find("Cost/txtCost")),
+                    Is.EqualTo(
+                        CurrencyIconMarkup.FormatForTmp(
+                            definition.CostSummary)));
                 Assert.That(
-                    GetRenderedText(panel.Find(
-                        "DetailLayout/ContractDetail/Cost/txtCost")),
-                    Does.Not.Contain("COST"));
+                    GetRenderedText(detail.Find("Cost/txtCost")),
+                    Does.Not.Contain(CurrencyIconMarkup.GoldTag));
 
                 hud.HideDemonContractDetail();
-                Assert.That(panel.gameObject.activeSelf, Is.False);
+                Assert.That(hoverDetail.gameObject.activeSelf, Is.False);
                 Assert.That(hud.IsDemonContractDetailVisible, Is.False);
                 Assert.That(
                     hudInstance.transform.Find("CombatControls").gameObject.activeSelf,

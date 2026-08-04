@@ -271,6 +271,23 @@ namespace DiaBlackJack.CoreLoop.Tests
             var purchasedKeys = new List<string>();
             foreach (DemonCardView offer in offers)
             {
+                Assert.That(offer.BoundCard, Is.Not.Null);
+                DemonContractDefinition definition =
+                    DemonContractCatalog.Default.GetByKey(
+                        offer.BoundCard.DefinitionKey);
+                Assert.That(
+                    offer.BoundCard.DisplayName,
+                    Is.EqualTo(definition.DisplayName));
+                Assert.That(
+                    offer.BoundCard.Summary,
+                    Is.EqualTo(definition.Summary));
+                Assert.That(
+                    offer.BoundCard.CostSummary,
+                    Is.EqualTo(definition.CostSummary));
+                Assert.That(
+                    offer.BoundCard.CostSummary,
+                    Does.Not.Contain("PRICE"));
+
                 Assert.That(
                     _shop.TryPurchaseDemonCard(
                         offer.CardId,

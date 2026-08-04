@@ -556,15 +556,12 @@ namespace DiaBlackJack.GameScene
             DemonCardView view = Instantiate(demonCardPrefab, demonCardHolder);
             view.transform.localRotation = Quaternion.identity;
             view.SetShopPresentation();
-            view.Bind(new GameSceneDemonCardViewModel(
+            DemonContractDefinition definition =
+                DemonContractCatalog.Default.GetByKey(option.DefinitionKey);
+            view.Bind(CreateShopDemonCardViewModel(
                 option.OptionId,
-                option.DefinitionKey,
-                isFaceUp: true,
-                canUse: option.CanBuy,
-                option.DisplayName,
-                option.Summary,
-                option.Price,
-                showHoverBadgeWhenUnavailable: true));
+                definition,
+                option.CanBuy));
             view.SetShopSoldOut(option.IsSold);
             _formalDemonOffers.Add(view);
             _formalDemonStatuses.Add(PrepareOfferStatus(
@@ -836,23 +833,28 @@ namespace DiaBlackJack.GameScene
 
             offer.View.gameObject.SetActive(true);
             DemonContractDefinition definition = offer.Definition;
-            string costSummary = "PRICE " + offer.Price + " GOLD";
-            if (!string.IsNullOrEmpty(definition.CostSummary))
-            {
-                costSummary += "\n" + definition.CostSummary;
-            }
-
-            offer.View.Bind(new GameSceneDemonCardViewModel(
+            offer.View.Bind(CreateShopDemonCardViewModel(
                 offer.OfferId,
-                definition.Key,
-                isFaceUp: true,
-                canUse: !offer.SoldOut && Gold >= offer.Price,
-                definition.DisplayName,
-                definition.Summary,
-                costSummary,
-                showHoverBadgeWhenUnavailable: true));
+                definition,
+                !offer.SoldOut && Gold >= offer.Price));
             offer.View.SetShopSoldOut(offer.SoldOut);
             offer.Status?.Bind(offer.Price, offer.SoldOut);
+        }
+
+        private static GameSceneDemonCardViewModel CreateShopDemonCardViewModel(
+            int cardId,
+            DemonContractDefinition definition,
+            bool canUse)
+        {
+            return new GameSceneDemonCardViewModel(
+                cardId,
+                definition.Key,
+                isFaceUp: true,
+                canUse,
+                definition.DisplayName,
+                definition.Summary,
+                definition.CostSummary,
+                showHoverBadgeWhenUnavailable: true);
         }
 
         private void BindOfferView(NormalCardOffer offer)

@@ -194,9 +194,28 @@ namespace DiaBlackJack.StageProgression.Tests
                 {
                     Assert.That(card.DefinitionKey, Is.Not.Empty);
                 }
-                Assert.That(
-                    demonHolder.GetComponentsInChildren<DemonCardView>(true),
-                    Has.Length.EqualTo(2));
+                DemonCardView[] demonCards =
+                    demonHolder.GetComponentsInChildren<DemonCardView>(true);
+                Assert.That(demonCards, Has.Length.EqualTo(2));
+                foreach (DemonCardView card in demonCards)
+                {
+                    Assert.That(card.BoundCard, Is.Not.Null);
+                    DemonContractDefinition definition =
+                        DemonContractCatalog.Default.GetByKey(
+                            card.BoundCard.DefinitionKey);
+                    Assert.That(
+                        card.BoundCard.DisplayName,
+                        Is.EqualTo(definition.DisplayName));
+                    Assert.That(
+                        card.BoundCard.Summary,
+                        Is.EqualTo(definition.Summary));
+                    Assert.That(
+                        card.BoundCard.CostSummary,
+                        Is.EqualTo(definition.CostSummary));
+                    Assert.That(
+                        card.BoundCard.CostSummary,
+                        Does.Not.Contain("GOLD"));
+                }
             }
             finally
             {
