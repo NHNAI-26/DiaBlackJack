@@ -246,7 +246,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CUM05_U01_EnemyHoverInfoIsAvailableOnlyAfterCardIsRevealed()
+        public void CUM05_U01_EnemyHoverInfoUsesSafePlaceholderUntilRevealed()
         {
             CoreLoopBattle battle = CreateBattle(
                 playerRanks: new[] { 10, 2 },
@@ -273,10 +273,12 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(hiddenCardModel.RevealRank, Is.False);
             Assert.That(hiddenCardModel.Rank, Is.Zero);
             Assert.That(hiddenCardModel.DefinitionKey, Is.Empty);
-            Assert.That(hiddenCardModel.DisplayName, Is.Empty);
-            Assert.That(hiddenCardModel.AbilityDescription, Is.Empty);
-            Assert.That(hiddenCardModel.ShowHoverBadgeWhenUnavailable, Is.False);
-            Assert.That(hiddenCardModel.ShowHoverBadgeBelow, Is.False);
+            Assert.That(hiddenCardModel.DisplayName, Is.EqualTo("비공개 카드"));
+            Assert.That(
+                hiddenCardModel.AbilityDescription,
+                Is.EqualTo("공개되기 전에는 정보를 확인할 수 없습니다."));
+            Assert.That(hiddenCardModel.ShowHoverBadgeWhenUnavailable, Is.True);
+            Assert.That(hiddenCardModel.ShowHoverBadgeBelow, Is.True);
 
             hiddenCard.Reveal();
             GameSceneCardViewModel revealedHiddenCardModel =
@@ -293,7 +295,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CUM05_U02_CardViewShowsPublicEnemyInfoWithoutHiddenCardLeak()
+        public void CUM05_U02_CardViewShowsSafeHiddenEnemyInfoWithoutLeak()
         {
             CoreLoopBattle battle = CreateBattle(
                 playerRanks: new[] { 10, 2 },
@@ -331,8 +333,15 @@ namespace DiaBlackJack.CoreLoop.Tests
                 cardView.Bind(hiddenCardModel);
                 cardView.SetHovered(true);
 
-                Assert.That(cardView.ShouldShowHoverBadge, Is.False);
-                Assert.That(cardView.HoverBadgeText, Is.Empty);
+                Assert.That(cardView.ShouldShowHoverBadge, Is.True);
+                Assert.That(cardView.HoverBadgeTitle, Is.EqualTo("비공개 카드"));
+                Assert.That(
+                    cardView.HoverBadgeDescription,
+                    Is.EqualTo("공개되기 전에는 정보를 확인할 수 없습니다."));
+                Assert.That(
+                    cardView.HoverBadgeText,
+                    Is.EqualTo(
+                        "비공개 카드\n공개되기 전에는 정보를 확인할 수 없습니다."));
             }
             finally
             {

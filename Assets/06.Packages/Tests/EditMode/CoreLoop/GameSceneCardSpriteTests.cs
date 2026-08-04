@@ -1194,6 +1194,122 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GSV11_U01_NormalCardsShowHoverInfoRegardlessOfUseState()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                GameSceneCardViewModel[] models =
+                {
+                    CreateHoverOutlineCard(
+                        CardDefinitionCatalog.GetDefaultForRank(2),
+                        canUse: false),
+                    CreateHoverOutlineCard(
+                        CardDefinitionCatalog.GetDefaultForRank(1),
+                        canUse: false),
+                    CreateHoverOutlineCard(
+                        CardDefinitionCatalog.GetByKey(CardDefinitionCatalog.PoisonKey),
+                        canUse: false),
+                    CreateHoverOutlineCard(
+                        CardDefinitionCatalog.GetDefaultForRank(5),
+                        canUse: false),
+                    CreateHoverOutlineCard(
+                        CardDefinitionCatalog.GetDefaultForRank(5),
+                        canUse: true),
+                    CreateHoverOutlineCard(
+                        CardDefinitionCatalog.GetDefaultForRank(7),
+                        canUse: false,
+                        isUsed: true),
+                };
+
+                foreach (GameSceneCardViewModel model in models)
+                {
+                    Assert.That(model.ShowHoverBadgeWhenUnavailable, Is.True);
+                    view.Bind(model);
+                    view.SetHovered(true);
+
+                    Assert.That(view.ShouldShowHoverBadge, Is.True,
+                        model.DefinitionKey);
+                    Assert.That(view.HoverBadgeTitle,
+                        Is.EqualTo($"{model.Rank}. {model.DisplayName}"));
+                    Assert.That(view.HoverBadgeDescription,
+                        Is.EqualTo(model.AbilityDescription));
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSV11_U02_SatanNumberCandidateExplicitlySuppressesHoverInfo()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                CardDefinition definition = CardDefinitionCatalog.GetDefaultForRank(3);
+                var model = new GameSceneCardViewModel(
+                    cardId: 100003,
+                    rank: 3,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    displayName: definition.DisplayName,
+                    showHoverBadgeWhenUnavailable: false,
+                    definitionKey: definition.Key,
+                    directSelectionCommand: new GameSceneCombatHudCommand(
+                        GameSceneCombatHudCommandKind.ResolveDemonContractChoice,
+                        1,
+                        1));
+
+                view.Bind(model);
+                view.SetHovered(true);
+
+                Assert.That(model.ShowHoverBadgeWhenUnavailable, Is.False);
+                Assert.That(view.ShouldShowHoverBadge, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSV11_U03_SoldOutShopCardStillSuppressesHoverInfo()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                view.SetShopPresentation();
+                view.Bind(CreateHoverOutlineCard(
+                    CardDefinitionCatalog.GetDefaultForRank(5),
+                    canUse: true));
+                view.SetShopSoldOut(true);
+                view.SetHovered(true);
+
+                Assert.That(view.IsShopSoldOut, Is.True);
+                Assert.That(view.ShouldShowHoverBadge, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
         public void GSV03_U01_ShopNormalCardHoverMaterialIsIsolatedPerOffer()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);

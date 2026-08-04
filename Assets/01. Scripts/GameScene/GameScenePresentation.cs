@@ -124,7 +124,7 @@ namespace DiaBlackJack.GameScene
             string displayName,
             string abilityDescription = "",
             CardSuit suit = CardSuit.Spade,
-            bool showHoverBadgeWhenUnavailable = false,
+            bool showHoverBadgeWhenUnavailable = true,
             string definitionKey = "",
             bool showHoverBadgeBelow = false,
             int? cardEffectChoiceOptionId = null,
@@ -1422,7 +1422,8 @@ namespace DiaBlackJack.GameScene
             var cards = new List<GameSceneCardViewModel>(hand.Count);
             foreach (BlackjackCard card in hand)
             {
-                // Face-down enemy card: emit no rank. This is the information-hiding boundary.
+                // Face-down enemy card: emit only safe placeholder copy. This is the
+                // information-hiding boundary for rank, definition, and real card name.
                 bool faceUp = card.IsFaceUp || revealRoundResult;
                 bool isHiddenCard = battle.Enemy.Hand.IsHiddenCard(card.Id);
                 var projectedCard = new GameSceneCardViewModel(
@@ -1431,14 +1432,14 @@ namespace DiaBlackJack.GameScene
                     faceUp,
                     revealRank: faceUp,
                     canUse: false,
-                    faceUp ? card.Definition.DisplayName : string.Empty,
+                    faceUp ? card.Definition.DisplayName : "비공개 카드",
                     abilityDescription: faceUp
                         ? ResolveAbilityDescription(card)
-                        : string.Empty,
+                        : "공개되기 전에는 정보를 확인할 수 없습니다.",
                     suit: card.Suit,
-                    showHoverBadgeWhenUnavailable: faceUp,
+                    showHoverBadgeWhenUnavailable: true,
                     definitionKey: faceUp ? card.DefinitionKey : string.Empty,
-                    showHoverBadgeBelow: faceUp,
+                    showHoverBadgeBelow: true,
                     cardEffectChoiceOptionId:
                         FindCardEffectChoiceOptionId(pendingEffect, card.Id),
                     isUsed: faceUp && card.UseState == CardUseState.Used,
@@ -1631,6 +1632,7 @@ namespace DiaBlackJack.GameScene
                     canUse: false,
                     definition.DisplayName,
                     suit: CardSuit.Spade,
+                    showHoverBadgeWhenUnavailable: false,
                     definitionKey: definition.Key,
                     isUsed: false,
                     directSelectionCommand: command,

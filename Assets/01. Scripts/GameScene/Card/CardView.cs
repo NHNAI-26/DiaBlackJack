@@ -290,17 +290,16 @@ namespace DiaBlackJack.GameScene
 
             HideRankText();
 
-            HoverBadgeTitle = !card.RevealRank
-                ? string.Empty
-                : $"{card.Rank}. {card.DisplayName}";
-            HoverBadgeDescription = !card.RevealRank
-                ? string.Empty
-                : card.AbilityDescription;
-            HoverBadgeText = !card.RevealRank
-                ? string.Empty
-                : string.IsNullOrEmpty(card.AbilityDescription)
-                    ? $"{card.Rank} {card.DisplayName}"
-                    : $"{card.Rank} {card.DisplayName}\n{card.AbilityDescription}";
+            HoverBadgeTitle = card.RevealRank
+                ? $"{card.Rank}. {card.DisplayName}"
+                : card.DisplayName;
+            HoverBadgeDescription = card.AbilityDescription;
+            string hoverBadgeHeading = card.RevealRank
+                ? $"{card.Rank} {card.DisplayName}"
+                : card.DisplayName;
+            HoverBadgeText = string.IsNullOrEmpty(card.AbilityDescription)
+                ? hoverBadgeHeading
+                : $"{hoverBadgeHeading}\n{card.AbilityDescription}";
 
             // Pooled cards are reused; clear any prior hover state and snap to base size.
             _hovered = false;

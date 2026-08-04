@@ -956,6 +956,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 card.DirectSelectionCommand.HasValue), Is.True);
             Assert.That(first.SatanNumberCandidates.All(card => !card.IsUsed),
                 Is.True);
+            Assert.That(first.SatanNumberCandidates.All(card =>
+                !card.ShowHoverBadgeWhenUnavailable), Is.True);
 
             PendingDemonContractInteraction declaration =
                 battle.PendingPlayerDemonContractInteraction;
