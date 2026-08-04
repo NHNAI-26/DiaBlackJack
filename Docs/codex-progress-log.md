@@ -1,5 +1,11 @@
 # 테이블 도감 진행 기록
 
+## DX-M09: 악마 상세 정보 문구 정리
+
+- 악마 페이지의 새 `EnglishName` TMP에 정의 key 대문자 영문명을 연결했다. 구매·계약 행은 각각 `상점 구매 가격 + 기존 골드 아이콘 + 숫자`, `계약 영혼 + 기존 영혼 아이콘 + 숫자`로 바꾸고 아이콘 에셋은 유지했다. 액티브 스킬·대가 본문에서는 중복 제목과 선행 빈 줄을 제거했다.
+- 최종 변경 테스트 2/2(job `2f31b18d6c8845eebc6e062c96b9a1da`)가 통과했다. 인접 `CodexPresentationTests`·`CodexAssetTests`는 26/29(job `71e1ff752e3a449fb6770d1f13d94c29`)이며 실패 3건은 병행 프리팹 편집값인 카드 크기 100×150 대 기존 기대 116×184 두 건과 비활성 탭 alpha 0.8235 대 기존 기대 0.5 한 건이다. 해당 레이아웃·색상은 되돌리지 않았다.
+- GameScene validation은 issue 0, missing script 0, broken prefab 0이다. 컴파일 오류는 0이며 Console에는 Test Framework 결과 저장 로그 1건과 기존 URP Material Drawer 오류 1건이 남았다. 공유 Editor의 다른 테스트를 방해하지 않기 위해 1280×720·1920×1080 수동 확인은 완료로 기록하지 않는다.
+
 ## DX-M08: 공용 픽셀 호버 외곽선
 
 - 도감 시작 덱의 공용 `DeckPreviewCardView`와 계약 악마의 전용 `CodexDemonCardPreviewView`에 전투 카드와 같은 상태색 픽셀 실루엣 외곽선을 적용했다. 계약 악마는 툴팁 없이도 기본 흰색 외곽선을 표시하고, 일반 카드는 기본/패시브 흰색·수동 사용 불가 빨강·수동 사용 가능 초록·자동 HDR 노랑·사용 완료 회색을 사용한다.

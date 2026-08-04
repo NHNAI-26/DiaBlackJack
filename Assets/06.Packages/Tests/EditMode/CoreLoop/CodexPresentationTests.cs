@@ -72,6 +72,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 page => page.DefinitionKey == DemonContractCatalog.SatanKey);
             DemonContractDefinition definition =
                 cards.GetDemonByKey(DemonContractCatalog.SatanKey);
+            Assert.That(satan.EnglishName, Is.EqualTo("SATAN"));
             Assert.That(satan.PurchaseGold, Is.EqualTo(definition.BasePurchasePrice));
             Assert.That(satan.SoulPrice, Is.EqualTo(definition.BaseSoulCost));
             Assert.That(satan.ActiveSkill, Is.EqualTo(definition.Summary));

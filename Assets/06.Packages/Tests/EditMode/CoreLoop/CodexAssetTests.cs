@@ -457,6 +457,21 @@ namespace DiaBlackJack.CoreLoop.Tests
                 contractTemplate,
                 "englishNameText");
             Image demonCard = GetReference<Image>(view, "demonCardImage");
+            Component demonEnglishName = GetReference<Component>(
+                view,
+                "demonEnglishNameText");
+            Component demonGold = GetReference<Component>(
+                view,
+                "demonGoldText");
+            Component demonSoul = GetReference<Component>(
+                view,
+                "demonSoulText");
+            Component demonActiveSkill = GetReference<Component>(
+                view,
+                "demonActiveSkillText");
+            Component demonCost = GetReference<Component>(
+                view,
+                "demonCostText");
             GameObject enemyPage = GetReference<GameObject>(
                 view,
                 "enemyPageRoot");
@@ -514,6 +529,32 @@ namespace DiaBlackJack.CoreLoop.Tests
                     demonCard.sprite,
                     Is.EqualTo(cardCatalog.GetDemonFaceSprite(
                         demonPages[0].DefinitionKey)));
+                DemonCodexPageViewModel firstDemon = demonPages[0];
+                Assert.That(
+                    GetText(demonEnglishName),
+                    Is.EqualTo(firstDemon.EnglishName));
+                Assert.That(
+                    GetText(demonGold),
+                    Is.EqualTo(
+                        $"상점 구매 가격  {CurrencyIconMarkup.GoldTag}  " +
+                        CodexQuantityText.ColorizeQuantityValue(
+                            firstDemon.PurchaseGold.ToString())));
+                Assert.That(
+                    GetText(demonSoul),
+                    Is.EqualTo(
+                        $"계약 영혼  {CurrencyIconMarkup.SoulTag}  " +
+                        CodexQuantityText.ColorizeQuantityValue(
+                            firstDemon.SoulPrice.ToString())));
+                Assert.That(
+                    GetText(demonActiveSkill),
+                    Is.EqualTo(CurrencyIconMarkup.FormatForTmp(
+                        CodexQuantityText.ColorizeRelevantQuantities(
+                            firstDemon.ActiveSkill))));
+                Assert.That(
+                    GetText(demonCost),
+                    Is.EqualTo(CurrencyIconMarkup.FormatForTmp(
+                        CodexQuantityText.ColorizeRelevantQuantities(
+                            firstDemon.Cost))));
 
                 while (session.CanMoveNext)
                 {

@@ -143,6 +143,7 @@ namespace DiaBlackJack.GameScene
                 throw new ArgumentNullException(nameof(definitionKey));
             DisplayName = displayName ??
                 throw new ArgumentNullException(nameof(displayName));
+            EnglishName = DefinitionKey.ToUpperInvariant();
             LoreDescription = loreDescription ??
                 throw new ArgumentNullException(nameof(loreDescription));
             ActiveSkill = activeSkill ??
@@ -159,6 +160,8 @@ namespace DiaBlackJack.GameScene
         public string DefinitionKey { get; }
 
         public string DisplayName { get; }
+
+        public string EnglishName { get; }
 
         public string LoreDescription { get; }
 

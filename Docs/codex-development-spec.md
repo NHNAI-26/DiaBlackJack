@@ -1,5 +1,12 @@
 # 테이블 도감 개발 명세
 
+## DX-M09: 악마 상세 정보 표시 계약
+
+- `DemonCodexPageViewModel.EnglishName`은 `DefinitionKey.ToUpperInvariant()`로 생성한다.
+- `CodexOverlayView`는 프리팹의 `EnglishName` TMP를 직렬화 참조로 받아 페이지 전환마다 현재 악마 영문명을 갱신한다.
+- 골드·영혼 행은 기존 `CurrencyIconMarkup.GoldTag`·`SoulTag`와 보라색 숫자 규칙을 재사용한다. 표시 문구는 각각 `상점 구매 가격`, `계약 영혼`이며 아이콘 에셋은 변경하지 않는다.
+- 액티브 스킬·대가 본문은 `ActiveSkill`·`Cost`만 렌더링하고 제목 문자열이나 선행 빈 줄을 덧붙이지 않는다.
+
 ## DX-M07: 탭과 카드 시각 개선
 
 - 책장 전환 Fade는 `Book/FadingContent`의 `CanvasGroup`에만 적용한다. 닫기, 적·악마 페이지, Previous/Next는 이 그룹 아래에 두고 적 정보·악마 카드 탭은 `Book` 직속 형제로 유지해 항상 불투명하게 표시한다.

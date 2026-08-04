@@ -138,6 +138,7 @@ namespace DiaBlackJack.GameScene
         [Header("Demon page")]
         [SerializeField] private GameObject demonPageRoot;
         [SerializeField] private TMP_Text demonNameText;
+        [SerializeField] private TMP_Text demonEnglishNameText;
         [SerializeField] private Image demonCardImage;
         [SerializeField] private TMP_Text demonGoldText;
         [SerializeField] private TMP_Text demonSoulText;
@@ -515,13 +516,20 @@ namespace DiaBlackJack.GameScene
             }
 
             SetText(demonNameText, page.DisplayName);
-            SetText(demonGoldText, $"구매 골드  {page.PurchaseGold}");
-            SetText(demonSoulText, $"영혼 가격  {page.SoulPrice}");
+            SetText(demonEnglishNameText, page.EnglishName);
+            SetCurrencyText(
+                demonGoldText,
+                "상점 구매 가격",
+                CurrencyIconMarkup.GoldTag,
+                page.PurchaseGold);
+            SetCurrencyText(
+                demonSoulText,
+                "계약 영혼",
+                CurrencyIconMarkup.SoulTag,
+                page.SoulPrice);
             SetText(demonLoreText, page.LoreDescription);
-            SetText(
-                demonActiveSkillText,
-                $"액티브 스킬\n\n{page.ActiveSkill}");
-            SetText(demonCostText, $"대가\n\n{page.Cost}");
+            SetText(demonActiveSkillText, page.ActiveSkill);
+            SetText(demonCostText, page.Cost);
 
             if (demonCardImage != null)
             {
@@ -801,6 +809,23 @@ namespace DiaBlackJack.GameScene
             CurrencyIconText.Set(
                 target,
                 CodexQuantityText.ColorizeRelevantQuantities(value));
+        }
+
+        private static void SetCurrencyText(
+            TMP_Text target,
+            string label,
+            string iconTag,
+            int value)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            target.richText = true;
+            target.text =
+                $"{label}  {iconTag}  " +
+                CodexQuantityText.ColorizeQuantityValue(value.ToString());
         }
 
         private static void SetQuantityText(TMP_Text target, string value)
