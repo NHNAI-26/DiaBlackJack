@@ -67,3 +67,45 @@ MonoBehaviour:
     lines:
     - "\uB098\uC758 \uC758\uC9C0\uB294... \uC774\uC5B4\uC9C8 \uAC83\uC774\uB2E4..."
     - "\uADF8\uBD84\uC758 \uACC1\uC73C\uB85C..."
+  - cueKey: combat.action.revolver.before
+    lines:
+    - "성스러운 탄환이 네 죄를 겨눈다."
+  - cueKey: combat.action.revolver.hit
+    lines:
+    - "계시가 과녁을 꿰뚫었도다."
+  - cueKey: combat.action.revolver.miss
+    lines:
+    - "이 빗나감에도 뜻이 있으리라."
+  - cueKey: combat.action.knife.before
+    lines:
+    - "피로써 다음 계시를 열리라."
+  - cueKey: combat.action.knife.bust
+    lines:
+    - "제물이 완성되었도다."
+  - cueKey: combat.action.knife.no_bust
+    lines:
+    - "아직 바칠 피가 남았구나."
+  - cueKey: combat.action.hammer.before
+    lines:
+    - "불경한 패를 산산이 부수리라."
+  - cueKey: combat.action.hammer.bust
+    lines:
+    - "파멸의 문이 열렸도다."
+  - cueKey: combat.action.hammer.no_bust
+    lines:
+    - "심판은 아직 끝나지 않았다."
+  - cueKey: combat.action.demon_contract.belphegor
+    lines:
+    - "벨페고르여, 감춰진 운명을 보이라."
+  - cueKey: combat.action.demon_contract.beelzebub
+    lines:
+    - "바알제붑이 이 육신의 파멸을 거두리라."
+  - cueKey: combat.reaction.player.manual_card
+    lines:
+    - "네 손의 성물이 울부짖는구나."
+  - cueKey: combat.reaction.player.demon_contract
+    lines:
+    - "그분의 종을 감히 부르는가."
+  - cueKey: combat.reaction.player.automatic_card
+    lines:
+    - "카드 스스로 계시를 전하는구나."

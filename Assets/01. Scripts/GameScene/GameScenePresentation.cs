@@ -23,6 +23,19 @@ namespace DiaBlackJack.GameScene
         Attacked,
     }
 
+    internal enum EnemySpeechEventKind
+    {
+        PublicAction,
+        AutomaticCardActivation,
+    }
+
+    internal enum EnemySpeechBeat
+    {
+        Immediate,
+        BeforeEffect,
+        AfterEffect,
+    }
+
     internal sealed class EnemySpeechCue
     {
         public EnemySpeechCue(
@@ -31,12 +44,37 @@ namespace DiaBlackJack.GameScene
             int actionOrdinal,
             string cueKey,
             string sourceDefinitionKey)
+            : this(
+                battle,
+                roundNumber,
+                actionOrdinal,
+                cueKey,
+                sourceDefinitionKey,
+                EnemySpeechEventKind.PublicAction,
+                EnemySpeechBeat.Immediate)
+        {
+        }
+
+        public EnemySpeechCue(
+            CoreLoopBattle battle,
+            int roundNumber,
+            int actionOrdinal,
+            string cueKey,
+            string sourceDefinitionKey,
+            EnemySpeechEventKind eventKind,
+            EnemySpeechBeat beat,
+            string fallbackCueKey = null,
+            int sequenceIndex = 0)
         {
             Battle = battle;
             RoundNumber = roundNumber;
             ActionOrdinal = actionOrdinal;
             CueKey = cueKey ?? throw new ArgumentNullException(nameof(cueKey));
             SourceDefinitionKey = sourceDefinitionKey ?? string.Empty;
+            EventKind = eventKind;
+            Beat = beat;
+            FallbackCueKey = fallbackCueKey ?? string.Empty;
+            SequenceIndex = sequenceIndex;
         }
 
         public int ActionOrdinal { get; }
@@ -45,16 +83,35 @@ namespace DiaBlackJack.GameScene
 
         public string CueKey { get; }
 
+        public EnemySpeechBeat Beat { get; }
+
+        public EnemySpeechEventKind EventKind { get; }
+
+        public string FallbackCueKey { get; }
+
         public int RoundNumber { get; }
 
         public string SourceDefinitionKey { get; }
+
+        public int SequenceIndex { get; }
+
+        public bool RequiresOrderedPlayback => Beat != EnemySpeechBeat.Immediate;
 
         public bool IsSameActionAs(EnemySpeechCue other)
         {
             return other != null &&
                 ReferenceEquals(Battle, other.Battle) &&
                 RoundNumber == other.RoundNumber &&
-                ActionOrdinal == other.ActionOrdinal;
+                ActionOrdinal == other.ActionOrdinal &&
+                EventKind == other.EventKind;
+        }
+
+
+        public bool IsSameBeatAs(EnemySpeechCue other)
+        {
+            return IsSameActionAs(other) &&
+                Beat == other.Beat &&
+                SequenceIndex == other.SequenceIndex;
         }
     }
 
@@ -69,6 +126,29 @@ namespace DiaBlackJack.GameScene
             RoundResolution? lastResolution,
             BattleOutcome outcome,
             EnemySpeechCue actionCue)
+            : this(
+                battle,
+                roundNumber,
+                actionOrdinal,
+                enemySoulCurrent,
+                enemySoulMaximum,
+                lastResolution,
+                outcome,
+                actionCue == null
+                    ? Array.Empty<EnemySpeechCue>()
+                    : Array.AsReadOnly(new[] { actionCue }))
+        {
+        }
+
+        public EnemySpeechObservation(
+            CoreLoopBattle battle,
+            int roundNumber,
+            int actionOrdinal,
+            int enemySoulCurrent,
+            int enemySoulMaximum,
+            RoundResolution? lastResolution,
+            BattleOutcome outcome,
+            IReadOnlyList<EnemySpeechCue> actionCues)
         {
             Battle = battle ?? throw new ArgumentNullException(nameof(battle));
             RoundNumber = roundNumber;
@@ -77,12 +157,16 @@ namespace DiaBlackJack.GameScene
             EnemySoulMaximum = enemySoulMaximum;
             LastResolution = lastResolution;
             Outcome = outcome;
-            ActionCue = actionCue;
+            ActionCues = actionCues ?? throw new ArgumentNullException(
+                nameof(actionCues));
         }
 
         public int ActionOrdinal { get; }
 
-        public EnemySpeechCue ActionCue { get; }
+        public EnemySpeechCue ActionCue =>
+            ActionCues.Count == 0 ? null : ActionCues[0];
+
+        public IReadOnlyList<EnemySpeechCue> ActionCues { get; }
 
         public CoreLoopBattle Battle { get; }
 
@@ -149,6 +233,8 @@ namespace DiaBlackJack.GameScene
             IsUsed = isUsed;
             DirectSelectionCommand = directSelectionCommand;
             IsEffectSource = isEffectSource;
+            IsEffectSourcePersistent =
+                isEffectSource && isEffectSourcePersistent;
             IsSatanBranded = isSatanBranded;
             HoverOutlineState = ResolveHoverOutlineState(
                 DefinitionKey,
@@ -205,6 +291,8 @@ namespace DiaBlackJack.GameScene
 
         public bool IsEffectSource { get; }
 
+        internal bool IsEffectSourcePersistent { get; }
+
         /// <summary>
         /// Whether Satan's upper-face declaration has branded this rank candidate.
         /// Kept separate from <see cref="IsUsed"/> so the normal used-card X mark is not shown.
@@ -233,8 +321,6 @@ namespace DiaBlackJack.GameScene
             foreach (CardDefinition definition in CardDefinitionCatalog.All)
             {
                 if (string.Equals(
-            IsEffectSourcePersistent =
-                isEffectSource && isEffectSourcePersistent;
                     definition.Key,
                     definitionKey,
                     StringComparison.Ordinal))
@@ -291,8 +377,6 @@ namespace DiaBlackJack.GameScene
         {
             Kind = kind;
             Title = title ?? string.Empty;
-        internal bool IsEffectSourcePersistent { get; }
-
             CardGroups = cardGroups ??
                 throw new ArgumentNullException(nameof(cardGroups));
 
@@ -630,6 +714,45 @@ namespace DiaBlackJack.GameScene
 
     public static class GameScenePresenter
     {
+        private enum EffectSourceCardKind
+        {
+            Normal,
+            Demon,
+        }
+
+        private readonly struct EffectSourceProjection
+        {
+            public EffectSourceProjection(
+                int cardId,
+                CombatantSide ownerSide,
+                EffectSourceCardKind cardKind,
+                bool isPersistent)
+            {
+                CardId = cardId;
+                OwnerSide = ownerSide;
+                CardKind = cardKind;
+                IsPersistent = isPersistent;
+            }
+
+            public int CardId { get; }
+
+            public EffectSourceCardKind CardKind { get; }
+
+            public bool IsPersistent { get; }
+
+            public CombatantSide OwnerSide { get; }
+
+            public bool Matches(
+                int cardId,
+                CombatantSide ownerSide,
+                EffectSourceCardKind cardKind)
+            {
+                return CardId == cardId &&
+                    OwnerSide == ownerSide &&
+                    CardKind == cardKind;
+            }
+        }
+
         public static GameSceneViewModel Create(CoreLoopBattle battle, string profileKey = null)
         {
             if (battle == null)
@@ -647,6 +770,8 @@ namespace DiaBlackJack.GameScene
                 battle.ActivePlayerDemonContracts);
             ActiveDemonContract enemyMammon = FindMammonContract(
                 battle.ActiveEnemyDemonContracts);
+            EffectSourceProjection? effectSource =
+                CreateEffectSourceProjection(battle);
             GameSceneViewModel model = new GameSceneViewModel(
                 core,
                 CreatePlayerCards(
@@ -697,10 +822,14 @@ namespace DiaBlackJack.GameScene
                 playerMammon != null &&
                     battle.CanBeginPlayerActiveDemonContractAction(
                         playerMammon.SourceCardId));
-            model.EnemySpeechCue = CreateEnemySpeechCue(battle);
+            IReadOnlyList<EnemySpeechCue> speechCues =
+                CreateEnemySpeechCues(battle);
+            model.EnemySpeechCue = speechCues.Count == 0
+                ? null
+                : speechCues[0];
             model.EnemySpeechObservation = CreateEnemySpeechObservation(
                 battle,
-                model.EnemySpeechCue);
+                speechCues);
             return model;
         }
 
@@ -723,45 +852,6 @@ namespace DiaBlackJack.GameScene
                 case PublicCombatActionType.Hit:
                     cueKey = SpeechCueKeys.ActionHit;
                     break;
-        private enum EffectSourceCardKind
-        {
-            Normal,
-            Demon,
-        }
-
-        private readonly struct EffectSourceProjection
-        {
-            public EffectSourceProjection(
-                int cardId,
-                CombatantSide ownerSide,
-                EffectSourceCardKind cardKind,
-                bool isPersistent)
-            {
-                CardId = cardId;
-                OwnerSide = ownerSide;
-                CardKind = cardKind;
-                IsPersistent = isPersistent;
-            }
-
-            public int CardId { get; }
-
-            public EffectSourceCardKind CardKind { get; }
-
-            public bool IsPersistent { get; }
-
-            public CombatantSide OwnerSide { get; }
-
-            public bool Matches(
-                int cardId,
-                CombatantSide ownerSide,
-                EffectSourceCardKind cardKind)
-            {
-                return CardId == cardId &&
-                    OwnerSide == ownerSide &&
-                    CardKind == cardKind;
-            }
-        }
-
                 case PublicCombatActionType.Stand:
                     cueKey = SpeechCueKeys.ActionStand;
                     break;
@@ -779,8 +869,6 @@ namespace DiaBlackJack.GameScene
             }
 
             return new EnemySpeechCue(
-            EffectSourceProjection? effectSource =
-                CreateEffectSourceProjection(battle);
                 battle,
                 roundNumber,
                 actionOrdinal,
@@ -790,7 +878,7 @@ namespace DiaBlackJack.GameScene
 
         private static EnemySpeechObservation CreateEnemySpeechObservation(
             CoreLoopBattle battle,
-            EnemySpeechCue actionCue)
+            IReadOnlyList<EnemySpeechCue> actionCues)
         {
             return new EnemySpeechObservation(
                 battle,
@@ -800,20 +888,266 @@ namespace DiaBlackJack.GameScene
                 battle.Enemy.Soul.Maximum,
                 battle.LastResolution,
                 battle.Outcome,
-                actionCue);
+                actionCues);
         }
 
-        private static EnemySpeechCue CreateEnemySpeechCue(CoreLoopBattle battle)
+        private static IReadOnlyList<EnemySpeechCue> CreateEnemySpeechCues(
+            CoreLoopBattle battle)
         {
+            var cues = new List<EnemySpeechCue>();
             IReadOnlyList<PublicCombatAction> history = battle.PublicActionHistory;
             int count = history.Count;
-            return count == 0
-                ? null
-                : CreateEnemySpeechCue(
-                    battle.RoundNumber,
-                    count,
+            if (count > 0)
+            {
+                AddPublicActionSpeechCues(
+                    battle,
                     history[count - 1],
+                    count,
+                    cues);
+            }
+
+            EnemySpeechCue automaticCue = CreateAutomaticCardSpeechCue(battle);
+            if (automaticCue != null)
+            {
+                int afterEffectIndex = cues.FindIndex(
+                    cue => cue.Beat == EnemySpeechBeat.AfterEffect);
+                if (afterEffectIndex >= 0)
+                {
+                    cues.Insert(afterEffectIndex, automaticCue);
+                }
+                else
+                {
+                    cues.Add(automaticCue);
+                }
+            }
+
+            return cues.AsReadOnly();
+        }
+
+        private static void AddPublicActionSpeechCues(
+            CoreLoopBattle battle,
+            PublicCombatAction action,
+            int actionOrdinal,
+            List<EnemySpeechCue> cues)
+        {
+            if (action.ActorSide == CombatantSide.Player)
+            {
+                if (action.ActionType == PublicCombatActionType.UseCard)
+                {
+                    cues.Add(CreateOrderedCue(
+                        battle,
+                        battle.RoundNumber,
+                        actionOrdinal,
+                        SpeechCueKeys.ReactionPlayerManualCard,
+                        action.SourceCardDefinitionKey,
+                        EnemySpeechBeat.BeforeEffect,
+                        SpeechCueKeys.ActionUseCard));
+                }
+                else if (action.ActionType ==
+                    PublicCombatActionType.DemonContract)
+                {
+                    cues.Add(CreateOrderedCue(
+                        battle,
+                        battle.RoundNumber,
+                        actionOrdinal,
+                        SpeechCueKeys.ReactionPlayerDemonContract,
+                        action.SourceCardDefinitionKey,
+                        EnemySpeechBeat.BeforeEffect,
+                        SpeechCueKeys.ActionDemonContract));
+                }
+
+                return;
+            }
+
+            if (action.ActionType == PublicCombatActionType.DemonContract)
+            {
+                cues.Add(CreateOrderedCue(
+                    battle,
+                    battle.RoundNumber,
+                    actionOrdinal,
+                    SpeechCueKeys.GetDemonContractAction(
+                        action.SourceCardDefinitionKey),
+                    action.SourceCardDefinitionKey,
+                    EnemySpeechBeat.BeforeEffect,
+                    SpeechCueKeys.ActionDemonContract));
+                return;
+            }
+
+            if (action.ActionType != PublicCombatActionType.UseCard)
+            {
+                EnemySpeechCue generic = CreateEnemySpeechCue(
+                    battle.RoundNumber,
+                    actionOrdinal,
+                    action,
                     battle);
+                if (generic != null)
+                {
+                    cues.Add(generic);
+                }
+
+                return;
+            }
+
+            CardEffectKind effectKind = CardDefinitionCatalog
+                .GetByKey(action.SourceCardDefinitionKey)
+                .Effect;
+            switch (effectKind)
+            {
+                case CardEffectKind.AutoPistol:
+                    AddManualEffectSpeechCues(
+                        battle,
+                        action,
+                        actionOrdinal,
+                        SpeechCueKeys.ActionRevolverBefore,
+                        SpeechCueKeys.ActionRevolverHit,
+                        SpeechCueKeys.ActionRevolverMiss,
+                        result => result.Succeeded,
+                        ResolveRevolverSpeechSequenceIndex(battle),
+                        cues);
+                    break;
+                case CardEffectKind.MilitaryKnife:
+                    AddManualEffectSpeechCues(
+                        battle,
+                        action,
+                        actionOrdinal,
+                        SpeechCueKeys.ActionKnifeBefore,
+                        SpeechCueKeys.ActionKnifeBust,
+                        SpeechCueKeys.ActionKnifeNoBust,
+                        result => result.EndedRound,
+                        1,
+                        cues);
+                    break;
+                case CardEffectKind.ThreatHammer:
+                    AddManualEffectSpeechCues(
+                        battle,
+                        action,
+                        actionOrdinal,
+                        SpeechCueKeys.ActionHammerBefore,
+                        SpeechCueKeys.ActionHammerBust,
+                        SpeechCueKeys.ActionHammerNoBust,
+                        result => result.EndedRound,
+                        1,
+                        cues);
+                    break;
+                default:
+                    cues.Add(new EnemySpeechCue(
+                        battle,
+                        battle.RoundNumber,
+                        actionOrdinal,
+                        SpeechCueKeys.ActionUseCard,
+                        action.SourceCardDefinitionKey));
+                    break;
+            }
+        }
+
+        private static void AddManualEffectSpeechCues(
+            CoreLoopBattle battle,
+            PublicCombatAction action,
+            int actionOrdinal,
+            string beforeKey,
+            string successfulKey,
+            string unsuccessfulKey,
+            Func<CardEffectResult, bool> isSuccessful,
+            int sequenceIndex,
+            List<EnemySpeechCue> cues)
+        {
+            cues.Add(CreateOrderedCue(
+                battle,
+                battle.RoundNumber,
+                actionOrdinal,
+                beforeKey,
+                action.SourceCardDefinitionKey,
+                EnemySpeechBeat.BeforeEffect,
+                SpeechCueKeys.ActionUseCard,
+                sequenceIndex));
+
+            if (!battle.LastCardEffectResult.HasValue ||
+                battle.LastCardEffectActorSide != CombatantSide.Enemy ||
+                !battle.LastPublicActionSourceCardId.HasValue)
+            {
+                return;
+            }
+
+            CardEffectResult result = battle.LastCardEffectResult.Value;
+            if (result.SourceCardId !=
+                battle.LastPublicActionSourceCardId.Value)
+            {
+                return;
+            }
+
+            cues.Add(CreateOrderedCue(
+                battle,
+                battle.RoundNumber,
+                actionOrdinal,
+                isSuccessful(result) ? successfulKey : unsuccessfulKey,
+                action.SourceCardDefinitionKey,
+                EnemySpeechBeat.AfterEffect,
+                SpeechCueKeys.ActionUseCard,
+                sequenceIndex));
+        }
+
+        private static EnemySpeechCue CreateAutomaticCardSpeechCue(
+            CoreLoopBattle battle)
+        {
+            if (battle.LastAutomaticCardActivationOrdinal <= 0 ||
+                !battle.LastAutomaticCardActivationOwnerSide.HasValue ||
+                string.IsNullOrWhiteSpace(
+                    battle.LastAutomaticCardActivationDefinitionKey))
+            {
+                return null;
+            }
+
+            CombatantSide ownerSide =
+                battle.LastAutomaticCardActivationOwnerSide.Value;
+            string definitionKey =
+                battle.LastAutomaticCardActivationDefinitionKey;
+            return new EnemySpeechCue(
+                battle,
+                battle.LastAutomaticCardActivationRoundNumber,
+                battle.LastAutomaticCardActivationOrdinal,
+                ownerSide == CombatantSide.Enemy
+                    ? SpeechCueKeys.GetAutomaticCardAction(definitionKey)
+                    : SpeechCueKeys.ReactionPlayerAutomaticCard,
+                definitionKey,
+                EnemySpeechEventKind.AutomaticCardActivation,
+                EnemySpeechBeat.BeforeEffect,
+                SpeechCueKeys.ActionUseCard);
+        }
+
+        private static EnemySpeechCue CreateOrderedCue(
+            CoreLoopBattle battle,
+            int roundNumber,
+            int actionOrdinal,
+            string cueKey,
+            string sourceDefinitionKey,
+            EnemySpeechBeat beat,
+            string fallbackCueKey,
+            int sequenceIndex = 0)
+        {
+            return new EnemySpeechCue(
+                battle,
+                roundNumber,
+                actionOrdinal,
+                cueKey,
+                sourceDefinitionKey,
+                EnemySpeechEventKind.PublicAction,
+                beat,
+                fallbackCueKey,
+                sequenceIndex);
+        }
+
+        private static int ResolveRevolverSpeechSequenceIndex(
+            CoreLoopBattle battle)
+        {
+            if (battle.HasPendingLeviathanAutoPistolRetry)
+            {
+                return 2;
+            }
+
+            return battle.LastLeviathanCardEffectResult != null &&
+                battle.LastLeviathanCardEffectResult.ActivationSuccesses.Count == 2
+                    ? 2
+                    : 1;
         }
 
         private static ActiveDemonContract FindMammonContract(

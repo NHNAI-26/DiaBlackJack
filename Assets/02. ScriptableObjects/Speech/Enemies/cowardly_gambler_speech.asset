@@ -67,3 +67,39 @@ MonoBehaviour:
     lines:
     - "\uB9D0\uB3C4 \uC548 \uB3FC..."
     - "\uC774\uAC74 \uAFC8\uC77C \uAC70\uC57C..."
+  - cueKey: combat.action.revolver.before
+    lines:
+    - "움직이지 마, 나도 떨리니까!"
+  - cueKey: combat.action.revolver.hit
+    lines:
+    - "마, 맞았어! 내가 맞혔다고!"
+  - cueKey: combat.action.revolver.miss
+    lines:
+    - "일부러 빗나간 거야, 진짜야!"
+  - cueKey: combat.action.knife.before
+    lines:
+    - "가까이 오지 마, 찌를 거야!"
+  - cueKey: combat.action.knife.bust
+    lines:
+    - "됐어, 이제 난 살 수 있어!"
+  - cueKey: combat.action.knife.no_bust
+    lines:
+    - "왜 아직 멀쩡한 건데?!"
+  - cueKey: combat.action.hammer.before
+    lines:
+    - "이 패만 없애면 괜찮아질 거야!"
+  - cueKey: combat.action.hammer.bust
+    lines:
+    - "끝난 거지? 이제 끝난 거지?!"
+  - cueKey: combat.action.hammer.no_bust
+    lines:
+    - "아직도 안 끝났다고...?"
+  - cueKey: combat.reaction.player.manual_card
+    lines:
+    - "잠깐, 그 카드 뭐야?!"
+  - cueKey: combat.reaction.player.demon_contract
+    lines:
+    - "악마까지 부르는 건 반칙이잖아!"
+  - cueKey: combat.reaction.player.automatic_card
+    lines:
+    - "그게 저절로 움직였어!"

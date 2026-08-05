@@ -66,3 +66,30 @@ MonoBehaviour:
     lines:
     - "\uC774\uBC88 \uACB0\uD22C\uB294 \uB124 \uBAAB\uC774\uB2E4."
     - "\uC88B\uC740 \uC0AC\uC218\uC600\uAD70."
+  - cueKey: combat.action.revolver.before
+    lines:
+    - "방아쇠는 이미 당겨졌다."
+  - cueKey: combat.action.revolver.hit
+    lines:
+    - "명중이다."
+  - cueKey: combat.action.revolver.miss
+    lines:
+    - "빗나갔군."
+  - cueKey: combat.action.hammer.before
+    lines:
+    - "쓸데없는 패는 부숴 주지."
+  - cueKey: combat.action.hammer.bust
+    lines:
+    - "그 패가 네 마지막 패였다."
+  - cueKey: combat.action.hammer.no_bust
+    lines:
+    - "하나 치웠을 뿐이다."
+  - cueKey: combat.reaction.player.manual_card
+    lines:
+    - "그 수, 끝까지 지켜보지."
+  - cueKey: combat.reaction.player.demon_contract
+    lines:
+    - "악마에게 손을 빌렸군."
+  - cueKey: combat.reaction.player.automatic_card
+    lines:
+    - "숨겨 둔 패가 있었군."

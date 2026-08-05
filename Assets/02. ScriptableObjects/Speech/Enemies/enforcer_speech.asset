@@ -66,3 +66,51 @@ MonoBehaviour:
     lines:
     - "\uC0B4\uC544\uB0A8\uC558\uAD70. \uCD95\uD558\uD55C\uB2E4."
     - "\uC774\uBC88 \uD310\uACB0\uC740 \uC5EC\uAE30\uAE4C\uC9C0\uB2E4. \uAC00\uB77C."
+  - cueKey: combat.action.revolver.before
+    lines:
+    - "사격 집행을 개시한다."
+  - cueKey: combat.action.revolver.hit
+    lines:
+    - "명중을 확인했다."
+  - cueKey: combat.action.revolver.miss
+    lines:
+    - "오차를 기록한다."
+  - cueKey: combat.action.knife.before
+    lines:
+    - "근접 집행 절차로 전환한다."
+  - cueKey: combat.action.knife.bust
+    lines:
+    - "대상의 파열을 확인했다."
+  - cueKey: combat.action.knife.no_bust
+    lines:
+    - "대상 생존, 집행을 계속한다."
+  - cueKey: combat.action.hammer.before
+    lines:
+    - "불필요한 증거를 파기한다."
+  - cueKey: combat.action.hammer.bust
+    lines:
+    - "파기와 함께 형이 확정됐다."
+  - cueKey: combat.action.hammer.no_bust
+    lines:
+    - "파기 완료, 다음 절차로 간다."
+  - cueKey: combat.action.automatic.poison-1
+    lines:
+    - "독극물 투입 절차를 실행한다."
+  - cueKey: combat.action.automatic.lie-detector-3
+    lines:
+    - "진술의 진위를 검사한다."
+  - cueKey: combat.action.automatic.flamethrower-4
+    lines:
+    - "소각 대상으로 판정했다."
+  - cueKey: combat.action.automatic.pocket-watch-5
+    lines:
+    - "사용 완료 도구를 재가동한다."
+  - cueKey: combat.reaction.player.manual_card
+    lines:
+    - "도구 사용을 확인했다."
+  - cueKey: combat.reaction.player.demon_contract
+    lines:
+    - "불법 계약 행위를 기록한다."
+  - cueKey: combat.reaction.player.automatic_card
+    lines:
+    - "자동 장치의 작동을 확인했다."

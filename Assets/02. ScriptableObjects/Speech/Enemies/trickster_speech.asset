@@ -67,3 +67,33 @@ MonoBehaviour:
     lines:
     - "\uB9D0\uB3C4 \uC548 \uB3FC! \uB0B4\uAC00 \uC9C8 \uB9AC\uAC00 \uC5C6\uB2E4\uACE0!!"
     - "\uC778\uC815 \uBABB \uD574... \uC778\uC815 \uBABB \uD55C\uB2E4\uACE0...!!"
+  - cueKey: combat.action.revolver.before
+    lines:
+    - "자, 오늘의 묘기는 단 한 발!"
+  - cueKey: combat.action.revolver.hit
+    lines:
+    - "정중앙! 박수는 크게 부탁해!"
+  - cueKey: combat.action.revolver.miss
+    lines:
+    - "빗나감까지 계산된 연출이지!"
+  - cueKey: combat.action.hammer.before
+    lines:
+    - "이번 순서는 카드 분쇄 마술이야!"
+  - cueKey: combat.action.hammer.bust
+    lines:
+    - "짜잔, 관객 한 명이 사라졌습니다!"
+  - cueKey: combat.action.hammer.no_bust
+    lines:
+    - "아직 피날레가 남았다고!"
+  - cueKey: combat.action.automatic.lie-detector-3
+    lines:
+    - "거짓말은 쇼의 재미를 망치지!"
+  - cueKey: combat.reaction.player.manual_card
+    lines:
+    - "오, 제법 볼 만한 묘기인데?"
+  - cueKey: combat.reaction.player.demon_contract
+    lines:
+    - "악마까지 특별 출연이라니 화려하군!"
+  - cueKey: combat.reaction.player.automatic_card
+    lines:
+    - "소품이 혼자 움직이다니 훌륭해!"

@@ -525,6 +525,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("GSB03")]
         public void GSB02_U02_EnemyAndMerchantAssetsContainTwoUniqueKoreanLinesPerCue()
         {
             EnemyContentCatalogSO catalog =
@@ -542,17 +543,22 @@ namespace DiaBlackJack.CoreLoop.Tests
             foreach (EnemyCombatProfileDefinitionSO enemy in catalog.Enemies)
             {
                 SpeechProfileSO profile = enemy.SpeechProfile;
+                EnemyCombatProfile runtimeProfile =
+                    enemy.CreateRuntimeProfile();
+                IReadOnlyList<string> requiredKeys =
+                    SpeechCueKeys.GetRequiredEnemyKeys(runtimeProfile);
                 Assert.That(profile, Is.Not.Null, enemy.Key);
                 Assert.That(profile.SpeakerKey, Is.EqualTo(enemy.Key));
                 Assert.That(profile.EntryCount,
-                    Is.EqualTo(SpeechCueKeys.RequiredEnemyKeys.Count));
-                foreach (string cueKey in SpeechCueKeys.RequiredEnemyKeys)
+                    Is.EqualTo(requiredKeys.Count));
+                foreach (string cueKey in requiredKeys)
                 {
                     Assert.That(profile.TryGetLines(
                         cueKey,
                         out IReadOnlyList<string> lines), Is.True,
                         enemy.Key + ":" + cueKey);
-                    Assert.That(lines.Count, Is.EqualTo(2));
+                    Assert.That(lines.Count,
+                        Is.EqualTo(IsSingleLineEnemyCue(cueKey) ? 1 : 2));
                     Assert.That(lines.All(ContainsKorean), Is.True);
                     Assert.That(
                         lines.Distinct(StringComparer.Ordinal).Count(),
@@ -929,6 +935,204 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
         }
 
+        [Test]
+        [Category("GSB03")]
+        public void GSB03_U01_OrderedCardSpeechPlaysBeforeResultThenTerminal()
+        {
+            CoreLoopBattle battle = CreateBattle(801);
+            SpeechProfileSO profile = CreateSpeechProfile(
+                "ordered",
+                (SpeechCueKeys.ActionRevolverBefore, new[] { "before" }),
+                (SpeechCueKeys.ActionRevolverHit, new[] { "hit" }),
+                (SpeechCueKeys.Victory, new[] { "victory" }));
+            try
+            {
+                var director = new EnemySpeechDirector(77);
+                var cues = Array.AsReadOnly(new[]
+                {
+                    new EnemySpeechCue(
+                        battle,
+                        1,
+                        1,
+                        SpeechCueKeys.ActionRevolverBefore,
+                        "auto-pistol-7",
+                        EnemySpeechEventKind.PublicAction,
+                        EnemySpeechBeat.BeforeEffect,
+                        SpeechCueKeys.ActionUseCard,
+                        sequenceIndex: 1),
+                    new EnemySpeechCue(
+                        battle,
+                        1,
+                        1,
+                        SpeechCueKeys.ActionRevolverHit,
+                        "auto-pistol-7",
+                        EnemySpeechEventKind.PublicAction,
+                        EnemySpeechBeat.AfterEffect,
+                        SpeechCueKeys.ActionUseCard,
+                        sequenceIndex: 1),
+                });
+                EnemySpeechObservation observation = CreateObservationWithCues(
+                    battle,
+                    1,
+                    1,
+                    10,
+                    10,
+                    null,
+                    BattleOutcome.PlayerDefeat,
+                    cues);
+
+                AssertResolved(
+                    director,
+                    profile,
+                    observation,
+                    SpeechPlaybackMoment.BeforeAnimation,
+                    SpeechCueKeys.ActionRevolverBefore,
+                    "before");
+                Assert.That(director.TryResolve(
+                    observation,
+                    profile,
+                    SpeechPlaybackMoment.BeforeAnimation,
+                    out _), Is.False);
+                AssertResolved(
+                    director,
+                    profile,
+                    observation,
+                    SpeechPlaybackMoment.AfterAnimation,
+                    SpeechCueKeys.ActionRevolverHit,
+                    "hit");
+                AssertResolved(
+                    director,
+                    profile,
+                    observation,
+                    SpeechPlaybackMoment.BeforeAnimation,
+                    SpeechCueKeys.Victory,
+                    "victory");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(profile);
+            }
+        }
+
+        [Test]
+        [Category("GSB03")]
+        public void GSB03_U02_SpecializedCueFallsBackToLegacyCardLine()
+        {
+            CoreLoopBattle battle = CreateBattle(811);
+            SpeechProfileSO profile = CreateSpeechProfile(
+                "fallback",
+                (SpeechCueKeys.ActionUseCard, new[] { "legacy" }));
+            try
+            {
+                var director = new EnemySpeechDirector(78);
+                EnemySpeechCue cue = new EnemySpeechCue(
+                    battle,
+                    1,
+                    1,
+                    SpeechCueKeys.ActionKnifeBefore,
+                    "military-knife-9",
+                    EnemySpeechEventKind.PublicAction,
+                    EnemySpeechBeat.BeforeEffect,
+                    SpeechCueKeys.ActionUseCard);
+                EnemySpeechObservation observation = CreateObservationWithCues(
+                    battle,
+                    1,
+                    1,
+                    10,
+                    10,
+                    null,
+                    BattleOutcome.InProgress,
+                    Array.AsReadOnly(new[] { cue }));
+
+                AssertResolved(
+                    director,
+                    profile,
+                    observation,
+                    SpeechPlaybackMoment.BeforeAnimation,
+                    SpeechCueKeys.ActionKnifeBefore,
+                    "legacy");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(profile);
+            }
+        }
+
+        [Test]
+        [Category("GSB03")]
+        public void GSB03_U03_CueIdentityIncludesBeatAndRevolverShotIndex()
+        {
+            CoreLoopBattle battle = CreateBattle(821);
+            EnemySpeechCue firstBefore = new EnemySpeechCue(
+                battle, 1, 1, "before", "auto-pistol-7",
+                EnemySpeechEventKind.PublicAction,
+                EnemySpeechBeat.BeforeEffect,
+                sequenceIndex: 1);
+            EnemySpeechCue firstResult = new EnemySpeechCue(
+                battle, 1, 1, "result", "auto-pistol-7",
+                EnemySpeechEventKind.PublicAction,
+                EnemySpeechBeat.AfterEffect,
+                sequenceIndex: 1);
+            EnemySpeechCue secondBefore = new EnemySpeechCue(
+                battle, 1, 1, "before", "auto-pistol-7",
+                EnemySpeechEventKind.PublicAction,
+                EnemySpeechBeat.BeforeEffect,
+                sequenceIndex: 2);
+
+            Assert.That(firstBefore.IsSameActionAs(firstResult), Is.True);
+            Assert.That(firstBefore.IsSameBeatAs(firstResult), Is.False);
+            Assert.That(firstBefore.IsSameBeatAs(secondBefore), Is.False);
+        }
+
+        [Test]
+        [Category("GSB03")]
+        public void GSB03_U04_LeviathanRetryBeforeCueUsesSecondShotIndex()
+        {
+            CoreLoopBattle battle = CreateBattle(831);
+            FieldInfo activeSequenceField = typeof(CoreLoopBattle).GetField(
+                "_activeLeviathanCardEffectSequence",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo pendingEffectField = typeof(CoreLoopBattle).GetField(
+                "_pendingCardEffect",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo resolver = typeof(GameScenePresenter).GetMethod(
+                "ResolveRevolverSpeechSequenceIndex",
+                BindingFlags.Static | BindingFlags.NonPublic);
+
+            Assert.That(activeSequenceField, Is.Not.Null);
+            Assert.That(pendingEffectField, Is.Not.Null);
+            Assert.That(resolver, Is.Not.Null);
+
+            BlackjackCard sourceCard = new BlackjackCard(
+                831,
+                CardDefinitionCatalog.GetByKey("auto-pistol-7"));
+            activeSequenceField.SetValue(
+                battle,
+                new LeviathanCardEffectSequence(
+                    CombatantSide.Enemy,
+                    sourceContractCardId: 830,
+                    sourceCard.Id,
+                    firstActivationSucceeded: false));
+            pendingEffectField.SetValue(
+                battle,
+                new PendingCardEffect(
+                    sourceCard.Id,
+                    sourceCard.Definition.Effect,
+                    "retry",
+                    CardEffectChoiceKind.DeclareNumber,
+                    new[]
+                    {
+                        new CardEffectChoiceOption(
+                            id: 1,
+                            label: "1",
+                            numericValue: 1),
+                    }));
+
+            Assert.That(
+                resolver.Invoke(null, new object[] { battle }),
+                Is.EqualTo(2));
+        }
+
         private static CoreLoopBattle CreateBattle(int seed)
         {
             return new CoreLoopBattle(
@@ -1035,6 +1239,27 @@ namespace DiaBlackJack.CoreLoop.Tests
                 actionCue);
         }
 
+        private static EnemySpeechObservation CreateObservationWithCues(
+            CoreLoopBattle battle,
+            int roundNumber,
+            int actionOrdinal,
+            int currentSoul,
+            int maximumSoul,
+            RoundResolution? resolution,
+            BattleOutcome outcome,
+            IReadOnlyList<EnemySpeechCue> actionCues)
+        {
+            return new EnemySpeechObservation(
+                battle,
+                roundNumber,
+                actionOrdinal,
+                currentSoul,
+                maximumSoul,
+                resolution,
+                outcome,
+                actionCues);
+        }
+
         private static void AssertResolved(
             EnemySpeechDirector director,
             SpeechProfileSO profile,
@@ -1048,6 +1273,45 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(presentation.CueKey, Is.EqualTo(expectedCueKey));
             Assert.That(presentation.Message,
                 Is.EqualTo(expectedCueKey + ".line"));
+        }
+
+        private static void AssertResolved(
+            EnemySpeechDirector director,
+            SpeechProfileSO profile,
+            EnemySpeechObservation observation,
+            SpeechPlaybackMoment playbackMoment,
+            string expectedCueKey,
+            string expectedMessage)
+        {
+            Assert.That(director.TryResolve(
+                observation,
+                profile,
+                playbackMoment,
+                out EnemySpeechPresentation presentation), Is.True);
+            Assert.That(presentation.CueKey, Is.EqualTo(expectedCueKey));
+            Assert.That(presentation.Message, Is.EqualTo(expectedMessage));
+        }
+
+        private static bool IsSingleLineEnemyCue(string cueKey)
+        {
+            return cueKey.StartsWith(
+                    "combat.action.revolver.",
+                    StringComparison.Ordinal) ||
+                cueKey.StartsWith(
+                    "combat.action.knife.",
+                    StringComparison.Ordinal) ||
+                cueKey.StartsWith(
+                    "combat.action.hammer.",
+                    StringComparison.Ordinal) ||
+                cueKey.StartsWith(
+                    "combat.action.automatic.",
+                    StringComparison.Ordinal) ||
+                cueKey.StartsWith(
+                    "combat.action.demon_contract.",
+                    StringComparison.Ordinal) ||
+                cueKey.StartsWith(
+                    "combat.reaction.player.",
+                    StringComparison.Ordinal);
         }
 
         private static bool ContainsKorean(string value)

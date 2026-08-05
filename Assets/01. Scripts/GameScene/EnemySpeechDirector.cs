@@ -20,6 +20,14 @@ namespace DiaBlackJack.GameScene
 
         public string Resolve(SpeechProfileSO profile, string cueKey)
         {
+            return Resolve(profile, cueKey, fallbackCueKey: null);
+        }
+
+        public string Resolve(
+            SpeechProfileSO profile,
+            string cueKey,
+            string fallbackCueKey)
+        {
             if (string.IsNullOrWhiteSpace(cueKey))
             {
                 return string.Empty;
@@ -32,6 +40,16 @@ namespace DiaBlackJack.GameScene
                 return lines[_random.Next(lines.Count)];
             }
 
+            if (!string.IsNullOrWhiteSpace(fallbackCueKey) &&
+                profile != null &&
+                profile.TryGetLines(
+                    fallbackCueKey,
+                    out IReadOnlyList<string> fallbackLines) &&
+                fallbackLines.Count > 0)
+            {
+                return fallbackLines[_random.Next(fallbackLines.Count)];
+            }
+
             string speakerKey = profile == null ? "<missing>" : profile.SpeakerKey;
             string warningKey = speakerKey + "\n" + cueKey;
             if (_warnedMissingKeys.Add(warningKey))
@@ -42,6 +60,13 @@ namespace DiaBlackJack.GameScene
 
             return cueKey;
         }
+    }
+
+    internal enum SpeechPlaybackMoment
+    {
+        Any,
+        BeforeAnimation,
+        AfterAnimation,
     }
 
     internal sealed class EnemySpeechPresentation
@@ -68,12 +93,13 @@ namespace DiaBlackJack.GameScene
     internal sealed class EnemySpeechDirector
     {
         private readonly SpeechLineResolver _resolver;
+        private readonly HashSet<string> _consumedActionBeats =
+            new HashSet<string>(StringComparer.Ordinal);
         private CoreLoopBattle _battle;
         private bool _battleStartConsumed;
         private bool _lowSoulConsumed;
         private bool _terminalConsumed;
         private int _lastRoundNumber;
-        private EnemySpeechCue _lastActionCue;
         private long _lastResolutionId = -1;
 
         public EnemySpeechDirector(int seed)
@@ -88,13 +114,26 @@ namespace DiaBlackJack.GameScene
             _lowSoulConsumed = false;
             _terminalConsumed = false;
             _lastRoundNumber = 0;
-            _lastActionCue = null;
+            _consumedActionBeats.Clear();
             _lastResolutionId = -1;
         }
 
         public bool TryResolve(
             EnemySpeechObservation observation,
             SpeechProfileSO profile,
+            out EnemySpeechPresentation presentation)
+        {
+            return TryResolve(
+                observation,
+                profile,
+                SpeechPlaybackMoment.Any,
+                out presentation);
+        }
+
+        public bool TryResolve(
+            EnemySpeechObservation observation,
+            SpeechProfileSO profile,
+            SpeechPlaybackMoment playbackMoment,
             out EnemySpeechPresentation presentation)
         {
             if (observation == null || observation.Battle == null)
@@ -107,6 +146,30 @@ namespace DiaBlackJack.GameScene
             {
                 Reset();
                 _battle = observation.Battle;
+            }
+
+            if (TryResolveOrderedActionCue(
+                    observation,
+                    profile,
+                    playbackMoment,
+                    out presentation))
+            {
+                return true;
+            }
+
+            if (playbackMoment == SpeechPlaybackMoment.AfterAnimation)
+            {
+                presentation = null;
+                return false;
+            }
+
+            if (playbackMoment == SpeechPlaybackMoment.BeforeAnimation &&
+                HasUnconsumedOrderedCue(
+                    observation,
+                    EnemySpeechBeat.AfterEffect))
+            {
+                presentation = null;
+                return false;
             }
 
             string selectedKey = null;
@@ -153,16 +216,20 @@ namespace DiaBlackJack.GameScene
                 }
             }
 
-            EnemySpeechCue actionCue = observation.ActionCue;
-            if (actionCue != null &&
-                !actionCue.IsSameActionAs(_lastActionCue))
+            foreach (EnemySpeechCue actionCue in observation.ActionCues)
             {
-                _lastActionCue = actionCue;
+                if (actionCue.RequiresOrderedPlayback ||
+                    !TryConsumeActionCue(actionCue))
+                {
+                    continue;
+                }
+
                 Select(
                     actionCue.CueKey,
                     SpeechPriority.Action,
                     ref selectedKey,
                     ref selectedPriority);
+                break;
             }
 
             if (!_battleStartConsumed)
@@ -197,6 +264,81 @@ namespace DiaBlackJack.GameScene
                 _resolver.Resolve(profile, selectedKey),
                 selectedPriority);
             return true;
+        }
+
+        private bool TryResolveOrderedActionCue(
+            EnemySpeechObservation observation,
+            SpeechProfileSO profile,
+            SpeechPlaybackMoment playbackMoment,
+            out EnemySpeechPresentation presentation)
+        {
+            foreach (EnemySpeechCue cue in observation.ActionCues)
+            {
+                if (!cue.RequiresOrderedPlayback ||
+                    !MatchesPlaybackMoment(cue.Beat, playbackMoment) ||
+                    !TryConsumeActionCue(cue))
+                {
+                    continue;
+                }
+
+                presentation = new EnemySpeechPresentation(
+                    cue.CueKey,
+                    _resolver.Resolve(
+                        profile,
+                        cue.CueKey,
+                        cue.FallbackCueKey),
+                    SpeechPriority.Action);
+                return true;
+            }
+
+            presentation = null;
+            return false;
+        }
+
+        private bool HasUnconsumedOrderedCue(
+            EnemySpeechObservation observation,
+            EnemySpeechBeat beat)
+        {
+            foreach (EnemySpeechCue cue in observation.ActionCues)
+            {
+                if (cue.RequiresOrderedPlayback &&
+                    cue.Beat == beat &&
+                    !_consumedActionBeats.Contains(CreateActionBeatKey(cue)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool TryConsumeActionCue(EnemySpeechCue cue)
+        {
+            return _consumedActionBeats.Add(CreateActionBeatKey(cue));
+        }
+
+        private static string CreateActionBeatKey(EnemySpeechCue cue)
+        {
+            return $"{cue.EventKind}:{cue.RoundNumber}:{cue.ActionOrdinal}:" +
+                $"{cue.SequenceIndex}:{cue.Beat}";
+        }
+
+        private static bool MatchesPlaybackMoment(
+            EnemySpeechBeat beat,
+            SpeechPlaybackMoment playbackMoment)
+        {
+            switch (playbackMoment)
+            {
+                case SpeechPlaybackMoment.Any:
+                    return true;
+                case SpeechPlaybackMoment.BeforeAnimation:
+                    return beat == EnemySpeechBeat.BeforeEffect;
+                case SpeechPlaybackMoment.AfterAnimation:
+                    return beat == EnemySpeechBeat.AfterEffect;
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(playbackMoment));
+            }
         }
 
         internal static string ResolveDamageCueKey(RoundEndCause cause)

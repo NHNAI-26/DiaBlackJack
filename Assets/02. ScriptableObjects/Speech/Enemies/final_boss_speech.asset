@@ -66,3 +66,57 @@ MonoBehaviour:
     lines:
     - "\uB0B4\uAC00 \uD328\uBC30\uD558\uB2E4\uB2C8...!"
     - "\uB124\uAC00 \uC774\uACBC\uB2E4..."
+  - cueKey: combat.action.revolver.before
+    lines:
+    - "왕의 총구 앞에 고개를 숙여라."
+  - cueKey: combat.action.revolver.hit
+    lines:
+    - "왕의 탄환은 빗나가지 않는다."
+  - cueKey: combat.action.revolver.miss
+    lines:
+    - "한 번의 자비라 여겨라."
+  - cueKey: combat.action.knife.before
+    lines:
+    - "친히 네 운명을 베어 주마."
+  - cueKey: combat.action.knife.bust
+    lines:
+    - "보잘것없는 그릇이 깨졌구나."
+  - cueKey: combat.action.knife.no_bust
+    lines:
+    - "아직 왕 앞에 설 힘은 남았나."
+  - cueKey: combat.action.hammer.before
+    lines:
+    - "왕에게 불필요한 패는 존재하지 않는다."
+  - cueKey: combat.action.hammer.bust
+    lines:
+    - "이것이 왕의 판결이다."
+  - cueKey: combat.action.hammer.no_bust
+    lines:
+    - "겨우 한 번의 판결을 견뎠군."
+  - cueKey: combat.action.demon_contract.belphegor
+    lines:
+    - "벨페고르여, 왕의 앞길을 미리 밝히라."
+  - cueKey: combat.action.demon_contract.beelzebub
+    lines:
+    - "바알제붑이 왕의 죽음을 거부한다."
+  - cueKey: combat.action.demon_contract.mammon
+    lines:
+    - "마몬이여, 운명마저 내게 바쳐라."
+  - cueKey: combat.action.demon_contract.asmodeus
+    lines:
+    - "아스모데우스여, 저자를 복종시켜라."
+  - cueKey: combat.action.demon_contract.satan
+    lines:
+    - "사탄의 권능조차 왕의 명에 따른다."
+  - cueKey: combat.action.demon_contract.azazel
+    lines:
+    - "아자젤이여, 왕의 패에 두 번 답하라."
+  - cueKey: combat.reaction.player.manual_card
+    lines:
+    - "그 장난감으로 왕을 시험하는가."
+  - cueKey: combat.reaction.player.demon_contract
+    lines:
+    - "감히 왕의 신하를 부리는구나."
+  - cueKey: combat.reaction.player.automatic_card
+    lines:
+    - "하찮은 카드가 스스로 발악하는군."

@@ -595,10 +595,10 @@ RF-05의 `StageTest ↔ GameScene` 결과는 당시 실제 완료 이력이다. 
 ## 10. 적·상인 월드 스페이스 말풍선
 
 - `SpeechBubble.prefab`은 World Space Canvas를 유지하며 `EnemyCharacter.prefab`의 스프라이트 우측 자식으로 배치한다. `SpeechBubbleView`가 카메라 정렬과 상인 축소 시 월드 크기 보정을 담당하고, 모든 UI Graphic의 raycast target은 꺼서 카드·상점 클릭을 차단하지 않는다.
-- 전투·상점 문구는 `SpeechProfileSO`가 소유한다. 한 entry는 대소문자를 구분하는 `cueKey`와 문장 목록이며, 현재 여섯 적과 상인은 필수 key마다 한국어 문장 2개를 가진다. 각 `EnemyCombatProfileDefinitionSO`는 자기 `SpeechProfileSO`를 직접 참조하고 `speakerKey == enemy key`를 검증한다. 콘텐츠는 `Assets/02. ScriptableObjects/Speech`에서 수정한다.
+- 전투·상점 문구는 `SpeechProfileSO`가 소유한다. 한 entry는 대소문자를 구분하는 `cueKey`와 문장 목록이다. 기존 공통 cue와 상인 cue는 한국어 문장 2개를 유지하고, GSB-03에서 추가한 카드별 전용 cue와 플레이어 카드 반응 cue는 캐릭터별 한국어 문장 1개를 가진다. 각 `EnemyCombatProfileDefinitionSO`는 자기 `SpeechProfileSO`를 직접 참조하고 `speakerKey == enemy key`를 검증한다. 콘텐츠는 `Assets/02. ScriptableObjects/Speech`에서 수정한다.
 - 게임 코드는 문장 대신 `SpeechCueKeys`만 발생시킨다. `EnemySpeechDirector`가 별도 `DeterministicRng`로 매 호출 문장을 고르므로 전투 규칙 RNG와 결과에는 영향이 없고 즉시 반복도 허용한다. 누락 key는 key 문자열 자체를 표시하며 같은 profile/key 경고는 한 번만 남긴다.
 - cue 우선순위는 종료, 낮은 영혼, 피해, 행동, 전투 시작, 라운드 시작 순이다. 같은 전환에서는 가장 높은 하나만 표시하고 다음 전환의 새 cue는 이전 우선순위와 무관하게 교체한다. 전투 시작·낮은 영혼·종료는 전투당 한 번, 라운드 시작은 라운드당 한 번, 행동은 공개 행동 순번당 한 번, 피해는 `RoundResolution.Id`당 한 번이다.
-- 행동 key는 적의 `Hit`, `Stand`, `Change`, `UseCard`, `DemonContract`에서만 발생한다. 피해는 `CardEffectBust`를 `combat.damage.card`, 일반 비교·숫자 버스트를 `combat.damage.round`, 계약 등 나머지를 `combat.damage.other`로 분류한다. 낮은 영혼은 `현재 영혼 > 0 && 현재 영혼 * 3 <= 최대 영혼`이 처음 성립할 때 발생한다. 기존 `EnemyActionLabel`은 회귀 호환용으로 남기되 말풍선 판정에는 사용하지 않는다.
+- 행동 key는 적의 `Hit`, `Stand`, `Change`, 카드 사용과 계약, 양측 자동 카드 발동에서 발생한다. 플레이어의 수동·악마·자동 카드는 각각 공통 상대 반응 cue로 합친다. 피해는 `CardEffectBust`를 `combat.damage.card`, 일반 비교·숫자 버스트를 `combat.damage.round`, 계약 등 나머지를 `combat.damage.other`로 분류한다. 낮은 영혼은 `현재 영혼 > 0 && 현재 영혼 * 3 <= 최대 영혼`이 처음 성립할 때 발생한다. 기존 `EnemyActionLabel`은 회귀 호환용으로 남기되 말풍선 판정에는 사용하지 않는다.
 - 상인은 `shop.greeting`, 구매 성공, 골드 부족, 판매 완료, 기타 구매 불가, 라이터, 위스키, 퇴장 key를 같은 `SpeechProfileSO` 형식으로 사용한다. 독립 상점과 정식 런 상점 모두 실패한 상품 클릭은 도메인 상태를 바꾸지 않고 이유 대사만 표시하며, 성공 대사는 실제 `Try*` 성공이 확인된 뒤에만 표시한다.
 - 문구는 다음 cue가 올 때까지 유지한다. 종료 cue가 표시되면 입력과 독립 상점·정식 진행 화면 전환을 실시간 1.5초 잠근 뒤 기존 흐름을 재개한다. 전투 재바인딩과 런 재시작에서는 명시적으로 숨기고 상점 입장 문구는 남아 있던 전투 문구를 교체한다. 페이드, 타이핑, 클릭형 대화 진행은 범위 밖이다.
 
@@ -648,6 +648,16 @@ GF-00~GF-06의 현재 계획 범위는 완료다. 이후 작업은 실제 빌드
 - 기준 흐름은 `MainMenuScene`에서 시작한 정식 런의 `StageProgressionRuntime → GameScene → GameManager` 전투다. 독립 GameScene 전용 분기는 변경하지 않았다.
 - 신규 `GSB02_U09` 1/1(job `daf181f127754f7487dc3003af744284`), Director 관련 U05~U09 5/5(job `aa00f90293ca4d3284a12ebd965cb66b`)가 통과했다. 말풍선 클래스 전체는 24/25(job `779932a0d3ea46ac9caadc4d9a49a1dc`)이며, 실패 1건 `GSB01_U11`의 카메라 스택 기대값 128/실제 160은 작업 전부터 기록된 기존 회귀다. 컴파일 직후 Console Error는 0건이었고, 클래스 전체 실행에서는 기존 머티리얼 드로어·URP 셰이더 오류가 재현됐다.
 - 사용자 저장을 덮을 수 있는 실제 새 게임 Play QA는 실행하지 않았다. 구현에서 씬·프리팹·대사 SO·외부 에셋·패키지는 변경하지 않았다. 클래스 전체 테스트 뒤 `GameScene.unity`의 소유 불명 작업 트리 변경이 새로 감지되어 정리하지 않고 보존했다.
+
+## GSB-03 카드 행동별 적 대사 분리
+
+- 적 리볼버는 각 발사마다 `before → hit/miss`, 나이프·망치는 `before → bust/no_bust` 순서로 재생한다. 리볼버 결과는 `CardEffectResult.Succeeded`, 나이프·망치 결과는 `EndedRound`를 사용한다. 레비아탄 재발사는 같은 공개 행동 안에서도 발사 순번 2로 분리한다.
+- 적 악마·자동 카드 cue는 프로필의 실제 계약·덱 구성에서 계산한다. 광신도 2종과 최종 보스 6종의 악마 카드, 사기꾼 1종과 집행자 4종의 자동 카드만 해당 프로필에 요구하며 보유하지 않은 전용 cue는 에셋에 두지 않는다.
+- 플레이어 수동·악마·자동 카드에는 적별 공통 반응 cue 3개를 사용한다. 전용 cue 누락 시 수동·자동은 `combat.action.use_card`, 악마는 `combat.action.demon_contract`로 폴백한다.
+- 순수 CoreLoop에는 자동 카드 발동 순번·라운드·소유자·정의 키 관측값만 추가했다. 공개 행동 기록과 AI 결정 표면은 변경하지 않았다. 말풍선 중복 식별자는 전투·라운드·이벤트 종류·행동/발동 순번·발사 순번·단계를 사용한다.
+- `GameManager`는 전 대사를 연출 시작 전에, 결과 대사를 연출 대기 종료 뒤에 표시한다. 결과 대사는 `stepSeconds` 동안 유지한 뒤 다음 스냅샷이나 승리·패배 대사로 넘어가며, 미소비 결과 대사가 있으면 승리·패배 대사를 먼저 표시하지 않는다. 수정구슬은 별도 결과 cue 없이 기존 사용·피해·종료 대사를 유지한다.
+- 여섯 `SpeechProfileSO`에 필요한 전용·반응 cue 79개를 한국어 1문장씩 추가했다. 씬·프리팹은 변경하지 않았다.
+- GSB03 범주는 5/5(job `ce9ac19328284ae884dc4071658189ee`) 통과했다. `GameSceneSpeechBubbleTests` 전체는 27/29(job `f67c80cd94584fa984e48e188aea6877`)이며, 실패는 작업 전부터 이번 변경 파일 밖에 있던 `GSB01_U09` 말풍선 앵커 기대값 `(-3.28, 0.69, 0)`/실제 `(-3.28, 2.59, 0)`과 `GSB01_U11` 카메라 mask 기대값 128/실제 160 두 건이다. 대상 구현 컴파일과 Console Error는 0건이었다. 이후 추가한 결과 대사 1초 유지 변경은 `validate_script` 오류 0을 확인했으나, 공유 Editor가 다른 세션 소유의 Play Mode 전환에 머물러 최종 Unity 재컴파일은 실행하지 못했다. 같은 이유로 리볼버·나이프·플레이어 자동 카드의 실제 Play Mode 입력 QA도 수행하지 않았다.
 
 ## GSV10 GameScene 적 선택 WANTED UI
 

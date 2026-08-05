@@ -2792,6 +2792,14 @@ namespace DiaBlackJack.GameScene
                     playedAnimation,
                     waitSeconds);
 
+                bool playedResultSpeech = PresentEnemySpeech(
+                    vm.EnemySpeechObservation,
+                    SpeechPlaybackMoment.AfterAnimation);
+                if (playedResultSpeech && stepSeconds > 0f)
+                {
+                    yield return new WaitForSeconds(stepSeconds);
+                }
+
                 if (playedAnimation.DeferredCardRender)
                 {
                     yield return RenderHandsThenTotalsAfterRevealFlip(
@@ -2952,7 +2960,9 @@ namespace DiaBlackJack.GameScene
                         ResolveRevolverTimedVisual(
                             CombatantSide.Enemy,
                             vm.EnemyVisual)));
-                PresentEnemySpeech(vm.EnemySpeechObservation);
+                PresentEnemySpeech(
+                    vm.EnemySpeechObservation,
+                    SpeechPlaybackMoment.BeforeAnimation);
             }
 
             return CreateAppliedAnimationResult(
@@ -2964,20 +2974,23 @@ namespace DiaBlackJack.GameScene
                 playedMammonRoll);
         }
 
-        private void PresentEnemySpeech(EnemySpeechObservation observation)
+        private bool PresentEnemySpeech(
+            EnemySpeechObservation observation,
+            SpeechPlaybackMoment playbackMoment = SpeechPlaybackMoment.Any)
         {
             if (observation == null || enemyCharacter == null)
             {
-                return;
+                return false;
             }
 
             _enemySpeechDirector ??= new EnemySpeechDirector(speechSeed);
             if (!_enemySpeechDirector.TryResolve(
                 observation,
                 _activeEnemySpeechProfile,
+                playbackMoment,
                 out EnemySpeechPresentation presentation))
             {
-                return;
+                return false;
             }
 
             enemyCharacter.ShowSpeech(presentation.Message);
@@ -2985,6 +2998,8 @@ namespace DiaBlackJack.GameScene
             {
                 BeginTerminalSpeechHold(observation.Battle);
             }
+
+            return true;
         }
 
         private void ResetEnemySpeech()
