@@ -1,5 +1,13 @@
 # 테이블 도감 진행 기록
 
+## DX-M12: 현재 상대 적 페이지 자동 표시
+
+- `CodexNavigationState.TryShowEnemyPage`와 `CodexController.Open(string enemyProfileKey)`를 추가했다. 도감을 열 때 적 탭과 현재 전투 적 페이지를 다시 선택하며, null·공백·대소문자 불일치·미등록 key와 비전투 호출은 적 도감 1페이지로 대체한다.
+- `GameManager` 도감 클릭은 `Battle`이 있을 때 `CurrentEnemyProfileKey`, 없을 때 기존 인자 없는 `Open()`을 사용한다. 도감을 연 뒤 Q/E·탭·계약 악마 바로가기는 기존 동작을 유지한다. 프리팹·Scene·직렬화 참조는 변경하지 않았다.
+- 신규 `DXM12` 3/3(job `b666e54026b04f7d894396c326ba0bfb`)가 통과했다. 인접 `CodexPresentationTests`·`CodexAssetTests`는 33/37(job `ee01f55a96d84d9eb146b3abac64c203`)이며 실패 4건은 이번에 수정하지 않은 기존 Overlay 카드 셀 80×150 대 기대 72×120, English Name 최소 크기 1 대 기대 8, 수량 글자 35 대 기대 32, 테이블 책 위치 `(1.39, 0.08, 0.02)` 대 기대 `(2.22, 0.08, -0.34)` 불일치다.
+- C# 컴파일 직후 Console Error는 0이고 GameScene validation은 issue 0, missing script 0, broken prefab 0이다. Play Mode exec에서 enforcer와 final-boss가 각각 일치 페이지를 열고, 비전투 기본 호출이 적 탭 0번 gunslinger 페이지를 여는 것을 확인했다. Play Mode·MainMenu 복원 뒤 범위 밖 기존 missing script와 Material Drawer 오류가 남았다.
+- Play Mode 종료 뒤 초기 `MainMenuScene`으로 복원했다. 실행 중 나타난 다른 세션의 `GameManager` 리볼버 입력 대기, `CoreLoopPresentationTests.cs`, card-use·scene-presentation 문서 변경은 보존했으며 이 작업에서 수정하지 않았다.
+
 ## DX-M11: 테이블 도감 3D 책과 월드 호버
 
 - 테이블 닫힌 도감의 2D SpriteRenderer를 `antique_book.fbx`·`MAT_Book` 3D 모델로 교체했다. 기존 `CodexClickable` 루트와 클릭 연결은 유지하고 모델 bounds 기준 콜라이더, 테이블 position `(2.224, 0.077, -0.339)`, rotation `(0, 8, 0)`, scale `(1, 1, 1)`을 적용했다. `GameScene.unity`는 저장하지 않았다.

@@ -313,6 +313,21 @@ namespace DiaBlackJack.GameScene
             return true;
         }
 
+        public bool TryShowEnemyPage(int pageIndex)
+        {
+            if (pageIndex < 0 ||
+                pageIndex >= _enemyPageCount ||
+                (Category == CodexCategory.Enemy &&
+                    _enemyPageIndex == pageIndex))
+            {
+                return false;
+            }
+
+            Category = CodexCategory.Enemy;
+            _enemyPageIndex = pageIndex;
+            return true;
+        }
+
         public bool TryShowDemonPage(int pageIndex)
         {
             if (pageIndex < 0 ||

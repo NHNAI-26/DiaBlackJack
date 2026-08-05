@@ -1386,6 +1386,105 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("DXM12")]
+        public void DXM12_U03_ControllerOpensCurrentEnemyAndDefaultsToFirstPage()
+        {
+            GameObject overlayPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
+            GameObject overlay = UnityEngine.Object.Instantiate(overlayPrefab);
+            CodexOverlayView view = overlay.GetComponent<CodexOverlayView>();
+            InvokeLifecycle(view, "Awake");
+            GameObject controllerObject = new GameObject(
+                "CodexControllerTest");
+            controllerObject.SetActive(false);
+            GameObject book = new GameObject("CodexBookTest");
+            CodexController controller =
+                controllerObject.AddComponent<CodexController>();
+            CardContentCatalogSO cardCatalog = LoadCardCatalog();
+            SerializedObject serialized = new SerializedObject(controller);
+            serialized.FindProperty("view").objectReferenceValue = view;
+            serialized.FindProperty("cardContentCatalog").objectReferenceValue =
+                cardCatalog;
+            serialized.FindProperty("enemyContentCatalog").objectReferenceValue =
+                LoadEnemyCatalog();
+            serialized.FindProperty("tableBookRoot").objectReferenceValue = book;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            controllerObject.SetActive(true);
+            InvokeLifecycle(controller, "Awake");
+            InvokeLifecycle(controller, "OnEnable");
+
+            IReadOnlyList<EnemyCodexPageViewModel> pages =
+                CreateEnemyPages(cardCatalog);
+            int targetIndex = -1;
+            for (int index = 0; index < pages.Count; index++)
+            {
+                if (pages[index].ProfileKey ==
+                    EnemyCombatProfileCatalog.EnforcerKey)
+                {
+                    targetIndex = index;
+                    break;
+                }
+            }
+
+            Assert.That(targetIndex, Is.GreaterThan(0));
+            Component enemyNameText =
+                GetPrivateField<Component>(view, "enemyNameText");
+            Component nextPageText =
+                GetPrivateField<Component>(view, "nextPageText");
+
+            try
+            {
+                Assert.That(
+                    controller.Open(EnemyCombatProfileCatalog.EnforcerKey),
+                    Is.True);
+                CodexNavigationState navigation =
+                    GetPrivateField<CodexNavigationState>(
+                        controller,
+                        "_navigation");
+                Assert.That(navigation.Category, Is.EqualTo(CodexCategory.Enemy));
+                Assert.That(navigation.CurrentPageIndex, Is.EqualTo(targetIndex));
+                Assert.That(
+                    GetText(enemyNameText),
+                    Is.EqualTo(pages[targetIndex].DisplayName));
+                Assert.That(
+                    GetText(nextPageText),
+                    Is.EqualTo($"{targetIndex + 1}/{pages.Count} Next E"));
+
+                controller.Close();
+                Assert.That(navigation.TryShowDemonPage(2), Is.True);
+                Assert.That(
+                    controller.Open(EnemyCombatProfileCatalog.EnforcerKey),
+                    Is.True);
+                Assert.That(navigation.Category, Is.EqualTo(CodexCategory.Enemy));
+                Assert.That(navigation.CurrentPageIndex, Is.EqualTo(targetIndex));
+
+                controller.Close();
+                Assert.That(navigation.TryShowDemonPage(1), Is.True);
+                Assert.That(controller.Open("ENFORCER"), Is.True);
+                Assert.That(navigation.Category, Is.EqualTo(CodexCategory.Enemy));
+                Assert.That(navigation.CurrentPageIndex, Is.Zero);
+                Assert.That(
+                    GetText(enemyNameText),
+                    Is.EqualTo(pages[0].DisplayName));
+
+                controller.Close();
+                Assert.That(navigation.TryShowEnemyPage(targetIndex), Is.True);
+                Assert.That(controller.Open(), Is.True);
+                Assert.That(navigation.CurrentPageIndex, Is.Zero);
+                Assert.That(
+                    GetText(enemyNameText),
+                    Is.EqualTo(pages[0].DisplayName));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(controllerObject);
+                UnityEngine.Object.DestroyImmediate(overlay);
+                UnityEngine.Object.DestroyImmediate(book);
+            }
+        }
+
+        [Test]
         [Category("DXM10")]
         public void DXM10_U04_ContractClickOpensMatchingDemonPageThroughController()
         {

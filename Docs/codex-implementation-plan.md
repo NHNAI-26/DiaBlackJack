@@ -1,5 +1,13 @@
 # 테이블 도감 구현 계획
 
+## DX-M12: 현재 상대 적 페이지 자동 표시
+
+1. 완료: 순수 navigation에 적 페이지 직접 이동과 실패 불변 계약을 추가했다.
+2. 완료: `CodexController.Open()`은 1페이지, `Open(string enemyProfileKey)`는 정확히 일치하는 현재 적 페이지를 선택하도록 연결했다.
+3. 완료: `GameManager` 도감 클릭이 활성 전투에서는 현재 적 key를 전달하고 비전투에서는 기본 열기를 사용하도록 변경했다.
+4. 완료: `DXM12` navigation·Controller 표시 회귀 3개와 도감 4문서 기록을 추가했다. 프리팹·Scene·직렬화 참조는 변경하지 않았다.
+5. 완료: 신규 `DXM12` 3/3, 인접 도감 두 클래스 33/37, GameScene validation issue 0을 확인했다. 인접 실패 4건은 범위 밖 기존 프리팹 기대값 불일치다. Play Mode에서 enforcer·final-boss 일치 페이지와 비전투 기본 1페이지를 확인했다.
+
 ## DX-M11: 테이블 도감 3D 책과 월드 호버
 
 1. 완료: `CodexBook.prefab`의 2D Sprite를 기존 `antique_book.fbx`·`MAT_Book` 3D 모델로 교체하고 모델 bounds에 맞춰 콜라이더를 조정했다.

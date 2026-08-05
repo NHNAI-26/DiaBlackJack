@@ -793,7 +793,14 @@ namespace DiaBlackJack.GameScene
             if (pointedCodex != null && codex != null && codex.IsAvailable)
             {
                 CloseDeckPreview();
-                codex.Open();
+                if (Battle == null)
+                {
+                    codex.Open();
+                }
+                else
+                {
+                    codex.Open(CurrentEnemyProfileKey);
+                }
                 return;
             }
 

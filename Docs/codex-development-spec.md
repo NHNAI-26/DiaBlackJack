@@ -1,5 +1,13 @@
 # 테이블 도감 개발 명세
 
+## DX-M12: 현재 상대 적 페이지 열기 계약
+
+- `CodexNavigationState.TryShowEnemyPage(int pageIndex)`는 유효한 적 페이지 인덱스면 적 카테고리와 대상 인덱스를 함께 변경한다. 음수·범위 밖·현재 적 페이지와 같은 인덱스는 거부하고 상태를 바꾸지 않는다.
+- 기존 `CodexController.Open()`은 적 도감 1페이지를 시작 위치로 사용한다. `Open(string enemyProfileKey)`는 `_enemyPages.ProfileKey`와 `StringComparer.Ordinal`로 정확히 일치하는 페이지를 선택하며, null·공백·미등록 key는 1페이지로 대체한다.
+- `GameManager`는 도감 클릭 시 활성 `CoreLoopBattle`이 있으면 `CurrentEnemyProfileKey`를 전달하고, 전투가 없으면 인자 없는 `Open()`을 호출한다.
+- 매번 열기 전에 시작 적 페이지를 다시 선택한다. 열린 뒤 Q/E, 탭, 계약 악마 바로가기와 카테고리별 페이지 기억은 기존 계약을 유지한다.
+- 프리팹·Scene·직렬화 참조와 CoreLoop·StageProgression 규칙은 변경하지 않는다.
+
 ## DX-M11: 3D 책과 호버 계약
 
 - `CodexBook.prefab` 루트의 `CodexClickable`과 `BoxCollider`는 유지하고 `SpriteRenderer`를 제거한다. 자식 모델은 `Assets/05. Arts/FBX/antique_book.fbx`, 머티리얼은 `Assets/05. Arts/Material/MAT_Book.mat`을 사용한다.

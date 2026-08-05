@@ -96,12 +96,18 @@ namespace DiaBlackJack.GameScene
 
         public bool Open()
         {
+            return Open(null);
+        }
+
+        public bool Open(string enemyProfileKey)
+        {
             if (!_available || IsOpen)
             {
                 return false;
             }
 
             EnsureInitialized();
+            SelectOpeningEnemyPage(enemyProfileKey);
             view.Open(CreateCurrentBook());
             SetBookVisible(false);
             OpenStateChanged?.Invoke(true);
@@ -263,6 +269,26 @@ namespace DiaBlackJack.GameScene
                 _navigation,
                 _enemyPages,
                 _demonPages);
+        }
+
+        private void SelectOpeningEnemyPage(string enemyProfileKey)
+        {
+            int pageIndex = 0;
+            if (!string.IsNullOrWhiteSpace(enemyProfileKey))
+            {
+                for (int index = 0; index < _enemyPages.Count; index++)
+                {
+                    if (StringComparer.Ordinal.Equals(
+                        _enemyPages[index].ProfileKey,
+                        enemyProfileKey))
+                    {
+                        pageIndex = index;
+                        break;
+                    }
+                }
+            }
+
+            _navigation.TryShowEnemyPage(pageIndex);
         }
 
         private void HandleHoverBadgeRequested(CardHoverBadgeRequest request)

@@ -222,6 +222,39 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(navigation.CurrentPageIndex, Is.EqualTo(2));
         }
 
+        [Test]
+        [Category("DXM12")]
+        public void DXM12_U01_DirectEnemyNavigationSelectsPageAndEnemyCategory()
+        {
+            CodexNavigationState navigation =
+                new CodexNavigationState(3, 2);
+            Assert.That(navigation.TryShowDemonPage(1), Is.True);
+
+            Assert.That(navigation.TryShowEnemyPage(2), Is.True);
+
+            Assert.That(navigation.Category, Is.EqualTo(CodexCategory.Enemy));
+            Assert.That(navigation.CurrentPageIndex, Is.EqualTo(2));
+        }
+
+        [Test]
+        [Category("DXM12")]
+        public void DXM12_U02_DirectEnemyNavigationRejectsInvalidWithoutMutation()
+        {
+            CodexNavigationState navigation =
+                new CodexNavigationState(3, 2);
+            Assert.That(navigation.TryShowDemonPage(1), Is.True);
+
+            Assert.That(navigation.TryShowEnemyPage(-1), Is.False);
+            Assert.That(navigation.TryShowEnemyPage(3), Is.False);
+            Assert.That(navigation.Category, Is.EqualTo(CodexCategory.DemonCard));
+            Assert.That(navigation.CurrentPageIndex, Is.EqualTo(1));
+
+            Assert.That(navigation.TryShowEnemyPage(1), Is.True);
+            Assert.That(navigation.TryShowEnemyPage(1), Is.False);
+            Assert.That(navigation.Category, Is.EqualTo(CodexCategory.Enemy));
+            Assert.That(navigation.CurrentPageIndex, Is.EqualTo(1));
+        }
+
         private static CardContentCatalog CreateCardCatalog()
         {
             return new CardContentCatalog(
