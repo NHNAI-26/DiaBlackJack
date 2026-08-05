@@ -926,6 +926,79 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("CUM06")]
+        public void CUM06_U02_PlayerRevolverReadyHoldsInputUntilSelectionReady()
+        {
+            Assert.That(
+                GameManager.ShouldHoldInputForRevolverReady(
+                    readyActive: true,
+                    selectionReady: false,
+                    CombatantSide.Player),
+                Is.True);
+            Assert.That(
+                GameManager.ShouldHoldInputForRevolverReady(
+                    readyActive: true,
+                    selectionReady: true,
+                    CombatantSide.Player),
+                Is.False);
+            Assert.That(
+                GameManager.ShouldHoldInputForRevolverReady(
+                    readyActive: true,
+                    selectionReady: false,
+                    CombatantSide.Enemy),
+                Is.False);
+            Assert.That(
+                GameManager.ShouldHoldInputForRevolverReady(
+                    readyActive: false,
+                    selectionReady: false,
+                    CombatantSide.Player),
+                Is.False);
+        }
+
+        [Test]
+        [Category("CUM06")]
+        public void CUM06_U04_PlayerReadyWithoutStepsQueuesPresentationSnapshot()
+        {
+            var playerReady = new GameSceneRevolverAnimationCue(
+                roundNumber: 1,
+                sourceCardId: 7,
+                CombatantSide.Player,
+                GameSceneRevolverAnimationPhase.Ready);
+            var enemyReady = new GameSceneRevolverAnimationCue(
+                roundNumber: 1,
+                sourceCardId: 8,
+                CombatantSide.Enemy,
+                GameSceneRevolverAnimationPhase.Ready);
+            var resolved = new GameSceneRevolverAnimationCue(
+                roundNumber: 1,
+                sourceCardId: 7,
+                CombatantSide.Player,
+                GameSceneRevolverAnimationPhase.Resolved,
+                succeeded: true);
+
+            Assert.That(
+                GameManager.ShouldQueuePlayerRevolverReadySnapshot(
+                    timelineCount: 0,
+                    playerReady),
+                Is.True);
+            Assert.That(
+                GameManager.ShouldQueuePlayerRevolverReadySnapshot(
+                    timelineCount: 1,
+                    playerReady),
+                Is.False);
+            Assert.That(
+                GameManager.ShouldQueuePlayerRevolverReadySnapshot(
+                    timelineCount: 0,
+                    enemyReady),
+                Is.False);
+            Assert.That(
+                GameManager.ShouldQueuePlayerRevolverReadySnapshot(
+                    timelineCount: 0,
+                    resolved),
+                Is.False);
+        }
+
+        [Test]
         public void CUM14_U01_KnifeShowsThreatenedBeforeSafeDrawResolvesAsMiss()
         {
             CoreLoopBattle battle = CreateBattle(

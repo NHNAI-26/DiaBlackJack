@@ -775,6 +775,13 @@ MCP가 Unity 창의 포커스를 가져가지 않은 상태에서는 게임 프�
 
 `fix : 연출 카드를 후처리 없는 레이어로 렌더한다`
 
+### 2026-08-06 CU-M06 리볼버 장전 완료 후 숫자 선택
+
+- 첫 원인은 `Revolver_Shoot_PlayerReady` 준비 클립과 `revolverReadySeconds`가 1.2666668초인데 전투 타임라인 기본 대기가 1초라 입력 잠금과 HUD 숨김이 먼저 해제되는 시간 차였다. 후속 확인에서 플레이어 리볼버 선택 대기 진입은 `Stepped`를 발행하지 않아 타임라인 자체가 비고 `ProcessInput`이 애니메이션 시작 전에 즉시 입력을 해제하는 실제 우회 경로를 확인했다. `GameSceneCombatHudPresenter`도 `inputLocked=true`에서 선택 모델을 만들 수 있었다.
+- `ProcessInput`은 수집된 단계가 없고 현재 단서가 플레이어 리볼버 `Ready`일 때 표시 스냅샷을 보충해 `PlayTimeline`을 반드시 시작한다. 타임라인은 준비 시간 뒤 카메라 우선순위를 바꾸고 다음 프레임부터 `CinemachineBrain.IsBlending`이 거짓이 될 때까지 입력 잠금을 유지한다. Presenter도 플레이어 `AutoPistol`에서 입력 잠금 중 `Hidden`만 반환하므로 숫자 선택 UI는 잠금 해제 후 최종 HUD 렌더에서만 열린다. 일반 리볼버와 레비아탄 재예측에 적용하며 적 리볼버·거짓말 탐지기·일시정지는 기존 동작을 유지한다.
+- 신규 `CUM06_U03`·`CUM06_U04` 2/2(job `3f12c7d6891041eead30cf0478788506`)과 최종 작업 트리 기준 관련 `CoreLoopPresentationTests`·`GameSceneCombatHudPresentationTests` 120/120(job `c5c7d7f0d97a4ac3ad1760853f7bc2ac`)이 통과했고 C# 컴파일 오류는 0건이다. 관련 클래스 실행 후 Console에는 기존 `CardView` 머티리얼 Enum drawer 오류 1건과 Test Framework 결과 저장 Exception 1건이 남았다.
+- GameScene Play Mode에서 테스트 전투를 실제 `ProcessInput` 경로로 실행했다. 시작은 `ui=false/locked=true`, 테이블 시점 블렌드 중에도 `ui=false/locked=true`, 블렌드 종료 뒤 `ready=true`가 된 다음 프레임에만 `ui=true/locked=false`로 바뀌었다. Console에는 기존 셰이더 `_DissolveObjectAxis` property drawer 중복 오류 1건이 재현됐다. 씬·프리팹·Animator·애니메이션 클립은 수정하지 않았다.
+
 ### 2026-08-06 GSV16 카드 사용 강조 유지
 
 - `CoreLoopBattle`은 표시용 원본 카드 ID와 자동 결과의 행동 순번을 내부 기록한다. 이 정보는 `EnemyObservation`과 공개 행동 모델에 추가하지 않아 적 AI의 공개 정보 경계를 유지했다.

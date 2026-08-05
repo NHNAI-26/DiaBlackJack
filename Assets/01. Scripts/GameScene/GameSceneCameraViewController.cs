@@ -41,6 +41,15 @@ namespace DiaBlackJack.GameScene
 
         public GameSceneCameraView CurrentView { get; private set; } = GameSceneCameraView.Current;
 
+        internal bool IsTransitioning
+        {
+            get
+            {
+                EnsureBrainReference();
+                return brain != null && brain.IsBlending;
+            }
+        }
+
         private void Reset()
         {
             EnsureBrainReference();

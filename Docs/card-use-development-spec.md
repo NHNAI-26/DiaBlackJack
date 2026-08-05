@@ -590,8 +590,9 @@ Controller가 `_stageSession.Battle`을 직접 조작하는 경로를 추가하�
 - `GameScenePresenter`는 플레이어 리볼버의 숫자 선택 대기에는 `Ready`, 판정 완료에는 `Resolved` 연출 단서를 투영한다.
 - 연출 단서는 라운드 번호·원본 카드 ID·행위자·단계·성공 여부로 식별해 같은 결과의 중복 재생을 막는다.
 - `GameManager`는 `Ready`에서 기존 `PlayerTurnStart` 트리거를 보내 `Revolver_Shoot_PlayerReady → Revolver_Shoot_PlayerReadyLoop`를 시작한다.
+- `TryBeginPlayerCardUse`가 선택 대기 진입에서 `Stepped`를 발행하지 않아 수집된 타임라인이 비어 있으면, `GameManager.ProcessInput`은 플레이어 `Ready` 스냅샷 1개를 보충하고 `PlayTimeline`을 실행한다. 적 `Ready`, 결과 단계, 이미 수집된 타임라인에는 보충하지 않는다.
 - 플레이어 `Resolved`는 Animator를 `Base`로 되돌리지 않고 준비 상태에서 `PlayerSuccess` 또는 `PlayerFail` 트리거를 보낸다. 준비 단서를 놓친 경우에만 준비 트리거를 함께 보내는 복구 경로를 사용한다.
-- 결과 연출이 시작된 경우에만 기존 8.8초 타임라인 홀드를 적용한다. 숫자 선택 대기 자체는 입력을 추가 지연시키지 않는다.
+- 결과 연출에는 기존 8.8초 타임라인 홀드를 적용한다. 플레이어 `Ready` 단계에서는 기존 `revolverReadySeconds`와 이어지는 테이블 시점 Cinemachine 블렌드가 모두 끝날 때까지 전투 타임라인의 입력 잠금을 유지한다. `GameSceneCombatHudPresenter`는 플레이어 `AutoPistol` 선택에서 `inputLocked`이면 `Hidden`을 반환하고, 블렌드 완료 후 잠금이 해제된 렌더에서만 숫자 선택 UI를 연다. 적 리볼버와 거짓말 탐지기 숫자 선택에는 이 준비 홀드를 적용하지 않는다.
 - 기존 씬의 `revolverRoot`, `revolverAnimator` 참조와 `Revolver_Anim` Controller를 사용하며 새 직렬화 연결이나 외부 에셋을 요구하지 않는다.
 
 ### 13.10 CU-M07 — 레비아탄 리볼버 재예측 상태

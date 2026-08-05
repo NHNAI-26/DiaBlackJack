@@ -268,6 +268,11 @@ namespace DiaBlackJack.GameScene
             {
                 if (core.PendingCardEffectKind == CardEffectKind.AutoPistol)
                 {
+                    if (inputLocked)
+                    {
+                        return CreateHidden();
+                    }
+
                     var revolverOptions =
                         new List<GameSceneCombatHudActionViewModel>();
                     foreach (CardEffectChoiceViewModel choice in

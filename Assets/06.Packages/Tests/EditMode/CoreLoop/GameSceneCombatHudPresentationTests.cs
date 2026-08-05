@@ -910,6 +910,32 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("CUM06")]
+        public void CUM06_U03_PlayerRevolverSelectionStaysHiddenWhileInputLocked()
+        {
+            CardDefinition revolver = CardDefinitionCatalog.GetDefaultForRank(7);
+            var battle = new CoreLoopBattle(
+                BlackjackDeck.CreateInDrawOrder(CreateCards(0, 2, revolver, 3)),
+                BlackjackDeck.CreateInDrawOrder(CreateCards(100, 10, 7, 5)),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 4,
+                enemyPolicy: new StandPolicy());
+            Assert.That(battle.Start(), Is.True);
+            BlackjackCard source = battle.Player.Hand.Cards.Single(
+                card => card.Definition.Effect == CardEffectKind.AutoPistol);
+            Assert.That(battle.TryBeginPlayerCardUse(source.Id), Is.True);
+
+            GameSceneCombatHudViewModel hud = GameSceneCombatHudPresenter.Create(
+                CoreLoopPresenter.Create(battle),
+                isStageBattle: false,
+                isShopOpen: false,
+                inputLocked: true);
+
+            Assert.That(hud.Mode, Is.EqualTo(GameSceneCombatHudMode.Hidden));
+            Assert.That(hud.OptionActions, Is.Empty);
+        }
+
+        [Test]
         public void DCUI03_U01_SatanShowsTenCardsAndBrandsFirstDeclaration()
         {
             CoreLoopBattle battle = CreateStartedContractBattle(

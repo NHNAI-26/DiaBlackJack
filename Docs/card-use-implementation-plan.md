@@ -414,15 +414,18 @@ Lore 의도 줄을 더 엄격히 적용할 경우 다음 제목을 권장한다.
 
 ### 목표
 
-리볼버 카드 사용 직후 무기가 등장해 준비하고, 숫자 선택 뒤 같은 Animator 흐름에서 성공·실패 사격으로 이어지게 한다.
+리볼버 카드 사용 직후 무기가 등장해 준비하고, 준비 완료 후 숫자 선택을 연 뒤 같은 Animator 흐름에서 성공·실패 사격으로 이어지게 한다.
 
 ### 완료 내용
 
 1. 플레이어 리볼버 선택 대기를 `Ready`, 완료 결과를 `Resolved` 단서로 분리했다.
-2. 기존 `PlayerTurnStart`를 준비 트리거로 연결하고 숫자 선택 중 오브젝트를 유지했다.
+2. 기존 `PlayerTurnStart`를 준비 트리거로 연결하고, 준비 연출 동안 입력 잠금과 HUD 숨김을 유지한 뒤 숫자 선택을 열며 선택 중 오브젝트를 유지한다.
 3. 결과 처리 전에 Animator를 `Base`로 되돌리던 경로를 제거해 준비 루프의 `PlayerSuccess`·`PlayerFail` 전이가 실제로 소비되게 했다.
 4. 라운드·카드·행위자·단계별 중복 재생 방지와 준비 단서 누락 복구를 추가했다.
 5. 기존 씬·프리팹·Animator Controller·외부 에셋은 수정하지 않았다.
+6. 일반 리볼버와 레비아탄 재예측은 같은 준비 완료 게이트를 사용한다. 이 게이트는 준비 시간 뒤 테이블 시점 Cinemachine 블렌드가 실제로 끝난 다음 열리며, 적 리볼버·거짓말 탐지기·일시정지는 기존 동작을 유지한다.
+7. 플레이어 리볼버 선택 대기 진입이 `Stepped`를 발행하지 않아 타임라인이 비는 경로에는 `Ready` 스냅샷을 보충해 준비 완료 게이트를 반드시 실행한다.
+8. HUD 재렌더가 준비 게이트를 우회하지 못하도록 플레이어 리볼버 선택 Presenter는 입력 잠금 중 `Hidden`만 반환한다.
 
 ### 완료 게이트
 
@@ -431,6 +434,7 @@ Lore 의도 줄을 더 엄격히 적용할 경우 다음 제목을 권장한다.
 - 전체 EditMode 627/627(job `eaf6d8bccc1f46ed9241ca55992b42bf`), 실패·건너뜀 0
 - GameScene Play Mode에서 `PlayerResolvingCardEffect`·선택지 10개와 `Revolver_Shoot_PlayerReady`, `Revolver_ShootSuccess`, `Revolver_ShootFail` 상태 확인
 - 신규 컴파일·게임 코드 오류 0
+- 2026-08-06 준비 완료 게이트 후속: 숫자 선택 준비 완료를 Cinemachine 블렌드 종료 뒤로 이동하고, `Stepped` 없는 리볼버 선택 진입에는 플레이어 `Ready` 스냅샷을 보충해 타임라인을 시작하며, 입력 잠금 중 선택 Presenter는 `Hidden`을 반환하도록 보강했다. 신규 `CUM06_U03`·`CUM06_U04` 2/2(job `3f12c7d6891041eead30cf0478788506`)과 최종 작업 트리 기준 `CoreLoopPresentationTests`·`GameSceneCombatHudPresentationTests` 120/120(job `c5c7d7f0d97a4ac3ad1760853f7bc2ac`) 통과. GameScene Play Mode 실제 `ProcessInput` 경로에서 블렌드 중 UI 숨김·입력 잠금과 블렌드 종료 다음 프레임 UI 표시·입력 해제를 확인했다.
 
 ## 10.4 CU-M07 — 레비아탄 조건부 재예측
 

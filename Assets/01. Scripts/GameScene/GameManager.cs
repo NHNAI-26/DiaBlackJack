@@ -2567,6 +2567,19 @@ namespace DiaBlackJack.GameScene
                 battle.Stepped -= OnBattleStepped;
             }
 
+            if (accepted && Application.isPlaying && battle != null &&
+                _timeline.Count == 0)
+            {
+                GameSceneViewModel current =
+                    GameScenePresenter.Create(battle, _activeEnemyProfileKey);
+                if (ShouldQueuePlayerRevolverReadySnapshot(
+                        _timeline.Count,
+                        current.RevolverAnimationCue))
+                {
+                    _timeline.Add(current);
+                }
+            }
+
             if (accepted && Application.isPlaying && _timeline.Count > 0)
             {
                 StartCoroutine(PlayTimeline(timelineBaseline));
@@ -2830,6 +2843,14 @@ namespace DiaBlackJack.GameScene
                         yield return new WaitForSeconds(stepSeconds);
                     }
                 }
+            }
+
+            while (ShouldHoldInputForRevolverReady(
+                       _revolverReadyActive,
+                       _revolverSelectionReady,
+                       _revolverReadyActorSide))
+            {
+                yield return null;
             }
 
             // Land on the true current state — e.g. BattleEnded, which is not itself a step.
@@ -4024,6 +4045,26 @@ namespace DiaBlackJack.GameScene
             _revolverReadyActorSide = cue.ActorSide;
         }
 
+        internal static bool ShouldHoldInputForRevolverReady(
+            bool readyActive,
+            bool selectionReady,
+            CombatantSide actorSide)
+        {
+            return readyActive &&
+                !selectionReady &&
+                actorSide == CombatantSide.Player;
+        }
+
+        internal static bool ShouldQueuePlayerRevolverReadySnapshot(
+            int timelineCount,
+            GameSceneRevolverAnimationCue cue)
+        {
+            return timelineCount == 0 &&
+                cue != null &&
+                cue.Phase == GameSceneRevolverAnimationPhase.Ready &&
+                cue.ActorSide == CombatantSide.Player;
+        }
+
         private bool IsMatchingActiveRevolverReady(
             GameSceneRevolverAnimationCue cue)
         {
@@ -4162,7 +4203,31 @@ namespace DiaBlackJack.GameScene
 
         private void MoveRevolverSelectionCameraToTableTop()
         {
-            ResolveCameraViewController()?.SetView(GameSceneCameraView.TableTop);
+            GameSceneCameraViewController controller =
+                ResolveCameraViewController();
+            bool transitionRequested = controller != null &&
+                controller.SetView(GameSceneCameraView.TableTop);
+            if (!Application.isPlaying || !transitionRequested)
+            {
+                _revolverSelectionReady = true;
+                return;
+            }
+
+            _revolverReadyCameraRoutine = StartCoroutine(
+                CompleteRevolverSelectionAfterCameraTransition(controller));
+        }
+
+        private IEnumerator CompleteRevolverSelectionAfterCameraTransition(
+            GameSceneCameraViewController controller)
+        {
+            // Cinemachine starts the blend during its next update after priorities change.
+            yield return null;
+            while (controller != null && controller.IsTransitioning)
+            {
+                yield return null;
+            }
+
+            _revolverReadyCameraRoutine = null;
             _revolverSelectionReady = true;
         }
 
