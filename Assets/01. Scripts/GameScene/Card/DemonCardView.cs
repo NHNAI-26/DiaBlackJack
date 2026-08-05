@@ -26,6 +26,33 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float hoverScale = 1.15f;
         [SerializeField] private float scaleLerp = 12f;
         [SerializeField] private string hoverSfxId = "cardHover";
+
+        [Header("Round result reveal")]
+        [Min(0.01f)]
+        [SerializeField] private float revealFlipDuration = 0.7f;
+        [Tooltip("Normalized time in the reveal duration when the visible side changes. 0.5 means halfway through.")]
+        [Range(0f, 1f)]
+        [SerializeField] private float revealFaceSwapNormalizedTime = 0.35f;
+        [SerializeField] private bool revealFlipXOnFaceSwap = true;
+        [Tooltip("Temporary local-position offset applied during the reveal flip. Curves decide how much of each axis is applied over the total duration.")]
+        [SerializeField] private Vector3 revealPositionOffset =
+            new Vector3(0.5f, 0f, 0.4f);
+        [SerializeField] private AnimationCurve revealPositionXCurve =
+            DefaultRevealOffsetCurve();
+        [SerializeField] private AnimationCurve revealPositionYCurve =
+            DefaultRevealOffsetCurve();
+        [SerializeField] private AnimationCurve revealPositionZCurve =
+            DefaultRevealOffsetCurve();
+        [Tooltip("Temporary local-euler offset applied during the reveal flip. Curves decide how much of each axis is applied over the total duration.")]
+        [SerializeField] private Vector3 revealRotationOffset =
+            new Vector3(0f, 180f, 0f);
+        [SerializeField] private AnimationCurve revealRotationXCurve =
+            DefaultRevealOffsetCurve();
+        [SerializeField] private AnimationCurve revealRotationYCurve =
+            DefaultRevealOffsetCurve();
+        [SerializeField] private AnimationCurve revealRotationZCurve =
+            DefaultRevealOffsetCurve();
+
         [Header("Satan orientation")]
         [SerializeField] private float upsideDownTurnDuration = 0.35f;
         [Header("Satan doom counter")]
@@ -46,6 +73,8 @@ namespace DiaBlackJack.GameScene
             Shader.PropertyToID("_Brightness");
         private static readonly int PixelOutlineVisibilityId =
             Shader.PropertyToID("_PixelOutlineVisibility");
+        private static readonly int SpriteFlipXId =
+            Shader.PropertyToID("_SpriteFlipX");
         private const string UnlitKeyword = "_UNLIT_ON";
         private const string PixelOutlineKeyword = "_PIXEL_OUTLINE_ON";
         private const string UnderlayKeyword = "UNDERLAY_ON";
@@ -76,6 +105,12 @@ namespace DiaBlackJack.GameScene
         private Vector3 _baseScale = Vector3.one;
         private Vector3 _hoverVisualBaseScale = Vector3.one;
         private Vector3 _targetScale = Vector3.one;
+        private Vector3 _revealBaseLocalPosition;
+        private Quaternion _revealBaseLocalRotation;
+        private bool _hasRevealBaseTransform;
+        private bool _hasRevealRendererFlipState;
+        private GameSceneDemonCardViewModel _pendingRevealFaceCard;
+        private bool _revealFaceSwapped;
         private bool _showingFrontFace = true;
         private bool _showBadgeOnHover;
         private bool _hovered;
@@ -83,11 +118,15 @@ namespace DiaBlackJack.GameScene
         private bool _isShopSoldOut;
         private bool _shopColorCaptured;
         private Color _shopFrontColor = Color.white;
+        private Sequence _revealSequence;
         private Tween _orientationTween;
         private bool _orientationInitialized;
         private bool _isUpsideDown;
+        private bool _hasBoundCard;
 
         public int CardId { get; private set; } = -1;
+
+        internal float RevealFlipDuration => revealFlipDuration;
 
         public bool CanUse { get; private set; }
 
@@ -173,6 +212,15 @@ namespace DiaBlackJack.GameScene
             _targetScale = HoverRestingScale();
         }
 
+        private void OnValidate()
+        {
+            revealFlipDuration = Mathf.Max(revealFlipDuration, 0.01f);
+            revealFaceSwapNormalizedTime =
+                Mathf.Clamp01(revealFaceSwapNormalizedTime);
+            upsideDownTurnDuration = Mathf.Max(upsideDownTurnDuration, 0f);
+            EnsureRevealCurves();
+        }
+
         private void Update()
         {
             Transform scaleTarget = HoverScaleTarget();
@@ -193,6 +241,9 @@ namespace DiaBlackJack.GameScene
 
         private void OnDisable()
         {
+            StopRevealSequence();
+            _orientationTween?.Kill();
+            _orientationTween = null;
             _hovered = false;
             ResetHoverScales();
             _targetScale = HoverRestingScale();
@@ -200,6 +251,7 @@ namespace DiaBlackJack.GameScene
 
         private void OnDestroy()
         {
+            _revealSequence?.Kill();
             _orientationTween?.Kill();
             DestroyOwnedMaterial(_presentationFrontMaterial);
             DestroyOwnedMaterial(_presentationBackMaterial);
@@ -214,6 +266,15 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            bool animateReveal = Application.isPlaying &&
+                _hasBoundCard &&
+                CardId == card.CardId &&
+                !_showingFrontFace &&
+                card.IsFaceUp;
+
+            StopRevealSequence();
+            _pendingRevealFaceCard = null;
+
             bool animateOrientation = _orientationInitialized &&
                 CardId == card.CardId &&
                 _isUpsideDown != card.IsUpsideDown &&
@@ -223,30 +284,41 @@ namespace DiaBlackJack.GameScene
             CanUse = card.CanUse;
             _showingFrontFace = card.IsFaceUp;
             _showBadgeOnHover = CanUse || card.ShowHoverBadgeWhenUnavailable;
+            _hasBoundCard = true;
 
             if (front != null)
             {
-                front.SetActive(_showingFrontFace);
+                front.SetActive(animateReveal ? false : _showingFrontFace);
             }
 
             if (_showingFrontFace)
             {
-                ApplyFaceSprite(card.DefinitionKey);
+                if (animateReveal)
+                {
+                    _pendingRevealFaceCard = card;
+                }
+                else
+                {
+                    ApplyFaceSprite(card.DefinitionKey);
+                }
             }
 
             if (back != null)
             {
-                back.SetActive(!_showingFrontFace);
+                back.SetActive(animateReveal || !_showingFrontFace);
             }
 
             string englishName = card.DefinitionKey.ToUpperInvariant();
             if (englishNameText != null)
             {
-                englishNameText.text = _showingFrontFace ? englishName : string.Empty;
-                englishNameText.gameObject.SetActive(_showingFrontFace);
+                englishNameText.text = _showingFrontFace && !animateReveal
+                    ? englishName
+                    : string.Empty;
+                englishNameText.gameObject.SetActive(
+                    _showingFrontFace && !animateReveal);
             }
 
-            UpdateSatanDoomCount(card);
+            UpdateSatanDoomCount(card, !animateReveal);
 
             HoverBadgeTitle = !card.IsFaceUp ? string.Empty : englishName;
             HoverBadgeDescription = !card.IsFaceUp
@@ -258,6 +330,11 @@ namespace DiaBlackJack.GameScene
             _targetScale = HoverRestingScale();
             ApplyOrientation(card.IsUpsideDown, animateOrientation);
             AlignSatanDoomCount();
+
+            if (animateReveal)
+            {
+                PlayRevealFlip();
+            }
         }
 
         private void ApplyOrientation(bool isUpsideDown, bool animate)
@@ -296,6 +373,290 @@ namespace DiaBlackJack.GameScene
                     transform.localEulerAngles = settled;
                     _orientationTween = null;
                 });
+        }
+
+#if UNITY_EDITOR
+        public bool CanPlayRevealFlipAnimationTest =>
+            Application.isPlaying &&
+            isActiveAndEnabled &&
+            gameObject.activeInHierarchy;
+
+        public void PlayRevealFlipAnimationTest()
+        {
+            if (!CanPlayRevealFlipAnimationTest)
+            {
+                return;
+            }
+
+            StopRevealSequence();
+            ResetHoverScales();
+            _hovered = false;
+            PlayRevealFlip();
+        }
+#endif
+
+        private void SetFaceObjects(bool showFront)
+        {
+            if (front != null)
+            {
+                front.SetActive(showFront);
+            }
+
+            if (back != null)
+            {
+                back.SetActive(!showFront);
+            }
+        }
+
+        private void SetShaderFlipX(
+            SpriteRenderer renderer,
+            bool flipX)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            // SpriteRenderer's mesh flip changes the card's physical orientation.
+            renderer.flipX = false;
+
+            var propertyBlock = new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetFloat(SpriteFlipXId, flipX ? 1f : 0f);
+            renderer.SetPropertyBlock(propertyBlock);
+        }
+
+        private void PlayRevealFlip()
+        {
+            _orientationTween?.Kill();
+            _orientationTween = null;
+            ResetHoverScales();
+            SetFaceObjects(showFront: false);
+            HideFaceDetails();
+
+            EnsureRevealCurves();
+
+            _revealBaseLocalPosition = transform.localPosition;
+            _revealBaseLocalRotation = transform.localRotation;
+            _hasRevealBaseTransform = true;
+            CaptureRevealRendererFlipState();
+            _revealFaceSwapped = false;
+
+            float duration = Mathf.Max(revealFlipDuration, 0.01f);
+            Sequence sequence = DOTween.Sequence()
+                .SetTarget(this)
+                .SetLink(gameObject, LinkBehaviour.KillOnDisable);
+            sequence.Append(
+                DOVirtual.Float(
+                        0f,
+                        1f,
+                        duration,
+                        ApplyRevealMotion)
+                    .SetEase(Ease.Linear));
+            sequence.OnComplete(() =>
+            {
+                ApplyPendingRevealFace();
+                RestoreRevealTransform();
+                ResetHoverScales();
+                SetFaceObjects(showFront: true);
+                ApplyFaceDetails();
+            });
+            sequence.OnKill(() =>
+            {
+                if (_revealSequence == sequence)
+                {
+                    _revealSequence = null;
+                }
+            });
+            _revealSequence = sequence;
+        }
+
+        private void StopRevealSequence()
+        {
+            if (_revealSequence != null)
+            {
+                _revealSequence.Kill();
+                _revealSequence = null;
+            }
+
+            RestoreRevealTransform();
+            ResetHoverScales();
+            SetFaceObjects(_showingFrontFace);
+            _pendingRevealFaceCard = null;
+            _revealFaceSwapped = false;
+        }
+
+        private void ApplyRevealMotion(float normalizedTime)
+        {
+            Vector3 positionOffset = new Vector3(
+                revealPositionOffset.x * EvaluateCurve(
+                    revealPositionXCurve,
+                    normalizedTime),
+                revealPositionOffset.y * EvaluateCurve(
+                    revealPositionYCurve,
+                    normalizedTime),
+                revealPositionOffset.z * EvaluateCurve(
+                    revealPositionZCurve,
+                    normalizedTime));
+            Vector3 rotationOffset = new Vector3(
+                revealRotationOffset.x * EvaluateCurve(
+                    revealRotationXCurve,
+                    normalizedTime),
+                revealRotationOffset.y * EvaluateCurve(
+                    revealRotationYCurve,
+                    normalizedTime),
+                revealRotationOffset.z * EvaluateCurve(
+                    revealRotationZCurve,
+                    normalizedTime));
+
+            transform.localPosition = _revealBaseLocalPosition + positionOffset;
+            transform.localRotation =
+                _revealBaseLocalRotation * Quaternion.Euler(rotationOffset);
+
+            if (!_revealFaceSwapped &&
+                normalizedTime >= Mathf.Clamp01(revealFaceSwapNormalizedTime))
+            {
+                SwapRevealFace();
+            }
+        }
+
+        private void RestoreRevealTransform()
+        {
+            transform.localScale = _baseScale;
+            if (_hasRevealBaseTransform)
+            {
+                transform.localPosition = _revealBaseLocalPosition;
+                transform.localRotation = _revealBaseLocalRotation;
+                _hasRevealBaseTransform = false;
+            }
+
+            RestoreRevealRendererFlipState();
+        }
+
+        private void SwapRevealFace()
+        {
+            _revealFaceSwapped = true;
+
+            if (revealFlipXOnFaceSwap)
+            {
+                ApplyRevealRendererFlip(invert: true);
+            }
+
+            ApplyPendingRevealFace();
+            SetFaceObjects(showFront: true);
+            ApplyFaceDetails();
+        }
+
+        private void ApplyPendingRevealFace()
+        {
+            if (_pendingRevealFaceCard == null)
+            {
+                return;
+            }
+
+            ApplyFaceSprite(_pendingRevealFaceCard.DefinitionKey);
+            _pendingRevealFaceCard = null;
+        }
+
+        private void CaptureRevealRendererFlipState()
+        {
+            _hasRevealRendererFlipState = true;
+            SetShaderFlipX(FrontSpriteRenderer(), false);
+            SetShaderFlipX(BackSpriteRenderer(), false);
+        }
+
+        private void ApplyRevealRendererFlip(bool invert)
+        {
+            if (!_hasRevealRendererFlipState)
+            {
+                return;
+            }
+
+            SetShaderFlipX(FrontSpriteRenderer(), invert);
+            SetShaderFlipX(BackSpriteRenderer(), invert);
+        }
+
+        private void RestoreRevealRendererFlipState()
+        {
+            if (!_hasRevealRendererFlipState)
+            {
+                return;
+            }
+
+            SetShaderFlipX(FrontSpriteRenderer(), false);
+            SetShaderFlipX(BackSpriteRenderer(), false);
+            _hasRevealRendererFlipState = false;
+        }
+
+        private void EnsureRevealCurves()
+        {
+            revealPositionXCurve = EnsureCurve(
+                revealPositionXCurve,
+                DefaultRevealOffsetCurve());
+            revealPositionYCurve = EnsureCurve(
+                revealPositionYCurve,
+                DefaultRevealOffsetCurve());
+            revealPositionZCurve = EnsureCurve(
+                revealPositionZCurve,
+                DefaultRevealOffsetCurve());
+            revealRotationXCurve = EnsureCurve(
+                revealRotationXCurve,
+                DefaultRevealOffsetCurve());
+            revealRotationYCurve = EnsureCurve(
+                revealRotationYCurve,
+                DefaultRevealOffsetCurve());
+            revealRotationZCurve = EnsureCurve(
+                revealRotationZCurve,
+                DefaultRevealOffsetCurve());
+        }
+
+        private static AnimationCurve EnsureCurve(
+            AnimationCurve curve,
+            AnimationCurve fallback)
+        {
+            return curve == null || curve.length == 0 ? fallback : curve;
+        }
+
+        private static float EvaluateCurve(AnimationCurve curve, float time)
+        {
+            return curve == null ? 0f : curve.Evaluate(time);
+        }
+
+        private static AnimationCurve DefaultRevealOffsetCurve()
+        {
+            return new AnimationCurve(
+                new Keyframe(0f, 0f),
+                new Keyframe(0.5f, 1f),
+                new Keyframe(1f, 0f));
+        }
+
+        private void HideFaceDetails()
+        {
+            if (englishNameText != null)
+            {
+                englishNameText.gameObject.SetActive(false);
+            }
+
+            if (satanDoomCountText != null)
+            {
+                satanDoomCountText.gameObject.SetActive(false);
+            }
+        }
+
+        private void ApplyFaceDetails()
+        {
+            if (BoundCard == null || !BoundCard.IsFaceUp)
+            {
+                return;
+            }
+
+            if (englishNameText != null)
+            {
+                englishNameText.text = BoundCard.DefinitionKey.ToUpperInvariant();
+                englishNameText.gameObject.SetActive(true);
+            }
+
+            UpdateSatanDoomCount(BoundCard, allowVisible: true);
         }
 
         public void SetHovered(bool hovered)
@@ -648,7 +1009,9 @@ namespace DiaBlackJack.GameScene
             counter.SetActive(false);
         }
 
-        private void UpdateSatanDoomCount(GameSceneDemonCardViewModel card)
+        private void UpdateSatanDoomCount(
+            GameSceneDemonCardViewModel card,
+            bool allowVisible = true)
         {
             EnsureSatanDoomCountText();
             if (satanDoomCountText == null)
@@ -656,7 +1019,8 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            bool visible = card.IsFaceUp &&
+            bool visible = allowVisible &&
+                card.IsFaceUp &&
                 string.Equals(
                     card.DefinitionKey,
                     DemonContractCatalog.SatanKey,

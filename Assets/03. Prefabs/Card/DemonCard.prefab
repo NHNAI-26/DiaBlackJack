@@ -295,7 +295,241 @@ MonoBehaviour:
   hoverScale: 1.15
   scaleLerp: 12
   hoverSfxId: cardHover
+  revealFlipDuration: 0.7
+  revealFaceSwapNormalizedTime: 0.35
+  revealFlipXOnFaceSwap: 1
+  revealPositionOffset: {x: 0.5, y: 0.4, z: 0}
+  revealPositionXCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.35
+      value: 0.5
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.7
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  revealPositionYCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.7
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.742599
+      value: 0.5348251
+      inSlope: -8.890457
+      outSlope: -8.890457
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.2807401
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.9035967
+      value: 0.009870769
+      inSlope: -0.2115756
+      outSlope: -0.2115756
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.2606021
+      outWeight: 0.72012067
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.26328772
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  revealPositionZCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.7
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.742599
+      value: 0.5348251
+      inSlope: -8.890457
+      outSlope: -8.890457
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.2807401
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.9035967
+      value: 0.009870769
+      inSlope: -0.2115756
+      outSlope: -0.2115756
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.2606021
+      outWeight: 0.72012067
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.26328772
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  revealRotationOffset: {x: 0, y: 180, z: 0}
+  revealRotationXCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  revealRotationYCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.7
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  revealRotationZCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   upsideDownTurnDuration: 0.35
+  satanDoomCountText: {fileID: 0}
+  satanDoomCountTilt: -4
+  satanDoomCountColor: {r: 0.68, g: 0.015, b: 0.025, a: 1}
+  satanDoomOutlineColor: {r: 0.12, g: 0, b: 0, a: 0.95}
   shopOfferStatus: {fileID: 3469392917929214280}
   shopSoldOutTint: {r: 0.35, g: 0.35, b: 0.35, a: 1}
 --- !u!1 &805380802697689471 stripped
@@ -317,7 +551,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fdc581742b122ac4abb1bcbba802ee78, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ShopCardOfferStatusView
 --- !u!4 &5217502089744215780 stripped
 Transform:

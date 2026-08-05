@@ -409,6 +409,38 @@ namespace DiaBlackJack.GameScene.Editor
         {
             DrawDefaultInspector();
             CardHoverAnchorPreviewDrawer.DrawInspectorHelp();
+            DrawRevealFlipTest();
+        }
+
+        private void DrawRevealFlipTest()
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField(
+                "Animation Test",
+                EditorStyles.boldLabel);
+
+            DemonCardView view = target as DemonCardView;
+            bool canPlay = view != null && view.CanPlayRevealFlipAnimationTest;
+            if (!EditorApplication.isPlaying)
+            {
+                EditorGUILayout.HelpBox(
+                    "Reveal flip test is available only in Play Mode.",
+                    MessageType.Info);
+            }
+            else if (!canPlay)
+            {
+                EditorGUILayout.HelpBox(
+                    "Select an active scene DemonCardView while in Play Mode.",
+                    MessageType.Warning);
+            }
+
+            using (new EditorGUI.DisabledScope(!canPlay))
+            {
+                if (GUILayout.Button("Play Reveal Flip"))
+                {
+                    view.PlayRevealFlipAnimationTest();
+                }
+            }
         }
 
         private void OnSceneGUI()
@@ -418,6 +450,35 @@ namespace DiaBlackJack.GameScene.Editor
                 serializedObject,
                 view == null ? null : view.transform,
                 includeBottom: false);
+        }
+
+        [MenuItem(
+            "Tools/DiaBlackJack/Card Animation Test/Play Selected Demon Reveal Flip",
+            priority = 241)]
+        private static void PlaySelectedDemonRevealFlipTest()
+        {
+            if (Selection.activeGameObject == null)
+            {
+                return;
+            }
+
+            DemonCardView view = Selection.activeGameObject
+                .GetComponentInParent<DemonCardView>();
+            if (view != null)
+            {
+                view.PlayRevealFlipAnimationTest();
+            }
+        }
+
+        [MenuItem(
+            "Tools/DiaBlackJack/Card Animation Test/Play Selected Demon Reveal Flip",
+            true)]
+        private static bool CanPlaySelectedDemonRevealFlipTest()
+        {
+            return EditorApplication.isPlaying &&
+                Selection.activeGameObject != null &&
+                Selection.activeGameObject
+                    .GetComponentInParent<DemonCardView>() != null;
         }
     }
 }

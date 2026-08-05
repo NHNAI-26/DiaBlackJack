@@ -241,78 +241,24 @@ namespace DiaBlackJack.GameScene
             GameObject second,
             IReadOnlyList<StartingDemonGrantCardViewModel> cards)
         {
-            Vector3 firstScale = first.transform.localScale;
-            Vector3 secondScale = second.transform.localScale;
-            float halfDuration = Mathf.Max(0.01f, flipDuration * 0.5f);
+            DemonCardView firstView = first.GetComponent<DemonCardView>();
+            DemonCardView secondView = second.GetComponent<DemonCardView>();
 
-            yield return ScaleCardWidths(
-                first,
-                second,
-                firstScale,
-                secondScale,
-                1f,
-                0f,
-                halfDuration);
-
-            first.GetComponent<DemonCardView>().Bind(
+            firstView.Bind(
                 CreateCardViewModel(cards[0], 11000, isFaceUp: true));
-            second.GetComponent<DemonCardView>().Bind(
+            secondView.Bind(
                 CreateCardViewModel(cards[1], 11001, isFaceUp: true));
-            _revealedCards.Add(first.GetComponent<DemonCardView>());
-            _revealedCards.Add(second.GetComponent<DemonCardView>());
-            first.transform.localScale = new Vector3(
-                0f,
-                firstScale.y,
-                firstScale.z);
-            second.transform.localScale = new Vector3(
-                0f,
-                secondScale.y,
-                secondScale.z);
+            _revealedCards.Add(firstView);
+            _revealedCards.Add(secondView);
 
-            yield return ScaleCardWidths(
-                first,
-                second,
-                firstScale,
-                secondScale,
-                0f,
-                1f,
-                halfDuration);
+            float duration = Mathf.Max(
+                flipDuration,
+                firstView.RevealFlipDuration,
+                secondView.RevealFlipDuration);
+            yield return WaitUnscaled(duration);
         }
 
-        private static IEnumerator ScaleCardWidths(
-            GameObject first,
-            GameObject second,
-            Vector3 firstScale,
-            Vector3 secondScale,
-            float from,
-            float to,
-            float duration)
-        {
-            float elapsed = 0f;
-            while (elapsed < duration)
-            {
-                elapsed += Time.unscaledDeltaTime;
-                float width = Mathf.Lerp(from, to, elapsed / duration);
-                first.transform.localScale = new Vector3(
-                    firstScale.x * width,
-                    firstScale.y,
-                    firstScale.z);
-                second.transform.localScale = new Vector3(
-                    secondScale.x * width,
-                    secondScale.y,
-                    secondScale.z);
-                yield return null;
-            }
 
-            first.transform.localScale = new Vector3(
-                firstScale.x * to,
-                firstScale.y,
-                firstScale.z);
-            second.transform.localScale = new Vector3(
-                secondScale.x * to,
-                secondScale.y,
-                secondScale.z);
-        }
 
         private static IEnumerator WaitUnscaled(float seconds)
         {
