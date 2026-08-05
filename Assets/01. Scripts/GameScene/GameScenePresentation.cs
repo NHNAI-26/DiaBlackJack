@@ -131,7 +131,8 @@ namespace DiaBlackJack.GameScene
             bool isUsed = false,
             GameSceneCombatHudCommand? directSelectionCommand = null,
             bool isEffectSource = false,
-            bool isSatanBranded = false)
+            bool isSatanBranded = false,
+            bool isEffectSourcePersistent = false)
         {
             CardId = cardId;
             Rank = rank;
@@ -232,6 +233,8 @@ namespace DiaBlackJack.GameScene
             foreach (CardDefinition definition in CardDefinitionCatalog.All)
             {
                 if (string.Equals(
+            IsEffectSourcePersistent =
+                isEffectSource && isEffectSourcePersistent;
                     definition.Key,
                     definitionKey,
                     StringComparison.Ordinal))
@@ -288,6 +291,8 @@ namespace DiaBlackJack.GameScene
         {
             Kind = kind;
             Title = title ?? string.Empty;
+        internal bool IsEffectSourcePersistent { get; }
+
             CardGroups = cardGroups ??
                 throw new ArgumentNullException(nameof(cardGroups));
 
@@ -644,16 +649,25 @@ namespace DiaBlackJack.GameScene
                 battle.ActiveEnemyDemonContracts);
             GameSceneViewModel model = new GameSceneViewModel(
                 core,
-                CreatePlayerCards(core, battle, revealRoundResult),
-                CreateEnemyCards(battle, revealRoundResult),
+                CreatePlayerCards(
+                    core,
+                    battle,
+                    revealRoundResult,
+                    effectSource),
+                CreateEnemyCards(
+                    battle,
+                    revealRoundResult,
+                    effectSource),
                 CreateActiveDemonCards(
                     battle,
                     battle.ActivePlayerDemonContracts,
-                    exposePlayerActions: true),
+                    exposePlayerActions: true,
+                    effectSource: effectSource),
                 CreateActiveDemonCards(
                     battle,
                     battle.ActiveEnemyDemonContracts,
-                    exposePlayerActions: false),
+                    exposePlayerActions: false,
+                    effectSource: effectSource),
                 enemyVisual,
                 enemyLabel,
                 CreateCrystalOrbCandidates(battle),
@@ -709,6 +723,45 @@ namespace DiaBlackJack.GameScene
                 case PublicCombatActionType.Hit:
                     cueKey = SpeechCueKeys.ActionHit;
                     break;
+        private enum EffectSourceCardKind
+        {
+            Normal,
+            Demon,
+        }
+
+        private readonly struct EffectSourceProjection
+        {
+            public EffectSourceProjection(
+                int cardId,
+                CombatantSide ownerSide,
+                EffectSourceCardKind cardKind,
+                bool isPersistent)
+            {
+                CardId = cardId;
+                OwnerSide = ownerSide;
+                CardKind = cardKind;
+                IsPersistent = isPersistent;
+            }
+
+            public int CardId { get; }
+
+            public EffectSourceCardKind CardKind { get; }
+
+            public bool IsPersistent { get; }
+
+            public CombatantSide OwnerSide { get; }
+
+            public bool Matches(
+                int cardId,
+                CombatantSide ownerSide,
+                EffectSourceCardKind cardKind)
+            {
+                return CardId == cardId &&
+                    OwnerSide == ownerSide &&
+                    CardKind == cardKind;
+            }
+        }
+
                 case PublicCombatActionType.Stand:
                     cueKey = SpeechCueKeys.ActionStand;
                     break;
@@ -726,6 +779,8 @@ namespace DiaBlackJack.GameScene
             }
 
             return new EnemySpeechCue(
+            EffectSourceProjection? effectSource =
+                CreateEffectSourceProjection(battle);
                 battle,
                 roundNumber,
                 actionOrdinal,
@@ -1295,7 +1350,8 @@ namespace DiaBlackJack.GameScene
         private static IReadOnlyList<GameSceneCardViewModel> CreatePlayerCards(
             CoreLoopViewModel core,
             CoreLoopBattle battle,
-            bool revealRoundResult)
+            bool revealRoundResult,
+            EffectSourceProjection? effectSource)
         {
             var cards = new List<GameSceneCardViewModel>(core.PlayerCardActions.Count);
             int hiddenCardCount = 0;
@@ -1318,7 +1374,17 @@ namespace DiaBlackJack.GameScene
                     isUsed: card.UseState == CardUseState.Used,
                     directSelectionCommand:
                         FindPlayerDirectSelectionCommand(battle, card.CardId),
-                    isEffectSource: IsPlayerEffectSource(battle, card.CardId));
+                    isEffectSource: IsEffectSource(
+                        effectSource,
+                        card.CardId,
+                        CombatantSide.Player,
+                        EffectSourceCardKind.Normal),
+                    isEffectSourcePersistent:
+                        IsPersistentEffectSource(
+                            effectSource,
+                            card.CardId,
+                            CombatantSide.Player,
+                            EffectSourceCardKind.Normal));
 
                 // PlayerHand's world orientation makes the highest index land at screen-left.
                 // Keep hidden cards last and prepend face-up cards so new draws appear at
@@ -1346,7 +1412,8 @@ namespace DiaBlackJack.GameScene
             CreateActiveDemonCards(
                 CoreLoopBattle battle,
                 IReadOnlyList<ActiveDemonContract> contracts,
-                bool exposePlayerActions)
+                bool exposePlayerActions,
+                EffectSourceProjection? effectSource)
         {
             var cards = new List<GameSceneDemonCardViewModel>(contracts.Count);
             foreach (ActiveDemonContract contract in contracts)
@@ -1377,7 +1444,18 @@ namespace DiaBlackJack.GameScene
                     definition.CostSummary,
                     showHoverBadgeWhenUnavailable: true,
                     isUpsideDown: isUpsideDown,
-                    satanDoomCount: satanDoomCount));
+                    satanDoomCount: satanDoomCount,
+                    isEffectSource: IsEffectSource(
+                        effectSource,
+                        contract.SourceCardId,
+                        contract.OwnerSide,
+                        EffectSourceCardKind.Demon),
+                    isEffectSourcePersistent:
+                        IsPersistentEffectSource(
+                            effectSource,
+                            contract.SourceCardId,
+                            contract.OwnerSide,
+                            EffectSourceCardKind.Demon)));
             }
 
             return cards.AsReadOnly();
@@ -1463,7 +1541,8 @@ namespace DiaBlackJack.GameScene
 
         private static IReadOnlyList<GameSceneCardViewModel> CreateEnemyCards(
             CoreLoopBattle battle,
-            bool revealRoundResult)
+            bool revealRoundResult,
+            EffectSourceProjection? effectSource)
         {
             IReadOnlyList<BlackjackCard> hand = battle.Enemy.Hand.Cards;
             PendingCardEffect pendingEffect = battle.PendingPlayerCardEffect;
@@ -1492,7 +1571,18 @@ namespace DiaBlackJack.GameScene
                         FindCardEffectChoiceOptionId(pendingEffect, card.Id),
                     isUsed: faceUp && card.UseState == CardUseState.Used,
                     directSelectionCommand:
-                        FindEnemyDirectSelectionCommand(battle, card.Id));
+                        FindEnemyDirectSelectionCommand(battle, card.Id),
+                    isEffectSource: IsEffectSource(
+                        effectSource,
+                        card.Id,
+                        CombatantSide.Enemy,
+                        EffectSourceCardKind.Normal),
+                    isEffectSourcePersistent:
+                        IsPersistentEffectSource(
+                            effectSource,
+                            card.Id,
+                            CombatantSide.Enemy,
+                            EffectSourceCardKind.Normal));
 
                 // EnemyHand is mirrored by the camera just like PlayerHand: its highest model index
                 // lands at screen-left. Keep hidden cards last and prepend each public draw so the
@@ -1799,17 +1889,116 @@ namespace DiaBlackJack.GameScene
             return null;
         }
 
-        private static bool IsPlayerEffectSource(CoreLoopBattle battle, int cardId)
+        private static EffectSourceProjection? CreateEffectSourceProjection(
+            CoreLoopBattle battle)
         {
-            PendingCardEffect manual = battle.PendingPlayerCardEffect;
-            if (manual != null && manual.SourceCardId == cardId)
+            PendingAutomaticCardInteraction automatic =
+                battle.PendingAutomaticInteraction;
+            if (automatic != null)
             {
-                return true;
+                return new EffectSourceProjection(
+                    automatic.SourceCardId,
+                    automatic.OwnerSide,
+                    EffectSourceCardKind.Normal,
+                    isPersistent: true);
             }
 
-            PendingAutomaticCardInteraction automatic =
-                battle.PendingPlayerAutomaticInteraction;
-            return automatic != null && automatic.SourceCardId == cardId;
+            PendingCardEffect manual = battle.PendingPlayerCardEffect ??
+                battle.PendingEnemyCardEffect;
+            if (manual != null && battle.ActiveCardEffectActorSide.HasValue)
+            {
+                return new EffectSourceProjection(
+                    manual.SourceCardId,
+                    battle.ActiveCardEffectActorSide.Value,
+                    EffectSourceCardKind.Normal,
+                    isPersistent: true);
+            }
+
+            PendingDemonContractInteraction demon =
+                battle.PendingPlayerDemonContractInteraction ??
+                battle.PendingEnemyDemonContractInteraction;
+            if (demon != null)
+            {
+                CombatantSide ownerSide =
+                    ReferenceEquals(
+                        demon,
+                        battle.PendingPlayerDemonContractInteraction)
+                        ? CombatantSide.Player
+                        : CombatantSide.Enemy;
+                int? sourceCardId = demon.SourceContractCardId;
+                PublicCombatAction lastDemonAction = battle.LastPublicAction;
+                if (!sourceCardId.HasValue &&
+                    lastDemonAction?.ActionType ==
+                        PublicCombatActionType.DemonContract &&
+                    lastDemonAction.ActorSide == ownerSide)
+                {
+                    sourceCardId = battle.LastPublicActionSourceCardId;
+                }
+
+                if (sourceCardId.HasValue)
+                {
+                    return new EffectSourceProjection(
+                        sourceCardId.Value,
+                        ownerSide,
+                        EffectSourceCardKind.Demon,
+                        isPersistent: true);
+                }
+            }
+
+            if (battle.LastAutomaticCardResult.HasValue &&
+                battle.LastAutomaticCardResultActionOrdinal ==
+                    battle.PublicActionHistory.Count)
+            {
+                AutomaticCardResult result =
+                    battle.LastAutomaticCardResult.Value;
+                return new EffectSourceProjection(
+                    result.SourceCardId,
+                    result.OwnerSide,
+                    EffectSourceCardKind.Normal,
+                    isPersistent: false);
+            }
+
+            PublicCombatAction lastAction = battle.LastPublicAction;
+            if (lastAction == null ||
+                !battle.LastPublicActionSourceCardId.HasValue)
+            {
+                return null;
+            }
+
+            EffectSourceCardKind? cardKind = lastAction.ActionType switch
+            {
+                PublicCombatActionType.UseCard => EffectSourceCardKind.Normal,
+                PublicCombatActionType.DemonContract => EffectSourceCardKind.Demon,
+                _ => null,
+            };
+            return cardKind.HasValue
+                ? new EffectSourceProjection(
+                    battle.LastPublicActionSourceCardId.Value,
+                    lastAction.ActorSide,
+                    cardKind.Value,
+                    isPersistent: false)
+                : (EffectSourceProjection?)null;
+        }
+
+        private static bool IsEffectSource(
+            EffectSourceProjection? source,
+            int cardId,
+            CombatantSide ownerSide,
+            EffectSourceCardKind cardKind)
+        {
+            return source.HasValue &&
+                source.Value.Matches(cardId, ownerSide, cardKind);
+        }
+
+        private static bool IsPersistentEffectSource(
+            EffectSourceProjection? source,
+            int cardId,
+            CombatantSide ownerSide,
+            EffectSourceCardKind cardKind)
+        {
+            return source.HasValue &&
+                source.Value.IsPersistent &&
+                source.Value.Matches(cardId, ownerSide, cardKind);
         }
 
         private static int? FindCardEffectChoiceOptionId(

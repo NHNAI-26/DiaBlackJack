@@ -120,6 +120,7 @@ namespace DiaBlackJack.GameScene
         private bool _showingFrontFace = true;
         private bool _showBadgeOnHover;
         private bool _hovered;
+        private bool _isEffectSource;
         private bool _useHandHoverVisual;
         private bool _isShopSoldOut;
         private bool _shopColorCaptured;
@@ -254,6 +255,7 @@ namespace DiaBlackJack.GameScene
             _orientationTween?.Kill();
             _orientationTween = null;
             _hovered = false;
+            _isEffectSource = false;
             ResetHoverScales();
             _targetScale = HoverRestingScale();
         }
@@ -270,11 +272,26 @@ namespace DiaBlackJack.GameScene
 
         public void Bind(GameSceneDemonCardViewModel card)
         {
+            Bind(card, showTransientEffectSource: true);
+        }
+
+        internal void Bind(
+            GameSceneDemonCardViewModel card,
+            bool showTransientEffectSource)
+        {
             if (card == null)
             {
                 return;
             }
 
+            bool sameCard = _hasBoundCard && CardId == card.CardId;
+            bool wasEmphasized = _hovered || _isEffectSource;
+            Transform scaleTarget = HoverScaleTarget();
+            Vector3 preservedScale = scaleTarget.localScale;
+            bool isEffectSource = card.IsEffectSource &&
+                (card.IsEffectSourcePersistent || showTransientEffectSource);
+            bool preserveCurrentScale = sameCard &&
+                (wasEmphasized || isEffectSource);
             bool animateReveal = Application.isPlaying &&
                 _hasBoundCard &&
                 CardId == card.CardId &&
@@ -291,6 +308,7 @@ namespace DiaBlackJack.GameScene
             CardId = card.CardId;
             BoundCard = card;
             CanUse = card.CanUse;
+            _isEffectSource = isEffectSource;
             _showingFrontFace = card.IsFaceUp;
             _showBadgeOnHover = CanUse || card.ShowHoverBadgeWhenUnavailable;
             _hasBoundCard = true;
@@ -336,7 +354,15 @@ namespace DiaBlackJack.GameScene
 
             _hovered = false;
             ResetHoverScales();
-            _targetScale = HoverRestingScale();
+            if (preserveCurrentScale)
+            {
+                HoverScaleTarget().localScale = preservedScale;
+            }
+
+            Vector3 restingScale = HoverRestingScale();
+            _targetScale = _isEffectSource
+                ? restingScale * hoverScale
+                : restingScale;
             ApplyOrientation(card.IsUpsideDown, animateOrientation);
             AlignSatanDoomCount();
 
@@ -688,7 +714,9 @@ namespace DiaBlackJack.GameScene
             _hovered = hovered;
             PlayHoverSfx(hovered);
             Vector3 restingScale = HoverRestingScale();
-            _targetScale = hovered ? restingScale * hoverScale : restingScale;
+            _targetScale = hovered || _isEffectSource
+                ? restingScale * hoverScale
+                : restingScale;
         }
 
         internal Transform HoverVisualTransform =>

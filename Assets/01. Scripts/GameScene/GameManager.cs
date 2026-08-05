@@ -2762,12 +2762,14 @@ namespace DiaBlackJack.GameScene
                     vm,
                     scheduleRevolverRetry: false,
                     deferHammerSmashCardRender: true,
-                    deferKnifeResultCardRender: revealKnifeCardWithThrow);
+                    deferKnifeResultCardRender: revealKnifeCardWithThrow,
+                    showTransientEffectSources: true);
 
                 if (revealKnifeCardWithThrow)
                 {
                     yield return RenderHandsThenTotalsAfterRevealFlip(
-                        pendingKnifeReveal);
+                        pendingKnifeReveal,
+                        showTransientEffectSources: true);
                 }
 
                 bool resolveBeat = vm.Core.State == CoreLoopState.ResolvingRound;
@@ -2793,7 +2795,8 @@ namespace DiaBlackJack.GameScene
                 if (playedAnimation.DeferredCardRender)
                 {
                     yield return RenderHandsThenTotalsAfterRevealFlip(
-                        playedAnimation.DeferredViewModel);
+                        playedAnimation.DeferredViewModel,
+                        showTransientEffectSources: true);
                 }
 
                 pendingKnifeReveal = null;
@@ -2838,7 +2841,8 @@ namespace DiaBlackJack.GameScene
             GameSceneViewModel vm,
             bool scheduleRevolverRetry = true,
             bool deferHammerSmashCardRender = false,
-            bool deferKnifeResultCardRender = false)
+            bool deferKnifeResultCardRender = false,
+            bool showTransientEffectSources = false)
         {
             _core = vm.Core;
             _enemyMammonDieValue = vm.EnemyMammonDieValue;
@@ -2934,7 +2938,7 @@ namespace DiaBlackJack.GameScene
 
             if (!deferredCardRender)
             {
-                RenderHandsAndTotals(vm);
+                RenderHandsAndTotals(vm, showTransientEffectSources);
             }
 
             RenderCrystalOrbSelection(vm);
@@ -3045,7 +3049,9 @@ namespace DiaBlackJack.GameScene
 
         /// <returns>True if any card started its reveal-flip animation this call (back
         /// turning to face-up) — see <see cref="CardView.WillAnimateRevealFor"/>.</returns>
-        private bool RenderHands(GameSceneViewModel vm)
+        private bool RenderHands(
+            GameSceneViewModel vm,
+            bool showTransientEffectSources)
         {
             if (vm == null)
             {
@@ -3055,12 +3061,18 @@ namespace DiaBlackJack.GameScene
             bool anyRevealAnimated = false;
             if (playerHand != null)
             {
-                anyRevealAnimated |= playerHand.Render(vm.PlayerCards, vm.PlayerDemonCards);
+                anyRevealAnimated |= playerHand.Render(
+                    vm.PlayerCards,
+                    vm.PlayerDemonCards,
+                    showTransientEffectSources);
             }
 
             if (enemyHand != null)
             {
-                anyRevealAnimated |= enemyHand.Render(vm.EnemyCards, vm.EnemyDemonCards);
+                anyRevealAnimated |= enemyHand.Render(
+                    vm.EnemyCards,
+                    vm.EnemyDemonCards,
+                    showTransientEffectSources);
             }
 
             return anyRevealAnimated;
@@ -3081,14 +3093,16 @@ namespace DiaBlackJack.GameScene
         // number jumps while the card still looks face-down. Used from non-coroutine call
         // sites (e.g. the default ApplyView render), so the wait runs as its own coroutine
         // rather than blocking the caller.
-        private void RenderHandsAndTotals(GameSceneViewModel vm)
+        private void RenderHandsAndTotals(
+            GameSceneViewModel vm,
+            bool showTransientEffectSources)
         {
             if (vm == null)
             {
                 return;
             }
 
-            if (RenderHands(vm))
+            if (RenderHands(vm, showTransientEffectSources))
             {
                 StartCoroutine(RenderTotalsAfterRevealFlip(vm));
             }
@@ -3100,9 +3114,11 @@ namespace DiaBlackJack.GameScene
 
         // Same as RenderHandsAndTotals, but yieldable so a driving coroutine (PlayTimeline) can
         // wait for it directly instead of racing a fire-and-forget StartCoroutine.
-        private IEnumerator RenderHandsThenTotalsAfterRevealFlip(GameSceneViewModel vm)
+        private IEnumerator RenderHandsThenTotalsAfterRevealFlip(
+            GameSceneViewModel vm,
+            bool showTransientEffectSources)
         {
-            if (RenderHands(vm))
+            if (RenderHands(vm, showTransientEffectSources))
             {
                 yield return new WaitForSeconds(ResolveCardRevealFaceSwapSeconds());
             }

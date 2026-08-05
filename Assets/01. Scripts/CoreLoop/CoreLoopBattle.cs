@@ -52,6 +52,9 @@ namespace DiaBlackJack.CoreLoop
             new List<ActiveDemonContract>();
         private readonly List<PublicCombatAction> _publicActionHistory =
             new List<PublicCombatAction>();
+        private int? _lastPublicActionSourceCardId;
+        private int _lastAutomaticCardResultActionOrdinal = -1;
+        private int _nextAutomaticCardActivationOrdinal = 1;
         private readonly List<int> _injectedPoisonCardIds = new List<int>();
         private CardEffectContext _activeCardEffectContext;
         private CombatantSide? _activeCardEffectActorSide;
@@ -452,6 +455,28 @@ namespace DiaBlackJack.CoreLoop
 
         internal PendingAutomaticCardInteraction PendingAutomaticInteraction =>
             _pendingAutomaticCardInteraction;
+
+        internal int LastAutomaticCardResultActionOrdinal =>
+            _lastAutomaticCardResultActionOrdinal;
+
+        internal int LastAutomaticCardActivationOrdinal { get; private set; }
+
+        internal int LastAutomaticCardActivationRoundNumber { get; private set; }
+
+        internal CombatantSide? LastAutomaticCardActivationOwnerSide
+        {
+            get;
+            private set;
+        }
+
+        internal string LastAutomaticCardActivationDefinitionKey
+        {
+            get;
+            private set;
+        }
+
+        internal int? LastPublicActionSourceCardId =>
+            _lastPublicActionSourceCardId;
 
         internal int PendingPoisonWinRewardCount =>
             _automaticCardBattleState.PendingPoisonWinRewardCount;
@@ -920,7 +945,8 @@ namespace DiaBlackJack.CoreLoop
             RecordPublicAction(
                 CombatantSide.Enemy,
                 PublicCombatActionType.DemonContract,
-                activeContract.Definition.Key);
+                activeContract.Definition.Key,
+                activeContract.SourceCardId);
 
             bool enemyDepleted = Enemy.Soul.IsDepleted;
             LastDemonContractResult = new DemonContractResult(
@@ -1188,7 +1214,8 @@ namespace DiaBlackJack.CoreLoop
             RecordPublicAction(
                 CombatantSide.Player,
                 PublicCombatActionType.DemonContract,
-                activeContract.Definition.Key);
+                activeContract.Definition.Key,
+                activeContract.SourceCardId);
             bool playerDepleted = Player.Soul.IsDepleted;
             LastDemonContractResult = new DemonContractResult(
                 pending.InteractionId,
@@ -1458,7 +1485,8 @@ namespace DiaBlackJack.CoreLoop
             RecordPublicAction(
                 CombatantSide.Enemy,
                 PublicCombatActionType.DemonContract,
-                activeContract.Definition.Key);
+                activeContract.Definition.Key,
+                activeContract.SourceCardId);
 
             if (activeContract.RuntimeState is MammonRuntimeState mammonState &&
                 mammonState.CurrentDieValue == 6)
@@ -2600,7 +2628,8 @@ namespace DiaBlackJack.CoreLoop
                 RecordPublicAction(
                     CombatantSide.Enemy,
                     PublicCombatActionType.DemonContract,
-                    activeContract.Definition.Key);
+                    activeContract.Definition.Key,
+                    activeContract.SourceCardId);
                 RaiseStepped();
             }
         }
@@ -2735,6 +2764,15 @@ namespace DiaBlackJack.CoreLoop
                 throw new InvalidOperationException(
                     $"Automatic card handler for {sourceCard.Definition.Effect} is not registered.");
             }
+
+            LastAutomaticCardActivationOrdinal =
+                _nextAutomaticCardActivationOrdinal;
+            LastAutomaticCardActivationRoundNumber = RoundNumber;
+            _nextAutomaticCardActivationOrdinal = checked(
+                _nextAutomaticCardActivationOrdinal + 1);
+            LastAutomaticCardActivationOwnerSide = ownerSide;
+            LastAutomaticCardActivationDefinitionKey =
+                sourceCard.DefinitionKey;
 
             _activeAutomaticCardEffectContext =
                 new AutomaticCardEffectContext(this, ownerSide, sourceCard);
@@ -2888,6 +2926,7 @@ namespace DiaBlackJack.CoreLoop
                         "Automatic card effect has no continuation.");
 
             LastAutomaticCardResult = result;
+            _lastAutomaticCardResultActionOrdinal = _publicActionHistory.Count;
             _pendingAutomaticCardInteraction = null;
             _activeAutomaticCardEffectContext = null;
             _automaticCardContinuation = null;
@@ -3065,7 +3104,8 @@ namespace DiaBlackJack.CoreLoop
             RecordPublicAction(
                 ownerSide,
                 PublicCombatActionType.DemonContract,
-                activeContract.Definition.Key);
+                activeContract.Definition.Key,
+                activeContract.SourceCardId);
             MammonRerollResult result = suppliedDieValue.HasValue
                 ? _demonContractResolver.RerollMammon(
                     this,
@@ -3323,7 +3363,8 @@ namespace DiaBlackJack.CoreLoop
             RecordPublicAction(
                 ownerSide,
                 PublicCombatActionType.DemonContract,
-                activeContract.Definition.Key);
+                activeContract.Definition.Key,
+                activeContract.SourceCardId);
             BlackjackCard drawnCard = opponent.Draw(faceUp: true);
             RaiseStepped();
             bool isWaitingForAutomaticChoice = TryBeginAutomaticCardEffect(
@@ -3607,7 +3648,8 @@ namespace DiaBlackJack.CoreLoop
             RecordPublicAction(
                 ownerSide,
                 PublicCombatActionType.DemonContract,
-                activeContract.Definition.Key);
+                activeContract.Definition.Key,
+                activeContract.SourceCardId);
             RaiseStepped();
             ResolveBelialTransferredCardArrival(
                 ownerSide,
@@ -3756,7 +3798,8 @@ namespace DiaBlackJack.CoreLoop
             RecordPublicAction(
                 ownerSide,
                 PublicCombatActionType.UseCard,
-                transferredCard.DefinitionKey);
+                transferredCard.DefinitionKey,
+                transferredCard.Id);
             CardEffectApplicationResult applicationResult =
                 ApplyCardEffectStep(_cardEffectResolver.Begin(context));
             if (applicationResult == CardEffectApplicationResult.Completed)
@@ -4014,7 +4057,8 @@ namespace DiaBlackJack.CoreLoop
                 RecordPublicAction(
                     ownerSide,
                     PublicCombatActionType.DemonContract,
-                    activeContract.Definition.Key);
+                    activeContract.Definition.Key,
+                    activeContract.SourceCardId);
                 RaiseStepped();
                 return true;
             }
@@ -4027,7 +4071,8 @@ namespace DiaBlackJack.CoreLoop
             RecordPublicAction(
                 ownerSide,
                 PublicCombatActionType.DemonContract,
-                activeContract.Definition.Key);
+                activeContract.Definition.Key,
+                activeContract.SourceCardId);
             int roundBeforeForcedDraw = RoundNumber;
             SatanContractFace faceBeforeForcedDraw = satanState.CurrentFace;
             BlackjackCard drawnCard = opponent.Draw(faceUp: true);
@@ -4587,7 +4632,8 @@ namespace DiaBlackJack.CoreLoop
             RecordPublicAction(
                 actorSide,
                 PublicCombatActionType.UseCard,
-                card.DefinitionKey);
+                card.DefinitionKey,
+                card.Id);
             CardEffectStep step = _cardEffectResolver.Begin(context);
 
             CardEffectApplicationResult applicationResult = ApplyCardEffectStep(step);
@@ -5213,7 +5259,8 @@ namespace DiaBlackJack.CoreLoop
                 RecordPublicAction(
                     sequence.OwnerSide,
                     PublicCombatActionType.UseCard,
-                    card.DefinitionKey);
+                    card.DefinitionKey,
+                    card.Id);
                 CardEffectApplicationResult applicationResult =
                     ApplyCardEffectStep(_cardEffectResolver.Begin(context));
                 if (applicationResult != CardEffectApplicationResult.Completed ||
@@ -5362,6 +5409,8 @@ namespace DiaBlackJack.CoreLoop
             _playerFinalBonusForEnemyChoice = 0;
             _playerChangeSelection = null;
             _publicActionHistory.Clear();
+            _lastPublicActionSourceCardId = null;
+            _lastAutomaticCardResultActionOrdinal = -1;
             _enemyDecisionOrdinal = 0;
             LastResolutionPlayerBonus = 0;
             LastResolutionEnemyBonus = 0;
@@ -5872,12 +5921,25 @@ namespace DiaBlackJack.CoreLoop
         private void RecordPublicAction(
             CombatantSide actorSide,
             PublicCombatActionType actionType,
-            string sourceCardDefinitionKey = null)
+            string sourceCardDefinitionKey = null,
+            int? sourceCardId = null)
         {
+            bool requiresSourceCardId =
+                actionType == PublicCombatActionType.UseCard ||
+                actionType == PublicCombatActionType.DemonContract;
+            if (requiresSourceCardId != sourceCardId.HasValue ||
+                (sourceCardId.HasValue && sourceCardId.Value < 0))
+            {
+                throw new ArgumentException(
+                    "Only public card or contract actions require a source card id.",
+                    nameof(sourceCardId));
+            }
+
             _publicActionHistory.Add(new PublicCombatAction(
                 actorSide,
                 actionType,
                 sourceCardDefinitionKey));
+            _lastPublicActionSourceCardId = sourceCardId;
         }
 
         private void ResolveRound()

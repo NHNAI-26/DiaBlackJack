@@ -160,6 +160,7 @@ namespace DiaBlackJack.GameScene
         private bool _useHandHoverVisual;
         private bool _hasBoundCard;
         private bool _isUsed;
+        private bool _isEffectSource;
         private bool _isEffectHighlighted;
         private GameSceneCardHoverOutlineState _hoverOutlineState =
             GameSceneCardHoverOutlineState.Basic;
@@ -275,6 +276,7 @@ namespace DiaBlackJack.GameScene
             StopUsedMarkSequence();
             ResetHoverScales();
             _hovered = false;
+            _isEffectSource = false;
             ApplyHoverOutline(false);
             ApplyHoverCardBlend(false);
             ShowUsedMarkInstant(_isUsed);
@@ -308,11 +310,26 @@ namespace DiaBlackJack.GameScene
 
         public void Bind(GameSceneCardViewModel card)
         {
+            Bind(card, showTransientEffectSource: true);
+        }
+
+        internal void Bind(
+            GameSceneCardViewModel card,
+            bool showTransientEffectSource)
+        {
             if (card == null)
             {
                 return;
             }
 
+            bool sameCard = _hasBoundCard && CardId == card.CardId;
+            bool wasEmphasized = _hovered || _isEffectSource;
+            Transform scaleTarget = HoverScaleTarget();
+            Vector3 preservedScale = scaleTarget.localScale;
+            bool isEffectSource = card.IsEffectSource &&
+                (card.IsEffectSourcePersistent || showTransientEffectSource);
+            bool preserveCurrentScale = sameCard &&
+                (wasEmphasized || isEffectSource);
             bool animateUsedMark =
                 Application.isPlaying &&
                 _hasBoundCard &&
@@ -330,7 +347,8 @@ namespace DiaBlackJack.GameScene
             CanUse = card.CanUse;
             CardEffectChoiceOptionId = card.CardEffectChoiceOptionId;
             DirectSelectionCommand = card.DirectSelectionCommand;
-            _isEffectHighlighted = card.IsEffectSource ||
+            _isEffectSource = isEffectSource;
+            _isEffectHighlighted = _isEffectSource ||
                 card.DirectSelectionCommand.HasValue;
             _isUsed = card.IsUsed;
             _hoverOutlineState = card.HoverOutlineState;
@@ -383,6 +401,20 @@ namespace DiaBlackJack.GameScene
             _hovered = false;
             StopScaleTween();
             ResetHoverScales();
+            if (preserveCurrentScale)
+            {
+                HoverScaleTarget().localScale = preservedScale;
+            }
+
+            Vector3 restingScale = HoverRestingScale();
+            Vector3 targetScale = _isEffectSource
+                ? restingScale * hoverScale
+                : restingScale;
+            if ((HoverScaleTarget().localScale - targetScale).sqrMagnitude >
+                0.0000001f)
+            {
+                PlayHoverScaleTween(targetScale);
+            }
             ApplyHoverOutline(_isEffectHighlighted);
             ApplyUsedMark(animateUsedMark);
             if (animateReveal)
@@ -435,7 +467,10 @@ namespace DiaBlackJack.GameScene
             _hovered = hovered;
             PlayHoverSfx(hovered);
             Vector3 restingScale = HoverRestingScale();
-            PlayHoverScaleTween(hovered ? restingScale * hoverScale : restingScale);
+            PlayHoverScaleTween(
+                hovered || _isEffectSource
+                    ? restingScale * hoverScale
+                    : restingScale);
             ApplyHoverOutline(hovered || _isEffectHighlighted);
             ApplyHoverCardBlend(hovered);
         }

@@ -78,6 +78,17 @@ namespace DiaBlackJack.GameScene
             IReadOnlyList<GameSceneCardViewModel> cards,
             IReadOnlyList<GameSceneDemonCardViewModel> demonCards)
         {
+            return Render(
+                cards,
+                demonCards,
+                showTransientEffectSources: true);
+        }
+
+        internal bool Render(
+            IReadOnlyList<GameSceneCardViewModel> cards,
+            IReadOnlyList<GameSceneDemonCardViewModel> demonCards,
+            bool showTransientEffectSources)
+        {
             if (cardPrefab == null ||
                 cards == null ||
                 demonCards == null ||
@@ -109,7 +120,7 @@ namespace DiaBlackJack.GameScene
                 card.transform.localRotation = Quaternion.identity;
                 card.SetSortingOrder(sortingOrderBase + i * sortingOrderStep);
                 anyRevealAnimated |= card.WillAnimateRevealFor(cards[i]);
-                card.Bind(cards[i]);
+                card.Bind(cards[i], showTransientEffectSources);
                 MoveCardToLayoutPosition(
                     card,
                     i,
@@ -130,7 +141,7 @@ namespace DiaBlackJack.GameScene
                     combinedIndex * depthStagger);
                 card.SetSortingOrder(
                     sortingOrderBase + combinedIndex * sortingOrderStep);
-                card.Bind(model);
+                card.Bind(model, showTransientEffectSources);
                 MoveDemonCardToLayoutPosition(
                     card,
                     i,

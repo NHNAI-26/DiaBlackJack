@@ -14,7 +14,9 @@ namespace DiaBlackJack.GameScene
             string costSummary = "",
             bool showHoverBadgeWhenUnavailable = false,
             bool isUpsideDown = false,
-            int? satanDoomCount = null)
+            int? satanDoomCount = null,
+            bool isEffectSource = false,
+            bool isEffectSourcePersistent = false)
         {
             if (cardId < 0)
             {
@@ -46,6 +48,9 @@ namespace DiaBlackJack.GameScene
             ShowHoverBadgeWhenUnavailable = showHoverBadgeWhenUnavailable;
             IsUpsideDown = isUpsideDown;
             SatanDoomCount = satanDoomCount;
+            IsEffectSource = isEffectSource;
+            IsEffectSourcePersistent =
+                isEffectSource && isEffectSourcePersistent;
         }
 
         public int CardId { get; }
@@ -61,6 +66,10 @@ namespace DiaBlackJack.GameScene
         public string DefinitionKey { get; }
 
         public bool IsFaceUp { get; }
+
+        public bool IsEffectSource { get; }
+
+        internal bool IsEffectSourcePersistent { get; }
 
         public bool IsUpsideDown { get; }
 
