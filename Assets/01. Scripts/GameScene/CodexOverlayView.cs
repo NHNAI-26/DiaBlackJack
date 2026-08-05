@@ -36,6 +36,7 @@ namespace DiaBlackJack.GameScene
     internal static class CodexQuantityText
     {
         internal const string PurpleHex = "#8E44AD";
+        internal const string BlueHex = "#3B82F6";
 
         private const RegexOptions PatternOptions =
             RegexOptions.Compiled |
@@ -531,7 +532,7 @@ namespace DiaBlackJack.GameScene
                 "계약 영혼",
                 CurrencyIconMarkup.SoulTag,
                 page.SoulPrice);
-            SetText(demonLoreText, page.LoreDescription);
+            SetTextWithoutCurrencyIcons(demonLoreText, page.LoreDescription);
             SetText(demonActiveSkillText, page.ActiveSkill);
             SetText(demonCostText, page.Cost);
 
@@ -836,6 +837,19 @@ namespace DiaBlackJack.GameScene
             CurrencyIconText.Set(
                 target,
                 CodexQuantityText.ColorizeRelevantQuantities(value));
+        }
+
+        // Lore/backstory text reads "영혼" as the plain word, not the currency sprite icon that
+        // every other Codex field swaps it for — the icon reads oddly mid-sentence in prose.
+        private static void SetTextWithoutCurrencyIcons(TMP_Text target, string value)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            target.richText = true;
+            target.text = CodexQuantityText.ColorizeRelevantQuantities(value);
         }
 
         private static void SetCurrencyText(
