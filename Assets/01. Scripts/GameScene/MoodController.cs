@@ -14,6 +14,7 @@ namespace DiaBlackJack.GameScene
         private static readonly int WindowGlassGlowColorId =
             Shader.PropertyToID("_GlassGlowColor");
         private const float DefaultLightningDeltaTime = 1f / 60f;
+        private const string DoorOpenSfxId = "woodOpenDoor";
 
         [SerializeField] private List<MoodProfileSO> moodProfiles =
             new List<MoodProfileSO>();
@@ -30,6 +31,7 @@ namespace DiaBlackJack.GameScene
             new Vector3(0f, 0f, 12f);
         [SerializeField] private AnimationCurve doorAnimationCurve =
             CreateDoorAnimationCurve(1f);
+        [SerializeField, Min(0f)] private float doorOpenSfxDelay;
         [SerializeField] private MoodTransitionMode transitionMode =
             MoodTransitionMode.Fade;
 
@@ -43,6 +45,7 @@ namespace DiaBlackJack.GameScene
         private Transform _doorAnimationMirror;
         private Quaternion _doorAnimationDriverStartRotation;
         private Quaternion _doorAnimationMirrorStartRotation;
+        private Tween _doorOpenSfxDelayTween;
         private VolumetricLight _volumetricLightRenderer;
         private ShadowBakeInterval _originalShadowBakeInterval;
         private bool _shadowBakeRefreshOverrideActive;
@@ -122,6 +125,7 @@ namespace DiaBlackJack.GameScene
             }
 
             KillMoodSequence();
+            StopCurrentBgm();
             _pendingBgmProfile = profile;
 
             switch (transitionMode)
@@ -145,6 +149,7 @@ namespace DiaBlackJack.GameScene
             }
 
             KillMoodSequence();
+            StopCurrentBgm();
             _pendingBgmProfile = profile;
             PlayEntranceDoorAnimation();
             DisableAudioReactiveLightning();
@@ -616,6 +621,33 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        private static void StopCurrentBgm()
+        {
+            SoundManager.Current?.StopBgm();
+        }
+
+        private void ScheduleDoorOpenSfx()
+        {
+            _doorOpenSfxDelayTween?.Kill();
+            _doorOpenSfxDelayTween = null;
+
+            if (doorOpenSfxDelay <= 0f)
+            {
+                PlayDoorOpenSfx();
+                return;
+            }
+
+            _doorOpenSfxDelayTween = DOVirtual.DelayedCall(
+                    doorOpenSfxDelay,
+                    PlayDoorOpenSfx)
+                .SetTarget(this);
+        }
+
+        private static void PlayDoorOpenSfx()
+        {
+            SoundManager.Current?.PlaySfx(DoorOpenSfxId);
+        }
+
         private static float ResolveDuration(float duration)
         {
             return duration <= 0f ||
@@ -698,6 +730,7 @@ namespace DiaBlackJack.GameScene
                 .SetTarget(_doorAnimationDriver);
 
             BeginVolumetricShadowRefresh();
+            ScheduleDoorOpenSfx();
         }
 
         private void ApplyMirroredDoorRotation()
@@ -776,6 +809,8 @@ namespace DiaBlackJack.GameScene
 
             _doorAnimationSequence?.Kill();
             _doorAnimationSequence = null;
+            _doorOpenSfxDelayTween?.Kill();
+            _doorOpenSfxDelayTween = null;
             leftDoorBone?.DOKill();
             rightDoorBone?.DOKill();
             EndVolumetricShadowRefresh();

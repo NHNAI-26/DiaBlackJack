@@ -1,4 +1,5 @@
 using System;
+using Border.Audio;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -16,6 +17,9 @@ namespace DiaBlackJack.GameScene
     public sealed class CharacterView : MonoBehaviour
     {
         private const int ActionLabelSortingOffset = 10;
+        private const string EnemyEntranceSfxId = "enemyIn";
+        private const string EnemyExitSfxId01 = "enemyOut01";
+        private const string EnemyExitSfxId02 = "enemyOut02";
 
         [Serializable]
         private sealed class EnemySpriteProfile
@@ -68,6 +72,10 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Ease appearanceExitEase = Ease.InBack;
         [SerializeField] private Ease merchantExitEase = Ease.InCubic;
 
+        [Header("Enemy appearance audio")]
+        [SerializeField, Min(0f)] private float entranceSfxDelay;
+        [SerializeField, Min(0f)] private float exitSfxDelay;
+
         private Vector3 _baseScale;
         private Quaternion _baseLocalRotation;
         private Vector3 _baseLocalEulerAngles;
@@ -76,6 +84,7 @@ namespace DiaBlackJack.GameScene
         private EnemySpriteProfile _activeEnemySpriteProfile;
         private CharacterVisualState _lastVisualState;
         private Tween _appearanceTween;
+        private Tween _appearanceSfxDelayTween;
         private bool _initialized;
         private bool _isMerchantMode;
 
@@ -93,6 +102,7 @@ namespace DiaBlackJack.GameScene
         {
             EnsureInitialized();
             KillAppearanceAnimation();
+            ScheduleAppearanceSfx(EnemyEntranceSfxId, entranceSfxDelay);
 
             Vector3 startEulerAngles =
                 _baseLocalEulerAngles + appearanceRotationOffset;
@@ -116,6 +126,11 @@ namespace DiaBlackJack.GameScene
         {
             EnsureInitialized();
             KillAppearanceAnimation();
+            ScheduleAppearanceSfx(
+                UnityEngine.Random.Range(0, 2) == 0
+                    ? EnemyExitSfxId01
+                    : EnemyExitSfxId02,
+                exitSfxDelay);
             transform.localRotation = _baseLocalRotation;
 
             Vector3 endEulerAngles =
@@ -231,6 +246,7 @@ namespace DiaBlackJack.GameScene
         {
             EnsureInitialized();
             _isMerchantMode = true;
+            transform.localRotation = _baseLocalRotation;
 
             if (sprite != null)
             {
@@ -255,6 +271,7 @@ namespace DiaBlackJack.GameScene
         {
             EnsureInitialized();
             _isMerchantMode = false;
+            transform.localRotation = _baseLocalRotation;
 
             if (sprite != null)
             {
@@ -319,6 +336,30 @@ namespace DiaBlackJack.GameScene
         {
             _appearanceTween?.Kill();
             _appearanceTween = null;
+            _appearanceSfxDelayTween?.Kill();
+            _appearanceSfxDelayTween = null;
+        }
+
+        private void ScheduleAppearanceSfx(string sfxId, float delay)
+        {
+            if (string.IsNullOrWhiteSpace(sfxId))
+            {
+                return;
+            }
+
+            if (delay <= 0f)
+            {
+                SoundManager.Current?.PlaySfx(sfxId);
+                return;
+            }
+
+            _appearanceSfxDelayTween = DOVirtual.DelayedCall(
+                delay,
+                () =>
+                {
+                    _appearanceSfxDelayTween = null;
+                    SoundManager.Current?.PlaySfx(sfxId);
+                });
         }
 
         private void KeepActionLabelInFront()
