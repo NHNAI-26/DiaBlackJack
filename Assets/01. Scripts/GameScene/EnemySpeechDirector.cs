@@ -73,7 +73,7 @@ namespace DiaBlackJack.GameScene
         private bool _lowSoulConsumed;
         private bool _terminalConsumed;
         private int _lastRoundNumber;
-        private int _lastActionOrdinal;
+        private EnemySpeechCue _lastActionCue;
         private long _lastResolutionId = -1;
 
         public EnemySpeechDirector(int seed)
@@ -88,7 +88,7 @@ namespace DiaBlackJack.GameScene
             _lowSoulConsumed = false;
             _terminalConsumed = false;
             _lastRoundNumber = 0;
-            _lastActionOrdinal = 0;
+            _lastActionCue = null;
             _lastResolutionId = -1;
         }
 
@@ -154,17 +154,15 @@ namespace DiaBlackJack.GameScene
             }
 
             EnemySpeechCue actionCue = observation.ActionCue;
-            if (observation.ActionOrdinal > _lastActionOrdinal)
+            if (actionCue != null &&
+                !actionCue.IsSameActionAs(_lastActionCue))
             {
-                _lastActionOrdinal = observation.ActionOrdinal;
-                if (actionCue != null)
-                {
-                    Select(
-                        actionCue.CueKey,
-                        SpeechPriority.Action,
-                        ref selectedKey,
-                        ref selectedPriority);
-                }
+                _lastActionCue = actionCue;
+                Select(
+                    actionCue.CueKey,
+                    SpeechPriority.Action,
+                    ref selectedKey,
+                    ref selectedPriority);
             }
 
             if (!_battleStartConsumed)

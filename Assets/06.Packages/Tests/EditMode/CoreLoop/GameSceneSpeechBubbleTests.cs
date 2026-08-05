@@ -855,6 +855,80 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
         }
 
+        [Test]
+        [Category("GSB02")]
+        public void GSB02_U09_NewRoundActionOrdinalRestartsWithoutBeingDeduplicated()
+        {
+            CoreLoopBattle battle = CreateBattle(701);
+            SpeechProfileSO profile =
+                CreateCompleteSpeechProfile("round-action-identity");
+            try
+            {
+                var director = new EnemySpeechDirector(66);
+                AssertResolved(
+                    director,
+                    profile,
+                    CreateObservation(
+                        battle, 1, 0, 10, 10, null,
+                        BattleOutcome.InProgress, null),
+                    SpeechCueKeys.BattleStart);
+
+                EnemySpeechCue firstRoundAction = new EnemySpeechCue(
+                    battle, 1, 3, SpeechCueKeys.ActionStand, null);
+                AssertResolved(
+                    director,
+                    profile,
+                    CreateObservation(
+                        battle, 1, 3, 10, 10, null,
+                        BattleOutcome.InProgress, firstRoundAction),
+                    SpeechCueKeys.ActionStand);
+
+                RoundResolution roundDamage = new RoundResolution(
+                    1, RoundOutcome.PlayerWin, 0, 2,
+                    RoundEndCause.TotalComparison);
+                AssertResolved(
+                    director,
+                    profile,
+                    CreateObservation(
+                        battle, 1, 3, 8, 10, roundDamage,
+                        BattleOutcome.InProgress, firstRoundAction),
+                    SpeechCueKeys.DamageRound);
+
+                AssertResolved(
+                    director,
+                    profile,
+                    CreateObservation(
+                        battle, 2, 0, 8, 10, roundDamage,
+                        BattleOutcome.InProgress, null),
+                    SpeechCueKeys.RoundStart);
+
+                EnemySpeechCue secondRoundChange = new EnemySpeechCue(
+                    battle, 2, 1, SpeechCueKeys.ActionChange, null);
+                EnemySpeechObservation changeObservation = CreateObservation(
+                    battle, 2, 1, 8, 10, roundDamage,
+                    BattleOutcome.InProgress, secondRoundChange);
+                AssertResolved(director, profile, changeObservation,
+                    SpeechCueKeys.ActionChange);
+                Assert.That(
+                    director.TryResolve(changeObservation, profile, out _),
+                    Is.False);
+
+                EnemySpeechCue secondRoundHit = new EnemySpeechCue(
+                    battle, 2, 2, SpeechCueKeys.ActionHit, null);
+                AssertResolved(
+                    director,
+                    profile,
+                    CreateObservation(
+                        battle, 2, 2, 8, 10, roundDamage,
+                        BattleOutcome.InProgress, secondRoundHit),
+                    SpeechCueKeys.ActionHit);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(profile);
+            }
+        }
+
         private static CoreLoopBattle CreateBattle(int seed)
         {
             return new CoreLoopBattle(
