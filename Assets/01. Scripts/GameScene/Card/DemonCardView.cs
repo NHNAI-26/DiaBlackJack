@@ -75,6 +75,8 @@ namespace DiaBlackJack.GameScene
             Shader.PropertyToID("_PixelOutlineVisibility");
         private static readonly int SpriteFlipXId =
             Shader.PropertyToID("_SpriteFlipX");
+        private static readonly int BaseSpriteUvRectId =
+            Shader.PropertyToID("_BaseSpriteUVRect");
         private const string UnlitKeyword = "_UNLIT_ON";
         private const string PixelOutlineKeyword = "_PIXEL_OUTLINE_ON";
         private const string UnderlayKeyword = "UNDERLAY_ON";
@@ -98,6 +100,10 @@ namespace DiaBlackJack.GameScene
 
         private SpriteRenderer _frontSpriteRenderer;
         private SpriteRenderer _backSpriteRenderer;
+        private Sprite _trackedFrontSprite;
+        private Sprite _trackedBackSprite;
+        private MaterialPropertyBlock _frontPropertyBlock;
+        private MaterialPropertyBlock _backPropertyBlock;
         private Material _presentationFrontMaterial;
         private Material _presentationBackMaterial;
         private Material _shopMaterial;
@@ -210,6 +216,7 @@ namespace DiaBlackJack.GameScene
                 _hoverVisualBaseScale = hoverVisualRoot.localScale;
             }
             _targetScale = HoverRestingScale();
+            RefreshSpriteUvRects();
         }
 
         private void OnValidate()
@@ -223,6 +230,8 @@ namespace DiaBlackJack.GameScene
 
         private void Update()
         {
+            RefreshSpriteUvRects();
+
             Transform scaleTarget = HoverScaleTarget();
             Vector3 current = scaleTarget.localScale;
             if ((current - _targetScale).sqrMagnitude > 0.0000001f)
@@ -661,6 +670,11 @@ namespace DiaBlackJack.GameScene
 
         public void SetHovered(bool hovered)
         {
+            if (_revealSequence != null)
+            {
+                return;
+            }
+
             if (_isShopSoldOut)
             {
                 hovered = false;
@@ -869,10 +883,13 @@ namespace DiaBlackJack.GameScene
         {
             SpriteRenderer renderer = FrontSpriteRenderer();
             Sprite sprite = GetFaceSprite(definitionKey);
-            if (renderer != null && sprite != null)
+            if (renderer == null || sprite == null)
             {
-                renderer.sprite = sprite;
+                return;
             }
+
+            renderer.sprite = sprite;
+            RefreshSpriteUvRect(renderer, ref _trackedFrontSprite);
         }
 
         private void PlayHoverSfx(bool hovered)
@@ -903,6 +920,86 @@ namespace DiaBlackJack.GameScene
             }
 
             return _backSpriteRenderer;
+        }
+
+        private void RefreshSpriteUvRects()
+        {
+            RefreshSpriteUvRect(FrontSpriteRenderer(), ref _trackedFrontSprite);
+            RefreshSpriteUvRect(BackSpriteRenderer(), ref _trackedBackSprite);
+        }
+
+        private void RefreshSpriteUvRect(
+            SpriteRenderer renderer,
+            ref Sprite trackedSprite)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            MaterialPropertyBlock propertyBlock = PropertyBlockFor(renderer);
+            renderer.GetPropertyBlock(propertyBlock);
+
+            Sprite currentSprite = renderer.sprite;
+            Vector4 uvRect = GetSpriteUvRect(currentSprite);
+            if (currentSprite == trackedSprite &&
+                Approximately(propertyBlock.GetVector(BaseSpriteUvRectId), uvRect))
+            {
+                return;
+            }
+
+            trackedSprite = currentSprite;
+            propertyBlock.SetVector(BaseSpriteUvRectId, uvRect);
+            renderer.SetPropertyBlock(propertyBlock);
+        }
+
+        private static bool Approximately(Vector4 left, Vector4 right)
+        {
+            return Mathf.Approximately(left.x, right.x) &&
+                Mathf.Approximately(left.y, right.y) &&
+                Mathf.Approximately(left.z, right.z) &&
+                Mathf.Approximately(left.w, right.w);
+        }
+
+        private MaterialPropertyBlock PropertyBlockFor(Renderer renderer)
+        {
+            if (renderer == _frontSpriteRenderer)
+            {
+                _frontPropertyBlock ??= new MaterialPropertyBlock();
+                return _frontPropertyBlock;
+            }
+
+            _backPropertyBlock ??= new MaterialPropertyBlock();
+            return _backPropertyBlock;
+        }
+
+        private static Vector4 GetSpriteUvRect(Sprite sprite)
+        {
+            if (sprite == null)
+            {
+                return new Vector4(0f, 0f, 1f, 1f);
+            }
+
+            Vector2[] uvs = sprite.uv;
+            if (uvs == null || uvs.Length == 0)
+            {
+                return new Vector4(0f, 0f, 1f, 1f);
+            }
+
+            Vector2 minimum = uvs[0];
+            Vector2 maximum = uvs[0];
+            for (int i = 1; i < uvs.Length; i++)
+            {
+                minimum = Vector2.Min(minimum, uvs[i]);
+                maximum = Vector2.Max(maximum, uvs[i]);
+            }
+
+            Vector2 size = maximum - minimum;
+            return new Vector4(
+                minimum.x,
+                minimum.y,
+                Mathf.Max(size.x, 0.00001f),
+                Mathf.Max(size.y, 0.00001f));
         }
 
         private static void CreateUnlitPresentationMaterial(
