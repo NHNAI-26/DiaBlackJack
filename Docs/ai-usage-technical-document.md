@@ -3,7 +3,7 @@
 > 프로젝트: DiaBlackJack  
 > 문서 책임자: 이천서  
 > 버전: v0.1  
-> 최종 갱신: 2026-08-04
+> 최종 갱신: 2026-08-05
 
 ## 1. 문서 목적
 
@@ -1834,3 +1834,12 @@ HUD 선택 슬롯은 `DefaultButton.prefab`의 중첩 인스턴스로 생성하�
 - AI 활용: Git 기록과 `Lighter_FireCard` 이벤트·곡선 시간을 비교해 카드 위치 변경이 아니라 소각 종료 전 상태 전환이 잔상의 원인임을 추적했다.
 - 구현 지시: 선택 카드 스프라이트·기존 Transform·애니메이션 궤적은 유지하고 `CoverClose` 이벤트 직전에 카드 Renderer만 비활성화한다.
 - 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 판단 책임자는 이천서다.
+
+## 2026-08-05 아자젤 재발동 카드 조건 미확인 보정
+
+- 이천서: 아자젤 계약 상태에서 이미 사용한 보위 나이프가 재발동되며 상대 공개 합이 17 이상이면 전투가 `InvalidOperationException`으로 멈추는 결함을 재현·제보했다.
+- AI 활용: `CoreLoopBattle.ContinueAzazelCardEffectSequence`가 대기 중인 공개 카드의 `UseState`(사용가능/사용됨)만 확인하고 카드 효과별 발동 조건(`CanStart`)은 확인하지 않은 채 재활성화·재사용을 강제해, `MilitaryKnifeEffectHandler.Begin`의 방어적 예외가 그대로 전투를 멈추던 경로를 추적했다.
+- 구현: 카드를 재활성화(`TryReactivate`)·재사용(`TryBeginUse`)하기 전에 `CardEffectResolver.CanStart`를 먼저 확인하도록 순서를 조정했다. 조건을 만족하지 못하는 카드는 원래 `UseState`를 그대로 두고 건너뛴다("사용할 수 있는 카드만 다시 사용" 의도와 일치). 나머지 세 핸들러(크리스탈 오브·해머·리볼버)의 `CanStart`도 부작용 없는 순수 조회임을 함께 확인했다.
+- 변경 파일: `Assets/01. Scripts/CoreLoop/CoreLoopBattle.cs`.
+- 검증: Unity MCP 브릿지가 이 세션에서 연결되지 않아(`127.0.0.1:6400` 응답 없음) AI는 EditMode 자동 회귀를 실행하지 못했다. 이천서가 직접 에디터에서 재현·검증하기로 했으며 결과는 아직 본 문서에 반영되지 않았다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.

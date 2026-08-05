@@ -5174,15 +5174,22 @@ namespace DiaBlackJack.CoreLoop
                     continue;
                 }
 
+                if (card.UseState != CardUseState.Available &&
+                    card.UseState != CardUseState.Used)
+                {
+                    continue;
+                }
+
+                var context = new CardEffectContext(this, sequence.OwnerSide, card);
+                if (!_cardEffectResolver.CanStart(context))
+                {
+                    continue;
+                }
+
                 if (card.UseState == CardUseState.Used && !card.TryReactivate())
                 {
                     throw new InvalidOperationException(
                         "Azazel could not reactivate a queued public card.");
-                }
-
-                if (card.UseState != CardUseState.Available)
-                {
-                    continue;
                 }
 
                 if (!card.TryBeginUse())
@@ -5191,7 +5198,6 @@ namespace DiaBlackJack.CoreLoop
                         "Azazel could not begin a queued public card effect.");
                 }
 
-                var context = new CardEffectContext(this, sequence.OwnerSide, card);
                 _activeCardEffectContext = context;
                 _activeCardEffectActorSide = sequence.OwnerSide;
                 RecordPublicAction(
