@@ -1,5 +1,13 @@
 # 테이블 도감 개발 명세
 
+## DX-M11: 3D 책과 호버 계약
+
+- `CodexBook.prefab` 루트의 `CodexClickable`과 `BoxCollider`는 유지하고 `SpriteRenderer`를 제거한다. 자식 모델은 `Assets/05. Arts/FBX/antique_book.fbx`, 머티리얼은 `Assets/05. Arts/Material/MAT_Book.mat`을 사용한다.
+- 콜라이더는 모델 bounds인 center `(0.0665, 0.1007, 0.0014)`, size `(1.0392, 0.2923, 1.0853)`을 사용한다. 테이블 배치는 position `(2.224, 0.077, -0.339)`, rotation `(0, 8, 0)`, scale `(1, 1, 1)`이다.
+- `CodexClickable.SetHovered(bool)`은 자식 Renderer를 `PostProcessOutlineRegistry`에 등록·해제한다. 머티리얼 `_StencilOutlineColor`를 우선 사용하고 폭은 플레이어 덱과 같은 4px이다. 비활성화·파괴 시 남은 등록을 제거한다.
+- `GameManager`는 기존 Physics raycast에서 사용 가능한 `CodexClickable`을 판정하고, 입력 잠금·모달·선택 UI·덱/도감 오버레이·전투 해제 시 도감 호버를 초기화한다. 기존 클릭과 `CodexController.IsAvailable` 계약은 유지한다.
+- 공개 도메인 API, CoreLoop·StageProgression 순수 규칙, `GameScene.unity`는 변경하지 않는다.
+
 ## DX-M10: 계약 악마 카드 이동 계약
 
 - `CodexDemonCardPreviewView`는 `IPointerClickHandler`를 구현하고 렌더링된 `DefinitionKey`를 보관한다. 왼쪽 버튼만 `Clicked` 이벤트를 발생시키며 다른 버튼은 무시한다.

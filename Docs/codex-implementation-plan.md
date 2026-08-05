@@ -1,5 +1,13 @@
 # 테이블 도감 구현 계획
 
+## DX-M11: 테이블 도감 3D 책과 월드 호버
+
+1. 완료: `CodexBook.prefab`의 2D Sprite를 기존 `antique_book.fbx`·`MAT_Book` 3D 모델로 교체하고 모델 bounds에 맞춰 콜라이더를 조정했다.
+2. 완료: 기존 적 덱 병행 변경을 보존하면서 `Table Controller.prefab`의 도감 transform override만 계획값으로 변경했다.
+3. 완료: `CodexClickable`과 `GameManager`에 플레이어 덱과 같은 주황색 4px 후처리 외곽선 호버·정리 경로를 연결했다.
+4. 완료: `DXM11` 에셋·호버 회귀 2개와 기존 2D 프리팹 기대값 갱신을 추가했다.
+5. 완료: 신규 `DXM11` 2/2, GameScene validation issue 0을 확인했다. 1280×720·1920×1080 Play Mode에서 책 배치·외곽선·해제와 도감 열기·닫기를 확인했다. 인접 두 클래스는 39/42이며 실패 3건은 범위 밖 기존 도감 Overlay 카드·글자 크기 기대값 불일치다.
+
 ## DX-M10: 계약 악마 카드 바로가기
 
 1. 완료: 계약 카드가 렌더링된 `DefinitionKey`와 왼쪽 클릭 이벤트를 제공하도록 한다.

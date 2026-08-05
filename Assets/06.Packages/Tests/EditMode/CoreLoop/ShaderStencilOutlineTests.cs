@@ -29,6 +29,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/Card/RemainingDeck.prefab";
         private const string DiscardDeckPrefabPath =
             "Assets/03. Prefabs/Card/DiscardDeck.prefab";
+        private const string CodexBookPrefabPath =
+            "Assets/03. Prefabs/Props/CodexBook.prefab";
         private const string ShopItemLighterPrefabPath =
             "Assets/03. Prefabs/Shop/ShopItem_Lighter.prefab";
         private const string ShopItemWhiskeyPrefabPath =
@@ -352,6 +354,58 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Object.DestroyImmediate(root);
                 Object.DestroyImmediate(sourceMaterial);
                 Object.DestroyImmediate(sourceMesh);
+                PostProcessOutlineRegistry.Clear();
+            }
+        }
+
+        [Test]
+        [Category("DXM11")]
+        public void DXM11_U02_CodexHoverMatchesDeckPostProcessOutline()
+        {
+            PostProcessOutlineRegistry.Clear();
+
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(CodexBookPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+
+            GameObject root = Object.Instantiate(prefab);
+            GameObject managerObject = new GameObject("Codex Hover Manager Test");
+            try
+            {
+                CodexClickable clickable = root.GetComponent<CodexClickable>();
+                MeshRenderer renderer =
+                    root.GetComponentInChildren<MeshRenderer>(true);
+                GameManager manager = managerObject.AddComponent<GameManager>();
+                Assert.That(clickable, Is.Not.Null);
+                Assert.That(renderer, Is.Not.Null);
+
+                Vector3 baseScale = root.transform.localScale;
+                MethodInfo update = typeof(GameManager).GetMethod(
+                    "UpdateCodexHover",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(update, Is.Not.Null);
+
+                update.Invoke(manager, new object[] { clickable });
+
+                var targets = new List<PostProcessOutlineRegistry.Target>();
+                PostProcessOutlineRegistry.FillTargets(targets);
+                Assert.That(targets.Count, Is.EqualTo(1));
+                Assert.That(targets[0].Renderer, Is.SameAs(renderer));
+                Assert.That(targets[0].WidthPixels, Is.EqualTo(4f));
+                Assert.That(
+                    targets[0].Color,
+                    Is.EqualTo(renderer.sharedMaterial.GetColor(
+                        StencilOutlineColorId)));
+                AssertVectorApproximately(root.transform.localScale, baseScale);
+
+                update.Invoke(manager, new object[] { null });
+                PostProcessOutlineRegistry.FillTargets(targets);
+                Assert.That(targets.Count, Is.Zero);
+            }
+            finally
+            {
+                Object.DestroyImmediate(managerObject);
+                Object.DestroyImmediate(root);
                 PostProcessOutlineRegistry.Clear();
             }
         }

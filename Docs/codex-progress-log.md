@@ -1,5 +1,13 @@
 # 테이블 도감 진행 기록
 
+## DX-M11: 테이블 도감 3D 책과 월드 호버
+
+- 테이블 닫힌 도감의 2D SpriteRenderer를 `antique_book.fbx`·`MAT_Book` 3D 모델로 교체했다. 기존 `CodexClickable` 루트와 클릭 연결은 유지하고 모델 bounds 기준 콜라이더, 테이블 position `(2.224, 0.077, -0.339)`, rotation `(0, 8, 0)`, scale `(1, 1, 1)`을 적용했다. `GameScene.unity`는 저장하지 않았다.
+- 도감 호버는 플레이어 덱과 같은 `PostProcessOutlineRegistry`, 머티리얼 주황색, 4px 폭을 사용한다. 스케일·효과음·툴팁은 추가하지 않았고 포인터 이탈, 입력 잠금, 모달·선택 UI·오버레이 전환, 비활성화·파괴 때 등록을 해제한다.
+- 신규 `DXM11` 2/2(job `fdff46c42b12492884d486e71cda51e8`)가 통과했다. 인접 `CodexAssetTests`·`ShaderStencilOutlineTests`는 39/42(job `5d39627ddaf046488cea2f81d24f3e89`)이며 실패 3건은 이번에 수정하지 않은 기존 Overlay의 악마 카드 셀 80×150 대 기대 72×120, English Name 최소 크기 1 대 기대 8, 수량 글자 35 대 기대 32다.
+- GameScene validation은 issue 0, missing script 0, broken prefab 0이다. 1280×720·1920×1080 Play Mode에서 책이 테이블 위 계획 위치·크기로 보이고 주황색 4px 외곽선이 표시되는 것을 확인했다. 호버 해제 뒤 Registry 대상 0건, `CodexController.Open()` 성공·책 숨김, 닫기 뒤 책 복원을 확인했다. `GameScene.unity`는 저장하지 않았다.
+- DX-M11 대상 컴파일·테스트 시점의 C# 컴파일 오류는 0이었다. 최종 확인 시 병행 작업의 미추적 `GameSceneOpponentSelectionViewTests.cs`에서 TMPro 어셈블리 참조 오류 2건이 새로 발생했으며, 범위 밖 파일이라 수정하지 않았다.
+
 ## DX-M10: 계약 악마 카드 바로가기
 
 - 적 정보의 계약 악마 카드가 왼쪽 클릭된 `DefinitionKey`를 Overlay 이벤트로 전달하고, Controller가 악마 도감 페이지 목록의 실제 인덱스를 찾아 기존 다음 방향 책장 전환 한 번으로 바로 이동하도록 연결했다. 오른쪽 클릭, 없는 key, 범위 밖·중복 인덱스, 닫힘·전환 중 요청은 상태를 바꾸지 않는다.

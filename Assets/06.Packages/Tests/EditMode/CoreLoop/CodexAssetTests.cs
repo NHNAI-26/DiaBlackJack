@@ -22,6 +22,12 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/UI/GameScene/CodexOverlay.prefab";
         private const string BookPrefabPath =
             "Assets/03. Prefabs/Props/CodexBook.prefab";
+        private const string TablePrefabPath =
+            "Assets/03. Prefabs/TableObjects/Table Controller.prefab";
+        private const string BookModelPath =
+            "Assets/05. Arts/FBX/antique_book.fbx";
+        private const string BookMaterialPath =
+            "Assets/05. Arts/Material/MAT_Book.mat";
         private const string CodexOutlinePath =
             "Assets/05. Arts/Texture/Codex/CodexOutline.png";
         private const string SoulIconPath =
@@ -299,7 +305,62 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(prefab, Is.Not.Null);
             Assert.That(prefab.GetComponent<CodexClickable>(), Is.Not.Null);
             Assert.That(prefab.GetComponent<Collider>(), Is.Not.Null);
-            Assert.That(prefab.GetComponent<SpriteRenderer>(), Is.Not.Null);
+            Assert.That(prefab.GetComponent<SpriteRenderer>(), Is.Null);
+            Assert.That(
+                prefab.GetComponentInChildren<MeshRenderer>(true),
+                Is.Not.Null);
+        }
+
+        [Test]
+        [Category("DXM11")]
+        public void DXM11_U01_TableBookUsesAntiqueBookMeshMaterialAndPlacement()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(BookPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+
+            CodexClickable clickable = prefab.GetComponent<CodexClickable>();
+            MeshFilter filter = prefab.GetComponentInChildren<MeshFilter>(true);
+            MeshRenderer renderer =
+                prefab.GetComponentInChildren<MeshRenderer>(true);
+            BoxCollider collider = prefab.GetComponent<BoxCollider>();
+
+            Assert.That(clickable, Is.Not.Null);
+            Assert.That(filter, Is.Not.Null);
+            Assert.That(renderer, Is.Not.Null);
+            Assert.That(collider, Is.Not.Null);
+            Assert.That(
+                AssetDatabase.GetAssetPath(filter.sharedMesh),
+                Is.EqualTo(BookModelPath));
+            Assert.That(
+                AssetDatabase.GetAssetPath(renderer.sharedMaterial),
+                Is.EqualTo(BookMaterialPath));
+            Assert.That(
+                collider.center,
+                Is.EqualTo(new Vector3(0.0665f, 0.1007f, 0.0014f)));
+            Assert.That(
+                collider.size,
+                Is.EqualTo(new Vector3(1.0392f, 0.2923f, 1.0853f)));
+
+            SerializedObject clickableData = new SerializedObject(clickable);
+            SerializedProperty renderers =
+                clickableData.FindProperty("renderers");
+            Assert.That(renderers.arraySize, Is.EqualTo(1));
+            Assert.That(
+                renderers.GetArrayElementAtIndex(0).objectReferenceValue,
+                Is.SameAs(renderer));
+
+            GameObject table =
+                AssetDatabase.LoadAssetAtPath<GameObject>(TablePrefabPath);
+            Transform book = table.transform.Find("CodexBook");
+            Assert.That(book, Is.Not.Null);
+            Assert.That(
+                book.localPosition,
+                Is.EqualTo(new Vector3(2.224f, 0.077f, -0.339f)));
+            Assert.That(book.localScale, Is.EqualTo(Vector3.one));
+            Assert.That(
+                Quaternion.Angle(book.localRotation, Quaternion.Euler(0f, 8f, 0f)),
+                Is.LessThan(0.01f));
         }
 
         [Test]
