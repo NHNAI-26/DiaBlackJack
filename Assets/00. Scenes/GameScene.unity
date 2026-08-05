@@ -2346,6 +2346,28 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+--- !u!114 &2282612047558951032 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2287671952019492955, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+  m_PrefabInstance: {fileID: 2282612047558951031}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89cbcd05085f4d68a42b15391645d529, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.DeckStackView
+--- !u!114 &2282612047558951033 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6146280730255418871, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+  m_PrefabInstance: {fileID: 2282612047558951031}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89cbcd05085f4d68a42b15391645d529, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.DeckStackView
 --- !u!1001 &2692548345735408785
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5858,9 +5880,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1152182556}
     - target: {fileID: 7870382590175114481, guid: 65b3779e515064540b9789c76687ef65, type: 3}
+      propertyPath: enemyDiscardDeck
+      value: 
+      objectReference: {fileID: 2282612047558951033}
+    - target: {fileID: 7870382590175114481, guid: 65b3779e515064540b9789c76687ef65, type: 3}
       propertyPath: revolverAnimator
       value: 
       objectReference: {fileID: 3936651455334222897}
+    - target: {fileID: 7870382590175114481, guid: 65b3779e515064540b9789c76687ef65, type: 3}
+      propertyPath: enemyRemainingDeck
+      value: 
+      objectReference: {fileID: 2282612047558951032}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

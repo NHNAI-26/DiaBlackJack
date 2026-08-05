@@ -523,6 +523,10 @@ namespace DiaBlackJack.GameScene
             string enemyActionLabel,
             IReadOnlyList<GameSceneCardViewModel> crystalOrbCandidates,
             IReadOnlyList<GameSceneCardViewModel> satanNumberCandidates,
+            int playerDrawPileCount,
+            int playerDiscardPileCount,
+            int enemyDrawPileCount,
+            int enemyDiscardPileCount,
             GameSceneRevolverAnimationCue revolverAnimationCue = null,
             GameSceneHammerAnimationCue hammerAnimationCue = null,
             bool usesDiegeticCardEffectSelection = false,
@@ -548,6 +552,10 @@ namespace DiaBlackJack.GameScene
                 throw new ArgumentNullException(nameof(crystalOrbCandidates));
             SatanNumberCandidates = satanNumberCandidates ??
                 throw new ArgumentNullException(nameof(satanNumberCandidates));
+            PlayerDrawPileCount = playerDrawPileCount;
+            PlayerDiscardPileCount = playerDiscardPileCount;
+            EnemyDrawPileCount = enemyDrawPileCount;
+            EnemyDiscardPileCount = enemyDiscardPileCount;
             RevolverAnimationCue = revolverAnimationCue;
             HammerAnimationCue = hammerAnimationCue;
             UsesDiegeticCardEffectSelection = usesDiegeticCardEffectSelection;
@@ -579,6 +587,14 @@ namespace DiaBlackJack.GameScene
         public IReadOnlyList<GameSceneCardViewModel> CrystalOrbCandidates { get; }
 
         public IReadOnlyList<GameSceneCardViewModel> SatanNumberCandidates { get; }
+
+        public int PlayerDrawPileCount { get; }
+
+        public int PlayerDiscardPileCount { get; }
+
+        public int EnemyDrawPileCount { get; }
+
+        public int EnemyDiscardPileCount { get; }
 
         public GameSceneRevolverAnimationCue RevolverAnimationCue { get; }
 
@@ -642,6 +658,10 @@ namespace DiaBlackJack.GameScene
                 enemyLabel,
                 CreateCrystalOrbCandidates(battle),
                 CreateSatanNumberCandidates(battle),
+                battle.Player.Deck.DrawCount,
+                battle.Player.Deck.DiscardCount,
+                battle.Enemy.Deck.DrawCount,
+                battle.Enemy.Deck.DiscardCount,
                 CreateRevolverAnimationCue(battle),
                 CreateHammerAnimationCue(battle),
                 UsesDiegeticSelection(battle),

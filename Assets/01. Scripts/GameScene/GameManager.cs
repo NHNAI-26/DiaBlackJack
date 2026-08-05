@@ -2896,7 +2896,7 @@ namespace DiaBlackJack.GameScene
                 Battle,
                 isCombatVisible: !isShopOpen));
 
-            RefreshDeckStacks();
+            RefreshDeckStacks(vm);
             RefreshShopUtilityItems();
 
             bool playedRevolverAnimation =
@@ -3232,10 +3232,9 @@ namespace DiaBlackJack.GameScene
             tableCombatCommands?.Render(combat);
         }
 
-        private void RefreshDeckStacks()
+        private void RefreshDeckStacks(GameSceneViewModel vm)
         {
-            CoreLoopBattle battle = Battle;
-            if (battle == null)
+            if (vm == null)
             {
                 remainingDeck?.Render(0);
                 discardDeck?.Render(0);
@@ -3244,28 +3243,10 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            remainingDeck?.Render(SumRankCounts(battle.Player.Deck.GetDrawPileRankCounts()));
-            discardDeck?.Render(SumRankCounts(battle.Player.Deck.GetDiscardPileRankCounts()));
-            enemyRemainingDeck?.Render(
-                SumRankCounts(battle.Enemy.Deck.GetDrawPileRankCounts()));
-            enemyDiscardDeck?.Render(
-                SumRankCounts(battle.Enemy.Deck.GetDiscardPileRankCounts()));
-        }
-
-        private static int SumRankCounts(IReadOnlyList<int> counts)
-        {
-            if (counts == null)
-            {
-                return 0;
-            }
-
-            int total = 0;
-            for (int i = 0; i < counts.Count; i++)
-            {
-                total += counts[i];
-            }
-
-            return total;
+            remainingDeck?.Render(vm.PlayerDrawPileCount);
+            discardDeck?.Render(vm.PlayerDiscardPileCount);
+            enemyRemainingDeck?.Render(vm.EnemyDrawPileCount);
+            enemyDiscardDeck?.Render(vm.EnemyDiscardPileCount);
         }
 
         private void RefreshShopUtilityItems()

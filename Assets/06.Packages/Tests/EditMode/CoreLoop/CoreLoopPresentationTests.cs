@@ -1042,6 +1042,35 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("GSDECK")]
+        public void GSDECK_U01_DeckCountsStayBoundToTimelineSnapshot()
+        {
+            var battle = new CoreLoopBattle(
+                CreateRankDeck(10, 10, 2, 3, 4, 5),
+                CreateRankDeck(10, 10, 2, 3, 4, 5),
+                enemyPolicy: new StandPolicy());
+            Assert.That(battle.Start(), Is.True);
+
+            GameSceneViewModel baseline = GameScenePresenter.Create(battle);
+            var timeline = new List<GameSceneViewModel>();
+            battle.Stepped += () => timeline.Add(GameScenePresenter.Create(battle));
+
+            Assert.That(battle.TryPlayerStand(), Is.True);
+
+            Assert.That(timeline.Count, Is.GreaterThanOrEqualTo(2));
+            Assert.That(baseline.PlayerDiscardPileCount, Is.Zero);
+            Assert.That(baseline.EnemyDiscardPileCount, Is.Zero);
+            Assert.That(timeline[0].PlayerDiscardPileCount, Is.Zero);
+            Assert.That(timeline[0].EnemyDiscardPileCount, Is.Zero);
+            Assert.That(
+                timeline.Any(model => model.PlayerDiscardPileCount > 0),
+                Is.True);
+            Assert.That(
+                timeline.Any(model => model.EnemyDiscardPileCount > 0),
+                Is.True);
+        }
+
+        [Test]
         public void CU05_GameSceneCreatesRevolverAnimationCueWhenRevolverResolves()
         {
             CoreLoopBattle battle = CreateBattle(

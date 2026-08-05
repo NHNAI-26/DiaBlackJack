@@ -32,6 +32,7 @@ namespace DiaBlackJack.GameScene
         private const int StencilOutlineRenderQueue = 3000;
         private static readonly int StencilOutlineEnabledId =
             Shader.PropertyToID("_StencilOutlineEnabled");
+        private static readonly int TopColorId = Shader.PropertyToID("_TopColor");
         private static readonly int StencilOutlineColorId =
             Shader.PropertyToID("_StencilOutlineColor");
         private static readonly int StencilOutlineWidthId =
@@ -53,6 +54,7 @@ namespace DiaBlackJack.GameScene
         private readonly List<Mesh> _outlineMeshes = new List<Mesh>();
         private readonly List<OutlineRendererBinding> _outlineBindings =
             new List<OutlineRendererBinding>();
+        private MaterialPropertyBlock _materialPropertyBlock;
 
         private void Awake()
         {
@@ -88,6 +90,30 @@ namespace DiaBlackJack.GameScene
 
             _isHovered = hovered;
             ApplyHoverOutline(hovered);
+        }
+
+        public void SetTopTint(Color tint)
+        {
+            AutoBindMissingReferences();
+            if (renderers == null)
+            {
+                return;
+            }
+
+            _materialPropertyBlock ??= new MaterialPropertyBlock();
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Renderer renderer = renderers[i];
+                Material material = renderer == null ? null : renderer.sharedMaterial;
+                if (material == null || !material.HasProperty(TopColorId))
+                {
+                    continue;
+                }
+
+                renderer.GetPropertyBlock(_materialPropertyBlock);
+                _materialPropertyBlock.SetColor(TopColorId, tint);
+                renderer.SetPropertyBlock(_materialPropertyBlock);
+            }
         }
 
         public void Render(int cardCount)

@@ -40,6 +40,10 @@ namespace DiaBlackJack.Content
         [SerializeField] private string displayName;
         [SerializeField] private Sprite portrait;
         [SerializeField] private SpeechProfileSO speechProfile;
+        [Header("GameScene presentation")]
+        [ColorUsage(true, true)]
+        [SerializeField] private Color deckTopTint =
+            new Color(1.35f, 1.35f, 1.35f, 1f);
         [SerializeField] private EnemyGrade grade;
         [Min(1)]
         [SerializeField] private int maximumSoul = 1;
@@ -63,6 +67,8 @@ namespace DiaBlackJack.Content
                 new List<FixedDemonContractPhaseEntry>();
 
         public int DefeatGold => defeatGold;
+
+        public Color DeckTopTint => deckTopTint;
 
         public string Key => key;
 
