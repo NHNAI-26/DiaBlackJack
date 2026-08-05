@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace DiaBlackJack.CoreLoop
 {
@@ -8,16 +9,61 @@ namespace DiaBlackJack.CoreLoop
         public const int LowConfidenceAutoPistolUsePercent = 25;
         public const int StandThreshold = 17;
 
+        private readonly HashSet<int> _declaredNumbers = new HashSet<int>();
+        private int _trackedRoundNumber = -1;
+        private int _trackedPlayerChangeCount = -1;
+
         public EnemyDecision Decide(EnemyObservation observation)
         {
-            return EnemyPolicyDecisionSelector.Select(observation, Evaluate);
+            ResetDeclaredNumbersIfHiddenCardChanged(observation);
+
+            EnemyDecision decision = EnemyPolicyDecisionSelector.Select(
+                observation,
+                (state, candidate) => Evaluate(state, candidate, _declaredNumbers));
+
+            if (observation.PendingCardEffectKind == CardEffectKind.AutoPistol &&
+                decision.ActionType == EnemyActionType.UseCard &&
+                decision.CardEffectOptionId.HasValue)
+            {
+                _declaredNumbers.Add(decision.CardEffectOptionId.Value);
+            }
+
+            return decision;
+        }
+
+        private void ResetDeclaredNumbersIfHiddenCardChanged(EnemyObservation observation)
+        {
+            int playerChangeCount = CountPlayerChanges(observation);
+            if (observation.RoundNumber != _trackedRoundNumber ||
+                playerChangeCount != _trackedPlayerChangeCount)
+            {
+                _declaredNumbers.Clear();
+            }
+
+            _trackedRoundNumber = observation.RoundNumber;
+            _trackedPlayerChangeCount = playerChangeCount;
+        }
+
+        private static int CountPlayerChanges(EnemyObservation observation)
+        {
+            int count = 0;
+            foreach (PublicCombatAction action in observation.PublicActionHistory)
+            {
+                if (action.ActorSide == CombatantSide.Player &&
+                    action.ActionType == PublicCombatActionType.Change)
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         private static EnemyActionScore Evaluate(
             EnemyObservation observation,
-            EnemyActionCandidate candidate)
+            EnemyActionCandidate candidate,
+            HashSet<int> declaredNumbers)
         {
-            EnemyNumberInference? mostLikely = FindMostLikely(observation);
             switch (candidate.ActionType)
             {
                 case EnemyActionType.Hit:
@@ -31,9 +77,11 @@ namespace DiaBlackJack.CoreLoop
                         observation.OwnHandValue.Total >= 17 ? 600 : 100,
                         "gunslinger-basic-stand");
                 case EnemyActionType.UseCard:
-                    return EvaluateCard(observation, candidate, mostLikely);
+                    return EvaluateCard(observation, candidate, declaredNumbers);
                 case EnemyActionType.Change:
-                    return Score(candidate, 2000, "gunslinger-required-change");
+                    return EnemyChangeRiskEvaluator.ShouldAcceptChange(observation)
+                        ? Score(candidate, 2000, "gunslinger-required-change")
+                        : Score(candidate, -50, "gunslinger-decline-risky-paid-change");
                 default:
                     throw new ArgumentOutOfRangeException(nameof(candidate));
             }
@@ -42,7 +90,7 @@ namespace DiaBlackJack.CoreLoop
         private static EnemyActionScore EvaluateCard(
             EnemyObservation observation,
             EnemyActionCandidate candidate,
-            EnemyNumberInference? mostLikely)
+            HashSet<int> declaredNumbers)
         {
             if (!IsAutoPistol(candidate.CardDefinitionKey))
             {
@@ -51,11 +99,18 @@ namespace DiaBlackJack.CoreLoop
 
             if (observation.PendingCardEffectKind == CardEffectKind.AutoPistol)
             {
-                int optionProbability = FindProbability(
+                int number = candidate.CardEffectOptionNumericValue ?? 0;
+                if (declaredNumbers.Contains(number))
+                {
+                    return Score(candidate, -1000, "gunslinger-avoid-repeated-number");
+                }
+
+                int optionProbability = FindProbability(observation, number);
+                EnemyNumberInference? bestUntried = FindMostLikelyUntried(
                     observation,
-                    candidate.CardEffectOptionNumericValue);
-                bool isBestGuess = mostLikely.HasValue &&
-                    candidate.CardEffectOptionNumericValue == mostLikely.Value.Number;
+                    declaredNumbers);
+                bool isBestGuess = bestUntried.HasValue &&
+                    number == bestUntried.Value.Number;
                 return Score(
                     candidate,
                     isBestGuess ? 2000 + optionProbability : optionProbability,
@@ -64,9 +119,37 @@ namespace DiaBlackJack.CoreLoop
                         : "gunslinger-declare-lower-probability-number");
             }
 
-            bool hasEnoughConfidence = mostLikely.HasValue &&
-                mostLikely.Value.ProbabilityPercent >=
-                    MinimumAutoPistolConfidencePercent;
+            if (HasActiveSatanContract(observation))
+            {
+                return Score(
+                    candidate,
+                    -900,
+                    "gunslinger-hold-pistol-during-satan-contract");
+            }
+
+            EnemyNumberInference? mostLikely = FindMostLikelyUntried(
+                observation,
+                declaredNumbers);
+            if (!mostLikely.HasValue)
+            {
+                return Score(candidate, -600, "gunslinger-no-untried-numbers-remaining");
+            }
+
+            int opponentVisibleTotal = CalculateBestTotal(observation.PlayerFaceUpCards);
+            bool alreadyWinningWithoutForcingBust =
+                observation.PlayerIsStanding &&
+                observation.OwnHandValue.Total <= 21 &&
+                opponentVisibleTotal + mostLikely.Value.Number >= 22;
+            if (alreadyWinningWithoutForcingBust)
+            {
+                return Score(
+                    candidate,
+                    -400,
+                    "gunslinger-hold-pistol-already-winning-at-showdown");
+            }
+
+            bool hasEnoughConfidence = mostLikely.Value.ProbabilityPercent >=
+                MinimumAutoPistolConfidencePercent;
             bool firesBeforeStand = observation.OwnHandValue.Total >=
                 StandThreshold;
             bool takesLowConfidenceShot =
@@ -75,7 +158,7 @@ namespace DiaBlackJack.CoreLoop
             bool usesPistol = hasEnoughConfidence ||
                 firesBeforeStand ||
                 takesLowConfidenceShot;
-            int probability = mostLikely?.ProbabilityPercent ?? 0;
+            int probability = mostLikely.Value.ProbabilityPercent;
             string reason = hasEnoughConfidence
                 ? "gunslinger-use-pistol-at-high-confidence"
                 : firesBeforeStand
@@ -89,11 +172,18 @@ namespace DiaBlackJack.CoreLoop
                 reason);
         }
 
-        private static EnemyNumberInference? FindMostLikely(EnemyObservation observation)
+        private static EnemyNumberInference? FindMostLikelyUntried(
+            EnemyObservation observation,
+            HashSet<int> declaredNumbers)
         {
             EnemyNumberInference? selected = null;
             foreach (EnemyNumberInference inference in observation.NumberInferences)
             {
+                if (declaredNumbers.Contains(inference.Number))
+                {
+                    continue;
+                }
+
                 if (!selected.HasValue ||
                     inference.ProbabilityPercent > selected.Value.ProbabilityPercent ||
                     (inference.ProbabilityPercent == selected.Value.ProbabilityPercent &&
@@ -124,6 +214,43 @@ namespace DiaBlackJack.CoreLoop
             }
 
             return 0;
+        }
+
+        private static bool HasActiveSatanContract(EnemyObservation observation)
+        {
+            foreach (EnemyActionCandidate candidate in observation.ActionCandidates)
+            {
+                if (candidate.ActionType == EnemyActionType.DemonContract &&
+                    candidate.DemonContractKind == DemonContractKind.Satan)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static int CalculateBestTotal(
+            IReadOnlyList<PublicCardObservation> cards)
+        {
+            int total = 0;
+            int aceCount = 0;
+            foreach (PublicCardObservation card in cards)
+            {
+                total += card.Rank;
+                if (card.Rank == 1)
+                {
+                    aceCount++;
+                }
+            }
+
+            while (aceCount > 0 && total + 10 <= 21)
+            {
+                total += 10;
+                aceCount--;
+            }
+
+            return total;
         }
 
         private static bool IsAutoPistol(string definitionKey)

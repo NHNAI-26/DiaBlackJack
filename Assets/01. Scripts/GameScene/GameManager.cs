@@ -281,6 +281,7 @@ namespace DiaBlackJack.GameScene
             }
 
             hud?.SetGold(currentGold);
+            hud?.SetPlayerSoul(model.PlayerSoul);
             hud?.SetEnemyStatusVisible(false);
             UpdateShopLeaveControl();
             return true;
@@ -2765,8 +2766,8 @@ namespace DiaBlackJack.GameScene
 
                 if (revealKnifeCardWithThrow)
                 {
-                    RenderHands(pendingKnifeReveal);
-                    RenderTotals(pendingKnifeReveal);
+                    yield return RenderHandsThenTotalsAfterRevealFlip(
+                        pendingKnifeReveal);
                 }
 
                 bool resolveBeat = vm.Core.State == CoreLoopState.ResolvingRound;
@@ -2791,8 +2792,8 @@ namespace DiaBlackJack.GameScene
 
                 if (playedAnimation.DeferredCardRender)
                 {
-                    RenderHands(playedAnimation.DeferredViewModel);
-                    RenderTotals(playedAnimation.DeferredViewModel);
+                    yield return RenderHandsThenTotalsAfterRevealFlip(
+                        playedAnimation.DeferredViewModel);
                 }
 
                 pendingKnifeReveal = null;
@@ -2933,7 +2934,7 @@ namespace DiaBlackJack.GameScene
 
             if (!deferredCardRender)
             {
-                RenderHands(vm);
+                RenderHandsAndTotals(vm);
             }
 
             RenderCrystalOrbSelection(vm);
@@ -2948,11 +2949,6 @@ namespace DiaBlackJack.GameScene
                             CombatantSide.Enemy,
                             vm.EnemyVisual)));
                 PresentEnemySpeech(vm.EnemySpeechObservation);
-            }
-
-            if (!deferredCardRender)
-            {
-                RenderTotals(vm);
             }
 
             return CreateAppliedAnimationResult(
@@ -3047,22 +3043,27 @@ namespace DiaBlackJack.GameScene
             }
         }
 
-        private void RenderHands(GameSceneViewModel vm)
+        /// <returns>True if any card started its reveal-flip animation this call (back
+        /// turning to face-up) — see <see cref="CardView.WillAnimateRevealFor"/>.</returns>
+        private bool RenderHands(GameSceneViewModel vm)
         {
             if (vm == null)
             {
-                return;
+                return false;
             }
 
+            bool anyRevealAnimated = false;
             if (playerHand != null)
             {
-                playerHand.Render(vm.PlayerCards, vm.PlayerDemonCards);
+                anyRevealAnimated |= playerHand.Render(vm.PlayerCards, vm.PlayerDemonCards);
             }
 
             if (enemyHand != null)
             {
-                enemyHand.Render(vm.EnemyCards, vm.EnemyDemonCards);
+                anyRevealAnimated |= enemyHand.Render(vm.EnemyCards, vm.EnemyDemonCards);
             }
+
+            return anyRevealAnimated;
         }
 
         private void RenderTotals(GameSceneViewModel vm)
@@ -3073,6 +3074,53 @@ namespace DiaBlackJack.GameScene
             }
 
             totals.Render(vm.PlayerTotalsText, vm.EnemyTotalsText);
+        }
+
+        // A newly revealed card still plays its own flip animation in CardView; the hand total
+        // must not count it until the flip has actually turned the sprite face-up, or the
+        // number jumps while the card still looks face-down. Used from non-coroutine call
+        // sites (e.g. the default ApplyView render), so the wait runs as its own coroutine
+        // rather than blocking the caller.
+        private void RenderHandsAndTotals(GameSceneViewModel vm)
+        {
+            if (vm == null)
+            {
+                return;
+            }
+
+            if (RenderHands(vm))
+            {
+                StartCoroutine(RenderTotalsAfterRevealFlip(vm));
+            }
+            else
+            {
+                RenderTotals(vm);
+            }
+        }
+
+        // Same as RenderHandsAndTotals, but yieldable so a driving coroutine (PlayTimeline) can
+        // wait for it directly instead of racing a fire-and-forget StartCoroutine.
+        private IEnumerator RenderHandsThenTotalsAfterRevealFlip(GameSceneViewModel vm)
+        {
+            if (RenderHands(vm))
+            {
+                yield return new WaitForSeconds(ResolveCardRevealFaceSwapSeconds());
+            }
+
+            RenderTotals(vm);
+        }
+
+        private IEnumerator RenderTotalsAfterRevealFlip(GameSceneViewModel vm)
+        {
+            yield return new WaitForSeconds(ResolveCardRevealFaceSwapSeconds());
+            RenderTotals(vm);
+        }
+
+        private float ResolveCardRevealFaceSwapSeconds()
+        {
+            CardView prefab = playerHand != null ? playerHand.CardPrefab : null;
+            prefab ??= enemyHand != null ? enemyHand.CardPrefab : null;
+            return prefab != null ? prefab.RevealFaceSwapSeconds : 0f;
         }
 
         internal static bool IsKnifeConcealedCardBeat(
@@ -3300,7 +3348,7 @@ namespace DiaBlackJack.GameScene
                 ResetRevolverAnimatorToBase();
                 revolverAnimator.SetTrigger(playerReadyTrigger);
                 RememberActiveRevolverReady(cue);
-                BeginRevolverReadyCameraSequence();
+                BeginRevolverReadyCameraSequence(cue.ActorSide);
                 return false;
             }
 
@@ -3325,7 +3373,14 @@ namespace DiaBlackJack.GameScene
             StopRevolverReadyCameraRoutine();
             _revolverSelectionReady = false;
             _revolverReadyActive = false;
-            ResolveCameraViewController()?.SetView(GameSceneCameraView.Current);
+            if (cue.ActorSide == CombatantSide.Player)
+            {
+                // Only the player's own revolver sequence ever moves the camera to the
+                // close-up table view, so only it needs to hand control back afterward. The
+                // enemy's sequence never touches the camera, so the viewer's current view
+                // (even one they picked manually) must be left alone here.
+                ResolveCameraViewController()?.SetView(GameSceneCameraView.Current);
+            }
 
             if (Application.isPlaying && revolverCameraReturnSeconds > 0f)
             {
@@ -3550,6 +3605,7 @@ namespace DiaBlackJack.GameScene
             yield return new WaitForSeconds(knifeResultSeconds);
             _knifeHideRoutine = null;
             ResetKnifeAnimatorToBase();
+            PresentationManager.Current?.ForceRestoreTransientCameraEffects();
             GameObject root = ResolveKnifeRoot();
             if (root != null)
             {
@@ -3576,6 +3632,7 @@ namespace DiaBlackJack.GameScene
             ClearPendingKnifeImpact();
             ResolveKnifeAnimator();
             ResetKnifeAnimatorToBase();
+            PresentationManager.Current?.ForceRestoreTransientCameraEffects();
             GameObject root = ResolveKnifeRoot();
             if (root != null)
             {
@@ -4010,7 +4067,7 @@ namespace DiaBlackJack.GameScene
             }
 
             RememberActiveRevolverReady(cue);
-            BeginRevolverReadyCameraSequence();
+            BeginRevolverReadyCameraSequence(cue.ActorSide);
         }
 
         private void HideRevolverAnimation()
@@ -4035,11 +4092,18 @@ namespace DiaBlackJack.GameScene
             Mathf.Max(0f, revolverCameraReturnSeconds) +
             Mathf.Max(0f, revolverAnimationSeconds);
 
-        private void BeginRevolverReadyCameraSequence()
+        private void BeginRevolverReadyCameraSequence(CombatantSide actorSide)
         {
             StopRevolverReadyCameraRoutine();
             _revolverSelectionReady = false;
             BeginRevolverSwitchInputLock();
+
+            // Only the player's own number selection needs the close-up table view; the
+            // camera stays on whatever the viewer already had while the enemy decides.
+            if (actorSide != CombatantSide.Player)
+            {
+                return;
+            }
 
             if (Application.isPlaying && revolverReadySeconds > 0f)
             {

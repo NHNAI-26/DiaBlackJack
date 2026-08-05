@@ -201,6 +201,19 @@ namespace DiaBlackJack.GameScene
                 clearOriginalOnComplete: true);
         }
 
+        /// <summary>
+        /// Forces every transient per-animation camera/screen effect (field of view, chromatic
+        /// aberration, color screen blend) back to its resting state immediately. Weapon
+        /// animations that get cut short before their own restoring animation events fire would
+        /// otherwise leave these stuck mid-effect (e.g. the field of view widened forever).
+        /// </summary>
+        public void ForceRestoreTransientCameraEffects()
+        {
+            RestoreFieldOfViewImmediate();
+            CleanupChromaticAberration();
+            ResetColorScreenBlendImmediate();
+        }
+
         public void StartColorScreenBlend(float fadeOutSpeed)
         {
             if (fadeOutSpeed <= 0f || float.IsNaN(fadeOutSpeed) || float.IsInfinity(fadeOutSpeed))

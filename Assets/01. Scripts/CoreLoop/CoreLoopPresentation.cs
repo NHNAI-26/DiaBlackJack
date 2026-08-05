@@ -332,7 +332,7 @@ namespace DiaBlackJack.CoreLoop.UI
                 FormatSoul(battle.Enemy.Soul),
                 FormatCards(battle.Player.Hand.Cards, revealAll: true),
                 FormatCards(battle.Enemy.Hand.Cards, revealAll: false),
-                battle.Player.HandValue.Total,
+                battle.Player.KnownHandValue.Total,
                 battle.Player.VisibleHandValue.Total,
                 battle.Enemy.VisibleHandValue.Total,
                 FormatDeck(battle.Player.Deck),

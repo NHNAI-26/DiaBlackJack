@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using Border.SaveLoad;
 using Border.SaveLoad.UI;
 using DiaBlackJack.StageProgression;
@@ -23,12 +24,16 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private CharacterView enemyCharacter;
         [SerializeField] private MoodController moodController;
         [SerializeField] private float moodTransitionDuration = 1f;
+        [SerializeField, Min(0f)] private float enemyAppearanceDelayAfterDoor = 1f;
 
         private StageProgressionRuntime _runtime;
         private FormalRunSession _session;
+        private Coroutine _enemyAppearanceDelayRoutine;
         private int? _focusedOpponentOfferId;
         private string _focusedOpponentProfileKey;
         private bool _isProcessingInput;
+        private bool _charactersEntranceWaiting;
+        private bool _hasPresentedCharacters;
         private string _currentMoodId;
 
         public event Action<GameFlowScreen, StageProgressionViewModel>
@@ -50,6 +55,7 @@ namespace DiaBlackJack.GameScene
             codex ??= GetComponent<CodexController>();
             moodController ??= GetComponent<MoodController>();
             ResolveSceneReferences();
+            SubscribeToMoodController();
 
             _runtime = StageProgressionRuntime.Instance;
         }
@@ -87,11 +93,15 @@ namespace DiaBlackJack.GameScene
                 resultView.MainMenuRequested += HandleMainMenuRequested;
                 resultView.SaveRetryRequested += HandleSaveRetryRequested;
             }
+
+            moodController ??= GetComponent<MoodController>();
+            SubscribeToMoodController();
         }
 
         private void Start()
         {
             ResolveSceneReferences();
+            SubscribeToMoodController();
             if (!TryAdoptFormalRun())
             {
                 ApplyMood(
@@ -136,6 +146,9 @@ namespace DiaBlackJack.GameScene
                 resultView.MainMenuRequested -= HandleMainMenuRequested;
                 resultView.SaveRetryRequested -= HandleSaveRetryRequested;
             }
+
+            UnsubscribeFromMoodController();
+            CancelEnemyAppearanceDelay();
         }
 
         public bool RequestCompleteStartingDemonReveal()
@@ -491,6 +504,7 @@ namespace DiaBlackJack.GameScene
                 CurrentScreen == GameFlowScreen.RunDefeat;
             codex?.SetAvailable(isCombat || isShop);
             hud?.SetEnemyStatusVisible(isCombat);
+            hud?.SetCoreStatsVisible(!isStartingReveal);
 
             if (isStartingReveal &&
                 CurrentViewModel.StartingDemonGrantId.HasValue)
@@ -530,12 +544,9 @@ namespace DiaBlackJack.GameScene
                 hudRoot.SetActive(ShouldShowHudRoot(CurrentScreen));
             }
 
-            if (charactersRoot != null)
-            {
-                charactersRoot.SetActive(
-                    isCombat || isStartingReveal ||
-                    CurrentScreen == GameFlowScreen.Shop);
-            }
+            UpdateCharactersVisibility(
+                isCombat || isStartingReveal ||
+                CurrentScreen == GameFlowScreen.Shop);
 
             if (enemyCharacter != null)
             {
@@ -549,6 +560,165 @@ namespace DiaBlackJack.GameScene
                     enemyCharacter.ExitMerchant();
                 }
             }
+        }
+
+        private void UpdateCharactersVisibility(bool shouldShow)
+        {
+            if (charactersRoot == null)
+            {
+                return;
+            }
+
+            if (shouldShow)
+            {
+                if (moodController != null &&
+                    moodController.IsEntranceDoorAnimationPlaying)
+                {
+                    BeginWaitingForDoorAnimation();
+                    return;
+                }
+
+                if (_charactersEntranceWaiting)
+                {
+                    return;
+                }
+
+                ShowCharactersWithEntrance();
+                return;
+            }
+
+            CancelEnemyAppearanceDelay();
+            _charactersEntranceWaiting = false;
+
+            if (enemyCharacter == null)
+            {
+                charactersRoot.SetActive(false);
+                return;
+            }
+
+            if (!charactersRoot.activeSelf)
+            {
+                return;
+            }
+
+            enemyCharacter.PlayExitAnimation(() =>
+            {
+                if (charactersRoot != null)
+                {
+                    charactersRoot.SetActive(false);
+                }
+            });
+        }
+
+        private void BeginWaitingForDoorAnimation()
+        {
+            StopEnemyAppearanceDelayRoutine();
+            _charactersEntranceWaiting = true;
+            charactersRoot.SetActive(false);
+        }
+
+        private void HandleEntranceDoorAnimationCompleted()
+        {
+            if (!_charactersEntranceWaiting || !ShouldShowCharacters())
+            {
+                return;
+            }
+
+            StopEnemyAppearanceDelayRoutine();
+            if (enemyAppearanceDelayAfterDoor <= 0f)
+            {
+                ShowCharactersWithEntrance();
+                return;
+            }
+
+            _enemyAppearanceDelayRoutine = StartCoroutine(
+                DelayEnemyAppearanceAfterDoor());
+        }
+
+        private IEnumerator DelayEnemyAppearanceAfterDoor()
+        {
+            yield return new WaitForSeconds(enemyAppearanceDelayAfterDoor);
+            _enemyAppearanceDelayRoutine = null;
+
+            if (_charactersEntranceWaiting && ShouldShowCharacters())
+            {
+                ShowCharactersWithEntrance();
+            }
+            else
+            {
+                _charactersEntranceWaiting = false;
+            }
+        }
+
+        private void ShowCharactersWithEntrance()
+        {
+            if (charactersRoot == null)
+            {
+                return;
+            }
+
+            bool wasVisible = charactersRoot.activeSelf;
+            charactersRoot.SetActive(true);
+            if (!wasVisible || !_hasPresentedCharacters)
+            {
+                enemyCharacter?.PlayEntranceAnimation();
+                if (enemyCharacter != null)
+                {
+                    moodController?.PlayPendingBgm();
+                }
+            }
+
+            _hasPresentedCharacters = true;
+            _charactersEntranceWaiting = false;
+        }
+
+        private bool ShouldShowCharacters()
+        {
+            return CurrentScreen == GameFlowScreen.StartingDemonReveal ||
+                CurrentScreen == GameFlowScreen.Combat ||
+                CurrentScreen == GameFlowScreen.Shop;
+        }
+
+        private void StopEnemyAppearanceDelayRoutine()
+        {
+            if (_enemyAppearanceDelayRoutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(_enemyAppearanceDelayRoutine);
+            _enemyAppearanceDelayRoutine = null;
+        }
+
+        private void CancelEnemyAppearanceDelay()
+        {
+            StopEnemyAppearanceDelayRoutine();
+            _charactersEntranceWaiting = false;
+            moodController?.CancelPendingBgm();
+        }
+
+        private void SubscribeToMoodController()
+        {
+            if (moodController == null)
+            {
+                return;
+            }
+
+            moodController.EntranceDoorAnimationCompleted -=
+                HandleEntranceDoorAnimationCompleted;
+            moodController.EntranceDoorAnimationCompleted +=
+                HandleEntranceDoorAnimationCompleted;
+        }
+
+        private void UnsubscribeFromMoodController()
+        {
+            if (moodController == null)
+            {
+                return;
+            }
+
+            moodController.EntranceDoorAnimationCompleted -=
+                HandleEntranceDoorAnimationCompleted;
         }
 
         private void ResolveSceneReferences()

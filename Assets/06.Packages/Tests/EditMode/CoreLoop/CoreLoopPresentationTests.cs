@@ -1106,9 +1106,11 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(cue.Phase,
                 Is.EqualTo(GameSceneRevolverAnimationPhase.Resolved));
             Assert.That(cue.Succeeded, Is.False);
+            // The revolver keeps the target's threatened expression through both outcomes —
+            // it never flips back to neutral just because the shot missed.
             Assert.That(
                 targetVisual,
-                Is.EqualTo(CharacterVisualState.UseCard));
+                Is.EqualTo(CharacterVisualState.AttackThreatened));
         }
 
         [Test]

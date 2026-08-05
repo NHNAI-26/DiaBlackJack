@@ -65,12 +65,16 @@ namespace DiaBlackJack.GameScene
             KillAllMoveTweens();
         }
 
-        public void Render(IReadOnlyList<GameSceneCardViewModel> cards)
+        public bool Render(IReadOnlyList<GameSceneCardViewModel> cards)
         {
-            Render(cards, Array.Empty<GameSceneDemonCardViewModel>());
+            return Render(cards, Array.Empty<GameSceneDemonCardViewModel>());
         }
 
-        public void Render(
+        /// <returns>True if binding any card this call started its reveal-flip animation
+        /// (back turning to face-up). Callers syncing other UI (e.g. a hand total) to the
+        /// actual visual reveal should wait <see cref="CardView.RevealFaceSwapSeconds"/> before
+        /// reacting to the new state when this returns true.</returns>
+        public bool Render(
             IReadOnlyList<GameSceneCardViewModel> cards,
             IReadOnlyList<GameSceneDemonCardViewModel> demonCards)
         {
@@ -80,7 +84,7 @@ namespace DiaBlackJack.GameScene
                 (demonCards.Count > 0 && demonCardPrefab == null))
             {
                 ClearAll();
-                return;
+                return false;
             }
 
             int previousDemonCount = _spawnedDemonCards.Count;
@@ -94,6 +98,7 @@ namespace DiaBlackJack.GameScene
                  newDemonCardIds.Count > 0);
             int totalCardCount = cards.Count + demonCards.Count;
             float offset = -(totalCardCount - 1) * 0.5f * spacing;
+            bool anyRevealAnimated = false;
             for (int i = 0; i < cards.Count; i++)
             {
                 CardView card = _spawned[i];
@@ -103,6 +108,7 @@ namespace DiaBlackJack.GameScene
                     i * depthStagger);
                 card.transform.localRotation = Quaternion.identity;
                 card.SetSortingOrder(sortingOrderBase + i * sortingOrderStep);
+                anyRevealAnimated |= card.WillAnimateRevealFor(cards[i]);
                 card.Bind(cards[i]);
                 MoveCardToLayoutPosition(
                     card,
@@ -134,6 +140,7 @@ namespace DiaBlackJack.GameScene
             }
 
             _hasRenderedLayout = true;
+            return anyRevealAnimated;
         }
 
         public void ResetView()

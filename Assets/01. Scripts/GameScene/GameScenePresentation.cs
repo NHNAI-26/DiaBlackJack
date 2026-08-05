@@ -790,7 +790,7 @@ namespace DiaBlackJack.GameScene
         {
             return revealRoundResult
                 ? FormatFinalTotals(
-                    battle.Player.HandValue.Total + appliedMammonBonus,
+                    battle.Player.KnownHandValue.Total + appliedMammonBonus,
                     battle.Player.VisibleHandValue.Total)
                 : core.PlayerTotalsText;
         }
@@ -803,7 +803,7 @@ namespace DiaBlackJack.GameScene
         {
             return revealRoundResult
                 ? FormatFinalTotals(
-                    battle.Enemy.HandValue.Total + appliedMammonBonus,
+                    battle.Enemy.KnownHandValue.Total + appliedMammonBonus,
                     battle.Enemy.VisibleHandValue.Total)
                 : core.EnemyVisibleTotalText;
         }
@@ -1185,7 +1185,14 @@ namespace DiaBlackJack.GameScene
                 CharacterVisualState visual = CharacterVisualState.UseCard;
                 if (IsAttackEffect(kind))
                 {
-                    if (!completedResult.HasValue)
+                    if (kind == CardEffectKind.AutoPistol)
+                    {
+                        // The revolver keeps the target's tense/threatened expression through
+                        // the whole resolution — a hit or a miss looks the same until the round
+                        // itself reacts, so it never flips back to neutral mid-sequence.
+                        visual = CharacterVisualState.AttackThreatened;
+                    }
+                    else if (!completedResult.HasValue)
                     {
                         visual = CharacterVisualState.AttackThreatened;
                     }

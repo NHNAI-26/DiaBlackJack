@@ -20,7 +20,7 @@ namespace DiaBlackJack.StageProgression.Tests
                 Is.EqualTo(new[]
                 {
                     DemonContractCatalog.SatanKey,
-                    DemonContractCatalog.BelphegorKey,
+                    DemonContractCatalog.AsmodeusKey,
                     DemonContractCatalog.BeelzebubKey,
                     DemonContractCatalog.MammonKey
                 }));

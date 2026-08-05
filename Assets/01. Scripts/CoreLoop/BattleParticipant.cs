@@ -31,6 +31,16 @@ namespace DiaBlackJack.CoreLoop
 
         public HandValue VisibleHandValue => HandValueCalculator.Calculate(GetVisibleCards());
 
+        /// <summary>
+        /// The owner's own true total, as they themselves would know it: every face-up card
+        /// plus their genuinely hidden-role card (always known to its owner), but excluding any
+        /// other card that is merely face-down for the moment — e.g. a card forced into this
+        /// hand by an opponent's effect that is still being concealed for a reveal beat. Unlike
+        /// <see cref="HandValue"/>, this does not count such a card before it is actually
+        /// revealed.
+        /// </summary>
+        public HandValue KnownHandValue => HandValueCalculator.Calculate(GetKnownCards());
+
         internal BlackjackCard Draw(bool faceUp)
         {
             BlackjackCard card = Deck.Draw();
@@ -226,6 +236,17 @@ namespace DiaBlackJack.CoreLoop
             foreach (BlackjackCard card in Hand.GetPublicCards())
             {
                 yield return card;
+            }
+        }
+
+        private IEnumerable<BlackjackCard> GetKnownCards()
+        {
+            foreach (BlackjackCard card in Hand.Cards)
+            {
+                if (card.IsFaceUp || Hand.IsHiddenCard(card.Id))
+                {
+                    yield return card;
+                }
             }
         }
     }

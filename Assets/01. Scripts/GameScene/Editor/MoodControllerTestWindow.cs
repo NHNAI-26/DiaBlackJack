@@ -18,6 +18,7 @@ namespace DiaBlackJack.GameScene.Editor
             Shader.PropertyToID("_GlassGlowColor");
 
         private MoodController _controller;
+        private CharacterView _enemyCharacter;
         private MoodProfileSO _profile;
         private string _profileId;
         private float _duration = DefaultBlendDuration;
@@ -54,6 +55,11 @@ namespace DiaBlackJack.GameScene.Editor
             {
                 RefreshFromSelection();
             }
+
+            if (_enemyCharacter == null)
+            {
+                FindSceneCharacter();
+            }
         }
 
         private void OnDisable()
@@ -68,6 +74,10 @@ namespace DiaBlackJack.GameScene.Editor
             DrawTargetSection();
             EditorGUILayout.Space(8f);
             DrawManualProfileSection();
+            EditorGUILayout.Space(8f);
+            DrawEntranceDoorSection();
+            EditorGUILayout.Space(8f);
+            DrawEnemyAppearanceSection();
             EditorGUILayout.Space(8f);
             DrawLightingCaptureSection();
             EditorGUILayout.Space(8f);
@@ -113,6 +123,125 @@ namespace DiaBlackJack.GameScene.Editor
                 EditorGUILayout.LabelField(
                     "Scene",
                     _controller.gameObject.scene.name);
+            }
+        }
+
+        private void DrawEntranceDoorSection()
+        {
+            EditorGUILayout.LabelField(
+                "ENTRANCE DOOR",
+                EditorStyles.boldLabel);
+
+            if (_controller == null)
+            {
+                EditorGUILayout.HelpBox(
+                    "Assign a MoodController to test the entrance door.",
+                    MessageType.Info);
+                return;
+            }
+
+            SerializedObject serialized = new SerializedObject(_controller);
+            serialized.Update();
+            DrawProfileProperty(serialized, "leftDoorBone");
+            DrawProfileProperty(serialized, "rightDoorBone");
+            DrawProfileProperty(serialized, "doorRotationDuration");
+            DrawProfileProperty(serialized, "doorRotationAmount");
+            DrawProfileProperty(serialized, "doorAnimationCurve");
+            serialized.ApplyModifiedProperties();
+
+            EditorGUILayout.LabelField(
+                "Animation",
+                "One shared DOTween curve rotation with mirrored direction");
+
+            using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying))
+            {
+                if (GUILayout.Button("Test Entrance Door"))
+                {
+                    TestEntranceDoor();
+                }
+            }
+
+            if (!EditorApplication.isPlaying)
+            {
+                EditorGUILayout.HelpBox(
+                    "Enter Play Mode before running the door animation test.",
+                    MessageType.Info);
+            }
+        }
+
+        private void DrawEnemyAppearanceSection()
+        {
+            EditorGUILayout.LabelField(
+                "ENEMY APPEARANCE",
+                EditorStyles.boldLabel);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                _enemyCharacter = EditorGUILayout.ObjectField(
+                    "Character View",
+                    _enemyCharacter,
+                    typeof(CharacterView),
+                    true) as CharacterView;
+
+                if (GUILayout.Button("Selection", GUILayout.Width(82f)))
+                {
+                    RefreshCharacterFromSelection();
+                }
+
+                if (GUILayout.Button("Find", GUILayout.Width(56f)))
+                {
+                    FindSceneCharacter();
+                }
+            }
+
+            if (_enemyCharacter == null)
+            {
+                EditorGUILayout.HelpBox(
+                    "Assign a CharacterView in the scene to test enemy appearance.",
+                    MessageType.Info);
+                return;
+            }
+
+            SerializedObject serialized = new SerializedObject(_enemyCharacter);
+            serialized.Update();
+            DrawProfileProperty(serialized, "appearanceEnterDuration");
+            DrawProfileProperty(serialized, "appearanceExitDuration");
+            DrawProfileProperty(serialized, "appearanceRotationOffset");
+            DrawProfileProperty(serialized, "appearanceEnterEase");
+            DrawProfileProperty(serialized, "appearanceExitEase");
+            DrawProfileProperty(serialized, "merchantExitEase");
+            serialized.ApplyModifiedProperties();
+
+            EditorGUILayout.LabelField(
+                "Animation",
+                "Entrance: 180° to 0° / Exit: 0° to 180°");
+
+            using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying))
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("Test Enemy Entrance"))
+                    {
+                        TestEnemyEntrance();
+                    }
+
+                    if (GUILayout.Button("Test Enemy Exit"))
+                    {
+                        TestEnemyExit();
+                    }
+                }
+
+                if (GUILayout.Button("Test Merchant Exit"))
+                {
+                    TestMerchantExit();
+                }
+            }
+
+            if (!EditorApplication.isPlaying)
+            {
+                EditorGUILayout.HelpBox(
+                    "Enter Play Mode before running the enemy appearance test.",
+                    MessageType.Info);
             }
         }
 
@@ -521,6 +650,72 @@ namespace DiaBlackJack.GameScene.Editor
                 applied ? MessageType.Info : MessageType.Warning);
         }
 
+        private void TestEntranceDoor()
+        {
+            if (_controller == null)
+            {
+                SetMessage("MoodController is missing.", MessageType.Error);
+                return;
+            }
+
+            bool started = _controller.TryPlayEntranceDoorAnimation();
+            RepaintScene(_controller);
+            SetMessage(
+                started
+                    ? "Started the entrance door animation."
+                    : "Door animation could not start. Assign both door bones and set a duration above zero.",
+                started ? MessageType.Info : MessageType.Warning);
+        }
+
+        private void TestEnemyEntrance()
+        {
+            if (_enemyCharacter == null)
+            {
+                SetMessage("CharacterView is missing.", MessageType.Error);
+                return;
+            }
+
+            EnsureCharacterRootIsActive(_enemyCharacter);
+            _enemyCharacter.PlayEntranceAnimation();
+            RepaintScene(_controller);
+            SetMessage(
+                "Started enemy entrance animation (180° to 0°).",
+                MessageType.Info);
+        }
+
+        private void TestEnemyExit()
+        {
+            if (_enemyCharacter == null)
+            {
+                SetMessage("CharacterView is missing.", MessageType.Error);
+                return;
+            }
+
+            EnsureCharacterRootIsActive(_enemyCharacter);
+            _enemyCharacter.PlayExitAnimation(null);
+            RepaintScene(_controller);
+            SetMessage(
+                "Started enemy exit animation (0° to 180°).",
+                MessageType.Info);
+        }
+
+        private void TestMerchantExit()
+        {
+            if (_enemyCharacter == null)
+            {
+                SetMessage("CharacterView is missing.", MessageType.Error);
+                return;
+            }
+
+            EnsureCharacterRootIsActive(_enemyCharacter);
+            _enemyCharacter.EnterMerchant();
+            _enemyCharacter.PlayExitAnimation(_enemyCharacter.ExitMerchant);
+            RepaintScene(_controller);
+            SetMessage(
+                "Started merchant exit animation with the merchant Ease.",
+                MessageType.Info);
+        }
+
         private void CaptureLighting(bool showMessage)
         {
             if (_controller == null)
@@ -599,6 +794,13 @@ namespace DiaBlackJack.GameScene.Editor
             GameObject selected = Selection.activeGameObject;
             if (selected != null)
             {
+                CharacterView character = selected.GetComponentInParent<CharacterView>();
+                character ??= selected.GetComponentInChildren<CharacterView>(true);
+                if (character != null)
+                {
+                    _enemyCharacter = character;
+                }
+
                 MoodController controller =
                     selected.GetComponentInParent<MoodController>();
                 if (controller != null)
@@ -607,9 +809,86 @@ namespace DiaBlackJack.GameScene.Editor
                     Repaint();
                     return;
                 }
+
+                if (character != null)
+                {
+                    Repaint();
+                    return;
+                }
             }
 
             FindSceneController();
+        }
+
+        private void RefreshCharacterFromSelection()
+        {
+            GameObject selected = Selection.activeGameObject;
+            CharacterView character = selected == null
+                ? null
+                : selected.GetComponentInParent<CharacterView>();
+            character ??= selected == null
+                ? null
+                : selected.GetComponentInChildren<CharacterView>(true);
+
+            if (character == null)
+            {
+                SetMessage(
+                    "No CharacterView was found in the current selection.",
+                    MessageType.Warning);
+                return;
+            }
+
+            _enemyCharacter = character;
+            SetMessage(
+                $"Using CharacterView on '{character.name}'.",
+                MessageType.Info);
+            Repaint();
+        }
+
+        private void FindSceneCharacter()
+        {
+            CharacterView[] characters =
+                Resources.FindObjectsOfTypeAll<CharacterView>();
+            foreach (CharacterView character in characters)
+            {
+                if (character == null ||
+                    EditorUtility.IsPersistent(character) ||
+                    !character.gameObject.scene.IsValid())
+                {
+                    continue;
+                }
+
+                _enemyCharacter = character;
+                SetMessage(
+                    $"Using CharacterView on '{character.name}'.",
+                    MessageType.Info);
+                Repaint();
+                return;
+            }
+
+            _enemyCharacter = null;
+            SetMessage(
+                "No scene CharacterView was found.",
+                MessageType.Warning);
+            Repaint();
+        }
+
+        private static void EnsureCharacterRootIsActive(CharacterView character)
+        {
+            Transform current = character.transform;
+            while (current != null)
+            {
+                if (current.name == "Characters")
+                {
+                    current.gameObject.SetActive(true);
+                    character.gameObject.SetActive(true);
+                    return;
+                }
+
+                current = current.parent;
+            }
+
+            character.gameObject.SetActive(true);
         }
 
         private void FindSceneController()

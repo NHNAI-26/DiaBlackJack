@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace DiaBlackJack.CoreLoop
 {
@@ -91,7 +92,9 @@ namespace DiaBlackJack.CoreLoop
                 case EnemyActionType.DemonContract:
                     return EvaluateDemonContract(observation, candidate);
                 case EnemyActionType.Change:
-                    return Score(candidate, 2000, "cultist-required-change");
+                    return EnemyChangeRiskEvaluator.ShouldAcceptChange(observation)
+                        ? Score(candidate, 2000, "cultist-required-change")
+                        : Score(candidate, -50, "cultist-decline-risky-paid-change");
                 default:
                     throw new ArgumentOutOfRangeException(nameof(candidate));
             }
@@ -167,9 +170,12 @@ namespace DiaBlackJack.CoreLoop
                 case DemonContractInteractionKind.AsmodeusForceOpponentHit:
                     bool forcesHit = candidate.DemonContractOptionId ==
                         AsmodeusDemonContractHandler.ForceHitOptionId;
+                    bool opponentVisiblyAhead =
+                        CalculateBestTotal(observation.PlayerFaceUpCards) >
+                            CalculateOwnVisibleTotal(observation);
                     return Score(
                         candidate,
-                        forcesHit ? 1500 : 0,
+                        forcesHit == opponentVisiblyAhead ? 1500 : 0,
                         forcesHit
                             ? "cultist-force-opponent-hit-with-asmodeus"
                             : "cultist-skip-asmodeus-forced-hit");
@@ -413,6 +419,56 @@ namespace DiaBlackJack.CoreLoop
                         ? "cultist-apply-safe-mammon-die"
                         : "cultist-decline-busting-mammon-die")
                     : "cultist-reject-mammon-final-option");
+        }
+
+        private static int CalculateBestTotal(
+            IReadOnlyList<PublicCardObservation> cards)
+        {
+            int total = 0;
+            int aceCount = 0;
+            foreach (PublicCardObservation card in cards)
+            {
+                total += card.Rank;
+                if (card.Rank == 1)
+                {
+                    aceCount++;
+                }
+            }
+
+            while (aceCount > 0 && total + 10 <= 21)
+            {
+                total += 10;
+                aceCount--;
+            }
+
+            return total;
+        }
+
+        private static int CalculateOwnVisibleTotal(EnemyObservation observation)
+        {
+            int total = 0;
+            int aceCount = 0;
+            foreach (EnemyOwnedCardObservation card in observation.OwnCards)
+            {
+                if (!card.IsFaceUp || card.IsHiddenCard)
+                {
+                    continue;
+                }
+
+                total += card.Rank;
+                if (card.Rank == 1)
+                {
+                    aceCount++;
+                }
+            }
+
+            while (aceCount > 0 && total + 10 <= 21)
+            {
+                total += 10;
+                aceCount--;
+            }
+
+            return total;
         }
 
         private static int GetOwnVisibleTotal(EnemyObservation observation)

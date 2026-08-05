@@ -188,6 +188,7 @@ MonoBehaviour:
   enemyCharacter: {fileID: 0}
   moodController: {fileID: 8419550313967010365}
   moodTransitionDuration: 1
+  enemyAppearanceDelayAfterDoor: 0
 --- !u!114 &2737482733934021627
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -201,6 +202,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.StartingDemonRevealView
   demonCardPrefab: {fileID: 88746123954579456, guid: 45d32c4ca972f2243966a587c6684a0c, type: 3}
+  confirmButtonRoot: {fileID: 0}
+  confirmButton: {fileID: 0}
   deckPosition: {x: 1.5, y: 3.58, z: 16.44}
   firstCardPosition: {x: -0.55, y: 3.56, z: 17}
   secondCardPosition: {x: 0.55, y: 3.56, z: 17}
@@ -255,4 +258,68 @@ MonoBehaviour:
   volumetricLight: {fileID: 0}
   enemyLight: {fileID: 0}
   enteranceLight: {fileID: 0}
+  leftDoorBone: {fileID: 0}
+  rightDoorBone: {fileID: 0}
+  doorRotationDuration: 2.5
+  doorRotationAmount: {x: 0, y: 0, z: 50}
+  doorAnimationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.23256102
+      value: 1.1158735
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.44346535
+      value: -0.7934097
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.7089819
+      value: 0.40694293
+      inSlope: -0.12844844
+      outSlope: -0.12844844
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.49455315
+    - serializedVersion: 3
+      time: 0.8871469
+      value: -0.22337717
+      inSlope: -0.027261179
+      outSlope: -0.027261179
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.47153923
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   transitionMode: 0

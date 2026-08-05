@@ -24,7 +24,7 @@ namespace DiaBlackJack.CoreLoop
                 new List<string>
                 {
                     SatanKey,
-                    BelphegorKey,
+                    AsmodeusKey,
                     BeelzebubKey,
                     MammonKey
                 }.AsReadOnly();

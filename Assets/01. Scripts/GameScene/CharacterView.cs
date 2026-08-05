@@ -1,6 +1,8 @@
 using System;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DiaBlackJack.GameScene
 {
@@ -56,16 +58,88 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Color merchantTint = new Color(0.32f, 0.30f, 0.36f);
         [SerializeField] private float merchantScale = 0.8f;
 
+        [Header("Enemy appearance animation")]
+        [FormerlySerializedAs("appearanceDuration")]
+        [SerializeField, Min(0f)] private float appearanceEnterDuration = 0.8f;
+        [SerializeField, Min(0f)] private float appearanceExitDuration = 0.8f;
+        [SerializeField] private Vector3 appearanceRotationOffset =
+            new Vector3(0f, 0f, 180f);
+        [SerializeField] private Ease appearanceEnterEase = Ease.OutBack;
+        [SerializeField] private Ease appearanceExitEase = Ease.InBack;
+        [SerializeField] private Ease merchantExitEase = Ease.InCubic;
+
         private Vector3 _baseScale;
+        private Quaternion _baseLocalRotation;
+        private Vector3 _baseLocalEulerAngles;
         private Color _baseColor;
         private Sprite _defaultSprite;
         private EnemySpriteProfile _activeEnemySpriteProfile;
         private CharacterVisualState _lastVisualState;
+        private Tween _appearanceTween;
         private bool _initialized;
+        private bool _isMerchantMode;
 
         private void Awake()
         {
             EnsureInitialized();
+        }
+
+        private void OnDisable()
+        {
+            KillAppearanceAnimation();
+        }
+
+        public void PlayEntranceAnimation()
+        {
+            EnsureInitialized();
+            KillAppearanceAnimation();
+
+            Vector3 startEulerAngles =
+                _baseLocalEulerAngles + appearanceRotationOffset;
+            transform.localRotation = Quaternion.Euler(startEulerAngles);
+
+            if (appearanceEnterDuration <= 0f)
+            {
+                transform.localRotation = _baseLocalRotation;
+                return;
+            }
+
+            _appearanceTween = transform.DOLocalRotate(
+                    _baseLocalEulerAngles,
+                    appearanceEnterDuration,
+                    RotateMode.Fast)
+                .SetEase(appearanceEnterEase)
+                .OnComplete(CompleteEntranceAnimation);
+        }
+
+        public void PlayExitAnimation(Action onComplete)
+        {
+            EnsureInitialized();
+            KillAppearanceAnimation();
+            transform.localRotation = _baseLocalRotation;
+
+            Vector3 endEulerAngles =
+                _baseLocalEulerAngles + appearanceRotationOffset;
+            if (appearanceExitDuration <= 0f)
+            {
+                transform.localRotation = Quaternion.Euler(endEulerAngles);
+                onComplete?.Invoke();
+                return;
+            }
+
+            Ease exitEase = _isMerchantMode
+                ? merchantExitEase
+                : appearanceExitEase;
+            _appearanceTween = transform.DOLocalRotate(
+                    endEulerAngles,
+                    appearanceExitDuration,
+                    RotateMode.Fast)
+                .SetEase(exitEase)
+                .OnComplete(() =>
+                {
+                    _appearanceTween = null;
+                    onComplete?.Invoke();
+                });
         }
 
         /// <summary>Apply the action label and profile-specific sprite for the given state.</summary>
@@ -156,6 +230,7 @@ namespace DiaBlackJack.GameScene
         public void EnterMerchant()
         {
             EnsureInitialized();
+            _isMerchantMode = true;
 
             if (sprite != null)
             {
@@ -179,6 +254,7 @@ namespace DiaBlackJack.GameScene
         public void ExitMerchant()
         {
             EnsureInitialized();
+            _isMerchantMode = false;
 
             if (sprite != null)
             {
@@ -226,9 +302,23 @@ namespace DiaBlackJack.GameScene
             }
 
             _baseScale = transform.localScale;
+            _baseLocalRotation = transform.localRotation;
+            _baseLocalEulerAngles = transform.localEulerAngles;
             _baseColor = sprite != null ? sprite.color : Color.white;
             _defaultSprite = sprite != null ? sprite.sprite : null;
             _initialized = true;
+        }
+
+        private void CompleteEntranceAnimation()
+        {
+            _appearanceTween = null;
+            transform.localRotation = _baseLocalRotation;
+        }
+
+        private void KillAppearanceAnimation()
+        {
+            _appearanceTween?.Kill();
+            _appearanceTween = null;
         }
 
         private void KeepActionLabelInFront()
