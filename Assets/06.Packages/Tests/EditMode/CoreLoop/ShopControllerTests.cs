@@ -169,6 +169,63 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("GSH03")]
+        public void GSH03_U01_StandaloneShopCardsUseCombatDescriptionsAndSeparatePrices()
+        {
+            Transform normalHolder = CreateHolder("Normal Card Holder");
+            Transform demonHolder = CreateHolder("Demon Card Holder");
+            SetPrivateField("normalCardHolder", normalHolder);
+            SetPrivateField("demonCardHolder", demonHolder);
+            SetPrivateField("normalCardPrefab", CreateNormalCardPrefab());
+            SetPrivateField("demonCardPrefab", CreateDemonCardPrefab());
+            SetPrivateField("normalCardOfferCount", 3);
+            SetPrivateField("demonCardOfferCount", 2);
+
+            _shop.Open();
+
+            CardView[] normalCards =
+                normalHolder.GetComponentsInChildren<CardView>(true);
+            DemonCardView[] demonCards =
+                demonHolder.GetComponentsInChildren<DemonCardView>(true);
+            ShopCardOfferStatusView[] statuses = normalHolder
+                .GetComponentsInChildren<ShopCardOfferStatusView>(true)
+                .Concat(demonHolder.GetComponentsInChildren<
+                    ShopCardOfferStatusView>(true))
+                .ToArray();
+
+            Assert.That(normalCards, Has.Length.EqualTo(3));
+            Assert.That(demonCards, Has.Length.EqualTo(2));
+            Assert.That(statuses, Has.Length.EqualTo(5));
+
+            foreach (CardView card in normalCards)
+            {
+                CardDefinition definition = CardDefinitionCatalog.GetByKey(
+                    card.DefinitionKey);
+                Assert.That(
+                    card.HoverBadgeDescription,
+                    Is.EqualTo(definition.Description));
+                Assert.That(card.HoverBadgeDescription, Does.Not.Contain("PRICE"));
+                Assert.That(card.HoverBadgeDescription, Does.Not.Contain("GOLD"));
+            }
+
+            foreach (DemonCardView card in demonCards)
+            {
+                DemonContractDefinition definition =
+                    DemonContractCatalog.Default.GetByKey(
+                        card.BoundCard.DefinitionKey);
+                Assert.That(card.BoundCard.Summary, Is.EqualTo(definition.Summary));
+                Assert.That(
+                    card.BoundCard.CostSummary,
+                    Is.EqualTo(definition.CostSummary));
+            }
+
+            foreach (ShopCardOfferStatusView status in statuses)
+            {
+                Assert.That(status.PriceLabel, Does.StartWith("돈 : "));
+            }
+        }
+
+        [Test]
         public void RFM01_U03_AllCardSlotsCanBePurchasedWithoutAVisitLimit()
         {
             GameObject holderObject = new GameObject("Normal Card Holder");

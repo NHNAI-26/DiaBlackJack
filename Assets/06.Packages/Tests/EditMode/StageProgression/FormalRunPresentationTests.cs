@@ -386,6 +386,113 @@ namespace DiaBlackJack.StageProgression.Tests
             }
         }
 
+        [Test]
+        [Category("GSH03")]
+        public void GSH03_U02_FormalShopUsesCombatCardDescriptionsAndKeepsPricesSeparate()
+        {
+            FormalRunSession run = OpenFirstShop();
+            StageProgressionViewModel model = StageProgressionPresenter.Create(run);
+            GameObject root = new GameObject("GSH03 Formal Shop Tooltip Test");
+            GameObject lighter = null;
+            GameObject whiskey = null;
+            try
+            {
+                foreach (ShopCardOptionViewModel option in model.ShopCardOptions)
+                {
+                    if (option.Category != "CARD")
+                    {
+                        continue;
+                    }
+
+                    CardDefinition definition = CardDefinitionCatalog.GetByKey(
+                        option.DefinitionKey);
+                    Assert.That(option.Summary, Is.EqualTo(definition.Description));
+                    Assert.That(
+                        option.Price,
+                        Is.EqualTo($"{option.PriceAmount} GOLD"));
+                }
+
+                ShopController shop = CreateFormalShopController(root);
+                lighter = UnityEngine.Object.Instantiate(
+                    AssetDatabase.LoadAssetAtPath<GameObject>(
+                        "Assets/03. Prefabs/Shop/ShopItem_Lighter.prefab"),
+                    root.transform);
+                whiskey = UnityEngine.Object.Instantiate(
+                    AssetDatabase.LoadAssetAtPath<GameObject>(
+                        "Assets/03. Prefabs/Shop/ShopItem_Whiskey.prefab"),
+                    root.transform);
+                SetField(
+                    shop,
+                    "lighterItem",
+                    lighter.GetComponent<ShopUtilityItemView>());
+                SetField(
+                    shop,
+                    "whiskeyItem",
+                    whiskey.GetComponent<ShopUtilityItemView>());
+
+                shop.OpenFormal(model);
+
+                CardView[] normalCards = GetActiveComponents<CardView>(root);
+                DemonCardView[] demonCards =
+                    GetActiveComponents<DemonCardView>(root);
+                ShopCardOfferStatusView[] statuses =
+                    GetActiveComponents<ShopCardOfferStatusView>(root);
+                Assert.That(normalCards, Has.Length.EqualTo(3));
+                Assert.That(demonCards, Has.Length.EqualTo(2));
+                Assert.That(statuses, Has.Length.EqualTo(5));
+
+                foreach (CardView card in normalCards)
+                {
+                    CardDefinition definition = CardDefinitionCatalog.GetByKey(
+                        card.DefinitionKey);
+                    Assert.That(
+                        card.HoverBadgeDescription,
+                        Is.EqualTo(definition.Description));
+                    Assert.That(
+                        card.HoverBadgeDescription,
+                        Does.Not.Contain("GOLD"));
+                    Assert.That(
+                        card.HoverBadgeDescription,
+                        Does.Not.Contain("PRICE"));
+                }
+
+                foreach (DemonCardView card in demonCards)
+                {
+                    DemonContractDefinition definition =
+                        DemonContractCatalog.Default.GetByKey(
+                            card.BoundCard.DefinitionKey);
+                    Assert.That(
+                        card.BoundCard.Summary,
+                        Is.EqualTo(definition.Summary));
+                    Assert.That(
+                        card.BoundCard.CostSummary,
+                        Is.EqualTo(definition.CostSummary));
+                }
+
+                foreach (ShopCardOfferStatusView status in statuses)
+                {
+                    Assert.That(status.PriceLabel, Does.StartWith("돈 : "));
+                }
+
+                Assert.That(
+                    lighter.GetComponent<HoverDescriptionTarget>()
+                        .ResolvedDescription,
+                    Does.Contain(model.LighterPriceAmount.ToString()));
+                Assert.That(
+                    whiskey.GetComponent<HoverDescriptionTarget>()
+                        .ResolvedDescription,
+                    Does.Contain(model.WhiskeyRecoveryAmount.ToString()));
+                Assert.That(
+                    whiskey.GetComponent<HoverDescriptionTarget>()
+                        .ResolvedDescription,
+                    Does.Contain(model.WhiskeyPriceAmount.ToString()));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
         private static ShopController CreateFormalShopController(GameObject root)
         {
             ShopController shop = root.AddComponent<ShopController>();

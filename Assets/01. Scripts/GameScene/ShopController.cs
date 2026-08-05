@@ -561,7 +561,6 @@ namespace DiaBlackJack.GameScene
             CardView view = Instantiate(normalCardPrefab, normalCardHolder);
             view.transform.localRotation = Quaternion.identity;
             view.SetShopPresentation();
-            string description = option.Price + "\n" + option.Summary;
             view.Bind(new GameSceneCardViewModel(
                 option.OptionId,
                 definition.Rank,
@@ -569,7 +568,7 @@ namespace DiaBlackJack.GameScene
                 revealRank: true,
                 canUse: option.CanBuy,
                 definition.DisplayName,
-                abilityDescription: description,
+                abilityDescription: definition.Description,
                 suit: CardSuit.Spade,
                 definitionKey: option.DefinitionKey,
                 showHoverBadgeWhenUnavailable: true));
@@ -856,7 +855,7 @@ namespace DiaBlackJack.GameScene
                 revealRank: true,
                 canUse: !offer.SoldOut && Gold >= offer.Price,
                 definition.DisplayName,
-                abilityDescription: FormatNormalCardOfferText(definition, offer.Price),
+                abilityDescription: definition.Description,
                 suit: offer.Suit,
                 definitionKey: definition.Key,
                 showHoverBadgeWhenUnavailable: true));
@@ -1062,20 +1061,6 @@ namespace DiaBlackJack.GameScene
             }
 
             return candidates;
-        }
-
-        private static string FormatNormalCardOfferText(
-            CardDefinition definition,
-            int price)
-        {
-            string text = "PRICE " + price + " GOLD";
-            string effect = definition.Description;
-            if (!string.IsNullOrEmpty(effect))
-            {
-                text += "\n" + effect;
-            }
-
-            return text;
         }
 
         private sealed class DemonCardOffer

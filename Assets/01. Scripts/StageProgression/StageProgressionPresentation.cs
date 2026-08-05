@@ -592,7 +592,7 @@ namespace DiaBlackJack.StageProgression.UI
                     CardDefinition definition = CardDefinitionCatalog.GetByKey(
                         option.DefinitionKey);
                     displayName = $"{definition.Rank} {definition.DisplayName}";
-                    summary = GetEffectSummary(definition);
+                    summary = definition.Description;
                     category = "CARD";
                 }
                 else
