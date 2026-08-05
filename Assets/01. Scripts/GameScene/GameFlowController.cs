@@ -43,7 +43,8 @@ namespace DiaBlackJack.GameScene
         {
             gameManager ??= GetComponent<GameManager>();
             startingDemonReveal ??= GetComponent<StartingDemonRevealView>();
-            opponentSelection ??= GetComponent<OpponentSelectionView>();
+            opponentSelection ??= FindFirstObjectByType<OpponentSelectionView>(
+                FindObjectsInactive.Include);
             resultView ??= GetComponent<RunResultView>();
             resultView ??= gameObject.AddComponent<RunResultView>();
             codex ??= GetComponent<CodexController>();
@@ -76,10 +77,8 @@ namespace DiaBlackJack.GameScene
 
             if (opponentSelection != null)
             {
-                opponentSelection.OpponentFocused +=
-                    HandleOpponentFocused;
-                opponentSelection.OpponentConfirmed +=
-                    HandleOpponentConfirmed;
+                opponentSelection.OpponentSelected +=
+                    HandleOpponentSelected;
             }
 
             if (resultView != null)
@@ -127,10 +126,8 @@ namespace DiaBlackJack.GameScene
 
             if (opponentSelection != null)
             {
-                opponentSelection.OpponentFocused -=
-                    HandleOpponentFocused;
-                opponentSelection.OpponentConfirmed -=
-                    HandleOpponentConfirmed;
+                opponentSelection.OpponentSelected -=
+                    HandleOpponentSelected;
             }
 
             if (resultView != null)
@@ -182,6 +179,40 @@ namespace DiaBlackJack.GameScene
 
             int offerId = CurrentViewModel.OpponentOfferId.Value;
             string profileKey = CurrentViewModel.FocusedOpponentProfileKey;
+            return ProcessInput(() =>
+                _session.TrySelectOpponent(offerId, profileKey));
+        }
+
+        public bool RequestSelectOpponent(string profileKey)
+        {
+            if (string.IsNullOrWhiteSpace(profileKey) ||
+                IsInputBlocked() ||
+                CurrentScreen != GameFlowScreen.OpponentSelection ||
+                CurrentViewModel == null ||
+                !CurrentViewModel.OpponentOfferId.HasValue)
+            {
+                return false;
+            }
+
+            bool isOffered = false;
+            foreach (OpponentCandidateViewModel candidate in
+                CurrentViewModel.OpponentCandidates)
+            {
+                if (StringComparer.Ordinal.Equals(
+                        candidate.ProfileKey,
+                        profileKey))
+                {
+                    isOffered = true;
+                    break;
+                }
+            }
+
+            if (!isOffered)
+            {
+                return false;
+            }
+
+            int offerId = CurrentViewModel.OpponentOfferId.Value;
             return ProcessInput(() =>
                 _session.TrySelectOpponent(offerId, profileKey));
         }
@@ -323,15 +354,9 @@ namespace DiaBlackJack.GameScene
             RequestCompleteStartingDemonReveal();
         }
 
-        private void HandleOpponentFocused(string profileKey)
+        private void HandleOpponentSelected(string profileKey)
         {
-            RequestFocusOpponent(profileKey);
-            opponentSelection?.Render(CurrentViewModel);
-        }
-
-        private void HandleOpponentConfirmed()
-        {
-            RequestConfirmOpponent();
+            RequestSelectOpponent(profileKey);
         }
 
         private void HandleFormalShopCardPurchaseRequested(int optionId)
@@ -529,6 +554,8 @@ namespace DiaBlackJack.GameScene
         private void ResolveSceneReferences()
         {
             moodController ??= GetComponent<MoodController>();
+            opponentSelection ??= FindFirstObjectByType<OpponentSelectionView>(
+                FindObjectsInactive.Include);
 
             if (hudRoot == null)
             {

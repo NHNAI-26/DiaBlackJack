@@ -32,11 +32,14 @@ namespace DiaBlackJack.StageProgression.Tests
                     preview.Grade.ToString().ToUpperInvariant()));
                 Assert.That(candidate.MaximumSoul, Is.EqualTo(
                     $"SOUL {preview.MaximumSoul}"));
+                Assert.That(candidate.SoulAmountText, Is.EqualTo(
+                    $"×{preview.MaximumSoul}"));
                 Assert.That(candidate.Summary, Is.EqualTo(preview.Summary));
                 Assert.That(candidate.RewardTier, Is.EqualTo(
                     preview.ExpectedRewardTier == BattleRewardTier.Normal
                         ? "NORMAL REWARD"
                         : "HIGH-GRADE REWARD"));
+                Assert.That(candidate.DefeatGoldAmountText, Is.Empty);
             }
         }
 

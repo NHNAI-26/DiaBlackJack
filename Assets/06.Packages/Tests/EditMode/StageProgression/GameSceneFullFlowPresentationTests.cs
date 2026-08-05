@@ -70,6 +70,18 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(model.IsStartingDemonReveal, Is.False);
             Assert.That(model.OpponentOfferId, Is.Not.Null);
             Assert.That(model.OpponentCandidates.Count, Is.EqualTo(2));
+            GoldRewardCatalog goldRewards =
+                GoldRewardCatalog.CreatePrototype();
+            foreach (OpponentCandidateViewModel candidate in
+                model.OpponentCandidates)
+            {
+                Assert.That(candidate.SoulAmountText,
+                    Is.EqualTo($"×{candidate.MaximumSoul.Substring(5)}"),
+                    candidate.ProfileKey);
+                Assert.That(candidate.DefeatGoldAmountText,
+                    Is.EqualTo($"×{goldRewards.GetAmount(candidate.ProfileKey)}"),
+                    candidate.ProfileKey);
+            }
             Assert.That(model.CanFocusOpponent, Is.True);
             Assert.That(model.CanConfirmOpponent, Is.False);
 

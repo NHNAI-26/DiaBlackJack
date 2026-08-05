@@ -14,6 +14,8 @@ namespace DiaBlackJack.StageProgression.UI
             string maximumSoul,
             string summary,
             string rewardTier,
+            string soulAmountText,
+            string defeatGoldAmountText,
             bool isFocused)
         {
             ProfileKey = profileKey;
@@ -22,6 +24,8 @@ namespace DiaBlackJack.StageProgression.UI
             MaximumSoul = maximumSoul;
             Summary = summary;
             RewardTier = rewardTier;
+            SoulAmountText = soulAmountText;
+            DefeatGoldAmountText = defeatGoldAmountText;
             IsFocused = isFocused;
         }
 
@@ -36,6 +40,10 @@ namespace DiaBlackJack.StageProgression.UI
         public string Summary { get; }
 
         public string RewardTier { get; }
+
+        public string SoulAmountText { get; }
+
+        public string DefeatGoldAmountText { get; }
 
         public bool IsFocused { get; }
     }
@@ -553,6 +561,10 @@ namespace DiaBlackJack.StageProgression.UI
                     usesFormalRewards
                         ? $"VICTORY GOLD {goldCatalog.GetAmount(preview.ProfileKey)}"
                         : GetRewardTier(preview.ExpectedRewardTier),
+                    $"×{preview.MaximumSoul}",
+                    usesFormalRewards
+                        ? $"×{goldCatalog.GetAmount(preview.ProfileKey)}"
+                        : string.Empty,
                     StringComparer.Ordinal.Equals(
                         candidate.ProfileKey,
                         focusedProfileKey)));
