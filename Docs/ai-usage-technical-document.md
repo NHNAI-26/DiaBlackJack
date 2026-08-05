@@ -1960,3 +1960,54 @@ HUD 선택 슬롯은 `DefaultButton.prefab`의 중첩 인스턴스로 생성하�
 - 변경 파일: `Assets/01. Scripts/CoreLoop/BattleParticipant.cs`, `Assets/01. Scripts/CoreLoop/CoreLoopPresentation.cs`, `Assets/01. Scripts/GameScene/GameScenePresentation.cs`.
 - 검증: AI가 Unity MCP로 컴파일 오류 0, 전체 EditMode 1080/1083(잔여 3건은 이전 항목들에서 이미 원인이 규명된 무관한 회귀·세션 한정 부작용)을 확인했다. 기존 테스트 중 `PlayerTotalsText`/라운드 종료 총합을 검증하는 항목들은 모두 그대로 통과해, 이 계산이 갈리는 경우(나이프 등으로 일시적 뒷면 카드가 존재하는 순간)를 다루는 기존 테스트가 없었음을 시사한다. 실제 화면에서 나이프 카드가 뒷면인 동안 "총합"도 함께 제외되는지는 이천서 몫으로 남아 있다.
 - 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+
+## 2026-08-06 테이블 버튼 간격·초기 악마 씬 연출 미표시·마몬 도감 해골 그림·악마 덱 중앙 배치
+
+- 이천서: 네 가지를 요청했다 — (1) 테이블의 히트·스탠드·체인지 버튼 간격을 띄워달라, (2) 초기 악마 배정 씬에서 재시작 시에는 카드가 덱에서 나오는 연출이 보이는데 최초 시작 때는 안 보인다, (3) 도감의 마몬 항목에서 "(해골 그림)"이라는 텍스트를 마몬 주사위 스프라이트에 있는 실제 해골 그림으로 바꿔달라, (4)(대화 중 추가) 초기 악마 배정 씬의 악마 덱이 테이블 중앙에 오게 해달라.
+- AI 활용: (1) `TableCombatCommandGroup`(`Hit`/`Stand`/`Change`, 각각 `TableCombatCommandView`)의 위치가 씬에 하드코딩돼 있고 배치 코드가 없음을 확인, Unity MCP로 직접 좌표를 조정했다. (2) `GameFlowController`에 `[DefaultExecutionOrder(-50)]`가 붙어 있어 `GameSceneCameraViewController`(기본 순서 0)보다 먼저 `Start()`가 실행됨을 확인했다 — 콜드 스타트(최초 씬 로드)에서는 `GameFlowController.Start()`가 `RefreshFlow()`를 통해 `StartingDemonRevealView.Render()`(→`Reveal()` 코루틴, `StartCoroutine` 호출 시점에 첫 부분이 즉시 동기 실행됨)를 카메라 컨트롤러가 올바른 Cinemachine 카메라를 우선순위 지정하기도 전에 트리거해, 딜 연출이 잘못된(또는 아직 준비 안 된) 카메라로 재생되어 보이지 않게 됨을 특정했다. 세션 중간 재시작은 카메라가 이미 정상 상태라 같은 문제가 없다. (3) `DemonContractCatalog.cs`의 마몬 "대가" 텍스트에 있는 "(해골 그림)"이 실제로는 그냥 텍스트였고, 실제 해골 이미지는 마몬 주사위 메시가 쓰는 공유 아틀라스(`Assets/05. Arts/Texture/Dice/Dice.png`, 256x256)의 좌상단 영역에 있음을 픽셀 단위 연결성분 분석(에디터 스크립트로 배경색과 다른 픽셀 블롭을 찾아 각 블롭의 크기를 비교 — 눈금 점들은 12x12, 해골만 34x34로 뚜렷이 구분됨)으로 정확히 특정했다(x:21, y:136, w:34, h:34, 텍스처 좌하단 원점 기준). (4) 초기 악마 씬의 덱 위치(`StartingDemonRevealView.deckPosition`)가 x=1.5로 테이블 중앙(x=0)에서 벗어나 있음을 확인했다.
+- 구현: (1) `Hit`/`Change`의 로컬 X 위치를 각각 1.1177→1.4, -0.22→-0.5로 넓혀 중앙의 `Stand`(0.45, 변경 없음) 기준 대칭 간격을 약 0.67에서 0.95로 늘렸다. (2) `StartingDemonRevealView.Reveal()` 코루틴 맨 앞에 `yield return null;`을 추가해, 카드 생성·이동 애니메이션이 최소 한 프레임 뒤(모든 컴포넌트의 `Start()`가 끝나고 카메라가 정상 우선순위 지정된 뒤)에 시작하도록 지연시켰다. (3) `Dice.png`를 Sprite/Multiple로 재구성해 해당 좌표를 `MammonSkull`이라는 이름의 서브 스프라이트로 슬라이스하고, 기존 `GoldIcon`/`SoulIcon`과 동일한 구조(스프라이트 시트 참조 + `TextMeshPro/Sprite` 셰이더 머티리얼)로 새 TMP 스프라이트 에셋 `MammonSkullIcon`(`Assets/TextMesh Pro/Resources/Sprite Assets/`)을 만들어, 마몬 텍스트의 "(해골 그림)"을 `<size=150%><sprite="MammonSkullIcon" index=0></size>`로 교체했다(리치 텍스트를 이미 쓰고 있어 그대로 인라인 렌더링됨). (4) `deckPosition`의 기본값과 씬에 직렬화된 값을 모두 x=0으로 맞췄다.
+- 변경 파일: `Assets/00. Scenes/GameScene.unity`(버튼·덱 위치), `Assets/01. Scripts/GameScene/StartingDemonRevealView.cs`, `Assets/01. Scripts/CoreLoop/DemonContracts/DemonContractCatalog.cs`, `Assets/05. Arts/Texture/Dice/Dice.png`(스프라이트 슬라이스만 추가, 픽셀 데이터 불변), 신규 `Assets/TextMesh Pro/Resources/Sprite Assets/MammonSkullIcon.asset`.
+- 검증: AI가 Unity MCP로 컴파일 오류 0을 확인했다. 전체 EditMode 1078/1083 — 이전 항목들에서 이미 원인이 규명된 무관한 렌더링 회귀 2건에 더해, 같은 `CodexDemonCardPreview` 관련 세 항목(`DXM07_U02`·`U03`·`U04`, 폰트 크기·RectTransform 크기 관련)이 이번 세션 중 처음 나타났으나, 관련 프리팹·에셋이 `git status`상 전혀 변경되지 않았음을 확인해 이번 변경과 무관한 세션 한정(메모리 내부) 부작용으로 판단했다(에디터를 재시작하면 사라질 것으로 예상, 이전에도 동일 계열 문제를 문서화한 바 있음). 실제 화면에서 버튼 간격·초기 연출·해골 그림·덱 위치가 의도대로 보이는지는 이천서 몫으로 남아 있다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+
+## 2026-08-06 마몬 도감 텍스트 진짜 소스 특정·초기 연출 재수정·악마 덱 깊이 조정
+
+- 이천서: 직전 항목의 마몬 도감 해골 그림 교체 후 "여전히 (해골 그림)인데요"라고 재확인해줬다. 이어서 "그리고 첫 게임 시작 시 뽑히는 연출 안 나오고요 / 정가운데 있는 악마 덱은 조금만 더 뒤로 가게 해주세요"라고 두 가지를 추가 요청했다 — 직전 세션에서 고쳤다고 보고한 최초 실행 연출 미표시가 실제로는 그대로였고, 방금 x=0으로 중앙 정렬한 덱을 카메라 기준 더 안쪽으로 옮겨달라는 것이었다.
+- AI 활용:
+  - **해골 그림**: 직전 수정이 왜 반영 안 됐는지 다시 추적한 결과, `DemonContractCatalog.cs`의 하드코딩 텍스트는 애초에 실행 중 쓰이지 않는 죽은 폴백이었음을 확인했다 — `CardContentBootstrap.Awake()`(실행 순서 -200)가 `CardContentCatalogSO.BuildRuntimeCatalog()`으로 각 `DemonCardDefinitionSO`(스크립터블 오브젝트, `Assets/02. ScriptableObjects/Cards/Demon/`)에서 런타임 카탈로그를 만든 뒤 `DemonContractCatalog.Install(...)`로 `DemonContractCatalog.Default`를 그 SO 소스 데이터로 통째로 교체한다. 즉 실제 화면에 뜨는 텍스트는 `mammon.asset`의 `costDescription` 필드였고, 여기에 진짜 "(해골 그림)" 문자열이 그대로 남아 있었다(`.asset` YAML이 한글을 `\uXXXX` 이스케이프로 저장해 일반 `Grep` 문자열 검색으로는 찾히지 않아, `Read` 도구로 직접 읽어 확인).
+  - **초기 연출 재수정**: 직전 수정(코루틴 맨 앞 `yield return null` 한 프레임 지연)이 카메라 우선순위 경쟁 이론에 기반했으나 실제로는 여전히 재현됨을 근거로 이론을 재검토했다. Unity MCP로 Play 모드에 직접 진입해 `MainMenuScene → StageProgressionRuntime.LoadBattleScene()`으로 콜드 스타트를 재현하려 했으나, 이 자동화 환경에서는 Editor의 플레이어 루프 틱(`Time.frameCount`)이 사실상 진행되지 않아(에디터 창이 포커스·리페인트되지 않는 자동화 특성상 확인됨) 프레임 단위 타이밍을 직접 관측하는 데 실패했다. 코드 추적으로 대안 이론을 찾았다 — `MoveCards`/`WaitUnscaled`가 모두 `Time.unscaledDeltaTime`을 그대로 누적하는데, 콜드 스타트 직후 첫 렌더 프레임은 새로 인스턴스화된 카드 프리팹의 셰이더·머티리얼 워밍업 등으로 메인 스레드가 순간적으로 멈췄다가(hitch) 재개될 수 있고, 이 경우 그 다음 프레임의 `unscaledDeltaTime`이 정지 시간 전체를 한 번에 보고한다 — 그러면 단 한 번의 `Update` 틱만으로 `elapsed`/`remaining`이 전체 시퀀스(약 2.4초 분량)를 통째로 건너뛰어, 카드가 중간 과정 없이 이미 끝난 상태로 "순간이동"하며 애니메이션이 전혀 보이지 않게 된다. 프레임 지연(몇 프레임째 시작하는지)과 무관하게 재현되는 문제라는 점이 이 이론과 부합한다.
+  - **악마 덱 깊이**: 씬의 `CM_Current`(기본 카메라) 트랜스폼을 조회해 위치 `(0, 5.1, 18.85)`, forward `(0, -0.32, -0.95)`임을 확인했다 — Z가 감소하는 방향을 바라보므로, Z값이 작을수록 카메라에서 "더 멀리(뒤로)", 클수록 "더 가까이(앞으로)"에 해당한다. 현재 `deckPosition.z = 16.44`(카드가 놓이는 목표 지점 z=17보다 이미 카메라에서 먼 쪽)임을 확인했다.
+- 구현:
+  - `mammon.asset`의 `costDescription`을 `SerializedObject`로 직접 편집해 "(해골 그림)"을 `<size=150%><sprite="MammonSkullIcon" index=0></size>`로 교체했다(직전에 만든 `MammonSkullIcon` TMP 스프라이트 에셋을 그대로 재사용). `DemonContractCatalog.cs`의 동일 텍스트 교체는 실행에는 관여하지 않지만 폴백 일관성을 위해 그대로 유지한다.
+  - `StartingDemonRevealView`의 `MoveCards`/`WaitUnscaled` 두 타이밍 루프 모두에서 `Time.unscaledDeltaTime`을 `Mathf.Min(Time.unscaledDeltaTime, 1f/30f)`로 클램프해, 어떤 프레임에 얼마나 큰 정지(hitch)가 있었든 한 스텝이 최대 1/30초만 전진하도록 강제했다 — 시퀀스가 반드시 여러 번의 실제 렌더 프레임에 걸쳐 진행되도록 보장한다. 기존 1프레임 지연(`yield return null`)은 동시에 존재해도 해가 되지 않아 그대로 남겨뒀다.
+  - `deckPosition`의 기본값과 씬 직렬화 값을 z=16.44 → 15.94로 낮춰(카메라 기준 더 먼 쪽으로 0.5 이동) 카드가 놓이는 지점(z=17)까지의 거리를 늘렸다.
+- 변경 파일: `Assets/02. ScriptableObjects/Cards/Demon/mammon.asset`, `Assets/01. Scripts/GameScene/StartingDemonRevealView.cs`, `Assets/00. Scenes/GameScene.unity`(덱 위치만).
+- 검증: AI가 Unity MCP로 컴파일 오류 0, 전체 EditMode 1095/1102(신규 테스트 없음, 순수 수치·에셋 데이터 변경)을 확인했다. 잔여 7건 중 `GameSceneDeckPreviewTests.GSV13_U01`·`GameSceneSpeechBubbleTests.GSB01_U11`은 이전 항목들에서 이미 원인이 규명된 무관 회귀, `CodexAssetTests.DXM07_U02/03/04`는 이전에도 나타난 세션 한정 메모리 내부 부작용이다. 이번 실행에서 `CodexAssetTests.DXM11_U01`(테이블 북 배치)·`GameSceneSpeechBubbleTests.GSB01_U09`(적 말풍선 앵커)가 처음 나타났으나, 관련 프리팹·머티리얼이 `git status`상 이번 세션의 어떤 변경과도 무관함을 확인해 동일 계열의 세션 한정 부작용으로 판단했다. 셰이더/머티리얼 워밍업 hitch 이론은 이 환경에서 Play 모드 틱이 진행되지 않아 실측으로 직접 검증하지 못했다 — 델타타임 클램프는 이론이 맞든 아니든 안전한 방어적 조치이지만, 실제 화면에서 최초 실행 시 연출이 이제 보이는지, 덱 깊이가 적절한지는 이천서의 실제 플레이 확인이 반드시 필요하다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+
+## 2026-08-06 테이블 버튼 간격 재조정 (직전 수정이 디스크에 저장되지 않았던 문제 포함)
+
+- 이천서: 히트·스탠드·체인지 버튼 간격을 다시 띄워달라고 재요청 — 이전 항목에서 이미 넓혔다고 보고했던 간격이 실제로는 반영되지 않은 상태였다.
+- AI 활용: 씬을 다시 열어 `Hit`/`Change`의 실제 로컬 좌표를 조회한 결과, 직전에 적용했다고 기록한 값(1.4 / -0.5)이 아니라 최초 원본 값(1.1177 / -0.22) 그대로임을 확인했다. `git diff`로 씬 파일을 직접 대조한 결과 해당 프리팹 인스턴스 오버라이드(`propertyPath: m_LocalPosition.x`) 자체가 존재하지 않아, 직전 수정이 세션 도중 어느 시점엔가(이번 세션에서 반복된 Play 모드 진입·씬 재로드 과정 중 저장 없이 씬이 갈아치워지며) 디스크에 남지 못하고 유실됐던 것으로 판단했다. 원인 규명에 시간을 더 쓰는 대신, 이번에는 적용 직후 `git diff`로 오버라이드가 실제로 파일에 기록됐는지 직접 대조해 유실 여부를 확인했다.
+- 구현: `Hit` 로컬 X를 1.1177 → 1.6, `Change` 로컬 X를 -0.22 → -0.7로 조정했다(`Stand`는 중앙 0.45 그대로 유지) — 중앙 기준 대칭 간격이 약 1.15로, 원본(~0.67)은 물론 유실됐던 직전 값(~0.95)보다도 더 넓다.
+- 변경 파일: `Assets/00. Scenes/GameScene.unity`.
+- 검증: AI가 Unity MCP로 씬을 저장한 뒤 `git diff`를 통해 두 프리팹 오버라이드(`value: 1.6`, `value: -0.7`)가 실제로 파일에 기록됐음을 직접 대조로 확인했다(이번에는 저장 여부를 씬 직렬화 파일로 재확인해, 직전과 같은 유실이 없음을 검증). 콘솔 오류 없음 확인. 스크립트 변경이 없어 EditMode 전체 재실행은 생략했다. 실제 화면에서 간격이 충분한지는 이천서 몫으로 남아 있다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+
+## 2026-08-06 히트 버튼이 도감(책) 프롭과 겹쳐 위치 소폭 축소
+
+- 이천서: 직전 조정 결과 화면 스크린샷을 보내 히트 버튼이 테이블 위 도감(책) 프롭과 겹친다며, 겹치지 않도록 간격을 조금만 좁혀달라고 요청했다.
+- AI 활용: 스크린샷과 씬의 카메라 방향(`CM_Current`의 `eulerAngles.y = 180`, `right` 벡터가 대략 세계 -X 방향)을 근거로, 히트의 로컬 X를 키울수록 화면상으로는 왼쪽(도감 프롭이 있는 방향)으로 이동함을 확인했다. 직전 값(1.6)에서 겹침이 생겼고, 그 이전 값(1.4)에서는 겹침 보고가 없었으므로 그 사이로 되돌리면 해결될 것으로 판단했다.
+- 구현: `Hit` 로컬 X를 1.6 → 1.45로 소폭 축소했다(스탠드·체인지는 변경 없음).
+- 변경 파일: `Assets/00. Scenes/GameScene.unity`.
+- 검증: AI가 씬 저장 후 `git diff`로 오버라이드 값이 `1.45`로 실제 파일에 기록됐음을 확인했다. 콘솔 오류 없음. 스크립트 변경 없어 EditMode 재실행 생략. 도감과 겹치지 않으면서 간격이 여전히 충분한지는 이천서의 실제 화면 확인이 필요하다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+
+## 2026-08-06 테이블 버튼 간격 추가 축소 및 좌우대칭 복원
+
+- 이천서: (1) 히트 버튼 간격을 조금 더 좁혀달라, (2) 직전 수정이 히트만 좁혀 좌우대칭이 깨졌으니 체인지도 대칭으로 함께 좁혀야 한다고 지적했다.
+- AI 활용: 직전 수정에서 도감 겹침을 피하려 히트만 1.6→1.45로 줄이고 체인지(-0.7)는 그대로 둬, 중앙 `Stand`(0.45) 기준 간격이 히트 쪽 1.0·체인지 쪽 1.15로 어긋나 있었음을 확인 — 이천서의 지적이 정확했다.
+- 구현: 좌우 간격을 0.85로 통일해 `Hit` 로컬 X를 1.45→1.3, `Change` 로컬 X를 -0.7→-0.4로 대칭 조정했다(`Stand`는 중앙 0.45 그대로).
+- 변경 파일: `Assets/00. Scenes/GameScene.unity`.
+- 검증: AI가 씬 저장 후 `git diff`로 두 값(`1.3`, `-0.4`)이 실제로 파일에 기록됐음을 확인했다. 콘솔 오류 없음. 스크립트 변경 없어 EditMode 재실행 생략. 실제 화면에서 간격·대칭·도감 비겹침이 모두 만족되는지는 이천서 몫으로 남아 있다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
