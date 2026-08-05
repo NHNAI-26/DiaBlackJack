@@ -3,7 +3,7 @@
 > 프로젝트: DiaBlackJack  
 > 문서 책임자: 이천서  
 > 버전: v0.1  
-> 최종 갱신: 2026-08-05
+> 최종 갱신: 2026-08-06
 
 ## 1. 문서 목적
 
@@ -1905,4 +1905,13 @@ HUD 선택 슬롯은 `DefaultButton.prefab`의 중첩 인스턴스로 생성하�
 - 구현: 공유 메서드는 그대로 두고, 카드의 `CanUse`만 계산하는 `GameScenePresentation.CreateActiveDemonCards`에서 마몬 계약 카드일 때 무조건 `canUse: false`로 고정했다. 주사위의 `CanPlayerRerollMammon`은 별도 호출부에서 여전히 같은 공유 메서드를 그대로 읽으므로 영향받지 않는다. 참고로 HUD의 범용 "ACTIVE CONTRACTS" 버튼 목록은 이미 마몬·사탄을 제외하고 있어 손댈 필요가 없었다.
 - 변경 파일: `Assets/01. Scripts/GameScene/GameScenePresentation.cs`.
 - 검증: AI가 Unity MCP `execute_code`로 실제 전투에서 마몬 계약을 건 뒤 확인했다 — 계약 카드 모델의 `CanUse=False`(클릭이 `GameManager`에서 아무 것도 트리거하지 않음), 주사위의 `CanPlayerRerollMammon=True`(그대로 굴릴 수 있음), CoreLoop의 공유 메서드 자체는 여전히 `True`(주사위 경로가 여전히 정상 동작함을 방증). 전체 EditMode 1081/1083(잔여 2건은 위와 동일한 무관 기존 회귀)도 재확인했다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+
+## 2026-08-06 적 AI 행동 로직 4종 정교화 (리볼버·보위 나이프·아스모데우스·체인지)
+
+- 이천서: 리볼버(자신이 안전한데 상대가 최종 승부에서 어차피 지는 상황이면 굳이 확정 킬 넘버를 쏘지 않음/같은 비공개 카드에 이미 쏜 숫자는 재사용 안 함/자신이 사탄 계약 중이면 리볼버 절대 안 씀), 보위 나이프(플레이어 덱에 독극물이 없고 버스트 가능성이 전혀 없으면 안 씀), 아스모데우스(상대 공개 카드 합이 자신보다 조금이라도 높을 때만 강제 히트), 체인지(자신 영혼 2 이하일 때 플레이어를 이번 라운드에 영혼 0~1로 끝장낼 확신이 없으면 유료 체인지를 하지 않음) 4가지 행동 규칙 수정을 요청했다.
+- AI 활용: 리볼버 규칙 1번(자신 안전+상대 확정 버스트 시 안 쏨)의 의도를 오독할 위험이 있어 먼저 확인 질문을 했다 — 이천서가 "최종 승부로 가면 어차피 이기는 상황이라 굳이 죽이지 않는다"는 취지로 확정해줘서, `PlayerIsStanding`(상대가 이미 스탠드해 더 이상 손을 바꿀 수 없는 경우)로 조건을 좁혀 구현했다. 코드 추적으로 다음을 확인했다: (1) `EnemyPolicyDecisionSelector.TrySelectRequiredChange`가 체인지 후보가 있으면 각 정책의 `Evaluate`를 거치지 않고 무조건 선택해, 6개 정책 전부의 기존 `Change: 2000` 분기가 사실상 도달 불가능한 죽은 코드였다. (2) `EnemyObservation`에는 다음 체인지 비용이나 독극물 주입 여부가 전혀 노출돼 있지 않았다. (3) `PublicCombatAction`은 액터·행동종류·카드키만 기록해 "이전에 어떤 숫자를 쐈는지"는 관측값에서 재구성할 수 없어, 정책 자체가 상태를 들고 있어야 함(이미 `FinalBossEnemyPolicy`가 텔레그래프 상태로 이 패턴을 쓰고 있어 동일하게 따름).
+- 구현: `EnemyObservation`에 `EnemyChangeSoulCost`(다음 체인지 비용)·`InjectedPoisonCardCount`(집행자가 주입한 독극물 수, 전투당 내부 카운터 그대로 노출) 두 필드를 추가했다(이름에 `Next`가 들어가면 EP02_U01의 "덱 순서·미래 카드 유출 금지" 리플렉션 가드 테스트에 걸려 `EnemyChangeSoulCost`로 지었다). 공용 `EnemyChangeRiskEvaluator.ShouldAcceptChange`를 새로 만들어 `TrySelectRequiredChange`와 6개 정책의 체인지 분기 모두에서 같은 기준(유료 체인지 + 자신 영혼 2 이하 + 상대 영혼이 2 초과면 거절)을 쓰게 했다 — 선택기만 고치면 정책이 몰라서 체인지를 다시 골라버리므로 둘 다 고쳐야 했다. `GunslingerEnemyPolicy`를 상태 없는 클래스에서 `_declaredNumbers`(현재 상대 비공개 카드 기준으로 이미 선언한 숫자 집합)를 들고 라운드 번호·상대 체인지 횟수 변화로 리셋하는 상태 보유 정책으로 바꾸고, 후보 숫자 탐색에서 이미 쏜 숫자를 제외(`FindMostLikelyUntried`)했다. 사탄 계약 활성 여부는 `EnemyObservation`에 새 필드를 추가하는 대신 `ActionCandidates`에 `DemonContractKind.Satan` 후보가 있는지로 판별해(사탄 활성 중에만 그 후보가 뜸) 기존 공개 정보만으로 해결했다. `FinalBossEnemyPolicy`도 동일한 세 규칙을 생존/압박 단계와 숫자 선언 단계에 이식했고(텔레그래프·집행 단계는 이미 복잡한 별도 상태 기계라 이번 범위에서 제외), `EnforcerEnemyPolicy`의 나이프 평가와 `FinalBossEnemyPolicy`의 생존/압박 나이프 평가에 "버스트 확률 0%이고 독극물도 없으면 보류" 게이트를 추가했다. 아스모데우스는 `CultistEnemyPolicy`·`FinalBossEnemyPolicy` 양쪽에서 상대 공개 카드 합(에이스 11 승격 포함 최적 합)이 자신의 공개 카드 합보다 높을 때만 강제 히트를 선택하도록 바꿨다.
+- 변경 파일: `Assets/01. Scripts/CoreLoop/EnemyAI/EnemyObservation.cs`, `EnemyAI/EnemyObservationFactory.cs`, `EnemyAI/EnemyPolicyDecisionSelector.cs`, `EnemyAI/EnemyChangeRiskEvaluator.cs`(신규), `EnemyAI/Policies/GunslingerEnemyPolicy.cs`, `EnemyAI/Policies/FinalBossEnemyPolicy.cs`, `EnemyAI/Policies/EnforcerEnemyPolicy.cs`, `EnemyAI/Policies/CultistEnemyPolicy.cs`, `EnemyAI/Policies/TricksterEnemyPolicy.cs`, `EnemyAI/Policies/CowardlyGamblerEnemyPolicy.cs`. 테스트: `Assets/06.Packages/Tests/EditMode/CoreLoop/EnemyBossPolicyTests.cs`(아스모데우스·압박 나이프 시나리오를 새 조건부 규칙에 맞게 상대 공개 카드를 추가해 수정).
+- 검증: AI가 Unity MCP로 컴파일 오류 0을 확인했다. 최초 전체 EditMode 실행에서 `EnemyBossPolicyTests`의 아스모데우스 테스트·3단계 압박 나이프 테스트, `EnemyCommonActionTests`의 관측값 유출 가드 테스트 3건이 새 조건부 규칙 때문에 실패해 원인을 특정하고 수정했다(테스트 시나리오 보강 2건, 필드명 변경 1건). 이후 전체 EditMode 1081/1083 통과, 잔여 2건(`GameSceneDeckPreviewTests.GSV13_U01`, `GameSceneSpeechBubbleTests.GSB01_U11`)은 위 마몬 항목들과 동일하게 이번 변경과 무관한 렌더링 관련 기존 회귀임을 코드 참조로 확인했다. 실제 전투에서 4가지 행동이 의도대로 체감되는지 확인은 이천서 몫으로 남아 있다.
 - 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace DiaBlackJack.CoreLoop
 {
@@ -7,6 +8,9 @@ namespace DiaBlackJack.CoreLoop
         private BossTelegraphedAction _telegraphedAction;
         private int _telegraphPlayerActionCount = -1;
         private int _telegraphRoundNumber = -1;
+        private readonly HashSet<int> _declaredNumbers = new HashSet<int>();
+        private int _trackedRoundNumber = -1;
+        private int _trackedPlayerChangeCount = -1;
 
         public BossCombatDisplayModel CurrentDisplay { get; private set; }
 
@@ -17,6 +21,20 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentNullException(nameof(observation));
             }
 
+            ResetDeclaredNumbersIfHiddenCardChanged(observation);
+            EnemyDecision decision = DecideCore(observation);
+            if (observation.PendingCardEffectKind == CardEffectKind.AutoPistol &&
+                decision.ActionType == EnemyActionType.UseCard &&
+                decision.CardEffectOptionId.HasValue)
+            {
+                _declaredNumbers.Add(decision.CardEffectOptionId.Value);
+            }
+
+            return decision;
+        }
+
+        private EnemyDecision DecideCore(EnemyObservation observation)
+        {
             if (HasPendingDemonContractChoice(observation))
             {
                 ClearTelegraph();
@@ -38,7 +56,8 @@ namespace DiaBlackJack.CoreLoop
                     BossTelegraphedAction.None);
                 return EnemyPolicyDecisionSelector.Select(
                     observation,
-                    EvaluatePendingCardChoice);
+                    (state, candidate) =>
+                        EvaluatePendingCardChoice(state, candidate, _declaredNumbers));
             }
 
             if (phase == FinalBossPhase.Survival)
@@ -49,7 +68,8 @@ namespace DiaBlackJack.CoreLoop
                     BossTelegraphedAction.None);
                 return EnemyPolicyDecisionSelector.Select(
                     observation,
-                    EvaluateSurvival);
+                    (state, candidate) =>
+                        EvaluateSurvival(state, candidate, _declaredNumbers));
             }
 
             if (phase == FinalBossPhase.Pressure)
@@ -60,10 +80,78 @@ namespace DiaBlackJack.CoreLoop
                     BossTelegraphedAction.None);
                 return EnemyPolicyDecisionSelector.Select(
                     observation,
-                    EvaluatePressure);
+                    (state, candidate) =>
+                        EvaluatePressure(state, candidate, _declaredNumbers));
             }
 
             return DecideExecutionPhase(observation);
+        }
+
+        private void ResetDeclaredNumbersIfHiddenCardChanged(
+            EnemyObservation observation)
+        {
+            int playerChangeCount = CountPlayerChanges(observation);
+            if (observation.RoundNumber != _trackedRoundNumber ||
+                playerChangeCount != _trackedPlayerChangeCount)
+            {
+                _declaredNumbers.Clear();
+            }
+
+            _trackedRoundNumber = observation.RoundNumber;
+            _trackedPlayerChangeCount = playerChangeCount;
+        }
+
+        private static int CountPlayerChanges(EnemyObservation observation)
+        {
+            int count = 0;
+            foreach (PublicCombatAction action in observation.PublicActionHistory)
+            {
+                if (action.ActorSide == CombatantSide.Player &&
+                    action.ActionType == PublicCombatActionType.Change)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static bool HasActiveSatanContract(EnemyObservation observation)
+        {
+            foreach (EnemyActionCandidate candidate in observation.ActionCandidates)
+            {
+                if (candidate.ActionType == EnemyActionType.DemonContract &&
+                    candidate.DemonContractKind == DemonContractKind.Satan)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static EnemyNumberInference? FindMostLikelyUntried(
+            EnemyObservation observation,
+            HashSet<int> declaredNumbers)
+        {
+            EnemyNumberInference? selected = null;
+            foreach (EnemyNumberInference inference in observation.NumberInferences)
+            {
+                if (declaredNumbers.Contains(inference.Number))
+                {
+                    continue;
+                }
+
+                if (!selected.HasValue ||
+                    inference.ProbabilityPercent > selected.Value.ProbabilityPercent ||
+                    (inference.ProbabilityPercent == selected.Value.ProbabilityPercent &&
+                        inference.Number < selected.Value.Number))
+                {
+                    selected = inference;
+                }
+            }
+
+            return selected;
         }
 
         private EnemyDecision DecideExecutionPhase(EnemyObservation observation)
@@ -117,7 +205,8 @@ namespace DiaBlackJack.CoreLoop
                     BossTelegraphedAction.None);
                 return EnemyPolicyDecisionSelector.Select(
                     observation,
-                    EvaluatePressure);
+                    (state, candidate) =>
+                        EvaluatePressure(state, candidate, _declaredNumbers));
             }
 
             _telegraphedAction = plannedAction;
@@ -133,7 +222,8 @@ namespace DiaBlackJack.CoreLoop
 
         private static EnemyActionScore EvaluateSurvival(
             EnemyObservation observation,
-            EnemyActionCandidate candidate)
+            EnemyActionCandidate candidate,
+            HashSet<int> declaredNumbers)
         {
             if (candidate.ActionType != EnemyActionType.UseCard)
             {
@@ -157,15 +247,35 @@ namespace DiaBlackJack.CoreLoop
                             ? "boss-survival-break-player-stand"
                             : "boss-survival-hold-hammer");
                 case CardEffectKind.MilitaryKnife:
-                    return Score(candidate, 600, "boss-survival-low-knife-priority");
+                {
+                    int bustChance = EstimateMilitaryKnifeBustChance(observation);
+                    bool hasPoisonSynergy = observation.InjectedPoisonCardCount > 0;
+                    return bustChance == 0 && !hasPoisonSynergy
+                        ? Score(candidate, -700, "boss-survival-hold-knife-no-bust-chance")
+                        : Score(candidate, 600, "boss-survival-low-knife-priority");
+                }
                 case CardEffectKind.AutoPistol:
-                    int confidence = GetTopInferenceProbability(observation);
+                {
+                    EnemyActionScore gated = EvaluatePistolUseGate(
+                        observation,
+                        candidate,
+                        declaredNumbers,
+                        "boss-survival");
+                    if (gated != null)
+                    {
+                        return gated;
+                    }
+
+                    int confidence = FindMostLikelyUntried(
+                        observation,
+                        declaredNumbers).Value.ProbabilityPercent;
                     return Score(
                         candidate,
                         confidence >= 60 ? 700 : -200,
                         confidence >= 60
                             ? "boss-survival-use-certain-pistol"
                             : "boss-survival-hold-pistol");
+                }
                 default:
                     return Score(candidate, -700, "boss-survival-ignore-card");
             }
@@ -173,7 +283,8 @@ namespace DiaBlackJack.CoreLoop
 
         private static EnemyActionScore EvaluatePressure(
             EnemyObservation observation,
-            EnemyActionCandidate candidate)
+            EnemyActionCandidate candidate,
+            HashSet<int> declaredNumbers)
         {
             if (candidate.ActionType != EnemyActionType.UseCard)
             {
@@ -195,15 +306,35 @@ namespace DiaBlackJack.CoreLoop
                             ? "boss-pressure-break-player-stand"
                             : "boss-pressure-hold-hammer");
                 case CardEffectKind.MilitaryKnife:
-                    return Score(candidate, 1800, "boss-pressure-force-player-draw");
+                {
+                    int bustChance = EstimateMilitaryKnifeBustChance(observation);
+                    bool hasPoisonSynergy = observation.InjectedPoisonCardCount > 0;
+                    return bustChance == 0 && !hasPoisonSynergy
+                        ? Score(candidate, -700, "boss-pressure-hold-knife-no-bust-chance")
+                        : Score(candidate, 1800, "boss-pressure-force-player-draw");
+                }
                 case CardEffectKind.AutoPistol:
-                    int confidence = GetTopInferenceProbability(observation);
+                {
+                    EnemyActionScore gated = EvaluatePistolUseGate(
+                        observation,
+                        candidate,
+                        declaredNumbers,
+                        "boss-pressure");
+                    if (gated != null)
+                    {
+                        return gated;
+                    }
+
+                    int confidence = FindMostLikelyUntried(
+                        observation,
+                        declaredNumbers).Value.ProbabilityPercent;
                     return Score(
                         candidate,
                         confidence >= 35 ? 1700 + confidence : 400,
                         confidence >= 35
                             ? "boss-pressure-use-informed-pistol"
                             : "boss-pressure-low-confidence-pistol");
+                }
                 case CardEffectKind.CrystalOrb:
                     return Score(candidate, 1500, "boss-pressure-use-orb");
                 default:
@@ -251,9 +382,48 @@ namespace DiaBlackJack.CoreLoop
                 "boss-execution");
         }
 
+        private static EnemyActionScore EvaluatePistolUseGate(
+            EnemyObservation observation,
+            EnemyActionCandidate candidate,
+            HashSet<int> declaredNumbers,
+            string reasonPrefix)
+        {
+            if (HasActiveSatanContract(observation))
+            {
+                return Score(
+                    candidate,
+                    -900,
+                    $"{reasonPrefix}-hold-pistol-during-satan-contract");
+            }
+
+            EnemyNumberInference? bestUntried = FindMostLikelyUntried(
+                observation,
+                declaredNumbers);
+            if (!bestUntried.HasValue)
+            {
+                return Score(
+                    candidate,
+                    -600,
+                    $"{reasonPrefix}-no-untried-numbers-remaining");
+            }
+
+            int opponentVisibleTotal = CalculateBestTotal(observation.PlayerFaceUpCards);
+            bool alreadyWinning =
+                observation.PlayerIsStanding &&
+                observation.OwnHandValue.Total <= 21 &&
+                opponentVisibleTotal + bestUntried.Value.Number >= 22;
+            return alreadyWinning
+                ? Score(
+                    candidate,
+                    -400,
+                    $"{reasonPrefix}-hold-pistol-already-winning-at-showdown")
+                : null;
+        }
+
         private static EnemyActionScore EvaluatePendingCardChoice(
             EnemyObservation observation,
-            EnemyActionCandidate candidate)
+            EnemyActionCandidate candidate,
+            HashSet<int> declaredNumbers)
         {
             switch (observation.PendingCardEffectKind.Value)
             {
@@ -285,6 +455,15 @@ namespace DiaBlackJack.CoreLoop
                         3000 + (targetRank * 10),
                         "boss-discard-highest-hammer-target");
                 case CardEffectKind.AutoPistol:
+                    int declaredNumber = candidate.CardEffectOptionNumericValue ?? 0;
+                    if (declaredNumbers.Contains(declaredNumber))
+                    {
+                        return Score(
+                            candidate,
+                            -1000,
+                            "boss-avoid-repeated-number");
+                    }
+
                     int probability = FindInferenceProbability(
                         observation,
                         candidate.CardEffectOptionNumericValue);
@@ -313,9 +492,12 @@ namespace DiaBlackJack.CoreLoop
                 case DemonContractInteractionKind.AsmodeusForceOpponentHit:
                     bool forcesHit = candidate.DemonContractOptionId ==
                         AsmodeusDemonContractHandler.ForceHitOptionId;
+                    bool opponentVisiblyAhead =
+                        CalculateBestTotal(observation.PlayerFaceUpCards) >
+                            CalculateOwnVisibleTotal(observation);
                     return Score(
                         candidate,
-                        forcesHit ? 3000 : 0,
+                        forcesHit == opponentVisiblyAhead ? 3000 : 0,
                         forcesHit
                             ? "boss-force-opponent-hit-with-asmodeus"
                             : "boss-skip-asmodeus-forced-hit");
@@ -384,7 +566,9 @@ namespace DiaBlackJack.CoreLoop
                             ? $"{reasonPrefix}-use-satan-instead-of-unsafe-hit"
                             : $"{reasonPrefix}-continue-normal-action-before-satan");
                 case EnemyActionType.Change:
-                    return Score(candidate, 2000, $"{reasonPrefix}-required-change");
+                    return EnemyChangeRiskEvaluator.ShouldAcceptChange(observation)
+                        ? Score(candidate, 2000, $"{reasonPrefix}-required-change")
+                        : Score(candidate, -50, $"{reasonPrefix}-decline-risky-paid-change");
                 default:
                     throw new ArgumentOutOfRangeException(nameof(candidate));
             }
@@ -452,6 +636,123 @@ namespace DiaBlackJack.CoreLoop
             int aceCount = additionalRank == 1 ? 1 : 0;
             foreach (EnemyOwnedCardObservation card in observation.OwnCards)
             {
+                total += card.Rank;
+                if (card.Rank == 1)
+                {
+                    aceCount++;
+                }
+            }
+
+            while (aceCount > 0 && total + 10 <= 21)
+            {
+                total += 10;
+                aceCount--;
+            }
+
+            return total;
+        }
+
+        private static int EstimateMilitaryKnifeBustChance(EnemyObservation observation)
+        {
+            if (observation.PlayerHiddenCardCount != 1 ||
+                observation.NumberInferences.Count == 0)
+            {
+                return 0;
+            }
+
+            long bustWeight = 0;
+            long totalWeight = 0;
+            foreach (EnemyNumberInference hidden in observation.NumberInferences)
+            {
+                foreach (EnemyNumberInference forcedDraw in observation.NumberInferences)
+                {
+                    int weight = hidden.ProbabilityPercent *
+                        forcedDraw.ProbabilityPercent;
+                    totalWeight += weight;
+                    if (CalculateProjectedTotal(
+                        observation.PlayerFaceUpCards,
+                        hidden.Number,
+                        forcedDraw.Number) > 21)
+                    {
+                        bustWeight += weight;
+                    }
+                }
+            }
+
+            return totalWeight == 0
+                ? 0
+                : (int)((bustWeight * 100) / totalWeight);
+        }
+
+        private static int CalculateProjectedTotal(
+            IReadOnlyList<PublicCardObservation> faceUpCards,
+            int hiddenRank,
+            int forcedDrawRank)
+        {
+            int total = hiddenRank + forcedDrawRank;
+            int aceCount = 0;
+            if (hiddenRank == 1)
+            {
+                aceCount++;
+            }
+
+            if (forcedDrawRank == 1)
+            {
+                aceCount++;
+            }
+
+            foreach (PublicCardObservation card in faceUpCards)
+            {
+                total += card.Rank;
+                if (card.Rank == 1)
+                {
+                    aceCount++;
+                }
+            }
+
+            while (aceCount > 0 && total + 10 <= 21)
+            {
+                total += 10;
+                aceCount--;
+            }
+
+            return total;
+        }
+
+        private static int CalculateBestTotal(
+            IReadOnlyList<PublicCardObservation> cards)
+        {
+            int total = 0;
+            int aceCount = 0;
+            foreach (PublicCardObservation card in cards)
+            {
+                total += card.Rank;
+                if (card.Rank == 1)
+                {
+                    aceCount++;
+                }
+            }
+
+            while (aceCount > 0 && total + 10 <= 21)
+            {
+                total += 10;
+                aceCount--;
+            }
+
+            return total;
+        }
+
+        private static int CalculateOwnVisibleTotal(EnemyObservation observation)
+        {
+            int total = 0;
+            int aceCount = 0;
+            foreach (EnemyOwnedCardObservation card in observation.OwnCards)
+            {
+                if (!card.IsFaceUp || card.IsHiddenCard)
+                {
+                    continue;
+                }
+
                 total += card.Rank;
                 if (card.Rank == 1)
                 {

@@ -52,14 +52,33 @@ namespace DiaBlackJack.CoreLoop.Tests
             EnemyActionCandidate knife = CreateCardCandidate(11, "military-knife-9");
             EnemyActionCandidate[] candidates = { hit, stand, orb, knife };
             var inferences = new[] { new EnemyNumberInference(7, 50) };
+            var visiblePressureCards = new[]
+            {
+                new PublicCardObservation("standard-plain-9", 9)
+            };
 
             EnemyDecision survival = new FinalBossEnemyPolicy().Decide(
-                CreateObservation(16, 7, candidates, inferences: inferences));
+                CreateObservation(
+                    16,
+                    7,
+                    candidates,
+                    inferences: inferences,
+                    playerFaceUpCards: visiblePressureCards));
             EnemyDecision pressure = new FinalBossEnemyPolicy().Decide(
-                CreateObservation(16, 4, candidates, inferences: inferences));
+                CreateObservation(
+                    16,
+                    4,
+                    candidates,
+                    inferences: inferences,
+                    playerFaceUpCards: visiblePressureCards));
             var executionPolicy = new FinalBossEnemyPolicy();
             EnemyDecision execution = executionPolicy.Decide(
-                CreateObservation(16, 2, candidates, inferences: inferences));
+                CreateObservation(
+                    16,
+                    2,
+                    candidates,
+                    inferences: inferences,
+                    playerFaceUpCards: visiblePressureCards));
 
             Assert.That(survival.CardId, Is.EqualTo(orb.CardId));
             Assert.That(pressure.CardId, Is.EqualTo(knife.CardId));
@@ -217,7 +236,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                 CreateObservation(
                     ownTotal: 16,
                     enemyCurrentSoul: 5,
-                    candidates: new[] { skip, force }));
+                    candidates: new[] { skip, force },
+                    playerFaceUpCards: new[]
+                    {
+                        new PublicCardObservation("standard-plain-4", 4)
+                    }));
 
             Assert.That(
                 decision.DemonContractOptionId,
@@ -358,12 +381,13 @@ namespace DiaBlackJack.CoreLoop.Tests
             IReadOnlyList<EnemyActionCandidate> candidates,
             IReadOnlyList<EnemyNumberInference> inferences = null,
             CardEffectKind? pendingCardEffectKind = null,
-            IReadOnlyList<PublicCombatAction> publicActionHistory = null)
+            IReadOnlyList<PublicCombatAction> publicActionHistory = null,
+            IReadOnlyList<PublicCardObservation> playerFaceUpCards = null)
         {
             return new EnemyObservation(
                 new HandValue(ownTotal),
                 Array.Empty<EnemyOwnedCardObservation>(),
-                Array.Empty<PublicCardObservation>(),
+                playerFaceUpCards ?? Array.Empty<PublicCardObservation>(),
                 playerHiddenCardCount: 1,
                 new SoulObservation(12, 12),
                 new SoulObservation(enemyCurrentSoul, 8),

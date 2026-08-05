@@ -66,7 +66,9 @@ namespace DiaBlackJack.CoreLoop
                 case EnemyActionType.DemonContract:
                     return EvaluateDemonContract(candidate);
                 case EnemyActionType.Change:
-                    return Score(candidate, 2000, "enforcer-required-change");
+                    return EnemyChangeRiskEvaluator.ShouldAcceptChange(observation)
+                        ? Score(candidate, 2000, "enforcer-required-change")
+                        : Score(candidate, -50, "enforcer-decline-risky-paid-change");
                 default:
                     throw new ArgumentOutOfRangeException(nameof(candidate));
             }
@@ -118,6 +120,15 @@ namespace DiaBlackJack.CoreLoop
             if (effect == CardEffectKind.MilitaryKnife)
             {
                 int bustChance = EstimateMilitaryKnifeBustChance(observation);
+                bool hasPoisonSynergy = observation.InjectedPoisonCardCount > 0;
+                if (bustChance == 0 && !hasPoisonSynergy)
+                {
+                    return Score(
+                        candidate,
+                        -600,
+                        "enforcer-hold-knife-no-bust-chance");
+                }
+
                 return Score(
                     candidate,
                     1400 + (bustChance * 5),

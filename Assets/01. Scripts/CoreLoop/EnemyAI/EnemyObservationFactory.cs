@@ -46,7 +46,9 @@ namespace DiaBlackJack.CoreLoop
                 battle.PendingEnemyCardEffect?.EffectKind,
                 decisionSeed,
                 battle.EnemyHiddenCardComparisonKnowledge,
-                knownPlayerHiddenCardRank);
+                knownPlayerHiddenCardRank,
+                battle.NextEnemyChangeSoulCost,
+                battle.InjectedPoisonCardCount);
         }
 
         internal static IReadOnlyList<EnemyNumberInference> CreateNumberInferences(

@@ -59,6 +59,11 @@ namespace DiaBlackJack.CoreLoop
                     continue;
                 }
 
+                if (!EnemyChangeRiskEvaluator.ShouldAcceptChange(observation))
+                {
+                    return false;
+                }
+
                 decision = EnemyDecision.FromCandidate(
                     candidate,
                     "required-hidden-or-bust-change");

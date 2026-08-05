@@ -3,7 +3,7 @@
 > 프로젝트: DiaBlackJack  
 > 문서 책임자: 이천서  
 > 버전: v0.1  
-> 최종 갱신: 2026-08-05
+> 최종 갱신: 2026-08-06
 
 ## 1. 기록 목적
 
@@ -582,3 +582,10 @@ DC-00 공통 규칙 개정으로 동일 악마 추가 계약과 계약 임시 �
 - AI 보조: 재굴림 트리거가 물리 주사위 클릭과 계약 카드 클릭 두 경로에 동시에 걸려 있고, 둘 다 같은 공유 판정 메서드를 쓰고 있어 그 메서드 자체를 막으면 주사위까지 죽는 문제를 확인. 카드의 `CanUse`만 계산하는 지점에서 마몬일 때 무조건 false로 고정해 카드 클릭만 분리해서 무력화했다. HUD 범용 버튼 목록은 이미 마몬을 제외하고 있어 추가 조치 불필요.
 - 변경 영역: `GameScenePresentation.cs`.
 - 검증: AI가 Unity MCP `execute_code`로 실제 전투에서 확인 — 계약 카드 `CanUse=False`(클릭 무반응), 주사위 `CanPlayerRerollMammon=True`(정상 작동 유지). 전체 EditMode 1081/1083(잔여 2건은 무관한 기존 회귀) 재확인.
+
+## 2026-08-06 적 AI 행동 로직 4종 정교화 (리볼버·보위 나이프·아스모데우스·체인지)
+
+- 이천서: 리볼버(자신 안전+상대 확정 버스트 시 안 쏨/같은 비공개 카드에 재사용 안 함/사탄 계약 중 절대 안 씀), 보위 나이프(독극물 없고 버스트 가능성 없으면 안 씀), 아스모데우스(상대 공개 합이 자신보다 높을 때만 강제 히트), 체인지(자신 영혼 2 이하일 때 상대를 끝장낼 확신 없으면 유료 체인지 안 함) 4가지 규칙을 요청하고, 리볼버 규칙 1번의 모호한 부분은 AI 질문에 "최종 승부로 가면 어차피 이기니 굳이 죽이지 않는다"는 취지로 답해 확정·최종 승인.
+- AI 보조: 체인지 후보는 `EnemyPolicyDecisionSelector.TrySelectRequiredChange`가 정책 평가 전에 무조건 가로채, 기존 6개 정책의 체인지 점수 분기가 전부 도달 불가능한 죽은 코드였음을 확인. 선택기와 정책 양쪽에 공용 위험 판단(`EnemyChangeRiskEvaluator`)을 넣어 실제로 작동하게 고침. 리볼버는 `GunslingerEnemyPolicy`를 상태 없는 클래스에서 "이미 쏜 숫자" 기억(라운드·상대 체인지로 리셋)을 갖는 정책으로 바꾸고, 사탄 계약 활성 여부는 새 은닉 필드 없이 이미 공개된 행동 후보 목록만으로 판별해 공정성 규칙(적 AI는 숨은 정보를 못 봄)을 지켰다. `FinalBossEnemyPolicy`에도 같은 세 규칙을 이식했다(단, 이미 복잡한 텔레그래프·집행 단계 로직은 이번 범위에서 제외). 나이프·아스모데우스는 `EnforcerEnemyPolicy`·`CultistEnemyPolicy`·`FinalBossEnemyPolicy`의 기존 평가에 조건을 추가해 고쳤다.
+- 변경 영역: `EnemyObservation.cs`, `EnemyObservationFactory.cs`, `EnemyPolicyDecisionSelector.cs`, `EnemyChangeRiskEvaluator.cs`(신규), `GunslingerEnemyPolicy.cs`, `FinalBossEnemyPolicy.cs`, `EnforcerEnemyPolicy.cs`, `CultistEnemyPolicy.cs`, `TricksterEnemyPolicy.cs`, `CowardlyGamblerEnemyPolicy.cs`, `EnemyBossPolicyTests.cs`(기존 테스트 2건을 새 규칙에 맞는 시나리오로 보강).
+- 검증: AI가 Unity MCP로 컴파일 오류 0을 확인했다. 새 규칙 때문에 실패한 기존 테스트 3건(아스모데우스·압박 나이프·관측값 유출 가드)을 원인 특정 후 수정했고, 이후 전체 EditMode 1081/1083 통과(잔여 2건은 무관한 기존 렌더링 회귀)를 재확인했다. 실제 전투에서 4가지 행동이 체감상 의도대로 바뀌었는지 확인은 이천서 몫으로 남음.

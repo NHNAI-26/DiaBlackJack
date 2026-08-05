@@ -28,7 +28,9 @@ namespace DiaBlackJack.CoreLoop
                 case EnemyActionType.UseCard:
                     return EvaluateCard(observation, candidate);
                 case EnemyActionType.Change:
-                    return Score(candidate, 2000, "trickster-required-change");
+                    return EnemyChangeRiskEvaluator.ShouldAcceptChange(observation)
+                        ? Score(candidate, 2000, "trickster-required-change")
+                        : Score(candidate, -50, "trickster-decline-risky-paid-change");
                 default:
                     throw new ArgumentOutOfRangeException(nameof(candidate));
             }

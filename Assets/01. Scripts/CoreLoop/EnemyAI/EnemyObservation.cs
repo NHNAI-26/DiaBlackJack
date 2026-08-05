@@ -201,7 +201,10 @@ namespace DiaBlackJack.CoreLoop
                 Array.Empty<EnemyNumberInference>(),
                 pendingCardEffectKind: null,
                 decisionSeed: 0,
-                lieDetectorComparisonKnowledge: null)
+                lieDetectorComparisonKnowledge: null,
+                knownPlayerHiddenCardRank: null,
+                enemyChangeSoulCost: 0,
+                injectedPoisonCardCount: 0)
         {
         }
 
@@ -226,11 +229,23 @@ namespace DiaBlackJack.CoreLoop
             int decisionSeed,
             HiddenCardComparisonKnowledge?
                 lieDetectorComparisonKnowledge = null,
-            int? knownPlayerHiddenCardRank = null)
+            int? knownPlayerHiddenCardRank = null,
+            int enemyChangeSoulCost = 0,
+            int injectedPoisonCardCount = 0)
         {
             if (playerHiddenCardCount < 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(playerHiddenCardCount));
+            }
+
+            if (enemyChangeSoulCost < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(enemyChangeSoulCost));
+            }
+
+            if (injectedPoisonCardCount < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(injectedPoisonCardCount));
             }
 
             if (roundNumber < 0)
@@ -300,6 +315,8 @@ namespace DiaBlackJack.CoreLoop
             LieDetectorComparisonKnowledge =
                 lieDetectorComparisonKnowledge;
             KnownPlayerHiddenCardRank = knownPlayerHiddenCardRank;
+            EnemyChangeSoulCost = enemyChangeSoulCost;
+            InjectedPoisonCardCount = injectedPoisonCardCount;
         }
 
         public IReadOnlyList<EnemyActionCandidate> ActionCandidates { get; }
@@ -334,6 +351,10 @@ namespace DiaBlackJack.CoreLoop
             LieDetectorComparisonKnowledge { get; }
 
         public int? KnownPlayerHiddenCardRank { get; }
+
+        public int EnemyChangeSoulCost { get; }
+
+        public int InjectedPoisonCardCount { get; }
 
         public bool PlayerIsStanding { get; }
 

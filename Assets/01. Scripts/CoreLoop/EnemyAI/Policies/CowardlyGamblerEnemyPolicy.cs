@@ -33,7 +33,9 @@ namespace DiaBlackJack.CoreLoop
                 case EnemyActionType.DemonContract:
                     return Score(candidate, -1000, "cowardly-gambler-has-no-contract");
                 case EnemyActionType.Change:
-                    return Score(candidate, 2000, "cowardly-gambler-required-change");
+                    return EnemyChangeRiskEvaluator.ShouldAcceptChange(observation)
+                        ? Score(candidate, 2000, "cowardly-gambler-required-change")
+                        : Score(candidate, -50, "cowardly-gambler-decline-risky-paid-change");
                 default:
                     throw new ArgumentOutOfRangeException(nameof(candidate));
             }
