@@ -211,6 +211,13 @@ namespace DiaBlackJack.GameScene
         /// <summary>Whether the shared HUD tooltip should extend below this card.</summary>
         public bool ShowHoverBadgeBelow { get; private set; }
 
+        /// <summary>Seconds into the reveal-flip animation when the visible side swaps from
+        /// back to front. Callers that need to sync other UI (e.g. a hand total) to the moment
+        /// the card actually looks face-up should wait this long, not the full flip duration.</summary>
+        public float RevealFaceSwapSeconds =>
+            Mathf.Max(revealFlipDuration, 0.01f) *
+                Mathf.Clamp01(revealFaceSwapNormalizedTime);
+
         /// <summary>Whether the shared HUD badge should currently be visible for this card.</summary>
         public bool ShouldShowHoverBadge =>
             !_isShopSoldOut &&
@@ -281,6 +288,24 @@ namespace DiaBlackJack.GameScene
             DestroyMaterialInstance(_shopBackMaterial);
         }
 
+        /// <summary>
+        /// True if binding <paramref name="next"/> right now would trigger the reveal-flip
+        /// animation (i.e. this same card is currently shown back-up and would become face-up).
+        /// Callers that need to sync other UI (e.g. a hand total) to the actual visual reveal
+        /// should check this before <see cref="Bind"/> and, if true, wait
+        /// <see cref="RevealFaceSwapSeconds"/> before showing the effect of the new state.
+        /// </summary>
+        public bool WillAnimateRevealFor(GameSceneCardViewModel next)
+        {
+            return next != null &&
+                Application.isPlaying &&
+                _hasBoundCard &&
+                CardId == next.CardId &&
+                !_showingFrontFace &&
+                next.RevealRank &&
+                next.IsFaceUp;
+        }
+
         public void Bind(GameSceneCardViewModel card)
         {
             if (card == null)
@@ -294,13 +319,7 @@ namespace DiaBlackJack.GameScene
                 CardId == card.CardId &&
                 !_isUsed &&
                 card.IsUsed;
-            bool animateReveal =
-                Application.isPlaying &&
-                _hasBoundCard &&
-                CardId == card.CardId &&
-                !_showingFrontFace &&
-                card.RevealRank &&
-                card.IsFaceUp;
+            bool animateReveal = WillAnimateRevealFor(card);
 
             StopRevealSequence();
             _pendingRevealFaceCard = null;
