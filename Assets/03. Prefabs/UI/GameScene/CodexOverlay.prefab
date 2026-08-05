@@ -1147,7 +1147,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 20
+  m_fontSize: 16.65
   m_fontSizeBase: 19
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -4579,7 +4579,7 @@ Canvas:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6432016518871201256}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_RenderMode: 0
   m_Camera: {fileID: 0}
@@ -6730,11 +6730,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6644154336624325260, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_fontSize
-      value: 32
+      value: 35
+      objectReference: {fileID: 0}
+    - target: {fileID: 6644154336624325260, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_fontColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6644154336624325260, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_fontColor.g
+      value: 0.5407325
+      objectReference: {fileID: 0}
+    - target: {fileID: 6644154336624325260, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_fontColor.r
+      value: 0.7924528
       objectReference: {fileID: 0}
     - target: {fileID: 6644154336624325260, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_fontSizeBase
-      value: 32
+      value: 35
+      objectReference: {fileID: 0}
+    - target: {fileID: 6644154336624325260, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4278225610
       objectReference: {fileID: 0}
     - target: {fileID: 8376401912220062693, guid: f1c05aeed05518b409573d5fc31aea02, type: 3}
       propertyPath: m_IsActive
