@@ -205,7 +205,9 @@ namespace DiaBlackJack.GameScene
                     $"{nameof(DemonCardView)} is required on the demon card prefab.");
             }
 
+            TextUIOverlayLayerUtility.ApplyRecursively(instance);
             view.Bind(CreateCardViewModel(card, cardId, isFaceUp));
+            view.SetUnlitPresentation();
             return instance;
         }
 

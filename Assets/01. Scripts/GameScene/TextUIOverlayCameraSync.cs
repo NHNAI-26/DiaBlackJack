@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -95,6 +96,32 @@ namespace DiaBlackJack.GameScene
                 {
                     sourceCamera = null;
                 }
+            }
+        }
+    }
+
+    internal static class TextUIOverlayLayerUtility
+    {
+        internal const string LayerName = "TextUI";
+
+        internal static void ApplyRecursively(GameObject root)
+        {
+            if (root == null)
+            {
+                throw new ArgumentNullException(nameof(root));
+            }
+
+            int layer = LayerMask.NameToLayer(LayerName);
+            if (layer < 0)
+            {
+                throw new InvalidOperationException(
+                    $"Required Unity layer '{LayerName}' is not defined.");
+            }
+
+            Transform[] hierarchy = root.GetComponentsInChildren<Transform>(true);
+            foreach (Transform item in hierarchy)
+            {
+                item.gameObject.layer = layer;
             }
         }
     }

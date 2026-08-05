@@ -4,6 +4,7 @@ using Border.Audio;
 using DiaBlackJack.Content;
 using DiaBlackJack.CoreLoop;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Serialization;
 
 namespace DiaBlackJack.GameScene
@@ -120,6 +121,8 @@ namespace DiaBlackJack.GameScene
         private static readonly int PixelOutlineWidthId = Shader.PropertyToID("_PixelOutlineWidth");
         private static readonly int PixelOutlineAlphaThresholdId = Shader.PropertyToID("_PixelOutlineAlphaThreshold");
         private static readonly int PixelOutlineVisibilityId = Shader.PropertyToID("_PixelOutlineVisibility");
+        private static readonly int LightingModeId = Shader.PropertyToID("_LightingMode");
+        private const string UnlitKeyword = "_UNLIT_ON";
         private const string PixelOutlineKeyword = "_PIXEL_OUTLINE_ON";
 
         private MaterialPropertyBlock _frontPropertyBlock;
@@ -712,6 +715,13 @@ namespace DiaBlackJack.GameScene
             ApplyHoverOutline(false);
         }
 
+        internal void SetUnlitPresentation()
+        {
+            EnsureCardMaterialInstances();
+            ApplyUnlitPresentation(FrontSpriteRenderer());
+            ApplyUnlitPresentation(BackSpriteRenderer());
+        }
+
         internal void SetShopSoldOut(bool isSoldOut)
         {
             _isShopSoldOut = isSoldOut;
@@ -1116,6 +1126,26 @@ namespace DiaBlackJack.GameScene
             {
                 material.EnableKeyword(PixelOutlineKeyword);
             }
+        }
+
+        private static void ApplyUnlitPresentation(Renderer renderer)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            Material material = renderer.sharedMaterial;
+            if (material != null && material.HasProperty(LightingModeId))
+            {
+                material.SetFloat(LightingModeId, 1f);
+                material.EnableKeyword(UnlitKeyword);
+            }
+
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.lightProbeUsage = LightProbeUsage.Off;
+            renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
         }
 
         private static void CreateMaterialInstance(

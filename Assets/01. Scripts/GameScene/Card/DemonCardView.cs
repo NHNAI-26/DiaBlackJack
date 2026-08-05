@@ -4,6 +4,7 @@ using DiaBlackJack.CoreLoop;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace DiaBlackJack.GameScene
 {
@@ -67,6 +68,9 @@ namespace DiaBlackJack.GameScene
             Shader.PropertyToID("_UnderlayDilate");
 
         private SpriteRenderer _frontSpriteRenderer;
+        private SpriteRenderer _backSpriteRenderer;
+        private Material _presentationFrontMaterial;
+        private Material _presentationBackMaterial;
         private Material _shopMaterial;
         private Material _satanDoomMaterial;
         private Vector3 _baseScale = Vector3.one;
@@ -197,6 +201,8 @@ namespace DiaBlackJack.GameScene
         private void OnDestroy()
         {
             _orientationTween?.Kill();
+            DestroyOwnedMaterial(_presentationFrontMaterial);
+            DestroyOwnedMaterial(_presentationBackMaterial);
             DestroyOwnedMaterial(_shopMaterial);
             DestroyOwnedMaterial(_satanDoomMaterial);
         }
@@ -324,6 +330,18 @@ namespace DiaBlackJack.GameScene
         internal void EnableHandHoverVisualOnly()
         {
             EnableHoverVisualOnly();
+        }
+
+        internal void SetUnlitPresentation()
+        {
+            CreateUnlitPresentationMaterial(
+                FrontSpriteRenderer(),
+                ref _presentationFrontMaterial,
+                "Demon Card Front Unlit Instance");
+            CreateUnlitPresentationMaterial(
+                BackSpriteRenderer(),
+                ref _presentationBackMaterial,
+                "Demon Card Back Unlit Instance");
         }
 
         private Transform HoverScaleTarget()
@@ -514,6 +532,53 @@ namespace DiaBlackJack.GameScene
             }
 
             return _frontSpriteRenderer;
+        }
+
+        private SpriteRenderer BackSpriteRenderer()
+        {
+            if (_backSpriteRenderer == null && back != null)
+            {
+                _backSpriteRenderer = back.GetComponent<SpriteRenderer>();
+            }
+
+            return _backSpriteRenderer;
+        }
+
+        private static void CreateUnlitPresentationMaterial(
+            SpriteRenderer renderer,
+            ref Material materialInstance,
+            string instanceName)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            if (materialInstance == null)
+            {
+                Material source = renderer.sharedMaterial;
+                if (source == null)
+                {
+                    return;
+                }
+
+                materialInstance = new Material(source)
+                {
+                    name = source.name + " (" + instanceName + ")"
+                };
+                renderer.sharedMaterial = materialInstance;
+            }
+
+            if (materialInstance.HasProperty(LightingModeId))
+            {
+                materialInstance.SetFloat(LightingModeId, 1f);
+                materialInstance.EnableKeyword(UnlitKeyword);
+            }
+
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.lightProbeUsage = LightProbeUsage.Off;
+            renderer.reflectionProbeUsage = ReflectionProbeUsage.Off;
         }
 
         private void EnsureSatanDoomCountText()

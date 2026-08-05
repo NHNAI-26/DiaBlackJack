@@ -102,6 +102,7 @@ namespace DiaBlackJack.GameScene
                     displayName: candidate.Title,
                     summary: candidate.Ability,
                     costSummary: candidate.Cost));
+                slot.Card.SetUnlitPresentation();
                 SetSortingOrder(slot, BaseSortingOrder + i);
             }
 
@@ -176,6 +177,7 @@ namespace DiaBlackJack.GameScene
                 DemonCardView card = Instantiate(candidatePrefab, anchor);
                 card.name = "DemonCard";
                 card.EnableHoverVisualOnly();
+                TextUIOverlayLayerUtility.ApplyRecursively(anchorObject);
                 Renderer[] renderers = card.GetComponentsInChildren<Renderer>(true);
                 _slots[i] = new CandidateSlot(
                     anchor,

@@ -1,9 +1,11 @@
 using System.Linq;
 using System.Reflection;
 using DiaBlackJack.GameScene;
+using DiaBlackJack.StageProgression.UI;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace DiaBlackJack.CoreLoop.Tests
 {
@@ -701,6 +703,163 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
         }
 
+        [Test]
+        [Category("GSV15")]
+        public void GSV15_U01_SelectionCardsUseTextUiLayerAndUnlitMaterials()
+        {
+            int textUiLayer = LayerMask.NameToLayer("TextUI");
+            Assert.That(textUiLayer, Is.GreaterThanOrEqualTo(0));
+
+            GameObject cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                CardPrefabPath);
+            GameObject demonPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                DemonCardPrefabPath);
+            Material cardSourceMaterial = FindLightingMaterial(cardPrefab);
+            Material demonSourceMaterial = FindLightingMaterial(demonPrefab);
+            float cardSourceLightingMode =
+                cardSourceMaterial.GetFloat("_LightingMode");
+            float demonSourceLightingMode =
+                demonSourceMaterial.GetFloat("_LightingMode");
+            bool cardSourceWasUnlit =
+                cardSourceMaterial.IsKeywordEnabled("_UNLIT_ON");
+            bool demonSourceWasUnlit =
+                demonSourceMaterial.IsKeywordEnabled("_UNLIT_ON");
+            GameObject root = new GameObject("SelectionTextUILayerTest");
+            GameObject cameraObject = new GameObject("Camera");
+            try
+            {
+                Camera camera = CreateTestCamera(cameraObject);
+                root.AddComponent<CardSelectionFanLayout>();
+
+                CrystalOrbSelectionView crystal =
+                    root.AddComponent<CrystalOrbSelectionView>();
+                crystal.Initialize(cardPrefab.GetComponent<CardView>());
+
+                SatanNumberSelectionView satan =
+                    root.AddComponent<SatanNumberSelectionView>();
+                satan.Initialize(cardPrefab.GetComponent<CardView>());
+
+                DemonContractSelectionView contract =
+                    root.AddComponent<DemonContractSelectionView>();
+                SetPrivateField(
+                    contract,
+                    "candidatePrefab",
+                    demonPrefab.GetComponent<DemonCardView>());
+                InvokePrivateMethod(contract, "EnsureSlots");
+
+                crystal.Render(
+                    new[]
+                    {
+                        new GameSceneCardViewModel(
+                            1001, 1, true, true, true, "1"),
+                        new GameSceneCardViewModel(
+                            1002, 2, true, true, true, "2")
+                    },
+                    camera);
+                satan.Render(
+                    Enumerable.Range(1, 10)
+                        .Select(rank => new GameSceneCardViewModel(
+                            2000 + rank,
+                            rank,
+                            true,
+                            true,
+                            true,
+                            rank.ToString()))
+                        .ToArray(),
+                    camera);
+                contract.Render(
+                    new[]
+                    {
+                        CreateContractCandidate(3001, "mammon"),
+                        CreateContractCandidate(3002, "satan")
+                    },
+                    camera);
+
+                Transform[] selectionAnchors = root
+                    .GetComponentsInChildren<Transform>(true)
+                    .Where(item =>
+                        item.name.StartsWith("CrystalOrbCandidate_") ||
+                        item.name.StartsWith("SatanNumberCandidate_") ||
+                        item.name.StartsWith("ContractCandidate_"))
+                    .ToArray();
+
+                Assert.That(selectionAnchors, Has.Length.EqualTo(14));
+                foreach (Transform anchor in selectionAnchors)
+                {
+                    AssertLayerRecursively(anchor, textUiLayer);
+                    AssertUnlitPresentation(anchor);
+                }
+
+                AssertSourceMaterialUnchanged(
+                    cardSourceMaterial,
+                    cardSourceLightingMode,
+                    cardSourceWasUnlit);
+                AssertSourceMaterialUnchanged(
+                    demonSourceMaterial,
+                    demonSourceLightingMode,
+                    demonSourceWasUnlit);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(cameraObject);
+            }
+        }
+
+        [Test]
+        [Category("GSV15")]
+        public void GSV15_U02_StartingDemonRevealUsesTextUiLayerAndUnlitMaterials()
+        {
+            int textUiLayer = LayerMask.NameToLayer("TextUI");
+            Assert.That(textUiLayer, Is.GreaterThanOrEqualTo(0));
+
+            GameObject demonPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                DemonCardPrefabPath);
+            Material sourceMaterial = FindLightingMaterial(demonPrefab);
+            float sourceLightingMode = sourceMaterial.GetFloat("_LightingMode");
+            bool sourceWasUnlit =
+                sourceMaterial.IsKeywordEnabled("_UNLIT_ON");
+            GameObject root = new GameObject("StartingDemonTextUILayerTest");
+            try
+            {
+                StartingDemonRevealView view =
+                    root.AddComponent<StartingDemonRevealView>();
+                SetPrivateField(view, "demonCardPrefab", demonPrefab);
+                MethodInfo createCard = typeof(StartingDemonRevealView).GetMethod(
+                    "CreateCard",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(createCard, Is.Not.Null);
+
+                var model = new StartingDemonGrantCardViewModel(
+                    "satan",
+                    "Satan",
+                    "Ability",
+                    "Cost");
+                GameObject card = (GameObject)createCard.Invoke(
+                    view,
+                    new object[]
+                    {
+                        model,
+                        11000,
+                        true,
+                        Vector3.zero,
+                        Quaternion.identity
+                    });
+
+                Assert.That(card, Is.Not.Null);
+                AssertLayerRecursively(card.transform, textUiLayer);
+                AssertUnlitPresentation(card.transform);
+                AssertSourceMaterialUnchanged(
+                    sourceMaterial,
+                    sourceLightingMode,
+                    sourceWasUnlit);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
         private static Camera CreateTestCamera(GameObject cameraObject)
         {
             Camera camera = cameraObject.AddComponent<Camera>();
@@ -744,6 +903,68 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.LessThan(0.0001f));
             Assert.That(visual.position.y, Is.GreaterThan(visualPosition.y));
             Assert.That(visual.position.z, Is.LessThan(visualPosition.z));
+        }
+
+        private static void AssertLayerRecursively(
+            Transform root,
+            int expectedLayer)
+        {
+            Transform[] hierarchy = root.GetComponentsInChildren<Transform>(true);
+            Assert.That(hierarchy, Is.Not.Empty);
+            Assert.That(
+                hierarchy.All(item => item.gameObject.layer == expectedLayer),
+                Is.True);
+        }
+
+        private static void AssertUnlitPresentation(Transform root)
+        {
+            SpriteRenderer[] renderers = root
+                .GetComponentsInChildren<SpriteRenderer>(true)
+                .Where(renderer =>
+                    renderer.sharedMaterial != null &&
+                    renderer.sharedMaterial.HasProperty("_LightingMode"))
+                .ToArray();
+            Assert.That(renderers, Has.Length.GreaterThanOrEqualTo(2));
+            foreach (SpriteRenderer renderer in renderers)
+            {
+                Assert.That(
+                    renderer.sharedMaterial.GetFloat("_LightingMode"),
+                    Is.EqualTo(1f));
+                Assert.That(
+                    renderer.sharedMaterial.IsKeywordEnabled("_UNLIT_ON"),
+                    Is.True);
+                Assert.That(
+                    renderer.shadowCastingMode,
+                    Is.EqualTo(ShadowCastingMode.Off));
+                Assert.That(renderer.receiveShadows, Is.False);
+                Assert.That(
+                    renderer.lightProbeUsage,
+                    Is.EqualTo(LightProbeUsage.Off));
+                Assert.That(
+                    renderer.reflectionProbeUsage,
+                    Is.EqualTo(ReflectionProbeUsage.Off));
+            }
+        }
+
+        private static Material FindLightingMaterial(GameObject prefab)
+        {
+            Material material = prefab
+                .GetComponentsInChildren<SpriteRenderer>(true)
+                .Select(renderer => renderer.sharedMaterial)
+                .FirstOrDefault(candidate =>
+                    candidate != null &&
+                    candidate.HasProperty("_LightingMode"));
+            Assert.That(material, Is.Not.Null);
+            return material;
+        }
+
+        private static void AssertSourceMaterialUnchanged(
+            Material material,
+            float lightingMode,
+            bool wasUnlit)
+        {
+            Assert.That(material.GetFloat("_LightingMode"), Is.EqualTo(lightingMode));
+            Assert.That(material.IsKeywordEnabled("_UNLIT_ON"), Is.EqualTo(wasUnlit));
         }
 
         private static void InvokeUpdateSlotPose(MonoBehaviour view, int index)

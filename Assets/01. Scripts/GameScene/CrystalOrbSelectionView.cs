@@ -103,6 +103,7 @@ namespace DiaBlackJack.GameScene
 
                 slot.Candidate = candidates[i];
                 slot.Card.Bind(slot.Candidate);
+                slot.Card.SetUnlitPresentation();
                 slot.Card.SetSortingOrder(BaseSortingOrder + i);
             }
 
@@ -173,6 +174,7 @@ namespace DiaBlackJack.GameScene
                 CardView card = Instantiate(_candidatePrefab, anchor);
                 card.name = "Card";
                 card.EnableHoverVisualOnly();
+                TextUIOverlayLayerUtility.ApplyRecursively(anchorObject);
                 _slots[i] = new CandidateSlot(
                     anchor,
                     card.HoverVisualTransform,
