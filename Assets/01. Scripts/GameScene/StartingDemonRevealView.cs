@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using DiaBlackJack.StageProgression.UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace DiaBlackJack.GameScene
 {
@@ -11,6 +12,9 @@ namespace DiaBlackJack.GameScene
     public sealed class StartingDemonRevealView : MonoBehaviour
     {
         [SerializeField] private GameObject demonCardPrefab;
+        [Tooltip("Root of the confirm button, toggled active only while confirmation is available.")]
+        [SerializeField] private GameObject confirmButtonRoot;
+        [SerializeField] private Button confirmButton;
 
         [Header("World-space layout")]
         [SerializeField] private Vector3 deckPosition =
@@ -32,13 +36,11 @@ namespace DiaBlackJack.GameScene
         private readonly List<GameObject> _instances = new List<GameObject>();
         private readonly List<DemonCardView> _revealedCards =
             new List<DemonCardView>(2);
-        private GUIStyle _buttonStyle;
         private Coroutine _revealRoutine;
         private Camera _camera;
         private GameHudView _hud;
         private DemonCardView _hoveredCard;
         private int? _activeGrantId;
-        private bool _canConfirm;
 
         public event Action ConfirmationRequested;
 
@@ -47,6 +49,38 @@ namespace DiaBlackJack.GameScene
         internal void BindHud(GameHudView hud)
         {
             _hud = hud;
+        }
+
+        private void Awake()
+        {
+            if (confirmButton != null)
+            {
+                confirmButton.onClick.AddListener(HandleConfirmClicked);
+            }
+
+            SetConfirmVisible(false);
+        }
+
+        private void OnDestroy()
+        {
+            if (confirmButton != null)
+            {
+                confirmButton.onClick.RemoveListener(HandleConfirmClicked);
+            }
+        }
+
+        private void HandleConfirmClicked()
+        {
+            SetConfirmVisible(false);
+            ConfirmationRequested?.Invoke();
+        }
+
+        private void SetConfirmVisible(bool visible)
+        {
+            if (confirmButtonRoot != null)
+            {
+                confirmButtonRoot.SetActive(visible);
+            }
         }
 
         private void Update()
@@ -107,40 +141,13 @@ namespace DiaBlackJack.GameScene
             UpdateHover(null);
             ResolveHud()?.HideDemonContractDetail();
             _activeGrantId = null;
-            _canConfirm = false;
+            SetConfirmVisible(false);
             IsVisible = false;
         }
 
         private void OnDisable()
         {
             Hide();
-        }
-
-        private void OnGUI()
-        {
-            if (!IsVisible || !_canConfirm)
-            {
-                return;
-            }
-
-            _buttonStyle ??= new GUIStyle(GUI.skin.button)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = Screen.height <= 720 ? 18 : 22,
-                fontStyle = FontStyle.Bold
-            };
-            float width = Mathf.Min(420f, Screen.width * 0.4f);
-            float height = Screen.height <= 720 ? 50f : 60f;
-            Rect buttonRect = new Rect(
-                (Screen.width - width) * 0.5f,
-                Screen.height - height - 38f,
-                width,
-                height);
-            if (GUI.Button(buttonRect, "CONFIRM DEMONS", _buttonStyle))
-            {
-                _canConfirm = false;
-                ConfirmationRequested?.Invoke();
-            }
         }
 
         private IEnumerator Reveal(
@@ -183,7 +190,7 @@ namespace DiaBlackJack.GameScene
             yield return WaitUnscaled(revealedHoldDuration);
 
             _revealRoutine = null;
-            _canConfirm = true;
+            SetConfirmVisible(true);
         }
 
         private GameObject CreateCard(

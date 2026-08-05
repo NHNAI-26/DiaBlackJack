@@ -144,6 +144,22 @@ namespace DiaBlackJack.GameScene
         }
 
         /// <summary>
+        /// Writes the player soul counter directly from a preformatted "current / max" string.
+        /// Used while the formal shop is open, since there is no active battle view-model then
+        /// (<see cref="Render(CoreLoopViewModel, GameSceneCombatHudViewModel)"/> is not called) and
+        /// the text would otherwise keep showing the value from the last battle until the next one starts.
+        /// </summary>
+        public void SetPlayerSoul(string soulText)
+        {
+            if (playerSoulText != null)
+            {
+                CurrencyIconText.Set(
+                    playerSoulText,
+                    $"{CurrencyIconMarkup.SoulTag} {soulText}");
+            }
+        }
+
+        /// <summary>
         /// Writes the run gold counter (top-left, beside souls). Separate from <see cref="Render"/>
         /// because gold is GameScene-local state in the MVP, not part of the battle view-model.
         /// </summary>
@@ -162,6 +178,29 @@ namespace DiaBlackJack.GameScene
             if (enemySoulText != null)
             {
                 enemySoulText.gameObject.SetActive(isVisible);
+            }
+        }
+
+        /// <summary>
+        /// Toggles the round/player-soul/gold labels as a group. Used to hide the default
+        /// battle-stat HUD on screens that have no battle or run economy to show yet, such as
+        /// the starting demon reveal.
+        /// </summary>
+        public void SetCoreStatsVisible(bool isVisible)
+        {
+            if (roundText != null)
+            {
+                roundText.gameObject.SetActive(isVisible);
+            }
+
+            if (playerSoulText != null)
+            {
+                playerSoulText.gameObject.SetActive(isVisible);
+            }
+
+            if (goldText != null)
+            {
+                goldText.gameObject.SetActive(isVisible);
             }
         }
 

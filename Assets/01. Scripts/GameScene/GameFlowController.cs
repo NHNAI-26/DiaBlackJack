@@ -466,6 +466,7 @@ namespace DiaBlackJack.GameScene
                 CurrentScreen == GameFlowScreen.RunDefeat;
             codex?.SetAvailable(isCombat || isShop);
             hud?.SetEnemyStatusVisible(isCombat);
+            hud?.SetCoreStatsVisible(!isStartingReveal);
 
             if (isStartingReveal &&
                 CurrentViewModel.StartingDemonGrantId.HasValue)

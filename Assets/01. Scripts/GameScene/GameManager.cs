@@ -276,6 +276,7 @@ namespace DiaBlackJack.GameScene
             }
 
             hud?.SetGold(currentGold);
+            hud?.SetPlayerSoul(model.PlayerSoul);
             hud?.SetEnemyStatusVisible(false);
             UpdateShopLeaveControl();
             return true;
