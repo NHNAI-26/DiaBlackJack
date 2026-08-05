@@ -38,7 +38,7 @@ Material:
     - _PixelOutlineGlowAlpha: 0.35
     - _PixelOutlineGlowWidth: 4
     - _PixelOutlineVisibility: 0
-    - _PixelOutlineWidth: 1
+    - _PixelOutlineWidth: 0.5
     - _RespectVertexRgbTint: 0
     - _Stencil: 0
     - _StencilComp: 8

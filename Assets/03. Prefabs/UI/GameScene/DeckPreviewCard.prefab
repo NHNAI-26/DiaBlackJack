@@ -411,10 +411,10 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   hoverSfxId: cardHover
-  basicHoverOutlineColor: {r: 5.3403134, g: 5.3403134, b: 5.3403134, a: 1}
-  unavailableHoverOutlineColor: {r: 2.1145804, g: 0.6420973, b: 0.6084406, a: 1}
-  availableHoverOutlineColor: {r: 1.9118087, g: 3.4278064, b: 0.48455897, a: 1}
-  automaticHoverOutlineColor: {r: 3.9999995, g: 3.3765495, b: 0, a: 1}
+  basicHoverOutlineColor: {r: 42.7225, g: 42.7225, b: 42.7225, a: 1}
+  unavailableHoverOutlineColor: {r: 25.994112, g: 0.498864, b: 0, a: 1}
+  availableHoverOutlineColor: {r: 3.425474, g: 30.04875, b: 0, a: 1}
+  automaticHoverOutlineColor: {r: 31.999996, g: 27.012396, b: 0, a: 1}
   usedHoverOutlineColor: {r: 0, g: 0, b: 0, a: 1}
   deckCardHoverBadgeOffset: {x: 16, y: 0}
 --- !u!1 &4541497329502257202
