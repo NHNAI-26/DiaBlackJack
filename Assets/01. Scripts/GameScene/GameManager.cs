@@ -34,6 +34,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private TableTotalsView totals;
         [SerializeField] private DeckStackView remainingDeck;
         [SerializeField] private DeckStackView discardDeck;
+        [SerializeField] private DeckStackView enemyRemainingDeck;
+        [SerializeField] private DeckStackView enemyDiscardDeck;
         [SerializeField] private DeckPreviewView deckPreview;
         [SerializeField] private CodexController codex;
         [SerializeField] private DemonContractSelectionView demonContractSelection;
@@ -116,6 +118,7 @@ namespace DiaBlackJack.GameScene
         private CodexClickable _hoveredCodex;
         private ShopUtilityItemView _hoveredShopUtilityItem;
         private TableCombatCommandView _hoveredCombatCommand;
+        private HoverDescriptionTarget _hoveredDescriptionTarget;
         private object _hoverBadgeOwner;
         private bool _inputLocked;
         private bool _pauseInputBlocked;
@@ -230,6 +233,7 @@ namespace DiaBlackJack.GameScene
             _activeEnemySpeechProfile = ResolveActiveEnemySpeechProfile();
             enemyCharacter?.ExitMerchant();
             enemyCharacter?.TrySetEnemyProfile(_activeEnemyProfileKey);
+            ApplyEnemyDeckTopTint();
             _inputLocked = false;
             RefreshView();
             return true;
@@ -426,6 +430,7 @@ namespace DiaBlackJack.GameScene
             {
                 enemyCharacter.TrySetEnemyProfile(_activeEnemyProfileKey);
             }
+            ApplyEnemyDeckTopTint();
             EnsureDeckPreview();
             codex ??= GetComponent<CodexController>();
             demonContractSelection ??=
@@ -586,6 +591,8 @@ namespace DiaBlackJack.GameScene
             enemyHand?.ResetView();
             remainingDeck?.ResetView();
             discardDeck?.ResetView();
+            enemyRemainingDeck?.ResetView();
+            enemyDiscardDeck?.ResetView();
             totals?.Render(string.Empty, string.Empty);
             enemyCharacter?.RenderVisual(CharacterVisualState.Idle);
             if (shop != null)
@@ -626,6 +633,11 @@ namespace DiaBlackJack.GameScene
                 UpdateDeckStackHover(null);
                 UpdateCodexHover(null);
                 UpdateCombatCommandHover(null);
+                UpdateHoverDescriptionTarget(null);
+                if (codex == null || !codex.IsOpen)
+                {
+                    hud?.HideCardHoverBadge();
+                }
                 return;
             }
 
@@ -635,6 +647,8 @@ namespace DiaBlackJack.GameScene
                 UpdateDeckStackHover(null);
                 UpdateCodexHover(null);
                 UpdateCombatCommandHover(null);
+                UpdateHoverDescriptionTarget(null);
+                hud?.HideCardHoverBadge();
                 return;
             }
 
@@ -646,6 +660,7 @@ namespace DiaBlackJack.GameScene
                 UpdateCodexHover(null);
                 UpdateShopUtilityItemHover(null);
                 UpdateCombatCommandHover(null);
+                UpdateHoverDescriptionTarget(null);
                 demonContractSelection?.SetHovered(null);
                 crystalOrbSelection?.SetHovered(null);
                 satanNumberSelection?.SetHovered(null);
@@ -661,6 +676,7 @@ namespace DiaBlackJack.GameScene
                 UpdateDeckStackHover(null);
                 UpdateCodexHover(null);
                 UpdateShopUtilityItemHover(null);
+                UpdateHoverDescriptionTarget(null);
                 demonContractSelection?.SetHovered(null);
                 crystalOrbSelection?.SetHovered(null);
                 satanNumberSelection?.SetHovered(null);
@@ -677,6 +693,7 @@ namespace DiaBlackJack.GameScene
                 UpdateCodexHover(null);
                 UpdateShopUtilityItemHover(null);
                 UpdateCombatCommandHover(null);
+                UpdateHoverDescriptionTarget(null);
                 demonContractSelection?.SetHovered(null);
                 crystalOrbSelection?.SetHovered(null);
                 satanNumberSelection?.SetHovered(null);
@@ -731,6 +748,13 @@ namespace DiaBlackJack.GameScene
                 codex.IsAvailable
                     ? hit.collider.GetComponentInParent<CodexClickable>()
                     : null;
+            HoverDescriptionTarget pointedHoverDescriptionTarget = hasHit
+                ? hit.collider.GetComponentInParent<HoverDescriptionTarget>()
+                : null;
+            if (pointedCard != null || pointedDemonCard != null)
+            {
+                pointedHoverDescriptionTarget = null;
+            }
 
             if (deckPreview != null && deckPreview.IsOpen)
             {
@@ -740,6 +764,7 @@ namespace DiaBlackJack.GameScene
                 UpdateCodexHover(null);
                 UpdateShopUtilityItemHover(null);
                 UpdateCombatCommandHover(null);
+                UpdateHoverDescriptionTarget(null);
 
                 return;
             }
@@ -751,6 +776,7 @@ namespace DiaBlackJack.GameScene
             UpdateCardHoverBadge();
             UpdateShopUtilityItemHover(pointedShopUtilityItem);
             UpdateCombatCommandHover(pointedCombatCommand);
+            UpdateHoverDescriptionTarget(pointedHoverDescriptionTarget);
 
             if (_inputLocked || _choosingLighterRemoval)
             {
@@ -1117,11 +1143,14 @@ namespace DiaBlackJack.GameScene
                 _hoveredCombatCommand?.SetHovered(true);
             }
 
-            if (_hoveredCombatCommand == null ||
-                !_hoveredCombatCommand.IsInteractable ||
-                string.IsNullOrEmpty(_hoveredCombatCommand.Tooltip))
+            hud?.HideCombatActionTooltip();
+        }
+
+        private void UpdateHoverDescriptionTarget(HoverDescriptionTarget pointed)
+        {
+            _hoveredDescriptionTarget = pointed;
+            if (_hoveredDescriptionTarget == null)
             {
-                hud?.HideCombatActionTooltip();
                 return;
             }
 
@@ -1130,24 +1159,21 @@ namespace DiaBlackJack.GameScene
                 _camera = Camera.main;
             }
 
-            if (_camera == null)
+            if (hud == null ||
+                !_hoveredDescriptionTarget.TryCreateRequest(
+                    _camera,
+                    out CardHoverBadgeRequest request))
             {
-                hud?.HideCombatActionTooltip();
+                hud?.HideCardHoverBadge();
                 return;
             }
 
-            Vector3 screenPosition = _camera.WorldToScreenPoint(
-                _hoveredCombatCommand.TooltipWorldPosition);
-            if (screenPosition.z <= 0f)
-            {
-                hud?.HideCombatActionTooltip();
-                return;
-            }
-
-            hud?.ShowCombatActionTooltip(
-                _hoveredCombatCommand.Tooltip,
-                new Vector2(screenPosition.x, screenPosition.y),
-                _camera);
+            hud.ShowCardHoverBadge(
+                request.Title,
+                request.Description,
+                request.ScreenPosition,
+                _camera,
+                request.TooltipPivot);
         }
 
         private void EnsureDeckPreview()
@@ -1522,6 +1548,30 @@ namespace DiaBlackJack.GameScene
             _hoveredCodex?.SetHovered(false);
             _hoveredCodex = pointed;
             _hoveredCodex?.SetHovered(true);
+        }
+
+        private void ApplyEnemyDeckTopTint()
+        {
+            EnemyContentCatalogSO catalog =
+                CardContentBootstrap.Instance?.EnemyCatalog;
+            if (catalog == null ||
+                string.IsNullOrWhiteSpace(_activeEnemyProfileKey))
+            {
+                return;
+            }
+
+            try
+            {
+                Color tint = catalog.GetByKey(_activeEnemyProfileKey).DeckTopTint;
+                enemyRemainingDeck?.SetTopTint(tint);
+                enemyDiscardDeck?.SetTopTint(tint);
+            }
+            catch (Exception exception)
+                when (exception is ArgumentException ||
+                      exception is KeyNotFoundException)
+            {
+                Debug.LogWarning(exception.Message, this);
+            }
         }
 
         private BlackjackDeck CreatePlayerDeck(int deckSeed)
@@ -3189,11 +3239,17 @@ namespace DiaBlackJack.GameScene
             {
                 remainingDeck?.Render(0);
                 discardDeck?.Render(0);
+                enemyRemainingDeck?.Render(0);
+                enemyDiscardDeck?.Render(0);
                 return;
             }
 
             remainingDeck?.Render(SumRankCounts(battle.Player.Deck.GetDrawPileRankCounts()));
             discardDeck?.Render(SumRankCounts(battle.Player.Deck.GetDiscardPileRankCounts()));
+            enemyRemainingDeck?.Render(
+                SumRankCounts(battle.Enemy.Deck.GetDrawPileRankCounts()));
+            enemyDiscardDeck?.Render(
+                SumRankCounts(battle.Enemy.Deck.GetDiscardPileRankCounts()));
         }
 
         private static int SumRankCounts(IReadOnlyList<int> counts)

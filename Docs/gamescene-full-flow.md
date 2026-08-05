@@ -648,3 +648,24 @@ GF-00~GF-06의 현재 계획 범위는 완료다. 이후 작업은 실제 빌드
 - 기준 흐름은 `MainMenuScene`에서 시작한 정식 런의 `StageProgressionRuntime → GameScene → GameManager` 전투다. 독립 GameScene 전용 분기는 변경하지 않았다.
 - 신규 `GSB02_U09` 1/1(job `daf181f127754f7487dc3003af744284`), Director 관련 U05~U09 5/5(job `aa00f90293ca4d3284a12ebd965cb66b`)가 통과했다. 말풍선 클래스 전체는 24/25(job `779932a0d3ea46ac9caadc4d9a49a1dc`)이며, 실패 1건 `GSB01_U11`의 카메라 스택 기대값 128/실제 160은 작업 전부터 기록된 기존 회귀다. 컴파일 직후 Console Error는 0건이었고, 클래스 전체 실행에서는 기존 머티리얼 드로어·URP 셰이더 오류가 재현됐다.
 - 사용자 저장을 덮을 수 있는 실제 새 게임 Play QA는 실행하지 않았다. 구현에서 씬·프리팹·대사 SO·외부 에셋·패키지는 변경하지 않았다. 클래스 전체 테스트 뒤 `GameScene.unity`의 소유 불명 작업 트리 변경이 새로 감지되어 정리하지 않고 보존했다.
+
+## GSV10 GameScene 적 선택 WANTED UI
+
+- 기존 GameScene IMGUI 상대 선택을 `OpponentSelectionOverlay.prefab`과 재사용 가능한 `OpponentWantedPoster.prefab`의 uGUI 구조로 교체했다. 오버레이는 정렬 순서 110의 1920×1080 `CanvasScaler`, 비활성 `ContentRoot`, 좌우 포스터 슬롯 2개를 직렬화하며 선택·확인 `Button`은 두지 않는다.
+- 포스터는 기존 `wanted.png`, 프로필별 초상화, 한국어 TMP 폰트, 영혼·골드 아이콘을 재사용한다. 이름, `×영혼`, 3줄 설명, `×처치 골드`를 표시하고 자식 Graphic의 raycast는 모두 끈다. 루트만 포인터를 받아 호버 시 금색 `Outline`과 1.04배 확대를 적용·복원한다.
+- 왼쪽 클릭은 포스터 입력을 즉시 잠근 뒤 프로필 키를 한 번만 방출한다. `GameFlowController.RequestSelectOpponent`는 현재 화면, Offer ID, 후보 키, 저장·처리 입력 잠금을 검증한 뒤 `TrySelectOpponent`를 한 번 호출한다. 우클릭·중복 클릭·비활성 슬롯은 무시하며 기존 포커스·확정 API는 레거시 호환용으로 유지한다.
+- `GameScene` 루트에 `UIOpponentSelection` 프리팹 인스턴스를 추가했고, `GameManager.prefab`과 해당 씬 인스턴스에 남아 있던 레거시 `OpponentSelectionView` 컴포넌트를 제거했다. 작업 전부터 존재한 GameScene 덱·렌더링 변경과 `Table Controller.prefab` 변경은 정리하지 않고 보존했다.
+- GSV10 집중 테스트는 최종 4/4(job `3c88a28161324eba973265efc6e5d00f`), 기존 `OpponentSelectionPresentationTests`와 `GameSceneFullFlowPresentationTests`는 20/20(job `27e7234fb75f47c1a702a4cd6466a794`), StageProgression EditMode 어셈블리는 269/269(job `40b6fdca667e4a9c8041dd704c6575ba`) 통과했다.
+- Unity 컴파일과 최종 Console Error는 0건이며 `GameScene` 검증은 missing script·broken prefab을 포함해 issue 0건이다. 저장 데이터를 변경하지 않는 Play Mode 런타임 표시 주입으로 1280×720과 1920×1080에서 좌우 배치, 초상화·이름·영혼·설명·골드, 첫 포스터 호버 외곽선·확대와 잘림 없음을 확인했다. 클릭 1회·우클릭·비활성 입력 계약은 GSV10 자동 테스트로 확인했으며, 실제 정식 저장 세션의 전투 전환 수동 입력은 수행하지 않았다.
+- 도감 프리팹의 편집 미리보기 방식을 따라 `OpponentWantedPosterView`와 `OpponentSelectionView` 전용 Inspector 미리보기를 추가했다. 포스터는 실제 적 프로필을 이전·다음으로 넘길 수 있고, 오버레이는 실제 후보 2장을 쌍으로 넘길 수 있다. 두 미리보기 모두 호버 상태를 직접 확인하며 새 미리보기 오브젝트를 만들지 않고 프리팹에 직렬화된 슬롯만 사용한다.
+- 미리보기 중 저장·Play Mode 전환·스크립트 리로드가 발생하면 이름·초상화·수치·활성 상태·외곽선·배율 등 저작 값을 먼저 복원한다. 프리팹 저장 뒤에는 같은 적 페이지와 호버 상태로 미리보기를 재개하므로, 미리보기 데이터는 저장되지 않고 사용자가 수정한 `RectTransform` 배치는 유지된다.
+- 미리보기 계약을 포함한 GSV10은 6/6(job `41a1a25ce5694421b33126079305e6b9`), 인접 프레젠테이션 테스트는 20/20(job `7657cc3f24934cde91b78c350dd52484`), StageProgression EditMode 어셈블리는 272/272(job `d66d3cb7c8964845b79d3dbc060bbf3f`) 통과했다. 어셈블리 실행 중 기존 머티리얼 드로어·URP 셰이더 오류가 재현됐고, Console 정리 후 최종 Unity 재컴파일 기준 Error는 0건이다.
+
+## GSH02 공용 호버 설명 SO
+
+- 라이터·위스키, 양측 드로우/디스카드 덱, HIT·STAND·CHANGE, 계약서, 도감, 맘몬 주사위의 12개 설명을 `HoverDescriptionSO`로 저작했다. 기본/상태별 본문과 `{price}`·`{amount}`·`{gold}` 토큰을 지원하며 빈 제목·본문, 중복 상태 키, 지원하지 않거나 치환되지 않은 토큰을 거부한다.
+- `HoverDescriptionTarget`이 월드 기준점과 위/아래 방향, 런타임 토큰을 `CardHoverBadgeRequest`로 변환한다. `GameManager`는 일반·악마 카드가 아닌 월드 대상을 이 컴포넌트로 찾고 기존 `GameHudView.ShowCardHoverBadge`만 사용한다. 입력 잠금·모달·포인터 이탈 시 설명을 정리하며, 도감 내부 카드처럼 오버레이가 소유한 기존 호버 경로는 유지한다.
+- 상점의 구형 월드 `HoverBadge` 자식은 제거했다. 독립·정식 상점 모두 실제 가격과 위스키 회복량을 토큰으로 전달하고, 최대 영혼에서는 `soul-full` 본문을 사용한다. 정식 표시 모델은 `WhiskeyRecoveryAmount`와 `IsPlayerSoulFull`을 투영한다.
+- 비활성 전투 명령도 표시 중에는 Collider를 유지해 설명을 볼 수 있다. `TryGetCommand`는 기존대로 비활성 클릭을 거부하며 월드 명령의 호환용 `Tooltip` 문자열은 비워 둔다. 플레이어 덱의 `DeckClickable`은 유지했고 상대 덱에는 추가하지 않았다.
+- 신규 `GSH02` 9/9(job `f20c52c8608f4634984100678f719b59`, 최종 재실행 job `3f946cb09ab04c01a56bac381d22e358`)와 영향 클래스 102/102(job `28ccaa5c2ee04bb1b3bebd7602d2011f`)가 통과했다. 전체 EditMode는 1,099개 중 1,094개 통과(job `d8c69b8c0dc64fa18f9302f46a5674cc`)이며 실패 5건은 병행 도감 3건, 기존 덱 외곽선 1건, 기존 말풍선 카메라 스택 1건이다. 최종 재컴파일 직후 Console Error는 0건이다. Play QA에서는 기존 `CardView` 머티리얼 드로어 오류 1건이 재현됐고 이 작업의 호버 경로 오류는 없었다.
+- 저장 데이터를 변경하지 않는 Play Mode 표시 주입으로 1920×1080과 1280×720에서 12개 고유 설명의 공용 툴팁 활성, 한국어 제목·본문, 미해결 토큰 0건을 확인했다. 1080p 캡처에서 비활성 HIT의 설명 표시·Collider 유지·클릭 거부를, 720p 캡처에서 위스키의 회복량·가격·영혼 최대 변형을 확인했다. 플레이어 드로우 덱에는 클릭 컴포넌트가 있고 상대 드로우 덱에는 없음을 런타임에서 확인했다. 운영체제 실제 마우스로 12개를 순차 이동하는 입력 검증은 수행하지 않았다.

@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 5240984484164536235}
   - component: {fileID: 3117458149716608140}
   - component: {fileID: 4595059020919501927}
+  - component: {fileID: 7022360686522226778}
   m_Layer: 0
   m_Name: MammonDie_Prototype
   m_TagString: Untagged
@@ -56,33 +57,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.5, y: 0.5, z: 0.5}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &4595059020919501927
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5294505426835478493}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 936ff26fa9cec87458b39207864df487, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.MammonDieView
-  dieVisual: {fileID: 9034780334301245888}
-  inputCollider: {fileID: 5240984484164536235}
-  dieBody: {fileID: 3117458149716608140}
-  launchHeight: 0.35
-  launchImpulse: 1.8
-  lateralImpulse: 0.45
-  torqueImpulse: 8
-  rollDuration: 3
-  settleDuration: 0.2
-  settleLinearSpeed: 0.08
-  settleAngularSpeed: 0.2
-  rollSurfaceSize: {x: 1.4, y: 1.2}
-  rollSurfaceThickness: 0.08
-  rollWallHeight: 0.65
-  rollWallThickness: 0.08
 --- !u!54 &3117458149716608140
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -110,6 +84,50 @@ Rigidbody:
   m_Interpolate: 1
   m_Constraints: 0
   m_CollisionDetection: 2
+--- !u!114 &4595059020919501927
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5294505426835478493}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 936ff26fa9cec87458b39207864df487, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.MammonDieView
+  dieVisual: {fileID: 9034780334301245888}
+  inputCollider: {fileID: 5240984484164536235}
+  dieBody: {fileID: 3117458149716608140}
+  launchHeight: 0.35
+  launchImpulse: 1.8
+  lateralImpulse: 0.45
+  torqueImpulse: 8
+  rollDuration: 3
+  settleDuration: 0.2
+  settleLinearSpeed: 0.08
+  settleAngularSpeed: 0.2
+  rollSurfaceSize: {x: 1.4, y: 1.2}
+  rollSurfaceThickness: 0.08
+  rollWallHeight: 0.65
+  rollWallThickness: 0.08
+  wallSafetyMargin: 0.18
+--- !u!114 &7022360686522226778
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5294505426835478493}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 813e6fe5491623b46988e63504cbd326, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.HoverDescriptionTarget
+  description: {fileID: 11400000, guid: 4d311094e02edf04e8594a8efabd2186, type: 2}
+  worldAnchor: {fileID: 0}
+  targetCollider: {fileID: 5240984484164536235}
+  showBelow: 0
 --- !u!1001 &8857249671404885547
 PrefabInstance:
   m_ObjectHideFlags: 0

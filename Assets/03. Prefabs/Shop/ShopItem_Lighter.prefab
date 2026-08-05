@@ -10,8 +10,12 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1191069393801395701, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
       propertyPath: displayModelPrefab
-      value:
+      value: 
       objectReference: {fileID: 1357090700038878843, guid: 825674819b82dd0438321d29d8c0324d, type: 3}
+    - target: {fileID: 1191069393801395701, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: hoverDescriptionTarget
+      value: 
+      objectReference: {fileID: 3515864309055975130}
     - target: {fileID: 3795005150099411801, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -114,5 +118,34 @@ PrefabInstance:
     m_RemovedGameObjects:
     - {fileID: 1217176478196107997, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6158096078959212752, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3515864309055975130}
   m_SourcePrefab: {fileID: 100100000, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+--- !u!1 &5902359993316743763 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6158096078959212752, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+  m_PrefabInstance: {fileID: 332306386787099267}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3515864309055975130
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5902359993316743763}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 813e6fe5491623b46988e63504cbd326, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.HoverDescriptionTarget
+  description: {fileID: 11400000, guid: 8435f04cad3220c49a7202eb9c7d234b, type: 2}
+  worldAnchor: {fileID: 0}
+  targetCollider: {fileID: 7267145911557330299}
+  showBelow: 0
+--- !u!65 &7267145911557330299 stripped
+BoxCollider:
+  m_CorrespondingSourceObject: {fileID: 6937373365422749688, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+  m_PrefabInstance: {fileID: 332306386787099267}
+  m_PrefabAsset: {fileID: 0}

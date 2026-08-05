@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7237871e0bb10fa47be9542376ea8083, type: 3}
+  m_Name: lighter
+  m_EditorClassIdentifier: Border::DiaBlackJack.Content.HoverDescriptionSO
+  title: "\uB77C\uC774\uD130"
+  descriptionTemplate: "\uBCF4\uC720 \uB371\uC5D0\uC11C \uCE74\uB4DC 1\uC7A5\uC744
+    \uC81C\uAC70\uD569\uB2C8\uB2E4. \uAC00\uACA9: {gold} {price}"
+  stateDescriptions: []

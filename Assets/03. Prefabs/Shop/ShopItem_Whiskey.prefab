@@ -9,13 +9,17 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 1191069393801395701, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
-      propertyPath: displayModelPrefab
-      value:
-      objectReference: {fileID: 569516968048728581, guid: bd7595eef395da24aa9eeed93f0ca3e7, type: 3}
-    - target: {fileID: 1191069393801395701, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
       propertyPath: kind
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 1191069393801395701, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: displayModelPrefab
+      value: 
+      objectReference: {fileID: 569516968048728581, guid: bd7595eef395da24aa9eeed93f0ca3e7, type: 3}
+    - target: {fileID: 1191069393801395701, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: hoverDescriptionTarget
+      value: 
+      objectReference: {fileID: 5718720604161052866}
     - target: {fileID: 3795005150099411801, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -130,5 +134,34 @@ PrefabInstance:
     m_RemovedGameObjects:
     - {fileID: 1217176478196107997, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6158096078959212752, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5718720604161052866}
   m_SourcePrefab: {fileID: 100100000, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+--- !u!65 &5435903455907566707 stripped
+BoxCollider:
+  m_CorrespondingSourceObject: {fileID: 6937373365422749688, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+  m_PrefabInstance: {fileID: 3113875433942623115}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &9098193686908492635 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6158096078959212752, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+  m_PrefabInstance: {fileID: 3113875433942623115}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5718720604161052866
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9098193686908492635}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 813e6fe5491623b46988e63504cbd326, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.HoverDescriptionTarget
+  description: {fileID: 11400000, guid: 9cc73f01a16efc646b11d0ddedcb4fec, type: 2}
+  worldAnchor: {fileID: 0}
+  targetCollider: {fileID: 5435903455907566707}
+  showBelow: 0

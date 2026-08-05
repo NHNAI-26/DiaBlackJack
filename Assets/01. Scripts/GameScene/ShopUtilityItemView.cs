@@ -15,8 +15,7 @@ namespace DiaBlackJack.GameScene
     {
         [SerializeField] private ShopUtilityItemKind kind;
         [SerializeField] private TMP_Text nameText;
-        [SerializeField] private GameObject hoverBadge;
-        [SerializeField] private TMP_Text hoverText;
+        [SerializeField] private HoverDescriptionTarget hoverDescriptionTarget;
 
         [Header("Display model")]
         [SerializeField] private GameObject displayModelPrefab;
@@ -30,7 +29,6 @@ namespace DiaBlackJack.GameScene
         private GameObject _displayModelRoot;
         private Renderer[] _outlineRenderers;
         private Camera _camera;
-        private bool _hovered;
 
         public ShopUtilityItemKind Kind => kind;
 
@@ -38,14 +36,13 @@ namespace DiaBlackJack.GameScene
 
         public bool CanUse { get; private set; }
 
+        internal HoverDescriptionTarget HoverDescriptionTarget =>
+            hoverDescriptionTarget;
+
         private void Awake()
         {
             CreateDisplayModel();
             _baseScale = transform.localScale;
-            if (hoverBadge != null)
-            {
-                hoverBadge.SetActive(false);
-            }
         }
 
         private void CreateDisplayModel()
@@ -81,7 +78,9 @@ namespace DiaBlackJack.GameScene
         public void Bind(
             ShopUtilityItemKind itemKind,
             string displayName,
-            string description,
+            int price,
+            int amount,
+            bool isPlayerSoulFull,
             bool canUse)
         {
             kind = itemKind;
@@ -92,20 +91,19 @@ namespace DiaBlackJack.GameScene
                 CurrencyIconText.Set(nameText, displayName);
             }
 
-            if (hoverText != null)
-            {
-                CurrencyIconText.Set(hoverText, description);
-            }
-
-            UpdateHoverBadge();
+            hoverDescriptionTarget?.Configure(
+                itemKind == ShopUtilityItemKind.Whiskey && isPlayerSoulFull
+                    ? "soul-full"
+                    : null,
+                new HoverDescriptionValue("gold", CurrencyIconMarkup.GoldTag),
+                new HoverDescriptionValue("price", price),
+                new HoverDescriptionValue("amount", amount));
         }
 
         public void SetHovered(bool hovered)
         {
-            _hovered = hovered;
             transform.localScale = _baseScale;
             ApplyHoverOutline(hovered);
-            UpdateHoverBadge();
         }
 
         private void ApplyHoverOutline(bool visible)
@@ -161,15 +159,7 @@ namespace DiaBlackJack.GameScene
         private void OnValidate()
         {
             hoverOutlineWidthPixels = Mathf.Max(0f, hoverOutlineWidthPixels);
-        }
-
-        private void UpdateHoverBadge()
-        {
-            if (hoverBadge != null)
-            {
-                hoverBadge.SetActive(_hovered);
-            }
-
+            hoverDescriptionTarget ??= GetComponent<HoverDescriptionTarget>();
         }
 
         private void FaceLabelsToCamera()
@@ -185,7 +175,6 @@ namespace DiaBlackJack.GameScene
             }
 
             FaceTextToCamera(nameText);
-            FaceTextToCamera(hoverText);
         }
 
         private void FaceTextToCamera(TMP_Text text)

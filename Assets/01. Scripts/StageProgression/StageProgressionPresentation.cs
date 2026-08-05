@@ -204,7 +204,9 @@ namespace DiaBlackJack.StageProgression.UI
             bool isWhiskeyUsed,
             bool canRestAtShop,
             bool canLeaveShop,
-            string shopTransactionResult)
+            string shopTransactionResult,
+            int whiskeyRecoveryAmount = 0,
+            bool isPlayerSoulFull = false)
         {
             StageProgress = stageProgress;
             StageName = stageName;
@@ -258,6 +260,8 @@ namespace DiaBlackJack.StageProgression.UI
             CanRestAtShop = canRestAtShop;
             CanLeaveShop = canLeaveShop;
             ShopTransactionResult = shopTransactionResult;
+            WhiskeyRecoveryAmount = whiskeyRecoveryAmount;
+            IsPlayerSoulFull = isPlayerSoulFull;
         }
 
         public string StageProgress { get; }
@@ -327,6 +331,8 @@ namespace DiaBlackJack.StageProgression.UI
         public string ShopTransactionResult { get; }
         public string WhiskeyLabel { get; }
         public int WhiskeyPriceAmount { get; }
+        public int WhiskeyRecoveryAmount { get; }
+        public bool IsPlayerSoulFull { get; }
     }
 
     public static class StageProgressionPresenter
@@ -503,7 +509,10 @@ namespace DiaBlackJack.StageProgression.UI
                     progress.Player.CurrentSoul < progress.Player.MaximumSoul &&
                     progress.Player.CurrentGold >= shop.Offer.WhiskeyPrice,
                 isShop && !shop.IsClosed,
-                isShop ? CreateShopTransactionResult(shop) : string.Empty);
+                isShop ? CreateShopTransactionResult(shop) : string.Empty,
+                isShop ? shop.Offer.WhiskeyRecovery : 0,
+                isShop &&
+                    progress.Player.CurrentSoul >= progress.Player.MaximumSoul);
         }
 
         private static IReadOnlyList<StartingDemonGrantCardViewModel>

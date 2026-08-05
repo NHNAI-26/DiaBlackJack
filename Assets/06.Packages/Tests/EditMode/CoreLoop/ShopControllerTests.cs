@@ -123,6 +123,52 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("GSH02")]
+        public void GSH02_U07_StandaloneShopInjectsPriceRecoveryAndSoulFullState()
+        {
+            GameObject lighter = Object.Instantiate(
+                AssetDatabase.LoadAssetAtPath<GameObject>(
+                    "Assets/03. Prefabs/Shop/ShopItem_Lighter.prefab"),
+                _root.transform);
+            GameObject whiskey = Object.Instantiate(
+                AssetDatabase.LoadAssetAtPath<GameObject>(
+                    "Assets/03. Prefabs/Shop/ShopItem_Whiskey.prefab"),
+                _root.transform);
+            SetPrivateField(
+                "lighterItem",
+                lighter.GetComponent<ShopUtilityItemView>());
+            SetPrivateField(
+                "whiskeyItem",
+                whiskey.GetComponent<ShopUtilityItemView>());
+
+            _shop.Open();
+            _shop.RefreshUtilityItems(2, 5, 12);
+
+            string lighterDescription = lighter
+                .GetComponent<HoverDescriptionTarget>()
+                .ResolvedDescription;
+            string whiskeyDescription = whiskey
+                .GetComponent<HoverDescriptionTarget>()
+                .ResolvedDescription;
+            Assert.That(
+                lighterDescription,
+                Does.Contain(_shop.CurrentLighterPrice.ToString()));
+            Assert.That(whiskeyDescription, Does.Contain("영혼을 2 회복"));
+            Assert.That(
+                whiskeyDescription,
+                Does.Contain(_shop.CurrentWhiskeyPrice.ToString()));
+            Assert.That(whiskeyDescription, Does.Not.Contain("이미 가득"));
+            Assert.That(lighterDescription, Does.Not.Contain("{"));
+            Assert.That(whiskeyDescription, Does.Not.Contain("{"));
+
+            _shop.RefreshUtilityItems(2, 12, 12);
+            Assert.That(
+                whiskey.GetComponent<HoverDescriptionTarget>()
+                    .ResolvedDescription,
+                Does.Contain("영혼이 이미 가득 찼습니다."));
+        }
+
+        [Test]
         public void RFM01_U03_AllCardSlotsCanBePurchasedWithoutAVisitLimit()
         {
             GameObject holderObject = new GameObject("Normal Card Holder");

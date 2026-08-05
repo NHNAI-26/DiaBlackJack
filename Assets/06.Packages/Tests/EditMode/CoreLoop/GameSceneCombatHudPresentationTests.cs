@@ -60,7 +60,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 model.PrimaryActions[2].Label,
                 Is.EqualTo($"CHANGE {CurrencyIconMarkup.SoulTag} 0"));
-            Assert.That(model.PrimaryActions[2].Tooltip, Does.Contain(core.ChangeActionText));
+            Assert.That(model.PrimaryActions.All(action => action.Tooltip == string.Empty),
+                Is.True);
             Assert.That(model.PrimaryActions.Any(action =>
                 action.Command.Kind == GameSceneCombatHudCommandKind.BeginContract),
                 Is.False);
@@ -1701,10 +1702,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                 TableCombatCommandView hit = group
                     .GetComponentsInChildren<TableCombatCommandView>(true)
                     .Single(command => command.Kind == GameSceneCombatHudCommandKind.Hit);
-                Assert.That(hit.GetComponent<Collider>().enabled, Is.False);
+                Assert.That(hit.GetComponent<Collider>().enabled, Is.True);
                 Assert.That(hit.GetComponent<SpriteRenderer>().color,
                     Is.EqualTo(new Color(0.35f, 0.35f, 0.35f, 0.35f)));
                 Assert.That(hit.TryGetCommand(out _), Is.False);
+                Assert.That(
+                    hit.GetComponent<HoverDescriptionTarget>(),
+                    Is.Not.Null);
 
                 TableCombatCommandView stand = group
                     .GetComponentsInChildren<TableCombatCommandView>(true)

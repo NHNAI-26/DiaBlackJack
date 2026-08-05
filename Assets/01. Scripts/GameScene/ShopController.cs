@@ -356,20 +356,13 @@ namespace DiaBlackJack.GameScene
             }
 
             int currentLighterPrice = CurrentLighterPrice;
-            string lighterDescription =
-                "Remove 1 card from your deck.\nPRICE " +
-                currentLighterPrice +
-                " GOLD";
-            if (_lighterPurchasedThisVisit)
-            {
-                lighterDescription += "\nPURCHASED THIS SHOP";
-            }
-
             BindUtilityItem(
                 lighterItem,
                 ShopUtilityItemKind.Lighter,
                 "LIGHTER",
-                lighterDescription,
+                currentLighterPrice,
+                amount: 0,
+                isPlayerSoulFull: false,
                 !_lighterPurchasedThisVisit,
                 IsOpen &&
                     !_lighterPurchasedThisVisit &&
@@ -377,27 +370,13 @@ namespace DiaBlackJack.GameScene
                     removableCardCount > 1);
 
             int currentWhiskeyPrice = CurrentWhiskeyPrice;
-            string whiskeyDescription =
-                "Restore " +
-                whiskeySoulRestore +
-                " soul.\nPRICE " +
-                currentWhiskeyPrice +
-                " GOLD";
-            if (_whiskeyPurchasedThisVisit)
-            {
-                whiskeyDescription += "\nPURCHASED THIS SHOP";
-            }
-
-            if (playerCurrentSoul >= playerMaximumSoul)
-            {
-                whiskeyDescription += "\nSOUL IS FULL";
-            }
-
             BindUtilityItem(
                 whiskeyItem,
                 ShopUtilityItemKind.Whiskey,
                 "WHISKEY",
-                whiskeyDescription,
+                currentWhiskeyPrice,
+                whiskeySoulRestore,
+                playerCurrentSoul >= playerMaximumSoul,
                 !_whiskeyPurchasedThisVisit,
                 IsOpen &&
                     !_whiskeyPurchasedThisVisit &&
@@ -618,14 +597,18 @@ namespace DiaBlackJack.GameScene
                 lighterItem,
                 ShopUtilityItemKind.Lighter,
                 "LIGHTER",
-                model.LighterLabel,
+                model.LighterPriceAmount,
+                amount: 0,
+                isPlayerSoulFull: false,
                 !model.IsLighterUsed,
                 canRemove);
             BindUtilityItem(
                 whiskeyItem,
                 ShopUtilityItemKind.Whiskey,
                 "WHISKEY",
-                model.WhiskeyLabel,
+                model.WhiskeyPriceAmount,
+                model.WhiskeyRecoveryAmount,
+                model.IsPlayerSoulFull,
                 !model.IsWhiskeyUsed,
                 model.CanRestAtShop);
         }
@@ -885,7 +868,9 @@ namespace DiaBlackJack.GameScene
             ShopUtilityItemView item,
             ShopUtilityItemKind kind,
             string displayName,
-            string description,
+            int price,
+            int amount,
+            bool isPlayerSoulFull,
             bool visible,
             bool canUse)
         {
@@ -900,7 +885,13 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            item.Bind(kind, displayName, description, canUse);
+            item.Bind(
+                kind,
+                displayName,
+                price,
+                amount,
+                isPlayerSoulFull,
+                canUse);
         }
 
         private void LayoutDemonOfferViews()

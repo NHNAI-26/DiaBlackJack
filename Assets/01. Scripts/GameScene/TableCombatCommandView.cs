@@ -10,6 +10,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private SpriteRenderer artworkRenderer;
         [SerializeField] private TMP_Text labelText;
         [SerializeField] private Collider hitCollider;
+        [SerializeField] private HoverDescriptionTarget hoverDescriptionTarget;
         [SerializeField] private Color interactableColor =
             new Color(0.91f, 0.85f, 0.69f, 1f);
         [SerializeField] private Color hoveredColor =
@@ -33,7 +34,9 @@ namespace DiaBlackJack.GameScene
         public bool HasRequiredReferences =>
             artworkRenderer != null &&
             hitCollider != null &&
-            labelText != null;
+            labelText != null &&
+            hoverDescriptionTarget != null &&
+            hoverDescriptionTarget.HasRequiredReferences;
 
         public void Render(GameSceneCombatHudActionViewModel model)
         {
@@ -51,7 +54,7 @@ namespace DiaBlackJack.GameScene
 
             if (hitCollider != null)
             {
-                hitCollider.enabled = IsInteractable;
+                hitCollider.enabled = _model != null;
             }
 
             ApplyColor();
@@ -90,6 +93,11 @@ namespace DiaBlackJack.GameScene
 
             command = default;
             return false;
+        }
+
+        private void OnValidate()
+        {
+            hoverDescriptionTarget ??= GetComponent<HoverDescriptionTarget>();
         }
 
         private void ApplyColor()

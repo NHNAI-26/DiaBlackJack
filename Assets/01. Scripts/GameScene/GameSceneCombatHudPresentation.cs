@@ -471,19 +471,15 @@ namespace DiaBlackJack.GameScene
                 CreateAction(
                     GameSceneCombatHudCommandKind.Hit,
                     "HIT",
-                    core.CanHit && !inputLocked,
-                    "Draw one public card.\nBust if visible total exceeds 21."),
+                    core.CanHit && !inputLocked),
                 CreateAction(
                     GameSceneCombatHudCommandKind.Stand,
                     "STAND",
-                    core.CanStand && !inputLocked,
-                    "End your actions for this round."),
+                    core.CanStand && !inputLocked),
                 CreateAction(
                     GameSceneCombatHudCommandKind.BeginChange,
                     FormatChangeLabel(core.ChangeActionText),
-                    core.CanChange && !inputLocked,
-                    "Reveal and discard hidden card, then choose one of two candidates.\n" +
-                    core.ChangeActionText)
+                    core.CanChange && !inputLocked)
             };
 
             var activeContractActions = new List<GameSceneCombatHudActionViewModel>();

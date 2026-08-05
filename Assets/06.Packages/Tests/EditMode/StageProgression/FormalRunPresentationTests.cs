@@ -5,6 +5,7 @@ using DiaBlackJack.CoreLoop;
 using DiaBlackJack.GameScene;
 using DiaBlackJack.StageProgression.UI;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 
 namespace DiaBlackJack.StageProgression.Tests
@@ -56,6 +57,14 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(model.CanSkipReward, Is.False);
             Assert.That(model.CanAdvanceStage, Is.False);
             Assert.That(model.CanLeaveShop, Is.True);
+            Assert.That(
+                model.WhiskeyRecoveryAmount,
+                Is.EqualTo(run.ActiveShop.Offer.WhiskeyRecovery));
+            Assert.That(
+                model.IsPlayerSoulFull,
+                Is.EqualTo(
+                    run.CombatSession.Progress.Player.CurrentSoul >=
+                    run.CombatSession.Progress.Player.MaximumSoul));
         }
 
         [Test]
@@ -307,6 +316,69 @@ namespace DiaBlackJack.StageProgression.Tests
 
                 Assert.That(lighter.transform.localPosition, Is.EqualTo(lighterPosition));
                 Assert.That(whiskey.transform.localPosition, Is.EqualTo(whiskeyPosition));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        [Category("GSH02")]
+        public void GSH02_U08_FormalShopUsesExactWhiskeyValuesAndSoulFullState()
+        {
+            FormalRunSession run = OpenFirstShop();
+            PlayerRunState player = run.CombatSession.Progress.Player;
+            player.SetCurrentSoul(player.MaximumSoul - 1);
+            StageProgressionViewModel model = StageProgressionPresenter.Create(run);
+            GameObject root = new GameObject("GSH02 Formal Utility Hover Test");
+            GameObject lighter = null;
+            GameObject whiskey = null;
+            try
+            {
+                ShopController shop = CreateFormalShopController(root);
+                lighter = UnityEngine.Object.Instantiate(
+                    AssetDatabase.LoadAssetAtPath<GameObject>(
+                        "Assets/03. Prefabs/Shop/ShopItem_Lighter.prefab"),
+                    root.transform);
+                whiskey = UnityEngine.Object.Instantiate(
+                    AssetDatabase.LoadAssetAtPath<GameObject>(
+                        "Assets/03. Prefabs/Shop/ShopItem_Whiskey.prefab"),
+                    root.transform);
+                SetField(
+                    shop,
+                    "lighterItem",
+                    lighter.GetComponent<ShopUtilityItemView>());
+                SetField(
+                    shop,
+                    "whiskeyItem",
+                    whiskey.GetComponent<ShopUtilityItemView>());
+
+                shop.OpenFormal(model);
+
+                Assert.That(
+                    lighter.GetComponent<HoverDescriptionTarget>()
+                        .ResolvedDescription,
+                    Does.Contain(model.LighterPriceAmount.ToString()));
+                string availableWhiskey = whiskey
+                    .GetComponent<HoverDescriptionTarget>()
+                    .ResolvedDescription;
+                Assert.That(
+                    availableWhiskey,
+                    Does.Contain(model.WhiskeyRecoveryAmount.ToString()));
+                Assert.That(
+                    availableWhiskey,
+                    Does.Contain(model.WhiskeyPriceAmount.ToString()));
+                Assert.That(
+                    availableWhiskey,
+                    Does.Not.Contain("이미 가득"));
+
+                player.SetCurrentSoul(player.MaximumSoul);
+                shop.OpenFormal(StageProgressionPresenter.Create(run));
+                Assert.That(
+                    whiskey.GetComponent<HoverDescriptionTarget>()
+                        .ResolvedDescription,
+                    Does.Contain("영혼이 이미 가득 찼습니다."));
             }
             finally
             {
