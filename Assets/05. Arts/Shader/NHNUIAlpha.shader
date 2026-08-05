@@ -97,6 +97,9 @@ Shader "Shader/UI Alpha"
                 fixed4 color : COLOR;
                 float2 texcoord : TEXCOORD0;
                 float4 worldPosition : TEXCOORD1;
+#if defined(UNITY_UI_CLIP_RECT)
+                half4 mask : TEXCOORD2;
+#endif
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -105,6 +108,8 @@ Shader "Shader/UI Alpha"
             fixed4 _Color;
             fixed4 _TextureSampleAdd;
             float4 _ClipRect;
+            float _UIMaskSoftnessX;
+            float _UIMaskSoftnessY;
             float _AlphaMultiplier;
             float _UseRgbOverride;
             fixed4 _RgbOverrideColor;
@@ -141,8 +146,19 @@ Shader "Shader/UI Alpha"
                 input.texcoord += expandDirection * _PixelOutlineMeshPadding.zw;
                 #endif
 
+                float4 clipPosition = UnityObjectToClipPos(input.vertex);
+#if defined(UNITY_UI_CLIP_RECT)
+                float2 pixelSize = clipPosition.w;
+                pixelSize /= abs(mul((float2x2)UNITY_MATRIX_P, _ScreenParams.xy));
+                float4 clampedRect = clamp(_ClipRect, -2e10, 2e10);
+                output.mask = half4(
+                    input.vertex.xy * 2 - clampedRect.xy - clampedRect.zw,
+                    0.25 / (0.25 * half2(
+                        _UIMaskSoftnessX,
+                        _UIMaskSoftnessY) + abs(pixelSize.xy)));
+#endif
                 output.worldPosition = input.vertex;
-                output.vertex = UnityObjectToClipPos(input.vertex);
+                output.vertex = clipPosition;
                 output.texcoord = input.texcoord;
                 output.color = input.color * _Color;
                 return output;
@@ -328,7 +344,10 @@ Shader "Shader/UI Alpha"
                 #endif
 
                 #ifdef UNITY_UI_CLIP_RECT
-                color.a *= UnityGet2DClipping(input.worldPosition.xy, _ClipRect);
+                half2 mask = saturate(
+                    (_ClipRect.zw - _ClipRect.xy - abs(input.mask.xy)) *
+                    input.mask.zw);
+                color.a *= mask.x * mask.y;
                 #endif
 
                 #ifdef UNITY_UI_ALPHACLIP
