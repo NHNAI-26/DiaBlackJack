@@ -1,6 +1,10 @@
+using System;
 using System.Collections.Generic;
 using Border.Audio;
+using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Serialization;
+using VolumetricLights;
 
 namespace DiaBlackJack.GameScene
 {
@@ -17,6 +21,15 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Light volumetricLight;
         [SerializeField] private Light enemyLight;
         [SerializeField] private Light enteranceLight;
+        [SerializeField] private Transform leftDoorBone;
+        [SerializeField] private Transform rightDoorBone;
+        [FormerlySerializedAs("doorShakeDuration")]
+        [SerializeField, Min(0f)] private float doorRotationDuration = 1.4f;
+        [FormerlySerializedAs("doorShakeStrength")]
+        [SerializeField] private Vector3 doorRotationAmount =
+            new Vector3(0f, 0f, 12f);
+        [SerializeField] private AnimationCurve doorAnimationCurve =
+            CreateDoorAnimationCurve(1f);
         [SerializeField] private MoodTransitionMode transitionMode =
             MoodTransitionMode.Fade;
 
@@ -25,7 +38,16 @@ namespace DiaBlackJack.GameScene
         private float _moodBlendDuration;
         private float _moodBlendElapsed;
         private float _moodBlendStartLightningBoost;
+        private Sequence _doorAnimationSequence;
+        private Transform _doorAnimationDriver;
+        private Transform _doorAnimationMirror;
+        private Quaternion _doorAnimationDriverStartRotation;
+        private Quaternion _doorAnimationMirrorStartRotation;
+        private VolumetricLight _volumetricLightRenderer;
+        private ShadowBakeInterval _originalShadowBakeInterval;
+        private bool _shadowBakeRefreshOverrideActive;
         private MoodProfileSO _pendingBlendProfile;
+        private MoodProfileSO _pendingBgmProfile;
         private Color _blendWindowStart;
         private Color _blendWindowTarget;
         private Color _blendVolumetricStart;
@@ -57,6 +79,12 @@ namespace DiaBlackJack.GameScene
 
         public bool IsAudioReactiveLightningActive =>
             _audioReactiveLightningEnabled;
+
+        public bool IsEntranceDoorAnimationPlaying =>
+            _doorAnimationSequence != null &&
+            _doorAnimationSequence.IsActive();
+
+        public event Action EntranceDoorAnimationCompleted;
 
         public float CurrentAudioReactiveLightningRms =>
             _currentLightningSfxRms;
@@ -94,11 +122,12 @@ namespace DiaBlackJack.GameScene
             }
 
             KillMoodSequence();
-            ApplyBgm(profile);
+            _pendingBgmProfile = profile;
 
             switch (transitionMode)
             {
                 case MoodTransitionMode.Fade:
+                    PlayEntranceDoorAnimation();
                     BeginAudioReactiveLightningBlendOut(resolvedDuration);
                     FadeToMood(profile, resolvedDuration);
                     break;
@@ -116,14 +145,32 @@ namespace DiaBlackJack.GameScene
             }
 
             KillMoodSequence();
+            _pendingBgmProfile = profile;
+            PlayEntranceDoorAnimation();
             DisableAudioReactiveLightning();
             ApplyColors(
                 profile.WindowGlassGlowColor,
                 profile.VolumetricLightColor,
                 profile.EnemyLightColor,
                 profile.EnteranceLightColor);
-            ApplyBgm(profile);
             ConfigureAudioReactiveLightning(profile);
+        }
+
+        public void PlayPendingBgm()
+        {
+            MoodProfileSO profile = _pendingBgmProfile;
+            _pendingBgmProfile = null;
+            ApplyBgm(profile);
+        }
+
+        public void CancelPendingBgm()
+        {
+            _pendingBgmProfile = null;
+        }
+
+        public bool TryPlayEntranceDoorAnimation()
+        {
+            return PlayEntranceDoorAnimation();
         }
 
         public MoodProfileSO FindProfile(string id)
@@ -151,6 +198,12 @@ namespace DiaBlackJack.GameScene
         {
             KillMoodSequence();
             DisableAudioReactiveLightning();
+            KillEntranceDoorAnimation(force: true);
+        }
+
+        private void OnValidate()
+        {
+            doorAnimationCurve = EnsureDoorAnimationCurve(doorAnimationCurve);
         }
 
         private void Update()
@@ -427,7 +480,7 @@ namespace DiaBlackJack.GameScene
                 _lightningSfxRollTimer = _lightningSfxInterval;
             }
 
-            if (Random.value <= _lightningSfxPlayChance)
+            if (UnityEngine.Random.value <= _lightningSfxPlayChance)
             {
                 TryPlayRandomLightningSfx();
             }
@@ -577,10 +630,223 @@ namespace DiaBlackJack.GameScene
             return profile != null && profile.HasValidId;
         }
 
+        private bool PlayEntranceDoorAnimation()
+        {
+            if (doorRotationDuration <= 0f)
+            {
+                return false;
+            }
+
+            if (IsEntranceDoorAnimationPlaying)
+            {
+                return true;
+            }
+
+            ResolveDoorBones();
+            if (leftDoorBone == null && rightDoorBone == null)
+            {
+                return false;
+            }
+
+            PlaySharedDoorRotation();
+            return _doorAnimationSequence != null;
+        }
+
+        private void PlaySharedDoorRotation()
+        {
+            if ((leftDoorBone == null && rightDoorBone == null) ||
+                IsEntranceDoorAnimationPlaying)
+            {
+                return;
+            }
+
+            KillEntranceDoorAnimation();
+
+            _doorAnimationDriver = leftDoorBone != null
+                ? leftDoorBone
+                : rightDoorBone;
+            _doorAnimationMirror = _doorAnimationDriver == leftDoorBone
+                ? rightDoorBone
+                : leftDoorBone;
+            _doorAnimationDriverStartRotation = _doorAnimationDriver.localRotation;
+            _doorAnimationMirrorStartRotation = _doorAnimationMirror == null
+                ? Quaternion.identity
+                : _doorAnimationMirror.localRotation;
+
+            float openDuration = doorRotationDuration * 0.55f;
+            float closeDuration = doorRotationDuration - openDuration;
+            float direction = _doorAnimationDriver == leftDoorBone ? 1f : -1f;
+            Vector3 startEulerAngles = _doorAnimationDriver.localEulerAngles;
+            Vector3 openEulerAngles =
+                startEulerAngles + doorRotationAmount * direction;
+            AnimationCurve animationCurve =
+                EnsureDoorAnimationCurve(doorAnimationCurve);
+
+            _doorAnimationSequence = DOTween.Sequence()
+                .Append(_doorAnimationDriver.DOLocalRotate(
+                    openEulerAngles,
+                    openDuration,
+                    RotateMode.Fast)
+                    .SetEase(animationCurve))
+                .Append(_doorAnimationDriver.DOLocalRotate(
+                    startEulerAngles,
+                    closeDuration,
+                    RotateMode.Fast)
+                    .SetEase(animationCurve))
+                .OnUpdate(ApplyMirroredDoorRotation)
+                .OnComplete(CompleteSharedDoorAnimation)
+                .SetTarget(_doorAnimationDriver);
+
+            BeginVolumetricShadowRefresh();
+        }
+
+        private void ApplyMirroredDoorRotation()
+        {
+            if (_doorAnimationDriver == null || _doorAnimationMirror == null)
+            {
+                return;
+            }
+
+            Quaternion driverDelta = Quaternion.Inverse(
+                _doorAnimationDriverStartRotation) *
+                _doorAnimationDriver.localRotation;
+            _doorAnimationMirror.localRotation =
+                _doorAnimationMirrorStartRotation *
+                Quaternion.Inverse(driverDelta);
+        }
+
+        private void CompleteSharedDoorAnimation()
+        {
+            ApplyMirroredDoorRotation();
+            EndVolumetricShadowRefresh();
+            _doorAnimationSequence = null;
+            _doorAnimationDriver = null;
+            _doorAnimationMirror = null;
+            EntranceDoorAnimationCompleted?.Invoke();
+        }
+
+        private void ResolveDoorBones()
+        {
+            leftDoorBone ??= FindSceneTransform(
+                "LeftDoorBone",
+                "LeftDoor_Bone");
+            rightDoorBone ??= FindSceneTransform(
+                "RightDoorBone",
+                "RightDoor_Bone");
+        }
+
+        private static Transform FindSceneTransform(
+            string primaryName,
+            string fallbackName)
+        {
+            GameObject foundObject = GameObject.Find(primaryName);
+            if (foundObject == null)
+            {
+                foundObject = GameObject.Find(fallbackName);
+            }
+
+            if (foundObject != null)
+            {
+                return foundObject.transform;
+            }
+
+            Transform[] transforms = UnityEngine.Object.FindObjectsByType<Transform>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+
+            foreach (Transform candidate in transforms)
+            {
+                if (candidate != null &&
+                    (candidate.name == primaryName ||
+                        candidate.name == fallbackName))
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        private void KillEntranceDoorAnimation(bool force = false)
+        {
+            if (!force && IsEntranceDoorAnimationPlaying)
+            {
+                return;
+            }
+
+            _doorAnimationSequence?.Kill();
+            _doorAnimationSequence = null;
+            leftDoorBone?.DOKill();
+            rightDoorBone?.DOKill();
+            EndVolumetricShadowRefresh();
+            _doorAnimationDriver = null;
+            _doorAnimationMirror = null;
+        }
+
+        private void BeginVolumetricShadowRefresh()
+        {
+            if (volumetricLight == null)
+            {
+                return;
+            }
+
+            _volumetricLightRenderer ??=
+                volumetricLight.GetComponent<VolumetricLight>();
+            if (_volumetricLightRenderer == null)
+            {
+                return;
+            }
+
+            if (!_shadowBakeRefreshOverrideActive)
+            {
+                _originalShadowBakeInterval =
+                    _volumetricLightRenderer.shadowBakeInterval;
+                _shadowBakeRefreshOverrideActive = true;
+            }
+
+            _volumetricLightRenderer.shadowBakeInterval =
+                ShadowBakeInterval.EveryFrame;
+        }
+
+        private void EndVolumetricShadowRefresh()
+        {
+            if (!_shadowBakeRefreshOverrideActive)
+            {
+                return;
+            }
+
+            if (_volumetricLightRenderer != null)
+            {
+                _volumetricLightRenderer.shadowBakeInterval =
+                    _originalShadowBakeInterval;
+            }
+
+            _shadowBakeRefreshOverrideActive = false;
+        }
+
+        private static AnimationCurve EnsureDoorAnimationCurve(
+            AnimationCurve curve)
+        {
+            return curve == null || curve.length == 0
+                ? CreateDoorAnimationCurve(1f)
+                : curve;
+        }
+
+        private static AnimationCurve CreateDoorAnimationCurve(float scale)
+        {
+            return new AnimationCurve(
+                new Keyframe(0f, 0f),
+                new Keyframe(0.42f, 1f + 0.08f * scale),
+                new Keyframe(0.7f, 1f - 0.02f * scale),
+                new Keyframe(0.88f, 1f + 0.01f * scale),
+                new Keyframe(1f, 1f));
+        }
+
         private void KillMoodSequence()
         {
             _isMoodBlendActive = false;
             _pendingBlendProfile = null;
+            _pendingBgmProfile = null;
         }
     }
 }
