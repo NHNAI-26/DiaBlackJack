@@ -1,5 +1,11 @@
 # 테이블 도감 진행 기록
 
+## DX-M10: 계약 악마 카드 바로가기
+
+- 적 정보의 계약 악마 카드가 왼쪽 클릭된 `DefinitionKey`를 Overlay 이벤트로 전달하고, Controller가 악마 도감 페이지 목록의 실제 인덱스를 찾아 기존 다음 방향 책장 전환 한 번으로 바로 이동하도록 연결했다. 오른쪽 클릭, 없는 key, 범위 밖·중복 인덱스, 닫힘·전환 중 요청은 상태를 바꾸지 않는다.
+- 신규 `DXM10` 테스트는 4/4(job `a9f0a6ad685c48f3a0dd20988fbfa6ec`) 통과했다. 인접 `CodexPresentationTests`·`CodexAssetTests`는 30/33(job `6e8a79af219549038e4c9272d13d9164`)이며 실패 3건은 기존 `ContractTemplate` 너비 0, 덱 셀 100×150 대 기대 116×184, 비활성 탭 alpha 0.8235 대 기대 0.5의 병행 프리팹 변경이다. 해당 변경은 되돌리지 않았다.
+- C# 컴파일 오류와 최종 Console Error는 0이고 GameScene validation은 issue 0, missing script 0, broken prefab 0이다. 공유 Editor에서 다른 세션의 Play Mode·테스트가 반복되어 1280×720·1920×1080 수동 확인은 완료로 기록하지 않는다.
+
 ## DX-M09: 악마 상세 정보 문구 정리
 
 - 악마 페이지의 새 `EnglishName` TMP에 정의 key 대문자 영문명을 연결했다. 구매·계약 행은 각각 `상점 구매 가격 + 기존 골드 아이콘 + 숫자`, `계약 영혼 + 기존 영혼 아이콘 + 숫자`로 바꾸고 아이콘 에셋은 유지했다. 액티브 스킬·대가 본문에서는 중복 제목과 선행 빈 줄을 제거했다.

@@ -52,6 +52,7 @@ namespace DiaBlackJack.GameScene
 
             view.CloseRequested += Close;
             view.CategoryRequested += ShowCategory;
+            view.DemonPageRequested += HandleDemonPageRequested;
             view.HoverBadgeRequested += HandleHoverBadgeRequested;
             view.HoverBadgeCleared += HandleHoverBadgeCleared;
         }
@@ -62,6 +63,7 @@ namespace DiaBlackJack.GameScene
             {
                 view.CloseRequested -= Close;
                 view.CategoryRequested -= ShowCategory;
+                view.DemonPageRequested -= HandleDemonPageRequested;
                 view.HoverBadgeRequested -= HandleHoverBadgeRequested;
                 view.HoverBadgeCleared -= HandleHoverBadgeCleared;
             }
@@ -173,6 +175,35 @@ namespace DiaBlackJack.GameScene
             SetBookVisible(available);
         }
 
+        internal bool TryShowDemonPage(string definitionKey)
+        {
+            if (!IsOpen ||
+                view.IsTransitioning ||
+                string.IsNullOrEmpty(definitionKey))
+            {
+                return false;
+            }
+
+            int pageIndex = -1;
+            for (int index = 0; index < _demonPages.Count; index++)
+            {
+                if (_demonPages[index].DefinitionKey == definitionKey)
+                {
+                    pageIndex = index;
+                    break;
+                }
+            }
+
+            if (pageIndex < 0 || !_navigation.TryShowDemonPage(pageIndex))
+            {
+                return false;
+            }
+
+            return view.TryRenderTransition(
+                CreateCurrentBook(),
+                CodexPageTurnDirection.Next);
+        }
+
         private void BuildModels()
         {
             if (cardContentCatalog == null)
@@ -237,6 +268,11 @@ namespace DiaBlackJack.GameScene
         private void HandleHoverBadgeRequested(CardHoverBadgeRequest request)
         {
             HoverBadgeRequested?.Invoke(request);
+        }
+
+        private void HandleDemonPageRequested(string definitionKey)
+        {
+            TryShowDemonPage(definitionKey);
         }
 
         private void HandleHoverBadgeCleared()

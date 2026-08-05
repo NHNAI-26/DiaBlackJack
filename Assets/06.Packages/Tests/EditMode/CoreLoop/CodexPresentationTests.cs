@@ -178,6 +178,50 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(demonLast.CanMoveNext, Is.False);
         }
 
+        [Test]
+        [Category("DXM10")]
+        public void DXM10_U01_DirectDemonNavigationSupportsFirstMiddleAndLastPage()
+        {
+            CodexNavigationState navigation =
+                new CodexNavigationState(3, 6);
+            Assert.That(navigation.TryMoveNext(), Is.True);
+            Assert.That(navigation.CurrentPageIndex, Is.EqualTo(1));
+
+            Assert.That(navigation.TryShowDemonPage(0), Is.True);
+            Assert.That(navigation.Category, Is.EqualTo(CodexCategory.DemonCard));
+            Assert.That(navigation.CurrentPageIndex, Is.Zero);
+
+            Assert.That(
+                navigation.TryShowCategory(CodexCategory.Enemy),
+                Is.True);
+            Assert.That(navigation.CurrentPageIndex, Is.EqualTo(1));
+
+            Assert.That(navigation.TryShowDemonPage(2), Is.True);
+            Assert.That(navigation.CurrentPageIndex, Is.EqualTo(2));
+            Assert.That(navigation.TryShowDemonPage(5), Is.True);
+            Assert.That(navigation.CurrentPageIndex, Is.EqualTo(5));
+        }
+
+        [Test]
+        [Category("DXM10")]
+        public void DXM10_U02_DirectDemonNavigationRejectsInvalidAndDuplicateTargets()
+        {
+            CodexNavigationState navigation =
+                new CodexNavigationState(2, 3);
+            Assert.That(navigation.TryMoveNext(), Is.True);
+            Assert.That(navigation.CurrentPageIndex, Is.EqualTo(1));
+
+            Assert.That(navigation.TryShowDemonPage(-1), Is.False);
+            Assert.That(navigation.TryShowDemonPage(3), Is.False);
+            Assert.That(navigation.Category, Is.EqualTo(CodexCategory.Enemy));
+            Assert.That(navigation.CurrentPageIndex, Is.EqualTo(1));
+
+            Assert.That(navigation.TryShowDemonPage(2), Is.True);
+            Assert.That(navigation.TryShowDemonPage(2), Is.False);
+            Assert.That(navigation.Category, Is.EqualTo(CodexCategory.DemonCard));
+            Assert.That(navigation.CurrentPageIndex, Is.EqualTo(2));
+        }
+
         private static CardContentCatalog CreateCardCatalog()
         {
             return new CardContentCatalog(

@@ -785,7 +785,10 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             try
             {
-                preview.Render(sprite, model.EnglishName);
+                preview.Render(
+                    sprite,
+                    model.EnglishName,
+                    model.DefinitionKey);
 
                 Assert.That(
                     model.EnglishName,
@@ -837,6 +840,46 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(
                     textData.FindProperty("m_fontSizeMax").floatValue,
                     Is.EqualTo(14f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        [Category("DXM10")]
+        public void DXM10_U03_DemonPreviewRaisesDefinitionKeyOnLeftClickOnly()
+        {
+            GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(
+                DemonCardPreviewPrefabPath);
+            GameObject instance = UnityEngine.Object.Instantiate(source);
+            CodexDemonCardPreviewView preview =
+                instance.GetComponent<CodexDemonCardPreviewView>();
+            string definitionKey = DemonContractCatalog.SatanKey;
+            int clickCount = 0;
+            string clickedDefinitionKey = null;
+            preview.Clicked += key =>
+            {
+                clickCount++;
+                clickedDefinitionKey = key;
+            };
+
+            try
+            {
+                preview.Render(null, "SATAN", definitionKey);
+                preview.OnPointerClick(new PointerEventData(null)
+                {
+                    button = PointerEventData.InputButton.Right
+                });
+                Assert.That(clickCount, Is.Zero);
+
+                preview.OnPointerClick(new PointerEventData(null)
+                {
+                    button = PointerEventData.InputButton.Left
+                });
+                Assert.That(clickCount, Is.EqualTo(1));
+                Assert.That(clickedDefinitionKey, Is.EqualTo(definitionKey));
             }
             finally
             {
@@ -1275,6 +1318,109 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("DXM10")]
+        public void DXM10_U04_ContractClickOpensMatchingDemonPageThroughController()
+        {
+            GameObject overlayPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(OverlayPrefabPath);
+            GameObject overlay = UnityEngine.Object.Instantiate(overlayPrefab);
+            CodexOverlayView view = overlay.GetComponent<CodexOverlayView>();
+            InvokeLifecycle(view, "Awake");
+            GameObject controllerObject = new GameObject(
+                "CodexControllerTest");
+            controllerObject.SetActive(false);
+            GameObject book = new GameObject("CodexBookTest");
+            CodexController controller =
+                controllerObject.AddComponent<CodexController>();
+            CardContentCatalogSO cardCatalog = LoadCardCatalog();
+            SerializedObject serialized = new SerializedObject(controller);
+            serialized.FindProperty("view").objectReferenceValue = view;
+            serialized.FindProperty("cardContentCatalog").objectReferenceValue =
+                cardCatalog;
+            serialized.FindProperty("enemyContentCatalog").objectReferenceValue =
+                LoadEnemyCatalog();
+            serialized.FindProperty("tableBookRoot").objectReferenceValue = book;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+
+            controllerObject.SetActive(true);
+            InvokeLifecycle(controller, "Awake");
+            InvokeLifecycle(controller, "OnEnable");
+
+            try
+            {
+                Assert.That(controller.Open(), Is.True);
+                Assert.That(
+                    controller.TryShowDemonPage("missing-demon"),
+                    Is.False);
+
+                IReadOnlyList<EnemyCodexPageViewModel> enemyPages =
+                    CreateEnemyPages(cardCatalog);
+                int contractPageIndex = FindEnemyPageIndex(
+                    enemyPages,
+                    hasContracts: true);
+                EnemyCodexPageViewModel enemyPage =
+                    enemyPages[contractPageIndex];
+                view.Render(new CodexBookViewModel(
+                    CodexCategory.Enemy,
+                    contractPageIndex,
+                    enemyPages.Count,
+                    enemyPage,
+                    null));
+
+                CodexDemonCardPreviewView clickedItem = null;
+                foreach (CodexDemonCardPreviewView item in overlay
+                    .GetComponentsInChildren<CodexDemonCardPreviewView>(true))
+                {
+                    if (item.gameObject.activeSelf)
+                    {
+                        clickedItem = item;
+                        break;
+                    }
+                }
+
+                Assert.That(clickedItem, Is.Not.Null);
+                string definitionKey =
+                    enemyPage.ContractableDemons[0].DefinitionKey;
+                IReadOnlyList<DemonCodexPageViewModel> demonPages =
+                    CodexPresenter.CreateDemonPages(
+                        cardCatalog.BuildRuntimeCatalog(),
+                        cardCatalog.BuildDemonLoreCatalog());
+                int expectedIndex = -1;
+                for (int index = 0; index < demonPages.Count; index++)
+                {
+                    if (demonPages[index].DefinitionKey == definitionKey)
+                    {
+                        expectedIndex = index;
+                        break;
+                    }
+                }
+
+                Assert.That(expectedIndex, Is.GreaterThanOrEqualTo(0));
+                clickedItem.OnPointerClick(new PointerEventData(null)
+                {
+                    button = PointerEventData.InputButton.Left
+                });
+
+                CodexNavigationState navigation =
+                    GetPrivateField<CodexNavigationState>(
+                        controller,
+                        "_navigation");
+                Assert.That(
+                    navigation.Category,
+                    Is.EqualTo(CodexCategory.DemonCard));
+                Assert.That(
+                    navigation.CurrentPageIndex,
+                    Is.EqualTo(expectedIndex));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(controllerObject);
+                UnityEngine.Object.DestroyImmediate(overlay);
+                UnityEngine.Object.DestroyImmediate(book);
+            }
+        }
+
+        [Test]
         public void DX03_U02_TransientCloseConsumesCodexBeforePause()
         {
             GameObject overlayPrefab =
@@ -1504,6 +1650,15 @@ namespace DiaBlackJack.CoreLoop.Tests
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null);
             method.Invoke(target, null);
+        }
+
+        private static T GetPrivateField<T>(object target, string fieldName)
+        {
+            FieldInfo field = target.GetType().GetField(
+                fieldName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null);
+            return (T)field.GetValue(target);
         }
     }
 }

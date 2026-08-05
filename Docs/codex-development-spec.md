@@ -1,5 +1,13 @@
 # 테이블 도감 개발 명세
 
+## DX-M10: 계약 악마 카드 이동 계약
+
+- `CodexDemonCardPreviewView`는 `IPointerClickHandler`를 구현하고 렌더링된 `DefinitionKey`를 보관한다. 왼쪽 버튼만 `Clicked` 이벤트를 발생시키며 다른 버튼은 무시한다.
+- `CodexOverlayView`는 생성한 계약 카드의 클릭 이벤트를 구독하고 `DemonPageRequested(string definitionKey)`로 올린다. 카드 제거 시 구독을 해제하며 도감이 닫혔거나 페이지 전환 중이면 요청을 무시한다.
+- `CodexController`는 요청 key와 `_demonPages.DefinitionKey`가 정확히 일치하는 인덱스를 찾고 `CodexNavigationState.TryShowDemonPage(int pageIndex)`를 호출한다. 성공 시 `Next` 방향 전환을 한 번 시작한다.
+- `TryShowDemonPage`는 음수·범위 밖·현재 악마 페이지와 같은 인덱스를 거부하고 카테고리와 인덱스를 바꾸지 않는다. 성공 시 기존 적 페이지 인덱스를 보존하면서 악마 카테고리와 대상 인덱스를 함께 변경한다.
+- 정의 key가 없거나 도감이 닫혔거나 전환 중인 요청은 실패하며 현재 표시 상태를 유지한다. 프리팹·Scene에 새 직렬화 참조를 추가하지 않는다.
+
 ## DX-M09: 악마 상세 정보 표시 계약
 
 - `DemonCodexPageViewModel.EnglishName`은 `DefinitionKey.ToUpperInvariant()`로 생성한다.

@@ -1,3 +1,4 @@
+using System;
 using Border.Audio;
 using DG.Tweening;
 using TMPro;
@@ -9,6 +10,7 @@ namespace DiaBlackJack.GameScene
 {
     [DisallowMultipleComponent]
     public sealed class CodexDemonCardPreviewView : MonoBehaviour,
+        IPointerClickHandler,
         IPointerEnterHandler,
         IPointerExitHandler
     {
@@ -46,6 +48,9 @@ namespace DiaBlackJack.GameScene
         private Tween _hoverScaleTween;
         private bool _hovered;
         private bool _hasHoverRestingScale;
+        private string _definitionKey;
+
+        internal event Action<string> Clicked;
 
         internal Color CurrentHoverOutlineColor => basicHoverOutlineColor;
 
@@ -72,8 +77,14 @@ namespace DiaBlackJack.GameScene
             _hovered = false;
         }
 
-        internal void Render(Sprite faceSprite, string englishName)
+        internal void Render(
+            Sprite faceSprite,
+            string englishName,
+            string definitionKey)
         {
+            _definitionKey = definitionKey ??
+                throw new ArgumentNullException(nameof(definitionKey));
+
             if (faceImage != null)
             {
                 faceImage.sprite = faceSprite;
@@ -90,6 +101,18 @@ namespace DiaBlackJack.GameScene
                 englishNameText.gameObject.SetActive(
                     !string.IsNullOrWhiteSpace(englishName));
             }
+        }
+
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData == null ||
+                eventData.button != PointerEventData.InputButton.Left ||
+                string.IsNullOrEmpty(_definitionKey))
+            {
+                return;
+            }
+
+            Clicked?.Invoke(_definitionKey);
         }
 
         public void OnPointerEnter(PointerEventData eventData)

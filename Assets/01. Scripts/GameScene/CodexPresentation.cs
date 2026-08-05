@@ -312,6 +312,21 @@ namespace DiaBlackJack.GameScene
             Category = category;
             return true;
         }
+
+        public bool TryShowDemonPage(int pageIndex)
+        {
+            if (pageIndex < 0 ||
+                pageIndex >= _demonPageCount ||
+                (Category == CodexCategory.DemonCard &&
+                    _demonPageIndex == pageIndex))
+            {
+                return false;
+            }
+
+            Category = CodexCategory.DemonCard;
+            _demonPageIndex = pageIndex;
+            return true;
+        }
     }
 
     public static class CodexPresenter

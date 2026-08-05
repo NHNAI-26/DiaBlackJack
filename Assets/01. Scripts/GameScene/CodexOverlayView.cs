@@ -166,6 +166,8 @@ namespace DiaBlackJack.GameScene
 
         public event Action<CodexCategory> CategoryRequested;
 
+        public event Action<string> DemonPageRequested;
+
         public event Action<CardHoverBadgeRequest> HoverBadgeRequested;
 
         public event Action HoverBadgeCleared;
@@ -225,7 +227,7 @@ namespace DiaBlackJack.GameScene
         {
             CancelPageTransition();
             IsOpen = false;
-            ClearSpawnedItems(_contractItems);
+            ClearContractItems();
             ClearDeckItems();
             ApplyVisibility(false);
         }
@@ -273,7 +275,7 @@ namespace DiaBlackJack.GameScene
 
             EnsureConfigured();
             CancelPageTransition();
-            ClearSpawnedItems(_contractItems);
+            ClearContractItems();
             ClearDeckItems();
             bool showEnemy = RenderBookFrame(model);
             if (showEnemy)
@@ -389,7 +391,7 @@ namespace DiaBlackJack.GameScene
         {
             RenderEnemyDetails(page);
 
-            ClearSpawnedItems(_contractItems);
+            ClearContractItems();
             bool hasContracts = page.ContractableDemons.Count > 0;
             RenderNoContractMessage(hasContracts);
             foreach (CodexDemonReferenceViewModel demon in
@@ -399,6 +401,7 @@ namespace DiaBlackJack.GameScene
                     contractTemplate,
                     contractGrid,
                     _contractItems);
+                item.Clicked += HandleDemonItemClicked;
                 RenderDemonThumbnail(item, demon);
             }
 
@@ -455,7 +458,8 @@ namespace DiaBlackJack.GameScene
             target.Render(
                 _cardContentCatalog.GetDemonFaceSprite(
                     demon.DefinitionKey),
-                demon.EnglishName);
+                demon.EnglishName,
+                demon.DefinitionKey);
         }
 
         private void RenderDeckThumbnail(
@@ -581,6 +585,16 @@ namespace DiaBlackJack.GameScene
             CategoryRequested?.Invoke(CodexCategory.DemonCard);
         }
 
+        private void HandleDemonItemClicked(string definitionKey)
+        {
+            if (!IsOpen || IsTransitioning)
+            {
+                return;
+            }
+
+            DemonPageRequested?.Invoke(definitionKey);
+        }
+
         private void HandleDeckItemHoverChanged(
             DeckPreviewCardView item,
             bool hovered)
@@ -633,6 +647,19 @@ namespace DiaBlackJack.GameScene
             }
 
             ClearSpawnedItems(_deckItems);
+        }
+
+        private void ClearContractItems()
+        {
+            foreach (CodexDemonCardPreviewView item in _contractItems)
+            {
+                if (item != null)
+                {
+                    item.Clicked -= HandleDemonItemClicked;
+                }
+            }
+
+            ClearSpawnedItems(_contractItems);
         }
 
         private void ApplyVisibility(bool visible)
