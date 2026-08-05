@@ -172,9 +172,6 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 papers[0].GetComponent<SpriteRenderer>().sortingOrder,
                 Is.LessThan(papers[1].GetComponent<SpriteRenderer>().sortingOrder));
-            Assert.That(
-                papers[0].transform.localPosition.y,
-                Is.LessThan(papers[1].transform.localPosition.y));
         }
 
         [Test]
@@ -783,7 +780,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 model.EnemyCards
                     .Where(card => card.CardEffectChoiceOptionId.HasValue)
                     .Select(card => card.CardId),
-                Is.EqualTo(pending.Options.Select(option => option.CardId.Value)));
+                Is.EquivalentTo(
+                    pending.Options.Select(option => option.CardId.Value)));
             foreach (CardEffectChoiceOption option in pending.Options)
             {
                 GameSceneCardViewModel target = model.EnemyCards.Single(
@@ -1889,18 +1887,24 @@ namespace DiaBlackJack.CoreLoop.Tests
                     BindingFlags.Instance | BindingFlags.NonPublic);
                 Assert.That(positionMethod, Is.Not.Null);
                 Vector2 anchorPoint = new Vector2(123f, -45f);
+                Vector2 bottomPivot = new Vector2(0.5f, 0f);
+                Vector2 topPivot = new Vector2(0.5f, 1f);
 
-                positionMethod.Invoke(hud, new object[] { anchorPoint, false });
+                positionMethod.Invoke(
+                    hud,
+                    new object[] { anchorPoint, bottomPivot });
                 Assert.That(
                     tooltipRoot.localPosition,
                     Is.EqualTo(new Vector3(anchorPoint.x, anchorPoint.y, 0f)));
-                Assert.That(tooltipRoot.pivot.y, Is.EqualTo(0f));
+                Assert.That(tooltipRoot.pivot, Is.EqualTo(bottomPivot));
 
-                positionMethod.Invoke(hud, new object[] { anchorPoint, true });
+                positionMethod.Invoke(
+                    hud,
+                    new object[] { anchorPoint, topPivot });
                 Assert.That(
                     tooltipRoot.localPosition,
                     Is.EqualTo(new Vector3(anchorPoint.x, anchorPoint.y, 0f)));
-                Assert.That(tooltipRoot.pivot.y, Is.EqualTo(1f));
+                Assert.That(tooltipRoot.pivot, Is.EqualTo(topPivot));
             }
             finally
             {

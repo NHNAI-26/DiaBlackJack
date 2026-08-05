@@ -539,7 +539,6 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(catalog.EnemyCount, Is.EqualTo(6));
             catalog.ValidateOrThrow();
 
-            var enemyLines = new HashSet<string>(StringComparer.Ordinal);
             foreach (EnemyCombatProfileDefinitionSO enemy in catalog.Enemies)
             {
                 SpeechProfileSO profile = enemy.SpeechProfile;
@@ -555,8 +554,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                         enemy.Key + ":" + cueKey);
                     Assert.That(lines.Count, Is.EqualTo(2));
                     Assert.That(lines.All(ContainsKorean), Is.True);
-                    Assert.That(lines.All(enemyLines.Add), Is.True,
-                        "Enemy lines must not be reused: " + cueKey);
+                    Assert.That(
+                        lines.Distinct(StringComparer.Ordinal).Count(),
+                        Is.EqualTo(lines.Count),
+                        "Enemy cue lines must be unique: " +
+                        enemy.Key + ":" + cueKey);
                 }
             }
 

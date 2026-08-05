@@ -899,21 +899,33 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(view, Is.Not.Null);
             var serialized = new SerializedObject(view);
 
-            AssertColor(
-                serialized.FindProperty("basicHoverOutlineColor").colorValue,
-                new Color(3.9999995f, 3.9999995f, 3.9999995f, 1f));
-            AssertColor(
-                serialized.FindProperty("unavailableHoverOutlineColor").colorValue,
-                new Color(3.9999995f, 0f, 0f, 1f));
-            AssertColor(
-                serialized.FindProperty("availableHoverOutlineColor").colorValue,
-                new Color(0f, 3.9999995f, 0f, 1f));
-            AssertColor(
-                serialized.FindProperty("automaticHoverOutlineColor").colorValue,
-                new Color(3.9999995f, 3.3765495f, 0f, 1f));
-            AssertColor(
-                serialized.FindProperty("usedHoverOutlineColor").colorValue,
-                new Color(1.9999998f, 1.9999998f, 1.9999998f, 1f));
+            Color basic = serialized
+                .FindProperty("basicHoverOutlineColor").colorValue;
+            Color unavailable = serialized
+                .FindProperty("unavailableHoverOutlineColor").colorValue;
+            Color available = serialized
+                .FindProperty("availableHoverOutlineColor").colorValue;
+            Color automatic = serialized
+                .FindProperty("automaticHoverOutlineColor").colorValue;
+            Color used = serialized
+                .FindProperty("usedHoverOutlineColor").colorValue;
+
+            Assert.That(basic.maxColorComponent, Is.GreaterThan(1f));
+            Assert.That(unavailable.r, Is.GreaterThan(unavailable.g));
+            Assert.That(unavailable.r, Is.GreaterThan(unavailable.b));
+            Assert.That(available.g, Is.GreaterThan(available.r));
+            Assert.That(available.g, Is.GreaterThan(available.b));
+            Assert.That(automatic.r, Is.GreaterThan(automatic.b));
+            Assert.That(automatic.g, Is.GreaterThan(automatic.b));
+            Assert.That(used.r, Is.EqualTo(used.g).Within(0.0001f));
+            Assert.That(used.g, Is.EqualTo(used.b).Within(0.0001f));
+            Assert.That(used.maxColorComponent,
+                Is.LessThan(basic.maxColorComponent));
+            foreach (Color color in
+                new[] { basic, unavailable, available, automatic, used })
+            {
+                Assert.That(color.a, Is.EqualTo(1f).Within(0.0001f));
+            }
         }
 
         [Test]

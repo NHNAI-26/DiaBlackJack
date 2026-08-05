@@ -172,7 +172,11 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(model.EnemyDisplayName, Is.EqualTo("총잡이"));
             Assert.That(model.EnemyGrade, Is.EqualTo("NORMAL"));
-            Assert.That(model.EnemySummary, Does.Contain("숫자를 추측"));
+            Assert.That(
+                model.EnemySummary,
+                Is.EqualTo(EnemyCombatProfileCatalog.Default
+                    .GetByKey(EnemyCombatProfileCatalog.GunslingerKey)
+                    .Summary));
             Assert.That(model.EnemyInformationTitle, Is.EqualTo("INFERENCE"));
             Assert.That(model.EnemyInformationLines, Is.EqualTo(
                 new[] { "4  40%", "3  30%", "2  20%" }));
