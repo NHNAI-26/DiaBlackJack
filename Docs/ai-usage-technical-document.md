@@ -1841,5 +1841,68 @@ HUD 선택 슬롯은 `DefaultButton.prefab`의 중첩 인스턴스로 생성하�
 - AI 활용: `CoreLoopBattle.ContinueAzazelCardEffectSequence`가 대기 중인 공개 카드의 `UseState`(사용가능/사용됨)만 확인하고 카드 효과별 발동 조건(`CanStart`)은 확인하지 않은 채 재활성화·재사용을 강제해, `MilitaryKnifeEffectHandler.Begin`의 방어적 예외가 그대로 전투를 멈추던 경로를 추적했다.
 - 구현: 카드를 재활성화(`TryReactivate`)·재사용(`TryBeginUse`)하기 전에 `CardEffectResolver.CanStart`를 먼저 확인하도록 순서를 조정했다. 조건을 만족하지 못하는 카드는 원래 `UseState`를 그대로 두고 건너뛴다("사용할 수 있는 카드만 다시 사용" 의도와 일치). 나머지 세 핸들러(크리스탈 오브·해머·리볼버)의 `CanStart`도 부작용 없는 순수 조회임을 함께 확인했다.
 - 변경 파일: `Assets/01. Scripts/CoreLoop/CoreLoopBattle.cs`.
-- 검증: Unity MCP 브릿지가 이 세션에서 연결되지 않아(`127.0.0.1:6400` 응답 없음) AI는 EditMode 자동 회귀를 실행하지 못했다. 이천서가 직접 에디터에서 재현·검증하기로 했으며 결과는 아직 본 문서에 반영되지 않았다.
+- 검증: 최초 작성 시점에는 Unity MCP 브릿지가 연결되지 않아 AI가 자동 회귀를 실행하지 못했다. 이후 같은 세션에서 브릿지가 연결되어 AI가 컴파일·전체 EditMode를 확인했다: 컴파일 오류 0, 전체 EditMode 1081/1083 통과. 잔여 2건(`GSV13_U01` 카드 도감 호버 색상 정밀도, `GSB01_U11` 말풍선 카메라 스택 알파)은 이번 변경과 무관한 기존 회귀다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+
+## 2026-08-05 시작 악마 공개 뒤집기 연출·덱 중앙 배치
+
+- 이천서: 라운드 종료 시 양측 비공개 카드가 뒤집히는 연출을 게임 시작 시 초기 악마 2장 공개에도 넣고, 그 장면의 악마 카드 덱을 테이블 중앙에 두도록 요청했다.
+- AI 활용(1차 시도, 이후 대체됨): 라운드 종료 뒤집기가 `CardView.PlayRevealFlip`(DOTween 커브 기반 위치·회전 오프셋 + 35% 지점 페이스 스왑 + 셰이더 `_SpriteFlipX` 미러)임을 확인하고, 같은 필드·로직을 `DemonCardView`에 이식했다. 실화면에서 "가로로 팽이처럼 도는" 잘못된 결과가 나와 원인을 분석했다: 배틀 카드는 카드 자체 로컬 회전을 항상 `identity`로 두고 눕는 각도를 부모(손패)에 두는데, 악마 카드는 카드 자체 로컬 회전에 눕는 각도(270,0,0)를 직접 넣어서 같은 회전 오프셋 수치가 다른 축으로 합성됐다. AI는 카드를 감싸는 빈 anchor로 눕는 각도를 분리하는 방식으로 우회했다.
+- 실제 반영: Shim0Hwan(아트)이 별도 커밋(`38d6cfe art : 악마카드 뒤집는 회전 애니메이션 추가`)에서 더 근본적인 방식으로 같은 문제를 해결했다 — anchor 분리 대신 `transform.localRotation = _revealBaseLocalRotation * Quaternion.Euler(rotationOffset)`로 기준 회전에 대해 항상 로컬축 기준으로 합성되도록 고쳐, 카드 자체의 눕는 각도가 무엇이든 상관없이 정상적으로 뒤집힌다. AI의 anchor 우회 코드는 이 커밋에 포함되지 않았고, 현재 `StartingDemonRevealView`는 anchor 없이 `DemonCardView`를 직접 참조하는 단순한 구조로 유지된다. 덱 중앙 배치(X=0)는 Shim0Hwan 커밋에 포함되지 않아 AI가 별도로 재적용했다.
+- 변경 파일(현재 세션 최종): `Assets/01. Scripts/GameScene/StartingDemonRevealView.cs`(덱 위치만), `Assets/00. Scenes/GameScene.unity`(덱 위치만). 뒤집기 애니메이션 본체는 Shim0Hwan의 `DemonCardView.cs`·`DemonCard.prefab`·`CardHoverAnchorPreviewEditor.cs` 변경이 최종본이다.
+- 검증: AI가 Unity MCP로 컴파일 오류 0, 전체 EditMode 1081/1083(잔여 2건은 위와 동일한 무관 기존 회귀)을 확인했다. 뒤집기 연출·덱 위치의 실제 플레이 화면 확인은 아직 이천서 몫으로 남아 있다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서(덱 위치)·Shim0Hwan(뒤집기 애니메이션)에게 있다.
+
+## 2026-08-05 마몬 주사위 투명 벽 회피 고정
+
+- 이천서: 마몬 능력으로 굴리는 물리 주사위가 가끔 투명한(렌더러 없는) 굴림판 벽에 닿아 앞으로 못 나가거나 애매하게 걸쳐 착지하는 문제를 제보하고, 무조건 벽에 안 닿게 고쳐달라고 요청했다.
+- AI 활용: `MammonDieView.Roll`의 좌우/전후 발사 임펄스가 좌우 무작위 방향(`sideDirection`)과 전후 균일 무작위 값으로 구성되고, 굴림판이 주사위 스폰 위치를 중심으로 대칭인 4면 벽(`MammonDieRollWall`, 렌더러 없음)으로 둘러싸여 있음을 확인했다. 대칭 구조라 "특정 벽에서 먼 방향"은 없고, 물리 임펄스·회전이 우연히 벽까지 닿는 것이 원인이었다.
+- 구현: 확률적 임펄스 조정 대신, 굴리는 동안 매 물리 프레임마다 주사위 위치를 앵커 기준 안전 반경(`wallSafetyMargin`, 기본 0.18) 안으로 강제로 고정하는 `ClampAwayFromWalls`를 추가했다. 범위를 벗어나려 하면 위치를 안으로 되돌리고 그 방향 속도를 0으로 죽여, 벽과의 접촉을 확률이 아니라 구조적으로 차단했다.
+- 변경 파일: `Assets/01. Scripts/GameScene/MammonDieView.cs`.
+- 검증: AI가 Unity MCP로 컴파일 오류 0, 전체 EditMode 1081/1083(잔여 2건은 위와 동일한 무관 기존 회귀)을 확인했다. 마몬 주사위에 대한 전용 EditMode 테스트는 없으며, 실제 여러 회 굴려 벽 접촉이 사라졌는지 확인하는 것은 이천서 몫으로 남아 있다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+
+## 2026-08-05 마몬 주사위 착지 뒤 자동 자세 보정 제거
+
+- 이천서: 물리 주사위를 굴린 뒤 화면이 매 프레임 갱신될 때마다 자세가 미세하게 자동 조정되는 현상을 제보하고, 굴린 그대로의 자세가 남게 해달라고 요청했다.
+- AI 활용: `FinishRollInPlace`가 물리적으로 굴러 멈춘 뒤에도 항상 `dieBody.rotation`을 굴리기 전 각도로 되돌리고 `ApplyResultRotation`으로 정해진 숫자 면이 보이는 "깨끗한" 고정 자세를 강제하고 있었다. 더 결정적으로, `GameManager.ApplyView`가 매 프레임 `mammonDie.Render(vm.PlayerMammonDieValue, ...)`를 호출하고 `Render`도 `_rollRoutine`이 끝나 있으면 같은 값을 다시 `ApplyResultRotation`으로 매번 재적용해, 물리적으로 멈춘 자세를 프레임마다 계속 깨끗한 자세로 되돌리고 있었다. 이것이 "자동으로 미세 조정되는" 것처럼 보인 원인이다.
+- 구현: 결과가 물리 굴림 자체에서 읽힌 경우(`PlayPhysicalRoll`, 순수 무작위 결과)는 `dieBody` 회전을 되돌리거나 강제 자세를 적용하지 않고, `_hasPhysicalRestPose` 플래그만 켜서 그대로 둔다. `Render()`는 이 플래그가 켜져 있고 값이 그대로면 아무 것도 하지 않고 반환해, 매 프레임 재호출돼도 자세를 건드리지 않는다. 다만 외부에서 특정 숫자를 강제로 보여줘야 하는 경로(`PlayRoll(int result)`, 예: 상대방 주사위처럼 결과가 미리 정해진 표시용 굴림)는 물리 결과와 무관하게 정확한 면을 보여줘야 하므로 기존처럼 깨끗한 자세 강제를 그대로 유지했다.
+- 변경 파일: `Assets/01. Scripts/GameScene/MammonDieView.cs`.
+- 검증: AI가 Unity MCP로 컴파일 오류 0, 전체 EditMode 1081/1083(잔여 2건은 위와 동일한 무관 기존 회귀)을 확인했다. 실제 플레이에서 굴린 뒤 자세가 더 이상 자동으로 바뀌지 않는지 확인은 이천서 몫으로 남아 있다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+
+## 2026-08-05 마몬 새 라운드 자동 굴림 연출·해골 버스트 지연·적용 보너스 총합 반영
+
+- 이천서: 새 라운드 시작 시 마몬 주사위가 로직으로만 재굴림되고 연출이 없는 점, 해골(6)이 나오면 카드가 배분되기도 전에 즉시 버스트 처리되는 점(굴리는 연출을 볼 틈도 없이 결과가 이미 나옴), 라운드 종료 시 주사위를 "포함하기"로 선택해도 화면의 총합 텍스트에 그 숫자가 반영되지 않는 점을 함께 제보했다.
+- AI 활용: `ApplyRoundStartContracts`가 `NotifyRoundStarted`(마몬 재굴림 포함)를 실행한 직후, 같은 동기 호출 안에서 곧바로 해골 여부를 확인해 버스트를 완결짓고 있어 GameManager의 타임라인(`Stepped` 스냅샷 목록)에 "방금 굴림, 아직 아무것도 처리 안 됨" 중간 프레임이 아예 존재하지 않음을 확인했다(라운드 시작 자체는 해골이 카드 배분 전에 버스트하는 게 의도된 규칙이라 `DCR10_U01` 테스트로 이미 고정돼 있음 — 그 자체는 바꾸지 않음). 총합 텍스트는 `RoundResolver.Resolve`가 승패 판정에는 `HandValueCalculator.CalculateWithBonus(cards, bonus)`로 마몬 보너스를 반영하면서도, 그 보너스 자체를 어디에도 저장하지 않아 `GameScenePresentation.CreatePlayerTotalsText`가 `battle.Player.HandValue.Total`(보너스 미반영)만 그대로 표시하고 있었음을 확인했다.
+- 구현: (1) 플레이어 쪽에 마몬 계약이 있을 때만 `NotifyRoundStarted` 직후 `RaiseStepped()`를 한 번 더 호출해, 재굴림된 값이 보이는(아직 버스트 미처리) 별도 타임라인 프레임을 만들었다. (2) `GameManager.ApplyView`의 굴림 감지를 "최초 등장(null→값)"에서 "다이 뷰가 아직 모르는 값으로 바뀜(`mammonDie.CurrentValue != vm.PlayerMammonDieValue.Value`)"으로 넓혀, 라운드 시작 재굴림도 상호작용 리롤과 동일하게 `PlayRoll`로 물리 연출을 재생하게 했다. `CreateAppliedAnimationResult`에 마몬 굴림 대기시간(`mammonDie.RollDuration`)을 추가해 `PlayTimeline`이 다음 프레임(버스트 결과)을 그리기 전에 굴림 연출만큼 기다리게 만들어, 결과적으로 "다 굴리기 전에 버스트가 미리 판정된 것처럼 보이는" 문제도 함께 해소했다. (3) `MammonRuntimeState`에 `DieAppliedThisRound` 플래그를 추가해 "포함하기"를 선택했을 때만 켜지도록 하고, `GameScenePresentation`이 라운드 종료 표시 시점에 이 플래그가 켜져 있으면 `CurrentDieValue`를 총합 텍스트에 더하도록 했다(공개 카드 합에는 더하지 않음 — 주사위는 카드가 아니므로).
+- 변경 파일: `Assets/01. Scripts/CoreLoop/CoreLoopBattle.cs`, `Assets/01. Scripts/CoreLoop/DemonContracts/MammonDemonContractHandler.cs`, `Assets/01. Scripts/GameScene/GameScenePresentation.cs`, `Assets/01. Scripts/GameScene/MammonDieView.cs`, `Assets/01. Scripts/GameScene/GameManager.cs`.
+- 검증: AI가 Unity MCP로 컴파일 오류 0, 전체 EditMode 1081/1083(잔여 2건은 위와 동일한 무관 기존 회귀, 마몬 관련 기존 테스트 전부 통과)을 확인했다. 이 변경을 검증하는 전용 신규 테스트는 아직 추가하지 않았고, 실제 플레이에서 굴림 연출·버스트 타이밍·총합 반영이 의도대로 보이는지는 이천서 몫으로 남아 있다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+
+## 2026-08-05 마몬 주사위 강제 결과 굴림의 눈 불일치 제거
+
+- 이천서: 계약 직후 첫 표시와 새 라운드 재굴림에서, 굴리는 동안 보이던 숫자(예: 4)와 굴림이 끝난 뒤 실제 판정값(예: 2)이 달라서 끝나는 순간 갑자기 숫자가 바뀌어 보이는 현상을 제보했다. 상호작용 리롤 버튼에서는 재현되지 않는다고 확인해줬다.
+- AI 활용: 원인을 특정했다 — 계약 직후 표시와 라운드 시작 재굴림은 둘 다 결과가 CoreLoop의 결정적 로직으로 이미 정해진 상태에서 `PlayRoll(int result)`(강제 표시 굴림)을 호출하는데, 이 경로가 기존에는 실제 리지드바디 물리로 무작위로 굴린 뒤 맨 끝에서 `dieBody.rotation`과 시각 회전을 강제로 `result`에 맞는 자세로 스냅하고 있었다. 물리가 우연히 다른 숫자(4)로 멈춘 뒤 그 위에 강제로 2를 스냅하면, 굴림 직후 순간적으로 "4가 2로 바뀌는" 불일치가 보인다. 반대로 상호작용 리롤(`PlayPhysicalRoll`)은 물리가 멈춘 면 자체가 결과이므로 애초에 불일치가 생길 수 없다.
+- 구현: 결과가 외부에서 정해지는 굴림 전용으로 물리를 전혀 쓰지 않는 결정적 스크립트 회전(`ScriptedRoll`)을 새로 만들었다. 시각 오브젝트(`dieVisual`)만 스핀 축 회전 + 완만한 감속(ease-out)으로 지정된 결과 자세를 향해 연속적으로 보간하고, 끝에서 정확히 그 자세에 도달하도록 수학적으로 보장해 중간에 다른 숫자가 스냅 없이 자연스럽게 정착한다. `PlayRoll`은 이제 이 스크립트 굴림을, `PlayPhysicalRoll`은 기존 실제 물리 굴림(개명: `PhysicalRoll`)을 각각 전담하며, 결과가 아직 물리로만 결정되는 자유 리롤 경로는 전혀 건드리지 않았다.
+- 변경 파일: `Assets/01. Scripts/GameScene/MammonDieView.cs`.
+- 검증: AI가 Unity MCP로 컴파일 오류 0, 전체 EditMode 1081/1083(잔여 2건은 위와 동일한 무관 기존 회귀)을 확인했다. 새 스크립트 회전 애니메이션의 실제 눈 감기·움직임은 전용 EditMode 테스트가 없고 실제 화면 확인이 필요해, 이천서 몫으로 남아 있다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+
+## 2026-08-05 마몬 적용 보너스 총합 미반영 재수정 (Unity MCP 실행으로 직접 검증)
+
+- 이천서: "포함하기"를 눌러도 여전히 화면 총합에 반영되지 않는다고 재확인하고, 직접 플레이로 검증한 뒤 고치라고 요청했다.
+- AI 활용: 이전 수정(`MammonRuntimeState.DieAppliedThisRound` 플래그)이 실제로는 동작하지 않는 근본 원인을 코드 추적으로 찾았다 — `FinalizeRound`가 `NotifyRoundEnded`(마몬의 `ResetRound()`를 호출해 그 플래그를 꺼버림)를 `State = ResolvingRound`·`RaiseStepped()`보다 **먼저** 실행하고 있어서, 화면이 `ResolvingRound`를 보는 시점에는 플래그가 이미 꺼져 있었다. 정적 분석만으로는 이 순서 버그를 놓쳤던 것이 첫 수정이 실패한 이유였다.
+- 구현: 계약 런타임 상태에 얹는 대신, `LastResolution`과 같은 방식으로 `CoreLoopBattle`에 `LastResolutionPlayerBonus`/`LastResolutionEnemyBonus` 스냅샷 필드를 새로 추가했다. `ResolveRoundWithBonuses(playerBonus, enemyBonus)` 진입 시점에 채우고 `StartRound()`에서 매 라운드 시작마다 0으로 리셋해, 보너스가 개입하지 않는 다른 라운드 종료 경로(버스트 등 `ResolveRoundWithBonuses`를 거치지 않는 다수의 `CompleteRound` 직접 호출 지점들)에서 이전 라운드의 값이 새어나오지 않게 했다. `GameScenePresentation`은 이제 계약의 라이브 런타임 상태 대신 이 안정된 스냅샷을 읽는다. 더 이상 필요 없어진 `DieAppliedThisRound`(및 `ResolveFinalChoice`의 `applied` 매개변수)는 되돌렸다.
+- 검증: AI가 Unity MCP `execute_code`로 실제 `CoreLoopBattle`을 마몬 계약과 함께 생성해 직접 플레이했다 — (1) 손패 합 20에 다이 4를 "포함하기"로 적용하자 `battle.Stepped`가 `ResolvingRound`를 알리는 순간 `LastResolutionPlayerBonus=4`, 총합 텍스트가 정확히 `총합 : 24`(20+4, 버스트로 이어짐)로 표시됨을 확인했다. (2) 같은 상황에서 "포함 안 함"을 고르면 `LastResolutionPlayerBonus=0`, 총합이 다이를 더하지 않은 `총합 : 14`로 유지됨도 확인했다. 전체 EditMode 1081/1083(잔여 2건은 위와 동일한 무관 기존 회귀)도 재확인했다.
+- 변경 파일: `Assets/01. Scripts/CoreLoop/CoreLoopBattle.cs`, `Assets/01. Scripts/CoreLoop/DemonContracts/MammonDemonContractHandler.cs`, `Assets/01. Scripts/GameScene/GameScenePresentation.cs`.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+
+## 2026-08-05 마몬 계약 카드 클릭 비활성화
+
+- 이천서: 마몬 계약이 활성화된 뒤, 테이블 위 마몬 계약 카드를 눌러도 아무 일도 일어나지 않게 해달라고 요청했다.
+- AI 활용: 마몬 재굴림 트리거가 두 경로에 동시에 걸려 있었음을 확인했다 — (1) 물리 주사위 오브젝트를 직접 클릭하는 새 경로, (2) 계약 카드 자체를 클릭하는 기존 경로(`GameManager`의 `pointedDemonCard.CanUse` → `TryBeginPlayerActiveDemonContractAction`). 두 경로 모두 `battle.CanBeginPlayerActiveDemonContractAction`을 공유해서, 이 메서드 자체를 마몬에 대해 막으면 주사위 클릭까지 함께 죽는 문제가 있었다.
+- 구현: 공유 메서드는 그대로 두고, 카드의 `CanUse`만 계산하는 `GameScenePresentation.CreateActiveDemonCards`에서 마몬 계약 카드일 때 무조건 `canUse: false`로 고정했다. 주사위의 `CanPlayerRerollMammon`은 별도 호출부에서 여전히 같은 공유 메서드를 그대로 읽으므로 영향받지 않는다. 참고로 HUD의 범용 "ACTIVE CONTRACTS" 버튼 목록은 이미 마몬·사탄을 제외하고 있어 손댈 필요가 없었다.
+- 변경 파일: `Assets/01. Scripts/GameScene/GameScenePresentation.cs`.
+- 검증: AI가 Unity MCP `execute_code`로 실제 전투에서 마몬 계약을 건 뒤 확인했다 — 계약 카드 모델의 `CanUse=False`(클릭이 `GameManager`에서 아무 것도 트리거하지 않음), 주사위의 `CanPlayerRerollMammon=True`(그대로 굴릴 수 있음), CoreLoop의 공유 메서드 자체는 여전히 `True`(주사위 경로가 여전히 정상 동작함을 방증). 전체 EditMode 1081/1083(잔여 2건은 위와 동일한 무관 기존 회귀)도 재확인했다.
 - 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.

@@ -360,6 +360,16 @@ namespace DiaBlackJack.CoreLoop
 
         public RoundResolution? LastResolution { get; private set; }
 
+        /// <summary>
+        /// The bonus (currently only a Mammon applied die) folded into each side's total for the
+        /// resolution captured in <see cref="LastResolution"/>. A stable snapshot, unlike reading a
+        /// contract's own runtime state — that gets reset by NotifyRoundEnded before presentation
+        /// ever sees the ResolvingRound step.
+        /// </summary>
+        public int LastResolutionPlayerBonus { get; private set; }
+
+        public int LastResolutionEnemyBonus { get; private set; }
+
         public RoundTransition? LastRoundTransition { get; private set; }
 
         /// <summary>
@@ -5243,6 +5253,15 @@ namespace DiaBlackJack.CoreLoop
                 this,
                 activeContracts,
                 ownerSide);
+
+            if (ownerSide == CombatantSide.Player &&
+                HasActiveMammonContract(activeContracts))
+            {
+                // A distinct beat so presentation can animate the fresh round-start die roll
+                // before any bust it caused gets revealed, instead of both landing in one frame.
+                RaiseStepped();
+            }
+
             int paidSoulCost = soulBefore - owner.Soul.Current;
             if (paidSoulCost > 0)
             {
@@ -5305,6 +5324,20 @@ namespace DiaBlackJack.CoreLoop
             return true;
         }
 
+        private static bool HasActiveMammonContract(
+            IReadOnlyList<ActiveDemonContract> activeContracts)
+        {
+            foreach (ActiveDemonContract contract in activeContracts)
+            {
+                if (contract.Kind == DemonContractKind.Mammon)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private void StartRound()
         {
             State = CoreLoopState.StartingRound;
@@ -5330,6 +5363,8 @@ namespace DiaBlackJack.CoreLoop
             _playerChangeSelection = null;
             _publicActionHistory.Clear();
             _enemyDecisionOrdinal = 0;
+            LastResolutionPlayerBonus = 0;
+            LastResolutionEnemyBonus = 0;
 
             if (!ApplyRoundStartContracts(
                     CombatantSide.Player,
@@ -6483,6 +6518,8 @@ namespace DiaBlackJack.CoreLoop
 
         private void ResolveRoundWithBonuses(int playerBonus, int enemyBonus)
         {
+            LastResolutionPlayerBonus = playerBonus;
+            LastResolutionEnemyBonus = enemyBonus;
             RoundResolution resolution = RoundResolver.Resolve(
                 RoundNumber,
                 Player.Hand.Cards,

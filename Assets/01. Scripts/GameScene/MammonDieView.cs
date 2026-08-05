@@ -27,6 +27,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float rollSurfaceThickness = 0.08f;
         [SerializeField] private float rollWallHeight = 0.65f;
         [SerializeField] private float rollWallThickness = 0.08f;
+        [Tooltip("Kept clear of the invisible roll walls so the die can never touch or settle against one.")]
+        [SerializeField] private float wallSafetyMargin = 0.18f;
 
         private Vector3 _restLocalPosition;
         private Quaternion _restLocalRotation;
@@ -39,10 +41,14 @@ namespace DiaBlackJack.GameScene
         private bool _initialized;
         private bool _requestedInteractable;
         private bool _hasRollAnchor;
+        private bool _hasPhysicalRestPose;
 
         public bool IsInteractable { get; private set; }
 
         public int CurrentValue { get; private set; }
+
+        /// <summary>Upper-bound time a triggered roll can take, for callers that need to wait it out.</summary>
+        public float RollDuration => rollDuration;
 
         private void Awake()
         {
@@ -65,6 +71,7 @@ namespace DiaBlackJack.GameScene
             rollSurfaceThickness = Mathf.Max(0.02f, rollSurfaceThickness);
             rollWallHeight = Mathf.Max(0.2f, rollWallHeight);
             rollWallThickness = Mathf.Max(0.02f, rollWallThickness);
+            wallSafetyMargin = Mathf.Max(0f, wallSafetyMargin);
             AutoBind();
         }
 
@@ -127,7 +134,15 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            if (_hasPhysicalRestPose && CurrentValue == value.Value)
+            {
+                // Already sitting exactly where the physical roll left it; every presentation
+                // refresh calling Render() with the same settled value must not re-snap it.
+                return;
+            }
+
             CurrentValue = value.Value;
+            _hasPhysicalRestPose = false;
             ApplyResultRotation(CurrentValue);
         }
 
@@ -146,7 +161,7 @@ namespace DiaBlackJack.GameScene
                 RestoreRollAnchor();
             }
 
-            _rollRoutine = StartCoroutine(Roll(result, null));
+            _rollRoutine = StartCoroutine(ScriptedRoll(result));
         }
 
         public void PlayPhysicalRoll(Action<int> onLanded)
@@ -164,10 +179,16 @@ namespace DiaBlackJack.GameScene
                 RestoreRollAnchor();
             }
 
-            _rollRoutine = StartCoroutine(Roll(null, onLanded));
+            _rollRoutine = StartCoroutine(PhysicalRoll(onLanded));
         }
 
-        private IEnumerator Roll(int? displayedResult, Action<int> onLanded)
+        // A scripted, deterministic spin used whenever the shown result is mandated externally
+        // (contract activation, round-start reroll) — see ScriptedRoll. Real, unconstrained
+        // physics can settle on a face other than the mandated one, which used to force a jarring
+        // snap at the end (e.g. tumbling to a visible 4 that then flips to the real result, 2).
+        // Free rerolls (PlayPhysicalRoll) still use real physics below, since there the settled
+        // face IS the result — no mismatch is possible there.
+        private IEnumerator PhysicalRoll(Action<int> onLanded)
         {
             IsInteractable = false;
             if (!_hasRollAnchor)
@@ -203,12 +224,22 @@ namespace DiaBlackJack.GameScene
             dieBody.AddForce(impulse, ForceMode.VelocityChange);
             dieBody.AddTorque(torque, ForceMode.VelocityChange);
 
+            // Half-extents the die is allowed to roam within, kept clear of the invisible walls by
+            // wallSafetyMargin so it can never touch/clip one or settle leaning against it.
+            float safeHalfX = Mathf.Max(
+                0.05f,
+                rollSurfaceSize.x * 0.5f - wallSafetyMargin);
+            float safeHalfZ = Mathf.Max(
+                0.05f,
+                rollSurfaceSize.y * 0.5f - wallSafetyMargin);
+
             float elapsed = 0f;
             float settledFor = 0f;
             while (elapsed < rollDuration)
             {
                 yield return new WaitForFixedUpdate();
                 elapsed += Time.fixedDeltaTime;
+                ClampAwayFromWalls(safeHalfX, safeHalfZ);
                 bool isSlow = dieBody.linearVelocity.sqrMagnitude <=
                         settleLinearSpeed * settleLinearSpeed &&
                     dieBody.angularVelocity.sqrMagnitude <=
@@ -222,12 +253,90 @@ namespace DiaBlackJack.GameScene
                 }
             }
 
-            int result = displayedResult ?? GetPhysicalTopFace();
+            int result = GetPhysicalTopFace();
             CurrentValue = result;
-            FinishRollInPlace(result);
+            FinishRollInPlace();
             _rollRoutine = null;
             IsInteractable = _requestedInteractable;
             onLanded?.Invoke(result);
+        }
+
+        // Deterministic, non-physics spin for a mandated result: it always ends exactly on the
+        // correct face, so there is no window where the wrong number is briefly visible.
+        private IEnumerator ScriptedRoll(int result)
+        {
+            IsInteractable = false;
+            if (!_hasRollAnchor)
+            {
+                _rollAnchorPosition = transform.position;
+                _rollAnchorRotation = transform.rotation;
+                _hasRollAnchor = true;
+            }
+
+            StopPhysics();
+            dieBody.position = _rollAnchorPosition;
+            dieBody.rotation = _rollAnchorRotation;
+
+            Vector3 startLocalPosition = dieVisual.localPosition;
+            Quaternion startLocalRotation = dieVisual.localRotation;
+            Quaternion endLocalRotation =
+                _restLocalRotation * Quaternion.Euler(GetResultEuler(result));
+            Vector3 spinAxis = new Vector3(1f, 0.6f, 0f).normalized;
+
+            float duration = Mathf.Max(0.01f, rollDuration);
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float ease = 1f - (1f - t) * (1f - t) * (1f - t);
+                float hop = Mathf.Sin(t * Mathf.PI) * launchHeight;
+                dieVisual.localPosition = Vector3.Lerp(
+                    startLocalPosition,
+                    _restLocalPosition,
+                    ease) + Vector3.up * hop;
+                dieVisual.localRotation =
+                    Quaternion.Slerp(startLocalRotation, endLocalRotation, ease) *
+                    Quaternion.AngleAxis(900f * (1f - ease), spinAxis);
+                yield return null;
+            }
+
+            ApplyResultRotation(result);
+            CurrentValue = result;
+            _hasPhysicalRestPose = false;
+            _rollRoutine = null;
+            IsInteractable = _requestedInteractable;
+        }
+
+        private void ClampAwayFromWalls(float safeHalfX, float safeHalfZ)
+        {
+            Vector3 position = dieBody.position;
+            Vector3 local = position - _rollAnchorPosition;
+            float clampedX = Mathf.Clamp(local.x, -safeHalfX, safeHalfX);
+            float clampedZ = Mathf.Clamp(local.z, -safeHalfZ, safeHalfZ);
+            if (Mathf.Approximately(clampedX, local.x) &&
+                Mathf.Approximately(clampedZ, local.z))
+            {
+                return;
+            }
+
+            dieBody.position = new Vector3(
+                _rollAnchorPosition.x + clampedX,
+                position.y,
+                _rollAnchorPosition.z + clampedZ);
+
+            Vector3 velocity = dieBody.linearVelocity;
+            if (!Mathf.Approximately(clampedX, local.x))
+            {
+                velocity.x = 0f;
+            }
+
+            if (!Mathf.Approximately(clampedZ, local.z))
+            {
+                velocity.z = 0f;
+            }
+
+            dieBody.linearVelocity = velocity;
         }
 
         private int GetPhysicalTopFace()
@@ -258,13 +367,13 @@ namespace DiaBlackJack.GameScene
             return topFace;
         }
 
-        private void FinishRollInPlace(int result)
+        private void FinishRollInPlace()
         {
             Vector3 settledPosition = dieBody.position;
             StopPhysics();
             dieBody.position = settledPosition;
-            dieBody.rotation = _rollAnchorRotation;
-            ApplyResultRotation(result);
+            // Leave the die exactly where/how it actually landed; the result IS the settled face.
+            _hasPhysicalRestPose = true;
             Physics.SyncTransforms();
         }
 
@@ -360,6 +469,7 @@ namespace DiaBlackJack.GameScene
         private void RestoreRollAnchor()
         {
             StopPhysics();
+            _hasPhysicalRestPose = false;
             if (dieBody == null)
             {
                 return;

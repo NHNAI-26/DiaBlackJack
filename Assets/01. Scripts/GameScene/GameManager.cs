@@ -123,7 +123,6 @@ namespace DiaBlackJack.GameScene
         private GameSceneCardViewModel _pendingLighterBurnCard;
         private int _battleIndex;
         private string _activeEnemyProfileKey;
-        private int? _playerMammonDieValue;
         private int? _enemyMammonDieValue;
         private bool _hasLastRevolverAnimationCue;
         private int _lastRevolverAnimationRoundNumber;
@@ -2757,20 +2756,21 @@ namespace DiaBlackJack.GameScene
             bool deferHammerSmashCardRender = false,
             bool deferKnifeResultCardRender = false)
         {
-            int? previousPlayerMammonDieValue = _playerMammonDieValue;
             _core = vm.Core;
-            _playerMammonDieValue = vm.PlayerMammonDieValue;
             _enemyMammonDieValue = vm.EnemyMammonDieValue;
             bool isShopOpen = shop != null && shop.IsOpen;
-            bool playInitialMammonRoll =
-                !previousPlayerMammonDieValue.HasValue &&
-                vm.PlayerMammonDieValue.HasValue;
+            // Covers both first appearance (CurrentValue defaults to 0) and any later change the
+            // die view hasn't shown yet (e.g. a silent round-start reroll) — not just null→value.
+            bool playedMammonRoll =
+                !isShopOpen &&
+                vm.PlayerMammonDieValue.HasValue &&
+                mammonDie != null &&
+                mammonDie.CurrentValue != vm.PlayerMammonDieValue.Value;
             mammonDie?.Render(
                 isShopOpen ? null : vm.PlayerMammonDieValue,
                 !isShopOpen && !_inputLocked &&
                     vm.CanPlayerRerollMammon);
-            if (!isShopOpen && vm.PlayerMammonDieValue.HasValue &&
-                playInitialMammonRoll)
+            if (playedMammonRoll)
             {
                 mammonDie?.PlayRoll(vm.PlayerMammonDieValue.Value);
             }
@@ -2877,7 +2877,8 @@ namespace DiaBlackJack.GameScene
                 playedKnifeAnimation,
                 playedHammerAnimation,
                 deferredCardRender,
-                deferredCardRender ? vm : null);
+                deferredCardRender ? vm : null,
+                playedMammonRoll);
         }
 
         private void PresentEnemySpeech(EnemySpeechObservation observation)
@@ -3730,7 +3731,8 @@ namespace DiaBlackJack.GameScene
             bool playedKnife,
             bool playedHammer,
             bool deferredCardRender = false,
-            GameSceneViewModel deferredViewModel = null)
+            GameSceneViewModel deferredViewModel = null,
+            bool playedMammonRoll = false)
         {
             float waitSeconds = 0f;
             if (playedRevolver)
@@ -3755,6 +3757,11 @@ namespace DiaBlackJack.GameScene
                 waitSeconds = Mathf.Max(
                     waitSeconds,
                     controller != null ? controller.AnimationSeconds : 0f);
+            }
+
+            if (playedMammonRoll && mammonDie != null)
+            {
+                waitSeconds = Mathf.Max(waitSeconds, mammonDie.RollDuration);
             }
 
             return new AppliedAnimationResult(

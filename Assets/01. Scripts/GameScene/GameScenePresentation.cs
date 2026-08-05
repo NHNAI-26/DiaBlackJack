@@ -624,6 +624,8 @@ namespace DiaBlackJack.GameScene
             enemyLabel = FilterEnemyActionLabel(enemyLabel);
             ActiveDemonContract playerMammon = FindMammonContract(
                 battle.ActivePlayerDemonContracts);
+            ActiveDemonContract enemyMammon = FindMammonContract(
+                battle.ActiveEnemyDemonContracts);
             GameSceneViewModel model = new GameSceneViewModel(
                 core,
                 CreatePlayerCards(core, battle, revealRoundResult),
@@ -644,12 +646,19 @@ namespace DiaBlackJack.GameScene
                 CreateHammerAnimationCue(battle),
                 UsesDiegeticSelection(battle),
                 FocusesEnemyCardsForSelection(battle),
-                CreatePlayerTotalsText(battle, core, revealRoundResult),
-                CreateEnemyTotalsText(battle, core, revealRoundResult),
+                CreatePlayerTotalsText(
+                    battle,
+                    core,
+                    revealRoundResult,
+                    revealRoundResult ? battle.LastResolutionPlayerBonus : 0),
+                CreateEnemyTotalsText(
+                    battle,
+                    core,
+                    revealRoundResult,
+                    revealRoundResult ? battle.LastResolutionEnemyBonus : 0),
                 CreateKnifeAnimationCue(battle),
                 FindMammonDieValue(playerMammon),
-                FindMammonDieValue(FindMammonContract(
-                    battle.ActiveEnemyDemonContracts)),
+                FindMammonDieValue(enemyMammon),
                 playerMammon?.SourceCardId,
                 playerMammon != null &&
                     battle.CanBeginPlayerActiveDemonContractAction(
@@ -756,11 +765,12 @@ namespace DiaBlackJack.GameScene
         private static string CreatePlayerTotalsText(
             CoreLoopBattle battle,
             CoreLoopViewModel core,
-            bool revealRoundResult)
+            bool revealRoundResult,
+            int appliedMammonBonus)
         {
             return revealRoundResult
                 ? FormatFinalTotals(
-                    battle.Player.HandValue.Total,
+                    battle.Player.HandValue.Total + appliedMammonBonus,
                     battle.Player.VisibleHandValue.Total)
                 : core.PlayerTotalsText;
         }
@@ -768,11 +778,12 @@ namespace DiaBlackJack.GameScene
         private static string CreateEnemyTotalsText(
             CoreLoopBattle battle,
             CoreLoopViewModel core,
-            bool revealRoundResult)
+            bool revealRoundResult,
+            int appliedMammonBonus)
         {
             return revealRoundResult
                 ? FormatFinalTotals(
-                    battle.Enemy.HandValue.Total,
+                    battle.Enemy.HandValue.Total + appliedMammonBonus,
                     battle.Enemy.VisibleHandValue.Total)
                 : core.EnemyVisibleTotalText;
         }
@@ -1322,11 +1333,16 @@ namespace DiaBlackJack.GameScene
                     contract.RuntimeState is SatanRuntimeState doomState
                         ? doomState.RemainingDoomCount
                         : (int?)null;
+                // Mammon's reroll now only triggers from the physical table die, not the contract
+                // card itself; the card's own click is inert regardless of what the shared
+                // CanBeginPlayerActiveDemonContractAction check would otherwise allow.
+                bool isMammon = contract.Kind == DemonContractKind.Mammon;
                 cards.Add(new GameSceneDemonCardViewModel(
                     contract.SourceCardId,
                     definition.Key,
                     isFaceUp: true,
                     canUse: exposePlayerActions &&
+                        !isMammon &&
                         battle.CanBeginPlayerActiveDemonContractAction(
                             contract.SourceCardId),
                     definition.DisplayName,
