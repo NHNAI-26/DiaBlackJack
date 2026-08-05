@@ -49,6 +49,8 @@ namespace DiaBlackJack.GameScene
         }
 
         [SerializeField] private SpriteRenderer sprite;
+        [Tooltip("Transform rotated by the appearance animation. Assign the sprite's child pivot so the character root and speech bubble stay upright.")]
+        [SerializeField] private Transform appearanceTarget;
         [SerializeField] private TMP_Text actionLabel;
         [SerializeField] private SpeechBubbleView speechBubble;
 
@@ -98,7 +100,7 @@ namespace DiaBlackJack.GameScene
             KillAppearanceAnimation();
         }
 
-        public void PlayEntranceAnimation()
+        public void PlayEntranceAnimation(Action onComplete = null)
         {
             EnsureInitialized();
             KillAppearanceAnimation();
@@ -106,20 +108,20 @@ namespace DiaBlackJack.GameScene
 
             Vector3 startEulerAngles =
                 _baseLocalEulerAngles + appearanceRotationOffset;
-            transform.localRotation = Quaternion.Euler(startEulerAngles);
+            appearanceTarget.localRotation = Quaternion.Euler(startEulerAngles);
 
             if (appearanceEnterDuration <= 0f)
             {
-                transform.localRotation = _baseLocalRotation;
+                CompleteEntranceAnimation(onComplete);
                 return;
             }
 
-            _appearanceTween = transform.DOLocalRotate(
+            _appearanceTween = appearanceTarget.DOLocalRotate(
                     _baseLocalEulerAngles,
                     appearanceEnterDuration,
                     RotateMode.Fast)
                 .SetEase(appearanceEnterEase)
-                .OnComplete(CompleteEntranceAnimation);
+                .OnComplete(() => CompleteEntranceAnimation(onComplete));
         }
 
         public void PlayExitAnimation(Action onComplete)
@@ -131,13 +133,13 @@ namespace DiaBlackJack.GameScene
                     ? EnemyExitSfxId01
                     : EnemyExitSfxId02,
                 exitSfxDelay);
-            transform.localRotation = _baseLocalRotation;
+            appearanceTarget.localRotation = _baseLocalRotation;
 
             Vector3 endEulerAngles =
                 _baseLocalEulerAngles + appearanceRotationOffset;
             if (appearanceExitDuration <= 0f)
             {
-                transform.localRotation = Quaternion.Euler(endEulerAngles);
+                appearanceTarget.localRotation = Quaternion.Euler(endEulerAngles);
                 onComplete?.Invoke();
                 return;
             }
@@ -145,7 +147,7 @@ namespace DiaBlackJack.GameScene
             Ease exitEase = _isMerchantMode
                 ? merchantExitEase
                 : appearanceExitEase;
-            _appearanceTween = transform.DOLocalRotate(
+            _appearanceTween = appearanceTarget.DOLocalRotate(
                     endEulerAngles,
                     appearanceExitDuration,
                     RotateMode.Fast)
@@ -246,7 +248,7 @@ namespace DiaBlackJack.GameScene
         {
             EnsureInitialized();
             _isMerchantMode = true;
-            transform.localRotation = _baseLocalRotation;
+            appearanceTarget.localRotation = _baseLocalRotation;
 
             if (sprite != null)
             {
@@ -271,7 +273,7 @@ namespace DiaBlackJack.GameScene
         {
             EnsureInitialized();
             _isMerchantMode = false;
-            transform.localRotation = _baseLocalRotation;
+            appearanceTarget.localRotation = _baseLocalRotation;
 
             if (sprite != null)
             {
@@ -318,18 +320,29 @@ namespace DiaBlackJack.GameScene
                 speechBubble = GetComponentInChildren<SpeechBubbleView>(true);
             }
 
+            if (appearanceTarget == null)
+            {
+                appearanceTarget = transform.Find("RotationAxis");
+            }
+
+            if (appearanceTarget == null)
+            {
+                appearanceTarget = transform;
+            }
+
             _baseScale = transform.localScale;
-            _baseLocalRotation = transform.localRotation;
-            _baseLocalEulerAngles = transform.localEulerAngles;
+            _baseLocalRotation = appearanceTarget.localRotation;
+            _baseLocalEulerAngles = appearanceTarget.localEulerAngles;
             _baseColor = sprite != null ? sprite.color : Color.white;
             _defaultSprite = sprite != null ? sprite.sprite : null;
             _initialized = true;
         }
 
-        private void CompleteEntranceAnimation()
+        private void CompleteEntranceAnimation(Action onComplete)
         {
             _appearanceTween = null;
-            transform.localRotation = _baseLocalRotation;
+            appearanceTarget.localRotation = _baseLocalRotation;
+            onComplete?.Invoke();
         }
 
         private void KillAppearanceAnimation()

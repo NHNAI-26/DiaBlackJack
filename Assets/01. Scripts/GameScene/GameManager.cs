@@ -254,7 +254,8 @@ namespace DiaBlackJack.GameScene
 
         public bool BindFormalShop(
             StageProgressionViewModel model,
-            int currentGold)
+            int currentGold,
+            bool unlockInput = true)
         {
             if (model == null || !model.IsShop || shop == null)
             {
@@ -271,7 +272,7 @@ namespace DiaBlackJack.GameScene
                 deckPreview.IsSingleSelection;
             _formalShopModel = model;
             _formalShopGold = currentGold;
-            _inputLocked = false;
+            _inputLocked = !unlockInput;
             _choosingLighterRemoval = keepLighterSelection;
             shop.OpenFormal(model);
             if (keepLighterSelection)
@@ -285,6 +286,12 @@ namespace DiaBlackJack.GameScene
             hud?.SetEnemyStatusVisible(false);
             UpdateShopLeaveControl();
             return true;
+        }
+
+        internal void SetPresentationInputLocked(bool locked)
+        {
+            _inputLocked = locked;
+            UpdateShopLeaveControl();
         }
 
         public void UnbindFormalShop()

@@ -158,7 +158,8 @@ namespace DiaBlackJack.GameScene
             CreateFormalCardOffers(model);
             BindFormalUtilityItems(model);
 
-            merchant?.EnterMerchant();
+            // GameFlowController applies merchant mode after the entrance door animation so the
+            // defeated enemy completes its exit animation before the merchant sprite is shown.
             if (isEnteringShop)
             {
                 ShowMerchantSpeech(SpeechCueKeys.ShopGreeting);

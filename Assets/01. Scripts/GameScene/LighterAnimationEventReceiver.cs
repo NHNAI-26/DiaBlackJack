@@ -49,12 +49,6 @@ namespace DiaBlackJack.GameScene
                 interaction ??= GetComponent<LighterDragTriggerController>();
                 interaction?.EnableBurnCardDissolve();
             }
-            else if (id == "CoverClose")
-            {
-                interaction ??= GetComponent<LighterDragTriggerController>();
-                interaction?.CompleteBurnCardDissolve();
-            }
-
             resolvedAnimator.SetTrigger(id);
         }
 

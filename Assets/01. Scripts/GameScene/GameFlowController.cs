@@ -36,6 +36,8 @@ namespace DiaBlackJack.GameScene
         private bool _hasPresentedCharacters;
         private bool _playCharacterExitBeforeEntrance;
         private bool _characterExitWaitingForEntrance;
+        private bool _shopTransitionWaitingForEnemyExit;
+        private bool _unlockInputAfterCharacterEntrance;
         private string _currentMoodId;
 
         public event Action<GameFlowScreen, StageProgressionViewModel>
@@ -151,6 +153,8 @@ namespace DiaBlackJack.GameScene
 
             UnsubscribeFromMoodController();
             CancelEnemyAppearanceDelay();
+            _shopTransitionWaitingForEnemyExit = false;
+            _unlockInputAfterCharacterEntrance = false;
         }
 
         public bool RequestCompleteStartingDemonReveal()
@@ -361,6 +365,12 @@ namespace DiaBlackJack.GameScene
 
         private void HandleBattleCompleted()
         {
+            if (ShouldWaitForEnemyExitBeforeShop())
+            {
+                BeginEnemyExitBeforeShop();
+                return;
+            }
+
             RefreshFlow();
         }
 
@@ -441,18 +451,22 @@ namespace DiaBlackJack.GameScene
             RequestRetrySave();
         }
 
-        private void RefreshFlow()
+        private void RefreshFlow(bool enemyExitAlreadyCompleted = false)
         {
             if (_session == null && !TryAdoptFormalRun())
             {
                 return;
             }
 
+            ResolveSceneReferences();
             SynchronizeFocusedOpponent();
+            GameFlowScreen previousScreen = CurrentScreen;
             GameFlowScreen nextScreen =
                 GameFlowScreenResolver.Resolve(_session);
             _playCharacterExitBeforeEntrance =
-                IsCharacterModeTransition(CurrentScreen, nextScreen);
+                IsCharacterModeTransition(previousScreen, nextScreen) &&
+                !enemyExitAlreadyCompleted;
+            _unlockInputAfterCharacterEntrance = false;
             CurrentViewModel = StageProgressionPresenter.Create(
                 _session,
                 _focusedOpponentProfileKey);
@@ -472,10 +486,16 @@ namespace DiaBlackJack.GameScene
             }
             else if (nextScreen == GameFlowScreen.Shop)
             {
+                bool isEnteringShop = previousScreen != GameFlowScreen.Shop;
+                bool waitForCharacterEntrance = isEnteringShop &&
+                    charactersRoot != null &&
+                    enemyCharacter != null;
+                _unlockInputAfterCharacterEntrance = waitForCharacterEntrance;
                 gameManager.UnbindBattle();
                 if (!gameManager.BindFormalShop(
                         CurrentViewModel,
-                        _session.CombatSession.Progress.Player.CurrentGold))
+                        _session.CombatSession.Progress.Player.CurrentGold,
+                        unlockInput: !waitForCharacterEntrance))
                 {
                     throw new InvalidOperationException(
                         "The active formal shop could not be bound.");
@@ -552,10 +572,55 @@ namespace DiaBlackJack.GameScene
                 isCombat || isStartingReveal ||
                 CurrentScreen == GameFlowScreen.Shop);
 
-            if (!_characterExitWaitingForEntrance)
+            if (!_characterExitWaitingForEntrance &&
+                (moodController == null ||
+                    !moodController.IsEntranceDoorAnimationPlaying))
             {
                 ApplyCharacterModeForCurrentScreen();
             }
+        }
+
+        private bool ShouldWaitForEnemyExitBeforeShop()
+        {
+            if (_shopTransitionWaitingForEnemyExit ||
+                _session == null ||
+                CurrentScreen != GameFlowScreen.Combat ||
+                GameFlowScreenResolver.Resolve(_session) != GameFlowScreen.Shop)
+            {
+                return false;
+            }
+
+            ResolveSceneReferences();
+            return charactersRoot != null &&
+                charactersRoot.activeSelf &&
+                enemyCharacter != null;
+        }
+
+        private void BeginEnemyExitBeforeShop()
+        {
+            if (_shopTransitionWaitingForEnemyExit)
+            {
+                return;
+            }
+
+            _shopTransitionWaitingForEnemyExit = true;
+            enemyCharacter.PlayExitAnimation(CompleteEnemyExitBeforeShop);
+        }
+
+        private void CompleteEnemyExitBeforeShop()
+        {
+            if (!_shopTransitionWaitingForEnemyExit)
+            {
+                return;
+            }
+
+            _shopTransitionWaitingForEnemyExit = false;
+            if (charactersRoot != null)
+            {
+                charactersRoot.SetActive(false);
+            }
+
+            RefreshFlow(enemyExitAlreadyCompleted: true);
         }
 
         private void UpdateCharactersVisibility(bool shouldShow)
@@ -684,7 +749,16 @@ namespace DiaBlackJack.GameScene
             charactersRoot.SetActive(true);
             if (!wasVisible || !_hasPresentedCharacters)
             {
-                enemyCharacter?.PlayEntranceAnimation();
+                ApplyCharacterModeForCurrentScreen();
+                if (enemyCharacter != null)
+                {
+                    enemyCharacter.PlayEntranceAnimation(
+                        CompleteCharacterEntrance);
+                }
+                else
+                {
+                    CompleteCharacterEntrance();
+                }
                 if (enemyCharacter != null)
                 {
                     moodController?.PlayPendingBgm();
@@ -695,6 +769,17 @@ namespace DiaBlackJack.GameScene
             _charactersEntranceWaiting = false;
         }
 
+        private void CompleteCharacterEntrance()
+        {
+            if (!_unlockInputAfterCharacterEntrance)
+            {
+                return;
+            }
+
+            _unlockInputAfterCharacterEntrance = false;
+            gameManager?.SetPresentationInputLocked(false);
+        }
+
         private void CompleteCharacterExitBeforeEntrance()
         {
             _characterExitWaitingForEntrance = false;
@@ -703,7 +788,6 @@ namespace DiaBlackJack.GameScene
                 charactersRoot.SetActive(false);
             }
 
-            ApplyCharacterModeForCurrentScreen();
             if (_charactersEntranceWaiting &&
                 ShouldShowCharacters() &&
                 (moodController == null ||

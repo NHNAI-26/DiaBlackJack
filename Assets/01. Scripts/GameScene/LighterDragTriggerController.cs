@@ -84,7 +84,6 @@ namespace DiaBlackJack.GameScene
         private Vector3 _authoredBurnCardScale = Vector3.one;
         private Vector2 _authoredBurnCardSize = Vector2.one;
         private bool _burnCardVisualCached;
-        private Material _burnCardMaterial;
 
         public static bool BlocksBackgroundInteraction => _backgroundBlockCount > 0;
 
@@ -109,7 +108,7 @@ namespace DiaBlackJack.GameScene
 
         internal void EnableBurnCardDissolve()
         {
-            Material material = EnsureBurnCardMaterialInstance();
+            Material material = GetBurnCardMaterial();
             if (material == null)
             {
                 return;
@@ -121,15 +120,6 @@ namespace DiaBlackJack.GameScene
             }
 
             material.EnableKeyword(DissolveKeyword);
-        }
-
-        internal void CompleteBurnCardDissolve()
-        {
-            ResolveBurnCardRenderer();
-            if (burnCardRenderer != null)
-            {
-                burnCardRenderer.enabled = false;
-            }
         }
 
         private void Awake()
@@ -155,23 +145,6 @@ namespace DiaBlackJack.GameScene
             _dragTarget = DragTarget.None;
             ResetHoverHighlights();
             EndBackgroundBlock();
-        }
-
-        private void OnDestroy()
-        {
-            if (_burnCardMaterial == null)
-            {
-                return;
-            }
-
-            if (Application.isPlaying)
-            {
-                Destroy(_burnCardMaterial);
-            }
-            else
-            {
-                DestroyImmediate(_burnCardMaterial);
-            }
         }
 
         private void Update()
@@ -554,7 +527,7 @@ namespace DiaBlackJack.GameScene
         private void ResetBurnCardMaterial(Sprite sprite)
         {
             burnCardRenderer.SetPropertyBlock(null);
-            Material material = EnsureBurnCardMaterialInstance();
+            Material material = GetBurnCardMaterial();
             if (material == null)
             {
                 return;
@@ -578,25 +551,11 @@ namespace DiaBlackJack.GameScene
             }
         }
 
-        private Material EnsureBurnCardMaterialInstance()
+        private Material GetBurnCardMaterial()
         {
-            if (_burnCardMaterial != null)
-            {
-                return _burnCardMaterial;
-            }
-
-            Material source = burnCardRenderer.sharedMaterial;
-            if (source == null)
-            {
-                return null;
-            }
-
-            _burnCardMaterial = new Material(source)
-            {
-                name = source.name + " (Lighter Burn Card Instance)"
-            };
-            burnCardRenderer.sharedMaterial = _burnCardMaterial;
-            return _burnCardMaterial;
+            return burnCardRenderer != null
+                ? burnCardRenderer.sharedMaterial
+                : null;
         }
 
         private static Vector2 GetSpriteSize(Sprite sprite)
