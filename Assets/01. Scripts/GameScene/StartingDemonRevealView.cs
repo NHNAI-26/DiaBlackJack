@@ -18,7 +18,7 @@ namespace DiaBlackJack.GameScene
 
         [Header("World-space layout")]
         [SerializeField] private Vector3 deckPosition =
-            new Vector3(1.5f, 3.58f, 16.44f);
+            new Vector3(0f, 3.58f, 15.94f);
         [SerializeField] private Vector3 firstCardPosition =
             new Vector3(-0.55f, 3.56f, 17f);
         [SerializeField] private Vector3 secondCardPosition =
@@ -32,6 +32,15 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float faceDownHoldDuration = 0.35f;
         [SerializeField] private float flipDuration = 0.3f;
         [SerializeField] private float revealedHoldDuration = 1.2f;
+
+        // On a cold scene load, shader/material warm-up for the freshly-instantiated card
+        // prefabs (and other first-use engine costs) can stall the main thread for the
+        // engine's very next frame. Time.unscaledDeltaTime would then report that entire
+        // stall as one frame's delta, letting a single Update tick jump elapsed time past
+        // the whole sequence — the cards teleport straight to their end state and no
+        // animation is ever seen. Clamping the per-step delta forces the sequence to always
+        // span multiple real, rendered frames regardless of any such stall.
+        private const float MaxStepUnscaledDeltaTime = 1f / 30f;
 
         private readonly List<GameObject> _instances = new List<GameObject>();
         private readonly List<DemonCardView> _revealedCards =
@@ -153,6 +162,13 @@ namespace DiaBlackJack.GameScene
         private IEnumerator Reveal(
             IReadOnlyList<StartingDemonGrantCardViewModel> cards)
         {
+            // On a cold scene load, GameFlowController (DefaultExecutionOrder -50) calls Render
+            // — and so starts this coroutine — before GameSceneCameraViewController's own Start()
+            // (default order 0) has prioritized the correct Cinemachine camera. Without this wait,
+            // the deal animation plays while the wrong camera is still active and is never seen.
+            // A mid-session restart has no such gap, since the camera is already set up.
+            yield return null;
+
             Quaternion rotation = Quaternion.Euler(cardEulerAngles);
             for (int i = 0; i < deckVisualCardCount; i++)
             {
@@ -230,7 +246,7 @@ namespace DiaBlackJack.GameScene
             float duration = Mathf.Max(0.01f, dealDuration);
             while (elapsed < duration)
             {
-                elapsed += Time.unscaledDeltaTime;
+                elapsed += Mathf.Min(Time.unscaledDeltaTime, MaxStepUnscaledDeltaTime);
                 float progress = Mathf.SmoothStep(0f, 1f, elapsed / duration);
                 first.transform.position =
                     Vector3.LerpUnclamped(firstStart, firstTarget, progress);
@@ -272,7 +288,7 @@ namespace DiaBlackJack.GameScene
             float remaining = Mathf.Max(0f, seconds);
             while (remaining > 0f)
             {
-                remaining -= Time.unscaledDeltaTime;
+                remaining -= Mathf.Min(Time.unscaledDeltaTime, MaxStepUnscaledDeltaTime);
                 yield return null;
             }
         }

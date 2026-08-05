@@ -162,7 +162,7 @@ namespace DiaBlackJack.CoreLoop
                     "자신의 차례에 일반 행동 대신, <color=#3B82F6>주사위</color>를 다시 굴리고 차례를 끝낼 수 있습니다.\n" +
                     "승부 전에 <b><color=#3B82F6>주사위</color> 값을 카드 합에 더할 수 있습니다.</b>\n" +
                     "새 라운드 시작 시, <color=#3B82F6>주사위</color>를 다시 굴립니다.",
-                    "<color=#3B82F6>주사위</color>가 (해골 그림)이 나오면 <b>버스트</b>합니다."),
+                    "<color=#3B82F6>주사위</color>가 <size=150%><sprite=\"MammonSkullIcon\" index=0></size>이 나오면 <b>버스트</b>합니다."),
                 new DemonContractDefinition(
                     LeviathanKey,
                     "레비아탄",

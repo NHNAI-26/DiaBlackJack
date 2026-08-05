@@ -251,6 +251,26 @@ MonoBehaviour:
     volume: 1
     pitch: 1
     loop: 0
+  - id: woodOpenDoor
+    clip: {fileID: 8300000, guid: a9ffda0785ea6d5418d1e349816d64c2, type: 3}
+    volume: 1
+    pitch: 3
+    loop: 0
+  - id: enemyIn
+    clip: {fileID: 8300000, guid: 2a9cf049768ed7a44b304d186668954c, type: 3}
+    volume: 0.3
+    pitch: 2
+    loop: 0
+  - id: enemyOut01
+    clip: {fileID: 8300000, guid: 75e361fb2747b8f4e9f41c194b6a1e39, type: 3}
+    volume: 0.5
+    pitch: 1.5
+    loop: 0
+  - id: enemyOut02
+    clip: {fileID: 8300000, guid: 20c1bce8679ff9646b6f123d49e892fc, type: 3}
+    volume: 0.5
+    pitch: 1.5
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1
