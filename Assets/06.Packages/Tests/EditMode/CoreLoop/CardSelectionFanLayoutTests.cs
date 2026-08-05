@@ -549,7 +549,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 root.AddComponent<CardSelectionFanLayout>();
                 SatanNumberSelectionView view =
                     root.AddComponent<SatanNumberSelectionView>();
-                view.Initialize(cardPrefab.GetComponent<CardView>());
+                Sprite brandSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
+                    SatanBrandSpritePath);
+                view.Initialize(cardPrefab.GetComponent<CardView>(), brandSprite);
                 GameSceneCardViewModel[] candidates = Enumerable.Range(1, 10)
                     .Select(rank => new GameSceneCardViewModel(
                         400 + rank,
@@ -570,22 +572,48 @@ namespace DiaBlackJack.CoreLoop.Tests
                 CardView two = cards.Single(card => card.CardId == 402);
                 CardView four = cards.Single(card => card.CardId == 404);
                 CardView six = cards.Single(card => card.CardId == 406);
+                SpriteRenderer twoBrand = FindSatanBrand(two);
+                SpriteRenderer fourBrand = FindSatanBrand(four);
+                SpriteRenderer sixBrand = FindSatanBrand(six);
 
-                Assert.That(view.TryToggleSelection(two), Is.True);
+                Assert.That(view.TryToggleSelection(two), Is.True,
+                    "First Satan number should be selectable.");
                 Assert.That(view.SelectedCount, Is.EqualTo(1));
-                Assert.That(view.TryToggleSelection(four), Is.True);
+                Assert.That(twoBrand.gameObject.activeSelf, Is.True,
+                    "First selected Satan number should show its brand.");
+                Assert.That(fourBrand.gameObject.activeSelf, Is.False);
+                Assert.That(sixBrand.gameObject.activeSelf, Is.False);
+                Assert.That(view.TryToggleSelection(four), Is.True,
+                    "Second Satan number should be selectable.");
                 Assert.That(view.TryGetSelectedNumbers(
                     out int first,
-                    out int second), Is.True);
+                    out int second), Is.True,
+                    "Two selected Satan numbers should be confirmable.");
                 Assert.That((first, second), Is.EqualTo((2, 4)));
+                Assert.That(twoBrand.gameObject.activeSelf, Is.True,
+                    "First selected Satan number should keep its brand.");
+                Assert.That(fourBrand.gameObject.activeSelf, Is.True,
+                    "Second selected Satan number should show its brand.");
+                Assert.That(sixBrand.gameObject.activeSelf, Is.False);
 
-                Assert.That(view.TryToggleSelection(six), Is.True);
+                Assert.That(view.TryToggleSelection(six), Is.True,
+                    "Third Satan number should replace the oldest selection.");
                 Assert.That(view.TryGetSelectedNumbers(out first, out second),
-                    Is.True);
+                    Is.True,
+                    "FIFO replacement should retain two confirmable numbers.");
                 Assert.That((first, second), Is.EqualTo((4, 6)));
+                Assert.That(twoBrand.gameObject.activeSelf, Is.False);
+                Assert.That(fourBrand.gameObject.activeSelf, Is.True,
+                    "Retained Satan number should keep its brand.");
+                Assert.That(sixBrand.gameObject.activeSelf, Is.True,
+                    "Replacement Satan number should show its brand.");
 
                 view.SetHovered(four);
-                Assert.That(view.TryToggleSelection(four), Is.True);
+                Assert.That(view.TryToggleSelection(four), Is.True,
+                    "Selected Satan number should be removable.");
+                Assert.That(fourBrand.gameObject.activeSelf, Is.False);
+                Assert.That(sixBrand.gameObject.activeSelf, Is.True,
+                    "Remaining Satan number should keep its brand.");
                 InvokeUpdateSlotPose(view, 3);
                 Vector3 suppressedPosition = four.HoverVisualTransform.position;
                 view.SetHovered(four);
@@ -611,6 +639,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 view.Render(candidates, camera, interactionId: 78);
                 Assert.That(view.SelectedCount, Is.Zero);
                 Assert.That(view.TryGetSelectedNumbers(out _, out _), Is.False);
+                Assert.That(twoBrand.gameObject.activeSelf, Is.False);
+                Assert.That(fourBrand.gameObject.activeSelf, Is.False);
+                Assert.That(sixBrand.gameObject.activeSelf, Is.False);
             }
             finally
             {
@@ -965,6 +996,12 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             Assert.That(material.GetFloat("_LightingMode"), Is.EqualTo(lightingMode));
             Assert.That(material.IsKeywordEnabled("_UNLIT_ON"), Is.EqualTo(wasUnlit));
+        }
+
+        private static SpriteRenderer FindSatanBrand(CardView card)
+        {
+            return card.GetComponentsInChildren<SpriteRenderer>(true)
+                .Single(renderer => renderer.gameObject.name == "DevilShape");
         }
 
         private static void InvokeUpdateSlotPose(MonoBehaviour view, int index)

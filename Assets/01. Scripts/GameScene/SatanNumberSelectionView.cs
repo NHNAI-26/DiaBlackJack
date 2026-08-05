@@ -384,6 +384,8 @@ namespace DiaBlackJack.GameScene
                 bool selected = IsSelected(i);
                 bool hovered = IsPointerHovered(i);
                 bool raised = selected || hovered;
+                bool branded = selected ||
+                    (slot.Candidate != null && slot.Candidate.IsSatanBranded);
                 int sortingBoost = hovered
                     ? HoveredSortingBoost
                     : selected
@@ -392,6 +394,8 @@ namespace DiaBlackJack.GameScene
                 slot.Card.SetHovered(raised);
                 int sortingOrder = BaseSortingOrder + i + sortingBoost;
                 slot.Card.SetSortingOrder(sortingOrder);
+                slot.BrandRenderer.gameObject.SetActive(
+                    _brandSprite != null && branded);
                 slot.BrandRenderer.sortingOrder = sortingOrder;
             }
         }
