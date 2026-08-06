@@ -41,6 +41,10 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private ShopUtilityItemView whiskeyItem;
         [Tooltip("Combat-only table objects hidden while the shop is open and restored on close.")]
         [SerializeField] private GameObject[] combatTableObjects;
+        [Tooltip("Codex book prop; nudged by codexShopLocalPositionOffset while the shop is open and restored on close.")]
+        [SerializeField] private Transform codexBook;
+        [SerializeField] private Vector3 codexShopLocalPositionOffset =
+            new Vector3(0.25f, 0f, 0f);
         [Tooltip("Gold granted once per battle victory.")]
         [SerializeField] private int goldPerWin = 3;
         [SerializeField] private int demonCardOfferCount = 2;
@@ -76,6 +80,8 @@ namespace DiaBlackJack.GameScene
         private bool _lighterPurchasedThisVisit;
         private bool _whiskeyPurchasedThisVisit;
         private bool _utilityPurchasedThisVisit;
+        private Vector3 _codexBookBaseLocalPosition;
+        private bool _hasCodexBookBaseLocalPosition;
 
         public bool IsOpen { get; private set; }
 
@@ -668,18 +674,36 @@ namespace DiaBlackJack.GameScene
 
         private void SetCombatTableActive(bool active)
         {
-            if (combatTableObjects == null)
+            if (combatTableObjects != null)
+            {
+                foreach (GameObject tableObject in combatTableObjects)
+                {
+                    if (tableObject != null)
+                    {
+                        tableObject.SetActive(active);
+                    }
+                }
+            }
+
+            ApplyCodexBookShopPosition(shopOpen: !active);
+        }
+
+        private void ApplyCodexBookShopPosition(bool shopOpen)
+        {
+            if (codexBook == null)
             {
                 return;
             }
 
-            foreach (GameObject tableObject in combatTableObjects)
+            if (!_hasCodexBookBaseLocalPosition)
             {
-                if (tableObject != null)
-                {
-                    tableObject.SetActive(active);
-                }
+                _codexBookBaseLocalPosition = codexBook.localPosition;
+                _hasCodexBookBaseLocalPosition = true;
             }
+
+            codexBook.localPosition = shopOpen
+                ? _codexBookBaseLocalPosition + codexShopLocalPositionOffset
+                : _codexBookBaseLocalPosition;
         }
 
         private void GenerateDemonCardOffers(int seed)
