@@ -341,6 +341,16 @@ MonoBehaviour:
     volume: 0.5
     pitch: 2
     loop: 0
+  - id: cardShake
+    clip: {fileID: 8300000, guid: 688fae35b522bdd4d81658c077e58078, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: deckHover
+    clip: {fileID: 8300000, guid: 2e5d96a3cfc029f4088bd66d808c5e2c, type: 3}
+    volume: 0.2
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1

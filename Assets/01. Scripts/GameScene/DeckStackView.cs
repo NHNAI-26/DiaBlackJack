@@ -26,6 +26,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float hoverOutlineWidth = 0.025f;
         [SerializeField] private float hoverOutlineWidthPixels = 4f;
 
+        private const string DeckHoverSfxId = "deckHover";
         private const string StencilOutlineKeyword = "_STENCIL_OUTLINE_ON";
         private const string StencilOutlineOnlyShaderName =
             "Hidden/NHN/Stencil Outline Only";
@@ -89,6 +90,11 @@ namespace DiaBlackJack.GameScene
             }
 
             _isHovered = hovered;
+            if (hovered)
+            {
+                SoundManager.Current?.PlaySfx(DeckHoverSfxId);
+            }
+
             ApplyHoverOutline(hovered);
         }
 

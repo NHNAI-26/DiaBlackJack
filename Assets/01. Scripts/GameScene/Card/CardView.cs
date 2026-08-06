@@ -153,6 +153,7 @@ namespace DiaBlackJack.GameScene
         private const string FlipSfxId = "flipCard";
         private const string SatanBrandDissolveSfxId = "shapeDissolve";
         private const string SatanCardDissolveSfxId = "fireCard";
+        private const string SatanGuessMissSfxId = "cardShake";
 
         private MaterialPropertyBlock _frontPropertyBlock;
         private MaterialPropertyBlock _backPropertyBlock;
@@ -579,6 +580,7 @@ namespace DiaBlackJack.GameScene
             }
             else
             {
+                SoundManager.Current?.PlaySfx(SatanGuessMissSfxId);
                 sequence.Append(
                     transform.DOPunchRotation(
                             new Vector3(0f, 0f, satanGuessPunchRotation),

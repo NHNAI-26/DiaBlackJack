@@ -183,9 +183,9 @@ Material:
     - _BaseSpriteUVRect: {r: 0, g: 0, b: 1, a: 1}
     - _CardBlendUVRect: {r: 0, g: 0, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _DissolveEdgeColor: {r: 8, g: 0.7330912, b: 0, a: 1}
+    - _DissolveEdgeColor: {r: 16, g: 1.4661824, b: 0, a: 1}
     - _DissolvePanning: {r: 0, g: 0, b: 0, a: 0}
-    - _DissolveTilingOffset: {r: 0.2, g: 0.2, b: 0, a: 0}
+    - _DissolveTilingOffset: {r: 0.35, g: 0.35, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _HeightFadeTint: {r: 0, g: 0, b: 0, a: 0}
     - _PixelOutlineColor: {r: 0.08, g: 0.06, b: 0.05, a: 1}
