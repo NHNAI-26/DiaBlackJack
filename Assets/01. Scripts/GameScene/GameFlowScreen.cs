@@ -8,6 +8,7 @@ namespace DiaBlackJack.GameScene
         Unavailable,
         StartingDemonReveal,
         OpponentSelection,
+        FinalBossReveal,
         Combat,
         Shop,
         RunVictory,

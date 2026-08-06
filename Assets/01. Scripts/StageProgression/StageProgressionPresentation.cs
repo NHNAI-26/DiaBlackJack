@@ -551,26 +551,66 @@ namespace DiaBlackJack.StageProgression.UI
                 : null;
             foreach (OpponentSelectionCandidate candidate in offer.Candidates)
             {
-                EnemyProfilePreview preview = candidate.Preview;
-                candidates.Add(new OpponentCandidateViewModel(
+                candidates.Add(CreateOpponentCandidate(
                     candidate.ProfileKey,
-                    preview.DisplayName,
-                    preview.Grade.ToString().ToUpperInvariant(),
-                    $"SOUL {preview.MaximumSoul}",
-                    preview.Summary,
-                    usesFormalRewards
-                        ? $"VICTORY GOLD {goldCatalog.GetAmount(preview.ProfileKey)}"
-                        : GetRewardTier(preview.ExpectedRewardTier),
-                    $"×{preview.MaximumSoul}",
-                    usesFormalRewards
-                        ? $"×{goldCatalog.GetAmount(preview.ProfileKey)}"
-                        : string.Empty,
-                    StringComparer.Ordinal.Equals(
-                        candidate.ProfileKey,
-                        focusedProfileKey)));
+                    candidate.Preview,
+                    focusedProfileKey,
+                    usesFormalRewards,
+                    goldCatalog));
             }
 
             return candidates;
+        }
+
+        /// <summary>
+        /// The final boss stage never generates an <see cref="OpponentSelectionOffer"/>
+        /// (it has one fixed enemy, not a choice among several), so it needs its own
+        /// single-candidate builder for the boss "wanted poster" reveal shown right
+        /// before combat starts. Returns null when the run's active stage isn't the
+        /// final boss, so the caller can hide the reveal poster.
+        /// </summary>
+        public static OpponentCandidateViewModel CreateFinalBossRevealCandidate(
+            FormalRunSession session)
+        {
+            StageDefinition stage = session?.CombatSession?.ActiveStage;
+            if (stage == null ||
+                stage.Kind != StageKind.FinalBossCombat ||
+                stage.BattleProfileKey == null)
+            {
+                return null;
+            }
+
+            EnemyProfilePreview preview = EnemyCombatProfileCatalog.Default
+                .GetPreviewByKey(stage.BattleProfileKey);
+            return CreateOpponentCandidate(
+                stage.BattleProfileKey,
+                preview,
+                focusedProfileKey: null,
+                usesFormalRewards: true,
+                GoldRewardCatalog.CreatePrototype());
+        }
+
+        private static OpponentCandidateViewModel CreateOpponentCandidate(
+            string profileKey,
+            EnemyProfilePreview preview,
+            string focusedProfileKey,
+            bool usesFormalRewards,
+            GoldRewardCatalog goldCatalog)
+        {
+            return new OpponentCandidateViewModel(
+                profileKey,
+                preview.DisplayName,
+                preview.Grade.ToString().ToUpperInvariant(),
+                $"SOUL {preview.MaximumSoul}",
+                preview.Summary,
+                usesFormalRewards
+                    ? $"VICTORY GOLD {goldCatalog.GetAmount(preview.ProfileKey)}"
+                    : GetRewardTier(preview.ExpectedRewardTier),
+                $"×{preview.MaximumSoul}",
+                usesFormalRewards
+                    ? $"×{goldCatalog.GetAmount(preview.ProfileKey)}"
+                    : string.Empty,
+                StringComparer.Ordinal.Equals(profileKey, focusedProfileKey));
         }
 
         private static IReadOnlyList<ShopCardOptionViewModel> CreateShopOptions(

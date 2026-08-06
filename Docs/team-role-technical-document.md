@@ -845,3 +845,11 @@ DC-00 공통 규칙 개정으로 동일 악마 추가 계약과 계약 임시 �
 - 상대 선택 없이 고정 적으로 진입하는 두 지점(`TryAdvanceToNextStage`, `PrepareCurrentStage`)에서 항상 라이브 카탈로그로 스테이지 정의를 다시 만들도록(`RefreshStageDefinition` 헬퍼) 통일 — 검사 자체는 정당한 불변식이라 그대로 뒀고, 애초에 항상 최신으로 구성하니 다시는 안 깨짐. 이 변경으로 "인스턴스가 재사용된다"는 걸 그대로 검증하던 기존 테스트 2건이 새로 깨져, 참조 동일성 대신 값 동등성 검증으로 함께 고쳐 통과시킴.
 - 변경 영역: `StageProgressionSession.cs`, `OpponentSelectionFoundationTests.cs`, `OpponentSelectionIntegrationTests.cs`.
 - 검증: AI가 컴파일 오류 0 확인. 전체 EditMode 1120개 중 1110개 통과 — 새로 깨졌던 테스트 2건 포함 신규 실패 전부 해소, 무관 실패 10건만 남음. 실제로 두 번째 상점을 나가 최종 보스로 정상 진입하는지는 이천서의 재확인 필요.
+
+## 2026-08-06 최종 보스전 진입 전 "현상수배서 공개" 화면 신규 추가
+
+- 이천서: "최종 보스 때는 현상수배서가 중앙에 하나 (최종보스)만 뜨게 되어 있나요? 안 되어 있으면 그렇게 해주세요"라고 질문.
+- AI 보조: 조사 결과 최종 보스는 상대 선택 자체가 없어(고정 적) 상점을 나가면 곧바로 전투가 시작되고, 현상수배서 화면은 전혀 뜨지 않고 있었음을 확인. 기존 "2명 중 1명 선택" 화면은 보스를 후보 풀에서 아예 제외하도록 설계돼 있어 억지로 확장하기보다, 이천서 승인을 받아 "초반 악마 지급" 화면과 같은 패턴의 새 연출 화면(`FinalBossReveal`)을 추가 — 포스터 클릭으로 전투 진입. 순수 로직 계층(`StageProgression`)은 건드리지 않고 UI 계층(`GameFlowController`)에서만 화면을 오버라이드했고, 뷰모델 데이터도 기존 생성자(수많은 테스트가 직접 호출)를 건드리지 않는 별도 정적 메서드로 추가. 씬에는 기존 상대 선택 화면의 포스터 프리팹을 새로 인스턴스화해 화면 정중앙(기존 좌/우 포스터 사이의 자연스러운 지점)에 배치.
+- 막힌 점: `duplicate` 액션이 비활성 프리팹 자식 대상을 못 찾아 `create`+`prefab_path`로 우회, RectTransform 앵커링을 수동으로 재조정. 씬 저장 후 diff를 라인 단위로 전수 검토해 의도한 변경 외 실제 손실이 없음(기존 드리프트 패턴만 동반)을 확인.
+- 변경 영역: `GameFlowScreen.cs`, `GameSceneMoodResolver.cs`, `OpponentSelectionView.cs`, `GameFlowController.cs`, `StageProgressionPresentation.cs`, `GameScene.unity`, `MoodControllerTests.cs`.
+- 검증: AI가 컴파일 오류 0 확인. 전체 EditMode 1121개(신규 무드 테스트 1건 포함) 중 1111개 통과, 무관 실패 10건만 남아 신규 실패 없음. `GameFlowScreenResolver`의 순수 상태 매핑은 건드리지 않아 관련 기존 테스트도 그대로 통과. 실제로 포스터가 정중앙에 뜨고 클릭 시 전투로 진입하는지는 이천서의 확인 필요.

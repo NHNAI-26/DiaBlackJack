@@ -17,6 +17,9 @@ namespace DiaBlackJack.GameScene
 
         public bool IsVisible { get; private set; }
 
+        /// <summary>Exposed so other flow-driven posters (the final boss reveal) can resolve portraits without a duplicate serialized reference.</summary>
+        internal EnemyContentCatalogSO ContentCatalog => enemyContentCatalog;
+
         private void OnEnable()
         {
             SetSlotSubscriptions(true);

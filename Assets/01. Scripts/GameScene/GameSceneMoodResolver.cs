@@ -18,6 +18,7 @@ namespace DiaBlackJack.GameScene
                     return ReadyStage;
                 case GameFlowScreen.Shop:
                     return ShopStage;
+                case GameFlowScreen.FinalBossReveal:
                 case GameFlowScreen.Combat:
                     return ResolveEnemyMood(enemyProfileKey);
                 default:

@@ -17,6 +17,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameManager gameManager;
         [SerializeField] private StartingDemonRevealView startingDemonReveal;
         [SerializeField] private OpponentSelectionView opponentSelection;
+        [SerializeField] private OpponentWantedPosterView finalBossReveal;
         [SerializeField] private RunResultView resultView;
         [SerializeField] private CodexController codex;
         [SerializeField] private GameObject hudRoot;
@@ -37,6 +38,7 @@ namespace DiaBlackJack.GameScene
         private Coroutine _enemyAppearanceDelayRoutine;
         private int? _focusedOpponentOfferId;
         private string _focusedOpponentProfileKey;
+        private string _acknowledgedFinalBossStageId;
         private bool _isProcessingInput;
         private bool _charactersEntranceWaiting;
         private bool _hasPresentedCharacters;
@@ -108,6 +110,11 @@ namespace DiaBlackJack.GameScene
                     HandleOpponentSelected;
             }
 
+            if (finalBossReveal != null)
+            {
+                finalBossReveal.Selected += HandleFinalBossRevealSelected;
+            }
+
             if (resultView != null)
             {
                 resultView.RestartRequested += HandleRestartRequested;
@@ -159,6 +166,11 @@ namespace DiaBlackJack.GameScene
             {
                 opponentSelection.OpponentSelected -=
                     HandleOpponentSelected;
+            }
+
+            if (finalBossReveal != null)
+            {
+                finalBossReveal.Selected -= HandleFinalBossRevealSelected;
             }
 
             if (resultView != null)
@@ -254,6 +266,27 @@ namespace DiaBlackJack.GameScene
                 _session.TrySelectOpponent(offerId, profileKey));
         }
 
+        public bool RequestAcknowledgeFinalBossReveal()
+        {
+            if (IsInputBlocked() ||
+                CurrentScreen != GameFlowScreen.FinalBossReveal)
+            {
+                return false;
+            }
+
+            StageDefinition activeStage = _session?.CombatSession?.ActiveStage;
+            if (activeStage == null)
+            {
+                return false;
+            }
+
+            return ProcessInput(() =>
+            {
+                _acknowledgedFinalBossStageId = activeStage.Id;
+                return true;
+            });
+        }
+
         public bool RequestBuyShopCard(int offerId, int optionId)
         {
             return ProcessInput(
@@ -296,6 +329,7 @@ namespace DiaBlackJack.GameScene
 
             _session = null;
             ClearFocusedOpponent();
+            _acknowledgedFinalBossStageId = null;
             if (!TryAdoptFormalRun())
             {
                 return false;
@@ -402,6 +436,11 @@ namespace DiaBlackJack.GameScene
             RequestSelectOpponent(profileKey);
         }
 
+        private void HandleFinalBossRevealSelected(string profileKey)
+        {
+            RequestAcknowledgeFinalBossReveal();
+        }
+
         private void HandleFormalShopCardPurchaseRequested(int optionId)
         {
             bool succeeded = false;
@@ -481,6 +520,12 @@ namespace DiaBlackJack.GameScene
             GameFlowScreen previousScreen = CurrentScreen;
             GameFlowScreen nextScreen =
                 GameFlowScreenResolver.Resolve(_session);
+            if (nextScreen == GameFlowScreen.Combat &&
+                ShouldShowFinalBossReveal())
+            {
+                nextScreen = GameFlowScreen.FinalBossReveal;
+            }
+
             _playCharacterExitBeforeEntrance =
                 IsCharacterModeTransition(previousScreen, nextScreen) &&
                 !enemyExitAlreadyCompleted;
@@ -575,6 +620,8 @@ namespace DiaBlackJack.GameScene
                 CurrentScreen == GameFlowScreen.StartingDemonReveal;
             bool isOpponentSelection =
                 CurrentScreen == GameFlowScreen.OpponentSelection;
+            bool isFinalBossReveal =
+                CurrentScreen == GameFlowScreen.FinalBossReveal;
             bool isCombat = CurrentScreen == GameFlowScreen.Combat;
             bool isShop = CurrentScreen == GameFlowScreen.Shop;
             bool isResult =
@@ -609,6 +656,15 @@ namespace DiaBlackJack.GameScene
                 opponentSelection?.Hide();
             }
 
+            if (isFinalBossReveal)
+            {
+                RenderFinalBossReveal();
+            }
+            else
+            {
+                finalBossReveal?.Hide();
+            }
+
             if (isResult)
             {
                 resultView?.Render(RunResultPresenter.Create(
@@ -636,6 +692,39 @@ namespace DiaBlackJack.GameScene
             {
                 ApplyCharacterModeForCurrentScreen();
             }
+        }
+
+        private void RenderFinalBossReveal()
+        {
+            OpponentCandidateViewModel bossCandidate =
+                StageProgressionPresenter.CreateFinalBossRevealCandidate(_session);
+            if (bossCandidate == null || finalBossReveal == null)
+            {
+                finalBossReveal?.Hide();
+                return;
+            }
+
+            finalBossReveal.Render(
+                bossCandidate,
+                ResolveBossPortrait(bossCandidate.ProfileKey),
+                interactable: true);
+        }
+
+        private Sprite ResolveBossPortrait(string profileKey)
+        {
+            return opponentSelection != null && opponentSelection.ContentCatalog != null
+                ? opponentSelection.ContentCatalog.GetPortrait(profileKey)
+                : null;
+        }
+
+        private bool ShouldShowFinalBossReveal()
+        {
+            StageDefinition activeStage = _session?.CombatSession?.ActiveStage;
+            return activeStage != null &&
+                activeStage.Kind == StageKind.FinalBossCombat &&
+                !StringComparer.Ordinal.Equals(
+                    _acknowledgedFinalBossStageId,
+                    activeStage.Id);
         }
 
         private bool ShouldWaitForEnemyExitBeforeShop()
@@ -976,6 +1065,14 @@ namespace DiaBlackJack.GameScene
             moodController ??= GetComponent<MoodController>();
             opponentSelection ??= FindFirstObjectByType<OpponentSelectionView>(
                 FindObjectsInactive.Include);
+            if (finalBossReveal == null)
+            {
+                GameObject finalBossPosterObject =
+                    GameObject.Find("WantedPosterFinalBoss");
+                finalBossReveal = finalBossPosterObject == null
+                    ? null
+                    : finalBossPosterObject.GetComponent<OpponentWantedPosterView>();
+            }
 
             if (hudRoot == null)
             {
