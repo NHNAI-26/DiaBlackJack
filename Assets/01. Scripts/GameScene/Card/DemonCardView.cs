@@ -5,6 +5,7 @@ using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.VFX;
 
 namespace DiaBlackJack.GameScene
 {
@@ -15,6 +16,18 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameObject back;
         [SerializeField] private TMP_Text englishNameText;
         [SerializeField] private CardContentCatalogSO cardContentCatalog;
+
+        [Header("Satan attack")]
+        [SerializeField] private VisualEffect satanAttack;
+        [Min(0.01f)]
+        [SerializeField] private float satanAttackTravelDuration = 0.75f;
+        [Tooltip("Normalized speed curve used while the Satan attack travels from the card to the target deck.")]
+        [SerializeField] private AnimationCurve satanAttackTravelCurve =
+            DefaultSatanAttackTravelCurve();
+        [Min(0f)]
+        [SerializeField] private float satanAttackArcHeight = 1.2f;
+        [Min(0f)]
+        [SerializeField] private float satanAttackReturnDelay = 1f;
 
         [Header("Hover badge anchor")]
         [Tooltip("World-space anchor projected to the HUD while this demon card is hovered.")]
@@ -81,6 +94,11 @@ namespace DiaBlackJack.GameScene
         private const string PixelOutlineKeyword = "_PIXEL_OUTLINE_ON";
         private const string UnderlayKeyword = "UNDERLAY_ON";
         private const string FlipSfxId = "flipCard";
+        private const string SatanAttackPlayEvent = "OnPlay";
+        private const string SatanAttackStopBaseEvent = "OnStopBase";
+        private const string SatanAttackSparkEvent = "OnSpark";
+        private const string SatanAttackTravelSfxId = "fireWoosh";
+        private const string SatanAttackImpactSfxId = "explosion";
         private const float SatanDoomOutlineWidthValue = 0.22f;
         private const float SatanDoomCountFontSizeValue = 11f;
         private const float SatanDoomCountScaleValue = 0.4f;
@@ -127,14 +145,23 @@ namespace DiaBlackJack.GameScene
         private bool _shopColorCaptured;
         private Color _shopFrontColor = Color.white;
         private Sequence _revealSequence;
+        private Sequence _satanAttackSequence;
         private Tween _orientationTween;
         private bool _orientationInitialized;
         private bool _isUpsideDown;
         private bool _hasBoundCard;
+        private Transform _satanAttackOriginalParent;
+        private Vector3 _satanAttackOriginalLocalPosition;
+        private Quaternion _satanAttackOriginalLocalRotation;
+        private Vector3 _satanAttackOriginalLocalScale;
+        private bool _hasSatanAttackOrigin;
 
         public int CardId { get; private set; } = -1;
 
         internal float RevealFlipDuration => revealFlipDuration;
+
+        internal bool IsSatanAttackAnimationPlaying =>
+            _satanAttackSequence != null;
 
         public bool CanUse { get; private set; }
 
@@ -206,6 +233,8 @@ namespace DiaBlackJack.GameScene
 
         private void Awake()
         {
+            EnsureSatanAttackEffect();
+            RestoreSatanAttackEffect();
             EnsureSatanDoomCountText();
             if (shopOfferStatus != null)
             {
@@ -227,6 +256,13 @@ namespace DiaBlackJack.GameScene
             revealFaceSwapNormalizedTime =
                 Mathf.Clamp01(revealFaceSwapNormalizedTime);
             upsideDownTurnDuration = Mathf.Max(upsideDownTurnDuration, 0f);
+            satanAttackTravelDuration =
+                Mathf.Max(satanAttackTravelDuration, 0.01f);
+            satanAttackTravelCurve = EnsureCurve(
+                satanAttackTravelCurve,
+                DefaultSatanAttackTravelCurve());
+            satanAttackArcHeight = Mathf.Max(satanAttackArcHeight, 0f);
+            satanAttackReturnDelay = Mathf.Max(satanAttackReturnDelay, 0f);
             EnsureRevealCurves();
         }
 
@@ -252,6 +288,7 @@ namespace DiaBlackJack.GameScene
 
         private void OnDisable()
         {
+            StopSatanAttackAnimation();
             StopRevealSequence();
             _orientationTween?.Kill();
             _orientationTween = null;
@@ -263,12 +300,171 @@ namespace DiaBlackJack.GameScene
 
         private void OnDestroy()
         {
+            StopSatanAttackAnimation();
             _revealSequence?.Kill();
             _orientationTween?.Kill();
             DestroyOwnedMaterial(_presentationFrontMaterial);
             DestroyOwnedMaterial(_presentationBackMaterial);
             DestroyOwnedMaterial(_shopMaterial);
             DestroyOwnedMaterial(_satanDoomMaterial);
+        }
+
+        internal bool PlaySatanAttackAnimation(Vector3 targetPosition)
+        {
+            if (!Application.isPlaying || !isActiveAndEnabled)
+            {
+                return false;
+            }
+
+            EnsureSatanAttackEffect();
+            if (satanAttack == null)
+            {
+                return false;
+            }
+
+            StopSatanAttackAnimation();
+
+            Vector3 startPosition = transform.position;
+            Vector3 controlPosition = Vector3.Lerp(
+                startPosition,
+                targetPosition,
+                0.5f);
+            controlPosition.y += satanAttackArcHeight;
+
+            Transform effectTransform = satanAttack.transform;
+            effectTransform.SetParent(null, worldPositionStays: true);
+            effectTransform.position = startPosition;
+            satanAttack.gameObject.SetActive(true);
+            satanAttack.Reinit();
+            satanAttack.SendEvent(SatanAttackPlayEvent);
+            SoundManager.Current?.PlaySfx(SatanAttackTravelSfxId);
+
+            float duration = Mathf.Max(satanAttackTravelDuration, 0.01f);
+            AnimationCurve travelCurve = EnsureCurve(
+                satanAttackTravelCurve,
+                DefaultSatanAttackTravelCurve());
+            Sequence sequence = null;
+            sequence = DOTween.Sequence()
+                .SetTarget(this)
+                .SetLink(gameObject, LinkBehaviour.KillOnDisable);
+            sequence.Append(
+                DOVirtual.Float(
+                        0f,
+                        1f,
+                        duration,
+                        normalizedTime =>
+                        {
+                            effectTransform.position = EvaluateQuadraticBezier(
+                                startPosition,
+                                controlPosition,
+                                targetPosition,
+                                normalizedTime);
+                        })
+                    .SetEase(travelCurve));
+            sequence.AppendCallback(() =>
+            {
+                satanAttack.SendEvent(SatanAttackStopBaseEvent);
+                satanAttack.SendEvent(SatanAttackSparkEvent);
+                SoundManager.Current?.PlaySfx(SatanAttackImpactSfxId);
+            });
+            sequence.AppendInterval(Mathf.Max(satanAttackReturnDelay, 0f));
+            sequence.OnComplete(() => FinishSatanAttackAnimation(sequence));
+            sequence.OnKill(() =>
+            {
+                if (_satanAttackSequence != sequence)
+                {
+                    return;
+                }
+
+                _satanAttackSequence = null;
+                RestoreSatanAttackEffect();
+            });
+            _satanAttackSequence = sequence;
+            return true;
+        }
+
+        private void EnsureSatanAttackEffect()
+        {
+            if (satanAttack == null)
+            {
+                VisualEffect[] effects =
+                    GetComponentsInChildren<VisualEffect>(includeInactive: true);
+                for (int i = 0; i < effects.Length; i++)
+                {
+                    VisualEffect candidate = effects[i];
+                    if (candidate != null &&
+                        candidate.gameObject.name == "SatanAttack")
+                    {
+                        satanAttack = candidate;
+                        break;
+                    }
+                }
+            }
+
+            if (satanAttack == null || _hasSatanAttackOrigin)
+            {
+                return;
+            }
+
+            Transform effect = satanAttack.transform;
+            _satanAttackOriginalParent = effect.parent;
+            _satanAttackOriginalLocalPosition = effect.localPosition;
+            _satanAttackOriginalLocalRotation = effect.localRotation;
+            _satanAttackOriginalLocalScale = effect.localScale;
+            _hasSatanAttackOrigin = true;
+        }
+
+        private void StopSatanAttackAnimation()
+        {
+            Sequence sequence = _satanAttackSequence;
+            _satanAttackSequence = null;
+            sequence?.Kill();
+            RestoreSatanAttackEffect();
+        }
+
+        private void FinishSatanAttackAnimation(Sequence sequence)
+        {
+            if (_satanAttackSequence != sequence)
+            {
+                return;
+            }
+
+            _satanAttackSequence = null;
+            RestoreSatanAttackEffect();
+        }
+
+        private void RestoreSatanAttackEffect()
+        {
+            if (satanAttack == null)
+            {
+                return;
+            }
+
+            satanAttack.Stop();
+            if (_hasSatanAttackOrigin)
+            {
+                Transform effect = satanAttack.transform;
+                effect.SetParent(
+                    _satanAttackOriginalParent,
+                    worldPositionStays: false);
+                effect.localPosition = _satanAttackOriginalLocalPosition;
+                effect.localRotation = _satanAttackOriginalLocalRotation;
+                effect.localScale = _satanAttackOriginalLocalScale;
+            }
+
+            satanAttack.gameObject.SetActive(false);
+        }
+
+        private static Vector3 EvaluateQuadraticBezier(
+            Vector3 start,
+            Vector3 control,
+            Vector3 end,
+            float normalizedTime)
+        {
+            float inverseTime = 1f - normalizedTime;
+            return inverseTime * inverseTime * start +
+                2f * inverseTime * normalizedTime * control +
+                normalizedTime * normalizedTime * end;
         }
 
         public void Bind(GameSceneDemonCardViewModel card)
@@ -665,6 +861,11 @@ namespace DiaBlackJack.GameScene
                 new Keyframe(0f, 0f),
                 new Keyframe(0.5f, 1f),
                 new Keyframe(1f, 0f));
+        }
+
+        private static AnimationCurve DefaultSatanAttackTravelCurve()
+        {
+            return AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
         }
 
         private void HideFaceDetails()

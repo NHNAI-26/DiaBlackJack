@@ -92,6 +92,12 @@ namespace DiaBlackJack.GameScene
         [Header("Hammer animation")]
         [SerializeField] private HammerAnimationController hammerAnimation;
 
+        private bool _hasLastSatanAttackAnimationCue;
+        private int _lastSatanAttackAnimationRoundNumber;
+        private int _lastSatanAttackAnimationSourceCardId;
+        private CombatantSide _lastSatanAttackAnimationActorSide;
+        private int _lastSatanAttackAnimationActionOrdinal;
+
         [Header("Poison injection announcement")]
         [SerializeField] private PoisonInjectionAnnounceView poisonInjectionAnnounce;
         [SerializeField] private CardContentCatalogSO poisonInjectionCardCatalog;
@@ -443,6 +449,7 @@ namespace DiaBlackJack.GameScene
             HideRevolverAnimation();
             HideKnifeAnimation();
             ResolveHammerAnimation()?.ResetPresentationState();
+            ResetSatanAttackAnimationState();
             _stageRuntime = StageProgressionRuntime.Instance;
             StageProgressionSession runtimeSession =
                 _stageRuntime?.FormalSession?.CombatSession ??
@@ -465,6 +472,7 @@ namespace DiaBlackJack.GameScene
 
             _activeEnemySpeechProfile = ResolveActiveEnemySpeechProfile();
 
+            ResolveDeckStackReferences();
             if (enemyCharacter != null)
             {
                 enemyCharacter.TrySetEnemyProfile(_activeEnemyProfileKey);
@@ -548,6 +556,7 @@ namespace DiaBlackJack.GameScene
             CloseDeckPreview();
             CloseCodex();
             EndEnemyCardSelectionCamera();
+            ResetSatanAttackAnimationState();
             if (deckPreview != null)
             {
                 deckPreview.HoverBadgeRequested -=
@@ -623,6 +632,7 @@ namespace DiaBlackJack.GameScene
             EndEnemyCardSelectionCamera();
             EndHammerSwitchInputLock();
             ResolveHammerAnimation()?.ResetPresentationState();
+            ResetSatanAttackAnimationState();
             ResetRevolverAnimationState();
             ResetKnifeAnimationState();
             ResetPoisonInjectionAnimationState();
@@ -1571,6 +1581,7 @@ namespace DiaBlackJack.GameScene
 
         private CoreLoopBattle CreateBattle()
         {
+            ResetSatanAttackAnimationState();
             ResetRevolverAnimationState();
             ResetKnifeAnimationState();
             ResetPoisonInjectionAnimationState();
@@ -2542,6 +2553,22 @@ namespace DiaBlackJack.GameScene
             return null;
         }
 
+        private void ResolveDeckStackReferences()
+        {
+            remainingDeck ??= FindSceneDeckStack("RemainingDeck");
+            discardDeck ??= FindSceneDeckStack("DiscardDeck");
+            enemyRemainingDeck ??= FindSceneDeckStack("EnemyRemain");
+            enemyDiscardDeck ??= FindSceneDeckStack("EnemyDiscard");
+        }
+
+        private static DeckStackView FindSceneDeckStack(string objectName)
+        {
+            GameObject sceneObject = FindInactiveSceneObject(objectName);
+            return sceneObject == null
+                ? null
+                : sceneObject.GetComponent<DeckStackView>();
+        }
+
         private void ResetShopUtilityAnimations()
         {
             if (lighterAnimationRoot != null)
@@ -2876,12 +2903,36 @@ namespace DiaBlackJack.GameScene
                 bool revealKnifeCardWithThrow =
                     pendingKnifeReveal != null &&
                     IsMatchingKnifeResolvedBeat(pendingKnifeReveal, vm);
+                DemonCardView satanAttackSource;
+                bool playedSatanAttack = TryPlaySatanAttackAnimation(
+                    vm.SatanAttackAnimationCue,
+                    out satanAttackSource);
+                if (playedSatanAttack)
+                {
+                    yield return WaitForSatanAttackAnimation(satanAttackSource);
+                }
+
                 AppliedAnimationResult playedAnimation = ApplyView(
                     vm,
                     scheduleRevolverRetry: false,
                     deferHammerSmashCardRender: true,
                     deferKnifeResultCardRender: revealKnifeCardWithThrow,
                     showTransientEffectSources: true);
+
+                // The Satan source card can be instantiated by ApplyView when the timeline
+                // starts from a stale/empty hand. Retry after rendering so the attack cannot be
+                // dropped just because the source view was not available in the first snapshot.
+                if (!playedSatanAttack)
+                {
+                    playedSatanAttack = TryPlaySatanAttackAnimation(
+                        vm.SatanAttackAnimationCue,
+                        out satanAttackSource);
+                    if (playedSatanAttack)
+                    {
+                        yield return WaitForSatanAttackAnimation(
+                            satanAttackSource);
+                    }
+                }
 
                 if (revealKnifeCardWithThrow)
                 {
@@ -3000,7 +3051,8 @@ namespace DiaBlackJack.GameScene
                 _inputLocked &&
                 (vm.HammerAnimationCue != null ||
                  vm.RevolverAnimationCue != null ||
-                 vm.KnifeAnimationCue != null);
+                 vm.KnifeAnimationCue != null ||
+                 vm.SatanAttackAnimationCue != null);
             GameSceneCombatHudViewModel combat =
                 GameSceneCombatHudPresenter.Create(
                     vm.Core,
@@ -3873,6 +3925,74 @@ namespace DiaBlackJack.GameScene
                 cue.ActorSide == CombatantSide.Player);
             _playedHammerAnimationController = controller;
             return true;
+        }
+
+        private bool TryPlaySatanAttackAnimation(
+            GameSceneSatanAttackAnimationCue cue,
+            out DemonCardView sourceCard)
+        {
+            sourceCard = null;
+            if (cue == null || IsLastSatanAttackAnimationCue(cue))
+            {
+                return false;
+            }
+
+            CardHand sourceHand = cue.ActorSide == CombatantSide.Player
+                ? playerHand
+                : enemyHand;
+            DeckStackView targetDeck = cue.ActorSide == CombatantSide.Player
+                ? enemyRemainingDeck
+                : remainingDeck;
+            if (sourceHand == null ||
+                targetDeck == null ||
+                !sourceHand.TryGetDemonCard(cue.SourceCardId, out sourceCard) ||
+                !sourceCard.PlaySatanAttackAnimation(targetDeck.transform.position))
+            {
+                sourceCard = null;
+                return false;
+            }
+
+            RememberSatanAttackAnimationCue(cue);
+            return true;
+        }
+
+        private IEnumerator WaitForSatanAttackAnimation(
+            DemonCardView sourceCard)
+        {
+            while (sourceCard != null &&
+                sourceCard.IsSatanAttackAnimationPlaying)
+            {
+                yield return null;
+            }
+        }
+
+        private bool IsLastSatanAttackAnimationCue(
+            GameSceneSatanAttackAnimationCue cue)
+        {
+            return _hasLastSatanAttackAnimationCue &&
+                _lastSatanAttackAnimationRoundNumber == cue.RoundNumber &&
+                _lastSatanAttackAnimationSourceCardId == cue.SourceCardId &&
+                _lastSatanAttackAnimationActorSide == cue.ActorSide &&
+                _lastSatanAttackAnimationActionOrdinal == cue.ActionOrdinal;
+        }
+
+        private void RememberSatanAttackAnimationCue(
+            GameSceneSatanAttackAnimationCue cue)
+        {
+            _hasLastSatanAttackAnimationCue = true;
+            _lastSatanAttackAnimationRoundNumber = cue.RoundNumber;
+            _lastSatanAttackAnimationSourceCardId = cue.SourceCardId;
+            _lastSatanAttackAnimationActorSide = cue.ActorSide;
+            _lastSatanAttackAnimationActionOrdinal = cue.ActionOrdinal;
+        }
+
+        private void ResetSatanAttackAnimationState()
+        {
+            _hasLastSatanAttackAnimationCue = false;
+            _lastSatanAttackAnimationRoundNumber = 0;
+            _lastSatanAttackAnimationSourceCardId = 0;
+            _lastSatanAttackAnimationActorSide = CombatantSide.Player;
+            _lastSatanAttackAnimationActionOrdinal = 0;
         }
 
         private HammerAnimationController ResolveHammerAnimation()

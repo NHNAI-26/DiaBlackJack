@@ -301,6 +301,16 @@ MonoBehaviour:
     volume: 1
     pitch: 1
     loop: 0
+  - id: explosion
+    clip: {fileID: 8300000, guid: 625de059d9797a74eba1dd4225c94509, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: fireWoosh
+    clip: {fileID: 8300000, guid: ed9db256be31e874cb0960de97fe18dc, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1

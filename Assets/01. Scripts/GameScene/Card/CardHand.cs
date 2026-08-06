@@ -215,6 +215,24 @@ namespace DiaBlackJack.GameScene
             return false;
         }
 
+        internal bool TryGetDemonCard(
+            int cardId,
+            out DemonCardView card)
+        {
+            for (int i = 0; i < _spawnedDemonCards.Count; i++)
+            {
+                DemonCardView candidate = _spawnedDemonCards[i];
+                if (candidate != null && candidate.CardId == cardId)
+                {
+                    card = candidate;
+                    return true;
+                }
+            }
+
+            card = null;
+            return false;
+        }
+
         public bool TryGetRandomCardWorldPosition(out Vector3 position)
         {
             int aliveCount = 0;

@@ -54,6 +54,7 @@ namespace DiaBlackJack.CoreLoop
             new List<PublicCombatAction>();
         private int? _lastPublicActionSourceCardId;
         private int _lastAutomaticCardResultActionOrdinal = -1;
+        private int _lastSatanForcedDrawActionOrdinal = -1;
         private int _nextAutomaticCardActivationOrdinal = 1;
         private readonly List<int> _injectedPoisonCardIds = new List<int>();
         private CardEffectContext _activeCardEffectContext;
@@ -467,6 +468,9 @@ namespace DiaBlackJack.CoreLoop
 
         internal int LastAutomaticCardResultActionOrdinal =>
             _lastAutomaticCardResultActionOrdinal;
+
+        internal int LastSatanForcedDrawActionOrdinal =>
+            _lastSatanForcedDrawActionOrdinal;
 
         internal int LastAutomaticCardActivationOrdinal { get; private set; }
 
@@ -4082,6 +4086,7 @@ namespace DiaBlackJack.CoreLoop
                 PublicCombatActionType.DemonContract,
                 activeContract.Definition.Key,
                 activeContract.SourceCardId);
+            _lastSatanForcedDrawActionOrdinal = _publicActionHistory.Count;
             int roundBeforeForcedDraw = RoundNumber;
             SatanContractFace faceBeforeForcedDraw = satanState.CurrentFace;
             BlackjackCard drawnCard = opponent.Draw(faceUp: true);
@@ -5433,6 +5438,7 @@ namespace DiaBlackJack.CoreLoop
             _publicActionHistory.Clear();
             _lastPublicActionSourceCardId = null;
             _lastAutomaticCardResultActionOrdinal = -1;
+            _lastSatanForcedDrawActionOrdinal = -1;
             _enemyDecisionOrdinal = 0;
             LastResolutionPlayerBonus = 0;
             LastResolutionEnemyBonus = 0;

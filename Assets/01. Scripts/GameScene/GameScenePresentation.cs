@@ -595,6 +595,49 @@ namespace DiaBlackJack.GameScene
         public int? TargetCardId { get; }
     }
 
+    public sealed class GameSceneSatanAttackAnimationCue
+    {
+        public GameSceneSatanAttackAnimationCue(
+            int roundNumber,
+            int sourceCardId,
+            CombatantSide actorSide,
+            int actionOrdinal)
+        {
+            if (roundNumber < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(roundNumber));
+            }
+
+            if (sourceCardId < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceCardId));
+            }
+
+            if (!Enum.IsDefined(typeof(CombatantSide), actorSide))
+            {
+                throw new ArgumentOutOfRangeException(nameof(actorSide));
+            }
+
+            if (actionOrdinal < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(actionOrdinal));
+            }
+
+            RoundNumber = roundNumber;
+            SourceCardId = sourceCardId;
+            ActorSide = actorSide;
+            ActionOrdinal = actionOrdinal;
+        }
+
+        public int RoundNumber { get; }
+
+        public int SourceCardId { get; }
+
+        public CombatantSide ActorSide { get; }
+
+        public int ActionOrdinal { get; }
+    }
+
     /// <summary>
     /// One-shot cue for the Enforcer's per-round poison injection: a poison card was just added
     /// to the player's deck this round. Keyed only by <see cref="RoundNumber"/> (mirroring the
@@ -644,6 +687,7 @@ namespace DiaBlackJack.GameScene
             string playerTotalsText = null,
             string enemyTotalsText = null,
             GameSceneKnifeAnimationCue knifeAnimationCue = null,
+            GameSceneSatanAttackAnimationCue satanAttackAnimationCue = null,
             int? playerMammonDieValue = null,
             int? enemyMammonDieValue = null,
             int? playerMammonSourceCardId = null,
@@ -674,6 +718,7 @@ namespace DiaBlackJack.GameScene
             PlayerTotalsText = playerTotalsText ?? core.PlayerTotalsText;
             EnemyTotalsText = enemyTotalsText ?? core.EnemyVisibleTotalText;
             KnifeAnimationCue = knifeAnimationCue;
+            SatanAttackAnimationCue = satanAttackAnimationCue;
             PlayerMammonDieValue = playerMammonDieValue;
             EnemyMammonDieValue = enemyMammonDieValue;
             PlayerMammonSourceCardId = playerMammonSourceCardId;
@@ -713,6 +758,8 @@ namespace DiaBlackJack.GameScene
         public GameSceneHammerAnimationCue HammerAnimationCue { get; }
 
         public GameSceneKnifeAnimationCue KnifeAnimationCue { get; }
+
+        public GameSceneSatanAttackAnimationCue SatanAttackAnimationCue { get; }
 
         public GameScenePoisonInjectionAnimationCue PoisonInjectionAnimationCue { get; }
 
@@ -841,6 +888,7 @@ namespace DiaBlackJack.GameScene
                     revealRoundResult,
                     revealRoundResult ? battle.LastResolutionEnemyBonus : 0),
                 CreateKnifeAnimationCue(battle),
+                CreateSatanAttackAnimationCue(battle),
                 FindMammonDieValue(playerMammon),
                 FindMammonDieValue(enemyMammon),
                 playerMammon?.SourceCardId,
@@ -1430,6 +1478,46 @@ namespace DiaBlackJack.GameScene
                     battle.ActiveCardEffectSourceCardId.Value,
                     battle.ActiveCardEffectActorSide.Value,
                     GameSceneKnifeAnimationPhase.Ready);
+            }
+
+            return null;
+        }
+
+        private static GameSceneSatanAttackAnimationCue
+            CreateSatanAttackAnimationCue(CoreLoopBattle battle)
+        {
+            PublicCombatAction action = battle.LastPublicAction;
+            if (action == null ||
+                action.ActionType != PublicCombatActionType.DemonContract ||
+                !String.Equals(
+                    action.SourceCardDefinitionKey,
+                    DemonContractCatalog.SatanKey,
+                    StringComparison.Ordinal) ||
+                !battle.LastPublicActionSourceCardId.HasValue ||
+                battle.LastSatanForcedDrawActionOrdinal !=
+                    battle.PublicActionHistory.Count)
+            {
+                return null;
+            }
+
+            int sourceCardId = battle.LastPublicActionSourceCardId.Value;
+            IReadOnlyList<ActiveDemonContract> contracts =
+                action.ActorSide == CombatantSide.Player
+                    ? battle.ActivePlayerDemonContracts
+                    : battle.ActiveEnemyDemonContracts;
+            foreach (ActiveDemonContract contract in contracts)
+            {
+                if (contract.SourceCardId == sourceCardId &&
+                    contract.Kind == DemonContractKind.Satan &&
+                    contract.RuntimeState is SatanRuntimeState satanState &&
+                    satanState.CurrentFace == SatanContractFace.Lower)
+                {
+                    return new GameSceneSatanAttackAnimationCue(
+                        battle.RoundNumber,
+                        sourceCardId,
+                        action.ActorSide,
+                        battle.PublicActionHistory.Count);
+                }
             }
 
             return null;
