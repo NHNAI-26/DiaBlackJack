@@ -38,7 +38,18 @@ namespace DiaBlackJack.GameScene
         private bool _characterExitWaitingForEntrance;
         private bool _shopTransitionWaitingForEnemyExit;
         private bool _unlockInputAfterCharacterEntrance;
+        private Coroutine _characterEntranceUnlockSafetyRoutine;
         private string _currentMoodId;
+
+        // The entrance-animation completion callback that unlocks input
+        // (CompleteCharacterEntrance) depends on a chain of several animation
+        // events firing in order (mood door animation, entrance-delay wait,
+        // exit-before-entrance, the entrance tween itself). If any link in that
+        // chain fails to fire — e.g. an interrupted tween, a re-entrant
+        // RefreshFlow call resetting the wait flag before the original entrance
+        // completes — input would otherwise stay locked forever. This is a
+        // generous upper bound on how long the whole chain should ever take.
+        private const float CharacterEntranceUnlockSafetySeconds = 6f;
 
         public event Action<GameFlowScreen, StageProgressionViewModel>
             ScreenChanged;
@@ -153,6 +164,7 @@ namespace DiaBlackJack.GameScene
 
             UnsubscribeFromMoodController();
             CancelEnemyAppearanceDelay();
+            StopCharacterEntranceUnlockSafety();
             _shopTransitionWaitingForEnemyExit = false;
             _unlockInputAfterCharacterEntrance = false;
         }
@@ -466,6 +478,11 @@ namespace DiaBlackJack.GameScene
             _playCharacterExitBeforeEntrance =
                 IsCharacterModeTransition(previousScreen, nextScreen) &&
                 !enemyExitAlreadyCompleted;
+            // Deliberately not stopped here: a redundant RefreshFlow call for a
+            // screen we are already on (so this resets straight back to false
+            // below) must not cancel an in-flight entrance's safety timer, or a
+            // still-pending CompleteCharacterEntrance would have nothing left to
+            // fall back on. Only a genuinely new wait (below) restarts the timer.
             _unlockInputAfterCharacterEntrance = false;
             CurrentViewModel = StageProgressionPresenter.Create(
                 _session,
@@ -475,8 +492,20 @@ namespace DiaBlackJack.GameScene
 
             if (nextScreen == GameFlowScreen.Combat)
             {
+                bool isEnteringCombat = previousScreen != GameFlowScreen.Combat;
+                bool waitForCharacterEntrance = isEnteringCombat &&
+                    charactersRoot != null &&
+                    enemyCharacter != null;
+                _unlockInputAfterCharacterEntrance = waitForCharacterEntrance;
+                if (waitForCharacterEntrance)
+                {
+                    BeginCharacterEntranceUnlockSafety();
+                }
+
                 gameManager.UnbindFormalShop();
-                if (!gameManager.BindBattle(_session.CombatSession))
+                if (!gameManager.BindBattle(
+                        _session.CombatSession,
+                        unlockInput: !waitForCharacterEntrance))
                 {
                     throw new InvalidOperationException(
                         "The active formal battle could not be bound.");
@@ -491,6 +520,11 @@ namespace DiaBlackJack.GameScene
                     charactersRoot != null &&
                     enemyCharacter != null;
                 _unlockInputAfterCharacterEntrance = waitForCharacterEntrance;
+                if (waitForCharacterEntrance)
+                {
+                    BeginCharacterEntranceUnlockSafety();
+                }
+
                 gameManager.UnbindBattle();
                 if (!gameManager.BindFormalShop(
                         CurrentViewModel,
@@ -529,6 +563,10 @@ namespace DiaBlackJack.GameScene
             codex?.SetAvailable(isCombat || isShop);
             hud?.SetEnemyStatusVisible(isCombat);
             hud?.SetCoreStatsVisible(!isStartingReveal);
+            // There is no opponent to draw against outside of combat, so the opponent's
+            // deck piles should not be shown (or hoverable) during the starting-demon
+            // grant or shop screens.
+            gameManager?.SetEnemyDeckVisible(isCombat);
 
             if (isStartingReveal &&
                 CurrentViewModel.StartingDemonGrantId.HasValue)
@@ -771,11 +809,38 @@ namespace DiaBlackJack.GameScene
 
         private void CompleteCharacterEntrance()
         {
+            StopCharacterEntranceUnlockSafety();
             if (!_unlockInputAfterCharacterEntrance)
             {
                 return;
             }
 
+            _unlockInputAfterCharacterEntrance = false;
+            gameManager?.SetPresentationInputLocked(false);
+        }
+
+        private void BeginCharacterEntranceUnlockSafety()
+        {
+            StopCharacterEntranceUnlockSafety();
+            _characterEntranceUnlockSafetyRoutine = StartCoroutine(
+                CharacterEntranceUnlockSafetyRoutine());
+        }
+
+        private void StopCharacterEntranceUnlockSafety()
+        {
+            if (_characterEntranceUnlockSafetyRoutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(_characterEntranceUnlockSafetyRoutine);
+            _characterEntranceUnlockSafetyRoutine = null;
+        }
+
+        private IEnumerator CharacterEntranceUnlockSafetyRoutine()
+        {
+            yield return new WaitForSeconds(CharacterEntranceUnlockSafetySeconds);
+            _characterEntranceUnlockSafetyRoutine = null;
             _unlockInputAfterCharacterEntrance = false;
             gameManager?.SetPresentationInputLocked(false);
         }

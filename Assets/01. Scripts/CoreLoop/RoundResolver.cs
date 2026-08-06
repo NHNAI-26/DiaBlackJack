@@ -9,7 +9,13 @@ namespace DiaBlackJack.CoreLoop
         EnemyBust,
         PlayerWin,
         PlayerTwentyOneWin,
-        EnemyWin
+        EnemyWin,
+        // Reached only from the final showdown (both stood): if either hand's total,
+        // including its hidden card, exceeds 21, that is no longer a bust — it is a
+        // mutual loss. Neither side "busted" (no bust-replacement contract, e.g.
+        // Beelzebub, can intercept it) and there is no winner; both take the same
+        // damage as an ordinary round loss.
+        MutualLoss
     }
 
     public enum RoundEndCause
@@ -204,21 +210,9 @@ namespace DiaBlackJack.CoreLoop
                 enemyCards,
                 enemyBonus);
 
-            if (player.IsBust && !enemy.IsBust)
+            if (player.IsBust || enemy.IsBust)
             {
-                return new RoundResolution(resolutionId, RoundOutcome.PlayerBust, 2, 0);
-            }
-
-            if (enemy.IsBust && !player.IsBust)
-            {
-                return new RoundResolution(resolutionId, RoundOutcome.EnemyBust, 0, 1);
-            }
-
-            if (player.IsBust && enemy.IsBust)
-            {
-                return player.Total <= enemy.Total
-                    ? new RoundResolution(resolutionId, RoundOutcome.PlayerWin, 0, 1)
-                    : new RoundResolution(resolutionId, RoundOutcome.EnemyWin, 1, 0);
+                return new RoundResolution(resolutionId, RoundOutcome.MutualLoss, 1, 1);
             }
 
             if (player.Total >= enemy.Total)

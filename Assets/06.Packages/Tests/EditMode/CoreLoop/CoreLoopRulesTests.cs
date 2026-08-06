@@ -197,21 +197,24 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CL_U11_PlayerBustDealsTwoPlayerDamage()
+        public void CL_U11_ShowdownOver21IsMutualLossDealingOneDamageEachSide()
         {
+            // rule.md 7.4: exceeding 21 at the final showdown is no longer a bust — it's
+            // a mutual loss, symmetric regardless of which side's total went over.
             RoundResolution resolution = Resolve(4, new[] { 10, 8, 4 }, new[] { 10, 9 });
 
-            Assert.That(resolution.Outcome, Is.EqualTo(RoundOutcome.PlayerBust));
-            Assert.That(resolution.PlayerDamage, Is.EqualTo(2));
-            Assert.That(resolution.EnemyDamage, Is.Zero);
+            Assert.That(resolution.Outcome, Is.EqualTo(RoundOutcome.MutualLoss));
+            Assert.That(resolution.PlayerDamage, Is.EqualTo(1));
+            Assert.That(resolution.EnemyDamage, Is.EqualTo(1));
         }
 
         [Test]
-        public void EnemyBustDealsOneEnemyDamage()
+        public void ShowdownOver21FromEnemySideIsAlsoMutualLoss()
         {
             RoundResolution resolution = Resolve(5, new[] { 10, 9 }, new[] { 10, 8, 4 });
 
-            Assert.That(resolution.Outcome, Is.EqualTo(RoundOutcome.EnemyBust));
+            Assert.That(resolution.Outcome, Is.EqualTo(RoundOutcome.MutualLoss));
+            Assert.That(resolution.PlayerDamage, Is.EqualTo(1));
             Assert.That(resolution.EnemyDamage, Is.EqualTo(1));
         }
 

@@ -294,6 +294,9 @@ namespace DiaBlackJack.CoreLoop.Tests
         [Test]
         public void CU04_U11_ThreatHammerHiddenReplacementWaitsForFinalShowdown()
         {
+            // The hammer-replaced hidden card only matters once it's folded into the
+            // final showdown total (rule.md 7.4) — a resulting over-21 total there is a
+            // mutual loss, not a bust; the enemy's 1-soul deal is unchanged either way.
             CoreLoopBattle battle = CreateStartedBattle(
                 playerRanks: new[] { 2, 3, 6 },
                 enemyRanks: new[] { 10, 2, 8, 7, 9 },
@@ -319,8 +322,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.Enemy.Soul.Current, Is.Zero);
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.BattleEnded));
             Assert.That(battle.Outcome, Is.EqualTo(BattleOutcome.PlayerVictory));
-            Assert.That(battle.LastResolution.Value.Outcome, Is.EqualTo(RoundOutcome.EnemyBust));
-            Assert.That(battle.LastResolution.Value.Cause, Is.EqualTo(RoundEndCause.NumericBust));
+            Assert.That(battle.LastResolution.Value.Outcome, Is.EqualTo(RoundOutcome.MutualLoss));
+            Assert.That(battle.LastResolution.Value.Cause, Is.EqualTo(RoundEndCause.TotalComparison));
         }
 
         [Test]

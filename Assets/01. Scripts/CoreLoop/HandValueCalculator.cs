@@ -48,7 +48,8 @@ namespace DiaBlackJack.CoreLoop
                 }
 
                 total += card.Rank;
-                if (card.Rank == 1)
+                if (card.Rank == 1 &&
+                    card.Definition.Effect != CardEffectKind.Poison)
                 {
                     aceCount++;
                 }

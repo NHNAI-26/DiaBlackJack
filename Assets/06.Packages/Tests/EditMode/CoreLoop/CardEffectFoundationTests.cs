@@ -293,10 +293,12 @@ namespace DiaBlackJack.CoreLoop.Tests
         [Test]
         public void CU02_U12_RoundResolutionDistinguishesNumericAndCardEffectBusts()
         {
-            RoundResolution numericBust = RoundResolver.Resolve(
+            // .Resolve(...) is the final-showdown comparison — a hand over 21 there is
+            // now a mutual loss (rule.md 7.4), not a bust, so a genuine numeric bust must
+            // come from the dedicated mid-round entry point instead.
+            RoundResolution numericBust = RoundResolver.ResolveNumericBust(
                 2,
-                CreateCards(10, 8, 4),
-                CreateCards(10, 7));
+                playerIsTarget: true);
             RoundResolution cardEffectBust = RoundResolver.ResolveCardEffectBust(
                 3,
                 playerIsTarget: false,

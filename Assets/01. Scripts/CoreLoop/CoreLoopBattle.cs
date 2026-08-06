@@ -4799,7 +4799,18 @@ namespace DiaBlackJack.CoreLoop
                     roundResolution.Value,
                     () => ResumeCardEffectAfterBeelzebubBust(
                         sourceCard,
-                        resumedResult));
+                        resumedResult),
+                    beforeBustReplacementPublish: () =>
+                    {
+                        // A distinct beat, published before any bust-replacement contract
+                        // (e.g. Beelzebub) can suspend this call for a player choice: without
+                        // it, the weapon's own reveal (revolver/knife) would not be visible in
+                        // any snapshot until the contract's interaction resolves, so the
+                        // interception would appear to happen before the weapon's presentation
+                        // ever played.
+                        LastCardEffectResult = resumedResult;
+                        LastCardEffectActorSide = _activeCardEffectActorSide;
+                    });
                 if (handling == OwnerBustHandlingResult.Prevented)
                 {
                     result = resumedResult;
@@ -5276,14 +5287,15 @@ namespace DiaBlackJack.CoreLoop
 
         private OwnerBustHandlingResult HandleRoundBust(
             RoundResolution resolution,
-            Action resume)
+            Action resume,
+            Action beforeBustReplacementPublish = null)
         {
             switch (resolution.Outcome)
             {
                 case RoundOutcome.PlayerBust:
-                    return HandlePlayerBust(resume);
+                    return HandlePlayerBust(resume, beforeBustReplacementPublish);
                 case RoundOutcome.EnemyBust:
-                    return HandleEnemyBust(resume);
+                    return HandleEnemyBust(resume, beforeBustReplacementPublish);
                 default:
                     return OwnerBustHandlingResult.NotHandled;
             }
@@ -5960,20 +5972,26 @@ namespace DiaBlackJack.CoreLoop
             ResolveRoundWithEnemyFinalChoice(playerBonus: 0);
         }
 
-        private OwnerBustHandlingResult HandlePlayerBust(Action resume)
+        private OwnerBustHandlingResult HandlePlayerBust(
+            Action resume,
+            Action beforeBustReplacementPublish = null)
         {
             return HandleOwnerBust(
                 CombatantSide.Player,
                 _activePlayerDemonContracts,
-                resume);
+                resume,
+                beforeBustReplacementPublish: beforeBustReplacementPublish);
         }
 
-        private OwnerBustHandlingResult HandleEnemyBust(Action resume)
+        private OwnerBustHandlingResult HandleEnemyBust(
+            Action resume,
+            Action beforeBustReplacementPublish = null)
         {
             return HandleOwnerBust(
                 CombatantSide.Enemy,
                 _activeEnemyDemonContracts,
-                resume);
+                resume,
+                beforeBustReplacementPublish: beforeBustReplacementPublish);
         }
 
         private bool TryResolveBaphometExhaustion(
@@ -6039,7 +6057,8 @@ namespace DiaBlackJack.CoreLoop
             CombatantSide ownerSide,
             IReadOnlyList<ActiveDemonContract> activeContracts,
             Action resume,
-            bool allowAbsolutePrevention = true)
+            bool allowAbsolutePrevention = true,
+            Action beforeBustReplacementPublish = null)
         {
             if (allowAbsolutePrevention &&
                 _demonContractResolver.PreventsOwnerBust(
@@ -6060,6 +6079,7 @@ namespace DiaBlackJack.CoreLoop
                 return OwnerBustHandlingResult.NotHandled;
             }
 
+            beforeBustReplacementPublish?.Invoke();
             LastDemonContractEffectResult = result;
             RaiseStepped();
             if (GetParticipant(ownerSide).Soul.IsDepleted)
@@ -6853,22 +6873,30 @@ namespace DiaBlackJack.CoreLoop
 
         private void ResolvePaimonRoundEndCost(RoundResolution resolution)
         {
-            CombatantSide winnerSide = GetRoundWinner(resolution.Outcome);
+            CombatantSide? winnerSide = GetRoundWinner(resolution.Outcome);
+            if (!winnerSide.HasValue)
+            {
+                // A mutual loss has no winner, so Paimon's round-end downside (which
+                // targets the winner) has nothing to apply to.
+                FinalizeRound(resolution);
+                return;
+            }
+
             IReadOnlyList<ActiveDemonContract> winnerContracts =
-                winnerSide == CombatantSide.Player
+                winnerSide.Value == CombatantSide.Player
                     ? _activePlayerDemonContracts
                     : _activeEnemyDemonContracts;
             if (!_demonContractResolver.BustsOwnerAtRoundEnd(
                     this,
                     winnerContracts,
-                    winnerSide))
+                    winnerSide.Value))
             {
                 FinalizeRound(resolution);
                 return;
             }
 
             OwnerBustHandlingResult handling = HandleOwnerBust(
-                winnerSide,
+                winnerSide.Value,
                 winnerContracts,
                 () => FinalizeRound(resolution));
             if (handling == OwnerBustHandlingResult.NotHandled)
@@ -6889,7 +6917,7 @@ namespace DiaBlackJack.CoreLoop
             }
         }
 
-        private static CombatantSide GetRoundWinner(RoundOutcome outcome)
+        private static CombatantSide? GetRoundWinner(RoundOutcome outcome)
         {
             switch (outcome)
             {
@@ -6900,6 +6928,8 @@ namespace DiaBlackJack.CoreLoop
                 case RoundOutcome.PlayerBust:
                 case RoundOutcome.EnemyWin:
                     return CombatantSide.Enemy;
+                case RoundOutcome.MutualLoss:
+                    return null;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(outcome));
             }

@@ -75,7 +75,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CL_F02_FinalShowdownIncludesHiddenCardInBustTotal()
+        public void CL_F02_FinalShowdownHiddenCardOver21IsMutualLoss()
         {
             CoreLoopBattle battle = CreateBattle(
                 playerRanks: new[] { 10, 10, 2 },
@@ -90,8 +90,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.TryPlayerStand(), Is.True);
 
             Assert.That(battle.LastResolution.HasValue, Is.True);
-            Assert.That(battle.LastResolution.Value.Outcome, Is.EqualTo(RoundOutcome.PlayerBust));
-            Assert.That(battle.LastResolution.Value.Cause, Is.EqualTo(RoundEndCause.NumericBust));
+            // rule.md 7.4: a total that only exceeds 21 once the hidden card is folded
+            // in at final showdown is a mutual loss, not a bust.
+            Assert.That(battle.LastResolution.Value.Outcome, Is.EqualTo(RoundOutcome.MutualLoss));
+            Assert.That(battle.LastResolution.Value.Cause, Is.EqualTo(RoundEndCause.TotalComparison));
         }
 
         [Test]

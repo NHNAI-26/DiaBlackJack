@@ -208,7 +208,7 @@ namespace DiaBlackJack.GameScene
             _shopUtilityAnimationPlaying ||
             (codex != null && codex.IsOpen);
 
-        public bool BindBattle(StageProgressionSession session)
+        public bool BindBattle(StageProgressionSession session, bool unlockInput = true)
         {
             if (session == null ||
                 session.Progress.State != StageProgressionState.InBattle ||
@@ -234,7 +234,7 @@ namespace DiaBlackJack.GameScene
             enemyCharacter?.ExitMerchant();
             enemyCharacter?.TrySetEnemyProfile(_activeEnemyProfileKey);
             ApplyEnemyDeckTopTint();
-            _inputLocked = false;
+            _inputLocked = !unlockInput;
             RefreshView();
             return true;
         }
@@ -284,6 +284,11 @@ namespace DiaBlackJack.GameScene
             hud?.SetGold(currentGold);
             hud?.SetPlayerSoul(model.PlayerSoul);
             hud?.SetEnemyStatusVisible(false);
+            // Outside of battle there is no draw/discard split, so the shop shows the whole
+            // owned deck as a single "remaining" pile rather than leaving it at the empty
+            // height ResetBattlePresentation left it at when combat ended.
+            remainingDeck?.Render(model.ShopOwnedCards.Count);
+            discardDeck?.Render(0);
             UpdateShopLeaveControl();
             return true;
         }
@@ -292,6 +297,26 @@ namespace DiaBlackJack.GameScene
         {
             _inputLocked = locked;
             UpdateShopLeaveControl();
+            // The combat HUD's Hit/Stand/Change/contract buttons are driven by a
+            // GameSceneCombatHudViewModel snapshot that only gets rebuilt on
+            // specific battle events (ApplyView), not whenever _inputLocked
+            // changes on its own — without this, unlocking here updates the flag
+            // but the buttons stay stuck showing (and behaving as) disabled until
+            // some unrelated event happens to re-render them.
+            RefreshView();
+        }
+
+        internal void SetEnemyDeckVisible(bool visible)
+        {
+            if (enemyRemainingDeck != null)
+            {
+                enemyRemainingDeck.gameObject.SetActive(visible);
+            }
+
+            if (enemyDiscardDeck != null)
+            {
+                enemyDiscardDeck.gameObject.SetActive(visible);
+            }
         }
 
         public void UnbindFormalShop()
@@ -746,7 +771,11 @@ namespace DiaBlackJack.GameScene
             TableCombatCommandView pointedCombatCommand = !shopOpen && hasHit
                 ? hit.collider.GetComponentInParent<TableCombatCommandView>()
                 : null;
-            DeckClickable pointedDeck = !shopOpen && hasHit
+            // Unlike combat commands, the deck pile stays clickable in the shop — the
+            // discard pile's collider is already off (DeckStackView.SetVisible hides it
+            // at height 0, see BindFormalShop), so only the remaining/owned-deck pile
+            // can actually be hit here.
+            DeckClickable pointedDeck = hasHit
                 ? hit.collider.GetComponentInParent<DeckClickable>()
                 : null;
             DeckStackView pointedDeckStack =
@@ -1207,7 +1236,18 @@ namespace DiaBlackJack.GameScene
         private void OpenDeckPreview(DeckKind kind)
         {
             CoreLoopBattle battle = Battle;
-            if (battle == null)
+            GameSceneDeckViewModel model;
+            if (battle != null)
+            {
+                model = GameScenePresenter.CreateDeckPreview(battle, kind);
+            }
+            else if (shop != null && shop.IsOpen && _formalShopModel != null)
+            {
+                // Outside of battle there is no draw/discard split, so the shop always
+                // browses the whole owned deck regardless of which pile was clicked.
+                model = CreateShopOwnedDeckPreview();
+            }
+            else
             {
                 return;
             }
@@ -1222,8 +1262,38 @@ namespace DiaBlackJack.GameScene
             UpdateDeckStackHover(null);
             UpdateCodexHover(null);
             UpdateCombatCommandHover(null);
-            deckPreview.Open(GameScenePresenter.CreateDeckPreview(battle, kind));
+            deckPreview.Open(model);
             BeginDeckPreviewSwitchInputLock();
+        }
+
+        private GameSceneDeckViewModel CreateShopOwnedDeckPreview()
+        {
+            IReadOnlyList<ShopOwnedCardViewModel> options =
+                _formalShopModel.ShopOwnedCards;
+            var groups = new List<GameSceneDeckCardGroupViewModel>(options.Count);
+            for (int i = 0; i < options.Count; i++)
+            {
+                ShopOwnedCardViewModel option = options[i];
+                CardDefinition definition =
+                    CardDefinitionCatalog.GetByKey(option.DefinitionKey);
+                var card = new GameSceneCardViewModel(
+                    option.CardId,
+                    option.Rank,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    definition.DisplayName,
+                    option.AbilityDescription,
+                    option.Suit,
+                    showHoverBadgeWhenUnavailable: true,
+                    option.DefinitionKey);
+                groups.Add(new GameSceneDeckCardGroupViewModel(card, 1));
+            }
+
+            return new GameSceneDeckViewModel(
+                DeckKind.Draw,
+                "MY DECK",
+                groups);
         }
 
         private void CloseDeckPreview()

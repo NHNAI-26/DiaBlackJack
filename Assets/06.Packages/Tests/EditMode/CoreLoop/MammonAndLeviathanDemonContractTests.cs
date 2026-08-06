@@ -197,8 +197,10 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR03_U05_MammonAppliedDieCanCauseNumericBust()
+        public void DCR03_U05_MammonAppliedDieCanCauseMutualLoss()
         {
+            // The die bonus is folded into the final showdown total (rule.md 7.4), so
+            // pushing over 21 with it is a mutual loss, not a bust.
             CoreLoopBattle battle = CreateMammonBattle(
                 playerRanks: new[] { 10, 10, 2, 3 },
                 enemyRanks: new[] { 10, 7, 2, 3 },
@@ -215,10 +217,10 @@ namespace DiaBlackJack.CoreLoop.Tests
                 MammonDemonContractHandler.ApplyDieOptionId), Is.True);
 
             Assert.That(battle.LastResolution.Value.Outcome,
-                Is.EqualTo(RoundOutcome.PlayerBust));
+                Is.EqualTo(RoundOutcome.MutualLoss));
             Assert.That(battle.LastResolution.Value.Cause,
-                Is.EqualTo(RoundEndCause.NumericBust));
-            Assert.That(battle.Player.Soul.Current, Is.EqualTo(9));
+                Is.EqualTo(RoundEndCause.TotalComparison));
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(10));
         }
 
         [Test]

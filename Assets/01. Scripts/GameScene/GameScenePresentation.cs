@@ -1372,6 +1372,28 @@ namespace DiaBlackJack.GameScene
         private static GameSceneKnifeAnimationCue CreateKnifeAnimationCue(
             CoreLoopBattle battle)
         {
+            // Checked before the "still active" branch below: a bust-replacement contract
+            // (e.g. Beelzebub) can publish the knife's result and then suspend the effect
+            // for a player choice before CompleteCardEffectResult ever clears
+            // ActiveCardEffectKind — without checking the result first, that in-flight
+            // context would keep reporting Ready and the hit/miss reveal would never show
+            // until after the contract's choice UI had already appeared.
+            if (battle.LastCardEffectResult.HasValue &&
+                battle.LastCardEffectActorSide.HasValue)
+            {
+                CardEffectResult resolvedResult = battle.LastCardEffectResult.Value;
+                if (resolvedResult.EffectKind == CardEffectKind.MilitaryKnife &&
+                    IsLastUseCardEffect(battle, CardEffectKind.MilitaryKnife))
+                {
+                    return new GameSceneKnifeAnimationCue(
+                        battle.RoundNumber,
+                        resolvedResult.SourceCardId,
+                        battle.LastCardEffectActorSide.Value,
+                        GameSceneKnifeAnimationPhase.Resolved,
+                        resolvedResult.EndedRound);
+                }
+            }
+
             if (battle.ActiveCardEffectKind == CardEffectKind.MilitaryKnife &&
                 battle.ActiveCardEffectSourceCardId.HasValue &&
                 battle.ActiveCardEffectActorSide.HasValue &&
@@ -1384,25 +1406,7 @@ namespace DiaBlackJack.GameScene
                     GameSceneKnifeAnimationPhase.Ready);
             }
 
-            if (!battle.LastCardEffectResult.HasValue ||
-                !battle.LastCardEffectActorSide.HasValue)
-            {
-                return null;
-            }
-
-            CardEffectResult result = battle.LastCardEffectResult.Value;
-            if (result.EffectKind != CardEffectKind.MilitaryKnife ||
-                !IsLastUseCardEffect(battle, CardEffectKind.MilitaryKnife))
-            {
-                return null;
-            }
-
-            return new GameSceneKnifeAnimationCue(
-                battle.RoundNumber,
-                result.SourceCardId,
-                battle.LastCardEffectActorSide.Value,
-                GameSceneKnifeAnimationPhase.Resolved,
-                result.EndedRound);
+            return null;
         }
 
         private static bool IsLastUseCardEffect(
@@ -1511,6 +1515,8 @@ namespace DiaBlackJack.GameScene
                     return side == CombatantSide.Enemy
                         ? (CharacterVisualState.Win, "WIN")
                         : (CharacterVisualState.Lose, "LOSE");
+                case RoundOutcome.MutualLoss:
+                    return (CharacterVisualState.Lose, "LOSE");
                 default:
                     return (CharacterVisualState.Idle, string.Empty);
             }

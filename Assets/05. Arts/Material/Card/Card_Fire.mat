@@ -181,7 +181,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _BaseSpriteUVRect: {r: 0.51171875, g: 0.38085938, b: 0.12109375, a: 0.3671875}
+    - _BaseSpriteUVRect: {r: 0, g: 0, b: 1, a: 1}
     - _CardBlendUVRect: {r: 0, g: 0, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _DissolveEdgeColor: {r: 23.968628, g: 1.9915967, b: 0, a: 1}

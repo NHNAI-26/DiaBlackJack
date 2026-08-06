@@ -165,8 +165,10 @@ namespace DiaBlackJack.CoreLoop.Tests
         [Test]
         public void AC02_U06_RetainedPaidPoisonCanWinAndHealOwner()
         {
+            // Poison is a flat rank-1 card, not a soft ace, so the player's plain
+            // cards must clear the enemy's total on their own (9+9+1=19 vs 10).
             CoreLoopBattle battle = CreateBattle(
-                PlayerCards(2, 2, Poison),
+                PlayerCards(9, 9, Poison),
                 EnemyCards(7, 3),
                 playerCurrentSoul: 10,
                 enemyPolicy: new StandPolicy());

@@ -195,6 +195,80 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
   m_Asset: {fileID: 1238359934}
   m_ActionId: 15cef263-9014-4fd5-94d9-4e4a6234a6ef
+--- !u!84 &27613604
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 6
+  m_Width: 256
+  m_Height: 256
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthStencilFormat: 90
+  m_ColorFormat: 0
+  m_MipMap: 0
+  m_GenerateMips: 1
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_UseDynamicScaleExplicit: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_EnableRandomWrite: 0
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 1
+    m_Aniso: 0
+    m_MipBias: 0
+    m_WrapU: 1
+    m_WrapV: 1
+    m_WrapW: 1
+  m_Dimension: 2
+  m_VolumeDepth: 1
+  m_ShadowSamplingMode: 2
+--- !u!84 &35750065
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 6
+  m_Width: 1
+  m_Height: 1
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthStencilFormat: 90
+  m_ColorFormat: 0
+  m_MipMap: 0
+  m_GenerateMips: 1
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_UseDynamicScaleExplicit: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_EnableRandomWrite: 0
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 1
+    m_Aniso: 0
+    m_MipBias: 0
+    m_WrapU: 1
+    m_WrapV: 1
+    m_WrapW: 1
+  m_Dimension: 2
+  m_VolumeDepth: 1
+  m_ShadowSamplingMode: 2
 --- !u!114 &39196510 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1446267767095836390, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
@@ -285,19 +359,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!134 &79799177
-PhysicsMaterial:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  serializedVersion: 2
-  m_DynamicFriction: 0.6
-  m_StaticFriction: 0.6
-  m_Bounciness: 0
-  m_FrictionCombine: 0
-  m_BounceCombine: 0
 --- !u!1001 &81412216
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -392,7 +453,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4988744702282033680, guid: ba1eaa702dfde044187ca70cd8fe42f7, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 322789.38
+      value: 323088.53
       objectReference: {fileID: 0}
     - target: {fileID: 6432016518871201256, guid: ba1eaa702dfde044187ca70cd8fe42f7, type: 3}
       propertyPath: m_Name
@@ -649,11 +710,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ShadowTexture:
-        m_Texture: {fileID: 2096785586}
+        m_Texture: {fileID: 27613604}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TranslucencyTexture:
-        m_Texture: {fileID: 1987897224}
+        m_Texture: {fileID: 744845231}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
@@ -691,7 +752,7 @@ Material:
     - _ShadowColor: {r: 0, g: 0, b: 0, a: 1}
     - _ShadowIntensity: {r: 0.9, g: 0.100000024, b: 0, a: 0}
     - _ToLightDir: {r: -0, g: 0.012133064, b: -0.9999264, a: 0}
-    - _WindDirection: {r: 0.15571202, g: 0.103808016, b: 0, a: 16.686918}
+    - _WindDirection: {r: 0, g: 0, b: 0, a: 0.618034}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &412777436
@@ -960,6 +1021,56 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1b7bcf9a9671174687c871b85ede20b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.GameHudView
+--- !u!84 &744845231
+RenderTexture:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 6
+  m_Width: 256
+  m_Height: 256
+  m_AntiAliasing: 1
+  m_MipCount: -1
+  m_DepthStencilFormat: 0
+  m_ColorFormat: 48
+  m_MipMap: 0
+  m_GenerateMips: 1
+  m_SRGB: 0
+  m_UseDynamicScale: 0
+  m_UseDynamicScaleExplicit: 0
+  m_BindMS: 0
+  m_EnableCompatibleFormat: 1
+  m_EnableRandomWrite: 0
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 1
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 1
+    m_WrapV: 1
+    m_WrapW: 1
+  m_Dimension: 2
+  m_VolumeDepth: 1
+  m_ShadowSamplingMode: 2
+--- !u!134 &763391311
+PhysicsMaterial:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ' (Instance)'
+  serializedVersion: 2
+  m_DynamicFriction: 0.6
+  m_StaticFriction: 0.6
+  m_Bounciness: 0
+  m_FrictionCombine: 0
+  m_BounceCombine: 0
 --- !u!4 &835830632 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4319304712395305500, guid: 666c75b10ee6b6a419cae4c2754aa9b1, type: 3}
@@ -970,6 +1081,19 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8410551936053609975, guid: 2369347f84f7d8a4db4f8f2ef318518c, type: 3}
   m_PrefabInstance: {fileID: 1772920}
   m_PrefabAsset: {fileID: 0}
+--- !u!134 &891202105
+PhysicsMaterial:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 2
+  m_DynamicFriction: 0.6
+  m_StaticFriction: 0.6
+  m_Bounciness: 0
+  m_FrictionCombine: 0
+  m_BounceCombine: 0
 --- !u!114 &918342824
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1743,6 +1867,19 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6274931620729214480, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
   m_PrefabInstance: {fileID: 2282612047558951031}
   m_PrefabAsset: {fileID: 0}
+--- !u!134 &1366088847
+PhysicsMaterial:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ' (Instance)'
+  serializedVersion: 2
+  m_DynamicFriction: 0.6
+  m_StaticFriction: 0.6
+  m_Bounciness: 0
+  m_FrictionCombine: 0
+  m_BounceCombine: 0
 --- !u!43 &1378029344
 Mesh:
   m_ObjectHideFlags: 0
@@ -1921,6 +2058,19 @@ Mesh:
       - serializedVersion: 1
         m_IndexStart: 0
         m_IndexCount: 0
+--- !u!134 &1432295001
+PhysicsMaterial:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 2
+  m_DynamicFriction: 0.6
+  m_StaticFriction: 0.6
+  m_Bounciness: 0
+  m_FrictionCombine: 0
+  m_BounceCombine: 0
 --- !u!4 &1450952647 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3427907724457257795, guid: 463ea261aaf3ef7498c28c00b0f183dc, type: 3}
@@ -1931,7 +2081,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6681122677308166243, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
   m_PrefabInstance: {fileID: 2282612047558951031}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 2282612047558951035}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f746bc8e2a7667549b97d4f9ef49c116, type: 3}
@@ -1961,19 +2111,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
   m_Asset: {fileID: 1238359934}
   m_ActionId: c95b2375-e6d9-4b88-9c4c-c5e76515df4b
---- !u!134 &1645648211
-PhysicsMaterial:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  serializedVersion: 2
-  m_DynamicFriction: 0.6
-  m_StaticFriction: 0.6
-  m_Bounciness: 0
-  m_FrictionCombine: 0
-  m_BounceCombine: 0
 --- !u!134 &1653652575
 PhysicsMaterial:
   m_ObjectHideFlags: 0
@@ -2201,37 +2338,7 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fc8c0bfea260deb44a15b4cc6c902955, type: 3}
---- !u!4 &1902803476 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4245370590929577225, guid: f7a5319eafd7a4845a4e15e9dcd32639, type: 3}
-  m_PrefabInstance: {fileID: 3715254595802159084}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1909267008
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
-  m_Name: UI/ScrollWheel
-  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
-  m_Asset: {fileID: 1238359934}
-  m_ActionId: 0489e84a-4833-4c40-bfae-cea84b696689
---- !u!114 &1914048715 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5222850714889115181, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
-  m_PrefabInstance: {fileID: 2282612047558951031}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f746bc8e2a7667549b97d4f9ef49c116, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CardHand
---- !u!84 &1936326820
+--- !u!84 &1830811601
 RenderTexture:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2268,43 +2375,36 @@ RenderTexture:
   m_Dimension: 2
   m_VolumeDepth: 1
   m_ShadowSamplingMode: 2
---- !u!84 &1987897224
-RenderTexture:
+--- !u!4 &1902803476 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4245370590929577225, guid: f7a5319eafd7a4845a4e15e9dcd32639, type: 3}
+  m_PrefabInstance: {fileID: 3715254595802159084}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1909267008
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc1515ab76e54f068e2f2207940fab32, type: 3}
+  m_Name: UI/ScrollWheel
+  m_EditorClassIdentifier: Unity.InputSystem::UnityEngine.InputSystem.InputActionReference
+  m_Asset: {fileID: 1238359934}
+  m_ActionId: 0489e84a-4833-4c40-bfae-cea84b696689
+--- !u!114 &1914048715 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5222850714889115181, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+  m_PrefabInstance: {fileID: 2282612047558951031}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2282612047558951036}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f746bc8e2a7667549b97d4f9ef49c116, type: 3}
   m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 6
-  m_Width: 256
-  m_Height: 256
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthStencilFormat: 0
-  m_ColorFormat: 48
-  m_MipMap: 0
-  m_GenerateMips: 1
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_UseDynamicScaleExplicit: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_EnableRandomWrite: 0
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 1
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 1
-    m_WrapV: 1
-    m_WrapW: 1
-  m_Dimension: 2
-  m_VolumeDepth: 1
-  m_ShadowSamplingMode: 2
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CardHand
 --- !u!21 &2012886066
 Material:
   serializedVersion: 8
@@ -2436,43 +2536,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83a1708a6ba1e9a4788ad9fe96f41789, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.TableTotalsView
---- !u!84 &2096785586
-RenderTexture:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: 
-  m_ImageContentsHash:
-    serializedVersion: 2
-    Hash: 00000000000000000000000000000000
-  m_IsAlphaChannelOptional: 0
-  serializedVersion: 6
-  m_Width: 256
-  m_Height: 256
-  m_AntiAliasing: 1
-  m_MipCount: -1
-  m_DepthStencilFormat: 90
-  m_ColorFormat: 0
-  m_MipMap: 0
-  m_GenerateMips: 1
-  m_SRGB: 0
-  m_UseDynamicScale: 0
-  m_UseDynamicScaleExplicit: 0
-  m_BindMS: 0
-  m_EnableCompatibleFormat: 1
-  m_EnableRandomWrite: 0
-  m_TextureSettings:
-    serializedVersion: 2
-    m_FilterMode: 1
-    m_Aniso: 1
-    m_MipBias: 0
-    m_WrapU: 1
-    m_WrapV: 1
-    m_WrapW: 1
-  m_Dimension: 2
-  m_VolumeDepth: 1
-  m_ShadowSamplingMode: 2
 --- !u!134 &2100467835
 PhysicsMaterial:
   m_ObjectHideFlags: 0
@@ -2596,6 +2659,26 @@ PrefabInstance:
       propertyPath: merchant
       value: 
       objectReference: {fileID: 1152182556}
+    - target: {fileID: 1446267767095836390, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: combatTableObjects.Array.size
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1446267767095836390, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: 'combatTableObjects.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2282612047558951036}
+    - target: {fileID: 1446267767095836390, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: 'combatTableObjects.Array.data[2]'
+      value: 
+      objectReference: {fileID: 2282612047558951035}
+    - target: {fileID: 1446267767095836390, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: 'combatTableObjects.Array.data[3]'
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 1446267767095836390, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+      propertyPath: 'combatTableObjects.Array.data[4]'
+      value:
+      objectReference: {fileID: 2282612047558951034}
     - target: {fileID: 3318951457764372874, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -2642,7 +2725,7 @@ PrefabInstance:
       objectReference: {fileID: 1653652575}
     - target: {fileID: 4773643196297998763, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
       propertyPath: m_Material
-      value: 
+      value:
       objectReference: {fileID: 1645648211}
     - target: {fileID: 4966641734643456948, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2659,7 +2742,7 @@ PrefabInstance:
     - target: {fileID: 8173614760632565736, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
       propertyPath: m_Material
       value: 
-      objectReference: {fileID: 79799177}
+      objectReference: {fileID: 763391311}
     - target: {fileID: 8300309572304711339, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
       propertyPath: m_Material
       value: 
@@ -2684,6 +2767,43 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+--- !u!114 &2282612047558951032 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2287671952019492955, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+  m_PrefabInstance: {fileID: 2282612047558951031}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89cbcd05085f4d68a42b15391645d529, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.DeckStackView
+--- !u!114 &2282612047558951033 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6146280730255418871, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+  m_PrefabInstance: {fileID: 2282612047558951031}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89cbcd05085f4d68a42b15391645d529, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.DeckStackView
+--- !u!1 &2282612047558951034 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5970126291640778163, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+  m_PrefabInstance: {fileID: 2282612047558951031}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &2282612047558951035 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3287629173877012768, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+  m_PrefabInstance: {fileID: 2282612047558951031}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &2282612047558951036 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 320939527204750451, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}
+  m_PrefabInstance: {fileID: 2282612047558951031}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2692548345735408785
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6214,9 +6334,17 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1152182556}
     - target: {fileID: 7870382590175114481, guid: 65b3779e515064540b9789c76687ef65, type: 3}
+      propertyPath: enemyDiscardDeck
+      value: 
+      objectReference: {fileID: 2282612047558951033}
+    - target: {fileID: 7870382590175114481, guid: 65b3779e515064540b9789c76687ef65, type: 3}
       propertyPath: revolverAnimator
       value: 
       objectReference: {fileID: 3936651455334222897}
+    - target: {fileID: 7870382590175114481, guid: 65b3779e515064540b9789c76687ef65, type: 3}
+      propertyPath: enemyRemainingDeck
+      value: 
+      objectReference: {fileID: 2282612047558951032}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -6396,6 +6524,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  doorOpenSfxDelay: 0
   transitionMode: 0
 --- !u!1001 &6219715712046308512
 PrefabInstance:
@@ -6459,12 +6588,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4228813926201636872, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4228813926201636872, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
       propertyPath: m_TargetTexture
       value: 
-      objectReference: {fileID: 1936326820}
+      objectReference: {fileID: 35750065}
     - target: {fileID: 9217523067565755968, guid: 6339b8ce084786849945f15d97c0c1e0, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
