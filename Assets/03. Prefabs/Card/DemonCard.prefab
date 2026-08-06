@@ -298,7 +298,7 @@ MonoBehaviour:
   revealFlipDuration: 0.7
   revealFaceSwapNormalizedTime: 0.35
   revealFlipXOnFaceSwap: 1
-  revealPositionOffset: {x: 0.3, y: 0.4, z: 0}
+  revealPositionOffset: {x: 0, y: 0.4, z: 0}
   revealPositionXCurve:
     serializedVersion: 2
     m_Curve:
