@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Border.Audio;
 using UnityEngine;
 
 namespace DiaBlackJack.GameScene
@@ -11,6 +12,14 @@ namespace DiaBlackJack.GameScene
         private const string RollSurfaceName = "MammonDieRollSurface";
         private const string RollWallName = "MammonDieRollWall";
         private const int RollWallCount = 4;
+        private static readonly string[] DiceRollSfxIds =
+        {
+            "dice01",
+            "dice02",
+            "dice03",
+            "dice04"
+        };
+        private const float ScriptedRollSurfaceContactTime = 0.84f;
 
         [SerializeField] private Transform dieVisual;
         [SerializeField] private Collider inputCollider;
@@ -42,6 +51,7 @@ namespace DiaBlackJack.GameScene
         private bool _requestedInteractable;
         private bool _hasRollAnchor;
         private bool _hasPhysicalRestPose;
+        private bool _hasPlayedDiceRollSound;
 
         public bool IsInteractable { get; private set; }
 
@@ -161,6 +171,7 @@ namespace DiaBlackJack.GameScene
                 RestoreRollAnchor();
             }
 
+            _hasPlayedDiceRollSound = false;
             _rollRoutine = StartCoroutine(ScriptedRoll(result));
         }
 
@@ -179,7 +190,21 @@ namespace DiaBlackJack.GameScene
                 RestoreRollAnchor();
             }
 
+            _hasPlayedDiceRollSound = false;
             _rollRoutine = StartCoroutine(PhysicalRoll(onLanded));
+        }
+
+        private void OnCollisionEnter(Collision collision)
+        {
+            if (_rollRoutine == null ||
+                _rollSurfaceCollider == null ||
+                collision == null ||
+                collision.collider != _rollSurfaceCollider)
+            {
+                return;
+            }
+
+            PlayDiceRollSoundOnce();
         }
 
         // A scripted, deterministic spin used whenever the shown result is mandated externally
@@ -291,6 +316,11 @@ namespace DiaBlackJack.GameScene
                 float t = Mathf.Clamp01(elapsed / duration);
                 float ease = 1f - (1f - t) * (1f - t) * (1f - t);
                 float hop = Mathf.Sin(t * Mathf.PI) * launchHeight;
+                if (t >= ScriptedRollSurfaceContactTime)
+                {
+                    PlayDiceRollSoundOnce();
+                }
+
                 dieVisual.localPosition = Vector3.Lerp(
                     startLocalPosition,
                     _restLocalPosition,
@@ -306,6 +336,19 @@ namespace DiaBlackJack.GameScene
             _hasPhysicalRestPose = false;
             _rollRoutine = null;
             IsInteractable = _requestedInteractable;
+        }
+
+        private void PlayDiceRollSoundOnce()
+        {
+            if (_hasPlayedDiceRollSound)
+            {
+                return;
+            }
+
+            _hasPlayedDiceRollSound = true;
+            string sfxId = DiceRollSfxIds[
+                UnityEngine.Random.Range(0, DiceRollSfxIds.Length)];
+            SoundManager.Current?.PlaySfx(sfxId);
         }
 
         private void ClampAwayFromWalls(float safeHalfX, float safeHalfZ)

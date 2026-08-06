@@ -321,6 +321,26 @@ MonoBehaviour:
     volume: 1
     pitch: 1
     loop: 0
+  - id: dice01
+    clip: {fileID: 8300000, guid: e08c8d9a0aed85e429c85e8ebbb40fbd, type: 3}
+    volume: 0.5
+    pitch: 2
+    loop: 0
+  - id: dice02
+    clip: {fileID: 8300000, guid: fe998457a644126449905c86493b7621, type: 3}
+    volume: 0.5
+    pitch: 2
+    loop: 0
+  - id: dice03
+    clip: {fileID: 8300000, guid: aa9f1c8a7387c6642a262543f41c206c, type: 3}
+    volume: 0.5
+    pitch: 2
+    loop: 0
+  - id: dice04
+    clip: {fileID: 8300000, guid: 78aaf39b70b08d746b36c852a6b9e503, type: 3}
+    volume: 0.5
+    pitch: 2
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1
