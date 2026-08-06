@@ -281,6 +281,23 @@ namespace DiaBlackJack.GameScene
             return true;
         }
 
+        /// <summary>
+        /// Sets the enemy character's visual appearance (sprite/merchant-mode exit)
+        /// for the upcoming battle without touching table/card/HUD state — meant to
+        /// run *before* the enemy's entrance animation plays, so the entrance shows
+        /// the actual opponent instead of whatever the character was last displaying
+        /// (e.g. a previous stage's enemy, or the merchant look), which would
+        /// otherwise abruptly swap the instant the full <see cref="BindBattle"/>
+        /// (deferred until after entrance) finally runs.
+        /// </summary>
+        internal void PrepareEnemyAppearance(StageProgressionSession session)
+        {
+            string profileKey = session?.ActiveStage?.BattleProfileKey ??
+                ResolveEnemyProfileKey();
+            enemyCharacter?.ExitMerchant();
+            enemyCharacter?.TrySetEnemyProfile(profileKey);
+        }
+
         public void UnbindBattle()
         {
             if (_stageSession == null && _session == null)

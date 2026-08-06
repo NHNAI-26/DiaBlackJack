@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Border.UI;
 using DiaBlackJack.Content;
 using DiaBlackJack.GameScene;
 using NUnit.Framework;
@@ -518,7 +519,12 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(image.sprite, Is.Not.Null);
             Assert.That(image.preserveAspect, Is.True);
             Assert.That(button.targetGraphic, Is.SameAs(image));
-            Assert.That(button.transition, Is.EqualTo(Selectable.Transition.ColorTint));
+            // Hover/press feedback is an animated scale (UIButtonScaleFeedback), not a
+            // ColorTint transition — see the "기본 버튼 호버 효과" rework.
+            Assert.That(button.transition, Is.EqualTo(Selectable.Transition.None));
+            Assert.That(
+                prefab.GetComponent<UIButtonScaleFeedback>(),
+                Is.Not.Null);
             Assert.That(label, Is.Not.Null);
             Assert.That(
                 serializedLabel.FindProperty("m_text").stringValue,

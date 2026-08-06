@@ -39,6 +39,7 @@ namespace DiaBlackJack.GameScene
         private int? _focusedOpponentOfferId;
         private string _focusedOpponentProfileKey;
         private string _acknowledgedFinalBossStageId;
+        private StageProgressionSession _pendingCombatBindSession;
         private bool _isProcessingInput;
         private bool _charactersEntranceWaiting;
         private bool _hasPresentedCharacters;
@@ -185,6 +186,7 @@ namespace DiaBlackJack.GameScene
             StopCharacterEntranceUnlockSafety();
             _shopTransitionWaitingForEnemyExit = false;
             _unlockInputAfterCharacterEntrance = false;
+            _pendingCombatBindSession = null;
         }
 
         public bool RequestCompleteStartingDemonReveal()
@@ -330,6 +332,7 @@ namespace DiaBlackJack.GameScene
             _session = null;
             ClearFocusedOpponent();
             _acknowledgedFinalBossStageId = null;
+            _pendingCombatBindSession = null;
             if (!TryAdoptFormalRun())
             {
                 return false;
@@ -550,22 +553,36 @@ namespace DiaBlackJack.GameScene
                 bool waitForCharacterEntrance = isEnteringCombat &&
                     charactersRoot != null &&
                     enemyCharacter != null;
-                _unlockInputAfterCharacterEntrance = waitForCharacterEntrance;
-                if (waitForCharacterEntrance)
-                {
-                    BeginCharacterEntranceUnlockSafety();
-                }
 
                 gameManager.UnbindFormalShop();
-                if (!gameManager.BindBattle(
-                        _session.CombatSession,
-                        unlockInput: !waitForCharacterEntrance))
+                if (waitForCharacterEntrance)
                 {
-                    throw new InvalidOperationException(
-                        "The active formal battle could not be bound.");
+                    // Sequenced as: enemy appearance is set immediately (so the
+                    // entrance shows the actual opponent, not whatever the
+                    // character was last displaying), then the entrance plays
+                    // with nothing else bound yet, then CompleteCharacterEntrance
+                    // binds the battle (table/cards/HUD appear) and only then
+                    // unlocks input — not all three at once the moment the screen
+                    // switches. gameManager stays disabled meanwhile so nothing
+                    // renders off unbound state while entrance plays.
+                    gameManager.PrepareEnemyAppearance(_session.CombatSession);
+                    gameManager.enabled = false;
+                    _pendingCombatBindSession = _session.CombatSession;
+                    BeginCharacterEntranceUnlockSafety();
                 }
+                else
+                {
+                    _pendingCombatBindSession = null;
+                    if (!gameManager.BindBattle(
+                            _session.CombatSession,
+                            unlockInput: true))
+                    {
+                        throw new InvalidOperationException(
+                            "The active formal battle could not be bound.");
+                    }
 
-                gameManager.enabled = true;
+                    gameManager.enabled = true;
+                }
             }
             else if (nextScreen == GameFlowScreen.Shop)
             {
@@ -919,6 +936,21 @@ namespace DiaBlackJack.GameScene
         private void CompleteCharacterEntrance()
         {
             StopCharacterEntranceUnlockSafety();
+            if (_pendingCombatBindSession != null)
+            {
+                StageProgressionSession session = _pendingCombatBindSession;
+                _pendingCombatBindSession = null;
+                gameManager.enabled = true;
+                // Object setup (BindBattle, unlocked: false) and button
+                // activation (SetPresentationInputLocked(false)) stay as two
+                // separate calls/renders — even though nothing currently
+                // animates between them — so the sequence is explicit rather
+                // than baked into a single BindBattle(unlockInput: true) call.
+                gameManager.BindBattle(session, unlockInput: false);
+                gameManager.SetPresentationInputLocked(false);
+                return;
+            }
+
             if (!_unlockInputAfterCharacterEntrance)
             {
                 return;
@@ -950,6 +982,14 @@ namespace DiaBlackJack.GameScene
         {
             yield return new WaitForSeconds(CharacterEntranceUnlockSafetySeconds);
             _characterEntranceUnlockSafetyRoutine = null;
+            if (_pendingCombatBindSession != null)
+            {
+                StageProgressionSession session = _pendingCombatBindSession;
+                _pendingCombatBindSession = null;
+                gameManager.enabled = true;
+                gameManager.BindBattle(session, unlockInput: false);
+            }
+
             _unlockInputAfterCharacterEntrance = false;
             gameManager?.SetPresentationInputLocked(false);
         }

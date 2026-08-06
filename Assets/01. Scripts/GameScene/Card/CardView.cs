@@ -672,6 +672,13 @@ namespace DiaBlackJack.GameScene
 
             EnsureRevealCurves();
 
+            // Jump any still-running move-into-hand tween on this transform to its
+            // final position before capturing it as the flip's base — otherwise, if
+            // the card is flipped while it's still animating into its hand slot
+            // (more likely for the opponent's hand, whose cards can be dealt and
+            // revealed in the same beat), the flip captures and then restores to
+            // wherever it happened to be mid-move rather than its actual seat.
+            DOTween.Complete(transform);
             _revealBaseLocalPosition = transform.localPosition;
             _revealBaseLocalEulerAngles = transform.localEulerAngles;
             _hasRevealBaseTransform = true;

@@ -97,20 +97,21 @@ namespace DiaBlackJack.GameScene
                 return true;
             }
 
-            if (!CaptureQueuedTargetPosition())
-            {
-                _queuedCue = null;
-                return false;
-            }
+            // Best-effort only: the target card's CardView can still be missing
+            // from its hand at this exact point in the frame (hand rendering
+            // happens later in GameManager's view-apply pass), which used to
+            // abort the whole animation here and made the hammer silently not
+            // appear at all. ApplyQueuedTargetPosition re-resolves fresh at
+            // every later point it is called (including inside the coroutine,
+            // well after hand rendering has caught up), so a miss here just
+            // means the target snaps in once it resolves instead of blocking
+            // the swing from starting.
+            CaptureQueuedTargetPosition();
 
             if (cue.ActorSide == CombatantSide.Enemy)
             {
                 ResetAnimatorToBase();
-                if (!ApplyQueuedTargetPosition())
-                {
-                    _queuedCue = null;
-                    return false;
-                }
+                ApplyQueuedTargetPosition();
             }
 
             resolvedAnimator.SetTrigger(
@@ -168,9 +169,9 @@ namespace DiaBlackJack.GameScene
 
         private bool ApplyQueuedTargetPosition()
         {
-            if (!_hasQueuedTargetPosition)
+            if (_queuedCue == null)
             {
-                Log.W("[HammerAnimationController] Cannot apply a hammer target position before one is captured.", this);
+                Log.W("[HammerAnimationController] Cannot apply a hammer target position before a cue is queued.", this);
                 return false;
             }
 
@@ -179,6 +180,30 @@ namespace DiaBlackJack.GameScene
             {
                 Log.W("[HammerAnimationController] Cannot move target because no target transform is assigned.", this);
                 return false;
+            }
+
+            // Re-resolve fresh every time this is called rather than reusing the
+            // position captured back when the cue first started: the target
+            // hand's layout can shift between then and the animation actually
+            // reaching its smash frame (other cards in that hand being drawn,
+            // used, or discarded reflows it), which is what let the hammer land
+            // on a stale spot instead of the card it's actually meant to hit.
+            if (TryResolveTargetPosition(_queuedCue, out Vector3 freshPosition))
+            {
+                _queuedTargetPosition = freshPosition;
+                _hasQueuedTargetPosition = true;
+            }
+
+            if (!_hasQueuedTargetPosition)
+            {
+                // Never resolved any position at all, not even back when the cue
+                // first started — _queuedTargetPosition is still its zeroed-out
+                // default. Applying that would snap the target (and the hammer
+                // with it) to the world origin right as it's about to strike,
+                // which is exactly what made the hammer appear to vanish at the
+                // last moment. Leave the target wherever it already is instead.
+                Log.W("[HammerAnimationController] No hammer target position has ever resolved; leaving target unmoved.", this);
+                return true;
             }
 
             resolvedTarget.position = _queuedTargetPosition;
