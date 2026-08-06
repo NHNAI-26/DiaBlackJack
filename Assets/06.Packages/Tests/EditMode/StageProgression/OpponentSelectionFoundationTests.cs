@@ -227,7 +227,16 @@ namespace DiaBlackJack.StageProgression.Tests
 
             Assert.That(progress.State, Is.EqualTo(StageProgressionState.InBattle));
             Assert.That(session.PendingOpponentSelection, Is.Null);
-            Assert.That(session.ActiveStage, Is.SameAs(bossStage));
+            // Not Is.SameAs: a fixed (non-selectable) stage is now re-derived from the
+            // live enemy profile catalog rather than reusing the pre-built instance
+            // from the run's stage list, so it's an equal-but-distinct StageDefinition.
+            Assert.That(session.ActiveStage.Id, Is.EqualTo(bossStage.Id));
+            Assert.That(
+                session.ActiveStage.BattleProfileKey,
+                Is.EqualTo(bossStage.BattleProfileKey));
+            Assert.That(
+                session.ActiveStage.EnemyMaximumSoul,
+                Is.EqualTo(bossStage.EnemyMaximumSoul));
             Assert.That(session.Battle, Is.Not.Null);
         }
 

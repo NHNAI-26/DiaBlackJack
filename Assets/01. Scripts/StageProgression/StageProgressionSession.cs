@@ -312,7 +312,8 @@ namespace DiaBlackJack.StageProgression
                 throw new InvalidOperationException("A cleared stage must have a following stage.");
             }
 
-            StageDefinition nextStage = Progress.Stages[nextStageIndex];
+            StageDefinition nextStage = RefreshStageDefinition(
+                Progress.Stages[nextStageIndex]);
             OpponentSelectionOffer nextOffer = ShouldOfferOpponentSelection(nextStage)
                 ? _opponentSelectionGenerator.Generate(nextStageIndex)
                 : null;
@@ -408,7 +409,7 @@ namespace DiaBlackJack.StageProgression
 
         private void PrepareCurrentStage()
         {
-            StageDefinition stage = Progress.CurrentStage;
+            StageDefinition stage = RefreshStageDefinition(Progress.CurrentStage);
             OpponentSelectionOffer offer = ShouldOfferOpponentSelection(stage)
                 ? _opponentSelectionGenerator.Generate(Progress.CurrentStageIndex)
                 : null;
@@ -439,6 +440,34 @@ namespace DiaBlackJack.StageProgression
         {
             return IsOpponentSelectionEnabled &&
                 stage.Kind != StageKind.FinalBossCombat;
+        }
+
+        /// <summary>
+        /// Re-derives a fixed (non-selectable) stage's <see cref="StageDefinition"/>
+        /// from the *current* <see cref="EnemyCombatProfileCatalog"/> instead of
+        /// trusting whatever the run's stage list captured when the path was first
+        /// built. <see cref="TrySelectOpponent"/> already does this at selection time
+        /// via <see cref="StageDefinition.CreateForEnemyProfile"/>; a stage with a
+        /// fixed enemy (no opponent selection — e.g. the final boss) skips that call
+        /// entirely and previously reused the stale, pre-built definition straight
+        /// from <see cref="Progress"/>.Stages, so if the live catalog's soul values
+        /// changed after the stage path was generated, <see cref="StageBattleFactory"/>
+        /// 's own consistency check would throw and leave the run stuck.
+        /// </summary>
+        private static StageDefinition RefreshStageDefinition(StageDefinition stage)
+        {
+            if (stage.BattleProfileKey == null)
+            {
+                return stage;
+            }
+
+            return StageDefinition.CreateForEnemyProfile(
+                stage.Id,
+                stage.DisplayName,
+                stage.Kind,
+                stage.BattleProfileKey,
+                stage.PlayerDeckSeed,
+                stage.EnemyDeckSeed);
         }
 
         private static OpponentSelectionCandidate FindCandidate(

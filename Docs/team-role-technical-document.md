@@ -837,3 +837,11 @@ DC-00 공통 규칙 개정으로 동일 악마 추가 계약과 계약 임시 �
 - AI 보조: 색 대비를 더 만지기 전에 포인터 이벤트 파이프라인부터 재점검 — `EventSystem` 중복 없음, `InputSystemUIInputModule`의 Point/Click 액션 정상 바인딩, `GraphicRaycaster.eventCamera`가 실제 활성 `MainCamera`를 정확히 가리킴을 확인해 파이프라인 자체는 문제없다고 판단. `DefaultButton.prefab`의 실제 사용처를 전수 조사해, `ConfirmDemonsButton` 외에 HUD의 `optionSlots` 100개(전투 중 카드/보상/상점 선택 목록)도 전부 같은 프리팹이고 인스턴스별 색상 오버라이드가 없음을 확인 — 이천서가 실제로 보고 있던 건 이 옵션 슬롯들일 가능성. 구조적 결함은 못 찾았고, "밝기만 20% 낮추는 변화가 칠해진 텍스처 위에서 잘 안 보였을 가능성"으로 판단해, 도감·덱·계약서 호버에 이미 쓰는 호박색(amber) 언어를 기본 버튼에도 동일 적용(회색 밝기 조정 → 호박색 색조 변화로 교체) — 색조 변화는 바탕 명도와 무관하게 항상 뚜렷하다.
 - 변경 영역: `DefaultButton.prefab`. 모든 사용처(ConfirmDemonsButton, 옵션 슬롯 100개, ShopLeaveButton 등)에 공통 적용.
 - 검증: AI가 컴파일 오류 0, 전체 EditMode 1120개 중 1110개 통과(무관 실패 10건만, 신규 실패 없음) 확인. 이번에도 안 보이면 이천서가 보는 버튼이 이 프리팹을 아예 안 쓰는 다른 화면(OnGUI 등)일 가능성이 높으므로 어느 화면인지 짚어달라고 요청 필요.
+
+## 2026-08-06 상점 나가기(2번째)가 예외로 진행 불가하던 버그 수정
+
+- 이천서: "상점 나가기 눌렀는데 다음과 같은 버그 발생하면서 아무 일도 안 일어남"이라며 `InvalidOperationException: The selected enemy profile no longer matches the stage soul configuration.` 전체 스택트레이스를 제보.
+- AI 보조: `StageBattleFactory.Create`의 정합성 검사(`enemy.EnemyMaximumSoul != stage.EnemyMaximumSoul`이면 예외)까지 역추적 — 상대를 실제로 고르는 정상 경로(`TrySelectOpponent`)는 선택 순간 라이브 카탈로그로 `StageDefinition`을 매번 새로 만들어 항상 일치하지만, 상대 선택이 없는 고정 적 스테이지(최종 보스가 대표적)로 자동 진행하는 `TryAdvanceToNextStage`는 런 시작 시점에 미리 구워둔 옛 `StageDefinition`을 그대로 재사용하고 있었다 — 런 도중 적 프로필 SO(`maximumSoul`)가 조정되면 이 스냅샷만 낡은 채로 남아, 두 번째 상점을 나가 최종 보스로 들어가려는 순간 정합성 검사에 걸려 진행이 완전히 막히는 구조였다(이번 세션 초반의 "상대 영혼·골드 SO 조정" 작업과 정확히 맞물리는 시나리오).
+- 상대 선택 없이 고정 적으로 진입하는 두 지점(`TryAdvanceToNextStage`, `PrepareCurrentStage`)에서 항상 라이브 카탈로그로 스테이지 정의를 다시 만들도록(`RefreshStageDefinition` 헬퍼) 통일 — 검사 자체는 정당한 불변식이라 그대로 뒀고, 애초에 항상 최신으로 구성하니 다시는 안 깨짐. 이 변경으로 "인스턴스가 재사용된다"는 걸 그대로 검증하던 기존 테스트 2건이 새로 깨져, 참조 동일성 대신 값 동등성 검증으로 함께 고쳐 통과시킴.
+- 변경 영역: `StageProgressionSession.cs`, `OpponentSelectionFoundationTests.cs`, `OpponentSelectionIntegrationTests.cs`.
+- 검증: AI가 컴파일 오류 0 확인. 전체 EditMode 1120개 중 1110개 통과 — 새로 깨졌던 테스트 2건 포함 신규 실패 전부 해소, 무관 실패 10건만 남음. 실제로 두 번째 상점을 나가 최종 보스로 정상 진입하는지는 이천서의 재확인 필요.
