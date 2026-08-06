@@ -60,7 +60,7 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
-            shop.Open();
+            shop.Open(gameManager.CurrentEnemyProfileKey);
             RefreshGameView();
             return true;
         }

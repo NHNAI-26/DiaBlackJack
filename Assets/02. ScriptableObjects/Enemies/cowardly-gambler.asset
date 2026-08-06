@@ -18,7 +18,7 @@ MonoBehaviour:
   speechProfile: {fileID: 11400000, guid: 73d5f5e734b43cc4c94c44f9981587c4, type: 2}
   deckTopTint: {r: 1.35, g: 1.35, b: 1.35, a: 1}
   grade: 0
-  maximumSoul: 3
+  maximumSoul: 4
   defeatGold: 3
   behaviorPolicyKey: cowardly-gambler-low-risk
   startingDeck:

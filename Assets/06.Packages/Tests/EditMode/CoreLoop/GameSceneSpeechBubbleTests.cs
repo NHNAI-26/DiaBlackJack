@@ -210,11 +210,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                 CharacterView merchant = enemy.GetComponent<CharacterView>();
                 SetPrivateField(shop, "merchant", merchant);
                 SetPrivateField(shop, "merchantSpeechProfile", profile);
-                SetPrivateField(shop, "goldPerWin", 0);
                 SpeechBubbleView bubble =
                     enemy.GetComponentInChildren<SpeechBubbleView>(true);
 
-                shop.Open();
+                shop.Open(EnemyCombatProfileCatalog.GunslingerKey);
+                shop.ResetGold();
                 Assert.That(bubble.DisplayedText, Is.EqualTo("어서 오게."));
 
                 AssertMerchantLine(shop, bubble,
@@ -248,10 +248,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             try
             {
                 ShopController shop = root.AddComponent<ShopController>();
-                SetPrivateField(shop, "goldPerWin", 0);
                 SetPrivateField(shop, "lighterPrice", 2);
                 SetPrivateField(shop, "whiskeyPrice", 3);
-                shop.Open();
+                shop.Open(EnemyCombatProfileCatalog.GunslingerKey);
+                shop.ResetGold();
 
                 Assert.That(shop.GetLighterAvailability(2),
                     Is.EqualTo(ShopPurchaseAvailability.InsufficientGold));

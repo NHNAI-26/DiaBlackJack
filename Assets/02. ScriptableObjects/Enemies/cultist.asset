@@ -18,8 +18,8 @@ MonoBehaviour:
   speechProfile: {fileID: 11400000, guid: b62ef220cb85f1b49b91dd22f8a01c70, type: 2}
   deckTopTint: {r: 1.35, g: 1.35, b: 1.35, a: 1}
   grade: 0
-  maximumSoul: 5
-  defeatGold: 6
+  maximumSoul: 6
+  defeatGold: 5
   behaviorPolicyKey: cultist-aggressive-risk
   startingDeck:
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120001, type: 2}

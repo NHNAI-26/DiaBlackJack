@@ -17,8 +17,8 @@ MonoBehaviour:
   portrait: {fileID: 2911093068676753536, guid: 22aa22444d6050045815396b307d8760, type: 3}
   speechProfile: {fileID: 11400000, guid: 7da099c11a64dc24c8313dba0087c9be, type: 2}
   deckTopTint: {r: 1.35, g: 1.35, b: 1.35, a: 1}
-  grade: 0
-  maximumSoul: 5
+  grade: 1
+  maximumSoul: 7
   defeatGold: 7
   behaviorPolicyKey: trickster-information-control
   startingDeck:

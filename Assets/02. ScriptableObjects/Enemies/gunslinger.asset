@@ -18,7 +18,7 @@ MonoBehaviour:
   speechProfile: {fileID: 11400000, guid: 1508931c76af757409f2c02dc5e0aa02, type: 2}
   deckTopTint: {r: 1.35, g: 1.35, b: 1.35, a: 1}
   grade: 0
-  maximumSoul: 3
+  maximumSoul: 4
   defeatGold: 4
   behaviorPolicyKey: gunslinger-public-inference
   startingDeck:

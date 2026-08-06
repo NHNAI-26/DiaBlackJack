@@ -4751,7 +4751,7 @@ namespace DiaBlackJack.GameScene
             }
 
             CloseDeckPreview();
-            shop.Open();
+            shop.Open(CurrentEnemyProfileKey);
         }
 
         // Leave the shop and start the next battle. Gold is KEPT by ShopController — it accumulates

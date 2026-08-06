@@ -23,7 +23,6 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             _root = new GameObject("Shop Controller Test Root");
             _shop = _root.AddComponent<ShopController>();
-            SetPrivateField("goldPerWin", 20);
             SetPrivateField("lighterPrice", 2);
             SetPrivateField("whiskeyPrice", 3);
             SetPrivateField("lighterPriceIncreasePerUsedVisit", 1);
@@ -39,7 +38,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         [Test]
         public void RFM01_U01_LighterPriceIncreasesOncePerUsedShopWhiskeyPriceNeverChanges()
         {
-            _shop.Open();
+            _shop.Open(EnemyCombatProfileCatalog.GunslingerKey);
 
             Assert.That(_shop.CurrentLighterPrice, Is.EqualTo(2));
             Assert.That(_shop.CurrentWhiskeyPrice, Is.EqualTo(3));
@@ -53,7 +52,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(_shop.CurrentWhiskeyPrice, Is.EqualTo(3));
 
             _shop.Close();
-            _shop.Open();
+            _shop.Open(EnemyCombatProfileCatalog.GunslingerKey);
 
             // Only whiskey was used in the previous shop — the lighter price is
             // unaffected by whiskey usage.
@@ -67,7 +66,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(secondRestore, Is.EqualTo(2));
 
             _shop.Close();
-            _shop.Open();
+            _shop.Open(EnemyCombatProfileCatalog.GunslingerKey);
 
             // The lighter was used in the previous shop, so its price rises by one
             // step — whiskey's price stays fixed no matter how it's used.
@@ -78,9 +77,9 @@ namespace DiaBlackJack.CoreLoop.Tests
         [Test]
         public void RFM01_U02_UnusedShopDoesNotIncreaseUtilityPricesAndRunResetClearsThem()
         {
-            _shop.Open();
+            _shop.Open(EnemyCombatProfileCatalog.GunslingerKey);
             _shop.Close();
-            _shop.Open();
+            _shop.Open(EnemyCombatProfileCatalog.GunslingerKey);
 
             Assert.That(_shop.CurrentLighterPrice, Is.EqualTo(2));
             Assert.That(_shop.CurrentWhiskeyPrice, Is.EqualTo(3));
@@ -110,7 +109,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             SetPrivateField("lighterItem", lighter);
             SetPrivateField("whiskeyItem", whiskey);
 
-            _shop.Open();
+            _shop.Open(EnemyCombatProfileCatalog.FinalBossKey);
             _shop.RefreshUtilityItems(2, 5, 12);
             Assert.That(lighterObject.activeSelf, Is.True);
             Assert.That(whiskeyObject.activeSelf, Is.True);
@@ -145,7 +144,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 "whiskeyItem",
                 whiskey.GetComponent<ShopUtilityItemView>());
 
-            _shop.Open();
+            _shop.Open(EnemyCombatProfileCatalog.GunslingerKey);
             _shop.RefreshUtilityItems(2, 5, 12);
 
             string lighterDescription = lighter
@@ -185,7 +184,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             SetPrivateField("normalCardOfferCount", 3);
             SetPrivateField("demonCardOfferCount", 2);
 
-            _shop.Open();
+            _shop.Open(EnemyCombatProfileCatalog.GunslingerKey);
 
             CardView[] normalCards =
                 normalHolder.GetComponentsInChildren<CardView>(true);
@@ -241,7 +240,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             SetPrivateField("normalCardPrefab", prefab);
             SetPrivateField("normalCardOfferCount", 3);
 
-            _shop.Open();
+            _shop.Open(EnemyCombatProfileCatalog.FinalBossKey);
             CardView[] offers = holderObject.GetComponentsInChildren<CardView>(true);
 
             Assert.That(offers, Has.Length.EqualTo(3));
@@ -256,11 +255,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(definitionKey, Is.Not.Empty);
             }
 
-            Assert.That(_shop.Gold, Is.EqualTo(11));
+            Assert.That(_shop.Gold, Is.EqualTo(6));
             Assert.That(
                 _shop.TryPurchaseNormalCard(offers[0].CardId, out _, out _),
                 Is.False);
-            Assert.That(_shop.Gold, Is.EqualTo(11));
+            Assert.That(_shop.Gold, Is.EqualTo(6));
         }
 
         [Test]
@@ -370,9 +369,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             SetPrivateField(
                 "demonCardOfferCount",
                 DemonContractCatalog.Default.Definitions.Count);
-            SetPrivateField("goldPerWin", 40);
 
-            _shop.Open();
+            _shop.Open(EnemyCombatProfileCatalog.GunslingerKey);
+            _shop.GrantGoldForTesting(1000);
             DemonCardView[] offers =
                 holderObject.GetComponentsInChildren<DemonCardView>(true);
             var purchasedKeys = new List<string>();
@@ -428,7 +427,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             SetPrivateField("normalCardOfferCount", 3);
             SetPrivateField("demonCardOfferCount", 2);
 
-            _shop.Open();
+            _shop.Open(EnemyCombatProfileCatalog.FinalBossKey);
             CardView[] normalCards =
                 normalHolder.GetComponentsInChildren<CardView>(true);
             DemonCardView[] demonCards =
@@ -519,7 +518,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             SetPrivateField("normalCardPrefab", prefab);
             SetPrivateField("normalCardOfferCount", 1);
 
-            _shop.Open();
+            _shop.Open(EnemyCombatProfileCatalog.GunslingerKey);
             _shop.ResetGold();
             CardView card = holder.GetComponentInChildren<CardView>(true);
             ShopCardOfferStatusView status =

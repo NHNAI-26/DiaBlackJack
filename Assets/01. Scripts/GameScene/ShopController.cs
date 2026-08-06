@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Border.Core;
 using DiaBlackJack.Content;
 using DiaBlackJack.CoreLoop;
+using DiaBlackJack.StageProgression;
 using DiaBlackJack.StageProgression.UI;
 using UnityEngine;
 
@@ -45,8 +46,6 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Transform codexBook;
         [SerializeField] private Vector3 codexShopLocalPositionOffset =
             new Vector3(0.25f, 0f, 0f);
-        [Tooltip("Gold granted once per battle victory.")]
-        [SerializeField] private int goldPerWin = 3;
         [SerializeField] private int demonCardOfferCount = 2;
         [SerializeField] private float demonCardSpacing = 1.1f;
         [SerializeField] private int normalCardOfferCount = 3;
@@ -118,7 +117,7 @@ namespace DiaBlackJack.GameScene
                 : demonCardPrefab.GetFaceSprite(definitionKey);
         }
 
-        public void Open()
+        public void Open(string enemyProfileKey)
         {
             if (IsOpen)
             {
@@ -129,7 +128,7 @@ namespace DiaBlackJack.GameScene
             _whiskeyPurchasedThisVisit = false;
             IsOpen = true;
             IsFormal = false;
-            Gold += goldPerWin;
+            Gold += GoldRewardCatalog.CreatePrototype().GetAmount(enemyProfileKey);
             int offerSeed = shopRandomSeed + _openCount++;
             GenerateDemonCardOffers(offerSeed);
             GenerateNormalCardOffers(offerSeed + 9973);
@@ -232,6 +231,12 @@ namespace DiaBlackJack.GameScene
         {
             Gold = 0;
             RefreshOfferViews();
+        }
+
+        /// <summary>Test-only hook — production gold only ever comes from Open's per-enemy reward.</summary>
+        internal void GrantGoldForTesting(int amount)
+        {
+            Gold += amount;
         }
 
         public void ResetRunEconomy()
