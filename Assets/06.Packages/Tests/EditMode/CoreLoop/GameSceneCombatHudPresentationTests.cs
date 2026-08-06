@@ -116,8 +116,13 @@ namespace DiaBlackJack.CoreLoop.Tests
             try
             {
                 ContractPaperView view = root.AddComponent<ContractPaperView>();
-                ContractPaperClickable first = CreateContractPaper(root, "PaperA");
-                ContractPaperClickable second = CreateContractPaper(root, "PaperB");
+                // Higher sortingOrder renders in front — "first" is the visually
+                // front-most paper here, which is what ContractPaperView now keys
+                // "top of stack" off of (see ContractPaperClickable.SortingOrder).
+                ContractPaperClickable first =
+                    CreateContractPaper(root, "PaperA", sortingOrder: 11);
+                ContractPaperClickable second =
+                    CreateContractPaper(root, "PaperB", sortingOrder: 10);
 
                 view.Render(new ContractPaperViewModel(2, true));
                 Assert.That(view.HasRequiredReferences, Is.True);
@@ -2325,10 +2330,12 @@ namespace DiaBlackJack.CoreLoop.Tests
 
         private static ContractPaperClickable CreateContractPaper(
             GameObject parent,
-            string name)
+            string name,
+            int sortingOrder)
         {
             var paper = new GameObject(name);
             paper.transform.SetParent(parent.transform, false);
+            paper.AddComponent<SpriteRenderer>().sortingOrder = sortingOrder;
             return paper.AddComponent<ContractPaperClickable>();
         }
 

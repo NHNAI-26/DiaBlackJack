@@ -126,6 +126,7 @@ namespace DiaBlackJack.GameScene
         private DemonCardView _hoveredDemonCard;
         private DeckStackView _hoveredDeckStack;
         private CodexClickable _hoveredCodex;
+        private ContractPaperClickable _hoveredContractPaper;
         private ShopUtilityItemView _hoveredShopUtilityItem;
         private TableCombatCommandView _hoveredCombatCommand;
         private HoverDescriptionTarget _hoveredDescriptionTarget;
@@ -345,6 +346,7 @@ namespace DiaBlackJack.GameScene
             UpdateDemonCardHover(null);
             UpdateDeckStackHover(null);
             UpdateCodexHover(null);
+            UpdateContractPaperHover(null);
             UpdateShopUtilityItemHover(null);
             UpdateCombatCommandHover(null);
             hud?.HideCardHoverBadge();
@@ -366,6 +368,7 @@ namespace DiaBlackJack.GameScene
             demonContractSelection?.SetHovered(null);
             UpdateDeckStackHover(null);
             UpdateCodexHover(null);
+            UpdateContractPaperHover(null);
             UpdateShopUtilityItemHover(null);
             UpdateCombatCommandHover(null);
             hud?.HideCardHoverBadge();
@@ -584,6 +587,7 @@ namespace DiaBlackJack.GameScene
             hud?.SetShopLeaveState(visible: false, interactable: false);
             UpdateDeckStackHover(null);
             UpdateCodexHover(null);
+            UpdateContractPaperHover(null);
             UpdateCombatCommandHover(null);
             ResetShopUtilityAnimations();
         }
@@ -615,6 +619,7 @@ namespace DiaBlackJack.GameScene
             UpdateDemonCardHover(null);
             UpdateDeckStackHover(null);
             UpdateCodexHover(null);
+            UpdateContractPaperHover(null);
             UpdateShopUtilityItemHover(null);
             UpdateCombatCommandHover(null);
             demonContractSelection?.SetHovered(null);
@@ -682,6 +687,7 @@ namespace DiaBlackJack.GameScene
             {
                 UpdateDeckStackHover(null);
                 UpdateCodexHover(null);
+                UpdateContractPaperHover(null);
                 UpdateCombatCommandHover(null);
                 UpdateHoverDescriptionTarget(null);
                 if (codex == null || !codex.IsOpen)
@@ -696,6 +702,7 @@ namespace DiaBlackJack.GameScene
             {
                 UpdateDeckStackHover(null);
                 UpdateCodexHover(null);
+                UpdateContractPaperHover(null);
                 UpdateCombatCommandHover(null);
                 UpdateHoverDescriptionTarget(null);
                 hud?.HideCardHoverBadge();
@@ -708,6 +715,7 @@ namespace DiaBlackJack.GameScene
                 UpdateDemonCardHover(null);
                 UpdateDeckStackHover(null);
                 UpdateCodexHover(null);
+                UpdateContractPaperHover(null);
                 UpdateShopUtilityItemHover(null);
                 UpdateCombatCommandHover(null);
                 UpdateHoverDescriptionTarget(null);
@@ -725,6 +733,7 @@ namespace DiaBlackJack.GameScene
                 UpdateDemonCardHover(null);
                 UpdateDeckStackHover(null);
                 UpdateCodexHover(null);
+                UpdateContractPaperHover(null);
                 UpdateShopUtilityItemHover(null);
                 UpdateHoverDescriptionTarget(null);
                 demonContractSelection?.SetHovered(null);
@@ -741,6 +750,7 @@ namespace DiaBlackJack.GameScene
                 UpdateDemonCardHover(null);
                 UpdateDeckStackHover(null);
                 UpdateCodexHover(null);
+                UpdateContractPaperHover(null);
                 UpdateShopUtilityItemHover(null);
                 UpdateCombatCommandHover(null);
                 UpdateHoverDescriptionTarget(null);
@@ -805,6 +815,9 @@ namespace DiaBlackJack.GameScene
             // A non-interactable contract paper (the decorative one underneath) has its
             // collider disabled by ContractPaperClickable.SetInteractable, so the
             // raycast physically can't hit it — no extra gating needed here.
+            ContractPaperClickable pointedContractPaper = !shopOpen && hasHit
+                ? hit.collider.GetComponentInParent<ContractPaperClickable>()
+                : null;
             HoverDescriptionTarget pointedHoverDescriptionTarget = hasHit
                 ? hit.collider.GetComponentInParent<HoverDescriptionTarget>()
                 : null;
@@ -819,6 +832,8 @@ namespace DiaBlackJack.GameScene
                 UpdateDemonCardHover(null);
                 UpdateDeckStackHover(null);
                 UpdateCodexHover(null);
+                UpdateContractPaperHover(null);
+                UpdateContractPaperHover(null);
                 UpdateShopUtilityItemHover(null);
                 UpdateCombatCommandHover(null);
                 UpdateHoverDescriptionTarget(null);
@@ -830,6 +845,7 @@ namespace DiaBlackJack.GameScene
             UpdateDemonCardHover(pointedDemonCard);
             UpdateDeckStackHover(pointedDeckStack);
             UpdateCodexHover(pointedCodex);
+            UpdateContractPaperHover(pointedContractPaper);
             UpdateCardHoverBadge();
             UpdateShopUtilityItemHover(pointedShopUtilityItem);
             UpdateCombatCommandHover(pointedCombatCommand);
@@ -860,9 +876,6 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            ContractPaperClickable pointedContractPaper = !shopOpen && hasHit
-                ? hit.collider.GetComponentInParent<ContractPaperClickable>()
-                : null;
             if (pointedContractPaper != null &&
                 pointedContractPaper.IsInteractable)
             {
@@ -995,6 +1008,7 @@ namespace DiaBlackJack.GameScene
             UpdateDemonCardHover(null);
             UpdateDeckStackHover(null);
             UpdateCodexHover(null);
+            UpdateContractPaperHover(null);
             UpdateShopUtilityItemHover(null);
             UpdateCombatCommandHover(null);
             hud?.HideCardHoverBadge();
@@ -1043,6 +1057,7 @@ namespace DiaBlackJack.GameScene
             UpdateDemonCardHover(null);
             UpdateDeckStackHover(null);
             UpdateCodexHover(null);
+            UpdateContractPaperHover(null);
             UpdateShopUtilityItemHover(null);
             UpdateCombatCommandHover(null);
             demonContractSelection?.SetHovered(null);
@@ -1084,6 +1099,7 @@ namespace DiaBlackJack.GameScene
             UpdateDemonCardHover(null);
             UpdateDeckStackHover(null);
             UpdateCodexHover(null);
+            UpdateContractPaperHover(null);
             UpdateShopUtilityItemHover(null);
             UpdateCombatCommandHover(null);
             demonContractSelection?.SetHovered(null);
@@ -1291,6 +1307,7 @@ namespace DiaBlackJack.GameScene
             UpdateHover(null);
             UpdateDeckStackHover(null);
             UpdateCodexHover(null);
+            UpdateContractPaperHover(null);
             UpdateCombatCommandHover(null);
             deckPreview.Open(model);
             BeginDeckPreviewSwitchInputLock();
@@ -1334,6 +1351,7 @@ namespace DiaBlackJack.GameScene
                 UpdateHover(null);
                 UpdateDeckStackHover(null);
                 UpdateCodexHover(null);
+                UpdateContractPaperHover(null);
                 UpdateCombatCommandHover(null);
                 hud?.HideCardHoverBadge();
             }
@@ -1381,6 +1399,7 @@ namespace DiaBlackJack.GameScene
 
             UpdateDeckStackHover(null);
             UpdateCodexHover(null);
+            UpdateContractPaperHover(null);
             EndCodexSwitchInputLock();
         }
 
@@ -1390,6 +1409,7 @@ namespace DiaBlackJack.GameScene
             UpdateDemonCardHover(null);
             UpdateDeckStackHover(null);
             UpdateCodexHover(null);
+            UpdateContractPaperHover(null);
             UpdateShopUtilityItemHover(null);
             UpdateCombatCommandHover(null);
             hud?.HideCardHoverBadge();
@@ -1665,6 +1685,18 @@ namespace DiaBlackJack.GameScene
             _hoveredCodex?.SetHovered(false);
             _hoveredCodex = pointed;
             _hoveredCodex?.SetHovered(true);
+        }
+
+        private void UpdateContractPaperHover(ContractPaperClickable pointed)
+        {
+            if (pointed == _hoveredContractPaper)
+            {
+                return;
+            }
+
+            _hoveredContractPaper?.SetHovered(false);
+            _hoveredContractPaper = pointed;
+            _hoveredContractPaper?.SetHovered(true);
         }
 
         private void ApplyEnemyDeckTopTint()

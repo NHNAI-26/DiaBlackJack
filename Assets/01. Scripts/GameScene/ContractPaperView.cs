@@ -37,11 +37,14 @@ namespace DiaBlackJack.GameScene
                 : Mathf.Clamp(model.VisibleCount, 0, papers.Length);
             bool canPlayerBegin = model != null && model.CanPlayerBegin;
 
-            // Papers are sorted top (index 0) to bottom (last index); as the stack
-            // shrinks, the top-most paper is the one that goes away first, regardless
-            // of which paper the player actually clicked. Only the top-most currently
-            // visible paper is hoverable/clickable — the ones underneath are purely
-            // visual "how many left" filler.
+            // Papers are sorted top (index 0) to bottom (last index) by actual draw
+            // order (SortingOrder), not name — the two don't necessarily agree, and
+            // sorting by name previously left the visually front-most paper's collider
+            // disabled while the paper rendered behind it silently absorbed hover and
+            // clicks instead. As the stack shrinks, the top-most paper is the one that
+            // goes away first, regardless of which paper the player actually clicked.
+            // Only the top-most currently visible paper is hoverable/clickable — the
+            // ones underneath are purely visual "how many left" filler.
             int topVisibleIndex = papers.Length - visibleCount;
 
             // Edit/test-mode renders apply instantly (mirrors DeckStackView.Render)
@@ -99,7 +102,7 @@ namespace DiaBlackJack.GameScene
             papers = GetComponentsInChildren<ContractPaperClickable>(true);
             Array.Sort(
                 papers,
-                (left, right) => string.CompareOrdinal(left.name, right.name));
+                (left, right) => right.SortingOrder.CompareTo(left.SortingOrder));
         }
     }
 }
