@@ -199,11 +199,14 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR04_U08_HiddenTotalBustAtShowdownIsMutualLossNotBeelzebubBust()
+        public void DCR04_U08_HiddenTotalBustAtShowdownIsAnOrdinaryLossNotBeelzebubBust()
         {
-            // A bust that only shows up once the hidden card is folded into the final
-            // showdown total (rule.md 7.4) is a mutual loss, not a bust — bust-reactive
-            // contracts like Beelzebub never get a pending interaction to resolve here.
+            // A total that only exceeds 21 once the hidden card is folded into the
+            // final showdown (rule.md 7.4) is never a "bust" for either side — one
+            // side over 21 alone is just an ordinary total-comparison loss for that
+            // side (mutual loss only when BOTH sides end up over 21). Because it's
+            // never classified as a bust, no bust-reactive contract — Beelzebub's
+            // replacement included — ever gets a pending interaction to resolve here.
             CoreLoopBattle battle = CreateBattle(
                 PlainDeck(new[] { 6, 10, 2, 2, 2, 2, 2, 2 }),
                 PlainDeck(new[] { 10, 7, 2, 2, 2, 2, 2, 2 }, 100),
@@ -222,8 +225,8 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(battle.PendingPlayerDemonContractInteraction, Is.Null);
             Assert.That(battle.LastResolution.Value.Outcome,
-                Is.EqualTo(RoundOutcome.MutualLoss));
-            // 12 start - 1 Beelzebub activation cost - 1 mutual-loss damage = 10.
+                Is.EqualTo(RoundOutcome.EnemyWin));
+            // 12 start - 1 Beelzebub activation cost - 1 ordinary loss damage = 10.
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(10));
         }
 

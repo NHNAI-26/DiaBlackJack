@@ -10,11 +10,16 @@ namespace DiaBlackJack.CoreLoop
         PlayerWin,
         PlayerTwentyOneWin,
         EnemyWin,
-        // Reached only from the final showdown (both stood): if either hand's total,
-        // including its hidden card, exceeds 21, that is no longer a bust — it is a
-        // mutual loss. Neither side "busted" (no bust-replacement contract, e.g.
-        // Beelzebub, can intercept it) and there is no winner; both take the same
-        // damage as an ordinary round loss.
+        // Reached only from the final showdown (both stood): exceeding 21 there is
+        // never treated as a "bust" (see PlayerBust/EnemyBust) — it's discovered by
+        // plain total comparison, after both sides have already committed to
+        // standing, so no bust-reactive contract (Satan's absolute prevention,
+        // Beelzebub's bust replacement, Paimon's opponent-bust peek, ...) can engage
+        // with it. If BOTH hands' totals (including hidden cards) exceed 21, it's a
+        // mutual loss: no winner, both take the same damage as an ordinary round
+        // loss. If only ONE side's total exceeds 21, the OTHER side simply wins the
+        // comparison outright (PlayerWin/PlayerTwentyOneWin/EnemyWin) — an ordinary
+        // win/loss, not a bust for either side.
         MutualLoss
     }
 
@@ -210,12 +215,15 @@ namespace DiaBlackJack.CoreLoop
                 enemyCards,
                 enemyBonus);
 
-            if (player.IsBust || enemy.IsBust)
+            if (player.IsBust && enemy.IsBust)
             {
                 return new RoundResolution(resolutionId, RoundOutcome.MutualLoss, 1, 1);
             }
 
-            if (player.Total >= enemy.Total)
+            // Exceeding 21 here is never a "bust" (see the RoundOutcome.MutualLoss
+            // comment) — it's an ordinary loss of the total-comparison, so a bust side
+            // simply can never win the comparison below, regardless of its raw total.
+            if (!player.IsBust && (enemy.IsBust || player.Total >= enemy.Total))
             {
                 return player.IsTwentyOne
                     ? new RoundResolution(resolutionId, RoundOutcome.PlayerTwentyOneWin, 0, 2)

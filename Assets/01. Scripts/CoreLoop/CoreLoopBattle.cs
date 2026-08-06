@@ -6752,24 +6752,16 @@ namespace DiaBlackJack.CoreLoop
             CombatantSide ownerSide,
             RoundResolution resolution)
         {
-            if (ownerSide == CombatantSide.Player &&
-                resolution.Outcome == RoundOutcome.EnemyBust)
+            // Only a genuine, immediately-resolved bust (mid-round numeric/card/contract
+            // bust) counts here. Exceeding 21 discovered only at the final showdown
+            // (RoundEndCause.TotalComparison) is never a "bust" for either side (rule.md
+            // 7.4/8.2) — no bust-reactive contract, Paimon included, engages with it.
+            if (ownerSide == CombatantSide.Player)
             {
-                return true;
+                return resolution.Outcome == RoundOutcome.EnemyBust;
             }
 
-            if (ownerSide == CombatantSide.Enemy &&
-                resolution.Outcome == RoundOutcome.PlayerBust)
-            {
-                return true;
-            }
-
-            if (resolution.Cause != RoundEndCause.TotalComparison)
-            {
-                return false;
-            }
-
-            return GetOpponent(ownerSide).HandValue.IsBust;
+            return resolution.Outcome == RoundOutcome.PlayerBust;
         }
 
         private void BeginPaimonOpponentBustChoice(
