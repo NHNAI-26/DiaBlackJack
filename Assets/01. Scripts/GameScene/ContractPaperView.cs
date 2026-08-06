@@ -8,6 +8,8 @@ namespace DiaBlackJack.GameScene
     {
         [SerializeField] private ContractPaperClickable[] papers;
 
+        private int _previousVisibleCount = -1;
+
         public int VisibleCount { get; private set; }
 
         public bool HasRequiredReferences
@@ -42,6 +44,16 @@ namespace DiaBlackJack.GameScene
             // visual "how many left" filler.
             int topVisibleIndex = papers.Length - visibleCount;
 
+            // Edit/test-mode renders apply instantly (mirrors DeckStackView.Render)
+            // since DOTween sequences never tick outside Play Mode's Update loop —
+            // animating here would leave the paper stuck active and never call its
+            // onComplete.
+            bool animateDecrease =
+                Application.isPlaying &&
+                _previousVisibleCount >= 0 &&
+                visibleCount < _previousVisibleCount;
+            int previousTopVisibleIndex = papers.Length - _previousVisibleCount;
+
             for (int i = 0; i < papers.Length; i++)
             {
                 ContractPaperClickable paper = papers[i];
@@ -50,13 +62,31 @@ namespace DiaBlackJack.GameScene
                     continue;
                 }
 
+                bool wasVisible = _previousVisibleCount >= 0 &&
+                    i >= previousTopVisibleIndex;
                 bool visible = i >= topVisibleIndex;
                 bool isTopOfStack = i == topVisibleIndex;
                 paper.SetInteractable(visible && isTopOfStack && canPlayerBegin);
-                paper.gameObject.SetActive(visible);
+
+                if (animateDecrease && wasVisible && !visible)
+                {
+                    ContractPaperClickable disappearing = paper;
+                    disappearing.PlayDisappearAnimation(
+                        () => disappearing.gameObject.SetActive(false));
+                }
+                else if (visible)
+                {
+                    paper.ResetVisualState();
+                    paper.gameObject.SetActive(true);
+                }
+                else
+                {
+                    paper.gameObject.SetActive(false);
+                }
             }
 
             VisibleCount = visibleCount;
+            _previousVisibleCount = visibleCount;
         }
 
         private void EnsurePapers()
