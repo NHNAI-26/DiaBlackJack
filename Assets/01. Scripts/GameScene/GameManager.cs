@@ -92,6 +92,10 @@ namespace DiaBlackJack.GameScene
         [Header("Hammer animation")]
         [SerializeField] private HammerAnimationController hammerAnimation;
 
+        [Header("Poison injection announcement")]
+        [SerializeField] private PoisonInjectionAnnounceView poisonInjectionAnnounce;
+        [SerializeField] private CardContentCatalogSO poisonInjectionCardCatalog;
+
         [Header("Shop utility animations")]
         [SerializeField] private GameObject lighterAnimationRoot;
         [SerializeField] private Animator lighterAnimator;
@@ -156,6 +160,8 @@ namespace DiaBlackJack.GameScene
         private KnifeAnimationEventReceiver _knifeEventReceiver;
         private bool _knifeImpactPending;
         private CombatantSide _knifeImpactTargetSide;
+        private bool _hasLastPoisonInjectionAnimationCue;
+        private int _lastPoisonInjectionAnimationRoundNumber;
         private bool _hammerSwitchInputLocked;
         private bool _enemyCardSelectionSwitchInputLocked;
         private bool _deckPreviewSwitchInputLocked;
@@ -619,6 +625,7 @@ namespace DiaBlackJack.GameScene
             ResolveHammerAnimation()?.ResetPresentationState();
             ResetRevolverAnimationState();
             ResetKnifeAnimationState();
+            ResetPoisonInjectionAnimationState();
             ResetShopUtilityAnimations();
             playerHand?.ResetView();
             enemyHand?.ResetView();
@@ -785,6 +792,9 @@ namespace DiaBlackJack.GameScene
                 codex.IsAvailable
                     ? hit.collider.GetComponentInParent<CodexClickable>()
                     : null;
+            // A non-interactable contract paper (the decorative one underneath) has its
+            // collider disabled by ContractPaperClickable.SetInteractable, so the
+            // raycast physically can't hit it — no extra gating needed here.
             HoverDescriptionTarget pointedHoverDescriptionTarget = hasHit
                 ? hit.collider.GetComponentInParent<HoverDescriptionTarget>()
                 : null;
@@ -1195,6 +1205,16 @@ namespace DiaBlackJack.GameScene
             _hoveredDescriptionTarget = pointed;
             if (_hoveredDescriptionTarget == null)
             {
+                // Only responsible for clearing our own badge — a hovered card/demon
+                // card is already shown (and hidden) by UpdateCardHoverBadge, which
+                // runs earlier in the same per-frame hover pass, so hiding here too
+                // would immediately clobber that legitimate badge every frame a card
+                // is hovered.
+                if (_hoveredCard == null && _hoveredDemonCard == null)
+                {
+                    hud?.HideCardHoverBadge();
+                }
+
                 return;
             }
 
@@ -1553,6 +1573,7 @@ namespace DiaBlackJack.GameScene
         {
             ResetRevolverAnimationState();
             ResetKnifeAnimationState();
+            ResetPoisonInjectionAnimationState();
             ResolveHammerAnimation()?.ResetPresentationState();
             int battleSeed = seed + (_battleIndex * 2);
             _battleIndex++;
@@ -3026,6 +3047,7 @@ namespace DiaBlackJack.GameScene
             _playedHammerAnimationController = null;
             bool playedHammerAnimation =
                 TryPlayHammerAnimation(vm.HammerAnimationCue);
+            TryPlayPoisonInjectionAnimation(vm.PoisonInjectionAnimationCue);
             UpdateEnemyCardSelectionCamera(
                 vm.FocusesEnemyCardsForSelection);
             bool deferredCardRender =
@@ -3722,6 +3744,50 @@ namespace DiaBlackJack.GameScene
             _lastKnifeAnimationActorSide = cue.ActorSide;
             _lastKnifeAnimationPhase = cue.Phase;
             _lastKnifeAnimationSucceeded = cue.Succeeded;
+        }
+
+        private bool TryPlayPoisonInjectionAnimation(
+            GameScenePoisonInjectionAnimationCue cue)
+        {
+            if (cue == null ||
+                poisonInjectionAnnounce == null ||
+                poisonInjectionCardCatalog == null ||
+                IsLastPoisonInjectionAnimationCue(cue))
+            {
+                return false;
+            }
+
+            RememberPoisonInjectionAnimationCue(cue);
+            Sprite poisonSprite = poisonInjectionCardCatalog.GetNormalFaceSprite(
+                CardDefinitionCatalog.PoisonKey,
+                CardSuit.Spade);
+            if (poisonSprite == null)
+            {
+                return false;
+            }
+
+            poisonInjectionAnnounce.Play(poisonSprite, onComplete: null);
+            return true;
+        }
+
+        private bool IsLastPoisonInjectionAnimationCue(
+            GameScenePoisonInjectionAnimationCue cue)
+        {
+            return _hasLastPoisonInjectionAnimationCue &&
+                _lastPoisonInjectionAnimationRoundNumber == cue.RoundNumber;
+        }
+
+        private void RememberPoisonInjectionAnimationCue(
+            GameScenePoisonInjectionAnimationCue cue)
+        {
+            _hasLastPoisonInjectionAnimationCue = true;
+            _lastPoisonInjectionAnimationRoundNumber = cue.RoundNumber;
+        }
+
+        private void ResetPoisonInjectionAnimationState()
+        {
+            _hasLastPoisonInjectionAnimationCue = false;
+            _lastPoisonInjectionAnimationRoundNumber = 0;
         }
 
         private void ResetKnifeAnimationState()

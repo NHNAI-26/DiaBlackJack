@@ -592,6 +592,11 @@ namespace DiaBlackJack.GameScene
                     {
                         PositionBottomRight(slot, bottomRightIndex++);
                     }
+                    else if (actions[i].Placement ==
+                        GameSceneCombatHudActionPlacement.Center)
+                    {
+                        PositionCenter(slot);
+                    }
                 }
             }
 
@@ -642,6 +647,22 @@ namespace DiaBlackJack.GameScene
             rect.anchorMax = new Vector2(1f, 0f);
             rect.pivot = new Vector2(1f, 0f);
             rect.anchoredPosition = new Vector2(-48f, 48f + index * 76f);
+            rect.sizeDelta = new Vector2(380f, 64f);
+        }
+
+        private void PositionCenter(GameHudChoiceButton slot)
+        {
+            if (slot == null || optionPanel == null ||
+                !(slot.transform is RectTransform rect))
+            {
+                return;
+            }
+
+            rect.SetParent(optionPanel.transform, false);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
             rect.sizeDelta = new Vector2(380f, 64f);
         }
 
@@ -769,7 +790,7 @@ namespace DiaBlackJack.GameScene
                 case BattleOutcome.PlayerDefeat:
                     return "DEFEAT";
                 default:
-                    return $"ROUND {core.RoundNumber}";
+                    return $"ROUND {core.RoundNumber}\nTURN {core.TurnNumber}";
             }
         }
     }

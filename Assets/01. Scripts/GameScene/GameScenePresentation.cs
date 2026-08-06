@@ -596,6 +596,27 @@ namespace DiaBlackJack.GameScene
     }
 
     /// <summary>
+    /// One-shot cue for the Enforcer's per-round poison injection: a poison card was just added
+    /// to the player's deck this round. Keyed only by <see cref="RoundNumber"/> (mirroring the
+    /// weapon cues) since the injection itself carries no per-card visual identity — the view
+    /// layer just announces "a poison card entered the deck" once per round.
+    /// </summary>
+    public sealed class GameScenePoisonInjectionAnimationCue
+    {
+        public GameScenePoisonInjectionAnimationCue(int roundNumber)
+        {
+            if (roundNumber < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(roundNumber));
+            }
+
+            RoundNumber = roundNumber;
+        }
+
+        public int RoundNumber { get; }
+    }
+
+    /// <summary>
     /// Read-only projection consumed by <c>GameSceneView</c>. Wraps the shared
     /// <see cref="CoreLoopViewModel"/> (souls, totals, state, player card actions) and adds
     /// world-render-friendly card lists for both sides.
@@ -626,7 +647,8 @@ namespace DiaBlackJack.GameScene
             int? playerMammonDieValue = null,
             int? enemyMammonDieValue = null,
             int? playerMammonSourceCardId = null,
-            bool canPlayerRerollMammon = false)
+            bool canPlayerRerollMammon = false,
+            GameScenePoisonInjectionAnimationCue poisonInjectionAnimationCue = null)
         {
             Core = core ?? throw new ArgumentNullException(nameof(core));
             PlayerCards = playerCards ?? throw new ArgumentNullException(nameof(playerCards));
@@ -656,6 +678,7 @@ namespace DiaBlackJack.GameScene
             EnemyMammonDieValue = enemyMammonDieValue;
             PlayerMammonSourceCardId = playerMammonSourceCardId;
             CanPlayerRerollMammon = canPlayerRerollMammon;
+            PoisonInjectionAnimationCue = poisonInjectionAnimationCue;
         }
 
         public CoreLoopViewModel Core { get; }
@@ -690,6 +713,8 @@ namespace DiaBlackJack.GameScene
         public GameSceneHammerAnimationCue HammerAnimationCue { get; }
 
         public GameSceneKnifeAnimationCue KnifeAnimationCue { get; }
+
+        public GameScenePoisonInjectionAnimationCue PoisonInjectionAnimationCue { get; }
 
         public bool UsesDiegeticCardEffectSelection { get; }
 
@@ -821,7 +846,8 @@ namespace DiaBlackJack.GameScene
                 playerMammon?.SourceCardId,
                 playerMammon != null &&
                     battle.CanBeginPlayerActiveDemonContractAction(
-                        playerMammon.SourceCardId));
+                        playerMammon.SourceCardId),
+                CreatePoisonInjectionAnimationCue(battle));
             IReadOnlyList<EnemySpeechCue> speechCues =
                 CreateEnemySpeechCues(battle);
             model.EnemySpeechCue = speechCues.Count == 0
@@ -1407,6 +1433,18 @@ namespace DiaBlackJack.GameScene
             }
 
             return null;
+        }
+
+        private static GameScenePoisonInjectionAnimationCue
+            CreatePoisonInjectionAnimationCue(CoreLoopBattle battle)
+        {
+            // Injection happens once at the start of a round (DealStartingRoundCards) and the
+            // injected card is cleaned up at round end, so a nonzero count for the whole round
+            // is exactly "this round got a poison card" — keyed by round like the weapon cues so
+            // the view layer plays it once per round rather than once per re-render.
+            return battle.InjectedPoisonCardCount > 0
+                ? new GameScenePoisonInjectionAnimationCue(battle.RoundNumber)
+                : null;
         }
 
         private static bool IsLastUseCardEffect(

@@ -361,6 +361,15 @@ namespace DiaBlackJack.CoreLoop
 
         public int RoundNumber { get; private set; }
 
+        /// <summary>
+        /// How many individual actions (player or enemy) have concluded within the
+        /// current round — one hit, stand, change, card use, etc. by either side is one
+        /// turn. Resets to 0 at the start of each round; incremented in
+        /// <see cref="NotifyNormalTurnEnded"/>, the single choke point every action's
+        /// completion already funnels through regardless of how the action concluded.
+        /// </summary>
+        public int TurnNumber { get; private set; }
+
         public RoundResolution? LastResolution { get; private set; }
 
         /// <summary>
@@ -5401,6 +5410,7 @@ namespace DiaBlackJack.CoreLoop
         {
             State = CoreLoopState.StartingRound;
             RoundNumber++;
+            TurnNumber = 0;
             _activeCardEffectContext = null;
             _activeCardEffectActorSide = null;
             _pendingCardEffect = null;
@@ -6350,6 +6360,8 @@ namespace DiaBlackJack.CoreLoop
 
         private void NotifyNormalTurnEnded(CombatantSide actorSide)
         {
+            TurnNumber++;
+
             IReadOnlyList<ActiveDemonContract> activeContracts =
                 actorSide == CombatantSide.Player
                     ? _activePlayerDemonContracts

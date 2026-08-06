@@ -124,14 +124,23 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(view.VisibleCount, Is.EqualTo(2));
                 Assert.That(first.gameObject.activeSelf, Is.True);
                 Assert.That(second.gameObject.activeSelf, Is.True);
-                Assert.That(first.IsInteractable, Is.False);
-                Assert.That(second.IsInteractable, Is.True);
+                // Only the top-most visible paper is hoverable/clickable — the rest of
+                // the stack is purely visual filler.
+                Assert.That(first.IsInteractable, Is.True);
+                Assert.That(second.IsInteractable, Is.False);
 
                 view.Render(new ContractPaperViewModel(1, false));
                 Assert.That(view.VisibleCount, Is.EqualTo(1));
-                Assert.That(first.gameObject.activeSelf, Is.True);
-                Assert.That(second.gameObject.activeSelf, Is.False);
-                Assert.That(first.IsInteractable, Is.False);
+                // The top paper (first, index 0) is always the one that disappears as
+                // the stack shrinks, regardless of which paper was actually clicked.
+                Assert.That(first.gameObject.activeSelf, Is.False);
+                Assert.That(second.gameObject.activeSelf, Is.True);
+                Assert.That(second.IsInteractable, Is.False);
+
+                view.Render(new ContractPaperViewModel(1, true));
+                // Once it's the only (and therefore top-most) paper left, it becomes
+                // clickable in its own right.
+                Assert.That(second.IsInteractable, Is.True);
             }
             finally
             {
@@ -985,8 +994,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(firstHud.OptionActions[0].Command.InteractionId,
                 Is.EqualTo(first.Core.DemonContract.InteractionId));
             Assert.That(firstHud.OptionActions[0].IsInteractable, Is.False);
+            // Satan's forward-facing ability confirm button is centered on screen,
+            // unlike the usual bottom-right corner placement.
             Assert.That(firstHud.OptionActions[0].Placement,
-                Is.EqualTo(GameSceneCombatHudActionPlacement.BottomRight));
+                Is.EqualTo(GameSceneCombatHudActionPlacement.Center));
 
             GameSceneCombatHudViewModel oneSelectedHud =
                 GameSceneCombatHudPresenter.Create(

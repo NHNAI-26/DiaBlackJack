@@ -150,6 +150,7 @@ namespace DiaBlackJack.CoreLoop.UI
             CoreLoopState state,
             BattleOutcome outcome,
             int roundNumber,
+            int turnNumber,
             string playerSoul,
             string enemySoul,
             string playerCards,
@@ -187,6 +188,7 @@ namespace DiaBlackJack.CoreLoop.UI
             State = state;
             Outcome = outcome;
             RoundNumber = roundNumber;
+            TurnNumber = turnNumber;
             PlayerSoul = playerSoul;
             EnemySoul = enemySoul;
             PlayerCards = playerCards;
@@ -235,6 +237,8 @@ namespace DiaBlackJack.CoreLoop.UI
         public BattleOutcome Outcome { get; }
 
         public int RoundNumber { get; }
+
+        public int TurnNumber { get; }
 
         public string PlayerSoul { get; }
 
@@ -328,6 +332,7 @@ namespace DiaBlackJack.CoreLoop.UI
                 battle.State,
                 battle.Outcome,
                 battle.RoundNumber,
+                battle.TurnNumber,
                 FormatSoul(battle.Player.Soul),
                 FormatSoul(battle.Enemy.Soul),
                 FormatCards(battle.Player.Hand.Cards, revealAll: true),

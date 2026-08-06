@@ -35,6 +35,13 @@ namespace DiaBlackJack.GameScene
                 : Mathf.Clamp(model.VisibleCount, 0, papers.Length);
             bool canPlayerBegin = model != null && model.CanPlayerBegin;
 
+            // Papers are sorted top (index 0) to bottom (last index); as the stack
+            // shrinks, the top-most paper is the one that goes away first, regardless
+            // of which paper the player actually clicked. Only the top-most currently
+            // visible paper is hoverable/clickable — the ones underneath are purely
+            // visual "how many left" filler.
+            int topVisibleIndex = papers.Length - visibleCount;
+
             for (int i = 0; i < papers.Length; i++)
             {
                 ContractPaperClickable paper = papers[i];
@@ -43,10 +50,9 @@ namespace DiaBlackJack.GameScene
                     continue;
                 }
 
-                bool visible = i < visibleCount;
-                bool isTopPaper = i == visibleCount - 1;
-                paper.SetInteractable(
-                    visible && isTopPaper && canPlayerBegin);
+                bool visible = i >= topVisibleIndex;
+                bool isTopOfStack = i == topVisibleIndex;
+                paper.SetInteractable(visible && isTopOfStack && canPlayerBegin);
                 paper.gameObject.SetActive(visible);
             }
 

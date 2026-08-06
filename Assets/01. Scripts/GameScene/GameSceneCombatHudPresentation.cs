@@ -36,7 +36,8 @@ namespace DiaBlackJack.GameScene
     public enum GameSceneCombatHudActionPlacement
     {
         Default,
-        BottomRight
+        BottomRight,
+        Center
     }
 
     /// <summary>Immutable input payload emitted by the scene-authored combat HUD.</summary>
@@ -367,9 +368,12 @@ namespace DiaBlackJack.GameScene
                                         contract.InteractionId ?? -1),
                                 "선택 완료",
                                 selectedCount == 2 && !inputLocked,
+                                // Satan's forward-facing ability (declare two numbers);
+                                // its confirm button is centered on screen rather than
+                                // the usual bottom-right corner.
                                 placement:
                                     GameSceneCombatHudActionPlacement
-                                        .BottomRight)
+                                        .Center)
                         },
                         Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
                         automaticCardResult);
