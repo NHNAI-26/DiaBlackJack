@@ -80,6 +80,7 @@ namespace DiaBlackJack.GameScene
         private const string UnlitKeyword = "_UNLIT_ON";
         private const string PixelOutlineKeyword = "_PIXEL_OUTLINE_ON";
         private const string UnderlayKeyword = "UNDERLAY_ON";
+        private const string FlipSfxId = "flipCard";
         private const float SatanDoomOutlineWidthValue = 0.22f;
         private const float SatanDoomCountFontSizeValue = 11f;
         private const float SatanDoomCountScaleValue = 0.4f;
@@ -463,6 +464,7 @@ namespace DiaBlackJack.GameScene
 
         private void PlayRevealFlip()
         {
+            SoundManager.Current?.PlaySfx(FlipSfxId);
             _orientationTween?.Kill();
             _orientationTween = null;
             ResetHoverScales();

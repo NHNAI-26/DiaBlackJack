@@ -230,13 +230,9 @@ namespace DiaBlackJack.GameScene
 
             if (targetHand != null &&
                 cue.TargetCardId.HasValue &&
-                targetHand.TryGetCardWorldPosition(cue.TargetCardId.Value, out position))
-            {
-                return true;
-            }
-
-            if (targetHand != null &&
-                targetHand.TryGetRandomCardWorldPosition(out position))
+                targetHand.TryGetCardLayoutWorldPosition(
+                    cue.TargetCardId.Value,
+                    out position))
             {
                 return true;
             }

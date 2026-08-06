@@ -3709,8 +3709,23 @@ namespace DiaBlackJack.GameScene
         private bool TryPlayHammerAnimation(GameSceneHammerAnimationCue cue)
         {
             HammerAnimationController controller = ResolveHammerAnimation();
-            if (controller == null || !controller.TryPlay(cue, playerHand, enemyHand))
+            if (controller == null)
             {
+                return false;
+            }
+
+            if (!controller.TryPlay(cue, playerHand, enemyHand))
+            {
+                // The same smash cue can appear in more than one timeline snapshot. It is still
+                // the active presentation until the controller reports that the smash finished;
+                // otherwise ApplyView would render the post-effect hand and discard the target
+                // card while the hammer is still on screen.
+                if (IsHammerSmashCue(cue) && controller.IsSmashAnimationPlaying)
+                {
+                    _playedHammerAnimationController = controller;
+                    return true;
+                }
+
                 return false;
             }
 

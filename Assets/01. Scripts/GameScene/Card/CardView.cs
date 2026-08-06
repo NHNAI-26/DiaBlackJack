@@ -124,6 +124,7 @@ namespace DiaBlackJack.GameScene
         private static readonly int LightingModeId = Shader.PropertyToID("_LightingMode");
         private const string UnlitKeyword = "_UNLIT_ON";
         private const string PixelOutlineKeyword = "_PIXEL_OUTLINE_ON";
+        private const string FlipSfxId = "flipCard";
 
         private MaterialPropertyBlock _frontPropertyBlock;
         private MaterialPropertyBlock _backPropertyBlock;
@@ -529,6 +530,7 @@ namespace DiaBlackJack.GameScene
 
         private void PlayRevealFlip()
         {
+            SoundManager.Current?.PlaySfx(FlipSfxId);
             StopScaleTween();
             ResetHoverScales();
             SetFaceObjects(showFront: false);

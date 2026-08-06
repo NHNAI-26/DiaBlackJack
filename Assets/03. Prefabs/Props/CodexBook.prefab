@@ -73,6 +73,12 @@ MonoBehaviour:
   useMaterialHoverOutlineSettings: 1
   hoverOutlineColor: {r: 1, g: 0.72, b: 0.08, a: 1}
   hoverOutlineWidthPixels: 4
+  punchLocation: {x: 0, y: 0.025, z: 0}
+  punchRotation: {x: 3, y: 4.2, z: 2.86}
+  punchDuration: 0.1
+  punchVibrato: 10
+  punchElasticity: 0.7
+  hoverSfxId: bookDrop
 --- !u!114 &2295141557578312034
 MonoBehaviour:
   m_ObjectHideFlags: 0

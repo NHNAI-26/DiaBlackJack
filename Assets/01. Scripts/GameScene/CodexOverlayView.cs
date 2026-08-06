@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Border.Audio;
 using DiaBlackJack.Content;
 using DiaBlackJack.CoreLoop;
 using TMPro;
@@ -99,6 +100,9 @@ namespace DiaBlackJack.GameScene
     public sealed class CodexOverlayView : MonoBehaviour
     {
         private const int RequiredPageTurnFrameCount = 5;
+        private const string OpeningBookSfxId = "openingBook";
+        private const string BookPageSfxId = "bookPage";
+        private const string ClosingBookSfxId = "closingBook";
 
         [Header("Overlay")]
         [SerializeField] private Canvas overlayCanvas;
@@ -222,15 +226,21 @@ namespace DiaBlackJack.GameScene
             IsOpen = true;
             ApplyVisibility(true);
             RenderImmediate(model);
+            SoundManager.Current?.PlaySfx(OpeningBookSfxId);
         }
 
         public void Close()
         {
+            bool wasOpen = IsOpen;
             CancelPageTransition();
             IsOpen = false;
             ClearContractItems();
             ClearDeckItems();
             ApplyVisibility(false);
+            if (wasOpen)
+            {
+                SoundManager.Current?.PlaySfx(ClosingBookSfxId);
+            }
         }
 
         public void Render(CodexBookViewModel model)
@@ -263,6 +273,7 @@ namespace DiaBlackJack.GameScene
             ClearHoveredDeckItem();
             _pageTransition = StartCoroutine(
                 RenderTransition(model, direction));
+            SoundManager.Current?.PlaySfx(BookPageSfxId);
             return true;
         }
 

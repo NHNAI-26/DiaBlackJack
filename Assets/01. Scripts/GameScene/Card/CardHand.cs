@@ -176,6 +176,27 @@ namespace DiaBlackJack.GameScene
             return false;
         }
 
+        /// <summary>
+        /// Returns the world position where the card is laid out, even while its move tween is
+        /// still running. Presentation effects that lock on to a card should use this instead of
+        /// the transient transform position.
+        /// </summary>
+        public bool TryGetCardLayoutWorldPosition(int cardId, out Vector3 position)
+        {
+            for (int i = 0; i < _spawned.Count; i++)
+            {
+                CardView card = _spawned[i];
+                if (card != null && card.CardId == cardId)
+                {
+                    position = transform.TransformPoint(GetCardLayoutPosition(i));
+                    return true;
+                }
+            }
+
+            position = default;
+            return false;
+        }
+
         internal bool TryGetDemonCardWorldPosition(
             int cardId,
             out Vector3 position)
@@ -408,6 +429,16 @@ namespace DiaBlackJack.GameScene
                 .DOLocalMove(targetPosition, isNewCard ? enterDuration : moveDuration)
                 .SetEase(isNewCard ? enterCurve : moveCurve)
                 .SetTarget(card);
+        }
+
+        private Vector3 GetCardLayoutPosition(int index)
+        {
+            int totalCardCount = _spawned.Count + _spawnedDemonCards.Count;
+            float offset = -(totalCardCount - 1) * 0.5f * spacing;
+            return new Vector3(
+                offset + index * spacing,
+                0f,
+                index * depthStagger);
         }
 
         private Vector3 GetBodyEntryPosition(Vector3 targetPosition)

@@ -138,7 +138,7 @@ MonoBehaviour:
     loop: 0
   - id: cardHover
     clip: {fileID: 8300000, guid: a0f677470ba5feb4aa67718d7e3d9189, type: 3}
-    volume: 0.1
+    volume: 0.02
     pitch: 1
     loop: 0
   - id: lighterOpen
@@ -253,7 +253,7 @@ MonoBehaviour:
     loop: 0
   - id: woodOpenDoor
     clip: {fileID: 8300000, guid: 7aa4d5442847fff4e95ebf1724bba68e, type: 3}
-    volume: 0.3
+    volume: 0.1
     pitch: 1
     loop: 0
   - id: enemyIn
@@ -269,6 +269,36 @@ MonoBehaviour:
   - id: enemyOut02
     clip: {fileID: 8300000, guid: 20c1bce8679ff9646b6f123d49e892fc, type: 3}
     volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: bookDrop
+    clip: {fileID: 8300000, guid: 0eef6542e853f124bbc04b7a91d95528, type: 3}
+    volume: 0.3
+    pitch: 1
+    loop: 0
+  - id: closingBook
+    clip: {fileID: 8300000, guid: ea47ebd7413139c44bf2bdf580fa2cdb, type: 3}
+    volume: 0.3
+    pitch: 1
+    loop: 0
+  - id: bookPage
+    clip: {fileID: 8300000, guid: f02602c6653cb40439d8862ec09fe59a, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: bookManyPage
+    clip: {fileID: 8300000, guid: 1b3638ac0fa9aea4b89847b49a5b47a8, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: flipCard
+    clip: {fileID: 8300000, guid: 6a578a7ec743e21448fa7d6a2ad1d2d0, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
+  - id: openingBook
+    clip: {fileID: 8300000, guid: 616f9f021d3380a48a271cb7f59084d5, type: 3}
+    volume: 1
     pitch: 1
     loop: 0
   crossfadeDuration: 1

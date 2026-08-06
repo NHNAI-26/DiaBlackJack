@@ -124,7 +124,7 @@ Material:
     - _DissolveEdgeIntensity: 16
     - _DissolveEdgeWidth: 0.002
     - _DissolveEnabled: 1
-    - _DissolveMaxOffset: 0.93
+    - _DissolveMaxOffset: 1.08
     - _DissolveMinOffset: -0.3
     - _DissolveMode: 1
     - _DissolveRadialNoiseStrength: 0.354

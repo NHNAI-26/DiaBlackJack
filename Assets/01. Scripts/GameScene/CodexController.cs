@@ -123,6 +123,11 @@ namespace DiaBlackJack.GameScene
 
             view.Close();
             SetBookVisible(_available);
+            if (_available)
+            {
+                tableBookRoot?.GetComponentInChildren<CodexClickable>(
+                    includeInactive: true)?.PlayPunchEffect();
+            }
             OpenStateChanged?.Invoke(false);
         }
 
