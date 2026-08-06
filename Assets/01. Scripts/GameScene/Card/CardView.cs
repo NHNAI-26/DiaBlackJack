@@ -99,6 +99,26 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private AnimationCurve revealRotationZCurve =
             DefaultRevealOffsetCurve();
 
+        [Header("Satan number guess result")]
+        [Min(0.01f)]
+        [FormerlySerializedAs("satanGuessDissolveDuration")]
+        [SerializeField] private float satanGuessBrandDissolveDuration = 3f;
+        [SerializeField] private AnimationCurve satanGuessBrandDissolveCurve =
+            AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+        [Min(0.01f)]
+        [SerializeField] private float satanGuessCardDissolveDuration = 3f;
+        [SerializeField] private AnimationCurve satanGuessCardDissolveCurve =
+            AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+        [Min(0.01f)]
+        [SerializeField] private float satanGuessPunchDuration = 0.55f;
+        [SerializeField] private float satanGuessPunchRotation = 18f;
+        [Min(1)]
+        [SerializeField] private int satanGuessPunchVibrato = 3;
+        [Min(0.01f)]
+        [SerializeField] private float satanGuessBrandScale = 0.38f;
+        [SerializeField] private Texture2D satanGuessDissolveNoiseMap;
+        [SerializeField] private Material satanGuessBrandMaterial;
+
         [Header("Used card mark")]
         [SerializeField] private GameObject usedMark;
         [SerializeField] private SpriteRenderer usedMarkFirstStroke;
@@ -117,14 +137,22 @@ namespace DiaBlackJack.GameScene
         private static readonly int SpriteFlipXId = Shader.PropertyToID("_SpriteFlipX");
         private static readonly int CardBlendAmountId = Shader.PropertyToID("_CardBlendAmount");
         private static readonly int CardBlendUvRectId = Shader.PropertyToID("_CardBlendUVRect");
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly int PixelOutlineColorId = Shader.PropertyToID("_PixelOutlineColor");
         private static readonly int PixelOutlineWidthId = Shader.PropertyToID("_PixelOutlineWidth");
         private static readonly int PixelOutlineAlphaThresholdId = Shader.PropertyToID("_PixelOutlineAlphaThreshold");
         private static readonly int PixelOutlineVisibilityId = Shader.PropertyToID("_PixelOutlineVisibility");
         private static readonly int LightingModeId = Shader.PropertyToID("_LightingMode");
+        private static readonly int DissolveAmountId = Shader.PropertyToID("_DissolveAmount");
+        private static readonly int DissolveEnabledId = Shader.PropertyToID("_DissolveEnabled");
+        private static readonly int DissolveNoiseMapId = Shader.PropertyToID("_DissolveNoiseMap");
+        private static readonly int DissolveEdgeColorId = Shader.PropertyToID("_DissolveEdgeColor");
         private const string UnlitKeyword = "_UNLIT_ON";
         private const string PixelOutlineKeyword = "_PIXEL_OUTLINE_ON";
+        private const string DissolveKeyword = "_DISSOLVE_ON";
         private const string FlipSfxId = "flipCard";
+        private const string SatanBrandDissolveSfxId = "shapeDissolve";
+        private const string SatanCardDissolveSfxId = "fireCard";
 
         private MaterialPropertyBlock _frontPropertyBlock;
         private MaterialPropertyBlock _backPropertyBlock;
@@ -132,6 +160,7 @@ namespace DiaBlackJack.GameScene
         private Material _cardBackMaterial;
         private Material _shopFrontMaterial;
         private Material _shopBackMaterial;
+        private Material _satanGuessBrandMaterial;
         private SpriteRenderer _frontSpriteRenderer;
         private SpriteRenderer _backSpriteRenderer;
         private Renderer _backRenderer;
@@ -144,6 +173,8 @@ namespace DiaBlackJack.GameScene
         private Tween _scaleTween;
         private Sequence _revealSequence;
         private Sequence _usedMarkSequence;
+        private Sequence _satanGuessSequence;
+        private SpriteRenderer _satanGuessBrandRenderer;
         private Vector3 _baseScale = Vector3.one;
         private Vector3 _hoverVisualBaseScale = Vector3.one;
         private Vector3 _usedMarkFirstStrokeScale = Vector3.one;
@@ -262,6 +293,17 @@ namespace DiaBlackJack.GameScene
             revealFaceSwapNormalizedTime =
                 Mathf.Clamp01(revealFaceSwapNormalizedTime);
             usedMarkStrokeDuration = Mathf.Max(usedMarkStrokeDuration, 0f);
+            satanGuessBrandDissolveDuration =
+                Mathf.Max(satanGuessBrandDissolveDuration, 0.01f);
+            satanGuessCardDissolveDuration =
+                Mathf.Max(satanGuessCardDissolveDuration, 0.01f);
+            satanGuessPunchDuration = Mathf.Max(satanGuessPunchDuration, 0.01f);
+            satanGuessPunchVibrato = Mathf.Max(satanGuessPunchVibrato, 1);
+            satanGuessBrandScale = Mathf.Max(satanGuessBrandScale, 0.01f);
+            satanGuessBrandDissolveCurve ??=
+                AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+            satanGuessCardDissolveCurve ??=
+                AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
             EnsureRevealCurves();
         }
 
@@ -275,6 +317,7 @@ namespace DiaBlackJack.GameScene
             StopRevealSequence();
             StopScaleTween();
             StopUsedMarkSequence();
+            ResetSatanNumberGuessPresentation();
             ResetHoverScales();
             _hovered = false;
             _isEffectSource = false;
@@ -289,6 +332,7 @@ namespace DiaBlackJack.GameScene
             DestroyMaterialInstance(_cardBackMaterial);
             DestroyMaterialInstance(_shopFrontMaterial);
             DestroyMaterialInstance(_shopBackMaterial);
+            DestroyMaterialInstance(_satanGuessBrandMaterial);
         }
 
         /// <summary>
@@ -322,6 +366,8 @@ namespace DiaBlackJack.GameScene
             {
                 return;
             }
+
+            ResetSatanNumberGuessPresentation();
 
             bool sameCard = _hasBoundCard && CardId == card.CardId;
             bool wasEmphasized = _hovered || _isEffectSource;
@@ -474,6 +520,95 @@ namespace DiaBlackJack.GameScene
                     : restingScale);
             ApplyHoverOutline(hovered || _isEffectHighlighted);
             ApplyHoverCardBlend(hovered);
+        }
+
+        internal bool IsSatanNumberGuessAnimationPlaying =>
+            _satanGuessSequence != null && _satanGuessSequence.IsActive();
+
+        internal bool PlaySatanNumberGuessResult(
+            bool succeeded,
+            Sprite brandSprite)
+        {
+            if (!isActiveAndEnabled || !gameObject.activeInHierarchy)
+            {
+                return false;
+            }
+
+            ResetSatanNumberGuessPresentation();
+            SetHovered(false);
+            SetFaceObjects(showFront: false);
+
+            ConfigureSatanGuessBrand(succeeded ? brandSprite : null);
+            Sequence sequence = DOTween.Sequence()
+                .SetTarget(this)
+                .SetLink(gameObject, LinkBehaviour.KillOnDisable);
+            if (succeeded)
+            {
+                EnableSatanDissolve();
+                EnableSatanGuessBrandDissolve();
+                float brandDuration = Mathf.Max(
+                    satanGuessBrandDissolveDuration,
+                    0.01f);
+                float cardDuration = Mathf.Max(
+                    satanGuessCardDissolveDuration,
+                    0.01f);
+                SoundManager.Current?.PlaySfx(SatanBrandDissolveSfxId);
+                sequence.Append(
+                    DOVirtual.Float(
+                            1f,
+                            0f,
+                            brandDuration,
+                            SetSatanGuessBrandDissolveAmount)
+                        .SetEase(satanGuessBrandDissolveCurve));
+                sequence.AppendCallback(() =>
+                    SoundManager.Current?.PlaySfx(SatanCardDissolveSfxId));
+                sequence.Append(
+                    DOVirtual.Float(
+                            0f,
+                            1f,
+                            cardDuration,
+                            SetSatanDissolveAmount)
+                        .SetEase(satanGuessCardDissolveCurve));
+                sequence.Join(
+                    DOVirtual.Float(
+                            0f,
+                            1f,
+                            cardDuration,
+                            SetSatanGuessBrandDissolveAmount)
+                        .SetEase(satanGuessCardDissolveCurve));
+            }
+            else
+            {
+                sequence.Append(
+                    transform.DOPunchRotation(
+                            new Vector3(0f, 0f, satanGuessPunchRotation),
+                            Mathf.Max(satanGuessPunchDuration, 0.01f),
+                            satanGuessPunchVibrato,
+                            0.8f)
+                        .SetEase(Ease.InOutSine));
+            }
+
+            sequence.OnComplete(() =>
+            {
+                if (!succeeded)
+                {
+                    ResetSatanNumberGuessPresentation();
+                }
+
+                if (_satanGuessSequence == sequence)
+                {
+                    _satanGuessSequence = null;
+                }
+            });
+            sequence.OnKill(() =>
+            {
+                if (_satanGuessSequence == sequence)
+                {
+                    _satanGuessSequence = null;
+                }
+            });
+            _satanGuessSequence = sequence;
+            return true;
         }
 
         internal Transform HoverVisualTransform =>
@@ -817,6 +952,11 @@ namespace DiaBlackJack.GameScene
             {
                 usedMarkSecondStroke.sortingOrder = usedMarkSortingOrder;
             }
+
+            if (_satanGuessBrandRenderer != null)
+            {
+                _satanGuessBrandRenderer.sortingOrder = usedMarkSortingOrder;
+            }
         }
 
         private void CaptureUsedMarkScales()
@@ -988,6 +1128,222 @@ namespace DiaBlackJack.GameScene
 
             _usedMarkSequence.Kill();
             _usedMarkSequence = null;
+        }
+
+        private void ResetSatanNumberGuessPresentation()
+        {
+            if (_satanGuessSequence != null)
+            {
+                _satanGuessSequence.Kill();
+                _satanGuessSequence = null;
+            }
+
+            SetSatanDissolveAmount(0f);
+            DisableSatanDissolve();
+            if (_satanGuessBrandRenderer != null)
+            {
+                SetSatanGuessBrandDissolveAmount(0f);
+                DisableSatanGuessBrandDissolve();
+                _satanGuessBrandRenderer.sprite = null;
+                _satanGuessBrandRenderer.gameObject.SetActive(false);
+            }
+
+            SetFaceObjects(_showingFrontFace);
+        }
+
+        private void ConfigureSatanGuessBrand(Sprite brandSprite)
+        {
+            EnsureSatanGuessBrandRenderer();
+            if (_satanGuessBrandRenderer == null)
+            {
+                return;
+            }
+
+            EnsureSatanGuessBrandMaterial();
+            _satanGuessBrandRenderer.sprite = brandSprite;
+            if (_satanGuessBrandMaterial != null)
+            {
+                _satanGuessBrandRenderer.sharedMaterial = _satanGuessBrandMaterial;
+            }
+            _satanGuessBrandRenderer.transform.localScale =
+                Vector3.one * satanGuessBrandScale;
+            _satanGuessBrandRenderer.sortingOrder =
+                BackSpriteRenderer() != null
+                    ? BackSpriteRenderer().sortingOrder + 1
+                    : 1;
+            _satanGuessBrandRenderer.gameObject.SetActive(brandSprite != null);
+        }
+
+        private void EnsureSatanGuessBrandRenderer()
+        {
+            if (_satanGuessBrandRenderer != null || back == null)
+            {
+                return;
+            }
+
+            GameObject brandObject = new GameObject("SatanGuessBrand");
+            Transform brandTransform = brandObject.transform;
+            brandTransform.SetParent(back.transform, false);
+            brandTransform.localPosition = new Vector3(0f, 0f, -0.003f);
+            brandTransform.localRotation = Quaternion.identity;
+            brandTransform.localScale = Vector3.one * satanGuessBrandScale;
+            _satanGuessBrandRenderer =
+                brandObject.AddComponent<SpriteRenderer>();
+            _satanGuessBrandRenderer.gameObject.SetActive(false);
+        }
+
+        private void EnsureSatanGuessBrandMaterial()
+        {
+            if (_satanGuessBrandMaterial != null)
+            {
+                return;
+            }
+
+            Material source = satanGuessBrandMaterial;
+            if (source == null)
+            {
+                Renderer backRenderer = BackRenderer();
+                EnsureCardMaterialInstance(backRenderer);
+                source = backRenderer?.sharedMaterial;
+            }
+
+            if (source == null)
+            {
+                return;
+            }
+
+            _satanGuessBrandMaterial = new Material(source)
+            {
+                name = source.name + " (Satan Guess Brand Instance)"
+            };
+            if (_satanGuessBrandMaterial.HasProperty(BaseColorId))
+            {
+                _satanGuessBrandMaterial.SetColor(BaseColorId, Color.white);
+            }
+
+            if (_satanGuessBrandMaterial.HasProperty(DissolveEdgeColorId))
+            {
+                _satanGuessBrandMaterial.SetColor(
+                    DissolveEdgeColorId,
+                    Color.white);
+            }
+
+            if (satanGuessDissolveNoiseMap != null &&
+                _satanGuessBrandMaterial.HasProperty(DissolveNoiseMapId))
+            {
+                _satanGuessBrandMaterial.SetTexture(
+                    DissolveNoiseMapId,
+                    satanGuessDissolveNoiseMap);
+            }
+        }
+
+        private void EnableSatanGuessBrandDissolve()
+        {
+            EnsureSatanGuessBrandMaterial();
+            if (_satanGuessBrandMaterial == null)
+            {
+                return;
+            }
+
+            _satanGuessBrandMaterial.EnableKeyword(DissolveKeyword);
+            if (_satanGuessBrandMaterial.HasProperty(DissolveEnabledId))
+            {
+                _satanGuessBrandMaterial.SetFloat(DissolveEnabledId, 1f);
+            }
+
+            if (satanGuessDissolveNoiseMap != null &&
+                _satanGuessBrandMaterial.HasProperty(DissolveNoiseMapId))
+            {
+                _satanGuessBrandMaterial.SetTexture(
+                    DissolveNoiseMapId,
+                    satanGuessDissolveNoiseMap);
+            }
+
+            SetSatanGuessBrandDissolveAmount(1f);
+        }
+
+        private void SetSatanGuessBrandDissolveAmount(float amount)
+        {
+            if (_satanGuessBrandMaterial == null ||
+                !_satanGuessBrandMaterial.HasProperty(DissolveAmountId))
+            {
+                return;
+            }
+
+            _satanGuessBrandMaterial.SetFloat(
+                DissolveAmountId,
+                Mathf.Clamp01(amount));
+        }
+
+        private void DisableSatanGuessBrandDissolve()
+        {
+            if (_satanGuessBrandMaterial == null)
+            {
+                return;
+            }
+
+            _satanGuessBrandMaterial.DisableKeyword(DissolveKeyword);
+            if (_satanGuessBrandMaterial.HasProperty(DissolveEnabledId))
+            {
+                _satanGuessBrandMaterial.SetFloat(DissolveEnabledId, 0f);
+            }
+        }
+
+        private void EnableSatanDissolve()
+        {
+            Renderer renderer = BackRenderer();
+            EnsureCardMaterialInstance(renderer);
+            Material material = renderer?.sharedMaterial;
+            if (material == null)
+            {
+                return;
+            }
+
+            material.EnableKeyword(DissolveKeyword);
+            if (material.HasProperty(DissolveEnabledId))
+            {
+                material.SetFloat(DissolveEnabledId, 1f);
+            }
+
+            if (satanGuessDissolveNoiseMap != null &&
+                material.HasProperty(DissolveNoiseMapId))
+            {
+                material.SetTexture(
+                    DissolveNoiseMapId,
+                    satanGuessDissolveNoiseMap);
+            }
+
+            SetSatanDissolveAmount(0f);
+        }
+
+        private void SetSatanDissolveAmount(float amount)
+        {
+            Renderer renderer = BackRenderer();
+            EnsureCardMaterialInstance(renderer);
+            Material material = renderer?.sharedMaterial;
+            if (material == null || !material.HasProperty(DissolveAmountId))
+            {
+                return;
+            }
+
+            material.SetFloat(DissolveAmountId, Mathf.Clamp01(amount));
+        }
+
+        private void DisableSatanDissolve()
+        {
+            Renderer renderer = BackRenderer();
+            EnsureCardMaterialInstance(renderer);
+            Material material = renderer?.sharedMaterial;
+            if (material == null)
+            {
+                return;
+            }
+
+            material.DisableKeyword(DissolveKeyword);
+            if (material.HasProperty(DissolveEnabledId))
+            {
+                material.SetFloat(DissolveEnabledId, 0f);
+            }
         }
 
         /// <summary>

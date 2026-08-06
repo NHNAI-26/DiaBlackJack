@@ -92,11 +92,31 @@ namespace DiaBlackJack.GameScene
         [Header("Hammer animation")]
         [SerializeField] private HammerAnimationController hammerAnimation;
 
+        [Header("Satan number guess presentation")]
+        [SerializeField, Min(0f)] private float satanNumberGuessCameraDelaySeconds = 0.8f;
+        [SerializeField, Min(0f)] private float satanNumberGuessAfterResultHoldSeconds = 0.5f;
+        [SerializeField, Min(0.01f)] private float satanNumberGuessFovRiseSpeed = 80f;
+        [SerializeField, Min(0.01f)] private float satanNumberGuessFovReturnSpeed = 120f;
+        [SerializeField, Min(0.01f)] private float satanNumberGuessChromaticRiseSpeed = 4f;
+        [SerializeField, Min(0.01f)] private float satanNumberGuessChromaticReturnSpeed = 2f;
+        [SerializeField, Min(0f)] private float cardSelectionHeartFadeOutSeconds = 0.35f;
+
         private bool _hasLastSatanAttackAnimationCue;
         private int _lastSatanAttackAnimationRoundNumber;
         private int _lastSatanAttackAnimationSourceCardId;
         private CombatantSide _lastSatanAttackAnimationActorSide;
         private int _lastSatanAttackAnimationActionOrdinal;
+        private bool _hasLastSatanNumberGuessAnimationCue;
+        private int _lastSatanNumberGuessAnimationRoundNumber;
+        private int _lastSatanNumberGuessAnimationSourceCardId;
+        private CombatantSide _lastSatanNumberGuessAnimationActorSide;
+        private int _lastSatanNumberGuessAnimationTargetCardId;
+        private bool _lastSatanNumberGuessAnimationSucceeded;
+        private int _lastSatanNumberGuessAnimationActionOrdinal;
+        private bool _satanNumberGuessSwitchInputLocked;
+        private int _satanNumberGuessCardIdToSuppress = -1;
+        private CombatantSide _satanNumberGuessSuppressedCardSide =
+            CombatantSide.Player;
 
         [Header("Poison injection announcement")]
         [SerializeField] private PoisonInjectionAnnounceView poisonInjectionAnnounce;
@@ -113,6 +133,10 @@ namespace DiaBlackJack.GameScene
 
         private const string WhiskeyAnimationStateName =
             "Base Layer.DrinkWhiskey";
+        private const string CardSelectionHeartSlowSfxId =
+            "heartSoundSlow";
+        private const string CardSelectionHeartFastSfxId =
+            "heartSoundFast";
 
         [Header("Cinematic camera")]
         [SerializeField] private GameSceneCameraViewController cameraViewController;
@@ -171,6 +195,11 @@ namespace DiaBlackJack.GameScene
         private int _lastPoisonInjectionAnimationRoundNumber;
         private bool _hammerSwitchInputLocked;
         private bool _enemyCardSelectionSwitchInputLocked;
+        private Coroutine _cardSelectionHeartRoutine;
+        private SoundManager.SoundHandle _cardSelectionHeartSlowHandle;
+        private SoundManager.SoundHandle _cardSelectionHeartFastHandle;
+        private bool _satanNumberSelectionHeartSlowActive;
+        private SoundManager.SoundHandle _satanNumberSelectionHeartSlowHandle;
         private bool _deckPreviewSwitchInputLocked;
         private bool _codexSwitchInputLocked;
         private bool _returnCameraToCurrentAfterHammer;
@@ -453,6 +482,7 @@ namespace DiaBlackJack.GameScene
             HideKnifeAnimation();
             ResolveHammerAnimation()?.ResetPresentationState();
             ResetSatanAttackAnimationState();
+            ResetSatanNumberGuessAnimationState();
             _stageRuntime = StageProgressionRuntime.Instance;
             StageProgressionSession runtimeSession =
                 _stageRuntime?.FormalSession?.CombatSession ??
@@ -559,7 +589,10 @@ namespace DiaBlackJack.GameScene
             CloseDeckPreview();
             CloseCodex();
             EndEnemyCardSelectionCamera();
+            EndSatanNumberGuessCameraSequence();
+            PresentationManager.Current?.ForceRestoreTransientCameraEffects();
             ResetSatanAttackAnimationState();
+            ResetSatanNumberGuessAnimationState();
             if (deckPreview != null)
             {
                 deckPreview.HoverBadgeRequested -=
@@ -595,6 +628,8 @@ namespace DiaBlackJack.GameScene
         private void OnDestroy()
         {
             EndEnemyCardSelectionCamera();
+            EndSatanNumberGuessCameraSequence();
+            PresentationManager.Current?.ForceRestoreTransientCameraEffects();
             if (hud != null)
             {
                 hud.CombatCommandRequested -= HandleCombatCommand;
@@ -605,6 +640,9 @@ namespace DiaBlackJack.GameScene
         private void ResetBattlePresentation()
         {
             StopAllCoroutines();
+            EndSatanNumberGuessCameraSequence();
+            PresentationManager.Current?.ForceRestoreTransientCameraEffects();
+            ResetSatanNumberGuessAnimationState();
             CoreLoopBattle battle = Battle;
             if (battle != null)
             {
@@ -2973,6 +3011,29 @@ namespace DiaBlackJack.GameScene
                         showTransientEffectSources: true);
                 }
 
+                CardView satanNumberGuessTarget;
+                bool playedSatanNumberGuess =
+                    TryPlaySatanNumberGuessAnimation(
+                        vm.SatanNumberGuessAnimationCue,
+                        out satanNumberGuessTarget);
+                if (playedSatanNumberGuess)
+                {
+                    yield return PlaySatanNumberGuessSequence(
+                        vm.SatanNumberGuessAnimationCue,
+                        satanNumberGuessTarget);
+
+                    if (vm.SatanNumberGuessAnimationCue.Succeeded)
+                    {
+                        _satanNumberGuessCardIdToSuppress =
+                            vm.SatanNumberGuessAnimationCue.TargetCardId;
+                        _satanNumberGuessSuppressedCardSide =
+                            vm.SatanNumberGuessAnimationCue.ActorSide ==
+                                CombatantSide.Player
+                                ? CombatantSide.Enemy
+                                : CombatantSide.Player;
+                    }
+                }
+
                 bool resolveBeat = vm.Core.State == CoreLoopState.ResolvingRound;
                 float waitSeconds = resolveBeat
                     ? Mathf.Max(resolveHoldSeconds, MinimumRoundResultHoldSeconds)
@@ -3084,7 +3145,8 @@ namespace DiaBlackJack.GameScene
                 (vm.HammerAnimationCue != null ||
                  vm.RevolverAnimationCue != null ||
                  vm.KnifeAnimationCue != null ||
-                 vm.SatanAttackAnimationCue != null);
+                 vm.SatanAttackAnimationCue != null ||
+                 vm.SatanNumberGuessAnimationCue != null);
             GameSceneCombatHudViewModel combat =
                 GameSceneCombatHudPresenter.Create(
                     vm.Core,
@@ -3285,10 +3347,31 @@ namespace DiaBlackJack.GameScene
             }
 
             bool anyRevealAnimated = false;
+            IReadOnlyList<GameSceneCardViewModel> playerCards =
+                vm.PlayerCards;
+            IReadOnlyList<GameSceneCardViewModel> enemyCards =
+                vm.EnemyCards;
+            if (_satanNumberGuessCardIdToSuppress >= 0)
+            {
+                if (_satanNumberGuessSuppressedCardSide ==
+                    CombatantSide.Player)
+                {
+                    playerCards = WithoutCard(
+                        playerCards,
+                        _satanNumberGuessCardIdToSuppress);
+                }
+                else
+                {
+                    enemyCards = WithoutCard(
+                        enemyCards,
+                        _satanNumberGuessCardIdToSuppress);
+                }
+            }
+
             if (playerHand != null)
             {
                 anyRevealAnimated |= playerHand.Render(
-                    vm.PlayerCards,
+                    playerCards,
                     vm.PlayerDemonCards,
                     showTransientEffectSources);
             }
@@ -3296,12 +3379,79 @@ namespace DiaBlackJack.GameScene
             if (enemyHand != null)
             {
                 anyRevealAnimated |= enemyHand.Render(
-                    vm.EnemyCards,
+                    enemyCards,
                     vm.EnemyDemonCards,
                     showTransientEffectSources);
             }
 
+            ClearSatanNumberGuessSuppressionIfTargetIsGone(vm);
             return anyRevealAnimated;
+        }
+
+        private void ClearSatanNumberGuessSuppressionIfTargetIsGone(
+            GameSceneViewModel vm)
+        {
+            if (_satanNumberGuessCardIdToSuppress < 0 || vm == null)
+            {
+                return;
+            }
+
+            IReadOnlyList<GameSceneCardViewModel> cards =
+                _satanNumberGuessSuppressedCardSide == CombatantSide.Player
+                    ? vm.PlayerCards
+                    : vm.EnemyCards;
+            if (ContainsCard(cards, _satanNumberGuessCardIdToSuppress))
+            {
+                return;
+            }
+
+            _satanNumberGuessCardIdToSuppress = -1;
+            _satanNumberGuessSuppressedCardSide = CombatantSide.Player;
+        }
+
+        private static IReadOnlyList<GameSceneCardViewModel> WithoutCard(
+            IReadOnlyList<GameSceneCardViewModel> cards,
+            int cardId)
+        {
+            if (cards == null || !ContainsCard(cards, cardId))
+            {
+                return cards;
+            }
+
+            var filteredCards =
+                new List<GameSceneCardViewModel>(cards.Count - 1);
+            for (int index = 0; index < cards.Count; index++)
+            {
+                GameSceneCardViewModel card = cards[index];
+                if (card != null && card.CardId == cardId)
+                {
+                    continue;
+                }
+
+                filteredCards.Add(card);
+            }
+
+            return filteredCards;
+        }
+
+        private static bool ContainsCard(
+            IReadOnlyList<GameSceneCardViewModel> cards,
+            int cardId)
+        {
+            if (cards == null)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < cards.Count; index++)
+            {
+                if (cards[index] != null && cards[index].CardId == cardId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void RenderTotals(GameSceneViewModel vm)
@@ -3492,9 +3642,11 @@ namespace DiaBlackJack.GameScene
             if (vm == null || vm.SatanNumberCandidates.Count == 0)
             {
                 satanNumberSelection.Hide();
+                StopSatanNumberSelectionHeartSlow();
                 return;
             }
 
+            StartSatanNumberSelectionHeartSlow();
             _camera ??= Camera.main;
             satanNumberSelection.Render(
                 vm.SatanNumberCandidates,
@@ -4027,6 +4179,158 @@ namespace DiaBlackJack.GameScene
             _lastSatanAttackAnimationActionOrdinal = 0;
         }
 
+        private bool TryPlaySatanNumberGuessAnimation(
+            GameSceneSatanNumberGuessAnimationCue cue,
+            out CardView targetCard)
+        {
+            targetCard = null;
+            if (cue == null || IsLastSatanNumberGuessAnimationCue(cue))
+            {
+                return false;
+            }
+
+            CardHand targetHand = cue.ActorSide == CombatantSide.Player
+                ? enemyHand
+                : playerHand;
+            if (targetHand == null ||
+                !targetHand.TryGetCard(cue.TargetCardId, out targetCard))
+            {
+                targetCard = null;
+                return false;
+            }
+
+            if (!BeginSatanNumberGuessCameraSequence())
+            {
+                targetCard = null;
+                return false;
+            }
+
+            RememberSatanNumberGuessAnimationCue(cue);
+            return true;
+        }
+
+        private IEnumerator PlaySatanNumberGuessSequence(
+            GameSceneSatanNumberGuessAnimationCue cue,
+            CardView targetCard)
+        {
+            GameSceneCameraViewController cameraController =
+                ResolveCameraViewController();
+            while (cameraController != null && cameraController.IsTransitioning)
+            {
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(
+                Mathf.Max(satanNumberGuessCameraDelaySeconds, 0f));
+
+            if (targetCard != null && targetCard.gameObject.activeInHierarchy)
+            {
+                targetCard.PlaySatanNumberGuessResult(
+                    cue.Succeeded,
+                    satanBrandSprite);
+            }
+
+            while (targetCard != null &&
+                targetCard.IsSatanNumberGuessAnimationPlaying)
+            {
+                yield return null;
+            }
+
+            yield return new WaitForSeconds(
+                Mathf.Max(satanNumberGuessAfterResultHoldSeconds, 0f));
+            EndSatanNumberGuessCameraSequence();
+        }
+
+        private bool IsLastSatanNumberGuessAnimationCue(
+            GameSceneSatanNumberGuessAnimationCue cue)
+        {
+            return _hasLastSatanNumberGuessAnimationCue &&
+                _lastSatanNumberGuessAnimationRoundNumber == cue.RoundNumber &&
+                _lastSatanNumberGuessAnimationSourceCardId == cue.SourceCardId &&
+                _lastSatanNumberGuessAnimationActorSide == cue.ActorSide &&
+                _lastSatanNumberGuessAnimationTargetCardId == cue.TargetCardId &&
+                _lastSatanNumberGuessAnimationSucceeded == cue.Succeeded &&
+                _lastSatanNumberGuessAnimationActionOrdinal == cue.ActionOrdinal;
+        }
+
+        private void RememberSatanNumberGuessAnimationCue(
+            GameSceneSatanNumberGuessAnimationCue cue)
+        {
+            _hasLastSatanNumberGuessAnimationCue = true;
+            _lastSatanNumberGuessAnimationRoundNumber = cue.RoundNumber;
+            _lastSatanNumberGuessAnimationSourceCardId = cue.SourceCardId;
+            _lastSatanNumberGuessAnimationActorSide = cue.ActorSide;
+            _lastSatanNumberGuessAnimationTargetCardId = cue.TargetCardId;
+            _lastSatanNumberGuessAnimationSucceeded = cue.Succeeded;
+            _lastSatanNumberGuessAnimationActionOrdinal = cue.ActionOrdinal;
+        }
+
+        private void ResetSatanNumberGuessAnimationState()
+        {
+            _hasLastSatanNumberGuessAnimationCue = false;
+            _lastSatanNumberGuessAnimationRoundNumber = 0;
+            _lastSatanNumberGuessAnimationSourceCardId = 0;
+            _lastSatanNumberGuessAnimationActorSide = CombatantSide.Player;
+            _lastSatanNumberGuessAnimationTargetCardId = 0;
+            _lastSatanNumberGuessAnimationSucceeded = false;
+            _lastSatanNumberGuessAnimationActionOrdinal = 0;
+            _satanNumberGuessCardIdToSuppress = -1;
+            _satanNumberGuessSuppressedCardSide = CombatantSide.Player;
+        }
+
+        private bool BeginSatanNumberGuessCameraSequence()
+        {
+            if (_satanNumberGuessSwitchInputLocked)
+            {
+                return true;
+            }
+
+            GameSceneCameraViewController controller =
+                ResolveCameraViewController();
+            if (controller == null ||
+                !controller.SetView(GameSceneCameraView.EnemyFocus))
+            {
+                return false;
+            }
+
+            controller.LockSwitchInput();
+            _satanNumberGuessSwitchInputLocked = true;
+            StopCardSelectionHeartSounds();
+            StopSatanNumberSelectionHeartSlow();
+            StartCardSelectionFastHeartAfterTransition(controller);
+            PresentationManager.Current?.StartFieldOfViewIncrease(
+                Mathf.Max(satanNumberGuessFovRiseSpeed, 0.01f));
+            PresentationManager.Current?.StartChromaticAberration(
+                Mathf.Max(satanNumberGuessChromaticRiseSpeed, 0.01f));
+            return true;
+        }
+
+        private void EndSatanNumberGuessCameraSequence()
+        {
+            StopCardSelectionHeartSounds();
+            StopSatanNumberSelectionHeartSlow();
+
+            if (!_satanNumberGuessSwitchInputLocked)
+            {
+                return;
+            }
+
+            PresentationManager.Current?.StopFieldOfViewIncrease(
+                Mathf.Max(satanNumberGuessFovReturnSpeed, 0.01f));
+            PresentationManager.Current?.StopChromaticAberration(
+                Mathf.Max(satanNumberGuessChromaticReturnSpeed, 0.01f));
+
+            GameSceneCameraViewController controller =
+                ResolveCameraViewController();
+            if (controller != null)
+            {
+                controller.SetView(GameSceneCameraView.Current);
+                controller.UnlockSwitchInput();
+            }
+
+            _satanNumberGuessSwitchInputLocked = false;
+        }
+
         private HammerAnimationController ResolveHammerAnimation()
         {
             if (hammerAnimation != null)
@@ -4098,10 +4402,13 @@ namespace DiaBlackJack.GameScene
 
             controller.LockSwitchInput();
             _enemyCardSelectionSwitchInputLocked = true;
+            StartCardSelectionHeartSounds(controller);
         }
 
         private void EndEnemyCardSelectionCamera()
         {
+            StopCardSelectionHeartSounds();
+
             if (!_enemyCardSelectionSwitchInputLocked)
             {
                 return;
@@ -4116,6 +4423,122 @@ namespace DiaBlackJack.GameScene
             }
 
             _enemyCardSelectionSwitchInputLocked = false;
+        }
+
+        private void StartCardSelectionHeartSounds(
+            GameSceneCameraViewController controller)
+        {
+            StopCardSelectionHeartSounds();
+            SoundManager soundManager = SoundManager.Current;
+            if (soundManager != null)
+            {
+                _cardSelectionHeartSlowHandle =
+                    soundManager.PlaySfx(CardSelectionHeartSlowSfxId);
+            }
+
+            StartCardSelectionFastHeartAfterTransition(controller);
+        }
+
+        private void StartCardSelectionFastHeartAfterTransition(
+            GameSceneCameraViewController controller)
+        {
+            StopCardSelectionHeartRoutine();
+
+            if (!Application.isPlaying || controller == null)
+            {
+                SwitchToCardSelectionFastHeart();
+                return;
+            }
+
+            _cardSelectionHeartRoutine = StartCoroutine(
+                SwitchToCardSelectionFastHeartAfterTransition(controller));
+        }
+
+        private IEnumerator SwitchToCardSelectionFastHeartAfterTransition(
+            GameSceneCameraViewController controller)
+        {
+            yield return null;
+
+            while (controller != null && controller.IsTransitioning)
+            {
+                yield return null;
+            }
+
+            SwitchToCardSelectionFastHeart();
+            _cardSelectionHeartRoutine = null;
+        }
+
+        private void SwitchToCardSelectionFastHeart()
+        {
+            FadeOutCardSelectionHeart(ref _cardSelectionHeartSlowHandle);
+
+            SoundManager soundManager = SoundManager.Current;
+            if (soundManager != null)
+            {
+                _cardSelectionHeartFastHandle =
+                    soundManager.PlaySfx(CardSelectionHeartFastSfxId);
+            }
+        }
+
+        private void StopCardSelectionHeartSounds()
+        {
+            StopCardSelectionHeartRoutine();
+            FadeOutCardSelectionHeart(ref _cardSelectionHeartSlowHandle);
+            FadeOutCardSelectionHeart(ref _cardSelectionHeartFastHandle);
+            StopSatanNumberSelectionHeartSlow();
+        }
+
+        private void FadeOutCardSelectionHeart(
+            ref SoundManager.SoundHandle handle)
+        {
+            SoundManager soundManager = SoundManager.Current;
+            if (soundManager != null && handle.IsValid)
+            {
+                soundManager.StopSfx(
+                    handle,
+                    Mathf.Max(cardSelectionHeartFadeOutSeconds, 0f));
+            }
+
+            handle = default;
+        }
+
+        private void StopCardSelectionHeartRoutine()
+        {
+            if (_cardSelectionHeartRoutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(_cardSelectionHeartRoutine);
+            _cardSelectionHeartRoutine = null;
+        }
+
+        private void StartSatanNumberSelectionHeartSlow()
+        {
+            SoundManager soundManager = SoundManager.Current;
+            if (soundManager == null)
+            {
+                return;
+            }
+
+            if (_satanNumberSelectionHeartSlowActive &&
+                soundManager.IsSfxPlaying(_satanNumberSelectionHeartSlowHandle))
+            {
+                return;
+            }
+
+            _satanNumberSelectionHeartSlowHandle =
+                soundManager.PlaySfx(CardSelectionHeartSlowSfxId);
+            _satanNumberSelectionHeartSlowActive =
+                _satanNumberSelectionHeartSlowHandle.IsValid;
+        }
+
+        private void StopSatanNumberSelectionHeartSlow()
+        {
+            FadeOutCardSelectionHeart(
+                ref _satanNumberSelectionHeartSlowHandle);
+            _satanNumberSelectionHeartSlowHandle = default;
+            _satanNumberSelectionHeartSlowActive = false;
         }
 
         private void ApplyCinematicCamera(

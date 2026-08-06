@@ -638,6 +638,62 @@ namespace DiaBlackJack.GameScene
         public int ActionOrdinal { get; }
     }
 
+    public sealed class GameSceneSatanNumberGuessAnimationCue
+    {
+        public GameSceneSatanNumberGuessAnimationCue(
+            int roundNumber,
+            int sourceCardId,
+            CombatantSide actorSide,
+            int targetCardId,
+            bool succeeded,
+            int actionOrdinal)
+        {
+            if (roundNumber < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(roundNumber));
+            }
+
+            if (sourceCardId < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(sourceCardId));
+            }
+
+            if (!Enum.IsDefined(typeof(CombatantSide), actorSide))
+            {
+                throw new ArgumentOutOfRangeException(nameof(actorSide));
+            }
+
+            if (targetCardId < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(targetCardId));
+            }
+
+            if (actionOrdinal < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(actionOrdinal));
+            }
+
+            RoundNumber = roundNumber;
+            SourceCardId = sourceCardId;
+            ActorSide = actorSide;
+            TargetCardId = targetCardId;
+            Succeeded = succeeded;
+            ActionOrdinal = actionOrdinal;
+        }
+
+        public int RoundNumber { get; }
+
+        public int SourceCardId { get; }
+
+        public CombatantSide ActorSide { get; }
+
+        public int TargetCardId { get; }
+
+        public bool Succeeded { get; }
+
+        public int ActionOrdinal { get; }
+    }
+
     /// <summary>
     /// One-shot cue for the Enforcer's per-round poison injection: a poison card was just added
     /// to the player's deck this round. Keyed only by <see cref="RoundNumber"/> (mirroring the
@@ -692,7 +748,8 @@ namespace DiaBlackJack.GameScene
             int? enemyMammonDieValue = null,
             int? playerMammonSourceCardId = null,
             bool canPlayerRerollMammon = false,
-            GameScenePoisonInjectionAnimationCue poisonInjectionAnimationCue = null)
+            GameScenePoisonInjectionAnimationCue poisonInjectionAnimationCue = null,
+            GameSceneSatanNumberGuessAnimationCue satanNumberGuessAnimationCue = null)
         {
             Core = core ?? throw new ArgumentNullException(nameof(core));
             PlayerCards = playerCards ?? throw new ArgumentNullException(nameof(playerCards));
@@ -724,6 +781,7 @@ namespace DiaBlackJack.GameScene
             PlayerMammonSourceCardId = playerMammonSourceCardId;
             CanPlayerRerollMammon = canPlayerRerollMammon;
             PoisonInjectionAnimationCue = poisonInjectionAnimationCue;
+            SatanNumberGuessAnimationCue = satanNumberGuessAnimationCue;
         }
 
         public CoreLoopViewModel Core { get; }
@@ -762,6 +820,8 @@ namespace DiaBlackJack.GameScene
         public GameSceneSatanAttackAnimationCue SatanAttackAnimationCue { get; }
 
         public GameScenePoisonInjectionAnimationCue PoisonInjectionAnimationCue { get; }
+
+        public GameSceneSatanNumberGuessAnimationCue SatanNumberGuessAnimationCue { get; }
 
         public bool UsesDiegeticCardEffectSelection { get; }
 
@@ -895,7 +955,8 @@ namespace DiaBlackJack.GameScene
                 playerMammon != null &&
                     battle.CanBeginPlayerActiveDemonContractAction(
                         playerMammon.SourceCardId),
-                CreatePoisonInjectionAnimationCue(battle));
+                CreatePoisonInjectionAnimationCue(battle),
+                CreateSatanNumberGuessAnimationCue(battle));
             IReadOnlyList<EnemySpeechCue> speechCues =
                 CreateEnemySpeechCues(battle);
             model.EnemySpeechCue = speechCues.Count == 0
@@ -1521,6 +1582,37 @@ namespace DiaBlackJack.GameScene
             }
 
             return null;
+        }
+
+        private static GameSceneSatanNumberGuessAnimationCue
+            CreateSatanNumberGuessAnimationCue(CoreLoopBattle battle)
+        {
+            if (battle.LastSatanNumberGuessActionOrdinal < 0 ||
+                battle.LastSatanNumberGuessActionOrdinal !=
+                    battle.PublicActionHistory.Count)
+            {
+                return null;
+            }
+
+            PublicCombatAction action = battle.LastPublicAction;
+            if (action == null ||
+                action.ActionType != PublicCombatActionType.DemonContract ||
+                !String.Equals(
+                    action.SourceCardDefinitionKey,
+                    DemonContractCatalog.SatanKey,
+                    StringComparison.Ordinal) ||
+                !battle.LastPublicActionSourceCardId.HasValue)
+            {
+                return null;
+            }
+
+            return new GameSceneSatanNumberGuessAnimationCue(
+                battle.RoundNumber,
+                battle.LastPublicActionSourceCardId.Value,
+                battle.LastSatanNumberGuessActorSide,
+                battle.LastSatanNumberGuessTargetCardId,
+                battle.LastSatanNumberGuessSucceeded,
+                battle.LastSatanNumberGuessActionOrdinal);
         }
 
         private static GameScenePoisonInjectionAnimationCue

@@ -311,6 +311,16 @@ MonoBehaviour:
     volume: 1
     pitch: 1
     loop: 0
+  - id: fireCard
+    clip: {fileID: 8300000, guid: d59c822cc22803c48bd26c6192b9fb19, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: shapeDissolve
+    clip: {fileID: 8300000, guid: e5e43a4c65635764992708efdf494160, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1

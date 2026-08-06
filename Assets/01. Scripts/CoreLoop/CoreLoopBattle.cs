@@ -55,6 +55,10 @@ namespace DiaBlackJack.CoreLoop
         private int? _lastPublicActionSourceCardId;
         private int _lastAutomaticCardResultActionOrdinal = -1;
         private int _lastSatanForcedDrawActionOrdinal = -1;
+        private int _lastSatanNumberGuessActionOrdinal = -1;
+        private int _lastSatanNumberGuessTargetCardId = -1;
+        private CombatantSide _lastSatanNumberGuessActorSide;
+        private bool _lastSatanNumberGuessSucceeded;
         private int _nextAutomaticCardActivationOrdinal = 1;
         private readonly List<int> _injectedPoisonCardIds = new List<int>();
         private CardEffectContext _activeCardEffectContext;
@@ -471,6 +475,18 @@ namespace DiaBlackJack.CoreLoop
 
         internal int LastSatanForcedDrawActionOrdinal =>
             _lastSatanForcedDrawActionOrdinal;
+
+        internal int LastSatanNumberGuessActionOrdinal =>
+            _lastSatanNumberGuessActionOrdinal;
+
+        internal int LastSatanNumberGuessTargetCardId =>
+            _lastSatanNumberGuessTargetCardId;
+
+        internal CombatantSide LastSatanNumberGuessActorSide =>
+            _lastSatanNumberGuessActorSide;
+
+        internal bool LastSatanNumberGuessSucceeded =>
+            _lastSatanNumberGuessSucceeded;
 
         internal int LastAutomaticCardActivationOrdinal { get; private set; }
 
@@ -4270,6 +4286,10 @@ namespace DiaBlackJack.CoreLoop
                     ? (CombatantSide?)GetOppositeSide(ownerSide)
                     : null,
                 paidSoulCost: 0);
+            _lastSatanNumberGuessActionOrdinal = _publicActionHistory.Count;
+            _lastSatanNumberGuessTargetCardId = hiddenCard.Id;
+            _lastSatanNumberGuessActorSide = ownerSide;
+            _lastSatanNumberGuessSucceeded = succeeded;
             RaiseStepped();
 
             if (succeeded && !bustPrevented)
@@ -5439,6 +5459,10 @@ namespace DiaBlackJack.CoreLoop
             _lastPublicActionSourceCardId = null;
             _lastAutomaticCardResultActionOrdinal = -1;
             _lastSatanForcedDrawActionOrdinal = -1;
+            _lastSatanNumberGuessActionOrdinal = -1;
+            _lastSatanNumberGuessTargetCardId = -1;
+            _lastSatanNumberGuessActorSide = CombatantSide.Player;
+            _lastSatanNumberGuessSucceeded = false;
             _enemyDecisionOrdinal = 0;
             LastResolutionPlayerBonus = 0;
             LastResolutionEnemyBonus = 0;

@@ -811,6 +811,80 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  satanGuessBrandDissolveDuration: 1
+  satanGuessBrandDissolveCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0.001121521
+      value: 0
+      inSlope: 3.0729203
+      outSlope: 3.0729203
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.02805836
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  satanGuessCardDissolveDuration: 2
+  satanGuessCardDissolveCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: -0.001121521
+      value: 0
+      inSlope: 0.18114813
+      outSlope: 0.18114813
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.084648006
+    - serializedVersion: 3
+      time: 0.45409027
+      value: 0.14608133
+      inSlope: 0.4934274
+      outSlope: 0.4934274
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.11145242
+    - serializedVersion: 3
+      time: 0.94907844
+      value: 0.62488866
+      inSlope: 2.2874281
+      outSlope: 2.2874281
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.7352169
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 9.936218
+      outSlope: 9.936218
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.19858672
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  satanGuessPunchDuration: 0.5
+  satanGuessPunchRotation: 10
+  satanGuessPunchVibrato: 50
+  satanGuessBrandScale: 1
+  satanGuessDissolveNoiseMap: {fileID: 2800000, guid: a149f8f1d6989de41adbcbd6d249b6f2, type: 3}
+  satanGuessBrandMaterial: {fileID: 2100000, guid: 5fda0e12f13ac6e438c90367eab8c0e4, type: 2}
   usedMark: {fileID: 8467901782112210214}
   usedMarkFirstStroke: {fileID: 6330193512941389023}
   usedMarkSecondStroke: {fileID: 1142530434892247872}

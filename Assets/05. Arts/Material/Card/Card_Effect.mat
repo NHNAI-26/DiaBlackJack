@@ -12,6 +12,7 @@ Material:
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
+  - _DISSOLVE_ON
   - _HEIGHT_FADE_ON
   - _SURFACE_TYPE_TRANSPARENT
   m_InvalidKeywords: []
@@ -52,7 +53,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DissolveNoiseMap:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: df3a5f74a2bbe5a44aaad8da663ddabf, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
@@ -121,9 +122,13 @@ Material:
     - _DissolveAmount: 0
     - _DissolveEdgeIntensity: 1
     - _DissolveEdgeWidth: 0.05
-    - _DissolveEnabled: 0
+    - _DissolveEnabled: 1
     - _DissolveMaxOffset: 0
-    - _DissolveMinOffset: 0
+    - _DissolveMinOffset: -0.035
+    - _DissolveMode: 0
+    - _DissolveRadialNoiseStrength: 0.15
+    - _DissolveRadialOrigin: 0
+    - _DissolveRadialRadius: 1.4142
     - _DstBlend: 10
     - _DstBlendAlpha: 10
     - _EmissionEnabled: 0
@@ -159,6 +164,8 @@ Material:
     - _SmoothnessMapEnabled: 0
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
+    - _SpriteFlipX: 0
+    - _SpriteFlipY: 0
     - _SrcBlend: 5
     - _SrcBlendAlpha: 1
     - _Surface: 1
@@ -176,9 +183,9 @@ Material:
     - _BaseSpriteUVRect: {r: 0, g: 0, b: 1, a: 1}
     - _CardBlendUVRect: {r: 0, g: 0, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _DissolveEdgeColor: {r: 1, g: 0.5, b: 0, a: 1}
+    - _DissolveEdgeColor: {r: 8, g: 0.7330912, b: 0, a: 1}
     - _DissolvePanning: {r: 0, g: 0, b: 0, a: 0}
-    - _DissolveTilingOffset: {r: 1, g: 1, b: 0, a: 0}
+    - _DissolveTilingOffset: {r: 0.2, g: 0.2, b: 0, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _HeightFadeTint: {r: 0, g: 0, b: 0, a: 0}
     - _PixelOutlineColor: {r: 0.08, g: 0.06, b: 0.05, a: 1}

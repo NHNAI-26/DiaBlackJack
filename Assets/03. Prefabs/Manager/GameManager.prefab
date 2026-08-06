@@ -94,6 +94,12 @@ MonoBehaviour:
   knifeSuccessTrigger: Success
   knifeFailTrigger: Fail
   hammerAnimation: {fileID: 0}
+  satanNumberGuessCameraDelaySeconds: 0.8
+  satanNumberGuessAfterResultHoldSeconds: 0.5
+  satanNumberGuessFovRiseSpeed: 80
+  satanNumberGuessFovReturnSpeed: 120
+  satanNumberGuessChromaticRiseSpeed: 4
+  satanNumberGuessChromaticReturnSpeed: 2
   lighterAnimationRoot: {fileID: 0}
   lighterAnimator: {fileID: 0}
   whiskeyAnimationRoot: {fileID: 0}
