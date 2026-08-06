@@ -215,7 +215,7 @@ namespace DiaBlackJack.CoreLoop
                     FinalBossKey,
                     "최종 보스",
                     EnemyGrade.Boss,
-                    8,
+                    9,
                     EnemyBehaviorPolicyCatalog.FinalBoss,
                     new[]
                     {
@@ -251,11 +251,11 @@ namespace DiaBlackJack.CoreLoop
                             DemonContractCatalog.BeelzebubKey,
                             DemonContractCatalog.MammonKey),
                         new FixedDemonContractPhaseDefinition(
-                            activationSoulThreshold: 5,
+                            activationSoulThreshold: 6,
                             DemonContractCatalog.AsmodeusKey,
                             DemonContractCatalog.SatanKey),
                         new FixedDemonContractPhaseDefinition(
-                            activationSoulThreshold: 2,
+                            activationSoulThreshold: 3,
                             DemonContractCatalog.AzazelKey,
                             DemonContractCatalog.BelphegorKey)
                     })

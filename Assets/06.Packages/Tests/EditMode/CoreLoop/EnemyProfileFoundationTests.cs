@@ -48,7 +48,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 catalog,
                 EnemyCombatProfileCatalog.FinalBossKey,
                 EnemyGrade.Boss,
-                8,
+                9,
                 EnemyBehaviorPolicyCatalog.FinalBoss);
         }
 
@@ -57,7 +57,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         [TestCase(EnemyCombatProfileCatalog.CultistKey, 5, 20, BattleRewardTier.Normal)]
         [TestCase(EnemyCombatProfileCatalog.TricksterKey, 5, 18, BattleRewardTier.Normal)]
         [TestCase(EnemyCombatProfileCatalog.EnforcerKey, 5, 19, BattleRewardTier.HighGrade)]
-        [TestCase(EnemyCombatProfileCatalog.FinalBossKey, 8, 25, BattleRewardTier.HighGrade)]
+        [TestCase(EnemyCombatProfileCatalog.FinalBossKey, 9, 25, BattleRewardTier.HighGrade)]
         public void EPR04_U01_RevisedProfilesFlowThroughBattleConfiguration(
             string profileKey,
             int expectedMaximumSoul,

@@ -170,7 +170,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             EnemyActionType expectedAction)
         {
             EnemyDecision decision = new FinalBossEnemyPolicy().Decide(
-                CreateActiveSatanObservation(ownTotal, enemyMaximumSoul: 8));
+                CreateActiveSatanObservation(ownTotal, enemyMaximumSoul: 9));
 
             Assert.That(decision.ActionType, Is.EqualTo(expectedAction));
         }

@@ -219,7 +219,7 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(session.ActiveStage.BattleProfileKey,
                 Is.EqualTo(EnemyCombatProfileCatalog.FinalBossKey));
             Assert.That(session.Battle, Is.Not.Null);
-            Assert.That(session.Battle.Enemy.Soul.Maximum, Is.EqualTo(8));
+            Assert.That(session.Battle.Enemy.Soul.Maximum, Is.EqualTo(9));
         }
 
         [Test]

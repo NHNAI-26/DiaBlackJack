@@ -79,7 +79,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             CoreLoopBattle battle = CreateInferenceBattle(
                 new FinalBossEnemyPolicy(),
-                enemyMaximumSoul: 8);
+                enemyMaximumSoul: 9);
 
             EnemyCombatDisplaySnapshot snapshot =
                 EnemyCombatDisplaySnapshotFactory.Create(
@@ -206,7 +206,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             CoreLoopViewModel model = CoreLoopPresenter.Create(
                 CreateInferenceBattle(
                     new FinalBossEnemyPolicy(),
-                    enemyMaximumSoul: 8),
+                    enemyMaximumSoul: 9),
                 EnemyCombatProfileCatalog.FinalBossKey);
 
             Assert.That(model.EnemyDisplayName, Is.EqualTo("최종 보스"));
@@ -348,10 +348,10 @@ namespace DiaBlackJack.CoreLoop.Tests
                     "military-knife-9",
                     "standard-plain-4",
                     "standard-plain-3"),
-                enemyMaximumSoul: 8,
+                enemyMaximumSoul: 9,
                 enemyPolicy: policy);
             battle.Start();
-            battle.Enemy.Soul.ApplyDamage(6);
+            battle.Enemy.Soul.ApplyDamage(7);
             return battle;
         }
 

@@ -18,7 +18,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 profile.FixedDemonContractPhases.Select(phase =>
                     phase.ActivationSoulThreshold),
-                Is.EqualTo(new int?[] { null, 5, 2 }));
+                Is.EqualTo(new int?[] { null, 6, 3 }));
             Assert.That(
                 profile.FixedDemonContractPhases.Select(phase =>
                     phase.ActiveDefinitionKey),
@@ -46,7 +46,7 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(battle.Start(), Is.True);
 
-            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(8));
+            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(9));
             Assert.That(battle.FixedEnemyDemonContractPhaseNumber, Is.EqualTo(1));
             Assert.That(battle.UsedEnemyBaseDemonContractCount, Is.Zero);
             Assert.That(
@@ -66,7 +66,7 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             battle.ApplySoulDamage(CombatantSide.Enemy, 3);
 
-            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(5));
+            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(6));
             Assert.That(battle.FixedEnemyDemonContractPhaseNumber, Is.EqualTo(2));
             Assert.That(
                 battle.ActiveEnemyDemonContracts.Single().Kind,
@@ -78,7 +78,7 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             battle.ApplySoulDamage(CombatantSide.Enemy, 3);
 
-            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(2));
+            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(3));
             Assert.That(battle.FixedEnemyDemonContractPhaseNumber, Is.EqualTo(3));
             Assert.That(
                 battle.ActiveEnemyDemonContracts.Single().Kind,
@@ -133,7 +133,7 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             battle.ApplySoulDamage(CombatantSide.Enemy, 6);
 
-            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(2));
+            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(3));
             Assert.That(battle.FixedEnemyDemonContractPhaseNumber, Is.EqualTo(3));
             Assert.That(
                 battle.ActiveEnemyDemonContracts.Single().Kind,
@@ -162,7 +162,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             battle.Enemy.Soul.Restore(6);
             battle.ApplySoulDamage(CombatantSide.Enemy, 1);
 
-            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(7));
+            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(8));
             Assert.That(battle.FixedEnemyDemonContractPhaseNumber, Is.EqualTo(3));
             Assert.That(
                 battle.ActiveEnemyDemonContracts.Single().Kind,
@@ -203,7 +203,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             CoreLoopBattle battle = CreateBossBattle();
             battle.Start();
 
-            battle.ApplySoulDamage(CombatantSide.Enemy, 8);
+            battle.ApplySoulDamage(CombatantSide.Enemy, 9);
 
             Assert.That(battle.Enemy.Soul.IsDepleted, Is.True);
             Assert.That(battle.FixedEnemyDemonContractPhaseNumber, Is.EqualTo(1));

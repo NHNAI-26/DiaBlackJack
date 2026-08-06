@@ -26,7 +26,7 @@ namespace DiaBlackJack.CoreLoop
 
     public static class FinalBossPhaseResolver
     {
-        public const int ExpectedMaximumSoul = 8;
+        public const int ExpectedMaximumSoul = 9;
 
         public static FinalBossPhase Resolve(SoulObservation enemySoul)
         {

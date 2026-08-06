@@ -67,10 +67,10 @@ MonoBehaviour:
     activeCard: {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a130005, type: 2}
     discardedCard: {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a130003, type: 2}
   - startsAtBattleStart: 0
-    activationSoulThreshold: 5
+    activationSoulThreshold: 6
     activeCard: {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a130007, type: 2}
     discardedCard: {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a130001, type: 2}
   - startsAtBattleStart: 0
-    activationSoulThreshold: 2
+    activationSoulThreshold: 3
     activeCard: {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a130008, type: 2}
     discardedCard: {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a130002, type: 2}

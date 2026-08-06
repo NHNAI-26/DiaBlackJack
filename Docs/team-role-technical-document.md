@@ -853,3 +853,11 @@ DC-00 공통 규칙 개정으로 동일 악마 추가 계약과 계약 임시 �
 - 막힌 점: `duplicate` 액션이 비활성 프리팹 자식 대상을 못 찾아 `create`+`prefab_path`로 우회, RectTransform 앵커링을 수동으로 재조정. 씬 저장 후 diff를 라인 단위로 전수 검토해 의도한 변경 외 실제 손실이 없음(기존 드리프트 패턴만 동반)을 확인.
 - 변경 영역: `GameFlowScreen.cs`, `GameSceneMoodResolver.cs`, `OpponentSelectionView.cs`, `GameFlowController.cs`, `StageProgressionPresentation.cs`, `GameScene.unity`, `MoodControllerTests.cs`.
 - 검증: AI가 컴파일 오류 0 확인. 전체 EditMode 1121개(신규 무드 테스트 1건 포함) 중 1111개 통과, 무관 실패 10건만 남아 신규 실패 없음. `GameFlowScreenResolver`의 순수 상태 매핑은 건드리지 않아 관련 기존 테스트도 그대로 통과. 실제로 포스터가 정중앙에 뜨고 클릭 시 전투로 진입하는지는 이천서의 확인 필요.
+
+## 2026-08-06 최종 보스 포스터 클릭 시 예외 발생 — 보스 영혼 9 반영 및 악마 구간(3·6·9) 재조정
+
+- 이천서: 방금 추가한 최종 보스 포스터 클릭 시 `InvalidOperationException: Final boss policy requires maximum soul 8.` 발생을 제보하고, "최종 보스 영혼이 9로 조정되었으므로, 악마 구간도 3 6 9로 조정해주십시오"라고 요청.
+- AI 보조: `FinalBossPhaseResolver.ExpectedMaximumSoul = 8`이 SO와 무관하게 코드에 하드코딩돼 있어, 이천서가 이미 SO의 `maximumSoul`을 9로 조정해둔 것과 어긋나 보스 AI가 매 결정마다 예외를 던지고 있었음을 확인. "악마 구간"은 `FinalBossPhase`(3·6 경계, 이미 요청과 일치)가 아니라 영혼 임계값에 따라 계약 악마가 바뀌는 `fixedDemonContractPhases`를 가리키는 것으로 판단 — 기존 (없음, 5, 2)가 옛 최대치 8과 3칸 균등 간격이었으므로 새 최대치 9에 맞춰 (없음, 6, 3)으로 갱신, 정확히 "3 6 9"와 일치.
+- 코드 레벨 폴백 카탈로그와 실제 라이브 SO 양쪽 모두 갱신(테스트가 하드코딩 카탈로그를 직접 참조하는 경우가 많아 SO와 별개로 일치시켜야 함). 이 값들이 여러 파일(CoreLoop·StageProgression 양쪽)의 최종 보스 전용 테스트에 깊게 박혀 있어 전역 치환 대신 파일별로 테스트 의도를 먼저 파악한 뒤 조정 — 데미지로 특정 페이즈에 도달시키는 테스트는 데미지량 자체를 재계산, 라운드 시뮬레이션 테스트는 직접 계산하지 않고 실제 테스트 실행 결과를 신뢰해 반영.
+- 변경 영역: `BossCombatDisplayModel.cs`, `EnemyCombatProfileCatalog.cs`, `final-boss.asset`, CoreLoop/StageProgression 테스트 7개 파일.
+- 검증: AI가 컴파일 오류 0 확인. 전체 EditMode 1122개 중 1112개 통과 — 신규 실패였던 항목 전부 해소, 무관 실패 10건만 남음. 실제로 포스터 클릭 시 예외 없이 전투가 시작되는지는 이천서의 재확인 필요.

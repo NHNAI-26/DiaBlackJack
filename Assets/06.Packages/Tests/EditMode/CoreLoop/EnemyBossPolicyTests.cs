@@ -17,7 +17,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                     enemyDeckSeed: 53);
 
             Assert.That(configuration.Grade, Is.EqualTo(EnemyGrade.Boss));
-            Assert.That(configuration.EnemyMaximumSoul, Is.EqualTo(8));
+            Assert.That(configuration.EnemyMaximumSoul, Is.EqualTo(9));
             Assert.That(
                 configuration.BehaviorPolicy,
                 Is.TypeOf<FinalBossEnemyPolicy>());
@@ -26,6 +26,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(BattleRewardTier.HighGrade));
         }
 
+        [TestCase(9, FinalBossPhase.Survival)]
         [TestCase(8, FinalBossPhase.Survival)]
         [TestCase(7, FinalBossPhase.Survival)]
         [TestCase(6, FinalBossPhase.Survival)]
@@ -39,7 +40,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             FinalBossPhase expected)
         {
             Assert.That(
-                FinalBossPhaseResolver.Resolve(new SoulObservation(currentSoul, 8)),
+                FinalBossPhaseResolver.Resolve(new SoulObservation(currentSoul, 9)),
                 Is.EqualTo(expected));
         }
 
@@ -260,10 +261,10 @@ namespace DiaBlackJack.CoreLoop.Tests
                     "military-knife-9",
                     "standard-plain-4",
                     "standard-plain-3"),
-                enemyMaximumSoul: 8,
+                enemyMaximumSoul: 9,
                 enemyPolicy: policy);
             battle.Start();
-            battle.Enemy.Soul.ApplyDamage(6);
+            battle.Enemy.Soul.ApplyDamage(7);
             BlackjackCard knife = battle.Enemy.Hand.Cards[0];
 
             Assert.That(battle.TryPlayerHit(), Is.True);
@@ -316,7 +317,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                     CreateRepeatedRankDeck(18, 4),
                     player.MaximumSoul,
                     player.CurrentSoul,
-                    enemyMaximumSoul: 8,
+                    enemyMaximumSoul: 9,
                     enemyPolicy: new FinalBossEnemyPolicy()));
 
             Assert.That(session.TryStartRun(), Is.True);
@@ -327,7 +328,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 completedRounds++;
             }
 
-            Assert.That(completedRounds, Is.EqualTo(4));
+            Assert.That(completedRounds, Is.EqualTo(5));
             Assert.That(session.Battle.Outcome, Is.EqualTo(BattleOutcome.PlayerVictory));
             Assert.That(
                 session.Progress.PendingReward.Offer.Tier,
@@ -345,8 +346,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.RunVictory));
             Assert.That(session.TryRestartRun(), Is.True);
             Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.InBattle));
-            Assert.That(session.Battle.Enemy.Soul.Maximum, Is.EqualTo(8));
-            Assert.That(session.Battle.Enemy.Soul.Current, Is.EqualTo(8));
+            Assert.That(session.Battle.Enemy.Soul.Maximum, Is.EqualTo(9));
+            Assert.That(session.Battle.Enemy.Soul.Current, Is.EqualTo(9));
         }
 
         private static EnemyActionCandidate CreateCardCandidate(
@@ -390,7 +391,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 playerFaceUpCards ?? Array.Empty<PublicCardObservation>(),
                 playerHiddenCardCount: 1,
                 new SoulObservation(12, 12),
-                new SoulObservation(enemyCurrentSoul, 8),
+                new SoulObservation(enemyCurrentSoul, 9),
                 roundNumber: 1,
                 playerIsStanding: false,
                 enemyIsStanding: false,
