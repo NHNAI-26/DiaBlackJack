@@ -49,10 +49,13 @@ namespace DiaBlackJack.CoreLoop
         IDemonContractHandler,
         IDemonContractNormalTurnHandler,
         IDemonContractStandRestrictionHandler,
-        IDemonContractBustPreventionHandler
+        IDemonContractBustPreventionHandler,
+        IDemonContractOwnerTurnStartChoiceHandler
     {
         public const int InitialDoomCount = 4;
         public const int DoomSoulCost = 2;
+        public const int SkipAbilityOptionId = 0;
+        public const int UseAbilityOptionId = 1;
 
         public DemonContractKind Kind => DemonContractKind.Satan;
 
@@ -74,6 +77,14 @@ namespace DiaBlackJack.CoreLoop
 
             context.ApplyOwnerSoulDamage(DoomSoulCost);
             return false;
+        }
+
+        public bool CanOfferOwnerTurnStartChoice(DemonContractContext context)
+        {
+            SatanRuntimeState state = GetState(context);
+            return state.CurrentFace == SatanContractFace.Upper
+                ? context.OpponentHasSingleHiddenCard
+                : context.OpponentCanDraw;
         }
 
         public bool PreventsOwnerStand(DemonContractContext context)

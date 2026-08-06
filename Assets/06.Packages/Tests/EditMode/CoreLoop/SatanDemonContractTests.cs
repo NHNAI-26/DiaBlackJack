@@ -54,9 +54,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(state.RemainingDoomCount, Is.EqualTo(3));
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(11));
 
-            Assert.That(battle.TryPlayerHit(), Is.True);
-            Assert.That(battle.TryPlayerHit(), Is.True);
-            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(HitSkippingSatanChoice(battle), Is.True);
+            Assert.That(HitSkippingSatanChoice(battle), Is.True);
+            Assert.That(HitSkippingSatanChoice(battle), Is.True);
 
             Assert.That(state.RemainingDoomCount, Is.Zero);
             Assert.That(state.DoomPenaltyActive, Is.True);
@@ -64,7 +64,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.ActivePlayerDemonContracts.Single().RuntimeState,
                 Is.SameAs(state));
 
-            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(HitSkippingSatanChoice(battle), Is.True);
             Assert.That(state.RemainingDoomCount, Is.Zero);
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(7));
         }
@@ -79,9 +79,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 playerCurrentSoul: 3);
             ActivateSatan(battle);
 
-            Assert.That(battle.TryPlayerHit(), Is.True);
-            Assert.That(battle.TryPlayerHit(), Is.True);
-            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(HitSkippingSatanChoice(battle), Is.True);
+            Assert.That(HitSkippingSatanChoice(battle), Is.True);
+            Assert.That(HitSkippingSatanChoice(battle), Is.True);
 
             Assert.That(battle.Player.Soul.Current, Is.Zero);
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.BattleEnded));
@@ -98,9 +98,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 new StandPolicy());
             ActivateSatan(battle);
 
-            Assert.That(battle.TryPlayerHit(), Is.True);
-            Assert.That(battle.TryPlayerHit(), Is.True);
-            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(HitSkippingSatanChoice(battle), Is.True);
+            Assert.That(HitSkippingSatanChoice(battle), Is.True);
+            Assert.That(HitSkippingSatanChoice(battle), Is.True);
 
             SatanRuntimeState state = GetSatanState(battle);
             Assert.That(state.RemainingDoomCount, Is.Zero);
@@ -122,16 +122,13 @@ namespace DiaBlackJack.CoreLoop.Tests
             SatanRuntimeState state = GetSatanState(battle);
 
             Assert.That(state.CurrentFace, Is.EqualTo(SatanContractFace.Upper));
-            Assert.That(battle.TryPlayerHit(), Is.True);
-            Assert.That(state.CurrentFace, Is.EqualTo(SatanContractFace.Upper));
-            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(HitSkippingSatanChoice(battle), Is.True);
             Assert.That(state.CurrentFace, Is.EqualTo(SatanContractFace.Upper));
 
-            ActiveDemonContract satan = battle.ActivePlayerDemonContracts.Single();
-            FailUpperPower(battle, satan.SourceCardId);
+            FailUpperPower(battle);
             Assert.That(state.CurrentFace, Is.EqualTo(SatanContractFace.Lower));
 
-            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(HitSkippingSatanChoice(battle), Is.True);
             Assert.That(state.CurrentFace, Is.EqualTo(SatanContractFace.Lower));
         }
 
@@ -145,9 +142,29 @@ namespace DiaBlackJack.CoreLoop.Tests
             ActivateSatan(battle);
             SatanRuntimeState state = GetSatanState(battle);
 
-            Assert.That(battle.TryBeginPlayerSatanContractAction(-1), Is.False);
-            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            PendingDemonContractInteraction pending =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(pending, Is.Not.Null);
+            Assert.That(pending.Kind,
+                Is.EqualTo(DemonContractInteractionKind.SatanTurnStartChoice));
+
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                pending.InteractionId + 1,
+                SatanDemonContractHandler.UseAbilityOptionId), Is.False);
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                pending.InteractionId,
+                99), Is.False);
+
+            Assert.That(battle.State,
+                Is.EqualTo(CoreLoopState.PlayerResolvingDemonContract));
+            Assert.That(battle.PendingPlayerDemonContractInteraction,
+                Is.SameAs(pending));
             Assert.That(state.CurrentFace, Is.EqualTo(SatanContractFace.Upper));
+
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                pending.InteractionId,
+                SatanDemonContractHandler.SkipAbilityOptionId), Is.True);
             Assert.That(battle.TryPlayerHit(), Is.True);
         }
 
@@ -163,18 +180,6 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(decision.ActionType, Is.EqualTo(expectedAction));
         }
 
-        [TestCase(14, EnemyActionType.Hit)]
-        [TestCase(18, EnemyActionType.DemonContract)]
-        public void DCR09_U04_FinalBossComparesSatanWithNormalAction(
-            int ownTotal,
-            EnemyActionType expectedAction)
-        {
-            EnemyDecision decision = new FinalBossEnemyPolicy().Decide(
-                CreateActiveSatanObservation(ownTotal, enemyMaximumSoul: 9));
-
-            Assert.That(decision.ActionType, Is.EqualTo(expectedAction));
-        }
-
         [Test]
         public void DCR02_U06_UpperFaceDeclaresDistinctNumbersAndBustsOnMatch()
         {
@@ -184,9 +189,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 new StandPolicy(),
                 enemyMaximumSoul: 3);
             ActivateSatan(battle);
-            ActiveDemonContract satan = battle.ActivePlayerDemonContracts.Single();
 
-            Assert.That(battle.TryBeginPlayerSatanContractAction(satan.SourceCardId), Is.True);
+            Assert.That(BeginSatanAbilityViaTurnStart(battle), Is.True);
             PendingDemonContractInteraction first =
                 battle.PendingPlayerDemonContractInteraction;
             Assert.That(first.Kind,
@@ -219,9 +223,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 new[] { 10, 7, 2, 2, 2, 2 },
                 new StandPolicy());
             ActivateSatan(battle);
-            ActiveDemonContract satan = battle.ActivePlayerDemonContracts.Single();
 
-            Assert.That(battle.TryBeginPlayerSatanContractAction(satan.SourceCardId), Is.True);
+            Assert.That(BeginSatanAbilityViaTurnStart(battle), Is.True);
             PendingDemonContractInteraction first =
                 battle.PendingPlayerDemonContractInteraction;
             Assert.That(ResolveNumber(battle, first, 3), Is.True);
@@ -247,9 +250,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 new StandPolicy(),
                 enemyMaximumSoul: 3);
             ActivateSatan(battle);
-            ActiveDemonContract satan = battle.ActivePlayerDemonContracts.Single();
-            Assert.That(battle.TryBeginPlayerSatanContractAction(
-                satan.SourceCardId), Is.True);
+
+            Assert.That(BeginSatanAbilityViaTurnStart(battle), Is.True);
             PendingDemonContractInteraction pending =
                 battle.PendingPlayerDemonContractInteraction;
 
@@ -275,9 +277,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 new[] { 10, 7, 2, 2, 2, 2 },
                 new StandPolicy());
             ActivateSatan(battle);
-            ActiveDemonContract satan = battle.ActivePlayerDemonContracts.Single();
-            Assert.That(battle.TryBeginPlayerSatanContractAction(
-                satan.SourceCardId), Is.True);
+
+            Assert.That(BeginSatanAbilityViaTurnStart(battle), Is.True);
             PendingDemonContractInteraction pending =
                 battle.PendingPlayerDemonContractInteraction;
             SatanRuntimeState state = GetSatanState(battle);
@@ -314,11 +315,10 @@ namespace DiaBlackJack.CoreLoop.Tests
                 new[] { 10, 7, 2, 3, 4, 5 },
                 new StandPolicy());
             ActivateSatan(battle);
-            ActiveDemonContract satan = battle.ActivePlayerDemonContracts.Single();
-            FailUpperPower(battle, satan.SourceCardId);
+            FailUpperPower(battle);
             int enemyHandCount = battle.Enemy.Hand.Count;
 
-            Assert.That(battle.TryBeginPlayerSatanContractAction(satan.SourceCardId), Is.True);
+            Assert.That(BeginSatanAbilityViaTurnStart(battle), Is.True);
 
             Assert.That(battle.Enemy.Hand.Count, Is.EqualTo(enemyHandCount));
             Assert.That(battle.Enemy.Deck.GetDiscardedCards().Select(card => card.Rank),
@@ -345,10 +345,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 automaticCardEffectResolver:
                     new AutomaticCardEffectResolver(automaticHandler));
             ActivateSatan(battle);
-            ActiveDemonContract satan = battle.ActivePlayerDemonContracts.Single();
-            FailUpperPower(battle, satan.SourceCardId);
+            FailUpperPower(battle);
 
-            Assert.That(battle.TryBeginPlayerSatanContractAction(satan.SourceCardId), Is.True);
+            Assert.That(BeginSatanAbilityViaTurnStart(battle), Is.True);
             PendingAutomaticCardInteraction pending =
                 battle.PendingPlayerAutomaticInteraction;
             Assert.That(pending, Is.Not.Null);
@@ -386,10 +385,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 enemyAutomaticCardDecisionPolicy:
                     DefaultAutomaticCardDecisionPolicy.Instance);
             ActivateSatan(battle);
-            ActiveDemonContract satan = battle.ActivePlayerDemonContracts.Single();
-            FailUpperPower(battle, satan.SourceCardId);
+            FailUpperPower(battle);
 
-            Assert.That(battle.TryBeginPlayerSatanContractAction(satan.SourceCardId), Is.True);
+            Assert.That(BeginSatanAbilityViaTurnStart(battle), Is.True);
 
             Assert.That(automaticHandler.ResolveCount, Is.EqualTo(1));
             Assert.That(battle.PendingPlayerAutomaticInteraction, Is.Null);
@@ -511,23 +509,54 @@ namespace DiaBlackJack.CoreLoop.Tests
                 pending.Options[0].OptionId), Is.True);
             Assert.That(battle.ActivePlayerDemonContracts.Single().Kind,
                 Is.EqualTo(DemonContractKind.Satan));
+
+            // Signing a contract is itself a full player action; since the newly-signed
+            // Satan contract can't stand and the enemy immediately stands too (this
+            // file's StandPolicy), that cascades straight into a fresh player-turn
+            // start where Satan's own ability is already offered. Skip it here so every
+            // test sees the same clean PlayerTurn state right after activation as it
+            // did before Satan had a turn-start choice at all.
+            Assert.That(SkipPendingSatanTurnStartChoice(battle), Is.True);
         }
 
-        private static void FailUpperPower(
-            CoreLoopBattle battle,
-            int sourceContractCardId)
+        // Hits once (which, if this is not the same turn Satan was signed on, first
+        // resolves the pending Satan turn-start choice by skipping it) so ordinary
+        // hitting tests are unaffected by the new once-per-turn choice gate.
+        private static bool HitSkippingSatanChoice(CoreLoopBattle battle)
         {
-            Assert.That(battle.TryBeginPlayerSatanContractAction(sourceContractCardId), Is.True);
-            Assert.That(ResolveNumber(
-                battle,
-                battle.PendingPlayerDemonContractInteraction,
-                3), Is.True);
-            Assert.That(ResolveNumber(
-                battle,
-                battle.PendingPlayerDemonContractInteraction,
-                4), Is.True);
-            Assert.That(GetSatanState(battle).CurrentFace,
-                Is.EqualTo(SatanContractFace.Lower));
+            SkipPendingSatanTurnStartChoice(battle);
+            return battle.TryPlayerHit();
+        }
+
+        private static bool SkipPendingSatanTurnStartChoice(CoreLoopBattle battle)
+        {
+            PendingDemonContractInteraction pending =
+                battle.PendingPlayerDemonContractInteraction;
+            if (pending == null ||
+                pending.Kind != DemonContractInteractionKind.SatanTurnStartChoice)
+            {
+                return false;
+            }
+
+            return battle.TryResolvePlayerDemonContract(
+                pending.InteractionId,
+                SatanDemonContractHandler.SkipAbilityOptionId);
+        }
+
+        // Hits once to reach a fresh owner-turn start (Satan's ability can now only be
+        // offered there), then selects "use ability" on the resulting turn-start choice
+        // — asserting that one is actually offered.
+        private static bool BeginSatanAbilityViaTurnStart(CoreLoopBattle battle)
+        {
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            PendingDemonContractInteraction pending =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(pending, Is.Not.Null);
+            Assert.That(pending.Kind,
+                Is.EqualTo(DemonContractInteractionKind.SatanTurnStartChoice));
+            return battle.TryResolvePlayerDemonContract(
+                pending.InteractionId,
+                SatanDemonContractHandler.UseAbilityOptionId);
         }
 
         private static bool ResolveNumber(
@@ -540,6 +569,24 @@ namespace DiaBlackJack.CoreLoop.Tests
             return battle.TryResolvePlayerDemonContract(
                 pending.InteractionId,
                 option.OptionId);
+        }
+
+        // Uses the ability at the next turn-start choice and declares (3, 4) — a
+        // guaranteed miss against every enemy setup used in this file (their hidden
+        // card is never 3 or 4) — flipping the contract to its lower face.
+        private static void FailUpperPower(CoreLoopBattle battle)
+        {
+            Assert.That(BeginSatanAbilityViaTurnStart(battle), Is.True);
+            Assert.That(ResolveNumber(
+                battle,
+                battle.PendingPlayerDemonContractInteraction,
+                3), Is.True);
+            Assert.That(ResolveNumber(
+                battle,
+                battle.PendingPlayerDemonContractInteraction,
+                4), Is.True);
+            Assert.That(GetSatanState(battle).CurrentFace,
+                Is.EqualTo(SatanContractFace.Lower));
         }
 
         private static SatanRuntimeState GetSatanState(CoreLoopBattle battle)
@@ -680,12 +727,15 @@ namespace DiaBlackJack.CoreLoop.Tests
                         action.DemonContractInteractionKind ==
                             DemonContractInteractionKind.ChooseContract &&
                         action.DemonContractKind == DemonContractKind.Satan);
+
                 if (candidate == null)
                 {
                     candidate = observation.ActionCandidates.FirstOrDefault(action =>
                         action.ActionType == EnemyActionType.DemonContract &&
-                        action.DemonContractSourceCardId.HasValue &&
-                        !action.DemonContractOptionId.HasValue);
+                        action.DemonContractInteractionKind ==
+                            DemonContractInteractionKind.SatanTurnStartChoice &&
+                        action.DemonContractOptionId ==
+                            SatanDemonContractHandler.UseAbilityOptionId);
                 }
 
                 if (candidate == null)

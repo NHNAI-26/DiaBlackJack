@@ -251,6 +251,48 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo("boss-force-opponent-hit-with-asmodeus"));
         }
 
+        [TestCase(18, 5, true)]
+        [TestCase(14, 5, false)]
+        public void DCR09_U04_FinalBossResolvesSatanTurnStartChoice(
+            int ownTotal,
+            int enemyCurrentSoul,
+            bool expectsUse)
+        {
+            EnemyActionCandidate skip = new EnemyActionCandidate(
+                EnemyActionType.DemonContract,
+                demonContractOptionId:
+                    SatanDemonContractHandler.SkipAbilityOptionId,
+                demonContractInteractionKind:
+                    DemonContractInteractionKind.SatanTurnStartChoice,
+                demonContractKind: DemonContractKind.Satan,
+                demonContractDefinitionKey: DemonContractCatalog.SatanKey);
+            EnemyActionCandidate use = new EnemyActionCandidate(
+                EnemyActionType.DemonContract,
+                demonContractOptionId:
+                    SatanDemonContractHandler.UseAbilityOptionId,
+                demonContractInteractionKind:
+                    DemonContractInteractionKind.SatanTurnStartChoice,
+                demonContractKind: DemonContractKind.Satan,
+                demonContractDefinitionKey: DemonContractCatalog.SatanKey);
+
+            EnemyDecision decision = new FinalBossEnemyPolicy().Decide(
+                CreateObservation(
+                    ownTotal,
+                    enemyCurrentSoul,
+                    candidates: new[] { skip, use }));
+
+            Assert.That(
+                decision.DemonContractOptionId,
+                Is.EqualTo(expectsUse
+                    ? SatanDemonContractHandler.UseAbilityOptionId
+                    : SatanDemonContractHandler.SkipAbilityOptionId));
+            Assert.That(
+                decision.ReasonCode,
+                Is.EqualTo(expectsUse
+                    ? "boss-use-satan-instead-of-unsafe-hit"
+                    : "boss-skip-satan-continue-normal-action"));
+        }
+
         [Test]
         public void EP05_I01_ExecutionPhaseTelegraphsThenUsesStrongCard()
         {

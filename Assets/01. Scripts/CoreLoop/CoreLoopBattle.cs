@@ -774,6 +774,12 @@ namespace DiaBlackJack.CoreLoop
                         CombatantSide.Player,
                         pending,
                         selectedOption);
+                case DemonContractInteractionKind.SatanTurnStartChoice:
+                    return TryResolveSatanTurnStartChoice(
+                        CombatantSide.Player,
+                        pending,
+                        selectedOption,
+                        out _);
                 case DemonContractInteractionKind.PaimonChooseDeck:
                 case DemonContractInteractionKind.PaimonChooseExileCard:
                     return TryResolvePaimonExileChoice(
@@ -908,6 +914,12 @@ namespace DiaBlackJack.CoreLoop
                         CombatantSide.Enemy,
                         pending,
                         selectedOption);
+                case DemonContractInteractionKind.SatanTurnStartChoice:
+                    return TryResolveSatanTurnStartChoice(
+                        CombatantSide.Enemy,
+                        pending,
+                        selectedOption,
+                        out completedOwnerAction);
                 case DemonContractInteractionKind.PaimonChooseDeck:
                 case DemonContractInteractionKind.PaimonChooseExileCard:
                     return TryResolvePaimonExileChoice(
@@ -2271,6 +2283,34 @@ namespace DiaBlackJack.CoreLoop
         }
 
         private static PendingDemonContractInteraction
+            CreateSatanTurnStartInteraction(
+                int interactionId,
+                ActiveDemonContract activeContract)
+        {
+            var options = new[]
+            {
+                new DemonContractOption(
+                    SatanDemonContractHandler.SkipAbilityOptionId,
+                    contractCardId: null,
+                    numericValue: null,
+                    "능력 사용하지 않기"),
+                new DemonContractOption(
+                    SatanDemonContractHandler.UseAbilityOptionId,
+                    contractCardId: null,
+                    numericValue: null,
+                    "능력 사용하기")
+            };
+
+            return new PendingDemonContractInteraction(
+                interactionId,
+                DemonContractInteractionKind.SatanTurnStartChoice,
+                DemonContractKind.Satan,
+                options,
+                "차례 시작에 사탄 능력을 사용할지 선택하십시오.",
+                activeContract.SourceCardId);
+        }
+
+        private static PendingDemonContractInteraction
             CreatePaimonDeckChoiceInteraction(
                 int interactionId,
                 ActiveDemonContract activeContract,
@@ -3051,16 +3091,6 @@ namespace DiaBlackJack.CoreLoop
                         return _demonContractResolver.CanOwnerRerollMammon(
                             this,
                             activeContract);
-                    case DemonContractKind.Satan:
-                        if (!(activeContract.RuntimeState is SatanRuntimeState
-                            satanState))
-                        {
-                            return false;
-                        }
-
-                        return satanState.CurrentFace == SatanContractFace.Upper
-                            ? TryGetSingleHiddenCard(Enemy, out _)
-                            : Enemy.Deck.CanDraw(1);
                     default:
                         return false;
                 }
@@ -3089,9 +3119,6 @@ namespace DiaBlackJack.CoreLoop
                 {
                     case DemonContractKind.Mammon:
                         return TryBeginPlayerMammonReroll(
-                            sourceContractCardId);
-                    case DemonContractKind.Satan:
-                        return TryBeginPlayerSatanContractAction(
                             sourceContractCardId);
                     default:
                         return false;
@@ -3334,6 +3361,11 @@ namespace DiaBlackJack.CoreLoop
                         TakeNextDemonContractInteractionId(),
                         activeContract);
                     break;
+                case DemonContractKind.Satan:
+                    pending = CreateSatanTurnStartInteraction(
+                        TakeNextDemonContractInteractionId(),
+                        activeContract);
+                    break;
                 case DemonContractKind.Belial:
                     pending = CreateBelialTurnStartInteraction(
                         TakeNextDemonContractInteractionId(),
@@ -3484,6 +3516,127 @@ namespace DiaBlackJack.CoreLoop
             }
 
             ResumeOwnerTurnAfterTurnStartChoice(ownerSide);
+        }
+
+        private bool TryResolveSatanTurnStartChoice(
+            CombatantSide ownerSide,
+            PendingDemonContractInteraction pending,
+            DemonContractOption selectedOption,
+            out bool completedOwnerAction)
+        {
+            completedOwnerAction = false;
+            if (pending.Kind != DemonContractInteractionKind.SatanTurnStartChoice ||
+                pending.ContractKind != DemonContractKind.Satan ||
+                !pending.SourceContractCardId.HasValue ||
+                !TryGetActiveDemonContract(
+                    ownerSide,
+                    pending.SourceContractCardId.Value,
+                    DemonContractKind.Satan,
+                    out ActiveDemonContract activeContract) ||
+                !(activeContract.RuntimeState is SatanRuntimeState satanState))
+            {
+                return false;
+            }
+
+            if (selectedOption.OptionId ==
+                SatanDemonContractHandler.SkipAbilityOptionId)
+            {
+                SetPendingDemonContractInteraction(ownerSide, pending: null);
+                ResumeOwnerTurnAfterTurnStartChoice(ownerSide);
+                return true;
+            }
+
+            if (selectedOption.OptionId !=
+                SatanDemonContractHandler.UseAbilityOptionId)
+            {
+                return false;
+            }
+
+            BattleParticipant opponent = GetOpponent(ownerSide);
+            bool canUseAbility = satanState.CurrentFace == SatanContractFace.Upper
+                ? TryGetSingleHiddenCard(opponent, out _)
+                : opponent.Deck.CanDraw(1);
+            if (!canUseAbility)
+            {
+                return false;
+            }
+
+            SetPendingDemonContractInteraction(ownerSide, pending: null);
+            BeginSatanAbilityUse(ownerSide, activeContract, satanState, opponent);
+            return true;
+        }
+
+        private void BeginSatanAbilityUse(
+            CombatantSide ownerSide,
+            ActiveDemonContract activeContract,
+            SatanRuntimeState satanState,
+            BattleParticipant opponent)
+        {
+            int sourceContractCardId = activeContract.SourceCardId;
+            if (satanState.CurrentFace == SatanContractFace.Upper)
+            {
+                PendingDemonContractInteraction pending =
+                    CreateSatanFirstNumberInteraction(
+                        TakeNextDemonContractInteractionId(),
+                        sourceContractCardId);
+                SetPendingDemonContractInteraction(ownerSide, pending);
+                State = ownerSide == CombatantSide.Player
+                    ? CoreLoopState.PlayerResolvingDemonContract
+                    : CoreLoopState.EnemyTurn;
+                RecordPublicAction(
+                    ownerSide,
+                    PublicCombatActionType.DemonContract,
+                    activeContract.Definition.Key,
+                    activeContract.SourceCardId);
+                RaiseStepped();
+                return;
+            }
+
+            RecordPublicAction(
+                ownerSide,
+                PublicCombatActionType.DemonContract,
+                activeContract.Definition.Key,
+                activeContract.SourceCardId);
+            _lastSatanForcedDrawActionOrdinal = _publicActionHistory.Count;
+            int roundBeforeForcedDraw = RoundNumber;
+            SatanContractFace faceBeforeForcedDraw = satanState.CurrentFace;
+            BlackjackCard drawnCard = opponent.Draw(faceUp: true);
+            RaiseStepped();
+            bool isWaitingForAutomaticChoice = TryBeginAutomaticCardEffect(
+                ownerSide == CombatantSide.Player
+                    ? CombatantSide.Enemy
+                    : CombatantSide.Player,
+                drawnCard,
+                AutomaticCardContinuation.ForDemonContract(
+                    ownerSide,
+                    DemonContractKind.Satan,
+                    sourceContractCardId,
+                    drawnCard.Id),
+                out AutomaticCardResult? immediateAutomaticResult);
+            if (isWaitingForAutomaticChoice)
+            {
+                return;
+            }
+
+            if (State == CoreLoopState.BattleEnded ||
+                RoundNumber != roundBeforeForcedDraw ||
+                !TryGetActiveDemonContract(
+                    ownerSide,
+                    sourceContractCardId,
+                    DemonContractKind.Satan,
+                    out ActiveDemonContract currentContract) ||
+                !(currentContract.RuntimeState is SatanRuntimeState currentState) ||
+                currentState.CurrentFace != faceBeforeForcedDraw)
+            {
+                return;
+            }
+
+            CompleteSatanLowerContractAction(
+                ownerSide,
+                sourceContractCardId,
+                drawnCard.Id,
+                immediateAutomaticResult?.SourceDisposition ??
+                    AutomaticCardSourceDisposition.RetainFaceUp);
         }
 
         private void ResumeOwnerTurnAfterTurnStartChoice(CombatantSide ownerSide)
@@ -4022,127 +4175,12 @@ namespace DiaBlackJack.CoreLoop
                         return TryBeginMammonReroll(
                             CombatantSide.Enemy,
                             sourceContractCardId);
-                    case DemonContractKind.Satan:
-                        return TryBeginSatanContractAction(
-                            CombatantSide.Enemy,
-                            sourceContractCardId);
                     default:
                         return false;
                 }
             }
 
             return false;
-        }
-
-        public bool TryBeginPlayerSatanContractAction(int sourceContractCardId)
-        {
-            return TryBeginSatanContractAction(
-                CombatantSide.Player,
-                sourceContractCardId);
-        }
-
-        private bool TryBeginSatanContractAction(
-            CombatantSide ownerSide,
-            int sourceContractCardId)
-        {
-            if (sourceContractCardId < 0)
-            {
-                return false;
-            }
-
-            bool canAcceptAction = ownerSide == CombatantSide.Player
-                ? CanAcceptPlayerAction()
-                : State == CoreLoopState.EnemyTurn &&
-                    !Enemy.IsStanding &&
-                    PendingEnemyCardEffect == null &&
-                    _pendingEnemyDemonContractInteraction == null;
-            if (!canAcceptAction ||
-                !TryGetActiveDemonContract(
-                    ownerSide,
-                    sourceContractCardId,
-                    DemonContractKind.Satan,
-                    out ActiveDemonContract activeContract) ||
-                !(activeContract.RuntimeState is SatanRuntimeState satanState))
-            {
-                return false;
-            }
-
-            BattleParticipant opponent = GetOpponent(ownerSide);
-            if (satanState.CurrentFace == SatanContractFace.Upper)
-            {
-                if (!TryGetSingleHiddenCard(opponent, out _))
-                {
-                    return false;
-                }
-
-                PendingDemonContractInteraction pending =
-                    CreateSatanFirstNumberInteraction(
-                        TakeNextDemonContractInteractionId(),
-                        sourceContractCardId);
-                SetPendingDemonContractInteraction(ownerSide, pending);
-                State = ownerSide == CombatantSide.Player
-                    ? CoreLoopState.PlayerResolvingDemonContract
-                    : CoreLoopState.EnemyTurn;
-                RecordPublicAction(
-                    ownerSide,
-                    PublicCombatActionType.DemonContract,
-                    activeContract.Definition.Key,
-                    activeContract.SourceCardId);
-                RaiseStepped();
-                return true;
-            }
-
-            if (!opponent.Deck.CanDraw(1))
-            {
-                return false;
-            }
-
-            RecordPublicAction(
-                ownerSide,
-                PublicCombatActionType.DemonContract,
-                activeContract.Definition.Key,
-                activeContract.SourceCardId);
-            _lastSatanForcedDrawActionOrdinal = _publicActionHistory.Count;
-            int roundBeforeForcedDraw = RoundNumber;
-            SatanContractFace faceBeforeForcedDraw = satanState.CurrentFace;
-            BlackjackCard drawnCard = opponent.Draw(faceUp: true);
-            RaiseStepped();
-            bool isWaitingForAutomaticChoice = TryBeginAutomaticCardEffect(
-                ownerSide == CombatantSide.Player
-                    ? CombatantSide.Enemy
-                    : CombatantSide.Player,
-                drawnCard,
-                AutomaticCardContinuation.ForDemonContract(
-                    ownerSide,
-                    DemonContractKind.Satan,
-                    sourceContractCardId,
-                    drawnCard.Id),
-                out AutomaticCardResult? immediateAutomaticResult);
-            if (isWaitingForAutomaticChoice)
-            {
-                return true;
-            }
-
-            if (State == CoreLoopState.BattleEnded ||
-                RoundNumber != roundBeforeForcedDraw ||
-                !TryGetActiveDemonContract(
-                    ownerSide,
-                    sourceContractCardId,
-                    DemonContractKind.Satan,
-                    out ActiveDemonContract currentContract) ||
-                !(currentContract.RuntimeState is SatanRuntimeState currentState) ||
-                currentState.CurrentFace != faceBeforeForcedDraw)
-            {
-                return true;
-            }
-
-            CompleteSatanLowerContractAction(
-                ownerSide,
-                sourceContractCardId,
-                drawnCard.Id,
-                immediateAutomaticResult?.SourceDisposition ??
-                    AutomaticCardSourceDisposition.RetainFaceUp);
-            return true;
         }
 
         private bool TryResolveSatanNumberChoice(

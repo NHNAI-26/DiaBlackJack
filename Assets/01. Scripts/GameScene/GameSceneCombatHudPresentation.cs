@@ -566,6 +566,7 @@ namespace DiaBlackJack.GameScene
             {
                 case DemonContractInteractionKind.BelphegorTopCard:
                 case DemonContractInteractionKind.AsmodeusForceOpponentHit:
+                case DemonContractInteractionKind.SatanTurnStartChoice:
                 case DemonContractInteractionKind.MammonApplyDie:
                     return true;
                 case DemonContractInteractionKind.MammonReroll:

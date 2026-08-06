@@ -118,16 +118,7 @@ namespace DiaBlackJack.CoreLoop
 
         private static bool HasActiveSatanContract(EnemyObservation observation)
         {
-            foreach (EnemyActionCandidate candidate in observation.ActionCandidates)
-            {
-                if (candidate.ActionType == EnemyActionType.DemonContract &&
-                    candidate.DemonContractKind == DemonContractKind.Satan)
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return observation.OwnerHasActiveSatanContract;
         }
 
         private static EnemyNumberInference? FindMostLikelyUntried(
@@ -510,6 +501,21 @@ namespace DiaBlackJack.CoreLoop
                         candidate,
                         3000 + probability,
                         "boss-declare-likely-satan-number");
+                case DemonContractInteractionKind.SatanTurnStartChoice:
+                    FinalBossPhase satanPhase = FinalBossPhaseResolver.Resolve(
+                        observation.EnemySoul);
+                    int satanHitMaximum =
+                        satanPhase == FinalBossPhase.Survival ? 15 : 16;
+                    bool prefersSatanAbility =
+                        observation.OwnHandValue.Total > satanHitMaximum;
+                    bool usesSatanAbility = candidate.DemonContractOptionId ==
+                        SatanDemonContractHandler.UseAbilityOptionId;
+                    return Score(
+                        candidate,
+                        usesSatanAbility == prefersSatanAbility ? 3000 : 0,
+                        usesSatanAbility
+                            ? "boss-use-satan-instead-of-unsafe-hit"
+                            : "boss-skip-satan-continue-normal-action");
                 default:
                     throw new InvalidOperationException(
                         "Final boss received an unsupported demon contract choice.");
@@ -550,21 +556,10 @@ namespace DiaBlackJack.CoreLoop
                         observation.OwnHandValue.Total > hitMaximum ? 800 : 200,
                         $"{reasonPrefix}-stand");
                 case EnemyActionType.DemonContract:
-                    if (candidate.DemonContractKind != DemonContractKind.Satan ||
-                        !candidate.DemonContractSourceCardId.HasValue)
-                    {
-                        return Score(
-                            candidate,
-                            -1000,
-                            $"{reasonPrefix}-ignore-unsupported-contract");
-                    }
-
                     return Score(
                         candidate,
-                        observation.OwnHandValue.Total > hitMaximum ? 650 : 150,
-                        observation.OwnHandValue.Total > hitMaximum
-                            ? $"{reasonPrefix}-use-satan-instead-of-unsafe-hit"
-                            : $"{reasonPrefix}-continue-normal-action-before-satan");
+                        -1000,
+                        $"{reasonPrefix}-ignore-unsupported-contract");
                 case EnemyActionType.Change:
                     return EnemyChangeRiskEvaluator.ShouldAcceptChange(observation)
                         ? Score(candidate, 2000, $"{reasonPrefix}-required-change")

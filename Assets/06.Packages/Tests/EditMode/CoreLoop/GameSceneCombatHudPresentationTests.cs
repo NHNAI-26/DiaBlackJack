@@ -964,23 +964,26 @@ namespace DiaBlackJack.CoreLoop.Tests
                 offer.InteractionId,
                 satan.OptionId), Is.True);
 
-            ActiveDemonContract active =
-                battle.ActivePlayerDemonContracts.Single();
+            // Signing a contract is itself a full player action; since the newly-signed
+            // Satan contract can't stand and the enemy immediately stands too (this
+            // file's StandPolicy), that cascades straight into a fresh player-turn
+            // start where Satan's own once-per-turn "use ability?" choice is already
+            // offered — its table card is no longer directly pressable at all.
+            PendingDemonContractInteraction turnStart =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(turnStart.Kind,
+                Is.EqualTo(DemonContractInteractionKind.SatanTurnStartChoice));
+
             GameSceneViewModel activeScene = GameScenePresenter.Create(battle);
-            GameSceneCombatHudViewModel actionHud =
-                GameSceneCombatHudPresenter.Create(
-                    activeScene.Core,
-                    isStageBattle: false,
-                    isShopOpen: false,
-                    inputLocked: false);
             GameSceneDemonCardViewModel activeSatan =
                 activeScene.PlayerDemonCards.Single();
-            Assert.That(actionHud.OptionActions, Is.Empty);
-            Assert.That(activeSatan.CanUse, Is.True);
+            Assert.That(activeSatan.CanUse, Is.False);
             Assert.That(activeSatan.IsUpsideDown, Is.False);
             Assert.That(activeSatan.SatanDoomCount, Is.EqualTo(3));
-            Assert.That(battle.TryBeginPlayerActiveDemonContractAction(
-                active.SourceCardId), Is.True);
+
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                turnStart.InteractionId,
+                SatanDemonContractHandler.UseAbilityOptionId), Is.True);
 
             GameSceneViewModel first = GameScenePresenter.Create(battle);
             GameSceneCombatHudViewModel firstHud =

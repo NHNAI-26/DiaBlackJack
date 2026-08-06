@@ -25,6 +25,8 @@ namespace DiaBlackJack.CoreLoop
                     battle,
                     playerFaceUpCards,
                     playerDiscardedCards);
+            bool ownerHasActiveSatanContract = HasActiveSatanContract(
+                battle.ActiveEnemyDemonContracts);
 
             return new EnemyObservation(
                 battle.Enemy.HandValue,
@@ -48,7 +50,22 @@ namespace DiaBlackJack.CoreLoop
                 battle.EnemyHiddenCardComparisonKnowledge,
                 knownPlayerHiddenCardRank,
                 battle.NextEnemyChangeSoulCost,
-                battle.InjectedPoisonCardCount);
+                battle.InjectedPoisonCardCount,
+                ownerHasActiveSatanContract);
+        }
+
+        private static bool HasActiveSatanContract(
+            IReadOnlyList<ActiveDemonContract> activeContracts)
+        {
+            foreach (ActiveDemonContract activeContract in activeContracts)
+            {
+                if (activeContract.Kind == DemonContractKind.Satan)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         internal static IReadOnlyList<EnemyNumberInference> CreateNumberInferences(
@@ -160,28 +177,6 @@ namespace DiaBlackJack.CoreLoop
                 return candidates.AsReadOnly();
             }
 
-            foreach (ActiveDemonContract activeContract in
-                battle.ActiveEnemyDemonContracts)
-            {
-                if (activeContract.Kind == DemonContractKind.Satan &&
-                    activeContract.RuntimeState is SatanRuntimeState satanState)
-                {
-                    bool canUse = satanState.CurrentFace == SatanContractFace.Upper
-                        ? battle.Player.Hand.HiddenCardCount == 1
-                        : battle.Player.Deck.CanDraw(1);
-                    if (canUse)
-                    {
-                        candidates.Add(new EnemyActionCandidate(
-                            EnemyActionType.DemonContract,
-                            demonContractKind: DemonContractKind.Satan,
-                            demonContractDefinitionKey:
-                                activeContract.Definition.Key,
-                            demonContractSourceCardId:
-                                activeContract.SourceCardId));
-                    }
-                }
-            }
-
             if (battle.Enemy.Deck.CanDraw(1))
             {
                 candidates.Add(new EnemyActionCandidate(EnemyActionType.Hit));
@@ -283,6 +278,11 @@ namespace DiaBlackJack.CoreLoop
                 DemonContractInteractionKind.AsmodeusForceOpponentHit)
             {
                 definitionKey = DemonContractCatalog.AsmodeusKey;
+            }
+            else if (pending.Kind ==
+                DemonContractInteractionKind.SatanTurnStartChoice)
+            {
+                definitionKey = DemonContractCatalog.SatanKey;
             }
             else if (pending.Kind ==
                     DemonContractInteractionKind.PaimonChooseDeck ||

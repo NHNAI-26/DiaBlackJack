@@ -188,19 +188,27 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void DCR05_U02_SatanActiveActionBeginsCurrentFaceInteraction()
+        public void DCR05_U02_SatanUsesTurnStartChoiceToBeginCurrentFaceInteraction()
         {
             CoreLoopBattle battle = CreateStartedBattle(DemonContractKind.Satan);
             SelectContract(battle, DemonContractKind.Satan);
-            ActiveDemonContractActionViewModel action =
-                DemonContractPresenter.Create(battle).ActiveActions.Single();
 
-            Assert.That(action.Kind, Is.EqualTo(DemonContractKind.Satan));
-            Assert.That(action.Label, Is.EqualTo("SATAN DECLARE"));
+            // Signing a contract is itself a full player action; since the newly-signed
+            // Satan contract can't stand and the enemy immediately stands too (this
+            // file's StandPolicy), that cascades straight into a fresh player-turn
+            // start where Satan's own once-per-turn "use ability?" choice is already
+            // offered — its table card is no longer directly pressable at all.
+            PendingDemonContractInteraction turnStart =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(turnStart.Kind,
+                Is.EqualTo(DemonContractInteractionKind.SatanTurnStartChoice));
             Assert.That(
-                battle.TryBeginPlayerActiveDemonContractAction(
-                    action.SourceCardId),
-                Is.True);
+                DemonContractPresenter.Create(battle).ActiveActions,
+                Is.Empty);
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                turnStart.InteractionId,
+                SatanDemonContractHandler.UseAbilityOptionId), Is.True);
+
             Assert.That(
                 battle.PendingPlayerDemonContractInteraction.Kind,
                 Is.EqualTo(

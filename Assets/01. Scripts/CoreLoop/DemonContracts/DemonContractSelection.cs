@@ -27,6 +27,7 @@ namespace DiaBlackJack.CoreLoop
         BeelzebubChooseOwnerCard,
         BeelzebubChooseOpponentCard,
         AsmodeusForceOpponentHit,
+        SatanTurnStartChoice,
         PaimonChooseDeck,
         PaimonChooseExileCard,
         BelialChooseOpponentCard,
@@ -411,6 +412,28 @@ namespace DiaBlackJack.CoreLoop
                     {
                         throw new ArgumentException(
                             "Asmodeus public options cannot contain card or hidden data.",
+                            nameof(options));
+                    }
+                }
+            }
+            else if (kind == DemonContractInteractionKind.SatanTurnStartChoice)
+            {
+                if (contractKind != DemonContractKind.Satan ||
+                    !sourceContractCardId.HasValue ||
+                    copiedOptions.Count != 2)
+                {
+                    throw new ArgumentException(
+                        "Satan turn-start choice requires two options and its active contract.",
+                        nameof(options));
+                }
+
+                foreach (DemonContractOption option in copiedOptions)
+                {
+                    if (option.ContractCardId.HasValue ||
+                        option.NumericValue.HasValue)
+                    {
+                        throw new ArgumentException(
+                            "Satan public options cannot contain card or hidden data.",
                             nameof(options));
                     }
                 }

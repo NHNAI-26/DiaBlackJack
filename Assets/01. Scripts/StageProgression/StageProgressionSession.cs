@@ -273,18 +273,6 @@ namespace DiaBlackJack.StageProgression
             return true;
         }
 
-        public bool TryBeginPlayerSatanContractAction(int sourceContractCardId)
-        {
-            if (!CanForwardBattleAction() ||
-                !_battleSession.TryBeginPlayerSatanContractAction(sourceContractCardId))
-            {
-                return false;
-            }
-
-            SynchronizeFinishedBattle();
-            return true;
-        }
-
         public bool TryBeginPlayerActiveDemonContractAction(
             int sourceContractCardId)
         {

@@ -351,13 +351,6 @@ namespace DiaBlackJack.CoreLoop.UI
                     case DemonContractKind.Mammon:
                         actionLabel = "MAMMON REROLL";
                         break;
-                    case DemonContractKind.Satan:
-                        SatanRuntimeState satan =
-                            (SatanRuntimeState)contract.RuntimeState;
-                        actionLabel = satan.CurrentFace == SatanContractFace.Upper
-                            ? "SATAN DECLARE"
-                            : "SATAN FORCE HIT";
-                        break;
                     default:
                         continue;
                 }

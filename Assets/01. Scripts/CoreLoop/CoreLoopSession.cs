@@ -88,11 +88,6 @@ namespace DiaBlackJack.CoreLoop
                 physicalDieValue);
         }
 
-        public bool TryBeginPlayerSatanContractAction(int sourceContractCardId)
-        {
-            return Battle.TryBeginPlayerSatanContractAction(sourceContractCardId);
-        }
-
         public bool TryBeginPlayerActiveDemonContractAction(
             int sourceContractCardId)
         {

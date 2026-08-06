@@ -482,12 +482,22 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             public EnemyDecision Decide(EnemyObservation observation)
             {
+                // Signs Satan the moment it's offered, then always skips its own
+                // once-per-turn "use ability?" choice and just keeps hitting — these
+                // tests are about the stand/bust prevention while Satan is active, not
+                // about exercising the ability itself.
                 EnemyActionCandidate candidate = observation.ActionCandidates
                     .FirstOrDefault(option =>
                         option.ActionType == EnemyActionType.DemonContract &&
                         option.DemonContractKind == DemonContractKind.Satan &&
                         option.DemonContractInteractionKind ==
                             DemonContractInteractionKind.ChooseContract)
+                    ?? observation.ActionCandidates.FirstOrDefault(option =>
+                        option.ActionType == EnemyActionType.DemonContract &&
+                        option.DemonContractInteractionKind ==
+                            DemonContractInteractionKind.SatanTurnStartChoice &&
+                        option.DemonContractOptionId ==
+                            SatanDemonContractHandler.SkipAbilityOptionId)
                     ?? observation.ActionCandidates.FirstOrDefault(option =>
                         option.ActionType == EnemyActionType.DemonContract &&
                         !option.DemonContractSourceCardId.HasValue &&

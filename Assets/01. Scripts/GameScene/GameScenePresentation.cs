@@ -1987,7 +1987,11 @@ namespace DiaBlackJack.GameScene
                         : (int?)null;
                 // Mammon's reroll now only triggers from the physical table die, not the contract
                 // card itself; the card's own click is inert regardless of what the shared
-                // CanBeginPlayerActiveDemonContractAction check would otherwise allow.
+                // CanBeginPlayerActiveDemonContractAction check would otherwise allow. Satan's
+                // ability is inert here too, but for a different reason: it no longer has a
+                // pressable entry point at all — CanBeginPlayerActiveDemonContractAction already
+                // returns false for it, offered instead via the once-per-turn "use ability?"
+                // choice (same UI pattern as Asmodeus/Mammon's own turn-start choices).
                 bool isMammon = contract.Kind == DemonContractKind.Mammon;
                 cards.Add(new GameSceneDemonCardViewModel(
                     contract.SourceCardId,

@@ -131,6 +131,9 @@ namespace DiaBlackJack.CoreLoop
 
         public bool OpponentCanDraw => Opponent.Deck.CanDraw(1);
 
+        public bool OpponentHasSingleHiddenCard =>
+            Opponent.Hand.TryGetSingleHiddenCard(out _);
+
         public bool OwnerDeckCanDraw(int count)
         {
             return Owner.Deck.CanDraw(count);

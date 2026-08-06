@@ -204,7 +204,8 @@ namespace DiaBlackJack.CoreLoop
                 lieDetectorComparisonKnowledge: null,
                 knownPlayerHiddenCardRank: null,
                 enemyChangeSoulCost: 0,
-                injectedPoisonCardCount: 0)
+                injectedPoisonCardCount: 0,
+                ownerHasActiveSatanContract: false)
         {
         }
 
@@ -231,7 +232,8 @@ namespace DiaBlackJack.CoreLoop
                 lieDetectorComparisonKnowledge = null,
             int? knownPlayerHiddenCardRank = null,
             int enemyChangeSoulCost = 0,
-            int injectedPoisonCardCount = 0)
+            int injectedPoisonCardCount = 0,
+            bool ownerHasActiveSatanContract = false)
         {
             if (playerHiddenCardCount < 0)
             {
@@ -317,6 +319,7 @@ namespace DiaBlackJack.CoreLoop
             KnownPlayerHiddenCardRank = knownPlayerHiddenCardRank;
             EnemyChangeSoulCost = enemyChangeSoulCost;
             InjectedPoisonCardCount = injectedPoisonCardCount;
+            OwnerHasActiveSatanContract = ownerHasActiveSatanContract;
         }
 
         public IReadOnlyList<EnemyActionCandidate> ActionCandidates { get; }
@@ -357,6 +360,8 @@ namespace DiaBlackJack.CoreLoop
         public int InjectedPoisonCardCount { get; }
 
         public bool PlayerIsStanding { get; }
+
+        public bool OwnerHasActiveSatanContract { get; }
 
         public SoulObservation PlayerSoul { get; }
 

@@ -372,6 +372,21 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.True);
             Assert.That(battle.ActivePlayerDemonContracts.Single().Kind,
                 Is.EqualTo(DemonContractKind.Satan));
+
+            // Signing a contract is itself a full player action; since the newly-signed
+            // Satan contract can't stand and the enemy immediately stands too (this
+            // file's StandPolicy), that cascades straight into a fresh player-turn
+            // start where Satan's own ability is already offered. Skip it here so this
+            // test sees the same clean PlayerTurn state right after activation as
+            // before Satan had a turn-start choice at all.
+            PendingDemonContractInteraction turnStart =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(turnStart, Is.Not.Null);
+            Assert.That(turnStart.Kind,
+                Is.EqualTo(DemonContractInteractionKind.SatanTurnStartChoice));
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                turnStart.InteractionId,
+                SatanDemonContractHandler.SkipAbilityOptionId), Is.True);
         }
 
         private sealed class StandPolicy : IEnemyBehaviorPolicy
