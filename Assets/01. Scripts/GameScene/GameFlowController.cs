@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using Border.SaveLoad;
 using Border.SaveLoad.UI;
+using DiaBlackJack.Content;
 using DiaBlackJack.StageProgression;
 using DiaBlackJack.StageProgression.UI;
 using UnityEngine;
@@ -26,8 +27,13 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float moodTransitionDuration = 1f;
         [SerializeField, Min(0f)] private float enemyAppearanceDelayAfterDoor = 1f;
 
+        [Header("Merchant speech")]
+        [SerializeField] private SpeechProfileSO merchantSpeechProfile;
+        [SerializeField] private int merchantSpeechSeed = 20260804;
+
         private StageProgressionRuntime _runtime;
         private FormalRunSession _session;
+        private SpeechLineResolver _speechResolver;
         private Coroutine _enemyAppearanceDelayRoutine;
         private int? _focusedOpponentOfferId;
         private string _focusedOpponentProfileKey;
@@ -489,6 +495,9 @@ namespace DiaBlackJack.GameScene
                 _focusedOpponentProfileKey);
             CurrentScreen = nextScreen;
             ApplyMood(nextScreen, ResolveCombatProfileKey());
+            bool isEnteringStartingDemonReveal =
+                nextScreen == GameFlowScreen.StartingDemonReveal &&
+                previousScreen != GameFlowScreen.StartingDemonReveal;
 
             if (nextScreen == GameFlowScreen.Combat)
             {
@@ -545,6 +554,17 @@ namespace DiaBlackJack.GameScene
             }
 
             RenderFlowScreen();
+            // Fires after RenderFlowScreen, not before: "Characters" starts inactive in
+            // the scene, so on the very first-ever transition (Unavailable ->
+            // StartingDemonReveal) GameObject.Find("Characters") inside
+            // ResolveSceneReferences can't find it yet — it's RenderFlowScreen's
+            // UpdateCharactersVisibility that actually activates it. Firing before that
+            // point left enemyCharacter null and this speech call silently no-opped.
+            if (isEnteringStartingDemonReveal)
+            {
+                ShowMerchantSpeech(SpeechCueKeys.StartingDemonGreeting);
+            }
+
             ScreenChanged?.Invoke(CurrentScreen, CurrentViewModel);
         }
 
@@ -878,6 +898,18 @@ namespace DiaBlackJack.GameScene
             {
                 enemyCharacter.ExitMerchant();
             }
+        }
+
+        private void ShowMerchantSpeech(string cueKey)
+        {
+            if (enemyCharacter == null || string.IsNullOrWhiteSpace(cueKey))
+            {
+                return;
+            }
+
+            _speechResolver ??= new SpeechLineResolver(merchantSpeechSeed);
+            enemyCharacter.ShowSpeech(
+                _speechResolver.Resolve(merchantSpeechProfile, cueKey));
         }
 
         private static bool IsCharacterModeTransition(

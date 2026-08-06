@@ -6453,6 +6453,8 @@ MonoBehaviour:
   moodController: {fileID: 6163863410494494799}
   moodTransitionDuration: 1
   enemyAppearanceDelayAfterDoor: 0
+  merchantSpeechProfile: {fileID: 11400000, guid: 0fb23cb8f2399b54cb64d57d5dec38bf, type: 2}
+  merchantSpeechSeed: 20260804
 --- !u!114 &6163863410494494795
 MonoBehaviour:
   m_ObjectHideFlags: 0

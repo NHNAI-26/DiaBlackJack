@@ -55,6 +55,14 @@ namespace DiaBlackJack.GameScene
         public const string Victory = "combat.victory";
         public const string Defeat = "combat.defeat";
 
+        /// <summary>
+        /// Said once by the merchant-mode character on the starting-demon-grant
+        /// screen, the very first screen of a run (before any enemy is chosen).
+        /// Lives on the same merchant speech profile as the shop cues below since
+        /// both screens reuse the same character in merchant mode.
+        /// </summary>
+        public const string StartingDemonGreeting = "starting_demon.greeting";
+
         public const string ShopGreeting = "shop.greeting";
         public const string ShopPurchaseSuccess = "shop.purchase_success";
         public const string ShopInsufficientGold = "shop.insufficient_gold";
@@ -88,6 +96,7 @@ namespace DiaBlackJack.GameScene
         private static readonly IReadOnlyList<string> ShopKeys =
             Array.AsReadOnly(new[]
             {
+                StartingDemonGreeting,
                 ShopGreeting,
                 ShopPurchaseSuccess,
                 ShopInsufficientGold,
