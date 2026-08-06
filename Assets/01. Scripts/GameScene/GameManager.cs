@@ -2977,11 +2977,18 @@ namespace DiaBlackJack.GameScene
                 GameSceneViewModel previous = index == 0
                     ? timelineBaseline
                     : timeline[index - 1];
+                // Searches the rest of the timeline (not just index + 1) because an
+                // automatic-activation card (e.g. poison) drawn mid-knife-effect inserts
+                // its own beat(s) between the reveal and the knife's resolved beat —
+                // those intervening beats still render/animate normally on their own
+                // turn through this same loop, and the knife's reveal+throw combo still
+                // finds and pairs with its resolved beat once it's reached.
                 if (IsKnifeRevealBeat(previous, vm) &&
-                    index + 1 < timeline.Count &&
-                    IsMatchingKnifeResolvedBeat(
+                    TryFindMatchingKnifeResolvedBeatIndex(
+                        timeline,
+                        index + 1,
                         vm,
-                        timeline[index + 1]))
+                        out _))
                 {
                     pendingKnifeReveal = vm;
                     continue;
@@ -3210,7 +3217,8 @@ namespace DiaBlackJack.GameScene
             _playedHammerAnimationController = null;
             bool playedHammerAnimation =
                 TryPlayHammerAnimation(vm.HammerAnimationCue);
-            TryPlayPoisonInjectionAnimation(vm.PoisonInjectionAnimationCue);
+            bool playedPoisonInjectionAnimation =
+                TryPlayPoisonInjectionAnimation(vm.PoisonInjectionAnimationCue);
             UpdateEnemyCardSelectionCamera(
                 vm.FocusesEnemyCardsForSelection);
             bool deferredCardRender =
@@ -3230,6 +3238,7 @@ namespace DiaBlackJack.GameScene
                     playedRevolverAnimation,
                     playedKnifeAnimation,
                     playedHammerAnimation,
+                    playedPoisonInjectionAnimation,
                     deferredCardRender: false,
                     deferredViewModel: null);
             }
@@ -3259,6 +3268,7 @@ namespace DiaBlackJack.GameScene
                 playedRevolverAnimation,
                 playedKnifeAnimation,
                 playedHammerAnimation,
+                playedPoisonInjectionAnimation,
                 deferredCardRender,
                 deferredCardRender ? vm : null,
                 playedMammonRoll);
@@ -3626,6 +3636,29 @@ namespace DiaBlackJack.GameScene
                 readyCue.RoundNumber == resolvedCue.RoundNumber &&
                 readyCue.SourceCardId == resolvedCue.SourceCardId &&
                 readyCue.ActorSide == resolvedCue.ActorSide;
+        }
+
+        // Scans forward from fromIndex (not just fromIndex itself) so intervening beats —
+        // e.g. an automatic-activation card drawn mid-knife-effect — don't break the
+        // reveal/resolved pairing; RoundNumber+SourceCardId+ActorSide in
+        // IsMatchingKnifeResolvedBeat already scope the match to this exact knife use.
+        internal static bool TryFindMatchingKnifeResolvedBeatIndex(
+            IReadOnlyList<GameSceneViewModel> timeline,
+            int fromIndex,
+            GameSceneViewModel readyBeat,
+            out int resolvedIndex)
+        {
+            for (int i = fromIndex; i < timeline.Count; i++)
+            {
+                if (IsMatchingKnifeResolvedBeat(readyBeat, timeline[i]))
+                {
+                    resolvedIndex = i;
+                    return true;
+                }
+            }
+
+            resolvedIndex = -1;
+            return false;
         }
 
         private void RenderCrystalOrbSelection(GameSceneViewModel vm)
@@ -4666,6 +4699,7 @@ namespace DiaBlackJack.GameScene
             bool playedRevolver,
             bool playedKnife,
             bool playedHammer,
+            bool playedPoisonInjection = false,
             bool deferredCardRender = false,
             GameSceneViewModel deferredViewModel = null,
             bool playedMammonRoll = false)
@@ -4700,10 +4734,18 @@ namespace DiaBlackJack.GameScene
                 waitSeconds = Mathf.Max(waitSeconds, mammonDie.RollDuration);
             }
 
+            if (playedPoisonInjection && poisonInjectionAnnounce != null)
+            {
+                waitSeconds = Mathf.Max(
+                    waitSeconds,
+                    poisonInjectionAnnounce.TotalDurationSeconds);
+            }
+
             return new AppliedAnimationResult(
                 playedRevolver,
                 playedKnife,
                 playedHammer,
+                playedPoisonInjection,
                 waitSeconds,
                 playedHammer ? _playedHammerAnimationController : null,
                 deferredCardRender,
@@ -4747,9 +4789,13 @@ namespace DiaBlackJack.GameScene
             AppliedAnimationResult animation,
             float waitSeconds)
         {
-            if (!animation.PlayedHammer ||
-                animation.HammerController == null ||
-                !animation.HammerController.IsSmashAnimationPlaying)
+            bool waitsForHammer =
+                animation.PlayedHammer &&
+                animation.HammerController != null;
+            bool waitsForPoisonInjection =
+                animation.PlayedPoisonInjection &&
+                poisonInjectionAnnounce != null;
+            if (!waitsForHammer && !waitsForPoisonInjection)
             {
                 yield return new WaitForSeconds(waitSeconds);
                 yield break;
@@ -4757,7 +4803,10 @@ namespace DiaBlackJack.GameScene
 
             float elapsedSeconds = 0f;
             while (elapsedSeconds < waitSeconds ||
-                animation.HammerController.IsSmashAnimationPlaying)
+                (waitsForHammer &&
+                    animation.HammerController.IsSmashAnimationPlaying) ||
+                (waitsForPoisonInjection &&
+                    poisonInjectionAnnounce.IsPlaying))
             {
                 elapsedSeconds += Time.deltaTime;
                 yield return null;
@@ -5296,6 +5345,7 @@ namespace DiaBlackJack.GameScene
                 bool playedRevolver,
                 bool playedKnife,
                 bool playedHammer,
+                bool playedPoisonInjection,
                 float waitSeconds,
                 HammerAnimationController hammerController,
                 bool deferredCardRender,
@@ -5304,6 +5354,7 @@ namespace DiaBlackJack.GameScene
                 PlayedRevolver = playedRevolver;
                 PlayedKnife = playedKnife;
                 PlayedHammer = playedHammer;
+                PlayedPoisonInjection = playedPoisonInjection;
                 WaitSeconds = waitSeconds;
                 HammerController = hammerController;
                 DeferredCardRender = deferredCardRender;
@@ -5316,7 +5367,10 @@ namespace DiaBlackJack.GameScene
 
             public bool PlayedHammer { get; }
 
-            public bool PlayedAny => PlayedRevolver || PlayedKnife || PlayedHammer;
+            public bool PlayedPoisonInjection { get; }
+
+            public bool PlayedAny =>
+                PlayedRevolver || PlayedKnife || PlayedHammer || PlayedPoisonInjection;
 
             public float WaitSeconds { get; }
 

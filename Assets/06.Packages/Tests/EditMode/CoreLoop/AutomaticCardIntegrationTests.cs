@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DiaBlackJack.CoreLoop.UI;
+using DiaBlackJack.GameScene;
 using NUnit.Framework;
 
 namespace DiaBlackJack.CoreLoop.Tests
@@ -201,6 +202,63 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 battle.LastAutomaticCardResult.Value.EffectKind,
                 Is.EqualTo(CardEffectKind.Poison));
+        }
+
+        [Test]
+        public void AC06_U08_KnifeForcedEnemyPoisonInsertsBeatsBetweenRevealAndResolvedButStillPairs()
+        {
+            // The enemy's AI resolves its own forced-drawn automatic card synchronously
+            // (ResolvePendingEnemyAutomaticChoices), so the whole sequence — concealed
+            // draw, reveal, the poison card's own activation, and the knife's own
+            // bust/hit resolution — fires as one batch of Stepped beats. That inserts
+            // extra beats between the knife's reveal beat and its resolved beat, so the
+            // GameManager timeline pairing must not require them to be adjacent.
+            CoreLoopBattle battle = CreateBattle(
+                PlayerCards(
+                    2,
+                    CardDefinitionCatalog.GetByKey("military-knife-9"),
+                    3),
+                EnemyCards(
+                    5,
+                    7,
+                    Automatic(CardDefinitionCatalog.PoisonKey),
+                    4),
+                new StandPolicy());
+            Assert.That(battle.Start(), Is.True);
+            BlackjackCard knife = battle.Player.Hand.Cards[1];
+            GameSceneViewModel baseline = GameScenePresenter.Create(battle);
+            var timeline = new List<GameSceneViewModel>();
+            battle.Stepped += () => timeline.Add(GameScenePresenter.Create(battle));
+
+            Assert.That(battle.TryBeginPlayerCardUse(knife.Id), Is.True);
+
+            int revealIndex = -1;
+            for (int i = 0; i < timeline.Count; i++)
+            {
+                GameSceneViewModel previous = i == 0 ? baseline : timeline[i - 1];
+                if (GameManager.IsKnifeRevealBeat(previous, timeline[i]))
+                {
+                    revealIndex = i;
+                }
+            }
+
+            Assert.That(revealIndex, Is.GreaterThanOrEqualTo(0));
+            Assert.That(revealIndex + 1, Is.LessThan(timeline.Count));
+            Assert.That(
+                GameManager.IsMatchingKnifeResolvedBeat(
+                    timeline[revealIndex],
+                    timeline[revealIndex + 1]),
+                Is.False,
+                "This case only exercises the bug if the poison card's own beat(s) land " +
+                "between the knife's reveal and resolved beats.");
+            Assert.That(
+                GameManager.TryFindMatchingKnifeResolvedBeatIndex(
+                    timeline,
+                    revealIndex + 1,
+                    timeline[revealIndex],
+                    out int resolvedIndex),
+                Is.True);
+            Assert.That(resolvedIndex, Is.GreaterThan(revealIndex + 1));
         }
 
         [Test]

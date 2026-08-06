@@ -35,6 +35,11 @@ namespace DiaBlackJack.GameScene
         private bool _hasBaseAnchoredPosition;
         private Sequence _sequence;
 
+        public bool IsPlaying => _sequence != null;
+
+        public float TotalDurationSeconds =>
+            Mathf.Max(0f, holdSeconds) + Mathf.Max(0.01f, dropSeconds);
+
         private void Awake()
         {
             _rectTransform = transform as RectTransform;
