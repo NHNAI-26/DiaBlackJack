@@ -13,10 +13,12 @@ MonoBehaviour:
   m_Name: 10_plain
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
   key: military-knife-10
-  displayName: 보위 나이프
-  description: 공개 합이 16 이하인 상대에게 히트를 강제합니다. 버스트하지 않으면 뽑은 카드를 버립니다.
+  displayName: "\uBCF4\uC704 \uB098\uC774\uD504"
+  description: "\uACF5\uAC1C \uD569\uC774 16 \uC774\uD558\uC778 \uC0C1\uB300\uC5D0\uAC8C
+    \uD788\uD2B8\uB97C \uAC15\uC81C\uD569\uB2C8\uB2E4. \uBC84\uC2A4\uD2B8\uD558\uC9C0
+    \uC54A\uC73C\uBA74 \uBF51\uC740 \uCE74\uB4DC\uB97C \uBC84\uB9BD\uB2C8\uB2E4."
   basePurchasePrice: 3
-  shopWeight: 1
+  shopWeight: 3
   rank: 10
   activation: 2
   effect: 4

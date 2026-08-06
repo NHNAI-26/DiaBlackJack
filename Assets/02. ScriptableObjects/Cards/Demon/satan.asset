@@ -48,6 +48,6 @@ MonoBehaviour:
     \uAE30\uB2E4\uB9B0\uB2E4."
   baseSoulCost: 1
   basePurchasePrice: 3
-  shopWeight: 1
+  shopWeight: 3
   kind: 0
   faceSprite: {fileID: 21300000, guid: 73d4ed70685d38e448dcdbf7ea443be3, type: 3}

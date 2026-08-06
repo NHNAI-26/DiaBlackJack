@@ -26,7 +26,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             SetPrivateField("goldPerWin", 20);
             SetPrivateField("lighterPrice", 2);
             SetPrivateField("whiskeyPrice", 3);
-            SetPrivateField("utilityPriceIncreasePerUsedVisit", 1);
+            SetPrivateField("lighterPriceIncreasePerUsedVisit", 1);
             SetPrivateField("whiskeySoulRestore", 2);
         }
 
@@ -37,7 +37,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void RFM01_U01_UtilityPricesIncreaseOncePerUsedShop()
+        public void RFM01_U01_LighterPriceIncreasesOncePerUsedShopWhiskeyPriceNeverChanges()
         {
             _shop.Open();
 
@@ -55,8 +55,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             _shop.Close();
             _shop.Open();
 
-            Assert.That(_shop.CurrentLighterPrice, Is.EqualTo(3));
-            Assert.That(_shop.CurrentWhiskeyPrice, Is.EqualTo(4));
+            // Only whiskey was used in the previous shop — the lighter price is
+            // unaffected by whiskey usage.
+            Assert.That(_shop.CurrentLighterPrice, Is.EqualTo(2));
+            Assert.That(_shop.CurrentWhiskeyPrice, Is.EqualTo(3));
             Assert.That(_shop.TryPurchaseLighterRemoval(2), Is.True);
             Assert.That(_shop.TryPurchaseLighterRemoval(2), Is.False);
             Assert.That(
@@ -67,8 +69,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             _shop.Close();
             _shop.Open();
 
-            Assert.That(_shop.CurrentLighterPrice, Is.EqualTo(4));
-            Assert.That(_shop.CurrentWhiskeyPrice, Is.EqualTo(5));
+            // The lighter was used in the previous shop, so its price rises by one
+            // step — whiskey's price stays fixed no matter how it's used.
+            Assert.That(_shop.CurrentLighterPrice, Is.EqualTo(3));
+            Assert.That(_shop.CurrentWhiskeyPrice, Is.EqualTo(3));
         }
 
         [Test]

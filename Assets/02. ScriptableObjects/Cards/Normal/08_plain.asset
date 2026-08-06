@@ -13,10 +13,12 @@ MonoBehaviour:
   m_Name: 08_plain
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
   key: auto-pistol-8
-  displayName: 리볼버
-  description: 숫자 하나를 선언합니다. 상대 비공개 카드와 일치하면 상대를 버스트시킵니다.
+  displayName: "\uB9AC\uBCFC\uBC84"
+  description: "\uC22B\uC790 \uD558\uB098\uB97C \uC120\uC5B8\uD569\uB2C8\uB2E4. \uC0C1\uB300
+    \uBE44\uACF5\uAC1C \uCE74\uB4DC\uC640 \uC77C\uCE58\uD558\uBA74 \uC0C1\uB300\uB97C
+    \uBC84\uC2A4\uD2B8\uC2DC\uD0B5\uB2C8\uB2E4."
   basePurchasePrice: 3
-  shopWeight: 1
+  shopWeight: 3
   rank: 8
   activation: 2
   effect: 3

@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: 02_plain
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
   key: standard-plain-2
-  displayName: 기본 카드
-  description: ''
-  basePurchasePrice: 3
-  shopWeight: 1
+  displayName: "\uAE30\uBCF8 \uCE74\uB4DC"
+  description: 
+  basePurchasePrice: 1
+  shopWeight: 3
   rank: 2
   activation: 0
   effect: 0

@@ -1852,6 +1852,8 @@ MonoBehaviour:
   - {fileID: 3287629173877012768}
   - {fileID: 0}
   - {fileID: 5970126291640778163}
+  codexBook: {fileID: 0}
+  codexShopLocalPositionOffset: {x: 0.25, y: 0, z: 0}
   goldPerWin: 3
   demonCardOfferCount: 2
   demonCardSpacing: 1.1
@@ -1859,7 +1861,7 @@ MonoBehaviour:
   normalCardSpacing: 0.95
   lighterPrice: 2
   whiskeyPrice: 2
-  utilityPriceIncreasePerUsedVisit: 1
+  lighterPriceIncreasePerUsedVisit: 1
   whiskeySoulRestore: 2
   shopRandomSeed: 20260726
   merchantSpeechProfile: {fileID: 11400000, guid: 0fb23cb8f2399b54cb64d57d5dec38bf, type: 2}

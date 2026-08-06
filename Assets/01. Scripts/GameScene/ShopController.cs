@@ -53,8 +53,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float normalCardSpacing = 0.95f;
         [SerializeField] private int lighterPrice = 2;
         [SerializeField] private int whiskeyPrice = 2;
-        [Tooltip("Added to both utility prices for every earlier shop where either utility was purchased.")]
-        [SerializeField] private int utilityPriceIncreasePerUsedVisit = 1;
+        [Tooltip("Added to the lighter price for every earlier shop where the lighter was used. Whiskey's price never rises.")]
+        [SerializeField] private int lighterPriceIncreasePerUsedVisit = 1;
         [SerializeField] private int whiskeySoulRestore = 2;
         [SerializeField] private int shopRandomSeed = 20260726;
 
@@ -76,10 +76,9 @@ namespace DiaBlackJack.GameScene
         private SpeechLineResolver _speechResolver;
         private int _nextOfferId;
         private int _openCount;
-        private int _utilityPriceLevel;
+        private int _lighterPriceLevel;
         private bool _lighterPurchasedThisVisit;
         private bool _whiskeyPurchasedThisVisit;
-        private bool _utilityPurchasedThisVisit;
         private Vector3 _codexBookBaseLocalPosition;
         private bool _hasCodexBookBaseLocalPosition;
 
@@ -93,9 +92,10 @@ namespace DiaBlackJack.GameScene
 
         public int Gold { get; private set; }
 
-        public int CurrentLighterPrice => CalculateUtilityPrice(lighterPrice);
+        public int CurrentLighterPrice => Mathf.Max(0, lighterPrice) +
+            _lighterPriceLevel * Mathf.Max(0, lighterPriceIncreasePerUsedVisit);
 
-        public int CurrentWhiskeyPrice => CalculateUtilityPrice(whiskeyPrice);
+        public int CurrentWhiskeyPrice => Mathf.Max(0, whiskeyPrice);
 
         private void Awake()
         {
@@ -127,7 +127,6 @@ namespace DiaBlackJack.GameScene
 
             _lighterPurchasedThisVisit = false;
             _whiskeyPurchasedThisVisit = false;
-            _utilityPurchasedThisVisit = false;
             IsOpen = true;
             IsFormal = false;
             Gold += goldPerWin;
@@ -206,9 +205,9 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            if (_utilityPurchasedThisVisit)
+            if (_lighterPurchasedThisVisit)
             {
-                _utilityPriceLevel++;
+                _lighterPriceLevel++;
             }
 
             IsOpen = false;
@@ -240,10 +239,9 @@ namespace DiaBlackJack.GameScene
             Gold = 0;
             _nextOfferId = 0;
             _openCount = 0;
-            _utilityPriceLevel = 0;
+            _lighterPriceLevel = 0;
             _lighterPurchasedThisVisit = false;
             _whiskeyPurchasedThisVisit = false;
-            _utilityPurchasedThisVisit = false;
             RefreshOfferViews();
         }
 
@@ -404,7 +402,6 @@ namespace DiaBlackJack.GameScene
 
             Gold -= price;
             _lighterPurchasedThisVisit = true;
-            _utilityPurchasedThisVisit = true;
             lighterItem?.gameObject.SetActive(false);
             RefreshOfferViews();
             return true;
@@ -450,7 +447,6 @@ namespace DiaBlackJack.GameScene
 
             Gold -= price;
             _whiskeyPurchasedThisVisit = true;
-            _utilityPurchasedThisVisit = true;
             whiskeyItem?.gameObject.SetActive(false);
             RefreshOfferViews();
             return true;
@@ -500,12 +496,6 @@ namespace DiaBlackJack.GameScene
                 default:
                     return SpeechCueKeys.ShopUnavailable;
             }
-        }
-
-        private int CalculateUtilityPrice(int basePrice)
-        {
-            return Mathf.Max(0, basePrice) +
-                _utilityPriceLevel * Mathf.Max(0, utilityPriceIncreasePerUsedVisit);
         }
 
         private void CreateFormalCardOffers(StageProgressionViewModel model)

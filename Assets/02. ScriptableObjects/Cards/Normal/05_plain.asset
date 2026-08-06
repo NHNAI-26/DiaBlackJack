@@ -13,10 +13,12 @@ MonoBehaviour:
   m_Name: 05_plain
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
   key: crystal-orb-5
-  displayName: 수정 구슬
-  description: 덱 위 카드 2장을 확인합니다. 최대 1장을 공개 카드로 가져오고, 나머지는 덱에 돌려놓습니다.
-  basePurchasePrice: 3
-  shopWeight: 1
+  displayName: "\uC218\uC815 \uAD6C\uC2AC"
+  description: "\uB371 \uC704 \uCE74\uB4DC 2\uC7A5\uC744 \uD655\uC778\uD569\uB2C8\uB2E4.
+    \uCD5C\uB300 1\uC7A5\uC744 \uACF5\uAC1C \uCE74\uB4DC\uB85C \uAC00\uC838\uC624\uACE0,
+    \uB098\uBA38\uC9C0\uB294 \uB371\uC5D0 \uB3CC\uB824\uB193\uC2B5\uB2C8\uB2E4."
+  basePurchasePrice: 2
+  shopWeight: 3
   rank: 5
   activation: 2
   effect: 1

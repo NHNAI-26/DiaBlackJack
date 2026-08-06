@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: 01_plain
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
   key: standard-ace-1
-  displayName: 에이스
-  description: 라운드 종료 시 합계가 21에 가장 가까워지도록 1 또는 11로 계산됩니다.
+  displayName: "\uC5D0\uC774\uC2A4"
+  description: "\uB77C\uC6B4\uB4DC \uC885\uB8CC \uC2DC \uD569\uACC4\uAC00 21\uC5D0
+    \uAC00\uC7A5 \uAC00\uAE4C\uC6CC\uC9C0\uB3C4\uB85D 1 \uB610\uB294 11\uB85C \uACC4\uC0B0\uB429\uB2C8\uB2E4."
   basePurchasePrice: 3
-  shopWeight: 1
+  shopWeight: 3
   rank: 1
   activation: 1
   effect: 0
