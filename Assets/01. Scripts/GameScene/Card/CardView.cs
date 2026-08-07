@@ -198,6 +198,7 @@ namespace DiaBlackJack.GameScene
         private bool _isUsed;
         private bool _isEffectSource;
         private bool _isEffectHighlighted;
+        private bool _matchSelectionHoverGlowIntensity;
         private GameSceneCardHoverOutlineState _hoverOutlineState =
             GameSceneCardHoverOutlineState.Basic;
         private bool _isShopSoldOut;
@@ -371,6 +372,7 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            ResetSelectionPresentation();
             ResetSatanNumberGuessPresentation();
 
             bool sameCard = _hasBoundCard && CardId == card.CardId;
@@ -940,12 +942,23 @@ namespace DiaBlackJack.GameScene
             ApplyShopTint(BackSpriteRenderer(), _shopBackColor, isSoldOut);
         }
 
-        internal void ApplySelectionFrontTint()
+        internal void ApplySelectionPresentation()
         {
+            _matchSelectionHoverGlowIntensity = true;
             SpriteRenderer frontRenderer = FrontSpriteRenderer();
             if (frontRenderer != null)
             {
                 frontRenderer.color = SelectionFrontTint;
+            }
+        }
+
+        private void ResetSelectionPresentation()
+        {
+            _matchSelectionHoverGlowIntensity = false;
+            SpriteRenderer frontRenderer = FrontSpriteRenderer();
+            if (frontRenderer != null)
+            {
+                frontRenderer.color = Color.white;
             }
         }
 
@@ -1511,19 +1524,53 @@ namespace DiaBlackJack.GameScene
 
         private Color ResolveHoverOutlineColor()
         {
+            Color outlineColor;
             switch (_hoverOutlineState)
             {
                 case GameSceneCardHoverOutlineState.ManualUnavailable:
-                    return unavailableHoverOutlineColor;
+                    outlineColor = unavailableHoverOutlineColor;
+                    break;
                 case GameSceneCardHoverOutlineState.ManualAvailable:
-                    return availableHoverOutlineColor;
+                    outlineColor = availableHoverOutlineColor;
+                    break;
                 case GameSceneCardHoverOutlineState.Automatic:
-                    return automaticHoverOutlineColor;
+                    outlineColor = automaticHoverOutlineColor;
+                    break;
                 case GameSceneCardHoverOutlineState.Used:
-                    return usedHoverOutlineColor;
+                    outlineColor = usedHoverOutlineColor;
+                    break;
                 default:
-                    return basicHoverOutlineColor;
+                    outlineColor = basicHoverOutlineColor;
+                    break;
             }
+
+            if (!_matchSelectionHoverGlowIntensity)
+            {
+                return outlineColor;
+            }
+
+            return MatchRgbPeak(outlineColor, basicHoverOutlineColor);
+        }
+
+        private static Color MatchRgbPeak(Color source, Color target)
+        {
+            float sourcePeak = Mathf.Max(
+                source.r,
+                Mathf.Max(source.g, source.b));
+            float targetPeak = Mathf.Max(
+                target.r,
+                Mathf.Max(target.g, target.b));
+            if (sourcePeak <= 0f || targetPeak <= 0f)
+            {
+                return source;
+            }
+
+            float scale = targetPeak / sourcePeak;
+            return new Color(
+                source.r * scale,
+                source.g * scale,
+                source.b * scale,
+                source.a);
         }
 
         private float ResolveOutlineWidth(Renderer renderer)

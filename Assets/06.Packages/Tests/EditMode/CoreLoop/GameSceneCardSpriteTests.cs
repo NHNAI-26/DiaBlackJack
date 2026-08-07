@@ -1082,6 +1082,58 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GSV09_U05_RebindClearsSelectionPresentation()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                SpriteRenderer frontRenderer = GetFrontRenderer(view);
+                GameSceneCardViewModel model = CreateHoverOutlineCard(
+                    CardDefinitionCatalog.GetDefaultForRank(5),
+                    canUse: false);
+                Color unavailableColor = GetPrivateField<Color>(
+                    view,
+                    "unavailableHoverOutlineColor");
+                Color basicColor = GetPrivateField<Color>(
+                    view,
+                    "basicHoverOutlineColor");
+                var properties = new MaterialPropertyBlock();
+
+                view.Bind(model);
+                view.ApplySelectionPresentation();
+                view.SetHovered(true);
+                frontRenderer.GetPropertyBlock(properties);
+                Color selectionOutline = properties.GetColor(
+                    PixelOutlineColorId);
+                Assert.That(
+                    Mathf.Max(
+                        selectionOutline.r,
+                        Mathf.Max(selectionOutline.g, selectionOutline.b)),
+                    Is.EqualTo(Mathf.Max(
+                        basicColor.r,
+                        Mathf.Max(basicColor.g, basicColor.b)))
+                        .Within(0.0001f));
+
+                view.Bind(model);
+                Assert.That(frontRenderer.color, Is.EqualTo(Color.white));
+                view.SetHovered(true);
+                frontRenderer.GetPropertyBlock(properties);
+                AssertColor(
+                    properties.GetColor(PixelOutlineColorId),
+                    unavailableColor);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
         public void GSV10_U01_CardInspectorPreviewsEveryHoverOutlineState()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);

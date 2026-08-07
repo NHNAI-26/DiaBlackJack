@@ -11,6 +11,9 @@ namespace DiaBlackJack.CoreLoop.Tests
 {
     public sealed class CardSelectionFanLayoutTests
     {
+        private static readonly int PixelOutlineColorId =
+            Shader.PropertyToID("_PixelOutlineColor");
+
         private const string CardPrefabPath =
             "Assets/03. Prefabs/Card/Card.prefab";
         private const string ManagerPrefabPath =
@@ -234,15 +237,23 @@ namespace DiaBlackJack.CoreLoop.Tests
                     root.AddComponent<SatanNumberSelectionView>();
                 Sprite brandSprite = AssetDatabase.LoadAssetAtPath<Sprite>(
                     SatanBrandSpritePath);
-                view.Initialize(cardPrefab.GetComponent<CardView>(), brandSprite);
+                CardView prefabView = cardPrefab.GetComponent<CardView>();
+                view.Initialize(prefabView, brandSprite);
+                var serializedPrefab = new SerializedObject(prefabView);
+                Color basicOutlineColor = serializedPrefab.FindProperty(
+                    "basicHoverOutlineColor").colorValue;
+                Color unavailableOutlineColor = serializedPrefab.FindProperty(
+                    "unavailableHoverOutlineColor").colorValue;
                 GameSceneCardViewModel[] candidates = Enumerable.Range(1, 10)
                     .Select(rank => new GameSceneCardViewModel(
                         cardId: 100 + rank,
                         rank: rank,
                         isFaceUp: true,
                         revealRank: true,
-                        canUse: rank != 1,
+                        canUse: false,
                         displayName: rank.ToString(),
+                        definitionKey: CardDefinitionCatalog
+                            .GetDefaultForRank(rank).Key,
                         isSatanBranded: rank == 1,
                         directSelectionCommand: rank == 1
                             ? null
@@ -306,6 +317,26 @@ namespace DiaBlackJack.CoreLoop.Tests
                     selectable.GetComponentsInChildren<SpriteRenderer>(true)
                         .Max(renderer => renderer.sortingOrder),
                     Is.EqualTo(restingSortingOrder + 40));
+                AssertSelectionOutlineGlow(
+                    selectable,
+                    basicOutlineColor,
+                    basicOutlineColor);
+
+                CardView manualUnavailable = cards.Single(
+                    card => card.CardId == 105);
+                view.SetHovered(manualUnavailable);
+                AssertSelectionOutlineGlow(
+                    manualUnavailable,
+                    unavailableOutlineColor,
+                    basicOutlineColor);
+                Assert.That(
+                    view.TryToggleSelection(manualUnavailable),
+                    Is.True);
+                view.SetHovered(null);
+                AssertSelectionOutlineGlow(
+                    manualUnavailable,
+                    unavailableOutlineColor,
+                    basicOutlineColor);
             }
             finally
             {
@@ -408,13 +439,37 @@ namespace DiaBlackJack.CoreLoop.Tests
                 root.AddComponent<CardSelectionFanLayout>();
                 CrystalOrbSelectionView view =
                     root.AddComponent<CrystalOrbSelectionView>();
-                view.Initialize(cardPrefab.GetComponent<CardView>());
+                CardView prefabView = cardPrefab.GetComponent<CardView>();
+                view.Initialize(prefabView);
+                var serializedPrefab = new SerializedObject(prefabView);
+                Color basicOutlineColor = serializedPrefab.FindProperty(
+                    "basicHoverOutlineColor").colorValue;
+                Color unavailableOutlineColor = serializedPrefab.FindProperty(
+                    "unavailableHoverOutlineColor").colorValue;
+                Color automaticOutlineColor = serializedPrefab.FindProperty(
+                    "automaticHoverOutlineColor").colorValue;
+                CardDefinition manualDefinition =
+                    CardDefinitionCatalog.GetDefaultForRank(5);
+                CardDefinition automaticDefinition = CardDefinitionCatalog.GetByKey(
+                    CardDefinitionCatalog.PoisonKey);
                 var candidates = new[]
                 {
                     new GameSceneCardViewModel(
-                        301, 3, true, true, true, "3"),
+                        301,
+                        manualDefinition.Rank,
+                        true,
+                        true,
+                        false,
+                        manualDefinition.DisplayName,
+                        definitionKey: manualDefinition.Key),
                     new GameSceneCardViewModel(
-                        302, 7, true, true, true, "7")
+                        302,
+                        automaticDefinition.Rank,
+                        true,
+                        true,
+                        false,
+                        automaticDefinition.DisplayName,
+                        definitionKey: automaticDefinition.Key)
                 };
                 view.Render(candidates, camera);
 
@@ -436,6 +491,10 @@ namespace DiaBlackJack.CoreLoop.Tests
 
                 view.SetHovered(card);
                 InvokeUpdateSlotPose(view, 0);
+                AssertSelectionOutlineGlow(
+                    card,
+                    unavailableOutlineColor,
+                    basicOutlineColor);
 
                 AssertFixedColliderAndLiftedVisual(
                     card.transform,
@@ -445,6 +504,15 @@ namespace DiaBlackJack.CoreLoop.Tests
                     rootRotation,
                     colliderBounds,
                     visualPosition);
+
+                CardView automaticCard = root
+                    .GetComponentsInChildren<CardView>(true)
+                    .Single(candidate => candidate.CardId == 302);
+                view.SetHovered(automaticCard);
+                AssertSelectionOutlineGlow(
+                    automaticCard,
+                    automaticOutlineColor,
+                    basicOutlineColor);
             }
             finally
             {
@@ -1019,6 +1087,37 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             return card.GetComponentsInChildren<SpriteRenderer>(true)
                 .Single(renderer => renderer.gameObject.name == "DevilShape");
+        }
+
+        private static void AssertSelectionOutlineGlow(
+            CardView card,
+            Color sourceColor,
+            Color basicColor)
+        {
+            SpriteRenderer front = card
+                .GetComponentsInChildren<SpriteRenderer>(true)
+                .Single(renderer => renderer.gameObject.name == "Front");
+            var properties = new MaterialPropertyBlock();
+            front.GetPropertyBlock(properties);
+            Color actualColor = properties.GetColor(PixelOutlineColorId);
+            float sourcePeak = RgbPeak(sourceColor);
+            float targetPeak = RgbPeak(basicColor);
+            float actualPeak = RgbPeak(actualColor);
+
+            Assert.That(actualPeak, Is.EqualTo(targetPeak).Within(0.0001f));
+            Assert.That(actualColor.a,
+                Is.EqualTo(sourceColor.a).Within(0.0001f));
+            Assert.That(actualColor.r / actualPeak,
+                Is.EqualTo(sourceColor.r / sourcePeak).Within(0.0001f));
+            Assert.That(actualColor.g / actualPeak,
+                Is.EqualTo(sourceColor.g / sourcePeak).Within(0.0001f));
+            Assert.That(actualColor.b / actualPeak,
+                Is.EqualTo(sourceColor.b / sourcePeak).Within(0.0001f));
+        }
+
+        private static float RgbPeak(Color color)
+        {
+            return Mathf.Max(color.r, Mathf.Max(color.g, color.b));
         }
 
         private static void InvokeUpdateSlotPose(MonoBehaviour view, int index)
