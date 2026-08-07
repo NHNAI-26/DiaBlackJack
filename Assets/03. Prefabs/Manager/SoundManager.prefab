@@ -386,6 +386,26 @@ MonoBehaviour:
     volume: 0.5
     pitch: 1
     loop: 0
+  - id: skullLay01
+    clip: {fileID: 8300000, guid: f6aeea8d055c9ab4b93acd326b510e6e, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: skullLay02
+    clip: {fileID: 8300000, guid: 31ff838d852fa794b8a79a951866d71e, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: skullLay03
+    clip: {fileID: 8300000, guid: 43c73a3e0f66f2047baac52b9a4b1464, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: skullLay04
+    clip: {fileID: 8300000, guid: 3a6a4d8b37199eb4d94474e1ebda50be, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1
