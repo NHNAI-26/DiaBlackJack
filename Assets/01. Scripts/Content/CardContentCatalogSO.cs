@@ -20,7 +20,10 @@ namespace DiaBlackJack.Content
             var lore = new Dictionary<string, string>(StringComparer.Ordinal);
             foreach (DemonCardDefinitionSO card in demonCards)
             {
-                lore.Add(card.Key, card.CodexLoreDescription.Trim());
+                lore.Add(
+                    card.Key,
+                    CardDescriptionRichTextFormatter.Apply(
+                        card.CodexLoreDescription.Trim()));
             }
 
             return new ReadOnlyDictionary<string, string>(lore);

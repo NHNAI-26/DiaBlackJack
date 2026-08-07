@@ -2407,3 +2407,14 @@ HUD 선택 슬롯은 `DefaultButton.prefab`의 중첩 인스턴스로 생성하�
 - 검증: AI가 Unity MCP로 컴파일 오류 0을 확인했다. 전체 EditMode 1124개 중 1114개 통과, 무관 베이스라인 10건만 남고 신규 실패 없음을 확인했다. `git status`로 이번 세션에서 건드린 파일이 `CardHand.cs` 하나뿐임을 확인했다. Play 모드 확인 불가로, 라운드 1 최초 딜이 실제로 애니메이션과 함께 나오는지는 이천서의 에디터 내 최종 확인이 필요하다.
 - 반성: 직전 (8)에서 서로 다른 두 코드 경로(카드 사용 시 공개 vs. 라운드 시작 딜)를 같은 문제로 오판해 조사 없이 완료 처리한 것은 명백한 실수였다 — Play 모드 육안 확인이 불가능한 이 환경에서는 "다른 수정이 우연히 해결해줄 것"이라는 추정만으로 항목을 닫지 않고, 사용자가 재차 지목하면 반드시 해당 코드 경로를 직접 재추적해야 한다는 점을 기록해 둔다.
 - 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+
+## 2026-08-07(10) 도감·호버 툴팁 카드 설명의 히트/스탠드/체인지/버스트에 리치 텍스트 적용
+
+- 이천서: "모든 도감 및 호버 시 나오는 툴팁의 카드 설명에 히트, 스탠드, 체인지, 버스트라는 용어에 리치 텍스트를 넣고 싶음. 해당 단어 모두 볼드 처리해주고, 버스트는 진한빨간색, 히트는 파란색, 스탠드는 주황색, 체인지는 초록색으로 바꿔줘. 그리고 SO 바뀐 거는 내가 바꾼 거니까 건들지 마라"라고 요청했다.
+- AI 활용: `CardDefinition.Description`(생성자에서 `description.Trim()`으로 설정)이 코덱스(`CodexPresentation.cs`)·호버 배지(`GameManager.cs`, `GameScenePresentation.cs`)·상점(`ShopController.cs`)·정식 런 요약(`StageProgressionPresentation.cs`) 등 카드 설명을 표시하는 사실상 모든 경로의 공통 원천임을 확인했다. 원본 텍스트 자체(SO의 `description` 필드, `NormalCardDefinitionSO`/`DemonCardDefinitionSO`)는 사용자가 직접 관리하는 데이터이므로 건드리지 않고, 대신 `CardDefinition` 생성자가 그 문자열을 읽어들이는 시점에 서식을 입히는 방식을 택했다 — TMP 리치 텍스트 태그는 순수 문자열 조작이라 `UnityEngine` 참조 없이도 CoreLoop의 순수성 규칙을 어기지 않는다.
+- 신규 순수 C# 정적 클래스 `CardDescriptionRichTextFormatter`(`CoreLoop/` 아래, `DiaBlackJack.CoreLoop` 네임스페이스)를 추가해 히트(`#2196F3` 파랑)·스탠드(`#FF9800` 주황)·체인지(`#4CAF50` 초록)·버스트(`#B71C1C` 진한빨강) 4개 용어를 각각 `<b><color=#RRGGBB>용어</color></b>`로 감싸도록 구현했다. `CardDefinition` 생성자의 `Description = description.Trim();`을 `Description = CardDescriptionRichTextFormatter.Apply(description.Trim());`로 바꿔 카드 능력 설명 전체를 단일 지점에서 커버했다. 도감의 악마 로어 텍스트(`CardContentCatalogSO.BuildDemonLoreCatalog`가 읽는 `DemonCardDefinitionSO.CodexLoreDescription`)는 별도 파이프라인이라 그 지점에도 같은 포매터를 적용했다.
+- 기존 EditMode 테스트 중 하드코딩된 카드 설명 문자열을 그대로 `Is.EqualTo(...)`로 비교하던 4건(위협용 해머의 "스탠드", 리볼버의 "버스트", 독극물의 "즉시 스탠드하거나")이 새 마크업 때문에 실패해, 기대 문자열에 동일한 태그를 반영해 수정했다(카드 설명 자체의 의미·내용은 변경 없음, 표시용 마크업만 추가).
+- `git status` 확인 중 `Assets/02. ScriptableObjects/Cards/Normal/{02,03,04}_plain.asset` 3개가 이미 수정된 상태였음을 발견했다(빈 `description` 필드에 "아무 효과가 없습니다."가 채워짐) — 사용자가 언급한 "내가 바꾼 SO"와 정확히 일치하는 성격의 변경(일관되고 사람이 직접 작성한 형태)이라 판단해 전혀 건드리지 않고 그대로 두었다.
+- 변경 파일: `CoreLoop/{CardDefinition,CardDescriptionRichTextFormatter(신규)}.cs`, `Content/CardContentCatalogSO.cs`, `Assets/06.Packages/Tests/EditMode/CoreLoop/CoreLoopPresentationTests.cs`.
+- 검증: AI가 Unity MCP로 컴파일 오류 0을 확인했다(신규 스크립트의 `.meta`는 Unity가 임포트 시 자동 생성). 전체 EditMode 1126개 중 1116개 통과, 무관 베이스라인 10건만 남고 신규 실패 없음을 최종 확인했다(1차 실행에서 발견된 4건은 위 기대값 수정으로 모두 해소). `git status`로 의도한 파일 외에는 사용자 본인이 이미 만들어 둔 SO 변경 3건만 남아있음을 확인했다(그대로 유지). Play 모드 확인 불가로, 실제 도감·호버 툴팁에서 색상·볼드가 올바르게 렌더되는지(해당 TMP_Text 컴포넌트들의 Rich Text 옵션이 켜져 있는지 포함)는 이천서의 에디터 내 최종 확인이 필요하다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.

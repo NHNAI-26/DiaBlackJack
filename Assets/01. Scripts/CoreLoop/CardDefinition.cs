@@ -60,7 +60,7 @@ namespace DiaBlackJack.CoreLoop
             Rank = rank;
             Activation = activation;
             Effect = effect;
-            Description = description.Trim();
+            Description = CardDescriptionRichTextFormatter.Apply(description.Trim());
             BasePurchasePrice = basePurchasePrice;
             ShopWeight = shopWeight;
             IsStandardDeckDefault = isStandardDeckDefault;

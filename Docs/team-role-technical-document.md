@@ -963,3 +963,12 @@ DC-00 공통 규칙 개정으로 동일 악마 추가 계약과 계약 임시 �
 - 변경 영역: `GameScene/Card/CardHand.cs` 1개 파일.
 - 검증: AI가 컴파일 오류 0 확인. 전체 EditMode 1124개 중 1114개 통과, 무관 베이스라인 10건만 남음. 씬 파일 미변경. Play 모드 확인 불가로 실제 동작은 이천서의 최종 확인 필요.
 - 반성: 서로 다른 코드 경로를 같은 문제로 오판해 조사 없이 완료 처리한 것은 실수였음을 기록.
+
+## 2026-08-07(10) 도감·호버 툴팁 카드 설명의 히트/스탠드/체인지/버스트에 리치 텍스트 적용
+
+- 이천서: 도감·호버 툴팁 카드 설명의 히트/스탠드/체인지/버스트 용어를 볼드+색상(버스트 진한빨강, 히트 파랑, 스탠드 주황, 체인지 초록)으로 표시해달라고 요청. SO(ScriptableObject) 원본 데이터는 본인이 직접 관리 중이니 건드리지 말라고 명시.
+- `CardDefinition.Description`이 도감·호버·상점 등 카드 설명 표시 경로의 공통 원천임을 확인 — SO의 원본 `description` 필드는 그대로 두고, `CardDefinition` 생성자가 그 값을 읽어들이는 시점에 리치 텍스트를 입히는 방식으로 구현(순수 문자열 조작이라 CoreLoop 순수성 규칙 위반 없음). 신규 `CardDescriptionRichTextFormatter` 정적 클래스로 4개 용어를 `<b><color=#RRGGBB>`로 감싸고, 도감 악마 로어 텍스트 파이프라인에도 동일 적용.
+- 하드코딩된 카드 설명을 비교하던 기존 테스트 4건을 새 마크업에 맞춰 기대값 수정(설명 내용 자체는 불변).
+- `git status` 확인 중 이미 수정돼 있던 `Normal/{02,03,04}_plain.asset` 3개(빈 description에 "아무 효과가 없습니다." 채움)를 발견 — 사용자가 언급한 본인 SO 변경과 일치해 건드리지 않음.
+- 변경 영역: `CoreLoop/{CardDefinition,CardDescriptionRichTextFormatter(신규)}.cs`, `Content/CardContentCatalogSO.cs`, 테스트 1개.
+- 검증: AI가 컴파일 오류 0 확인. 전체 EditMode 1126개 중 1116개 통과, 무관 베이스라인 10건만 남음. Play 모드 확인 불가로 실제 색상·볼드 렌더링(TMP Rich Text 옵션 포함)은 이천서의 최종 확인 필요.
