@@ -846,6 +846,9 @@ namespace DiaBlackJack.GameScene
         internal PlayerMammonComparisonPlan PlayerMammonComparisonPlan { get; set; }
 
         internal RoundComparisonPlan RoundComparisonPlan { get; set; }
+
+        internal IReadOnlyList<SoulLossRecord> SoulLossHistory { get; set; } =
+            Array.AsReadOnly(Array.Empty<SoulLossRecord>());
     }
 
     public static class GameScenePresenter
@@ -979,6 +982,8 @@ namespace DiaBlackJack.GameScene
                 model.EnemyCards,
                 model.RevolverAnimationCue,
                 model.SatanNumberGuessAnimationCue);
+            model.SoulLossHistory = new List<SoulLossRecord>(
+                battle.SoulLossHistory).AsReadOnly();
             return model;
         }
 

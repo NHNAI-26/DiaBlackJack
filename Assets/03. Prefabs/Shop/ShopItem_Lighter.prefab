@@ -9,6 +9,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 919260807000000012, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.006588772
+      objectReference: {fileID: 0}
+    - target: {fileID: 919260807000000012, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
       propertyPath: m_LocalPosition.y
       value: -0.3
       objectReference: {fileID: 0}
@@ -20,6 +24,14 @@ PrefabInstance:
       propertyPath: hoverDescriptionTarget
       value: 
       objectReference: {fileID: 3515864309055975130}
+    - target: {fileID: 1191069393801395701, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: displayModelLocalPosition.x
+      value: -0.14
+      objectReference: {fileID: 0}
+    - target: {fileID: 1191069393801395701, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
+      propertyPath: displayModelLocalEulerAngles.y
+      value: 90
+      objectReference: {fileID: 0}
     - target: {fileID: 3795005150099411801, guid: 8d2e9dc859d10c64d9842b71ef10aadc, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 

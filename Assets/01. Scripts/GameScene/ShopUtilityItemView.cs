@@ -21,6 +21,8 @@ namespace DiaBlackJack.GameScene
         [Header("Display model")]
         [SerializeField] private GameObject displayModelPrefab;
         [SerializeField] private Renderer placeholderRenderer;
+        [SerializeField] private Vector3 displayModelLocalPosition;
+        [SerializeField] private Vector3 displayModelLocalEulerAngles;
 
         [Header("Hover feel")]
         [SerializeField] private Color hoverOutlineColor =
@@ -34,6 +36,12 @@ namespace DiaBlackJack.GameScene
         public ShopUtilityItemKind Kind => kind;
 
         internal GameObject DisplayModelPrefab => displayModelPrefab;
+
+        internal Vector3 DisplayModelLocalPosition =>
+            displayModelLocalPosition;
+
+        internal Vector3 DisplayModelLocalEulerAngles =>
+            displayModelLocalEulerAngles;
 
         public bool CanUse { get; private set; }
 
@@ -65,8 +73,8 @@ namespace DiaBlackJack.GameScene
                 model = Instantiate(displayModelPrefab, transform);
                 model.name = displayModelPrefab.name;
                 model.transform.SetLocalPositionAndRotation(
-                    Vector3.zero,
-                    Quaternion.identity);
+                    displayModelLocalPosition,
+                    Quaternion.Euler(displayModelLocalEulerAngles));
             }
 
             _displayModelRoot = model;

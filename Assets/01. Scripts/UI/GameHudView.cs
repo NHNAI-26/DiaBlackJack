@@ -30,6 +30,28 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float soulRestoreScaleMultiplier = 1.25f;
         [SerializeField] private float soulRestoreFlashSeconds = 0.7f;
 
+        [Header("Soul Loss Tokens")]
+        [ColorUsage(true, true)]
+        [SerializeField] private Color soulLossTokenColor = Color.white;
+        [SerializeField, Min(0.1f)] private float soulLossTokenFontScale = 1f;
+        [SerializeField, Min(1f)] private float soulLossTokenMinimumFontSize = 28f;
+        [SerializeField] private Vector2 soulLossTokenSize = new Vector2(220f, 80f);
+        [SerializeField, Min(0.01f)] private float soulLossTokenFallSeconds = 0.72f;
+        [SerializeField, Min(0f)] private float soulLossTokenStaggerSeconds = 0.12f;
+        [SerializeField, Min(0f)] private float soulLossTokenImpactSeconds = 0.42f;
+        [SerializeField, Min(0.01f)] private float soulLossTokenFadeSeconds = 0.2f;
+        [SerializeField, Min(0f)] private float soulLossTokenStartRandomX = 42f;
+        [SerializeField] private Vector2 soulLossTokenStartYRange =
+            new Vector2(-8f, 12f);
+        [SerializeField, Min(0f)] private float soulLossTokenDriftX = 24f;
+        [SerializeField] private Vector2 soulLossTokenFallDistanceRange =
+            new Vector2(145f, 185f);
+        [SerializeField, Min(0f)] private float soulLossTokenRotation = 14f;
+        [SerializeField] private Vector2 soulLossPlayerAnchor =
+            new Vector2(0.5f, 0.18f);
+        [SerializeField] private Vector2 soulLossEnemyFallbackAnchor =
+            new Vector2(0.78f, 0.68f);
+
         [Header("Shop controls")]
         [SerializeField] private GameObject shopLeaveRoot;
         [SerializeField] private Button shopLeaveButton;
@@ -64,11 +86,23 @@ namespace DiaBlackJack.GameScene
         private Canvas _canvas;
         private OptionSlotLayout[] _optionSlotLayouts = Array.Empty<OptionSlotLayout>();
         private Sequence _soulRestoreSequence;
+        private Sequence _playerSoulDamageSequence;
+        private Sequence _enemySoulDamageSequence;
+        private SoulLossPresentation _soulLossPresentation;
         private readonly List<ShopPriceBadgeView> _shopPriceBadges =
             new List<ShopPriceBadgeView>();
         private Color _playerSoulBaseColor;
         private Vector3 _playerSoulBaseScale;
         private bool _hasPlayerSoulBaseState;
+        private Color _enemySoulBaseColor;
+        private Vector3 _enemySoulBaseScale;
+        private bool _hasEnemySoulBaseState;
+        private bool _playerSoulOverrideActive;
+        private int _playerSoulOverrideCurrent;
+        private int _playerSoulOverrideMaximum;
+        private bool _enemySoulOverrideActive;
+        private int _enemySoulOverrideCurrent;
+        private int _enemySoulOverrideMaximum;
 
         public event Action<GameSceneCombatHudCommand> CombatCommandRequested;
 
@@ -121,6 +155,7 @@ namespace DiaBlackJack.GameScene
             HideCombatControls();
             BindShopLeaveControl();
             SetShopLeaveState(visible: false, interactable: false);
+            EnsureSoulLossPresentation();
         }
 
         private void OnDestroy()
@@ -131,6 +166,9 @@ namespace DiaBlackJack.GameScene
             }
 
             _soulRestoreSequence?.Kill();
+            CancelSoulLossPresentation();
+            _soulLossPresentation?.Dispose();
+            _soulLossPresentation = null;
             UnbindCombatControls();
             UnbindShopLeaveControl();
         }
@@ -150,14 +188,14 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            if (playerSoulText != null)
+            if (playerSoulText != null && !_playerSoulOverrideActive)
             {
                 CurrencyIconText.Set(
                     playerSoulText,
                     $"{CurrencyIconMarkup.SoulTag} {core.PlayerSoul}");
             }
 
-            if (enemySoulText != null)
+            if (enemySoulText != null && !_enemySoulOverrideActive)
             {
                 CurrencyIconText.Set(
                     enemySoulText,
@@ -241,6 +279,256 @@ namespace DiaBlackJack.GameScene
             _playerSoulBaseColor = playerSoulText.color;
             _playerSoulBaseScale = playerSoulText.transform.localScale;
             _hasPlayerSoulBaseState = true;
+        }
+
+        internal void BeginSoulLossHold(SoulLossRecord record)
+        {
+            if (record.TargetSide == CombatantSide.Player)
+            {
+                if (!_playerSoulOverrideActive)
+                {
+                    _playerSoulOverrideCurrent = record.SoulBefore;
+                    _playerSoulOverrideMaximum = record.MaximumSoul;
+                }
+
+                _playerSoulOverrideActive = true;
+                WriteSoulValue(
+                    playerSoulText,
+                    _playerSoulOverrideCurrent,
+                    _playerSoulOverrideMaximum);
+                return;
+            }
+
+            if (!_enemySoulOverrideActive)
+            {
+                _enemySoulOverrideCurrent = record.SoulBefore;
+                _enemySoulOverrideMaximum = record.MaximumSoul;
+            }
+
+            _enemySoulOverrideActive = true;
+            WriteSoulValue(
+                enemySoulText,
+                _enemySoulOverrideCurrent,
+                _enemySoulOverrideMaximum);
+        }
+
+        internal void ApplySoulLossUnit(SoulLossRecord record)
+        {
+            if (record.TargetSide == CombatantSide.Player)
+            {
+                _playerSoulOverrideActive = true;
+                _playerSoulOverrideMaximum = record.MaximumSoul;
+                _playerSoulOverrideCurrent = Mathf.Max(
+                    record.SoulAfter,
+                    _playerSoulOverrideCurrent - 1);
+                WriteSoulValue(
+                    playerSoulText,
+                    _playerSoulOverrideCurrent,
+                    _playerSoulOverrideMaximum);
+                PlaySoulDamageFlourish(CombatantSide.Player);
+                return;
+            }
+
+            _enemySoulOverrideActive = true;
+            _enemySoulOverrideMaximum = record.MaximumSoul;
+            _enemySoulOverrideCurrent = Mathf.Max(
+                record.SoulAfter,
+                _enemySoulOverrideCurrent - 1);
+            WriteSoulValue(
+                enemySoulText,
+                _enemySoulOverrideCurrent,
+                _enemySoulOverrideMaximum);
+            PlaySoulDamageFlourish(CombatantSide.Enemy);
+        }
+
+        internal void CompleteSoulLossHold(
+            CombatantSide side,
+            int current,
+            int maximum)
+        {
+            if (side == CombatantSide.Player)
+            {
+                _playerSoulOverrideActive = false;
+                _playerSoulOverrideCurrent = current;
+                _playerSoulOverrideMaximum = maximum;
+                WriteSoulValue(playerSoulText, current, maximum);
+                return;
+            }
+
+            _enemySoulOverrideActive = false;
+            _enemySoulOverrideCurrent = current;
+            _enemySoulOverrideMaximum = maximum;
+            WriteSoulValue(enemySoulText, current, maximum);
+        }
+
+        internal Sequence PlaySoulLossTokens(
+            IReadOnlyList<SoulLossRecord> records,
+            Vector3 enemyWorldAnchor,
+            Camera worldCamera,
+            Action<SoulLossRecord> onImpact)
+        {
+            EnsureSoulLossPresentation();
+            _soulLossPresentation?.SetSettings(CreateSoulLossTokenSettings());
+            return _soulLossPresentation?.Play(
+                records,
+                enemyWorldAnchor,
+                worldCamera,
+                onImpact);
+        }
+
+        internal void CancelSoulLossPresentation()
+        {
+            _soulLossPresentation?.Cancel();
+            _soulRestoreSequence?.Kill();
+            _soulRestoreSequence = null;
+            KillSoulDamageFlourish(
+                playerSoulText,
+                ref _playerSoulDamageSequence,
+                _playerSoulBaseColor,
+                _playerSoulBaseScale,
+                _hasPlayerSoulBaseState);
+            KillSoulDamageFlourish(
+                enemySoulText,
+                ref _enemySoulDamageSequence,
+                _enemySoulBaseColor,
+                _enemySoulBaseScale,
+                _hasEnemySoulBaseState);
+            _playerSoulOverrideActive = false;
+            _enemySoulOverrideActive = false;
+        }
+
+        internal bool IsSoulLossHoldActive(CombatantSide side) =>
+            side == CombatantSide.Player
+                ? _playerSoulOverrideActive
+                : _enemySoulOverrideActive;
+
+        private void EnsureSoulLossPresentation()
+        {
+            if (_soulLossPresentation != null)
+            {
+                return;
+            }
+
+            _canvas ??= GetComponentInParent<Canvas>();
+            TMP_Text template = playerSoulText != null
+                ? playerSoulText
+                : enemySoulText;
+            if (_canvas != null && template != null)
+            {
+                _soulLossPresentation = new SoulLossPresentation(
+                    _canvas,
+                    template,
+                    CreateSoulLossTokenSettings());
+            }
+        }
+
+        private SoulLossTokenSettings CreateSoulLossTokenSettings()
+        {
+            return new SoulLossTokenSettings(
+                soulLossTokenColor,
+                soulLossTokenFontScale,
+                soulLossTokenMinimumFontSize,
+                soulLossTokenSize,
+                soulLossTokenFallSeconds,
+                soulLossTokenStaggerSeconds,
+                soulLossTokenImpactSeconds,
+                soulLossTokenFadeSeconds,
+                soulLossTokenStartRandomX,
+                soulLossTokenStartYRange,
+                soulLossTokenDriftX,
+                soulLossTokenFallDistanceRange,
+                soulLossTokenRotation,
+                soulLossPlayerAnchor,
+                soulLossEnemyFallbackAnchor);
+        }
+
+        private void PlaySoulDamageFlourish(CombatantSide side)
+        {
+            TMP_Text target = side == CombatantSide.Player
+                ? playerSoulText
+                : enemySoulText;
+            if (target == null)
+            {
+                return;
+            }
+
+            CaptureSoulBaseState(side);
+            Sequence previous = side == CombatantSide.Player
+                ? _playerSoulDamageSequence
+                : _enemySoulDamageSequence;
+            previous?.Kill();
+            Color baseColor = side == CombatantSide.Player
+                ? _playerSoulBaseColor
+                : _enemySoulBaseColor;
+            Vector3 baseScale = side == CombatantSide.Player
+                ? _playerSoulBaseScale
+                : _enemySoulBaseScale;
+            target.color = Color.red;
+            target.transform.localScale = baseScale * 1.25f;
+            Sequence sequence = DOTween.Sequence()
+                .Append(DOTween.To(
+                        () => target.color,
+                        color => target.color = color,
+                        baseColor,
+                        0.3f)
+                    .SetEase(Ease.OutQuad))
+                .Join(target.transform
+                    .DOScale(baseScale, 0.3f)
+                    .SetEase(Ease.OutBack));
+            if (side == CombatantSide.Player)
+            {
+                sequence.OnComplete(() => _playerSoulDamageSequence = null);
+                _playerSoulDamageSequence = sequence;
+            }
+            else
+            {
+                sequence.OnComplete(() => _enemySoulDamageSequence = null);
+                _enemySoulDamageSequence = sequence;
+            }
+        }
+
+        private void CaptureSoulBaseState(CombatantSide side)
+        {
+            if (side == CombatantSide.Player)
+            {
+                CapturePlayerSoulBaseState();
+                return;
+            }
+
+            if (_hasEnemySoulBaseState || enemySoulText == null)
+            {
+                return;
+            }
+
+            _enemySoulBaseColor = enemySoulText.color;
+            _enemySoulBaseScale = enemySoulText.transform.localScale;
+            _hasEnemySoulBaseState = true;
+        }
+
+        private static void KillSoulDamageFlourish(
+            TMP_Text target,
+            ref Sequence sequence,
+            Color baseColor,
+            Vector3 baseScale,
+            bool hasBaseState)
+        {
+            sequence?.Kill();
+            sequence = null;
+            if (target != null && hasBaseState)
+            {
+                target.color = baseColor;
+                target.transform.localScale = baseScale;
+            }
+        }
+
+        private static void WriteSoulValue(
+            TMP_Text target,
+            int current,
+            int maximum)
+        {
+            CurrencyIconText.Set(
+                target,
+                $"{CurrencyIconMarkup.SoulTag} {current} / {maximum}");
         }
 
         /// <summary>

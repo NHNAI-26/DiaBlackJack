@@ -172,10 +172,12 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(hudPrefab, Is.Not.Null);
 
             CombatPromptView prefabView = promptPrefab.GetComponent<CombatPromptView>();
-            CanvasGroup group = promptPrefab.GetComponent<CanvasGroup>();
-            Graphic text = promptPrefab.transform.Find("Text").GetComponent<Graphic>();
-            Image background = promptPrefab.GetComponent<Image>();
-            RectTransform rect = promptPrefab.GetComponent<RectTransform>();
+            Transform layoutRoot = promptPrefab.transform.Find("LayoutRoot");
+            Assert.That(layoutRoot, Is.Not.Null);
+            CanvasGroup group = layoutRoot.GetComponent<CanvasGroup>();
+            Graphic text = layoutRoot.Find("Text").GetComponent<Graphic>();
+            Image background = layoutRoot.GetComponent<Image>();
+            RectTransform rect = layoutRoot.GetComponent<RectTransform>();
             Assert.That(prefabView.HasRequiredReferences, Is.True);
             Assert.That(group.blocksRaycasts, Is.False);
             Assert.That(group.interactable, Is.False);
@@ -196,7 +198,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 hudPrefab.GetComponentsInChildren<CombatPromptView>(true),
                 Has.Length.EqualTo(1));
 
-            RectTransform nestedRect = nested.GetComponent<RectTransform>();
+            RectTransform nestedRect = nested.transform.Find("LayoutRoot")
+                .GetComponent<RectTransform>();
             Assert.That(nestedRect.anchorMin, Is.EqualTo(rect.anchorMin));
             Assert.That(nestedRect.anchorMax, Is.EqualTo(rect.anchorMax));
             Assert.That(nestedRect.pivot, Is.EqualTo(rect.pivot));
@@ -258,8 +261,28 @@ namespace DiaBlackJack.CoreLoop.Tests
                 .GetComponentInChildren<CombatPromptView>(true);
             GameObject source = PrefabUtility.GetCorrespondingObjectFromSource(
                 nested.gameObject);
+            Transform sourceLayout = promptPrefab.transform.Find("LayoutRoot");
+            Transform nestedLayout = nested.transform.Find("LayoutRoot");
+            PropertyModification[] modifications =
+                PrefabUtility.GetPropertyModifications(nested.gameObject) ??
+                Array.Empty<PropertyModification>();
+            var layoutObjects = new HashSet<Object>(
+                sourceLayout.GetComponentsInChildren<Component>(true)
+                    .Cast<Object>());
+            foreach (Transform transform in sourceLayout.GetComponentsInChildren<Transform>(true))
+            {
+                layoutObjects.Add(transform.gameObject);
+            }
 
             Assert.That(source, Is.EqualTo(promptPrefab));
+            Assert.That(
+                PrefabUtility.GetCorrespondingObjectFromSource(nestedLayout.gameObject),
+                Is.EqualTo(sourceLayout.gameObject));
+            Assert.That(
+                modifications.Where(modification =>
+                    layoutObjects.Contains(modification.target)),
+                Is.Empty,
+                "HUD must not override any authored CombatPrompt LayoutRoot property.");
         }
 
         [Test]
@@ -271,7 +294,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             try
             {
                 CombatPromptView view = instance.GetComponent<CombatPromptView>();
-                CanvasGroup group = instance.GetComponent<CanvasGroup>();
+                CanvasGroup group = instance.GetComponentInChildren<CanvasGroup>(true);
 
                 view.Render(new CombatPromptRequest(CombatPromptId.ChangeCard));
 

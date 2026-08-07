@@ -157,7 +157,10 @@ namespace DiaBlackJack.CoreLoop
 
         public void ApplyOwnerSoulDamage(int amount)
         {
-            Owner.Soul.ApplyDamage(amount);
+            _battle.ApplySoulDamage(
+                ActiveContract.OwnerSide,
+                amount,
+                SoulLossCause.DemonContractCost);
         }
 
         public void DiscardAllOwnerFaceUpCards()

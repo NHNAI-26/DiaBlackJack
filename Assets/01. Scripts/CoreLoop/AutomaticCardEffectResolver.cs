@@ -73,7 +73,10 @@ namespace DiaBlackJack.CoreLoop
 
         public void ApplyOwnerSoulDamage(int amount)
         {
-            Battle.ApplySoulDamage(OwnerSide, amount);
+            Battle.ApplySoulDamage(
+                OwnerSide,
+                amount,
+                SoulLossCause.AutomaticCardCost);
         }
 
         public void RegisterPoisonWinReward(int healAmount)

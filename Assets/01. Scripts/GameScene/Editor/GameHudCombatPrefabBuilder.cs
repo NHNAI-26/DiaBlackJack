@@ -24,6 +24,7 @@ namespace DiaBlackJack.GameScene.Editor
             "Assets/03. Prefabs/UI/GameScene/RevolverNumberSelector.prefab";
         private const string CombatPromptPrefabPath =
             "Assets/03. Prefabs/UI/GameScene/CombatPrompt.prefab";
+        private const string CombatPromptLayoutRootName = "LayoutRoot";
         private const string CombatPromptCatalogPath =
             "Assets/02. ScriptableObjects/UI/CombatPromptCatalog.asset";
         private const string CoreLoopTestScenePath =
@@ -186,7 +187,6 @@ namespace DiaBlackJack.GameScene.Editor
         {
             CombatPromptCatalogSO catalog = CreateOrLoadCombatPromptCatalog();
             ValidateCombatPromptPrefabAsset(catalog);
-            BuildRevolverNumberSelectorPrefabAsset();
 
             GameObject hudRoot = PrefabUtility.LoadPrefabContents(HudPrefabPath);
             try
@@ -218,8 +218,6 @@ namespace DiaBlackJack.GameScene.Editor
                 serialized.FindProperty("combatPromptView").objectReferenceValue =
                     combatPrompt;
                 serialized.ApplyModifiedPropertiesWithoutUndo();
-
-                InstallRevolverNumberSelector(hudRoot, hud);
                 PrefabUtility.SaveAsPrefabAsset(hudRoot, HudPrefabPath);
             }
             finally
@@ -513,10 +511,13 @@ namespace DiaBlackJack.GameScene.Editor
             CombatPromptView view = prefab == null
                 ? null
                 : prefab.GetComponent<CombatPromptView>();
-            if (view == null || !view.HasRequiredReferences)
+            Transform layoutRoot = prefab == null
+                ? null
+                : prefab.transform.Find(CombatPromptLayoutRootName);
+            if (view == null || !view.HasRequiredReferences || layoutRoot == null)
             {
                 throw new InvalidOperationException(
-                    "Author CombatPrompt.prefab with CombatPromptView and all required references before building the HUD.");
+                    "Author CombatPrompt.prefab with CombatPromptView, LayoutRoot, and all required references before building the HUD.");
             }
 
             SerializedObject serialized = new SerializedObject(view);
@@ -530,18 +531,31 @@ namespace DiaBlackJack.GameScene.Editor
         private static CombatPromptView InstallCombatPrompt(
             Transform controls)
         {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(CombatPromptPrefabPath);
             Transform existing = controls.Find("CombatPrompt");
             if (existing != null)
             {
+                CombatPromptView existingView =
+                    existing.GetComponent<CombatPromptView>();
+                GameObject source = PrefabUtility.GetCorrespondingObjectFromSource(
+                    existing.gameObject);
+                if (existingView != null &&
+                    source == prefab &&
+                    existing.Find(CombatPromptLayoutRootName) != null)
+                {
+                    Stretch(existing.GetComponent<RectTransform>());
+                    return existingView;
+                }
+
                 UnityEngine.Object.DestroyImmediate(existing.gameObject);
             }
 
-            GameObject prefab =
-                AssetDatabase.LoadAssetAtPath<GameObject>(CombatPromptPrefabPath);
             GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(
                 prefab,
                 controls);
             instance.name = "CombatPrompt";
+            Stretch(instance.GetComponent<RectTransform>());
             return instance.GetComponent<CombatPromptView>();
         }
 

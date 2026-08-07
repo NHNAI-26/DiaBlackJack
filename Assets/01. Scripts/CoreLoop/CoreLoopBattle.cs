@@ -52,6 +52,9 @@ namespace DiaBlackJack.CoreLoop
             new List<ActiveDemonContract>();
         private readonly List<PublicCombatAction> _publicActionHistory =
             new List<PublicCombatAction>();
+        private readonly List<SoulLossRecord> _soulLossHistory =
+            new List<SoulLossRecord>();
+        private long _nextSoulLossRecordId;
         private int? _lastPublicActionSourceCardId;
         private int _lastAutomaticCardResultActionOrdinal = -1;
         private int _lastSatanForcedDrawActionOrdinal = -1;
@@ -398,6 +401,9 @@ namespace DiaBlackJack.CoreLoop
         /// </summary>
         public event Action Stepped;
 
+        internal IReadOnlyList<SoulLossRecord> SoulLossHistory =>
+            _soulLossHistory.AsReadOnly();
+
         public CardEffectResult? LastCardEffectResult { get; private set; }
 
         public CombatantSide? LastCardEffectActorSide { get; private set; }
@@ -702,7 +708,10 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
-            Player.Soul.ApplyDamage(availability.SoulCost);
+            ApplySoulDamage(
+                CombatantSide.Player,
+                availability.SoulCost,
+                SoulLossCause.DemonContractCost);
             UsedPlayerBaseDemonContractCount = checked(
                 UsedPlayerBaseDemonContractCount + 1);
             _playerDemonContractSoulAfterCost = Player.Soul.Current;
@@ -837,7 +846,10 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
-            ApplySoulDamage(CombatantSide.Enemy, availability.SoulCost);
+            ApplySoulDamage(
+                CombatantSide.Enemy,
+                availability.SoulCost,
+                SoulLossCause.DemonContractCost);
             _enemyDemonContractSoulAfterCost = Enemy.Soul.Current;
             _enemyDemonContractCandidates = EnemyDemonDeck.TakeCandidates(
                 _enemyDemonContractCandidateCount);
@@ -1885,7 +1897,10 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
-            Player.Soul.ApplyDamage(NextPlayerChangeSoulCost);
+            ApplySoulDamage(
+                CombatantSide.Player,
+                NextPlayerChangeSoulCost,
+                SoulLossCause.ChangeCost);
             if (!Player.TryBeginChange(out PlayerChangeSelection selection))
             {
                 throw new InvalidOperationException(
@@ -1936,7 +1951,10 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
-            ApplySoulDamage(CombatantSide.Enemy, NextEnemyChangeSoulCost);
+            ApplySoulDamage(
+                CombatantSide.Enemy,
+                NextEnemyChangeSoulCost,
+                SoulLossCause.ChangeCost);
             if (!Enemy.TryBeginChange(out PlayerChangeSelection selection))
             {
                 throw new InvalidOperationException(
@@ -2705,11 +2723,57 @@ namespace DiaBlackJack.CoreLoop
 
         internal void ApplySoulDamage(CombatantSide ownerSide, int amount)
         {
-            GetParticipant(ownerSide).Soul.ApplyDamage(amount);
+            ApplySoulDamage(
+                ownerSide,
+                amount,
+                SoulLossCause.AutomaticCardCost);
+        }
+
+        internal void ApplySoulDamage(
+            CombatantSide ownerSide,
+            int amount,
+            SoulLossCause cause)
+        {
+            BattleParticipant participant = GetParticipant(ownerSide);
+            int soulBefore = participant.Soul.Current;
+            participant.Soul.ApplyDamage(amount);
+            RecordSoulLoss(
+                ownerSide,
+                soulBefore,
+                participant.Soul,
+                cause,
+                resolutionId: null);
             if (ownerSide == CombatantSide.Enemy)
             {
                 AdvanceFixedEnemyDemonContractPhases();
             }
+        }
+
+        private void RecordSoulLoss(
+            CombatantSide targetSide,
+            int soulBefore,
+            SoulPool soul,
+            SoulLossCause cause,
+            long? resolutionId)
+        {
+            if (soul == null)
+            {
+                throw new ArgumentNullException(nameof(soul));
+            }
+
+            if (soul.Current >= soulBefore)
+            {
+                return;
+            }
+
+            _soulLossHistory.Add(new SoulLossRecord(
+                _nextSoulLossRecordId++,
+                targetSide,
+                soulBefore,
+                soul.Current,
+                soul.Maximum,
+                cause,
+                resolutionId));
         }
 
         internal void RegisterPoisonWinReward(
@@ -6499,7 +6563,10 @@ namespace DiaBlackJack.CoreLoop
                 .TryGetSingleHiddenCard(out BlackjackCard hiddenCard)
                     ? hiddenCard.Id
                     : (int?)null;
-            ApplySoulDamage(side, 1);
+            ApplySoulDamage(
+                side,
+                1,
+                SoulLossCause.AutomaticCardCost);
             if (participant.Soul.IsDepleted)
             {
                 return false;
@@ -7058,7 +7125,23 @@ namespace DiaBlackJack.CoreLoop
                 this,
                 _activeEnemyDemonContracts);
             State = CoreLoopState.ResolvingRound;
-            _damageApplier.TryApply(resolution, Player.Soul, Enemy.Soul);
+            int playerSoulBefore = Player.Soul.Current;
+            int enemySoulBefore = Enemy.Soul.Current;
+            if (_damageApplier.TryApply(resolution, Player.Soul, Enemy.Soul))
+            {
+                RecordSoulLoss(
+                    CombatantSide.Player,
+                    playerSoulBefore,
+                    Player.Soul,
+                    SoulLossCause.RoundDamage,
+                    resolution.Id);
+                RecordSoulLoss(
+                    CombatantSide.Enemy,
+                    enemySoulBefore,
+                    Enemy.Soul,
+                    SoulLossCause.RoundDamage,
+                    resolution.Id);
+            }
             AdvanceFixedEnemyDemonContractPhases();
             _automaticCardBattleState.ResolvePoisonWinRewards(
                 resolution,

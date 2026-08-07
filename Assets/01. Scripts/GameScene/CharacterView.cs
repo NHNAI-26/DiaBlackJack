@@ -90,6 +90,24 @@ namespace DiaBlackJack.GameScene
         private bool _initialized;
         private bool _isMerchantMode;
 
+        internal Vector3 SoulLossAnchorWorldPosition
+        {
+            get
+            {
+                EnsureInitialized();
+                if (sprite == null)
+                {
+                    return transform.position;
+                }
+
+                Bounds bounds = sprite.bounds;
+                return new Vector3(
+                    bounds.center.x,
+                    bounds.max.y,
+                    bounds.center.z);
+            }
+        }
+
         private void Awake()
         {
             EnsureInitialized();

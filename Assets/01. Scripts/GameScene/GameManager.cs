@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Border.Audio;
+using DG.Tweening;
 using DiaBlackJack.Bootstrap;
 using DiaBlackJack.Content;
 using DiaBlackJack.CoreLoop;
@@ -148,6 +149,7 @@ namespace DiaBlackJack.GameScene
             "heartSoundSlow";
         private const string CardSelectionHeartFastSfxId =
             "heartSoundFast";
+        private const string ComparisonCardSfxId = "click";
 
         [Header("Cinematic camera")]
         [SerializeField] private GameSceneCameraViewController cameraViewController;
@@ -236,6 +238,10 @@ namespace DiaBlackJack.GameScene
         private PlayerMammonComparisonPlan _pendingPlayerMammonComparison;
         private CardView _comparisonHighlightedCard;
         private long _lastRoundComparisonResolutionId = -1;
+        private readonly List<SoulLossRecord> _pendingRoundSoulLossRecords =
+            new List<SoulLossRecord>();
+        private long _lastQueuedSoulLossRecordId = -1;
+        private bool _soulLossPresentationActive;
 
         internal const float DefaultTerminalSpeechHoldSeconds = 1.5f;
 
@@ -295,6 +301,7 @@ namespace DiaBlackJack.GameScene
             enemyCharacter?.TrySetEnemyProfile(_activeEnemyProfileKey);
             ApplyEnemyDeckTopTint();
             _inputLocked = !unlockInput;
+            SynchronizeSoulLossCursor();
 
             _tutorialDirector = null;
             _tutorialIntroCompleted = false;
@@ -399,6 +406,8 @@ namespace DiaBlackJack.GameScene
         /// </summary>
         internal void PrepareEnemyAppearance(StageProgressionSession session)
         {
+            ResetCameraToCurrentView();
+
             string profileKey = session?.ActiveStage?.BattleProfileKey ??
                 ResolveEnemyProfileKey();
             enemyCharacter?.ExitMerchant();
@@ -554,6 +563,7 @@ namespace DiaBlackJack.GameScene
                 UnbindBattle();
             }
 
+            bool isEnteringFormalShop = !shop.IsOpen || !shop.IsFormal;
             bool keepLighterSelection = _choosingLighterRemoval &&
                 deckPreview != null &&
                 deckPreview.IsSingleSelection;
@@ -562,7 +572,12 @@ namespace DiaBlackJack.GameScene
             _inputLocked = !unlockInput;
             _choosingLighterRemoval = keepLighterSelection;
             shop.OpenFormal(model);
-            SetBattleCardObjectsVisible(false);
+            if (isEnteringFormalShop)
+            {
+                ResetCameraToCurrentView();
+            }
+
+            SetShopCardObjectsVisible();
             if (keepLighterSelection)
             {
                 deckPreview.OpenForSingleSelection(
@@ -572,6 +587,8 @@ namespace DiaBlackJack.GameScene
             hud?.SetGold(currentGold);
             hud?.SetPlayerSoul(model.PlayerSoul);
             hud?.SetEnemyStatusVisible(false);
+            remainingDeck?.Render(model.ShopOwnedCards.Count);
+            discardDeck?.Render(0);
             UpdateShopLeaveControl();
             return true;
         }
@@ -593,6 +610,20 @@ namespace DiaBlackJack.GameScene
         {
             SetComponentActive(enemyRemainingDeck, visible);
             SetComponentActive(enemyDiscardDeck, visible);
+        }
+
+        internal void SetShopCardObjectsVisible()
+        {
+            UpdateHover(null);
+            UpdateDemonCardHover(null);
+            UpdateDeckStackHover(null);
+
+            SetComponentActive(playerHand, false);
+            SetComponentActive(enemyHand, false);
+            SetComponentActive(remainingDeck, true);
+            SetComponentActive(discardDeck, true);
+            SetComponentActive(enemyRemainingDeck, false);
+            SetComponentActive(enemyDiscardDeck, false);
         }
 
         internal void SetBattleCardObjectsVisible(bool visible)
@@ -807,6 +838,7 @@ namespace DiaBlackJack.GameScene
         {
             if (Battle != null)
             {
+                SynchronizeSoulLossCursor();
                 RefreshView();
             }
         }
@@ -835,6 +867,8 @@ namespace DiaBlackJack.GameScene
                 codex.HoverBadgeCleared +=
                     HandleCodexHoverBadgeCleared;
             }
+
+            SynchronizeSoulLossCursor();
         }
 
         private void OnDisable()
@@ -1103,7 +1137,7 @@ namespace DiaBlackJack.GameScene
             TableCombatCommandView pointedCombatCommand = !shopOpen && hasHit
                 ? hit.collider.GetComponentInParent<TableCombatCommandView>()
                 : null;
-            DeckClickable pointedDeck = !shopOpen && hasHit
+            DeckClickable pointedDeck = hasHit
                 ? hit.collider.GetComponentInParent<DeckClickable>()
                 : null;
             DeckStackView pointedDeckStack =
@@ -1637,13 +1671,20 @@ namespace DiaBlackJack.GameScene
         private void OpenDeckPreview(DeckKind kind)
         {
             CoreLoopBattle battle = Battle;
-            if (battle == null)
+            GameSceneDeckViewModel model;
+            if (battle != null)
+            {
+                model = GameScenePresenter.CreateDeckPreview(battle, kind);
+            }
+            else if (shop != null && shop.IsOpen && _formalShopModel != null)
+            {
+                model = CreateShopOwnedDeckPreview(
+                    _formalShopModel.ShopOwnedCards);
+            }
+            else
             {
                 return;
             }
-
-            GameSceneDeckViewModel model =
-                GameScenePresenter.CreateDeckPreview(battle, kind);
 
             EnsureDeckPreview();
             if (deckPreview == null)
@@ -1658,6 +1699,41 @@ namespace DiaBlackJack.GameScene
             UpdateCombatCommandHover(null);
             deckPreview.Open(model);
             BeginDeckPreviewSwitchInputLock();
+        }
+
+        internal static GameSceneDeckViewModel CreateShopOwnedDeckPreview(
+            IReadOnlyList<ShopOwnedCardViewModel> options)
+        {
+            if (options == null)
+            {
+                throw new ArgumentNullException(nameof(options));
+            }
+
+            var groups =
+                new List<GameSceneDeckCardGroupViewModel>(options.Count);
+            for (int i = 0; i < options.Count; i++)
+            {
+                ShopOwnedCardViewModel option = options[i];
+                CardDefinition definition =
+                    CardDefinitionCatalog.GetByKey(option.DefinitionKey);
+                var card = new GameSceneCardViewModel(
+                    option.CardId,
+                    option.Rank,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    definition.DisplayName,
+                    option.AbilityDescription,
+                    option.Suit,
+                    showHoverBadgeWhenUnavailable: true,
+                    option.DefinitionKey);
+                groups.Add(new GameSceneDeckCardGroupViewModel(card, 1));
+            }
+
+            return new GameSceneDeckViewModel(
+                DeckKind.Draw,
+                "MY DECK",
+                groups);
         }
 
         private void CloseDeckPreview()
@@ -3076,7 +3152,8 @@ namespace DiaBlackJack.GameScene
                     GameScenePresenter.Create(battle, _activeEnemyProfileKey);
                 if (ShouldQueuePlayerRevolverReadySnapshot(
                         _timeline.Count,
-                        current.RevolverAnimationCue))
+                        current.RevolverAnimationCue) ||
+                    HasUnqueuedSoulLoss(current))
                 {
                     _timeline.Add(current);
                 }
@@ -3326,6 +3403,10 @@ namespace DiaBlackJack.GameScene
                     continue;
                 }
 
+                List<SoulLossRecord> immediateSoulLossRecords =
+                    new List<SoulLossRecord>();
+                CollectNewSoulLossRecords(vm, immediateSoulLossRecords);
+
                 bool revealKnifeCardWithThrow =
                     pendingKnifeReveal != null &&
                     IsMatchingKnifeResolvedBeat(pendingKnifeReveal, vm);
@@ -3418,6 +3499,13 @@ namespace DiaBlackJack.GameScene
                     playedAnimation,
                     waitSeconds);
 
+				_tutorialDirector?.Observe();
+
+				if (immediateSoulLossRecords.Count > 0)
+				{
+					yield return PlaySoulLossRecords(immediateSoulLossRecords);
+				}
+
                 if (comparisonBeat)
                 {
                     yield return PlayRoundComparison(vm, comparisonPlan);
@@ -3450,7 +3538,8 @@ namespace DiaBlackJack.GameScene
 
                 if (directResolutionBeat)
                 {
-                    CompleteDirectRoundResolutionPresentation(comparisonPlan);
+                    yield return CompleteDirectRoundResolutionPresentation(
+                        comparisonPlan);
                 }
 
                 pendingKnifeReveal = null;
@@ -3625,7 +3714,7 @@ namespace DiaBlackJack.GameScene
             yield return new WaitForSeconds(
                 Mathf.Max(resolveHoldSeconds, MinimumRoundResultHoldSeconds));
 
-            OnRoundResolutionResultHeld(plan);
+            yield return OnRoundResolutionResultHeld(plan);
             totals?.CompleteComparison(
                 vm.PlayerTotalsText,
                 vm.EnemyTotalsText);
@@ -3635,15 +3724,15 @@ namespace DiaBlackJack.GameScene
             _roundComparisonActive = false;
         }
 
-        private void CompleteDirectRoundResolutionPresentation(
+        private IEnumerator CompleteDirectRoundResolutionPresentation(
             RoundComparisonPlan plan)
         {
             if (plan == null)
             {
-                return;
+                yield break;
             }
 
-            OnRoundResolutionResultHeld(plan);
+            yield return OnRoundResolutionResultHeld(plan);
             _lastRoundComparisonResolutionId = plan.ResolutionId;
             _pendingPlayerMammonComparison = null;
             _roundComparisonActive = false;
@@ -3687,6 +3776,7 @@ namespace DiaBlackJack.GameScene
                 side,
                 step.Total,
                 comparisonCountSeconds);
+            SoundManager.Current?.PlaySfx(ComparisonCardSfxId);
             if (comparisonCountSeconds > 0f)
             {
                 yield return new WaitForSeconds(comparisonCountSeconds);
@@ -3768,19 +3858,214 @@ namespace DiaBlackJack.GameScene
 
             _roundComparisonActive = false;
             _pendingPlayerMammonComparison = null;
+            CancelSoulLossPresentation(resetResolutionHistory);
             if (resetResolutionHistory)
             {
                 _lastRoundComparisonResolutionId = -1;
             }
         }
 
-        /// <summary>
-        /// Single extension seam for the follow-up shared soul-loss presentation. The immutable
-        /// plan already carries both damage values and the resolution id at this exact beat.
-        /// </summary>
-        private static void OnRoundResolutionResultHeld(RoundComparisonPlan plan)
+        private IEnumerator OnRoundResolutionResultHeld(RoundComparisonPlan plan)
         {
-            _ = plan;
+            if (plan == null)
+            {
+                yield break;
+            }
+
+            List<SoulLossRecord> records = new List<SoulLossRecord>();
+            for (int index = _pendingRoundSoulLossRecords.Count - 1;
+                 index >= 0;
+                 index--)
+            {
+                SoulLossRecord record = _pendingRoundSoulLossRecords[index];
+                if (record.ResolutionId != plan.ResolutionId)
+                {
+                    continue;
+                }
+
+                records.Add(record);
+                _pendingRoundSoulLossRecords.RemoveAt(index);
+            }
+
+            records.Sort((left, right) => left.Id.CompareTo(right.Id));
+            yield return PlaySoulLossRecords(records);
+        }
+
+        private bool HasUnqueuedSoulLoss(GameSceneViewModel vm)
+        {
+            IReadOnlyList<SoulLossRecord> records = vm?.SoulLossHistory;
+            return HasUnqueuedSoulLoss(
+                _lastQueuedSoulLossRecordId,
+                records);
+        }
+
+        internal static bool HasUnqueuedSoulLoss(
+            long lastQueuedRecordId,
+            IReadOnlyList<SoulLossRecord> records)
+        {
+            return records != null &&
+                records.Count > 0 &&
+                records[records.Count - 1].Id > lastQueuedRecordId;
+        }
+
+        private void CollectNewSoulLossRecords(
+            GameSceneViewModel vm,
+            ICollection<SoulLossRecord> immediateRecords)
+        {
+            IReadOnlyList<SoulLossRecord> records = vm?.SoulLossHistory;
+            if (records == null)
+            {
+                return;
+            }
+
+            for (int index = 0; index < records.Count; index++)
+            {
+                SoulLossRecord record = records[index];
+                if (record.Id <= _lastQueuedSoulLossRecordId)
+                {
+                    continue;
+                }
+
+                hud?.BeginSoulLossHold(record);
+                _soulLossPresentationActive = true;
+                if (record.Cause == SoulLossCause.RoundDamage)
+                {
+                    _pendingRoundSoulLossRecords.Add(record);
+                }
+                else
+                {
+                    immediateRecords?.Add(record);
+                }
+
+                _lastQueuedSoulLossRecordId = record.Id;
+            }
+        }
+
+        private IEnumerator PlaySoulLossRecords(
+            IReadOnlyList<SoulLossRecord> records)
+        {
+            if (records == null || records.Count == 0)
+            {
+                yield break;
+            }
+
+            _soulLossPresentationActive = true;
+            _camera ??= Camera.main;
+            Vector3 enemyAnchor = enemyCharacter != null
+                ? enemyCharacter.SoulLossAnchorWorldPosition
+                : Vector3.zero;
+            Action<SoulLossRecord> onImpact = record =>
+            {
+                hud?.ApplySoulLossUnit(record);
+                if (record.TargetSide == CombatantSide.Player)
+                {
+                    PresentationManager.Current?.PlaySoulLossFlashPulse();
+                }
+            };
+            Sequence sequence = hud?.PlaySoulLossTokens(
+                records,
+                enemyAnchor,
+                _camera,
+                onImpact);
+            if (sequence != null)
+            {
+                while (sequence.IsActive() && sequence.IsPlaying())
+                {
+                    yield return null;
+                }
+            }
+            else
+            {
+                for (int recordIndex = 0;
+                     recordIndex < records.Count;
+                     recordIndex++)
+                {
+                    SoulLossRecord record = records[recordIndex];
+                    for (int unit = 0; unit < record.LossAmount; unit++)
+                    {
+                        onImpact(record);
+                    }
+                }
+            }
+
+            PresentationManager.Current?.CompleteSoulLossFlash();
+            CompleteSoulLossHolds(records);
+            _soulLossPresentationActive =
+                _pendingRoundSoulLossRecords.Count > 0;
+        }
+
+        private void CompleteSoulLossHolds(
+            IReadOnlyList<SoulLossRecord> records)
+        {
+            SoulLossRecord? lastPlayer = null;
+            SoulLossRecord? lastEnemy = null;
+            for (int index = 0; index < records.Count; index++)
+            {
+                SoulLossRecord record = records[index];
+                if (record.TargetSide == CombatantSide.Player)
+                {
+                    lastPlayer = record;
+                }
+                else
+                {
+                    lastEnemy = record;
+                }
+            }
+
+            if (lastPlayer.HasValue &&
+                !HasPendingRoundSoulLoss(CombatantSide.Player))
+            {
+                SoulLossRecord record = lastPlayer.Value;
+                hud?.CompleteSoulLossHold(
+                    CombatantSide.Player,
+                    record.SoulAfter,
+                    record.MaximumSoul);
+            }
+
+            if (lastEnemy.HasValue &&
+                !HasPendingRoundSoulLoss(CombatantSide.Enemy))
+            {
+                SoulLossRecord record = lastEnemy.Value;
+                hud?.CompleteSoulLossHold(
+                    CombatantSide.Enemy,
+                    record.SoulAfter,
+                    record.MaximumSoul);
+            }
+        }
+
+        private bool HasPendingRoundSoulLoss(CombatantSide side)
+        {
+            for (int index = 0;
+                 index < _pendingRoundSoulLossRecords.Count;
+                 index++)
+            {
+                if (_pendingRoundSoulLossRecords[index].TargetSide == side)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void SynchronizeSoulLossCursor()
+        {
+            IReadOnlyList<SoulLossRecord> records = Battle?.SoulLossHistory;
+            _lastQueuedSoulLossRecordId = records != null && records.Count > 0
+                ? records[records.Count - 1].Id
+                : -1;
+        }
+
+        private void CancelSoulLossPresentation(bool resetHistory)
+        {
+            hud?.CancelSoulLossPresentation();
+            PresentationManager.Current?.CompleteSoulLossFlash();
+            _pendingRoundSoulLossRecords.Clear();
+            _soulLossPresentationActive = false;
+            if (resetHistory)
+            {
+                _lastQueuedSoulLossRecordId = -1;
+            }
         }
 
         private void RefreshView()
@@ -3835,7 +4120,7 @@ namespace DiaBlackJack.GameScene
             bool hideCombatHudForPresentation =
                 ShouldHideCombatHudForPresentation(
                     _inputLocked,
-                    _roundComparisonActive,
+                    _roundComparisonActive || _soulLossPresentationActive,
                     deferRoundResultPresentation,
                     hasBlockingAnimationCue);
             GameSceneCombatHudViewModel combat =
@@ -5398,6 +5683,11 @@ namespace DiaBlackJack.GameScene
             return cameraViewController;
         }
 
+        internal void ResetCameraToCurrentView()
+        {
+            ResolveCameraViewController()?.SetView(GameSceneCameraView.Current);
+        }
+
         private AppliedAnimationResult CreateAppliedAnimationResult(
             bool playedRevolver,
             bool playedKnife,
@@ -6175,8 +6465,9 @@ namespace DiaBlackJack.GameScene
         private void OpenStandaloneShop()
         {
             CloseDeckPreview();
+            ResetCameraToCurrentView();
             shop.Open(CurrentEnemyProfileKey);
-            SetBattleCardObjectsVisible(false);
+            SetShopCardObjectsVisible();
         }
 
         private void CloseStandaloneShop()
