@@ -119,7 +119,6 @@ namespace DiaBlackJack.CoreLoop.UI
             GUILayout.Label(
                 CurrencyIconGui.Content(_model.LastCardEffect),
                 _bodyStyle);
-            DrawAutomaticCardStatus();
             GUILayout.FlexibleSpace();
             DrawActions();
             GUILayout.Space(4f);
@@ -201,6 +200,8 @@ namespace DiaBlackJack.CoreLoop.UI
 
         private void DrawActions()
         {
+            DrawCombatPrompt();
+
             if (_model.CanRestart || _model.Outcome != BattleOutcome.InProgress)
             {
                 bool previousEnabled = GUI.enabled;
@@ -304,7 +305,6 @@ namespace DiaBlackJack.CoreLoop.UI
         private void DrawChangeCandidates()
         {
             var candidates = _model.ChangeCandidates;
-            DrawSelectionPrompt();
             GUILayout.Space(8f);
             GUILayout.BeginHorizontal();
 
@@ -360,7 +360,6 @@ namespace DiaBlackJack.CoreLoop.UI
         private void DrawCardEffectChoices()
         {
             var choices = _model.CardEffectChoices;
-            DrawSelectionPrompt();
             GUILayout.Space(8f);
 
             const int choicesPerRow = 5;
@@ -393,32 +392,6 @@ namespace DiaBlackJack.CoreLoop.UI
             GUI.enabled = wasEnabled;
         }
 
-        private void DrawAutomaticCardStatus()
-        {
-            AutomaticCardResultViewModel result =
-                _model.AutomaticCardResult;
-            if (result == null)
-            {
-                return;
-            }
-
-            GUILayout.BeginVertical(
-                GUI.skin.box,
-                GUILayout.ExpandWidth(true));
-            GUILayout.Label("AUTOMATIC CARD", _headingStyle);
-            GUILayout.Label(
-                CurrencyIconGui.Content(result.PublicSummary),
-                _bodyStyle);
-            if (!string.IsNullOrEmpty(result.PrivateSummary))
-            {
-                GUILayout.Label(
-                    CurrencyIconGui.Content(result.PrivateSummary),
-                    _warningStyle);
-            }
-
-            GUILayout.EndVertical();
-        }
-
         private void DrawAutomaticCardChoices()
         {
             AutomaticCardInteractionViewModel interaction =
@@ -428,7 +401,6 @@ namespace DiaBlackJack.CoreLoop.UI
                 return;
             }
 
-            DrawSelectionPrompt();
             GUILayout.Space(8f);
 
             const int choicesPerRow = 5;
@@ -467,8 +439,6 @@ namespace DiaBlackJack.CoreLoop.UI
         private void DrawDemonContractChoices()
         {
             DemonContractPanelViewModel contract = _model.DemonContract;
-            DrawSelectionPrompt();
-
             GUILayout.Space(6f);
             bool wasEnabled = GUI.enabled;
             int choicesPerRow = contract.UsesContractCandidateLayout ? 3 : 5;
@@ -529,14 +499,29 @@ namespace DiaBlackJack.CoreLoop.UI
             GUI.enabled = wasEnabled;
         }
 
-        private void DrawSelectionPrompt()
+        private void DrawCombatPrompt()
         {
-            if (_inputLocked ||
-                !_model.SelectionPrompt.HasValue ||
-                combatPromptCatalog == null ||
+            if (combatPromptCatalog == null)
+            {
+                return;
+            }
+
+            string text;
+            if (_model.SelectionPrompt.HasValue)
+            {
+                if (_inputLocked ||
+                    !combatPromptCatalog.TryResolve(
+                        _model.SelectionPrompt.Value,
+                        out text))
+                {
+                    return;
+                }
+            }
+            else if (!_model.AutomaticCardResult.HasValue ||
                 !combatPromptCatalog.TryResolve(
-                    _model.SelectionPrompt.Value,
-                    out string text))
+                    _model.AutomaticCardResult.Value,
+                    _model.EnemyDisplayName,
+                    out text))
             {
                 return;
             }

@@ -57,6 +57,8 @@ namespace DiaBlackJack.CoreLoop
         private long _nextSoulLossRecordId;
         private int? _lastPublicActionSourceCardId;
         private int _lastAutomaticCardResultActionOrdinal = -1;
+        private AutomaticCardResultPromptRequest?
+            _automaticCardResultPrompt;
         private int _lastSatanForcedDrawActionOrdinal = -1;
         private int _lastSatanNumberGuessActionOrdinal = -1;
         private int _lastSatanNumberGuessTargetCardId = -1;
@@ -519,6 +521,9 @@ namespace DiaBlackJack.CoreLoop
         internal int InjectedPoisonCardCount => _injectedPoisonCardIds.Count;
 
         public AutomaticCardResult? LastAutomaticCardResult { get; private set; }
+
+        internal AutomaticCardResultPromptRequest?
+            AutomaticCardResultPrompt => _automaticCardResultPrompt;
 
         public AutomaticCardDecision? LastEnemyAutomaticCardDecision
         {
@@ -3059,6 +3064,10 @@ namespace DiaBlackJack.CoreLoop
                         "Automatic card effect has no continuation.");
 
             LastAutomaticCardResult = result;
+            _automaticCardResultPrompt =
+                CreateAutomaticCardResultPromptRequest(
+                    sourceCard,
+                    result);
             _lastAutomaticCardResultActionOrdinal = _publicActionHistory.Count;
             _pendingAutomaticCardInteraction = null;
             _activeAutomaticCardEffectContext = null;
@@ -5582,6 +5591,7 @@ namespace DiaBlackJack.CoreLoop
             _publicActionHistory.Clear();
             _lastPublicActionSourceCardId = null;
             _lastAutomaticCardResultActionOrdinal = -1;
+            _automaticCardResultPrompt = null;
             _lastSatanForcedDrawActionOrdinal = -1;
             _lastSatanNumberGuessActionOrdinal = -1;
             _lastSatanNumberGuessTargetCardId = -1;
@@ -6515,6 +6525,7 @@ namespace DiaBlackJack.CoreLoop
         private void NotifyNormalTurnEnded(CombatantSide actorSide)
         {
             TurnNumber++;
+            _automaticCardResultPrompt = null;
 
             IReadOnlyList<ActiveDemonContract> activeContracts =
                 actorSide == CombatantSide.Player
@@ -6528,6 +6539,7 @@ namespace DiaBlackJack.CoreLoop
 
         private void EndBattleWithoutRound()
         {
+            _automaticCardResultPrompt = null;
             CancelPendingEffectResolutions();
             _automaticCardBattleState.ClearRoundState();
             ClearPlayerDemonContractInteraction();
@@ -6546,6 +6558,54 @@ namespace DiaBlackJack.CoreLoop
             CleanupBattleContracts();
             State = CoreLoopState.BattleEnded;
             RaiseStepped();
+        }
+
+        private AutomaticCardResultPromptRequest
+            CreateAutomaticCardResultPromptRequest(
+                BlackjackCard sourceCard,
+                AutomaticCardResult result)
+        {
+            int? declaredNumber = null;
+            AutomaticCardHiddenComparison comparison =
+                AutomaticCardHiddenComparison.None;
+            AutomaticCardResultOutcome outcome =
+                AutomaticCardResultOutcome.None;
+
+            if (result.EffectKind == CardEffectKind.Poison)
+            {
+                outcome = PendingPoisonWinRewardCount > 0
+                    ? AutomaticCardResultOutcome.WinHealReserved
+                    : AutomaticCardResultOutcome.ReservationResolved;
+            }
+            else if (result.EffectKind == CardEffectKind.LieDetector &&
+                LastLieDetectorPublicResult.HasValue &&
+                LastLieDetectorPublicResult.Value.SourceCardId ==
+                    result.SourceCardId)
+            {
+                LieDetectorPublicResult publicResult =
+                    LastLieDetectorPublicResult.Value;
+                declaredNumber = publicResult.DeclaredNumber;
+                if (result.OwnerSide == CombatantSide.Player &&
+                    PlayerHiddenCardComparisonKnowledge.HasValue)
+                {
+                    HiddenCardComparisonKnowledge knowledge =
+                        PlayerHiddenCardComparisonKnowledge.Value;
+                    comparison = knowledge.IsAtLeastDeclaredNumber
+                        ? AutomaticCardHiddenComparison.AtLeastDeclared
+                        : AutomaticCardHiddenComparison.BelowDeclared;
+                }
+            }
+
+            return new AutomaticCardResultPromptRequest(
+                AutomaticCardResultPromptIdMap.ForEffect(result.EffectKind),
+                sourceCard.Definition.DisplayName,
+                result.OwnerSide,
+                result.SourceDisposition,
+                result.PlayerDecision,
+                result.EnemyDecision,
+                declaredNumber,
+                comparison,
+                outcome);
         }
 
         internal bool PayResurrectionHerbSoulAndRedeal(

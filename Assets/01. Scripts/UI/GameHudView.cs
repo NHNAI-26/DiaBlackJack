@@ -79,8 +79,6 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameHudChoiceButton[] optionSlots = Array.Empty<GameHudChoiceButton>();
         [SerializeField] private RevolverNumberSelectorView revolverNumberSelector;
         [SerializeField] private DemonCardHoverDetailView demonCardHoverDetail;
-        [SerializeField] private GameObject automaticCardResultPanel;
-        [SerializeField] private TMP_Text automaticCardResultText;
         [SerializeField] private CardContentCatalogSO cardContentCatalog;
 
         private Canvas _canvas;
@@ -207,7 +205,7 @@ namespace DiaBlackJack.GameScene
                 roundText.text = BuildRoundText(core);
             }
 
-            RenderCombat(combat);
+            RenderCombat(core, combat);
         }
 
         /// <summary>
@@ -924,13 +922,22 @@ namespace DiaBlackJack.GameScene
             CombatCommandRequested?.Invoke(command);
         }
 
-        private void RenderCombat(GameSceneCombatHudViewModel combat)
+        private void RenderCombat(
+            CoreLoopViewModel core,
+            GameSceneCombatHudViewModel combat)
         {
             HideCombatActionTooltip();
 
             if (combat?.SelectionPrompt is CombatPromptRequest promptRequest)
             {
                 combatPromptView?.Render(promptRequest);
+            }
+            else if (combat?.AutomaticCardResult is
+                AutomaticCardResultPromptRequest resultRequest)
+            {
+                combatPromptView?.Render(
+                    resultRequest,
+                    core.EnemyDisplayName);
             }
             else
             {
@@ -984,17 +991,6 @@ namespace DiaBlackJack.GameScene
             {
                 optionScrollRect.gameObject.SetActive(hasDefaultAction);
             }
-            SetActive(
-                automaticCardResultPanel,
-                !string.IsNullOrEmpty(combat.AutomaticCardResult));
-
-            if (automaticCardResultText != null)
-            {
-                CurrencyIconText.Set(
-                    automaticCardResultText,
-                    combat.AutomaticCardResult);
-            }
-
             if (combat.Mode == GameSceneCombatHudMode.Actions)
             {
                 RenderOptionActions(combat.HeaderText, combat.OptionActions);
@@ -1225,7 +1221,6 @@ namespace DiaBlackJack.GameScene
             revolverNumberSelector?.Hide();
             SetActive(combatControlsRoot, false);
             SetActive(optionPanel, false);
-            SetActive(automaticCardResultPanel, false);
         }
 
         private static void SetActive(GameObject target, bool isActive)

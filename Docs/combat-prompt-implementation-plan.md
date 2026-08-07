@@ -45,3 +45,15 @@
 검증: `[Category("CP04")]`, `CombatPromptTests`,
 `GameSceneCombatHudPresentationTests`, 카드 선택 관련 테스트,
 CoreLoop EditMode 어셈블리, GameScene 해상도별 수동 확인.
+
+### CP-04 추가 범위 — AutomaticCardResult 공통 Prompt 통합
+
+- 구조화 결과 ID/요청과 턴 종료 기반 표시 수명 추가
+- SO 결과 템플릿·상태 라벨·토큰 검증 추가
+- HUD/IMGUI 별도 결과 UI 제거와 공통 Prompt 우선순위 연결
+- HUD 프리팹/빌더의 레거시 결과 패널 제거
+- DebugManager에 양측 10종 실제 자동카드 디버거 연결
+- 자동카드 결과를 `나는/내` 문장으로 바꾸고 현재 적 프로필 이름을
+  HUD/IMGUI의 SO 해석에 전달
+
+검증: `[Category("CP04")]` 5종 결과/토큰/수명/우선순위/양측 10종, `CP01`, 두 프레젠테이션 테스트 클래스, CoreLoop EditMode 어셈블리, GameScene validation 및 Console 오류 확인.

@@ -47,3 +47,21 @@
 - 런타임 카탈로그 누락/오류는 ID별 한 번만 오류를 기록하고 숨긴다.
 - 선택 종료, 입력 잠금, 상점, 전투 외 연출에서는 `SelectionPrompt = null`이며
   Prompt가 소유하는 선택 표면도 함께 숨긴다.
+
+## CP-04 자동카드 결과 요청
+
+`AutomaticCardResultPromptId`는 1..5의 고정 숫자를 사용한다. `AutomaticCardResultPromptRequest`는 카드명, 소유자, 유지/버림, 양측 결정, 선언 숫자, 비공개 비교와 결과 상태만 보유한다. 표시 문구는 포함하지 않는다.
+
+`CombatPromptCatalogSO`는 `{source}`, `{owner}`,
+`{ownerPossessive}`, `{enemy}`, `{disposition}`,
+`{playerDecision}`, `{enemyDecision}`, `{declared}`,
+`{comparison}`, `{outcome}`을 치환한다. 적 이름은
+`CoreLoopViewModel.EnemyDisplayName`을 해석 시점에 전달하며, 비어 있거나
+`UNPROFILED ENEMY`이면 SO의 `적` 라벨을 사용한다. 거짓말 탐지기의
+비공개 비교 행은 비교 데이터가 있을 때만 SO의 보조 템플릿을 붙인다.
+
+`CoreLoopBattle.LastAutomaticCardResult`는 규칙 기록으로 계속 유지한다. 별도 Prompt 스냅샷은 결과 완료 시 생성하고 `NotifyNormalTurnEnded`, 새 라운드 시작 또는 즉시 전투 종료에서 제거한다. `CoreLoopViewModel`과 `GameSceneCombatHudViewModel`은 이 nullable 구조체를 그대로 투영한다.
+
+`GameHudView`와 IMGUI는 `SelectionPrompt > AutomaticCardResult > 숨김` 우선순위를 사용한다. 페이드와 유지 타이머는 없다.
+
+`AutomaticCardDebugPanel`은 Play Mode와 닫힌 상점에서만 실행하며, DebugManager Inspector에 플레이어 5종과 상대 5종 버튼을 노출한다. 각 버튼은 결정적 덱과 정상 CoreLoop 입력을 사용한다.

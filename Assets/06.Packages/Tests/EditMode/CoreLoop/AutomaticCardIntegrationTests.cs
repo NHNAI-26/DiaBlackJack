@@ -37,10 +37,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             CoreLoopViewModel resultModel =
                 CoreLoopPresenter.Create(session.Battle);
             Assert.That(resultModel.AutomaticCardInteraction, Is.Null);
-            Assert.That(resultModel.AutomaticCardResult, Is.Not.Null);
+            Assert.That(resultModel.AutomaticCardResult, Is.Null);
             Assert.That(
-                resultModel.AutomaticCardResult.PublicSummary,
-                Does.Contain("WIN HEAL RESERVED"));
+                session.Battle.LastAutomaticCardResult.Value.EffectKind,
+                Is.EqualTo(CardEffectKind.Poison));
         }
 
         [Test]
@@ -95,6 +95,16 @@ namespace DiaBlackJack.CoreLoop.Tests
                 enemyPolicy);
             Assert.That(battle.Start(), Is.True);
 
+            AutomaticCardResultPromptRequest? presentedResult = null;
+            battle.Stepped += () =>
+            {
+                CoreLoopViewModel stepped = CoreLoopPresenter.Create(battle);
+                if (stepped.AutomaticCardResult.HasValue)
+                {
+                    presentedResult = stepped.AutomaticCardResult;
+                }
+            };
+
             Assert.That(battle.TryPlayerStand(), Is.True);
 
             Assert.That(
@@ -103,12 +113,14 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 battle.LastLieDetectorPublicResult.Value.WasComparable,
                 Is.True);
-            CoreLoopViewModel model = CoreLoopPresenter.Create(battle);
-            Assert.That(model.AutomaticCardResult, Is.Not.Null);
-            Assert.That(model.AutomaticCardResult.PrivateSummary, Is.Empty);
+            Assert.That(presentedResult.HasValue, Is.True);
             Assert.That(
-                model.AutomaticCardResult.PublicSummary,
-                Does.Contain("DECLARED"));
+                presentedResult.Value.Id,
+                Is.EqualTo(AutomaticCardResultPromptId.LieDetector));
+            Assert.That(presentedResult.Value.DeclaredNumber.HasValue, Is.True);
+            Assert.That(
+                presentedResult.Value.Comparison,
+                Is.EqualTo(AutomaticCardHiddenComparison.None));
         }
 
         [Test]

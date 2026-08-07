@@ -132,7 +132,7 @@ namespace DiaBlackJack.GameScene
             IReadOnlyList<GameSceneCombatHudActionViewModel> primaryActions,
             IReadOnlyList<GameSceneCombatHudActionViewModel> optionActions,
             IReadOnlyList<GameSceneCombatHudContractCandidateViewModel> contractCandidates,
-            string automaticCardResult)
+            AutomaticCardResultPromptRequest? automaticCardResult)
         {
             Mode = mode;
             SelectionPrompt = selectionPrompt;
@@ -141,7 +141,7 @@ namespace DiaBlackJack.GameScene
             OptionActions = optionActions ?? Array.Empty<GameSceneCombatHudActionViewModel>();
             ContractCandidates = contractCandidates ??
                 Array.Empty<GameSceneCombatHudContractCandidateViewModel>();
-            AutomaticCardResult = automaticCardResult ?? string.Empty;
+            AutomaticCardResult = automaticCardResult;
         }
 
         public GameSceneCombatHudMode Mode { get; }
@@ -156,7 +156,7 @@ namespace DiaBlackJack.GameScene
 
         public IReadOnlyList<GameSceneCombatHudContractCandidateViewModel> ContractCandidates { get; }
 
-        public string AutomaticCardResult { get; }
+        public AutomaticCardResultPromptRequest? AutomaticCardResult { get; }
     }
 
     public static class GameSceneCombatHudPresenter
@@ -183,7 +183,8 @@ namespace DiaBlackJack.GameScene
                 return CreateHidden();
             }
 
-            string automaticCardResult = FormatAutomaticCardResult(core.AutomaticCardResult);
+            AutomaticCardResultPromptRequest? automaticCardResult =
+                core.AutomaticCardResult;
             CombatPromptRequest? selectionPrompt = core.SelectionPrompt;
             if (core.State == CoreLoopState.BattleEnded)
             {
@@ -203,6 +204,20 @@ namespace DiaBlackJack.GameScene
                                 "RESTART",
                                 core.CanRestart && !inputLocked)
                         },
+                    Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
+                    automaticCardResult);
+            }
+
+            if (automaticCardResult.HasValue &&
+                core.IsResolvingAutomaticCardEffect &&
+                core.AutomaticCardInteraction == null)
+            {
+                return new GameSceneCombatHudViewModel(
+                    GameSceneCombatHudMode.Actions,
+                    selectionPrompt: null,
+                    string.Empty,
+                    Array.Empty<GameSceneCombatHudActionViewModel>(),
+                    Array.Empty<GameSceneCombatHudActionViewModel>(),
                     Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
                     automaticCardResult);
             }
@@ -557,13 +572,13 @@ namespace DiaBlackJack.GameScene
                 Array.Empty<GameSceneCombatHudActionViewModel>(),
                 Array.Empty<GameSceneCombatHudActionViewModel>(),
                 Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
-                string.Empty);
+                automaticCardResult: null);
         }
 
         private static GameSceneCombatHudViewModel CreateOptions(
             CombatPromptRequest? selectionPrompt,
             IReadOnlyList<GameSceneCombatHudActionViewModel> options,
-            string automaticCardResult)
+            AutomaticCardResultPromptRequest? automaticCardResult)
         {
             return new GameSceneCombatHudViewModel(
                 GameSceneCombatHudMode.Options,
@@ -679,18 +694,5 @@ namespace DiaBlackJack.GameScene
             return false;
         }
 
-        private static string FormatAutomaticCardResult(
-            AutomaticCardResultViewModel result)
-        {
-            if (result == null)
-            {
-                return string.Empty;
-            }
-
-            string text = "AUTOMATIC CARD\n" + result.PublicSummary;
-            return string.IsNullOrEmpty(result.PrivateSummary)
-                ? text
-                : text + "\n" + result.PrivateSummary;
-        }
     }
 }

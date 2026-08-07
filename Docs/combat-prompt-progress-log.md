@@ -60,3 +60,41 @@
 - 2026-08-08: `GameScene` validation 결과 0 issues, missing script 0,
   broken prefab 0을 확인했다.
 - 실제 Game View에서의 1280×720/1920×1080 육안 검증은 수행하지 않았다.
+
+## CP-04 자동카드 결과 확장
+
+- 2026-08-08: `AutomaticCardResultPromptRequest`와 5개 고정 ID를 추가하고, 결과 완료 시 만든 Prompt 스냅샷을 행동 턴 종료에서 제거하도록 구현했다. 기존 `LastAutomaticCardResult` 규칙 기록은 유지했다.
+- 2026-08-08: 별도 HUD 결과 패널과 IMGUI 결과 박스를 제거했다. 선택 안내 우선, 결과 차선의 공통 `CombatPromptView` 렌더링으로 통합했다.
+- 2026-08-08: 5종 결과 템플릿과 소유자·유지/버림·양측 결정·선언·비공개 비교·결과 상태 라벨을 `CombatPromptCatalogSO`로 이동했다.
+- 2026-08-08: `DebugManager`에 `AutomaticCardDebugPanel`을 추가하고 GameScene 참조를 연결했다. 플레이어/상대 각 5종은 결정적 덱에서 실제 CoreLoop Hit/Stand 및 선택 경로를 실행한다.
+
+## CP-04 자동카드 결과 검증
+
+- 최종 Unity MCP job `8aeafec26fcd41c2ae294d8ced59c250`: `CP04` 17/17 통과.
+- Unity MCP job `1ec70e1d6d254e05b21ceb55c07ebc1f`: `CP01` 9/9 통과.
+- Unity MCP job `2c11fcb74be84665a0e7d937537b83e9`: `CoreLoopPresentationTests` + `GameSceneCombatHudPresentationTests` 136/136 통과.
+- CoreLoop EditMode 어셈블리 job `cc2ae62fdb204896a556bb795e816b15`: 899건 중 885 통과, 14건 실패. 실패는 Codex·카드 콘텐츠/프리팹·외곽선·말풍선·라이터·상점 등 기존/동시 작업 에셋이며 CP-04 대상 실패는 없다.
+- `GameScene` validation 0 issues, missing script 0, broken prefab 0. 최종 컴파일 오류 0, Console 오류 0을 확인했다.
+- 실제 Game View 1280×720/1920×1080 육안 검증은 수행하지 않았다.
+
+## CP-04 자동카드 1인칭·적 이름 표시
+
+- 2026-08-08: 자동카드 결과 템플릿을 상태 나열에서 문장형 한국어로
+  교체했다. 플레이어는 `나는/내`, 적은 현재
+  `CoreLoopViewModel.EnemyDisplayName`을 사용하며 프로필 없는 전투는
+  `적`으로 대체한다.
+- 2026-08-08: `{enemy}`, `{ownerPossessive}` 토큰과 적 이름을 받는
+  카탈로그·뷰 오버로드를 추가했다. 규칙 요청 구조, Prompt 우선순위,
+  즉시 표시·숨김, 턴 종료 수명은 변경하지 않았다.
+- 최종 Unity MCP job `6ecde15789624eee84b55a39aa4c3071`:
+  `CP04` 24/24 통과. 5종 문장 치환, 6개 적 프로필 이름, 독립 전투
+  대체 문구, 빈 대체 라벨 검증을 포함한다.
+- Unity MCP job `370591b24e5f4d609ba7123e448d88d8`:
+  `CoreLoopPresentationTests` + `GameSceneCombatHudPresentationTests`
+  136/136 통과.
+- `CP01` job `377576bffbb14f418abc7fd9d18fb318`은 9건 중
+  8건 통과했다. 실패 1건은 이번 작업에서 수정하지 않은
+  `HUD.prefab`의 중첩 `CombatPrompt` `m_fontSizeMax = 32`
+  오버라이드를 검출한 기존 프리팹 위치 검사다.
+- `GameScene` validation 0 issues, missing script 0, broken prefab 0.
+  최종 컴파일 오류 0, Console 오류 0을 확인했다.

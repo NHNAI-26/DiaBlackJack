@@ -95,17 +95,6 @@ namespace DiaBlackJack.GameScene.Editor
                 Stretch(tooltipText.rectTransform, 16f);
                 tooltip.gameObject.SetActive(false);
 
-                RectTransform automaticResult = CreatePanel(
-                    "AutomaticCardResult", controls, panelBrush, new Color(0.07f, 0.05f, 0.06f, 0.94f));
-                automaticResult.anchorMin = new Vector2(0.5f, 1f);
-                automaticResult.anchorMax = new Vector2(0.5f, 1f);
-                automaticResult.pivot = new Vector2(0.5f, 1f);
-                automaticResult.anchoredPosition = new Vector2(0f, -98f);
-                automaticResult.sizeDelta = new Vector2(660f, 100f);
-                TMP_Text automaticResultText = CreateText(
-                    "Text", automaticResult, font, 16f, TextAlignmentOptions.Center);
-                Stretch(automaticResultText.rectTransform, 14f);
-
                 RectTransform optionPanel = CreateOverlay("OptionPanel", controls);
                 TMP_Text optionPrompt = CreateText(
                     "HeaderText", optionPanel, font, 22f, TextAlignmentOptions.Center);
@@ -148,8 +137,6 @@ namespace DiaBlackJack.GameScene.Editor
                     optionSlots,
                     contractDetailPanel.gameObject,
                     contractDetail,
-                    automaticResult.gameObject,
-                    automaticResultText,
                     contentCatalog);
                 InstallRevolverNumberSelector(hudRoot, hud);
                 PrefabUtility.SaveAsPrefabAsset(hudRoot, HudPrefabPath);
@@ -1047,8 +1034,6 @@ namespace DiaBlackJack.GameScene.Editor
             GameHudChoiceButton[] optionSlots,
             GameObject contractDetailPanel,
             GameHudContractDetailView contractDetail,
-            GameObject automaticResult,
-            TMP_Text automaticResultText,
             CardContentCatalogSO cardContentCatalog)
         {
             SerializedObject serialized = new SerializedObject(hud);
@@ -1063,8 +1048,6 @@ namespace DiaBlackJack.GameScene.Editor
             serialized.FindProperty("contractDetailPanel").objectReferenceValue =
                 contractDetailPanel;
             serialized.FindProperty("contractDetailView").objectReferenceValue = contractDetail;
-            serialized.FindProperty("automaticCardResultPanel").objectReferenceValue = automaticResult;
-            serialized.FindProperty("automaticCardResultText").objectReferenceValue = automaticResultText;
             serialized.FindProperty("cardContentCatalog").objectReferenceValue = cardContentCatalog;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }

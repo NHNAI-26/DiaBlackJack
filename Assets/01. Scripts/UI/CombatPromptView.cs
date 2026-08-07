@@ -38,6 +38,38 @@ namespace DiaBlackJack.GameScene
             gameObject.SetActive(true);
         }
 
+        public void Render(AutomaticCardResultPromptRequest request)
+        {
+            Render(request, string.Empty);
+        }
+
+        public void Render(
+            AutomaticCardResultPromptRequest request,
+            string enemyDisplayName)
+        {
+            if (!HasRequiredReferences)
+            {
+                LogMissingReferenceOnce();
+                Hide();
+                return;
+            }
+
+            if (!catalog.TryResolve(
+                    request,
+                    enemyDisplayName,
+                    out string resolvedText))
+            {
+                Hide();
+                return;
+            }
+
+            CurrencyIconText.Set(promptText, resolvedText);
+            canvasGroup.alpha = 1f;
+            canvasGroup.blocksRaycasts = false;
+            canvasGroup.interactable = false;
+            gameObject.SetActive(true);
+        }
+
         public void Hide()
         {
             if (canvasGroup == null)

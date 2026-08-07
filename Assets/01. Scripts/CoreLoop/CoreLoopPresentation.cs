@@ -114,32 +114,6 @@ namespace DiaBlackJack.CoreLoop.UI
         public IReadOnlyList<AutomaticCardChoiceViewModel> Choices { get; }
     }
 
-    public sealed class AutomaticCardResultViewModel
-    {
-        public AutomaticCardResultViewModel(
-            string sourceDisplayName,
-            string ownerLabel,
-            string publicSummary,
-            string privateSummary)
-        {
-            SourceDisplayName = sourceDisplayName ??
-                throw new ArgumentNullException(nameof(sourceDisplayName));
-            OwnerLabel = ownerLabel ??
-                throw new ArgumentNullException(nameof(ownerLabel));
-            PublicSummary = publicSummary ??
-                throw new ArgumentNullException(nameof(publicSummary));
-            PrivateSummary = privateSummary ?? string.Empty;
-        }
-
-        public string SourceDisplayName { get; }
-
-        public string OwnerLabel { get; }
-
-        public string PublicSummary { get; }
-
-        public string PrivateSummary { get; }
-    }
-
     public sealed class CoreLoopViewModel
     {
         public CoreLoopViewModel(
@@ -176,7 +150,7 @@ namespace DiaBlackJack.CoreLoop.UI
             string lastCardEffect,
             bool isResolvingCardEffect,
             AutomaticCardInteractionViewModel automaticCardInteraction,
-            AutomaticCardResultViewModel automaticCardResult,
+            AutomaticCardResultPromptRequest? automaticCardResult,
             bool isResolvingAutomaticCardEffect,
             DemonContractPanelViewModel demonContract,
             bool canRestart)
@@ -301,7 +275,7 @@ namespace DiaBlackJack.CoreLoop.UI
             get;
         }
 
-        public AutomaticCardResultViewModel AutomaticCardResult { get; }
+        public AutomaticCardResultPromptRequest? AutomaticCardResult { get; }
 
         public bool IsResolvingAutomaticCardEffect { get; }
 
@@ -368,7 +342,7 @@ namespace DiaBlackJack.CoreLoop.UI
                 FormatLastCardEffect(battle.LastCardEffectResult),
                 battle.State == CoreLoopState.PlayerResolvingCardEffect,
                 automaticInteraction,
-                FormatAutomaticCardResult(battle),
+                battle.AutomaticCardResultPrompt,
                 battle.State ==
                     CoreLoopState.ResolvingAutomaticCardEffect,
                 demonContract,
@@ -649,93 +623,6 @@ namespace DiaBlackJack.CoreLoop.UI
                 demonContract?.OwnerPreview,
                 currentCount,
                 requiredCount);
-        }
-
-        private static AutomaticCardResultViewModel
-            FormatAutomaticCardResult(CoreLoopBattle battle)
-        {
-            if (!battle.LastAutomaticCardResult.HasValue)
-            {
-                return null;
-            }
-
-            AutomaticCardResult result =
-                battle.LastAutomaticCardResult.Value;
-            string sourceDisplayName =
-                FormatEffectName(result.EffectKind);
-            string ownerLabel = result.OwnerSide ==
-                CombatantSide.Player
-                    ? "PLAYER"
-                    : "ENEMY";
-            string disposition = result.SourceDisposition ==
-                AutomaticCardSourceDisposition.Discard
-                    ? "SOURCE DISCARDED"
-                    : "SOURCE RETAINED";
-            string publicSummary =
-                $"{sourceDisplayName}  |  {ownerLabel}  |  {disposition}";
-            string privateSummary = string.Empty;
-
-            switch (result.EffectKind)
-            {
-                case CardEffectKind.Poison:
-                    publicSummary += battle.PendingPoisonWinRewardCount > 0
-                        ? "  |  WIN HEAL RESERVED"
-                        : "  |  RESERVATION RESOLVED";
-                    break;
-                case CardEffectKind.ResurrectionHerb:
-                    publicSummary +=
-                        $"  |  PLAYER {FormatDecision(result.PlayerDecision, "PAID", "DECLINED")}" +
-                        $"  |  ENEMY {FormatDecision(result.EnemyDecision, "PAID", "DECLINED")}";
-                    break;
-                case CardEffectKind.LieDetector:
-                    if (battle.LastLieDetectorPublicResult.HasValue)
-                    {
-                        LieDetectorPublicResult publicResult =
-                            battle.LastLieDetectorPublicResult.Value;
-                        publicSummary +=
-                            $"  |  DECLARED {publicResult.DeclaredNumber}";
-                    }
-
-                    if (result.OwnerSide == CombatantSide.Player &&
-                        battle.PlayerHiddenCardComparisonKnowledge.HasValue)
-                    {
-                        HiddenCardComparisonKnowledge knowledge =
-                            battle.PlayerHiddenCardComparisonKnowledge.Value;
-                        privateSummary =
-                            knowledge.IsAtLeastDeclaredNumber
-                                ? $"ENEMY HIDDEN CARD IS AT LEAST {knowledge.DeclaredNumber}"
-                                : $"ENEMY HIDDEN CARD IS BELOW {knowledge.DeclaredNumber}";
-                    }
-
-                    break;
-                case CardEffectKind.Flamethrower:
-                    publicSummary +=
-                        $"  |  PLAYER {FormatDecision(result.PlayerDecision, "DISCARDED", "SKIPPED")}" +
-                        $"  |  ENEMY {FormatDecision(result.EnemyDecision, "DISCARDED", "SKIPPED")}";
-                    break;
-                case CardEffectKind.PocketWatch:
-                    publicSummary += result.SourceDisposition ==
-                        AutomaticCardSourceDisposition.Discard
-                            ? "  |  WATCH DISCARDED"
-                            : "  |  WATCH REMAINS FACE UP";
-                    break;
-            }
-
-            return new AutomaticCardResultViewModel(
-                sourceDisplayName,
-                ownerLabel,
-                publicSummary,
-                privateSummary);
-        }
-
-        private static string FormatDecision(
-            AutomaticCardDecisionOutcome outcome,
-            string acceptedLabel,
-            string declinedLabel)
-        {
-            return outcome == AutomaticCardDecisionOutcome.Accepted
-                ? acceptedLabel
-                : declinedLabel;
         }
 
         private static string FormatCardDisabledReason(

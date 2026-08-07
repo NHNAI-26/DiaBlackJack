@@ -125,6 +125,163 @@ namespace DiaBlackJack.CoreLoop
         }
     }
 
+    public enum AutomaticCardResultPromptId
+    {
+        None = 0,
+        Poison = 1,
+        ResurrectionHerb = 2,
+        LieDetector = 3,
+        Flamethrower = 4,
+        PocketWatch = 5
+    }
+
+    public enum AutomaticCardHiddenComparison
+    {
+        None = 0,
+        AtLeastDeclared = 1,
+        BelowDeclared = 2
+    }
+
+    public enum AutomaticCardResultOutcome
+    {
+        None = 0,
+        WinHealReserved = 1,
+        ReservationResolved = 2
+    }
+
+    public readonly struct AutomaticCardResultPromptRequest :
+        IEquatable<AutomaticCardResultPromptRequest>
+    {
+        public AutomaticCardResultPromptRequest(
+            AutomaticCardResultPromptId id,
+            string sourceDisplayName,
+            CombatantSide ownerSide,
+            AutomaticCardSourceDisposition sourceDisposition,
+            AutomaticCardDecisionOutcome playerDecision =
+                AutomaticCardDecisionOutcome.None,
+            AutomaticCardDecisionOutcome enemyDecision =
+                AutomaticCardDecisionOutcome.None,
+            int? declaredNumber = null,
+            AutomaticCardHiddenComparison comparison =
+                AutomaticCardHiddenComparison.None,
+            AutomaticCardResultOutcome outcome =
+                AutomaticCardResultOutcome.None)
+        {
+            if (!Enum.IsDefined(typeof(AutomaticCardResultPromptId), id) ||
+                id == AutomaticCardResultPromptId.None)
+            {
+                throw new ArgumentOutOfRangeException(nameof(id));
+            }
+
+            if (declaredNumber.HasValue &&
+                (declaredNumber.Value < 1 || declaredNumber.Value > 10))
+            {
+                throw new ArgumentOutOfRangeException(nameof(declaredNumber));
+            }
+
+            Id = id;
+            SourceDisplayName = sourceDisplayName ?? string.Empty;
+            OwnerSide = ownerSide;
+            SourceDisposition = sourceDisposition;
+            PlayerDecision = playerDecision;
+            EnemyDecision = enemyDecision;
+            DeclaredNumber = declaredNumber;
+            Comparison = comparison;
+            Outcome = outcome;
+        }
+
+        public AutomaticCardResultPromptId Id { get; }
+
+        public string SourceDisplayName { get; }
+
+        public CombatantSide OwnerSide { get; }
+
+        public AutomaticCardSourceDisposition SourceDisposition { get; }
+
+        public AutomaticCardDecisionOutcome PlayerDecision { get; }
+
+        public AutomaticCardDecisionOutcome EnemyDecision { get; }
+
+        public int? DeclaredNumber { get; }
+
+        public AutomaticCardHiddenComparison Comparison { get; }
+
+        public AutomaticCardResultOutcome Outcome { get; }
+
+        public bool Equals(AutomaticCardResultPromptRequest other)
+        {
+            return Id == other.Id &&
+                SourceDisplayName == other.SourceDisplayName &&
+                OwnerSide == other.OwnerSide &&
+                SourceDisposition == other.SourceDisposition &&
+                PlayerDecision == other.PlayerDecision &&
+                EnemyDecision == other.EnemyDecision &&
+                DeclaredNumber == other.DeclaredNumber &&
+                Comparison == other.Comparison &&
+                Outcome == other.Outcome;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is AutomaticCardResultPromptRequest other &&
+                Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hashCode = (int)Id;
+                hashCode = (hashCode * 397) ^ SourceDisplayName.GetHashCode();
+                hashCode = (hashCode * 397) ^ (int)OwnerSide;
+                hashCode = (hashCode * 397) ^ (int)SourceDisposition;
+                hashCode = (hashCode * 397) ^ (int)PlayerDecision;
+                hashCode = (hashCode * 397) ^ (int)EnemyDecision;
+                hashCode = (hashCode * 397) ^ DeclaredNumber.GetHashCode();
+                hashCode = (hashCode * 397) ^ (int)Comparison;
+                hashCode = (hashCode * 397) ^ (int)Outcome;
+                return hashCode;
+            }
+        }
+
+        public static bool operator ==(
+            AutomaticCardResultPromptRequest left,
+            AutomaticCardResultPromptRequest right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(
+            AutomaticCardResultPromptRequest left,
+            AutomaticCardResultPromptRequest right)
+        {
+            return !left.Equals(right);
+        }
+    }
+
+    internal static class AutomaticCardResultPromptIdMap
+    {
+        public static AutomaticCardResultPromptId ForEffect(
+            CardEffectKind effectKind)
+        {
+            switch (effectKind)
+            {
+                case CardEffectKind.Poison:
+                    return AutomaticCardResultPromptId.Poison;
+                case CardEffectKind.ResurrectionHerb:
+                    return AutomaticCardResultPromptId.ResurrectionHerb;
+                case CardEffectKind.LieDetector:
+                    return AutomaticCardResultPromptId.LieDetector;
+                case CardEffectKind.Flamethrower:
+                    return AutomaticCardResultPromptId.Flamethrower;
+                case CardEffectKind.PocketWatch:
+                    return AutomaticCardResultPromptId.PocketWatch;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(effectKind));
+            }
+        }
+    }
+
     internal static class CombatPromptIdMap
     {
         public static CombatPromptId ForManualCard(CardEffectKind effectKind)

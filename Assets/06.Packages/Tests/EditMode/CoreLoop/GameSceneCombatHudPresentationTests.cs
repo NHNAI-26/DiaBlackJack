@@ -674,12 +674,23 @@ namespace DiaBlackJack.CoreLoop.Tests
                 action.Command.Kind == GameSceneCombatHudCommandKind.ResolveAutomaticCardChoice &&
                 action.Command.InteractionId == interaction.InteractionId), Is.True);
 
+            GameSceneCombatHudViewModel result = null;
+            session.Battle.Stepped += () =>
+            {
+                CoreLoopViewModel stepped = CoreLoopPresenter.Create(session.Battle);
+                if (stepped.AutomaticCardResult.HasValue)
+                {
+                    result = GameSceneCombatHudPresenter.Create(
+                        stepped, false, false, false);
+                }
+            };
             Assert.That(session.TryResolvePlayerAutomaticCardChoice(
                 interaction.InteractionId,
                 PoisonEffectHandler.PaySoulOptionId), Is.True);
-            GameSceneCombatHudViewModel result = GameSceneCombatHudPresenter.Create(
-                CoreLoopPresenter.Create(session.Battle), false, false, false);
-            Assert.That(result.AutomaticCardResult, Does.StartWith("AUTOMATIC CARD"));
+            Assert.That(result, Is.Not.Null);
+            Assert.That(
+                result.AutomaticCardResult?.Id,
+                Is.EqualTo(AutomaticCardResultPromptId.Poison));
         }
 
         [Test]
@@ -710,7 +721,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             GameSceneCombatHudViewModel committedPlayer =
                 GameSceneCombatHudPresenter.Create(
                     CoreLoopPresenter.Create(battle), false, false, false);
-            Assert.That(committedPlayer.AutomaticCardResult, Is.Empty);
+            Assert.That(committedPlayer.AutomaticCardResult, Is.Null);
             Assert.That(committedPlayer.Mode,
                 Is.EqualTo(GameSceneCombatHudMode.Hidden));
 
@@ -719,18 +730,27 @@ namespace DiaBlackJack.CoreLoop.Tests
             AutomaticCardChoiceOption enemySkip = enemyChoice.Options
                 .Single(option => option.OptionId ==
                     FlamethrowerEffectHandler.SkipOptionId);
+            GameSceneCombatHudViewModel revealed = null;
+            battle.Stepped += () =>
+            {
+                CoreLoopViewModel stepped = CoreLoopPresenter.Create(battle);
+                if (stepped.AutomaticCardResult.HasValue)
+                {
+                    revealed = GameSceneCombatHudPresenter.Create(
+                        stepped, false, false, false);
+                }
+            };
             Assert.That(battle.TryResolveAutomaticCardChoice(
                 CombatantSide.Enemy,
                 enemyChoice.InteractionId,
                 enemySkip.OptionId), Is.True);
-            GameSceneCombatHudViewModel revealed =
-                GameSceneCombatHudPresenter.Create(
-                    CoreLoopPresenter.Create(battle), false, false, false);
-
-            Assert.That(revealed.AutomaticCardResult,
-                Does.Contain("PLAYER DISCARDED"));
-            Assert.That(revealed.AutomaticCardResult,
-                Does.Contain("ENEMY SKIPPED"));
+            Assert.That(revealed, Is.Not.Null);
+            Assert.That(
+                revealed.AutomaticCardResult?.PlayerDecision,
+                Is.EqualTo(AutomaticCardDecisionOutcome.Accepted));
+            Assert.That(
+                revealed.AutomaticCardResult?.EnemyDecision,
+                Is.EqualTo(AutomaticCardDecisionOutcome.Declined));
         }
 
         [Test]
@@ -1295,7 +1315,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                     null,
                     new[] { action },
                     null,
-                    string.Empty);
+                    automaticCardResult: null);
 
                 hud.Render(core, model);
 
@@ -1413,7 +1433,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                     null,
                     System.Array.Empty<GameSceneCombatHudActionViewModel>(),
                     null,
-                    string.Empty);
+                    automaticCardResult: null);
 
                 hud.Render(core, model);
 
@@ -2021,7 +2041,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                     actions,
                     null,
                     null,
-                    string.Empty);
+                    automaticCardResult: null);
 
                 group.Render(model);
                 TableCombatCommandView hit = group
