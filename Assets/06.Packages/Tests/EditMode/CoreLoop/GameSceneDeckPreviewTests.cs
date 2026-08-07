@@ -4,6 +4,7 @@ using System.Reflection;
 using Border.UI;
 using DiaBlackJack.Content;
 using DiaBlackJack.GameScene;
+using DiaBlackJack.StageProgression.UI;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -291,7 +292,7 @@ namespace DiaBlackJack.CoreLoop.Tests
 
         [Test]
         [Category("GSV12")]
-        public void GSV12_U01_ShopHidesBothHandsAndAllFourDeckPiles()
+        public void GSV12_U01_ShopKeepsPlayerDeckAndHidesCombatCards()
         {
             GameManager manager = CreateBattleCardVisibilityFixture(
                 out GameObject root,
@@ -299,11 +300,9 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             try
             {
-                manager.SetBattleCardObjectsVisible(false);
+                manager.SetShopCardObjectsVisible();
 
-                Assert.That(
-                    battleCardObjects.All(cardObject => !cardObject.activeSelf),
-                    Is.True);
+                AssertShopCardVisibility(battleCardObjects);
             }
             finally
             {
@@ -321,7 +320,7 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             try
             {
-                manager.SetBattleCardObjectsVisible(false);
+                manager.SetShopCardObjectsVisible();
                 manager.SetBattleCardObjectsVisible(true);
 
                 Assert.That(
@@ -351,14 +350,12 @@ namespace DiaBlackJack.CoreLoop.Tests
             try
             {
                 preview.OpenForSingleSelection(CreateSelectionCards());
-                manager.SetBattleCardObjectsVisible(false);
+                manager.SetShopCardObjectsVisible();
 
                 Assert.That(preview.IsOpen, Is.True);
                 Assert.That(previewObject.activeSelf, Is.True);
                 Assert.That(shopOffers.activeSelf, Is.True);
-                Assert.That(
-                    battleCardObjects.All(cardObject => !cardObject.activeSelf),
-                    Is.True);
+                AssertShopCardVisibility(battleCardObjects);
             }
             finally
             {
@@ -382,9 +379,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             {
                 Assert.That(manager.DebugOpenStandaloneShop(), Is.True);
                 Assert.That(shop.IsOpen, Is.True);
-                Assert.That(
-                    battleCardObjects.All(cardObject => !cardObject.activeSelf),
-                    Is.True);
+                AssertShopCardVisibility(battleCardObjects);
 
                 Assert.That(manager.DebugCloseStandaloneShop(), Is.True);
                 Assert.That(shop.IsOpen, Is.False);
@@ -396,6 +391,52 @@ namespace DiaBlackJack.CoreLoop.Tests
             {
                 Object.DestroyImmediate(root);
             }
+        }
+
+        [Test]
+        [Category("GSV12")]
+        public void GSV12_U05_ShopOwnedDeckPreviewContainsEveryOwnedCard()
+        {
+            var ownedCards = new List<ShopOwnedCardViewModel>
+            {
+                new ShopOwnedCardViewModel(
+                    101,
+                    "standard-plain-2",
+                    2,
+                    "Two",
+                    "Ability A",
+                    CardSuit.Spade,
+                    canRemove: true),
+                new ShopOwnedCardViewModel(
+                    102,
+                    "standard-plain-2",
+                    2,
+                    "Two",
+                    "Ability B",
+                    CardSuit.Clover,
+                    canRemove: true)
+            };
+
+            GameSceneDeckViewModel model =
+                GameManager.CreateShopOwnedDeckPreview(ownedCards);
+
+            Assert.That(model.Kind, Is.EqualTo(DeckKind.Draw));
+            Assert.That(model.Title, Is.EqualTo("MY DECK"));
+            Assert.That(model.CardCount, Is.EqualTo(2));
+            Assert.That(model.GroupCount, Is.EqualTo(2));
+            Assert.That(model.CardGroups[0].Card.CardId, Is.EqualTo(101));
+            Assert.That(model.CardGroups[1].Card.CardId, Is.EqualTo(102));
+        }
+
+        private static void AssertShopCardVisibility(
+            GameObject[] battleCardObjects)
+        {
+            Assert.That(battleCardObjects[0].activeSelf, Is.False);
+            Assert.That(battleCardObjects[1].activeSelf, Is.False);
+            Assert.That(battleCardObjects[2].activeSelf, Is.True);
+            Assert.That(battleCardObjects[3].activeSelf, Is.True);
+            Assert.That(battleCardObjects[4].activeSelf, Is.False);
+            Assert.That(battleCardObjects[5].activeSelf, Is.False);
         }
 
         [Test]

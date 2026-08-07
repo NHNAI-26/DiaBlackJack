@@ -490,7 +490,7 @@ namespace DiaBlackJack.GameScene
             _inputLocked = !unlockInput;
             _choosingLighterRemoval = keepLighterSelection;
             shop.OpenFormal(model);
-            SetBattleCardObjectsVisible(false);
+            SetShopCardObjectsVisible();
             if (keepLighterSelection)
             {
                 deckPreview.OpenForSingleSelection(
@@ -500,6 +500,8 @@ namespace DiaBlackJack.GameScene
             hud?.SetGold(currentGold);
             hud?.SetPlayerSoul(model.PlayerSoul);
             hud?.SetEnemyStatusVisible(false);
+            remainingDeck?.Render(model.ShopOwnedCards.Count);
+            discardDeck?.Render(0);
             UpdateShopLeaveControl();
             return true;
         }
@@ -521,6 +523,20 @@ namespace DiaBlackJack.GameScene
         {
             SetComponentActive(enemyRemainingDeck, visible);
             SetComponentActive(enemyDiscardDeck, visible);
+        }
+
+        internal void SetShopCardObjectsVisible()
+        {
+            UpdateHover(null);
+            UpdateDemonCardHover(null);
+            UpdateDeckStackHover(null);
+
+            SetComponentActive(playerHand, false);
+            SetComponentActive(enemyHand, false);
+            SetComponentActive(remainingDeck, true);
+            SetComponentActive(discardDeck, true);
+            SetComponentActive(enemyRemainingDeck, false);
+            SetComponentActive(enemyDiscardDeck, false);
         }
 
         internal void SetBattleCardObjectsVisible(bool visible)
@@ -1049,7 +1065,7 @@ namespace DiaBlackJack.GameScene
             TableCombatCommandView pointedCombatCommand = !shopOpen && hasHit
                 ? hit.collider.GetComponentInParent<TableCombatCommandView>()
                 : null;
-            DeckClickable pointedDeck = !shopOpen && hasHit
+            DeckClickable pointedDeck = hasHit
                 ? hit.collider.GetComponentInParent<DeckClickable>()
                 : null;
             DeckStackView pointedDeckStack =
@@ -1566,13 +1582,20 @@ namespace DiaBlackJack.GameScene
         private void OpenDeckPreview(DeckKind kind)
         {
             CoreLoopBattle battle = Battle;
-            if (battle == null)
+            GameSceneDeckViewModel model;
+            if (battle != null)
+            {
+                model = GameScenePresenter.CreateDeckPreview(battle, kind);
+            }
+            else if (shop != null && shop.IsOpen && _formalShopModel != null)
+            {
+                model = CreateShopOwnedDeckPreview(
+                    _formalShopModel.ShopOwnedCards);
+            }
+            else
             {
                 return;
             }
-
-            GameSceneDeckViewModel model =
-                GameScenePresenter.CreateDeckPreview(battle, kind);
 
             EnsureDeckPreview();
             if (deckPreview == null)
@@ -1587,6 +1610,41 @@ namespace DiaBlackJack.GameScene
             UpdateCombatCommandHover(null);
             deckPreview.Open(model);
             BeginDeckPreviewSwitchInputLock();
+        }
+
+        internal static GameSceneDeckViewModel CreateShopOwnedDeckPreview(
+            IReadOnlyList<ShopOwnedCardViewModel> options)
+        {
+            if (options == null)
+            {
+                throw new ArgumentNullException(nameof(options));
+            }
+
+            var groups =
+                new List<GameSceneDeckCardGroupViewModel>(options.Count);
+            for (int i = 0; i < options.Count; i++)
+            {
+                ShopOwnedCardViewModel option = options[i];
+                CardDefinition definition =
+                    CardDefinitionCatalog.GetByKey(option.DefinitionKey);
+                var card = new GameSceneCardViewModel(
+                    option.CardId,
+                    option.Rank,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    definition.DisplayName,
+                    option.AbilityDescription,
+                    option.Suit,
+                    showHoverBadgeWhenUnavailable: true,
+                    option.DefinitionKey);
+                groups.Add(new GameSceneDeckCardGroupViewModel(card, 1));
+            }
+
+            return new GameSceneDeckViewModel(
+                DeckKind.Draw,
+                "MY DECK",
+                groups);
         }
 
         private void CloseDeckPreview()
@@ -6101,7 +6159,7 @@ namespace DiaBlackJack.GameScene
         {
             CloseDeckPreview();
             shop.Open(CurrentEnemyProfileKey);
-            SetBattleCardObjectsVisible(false);
+            SetShopCardObjectsVisible();
         }
 
         private void CloseStandaloneShop()
