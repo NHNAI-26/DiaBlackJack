@@ -1,3 +1,4 @@
+using Border.Audio;
 using Border.Core;
 using Border.Events;
 using DG.Tweening;
@@ -13,10 +14,16 @@ namespace DiaBlackJack.GameScene
     {
         private static readonly int ColorScreenBlendEnabledId = Shader.PropertyToID("_ColorScreenBlendEnabled");
         private static readonly int BlendStrengthId = Shader.PropertyToID("_BlendStrength");
-        private static readonly int ColorScreenId = Shader.PropertyToID("_ColorScreen");
         private const string ColorScreenBlendKeyword = "_COLOR_SCREEN_BLEND_ON";
         private const int DefaultNormalImpulseChannel = 1;
         private const int DefaultSmallImpulseChannel = 1 << 1;
+        private const string PlayerDamageSfxId = "playerDamage";
+        private const float PlayerDamageCameraShakeSeconds = 0.2f;
+        private const float PlayerDamageVignetteInSeconds = 0.25f;
+        private const float PlayerDamageVignetteReturnSeconds = 2f;
+        private const float PlayerDamageVignetteIntensity = 0.7f;
+        private static readonly Color PlayerDamageVignetteColor =
+            new Color(1f, 0f, 0f, 1f);
 
         [Header("Mood")]
         [SerializeField] private Volume moodVolume;
@@ -39,10 +46,6 @@ namespace DiaBlackJack.GameScene
 
         [Header("Color Screen Blend")]
         [SerializeField] private Material colorScreenBlendMaterial;
-        [SerializeField] private Color soulLossFlashColor =
-            new Color(0.85f, 0.04f, 0.04f, 1f);
-        [SerializeField, Range(0f, 1f)] private float soulLossFlashStrength = 0.65f;
-        [SerializeField, Min(0.01f)] private float soulLossFlashSeconds = 0.18f;
 
         private Tween moodTween;
         private Tween shakeDurationRestoreTween;
@@ -55,9 +58,11 @@ namespace DiaBlackJack.GameScene
         private float originalFieldOfView = -1f;
         private Tween fieldOfViewTween;
         private Tween colorScreenBlendTween;
-        private bool soulLossFlashActive;
-        private Color soulLossOriginalScreenColor;
-        private float soulLossOriginalBlendStrength;
+        private Vignette playerDamageVignette;
+        private Tween playerDamageVignetteTween;
+        private bool playerDamageVignetteStateCaptured;
+        private Color playerDamageVignetteOriginalColor;
+        private float playerDamageVignetteOriginalIntensity;
 
         public static PresentationManager Current { get; private set; }
 
@@ -89,6 +94,7 @@ namespace DiaBlackJack.GameScene
             CleanupChromaticAberration();
             RestoreFieldOfViewImmediate();
             ResetColorScreenBlendImmediate();
+            RestorePlayerDamageVignetteImmediate();
         }
 
         public void BlendToMood(VolumeProfile profile, float duration)
@@ -220,6 +226,7 @@ namespace DiaBlackJack.GameScene
             RestoreFieldOfViewImmediate();
             CleanupChromaticAberration();
             ResetColorScreenBlendImmediate();
+            RestorePlayerDamageVignetteImmediate();
         }
 
         public void StartColorScreenBlend(float fadeOutSpeed)
@@ -227,7 +234,6 @@ namespace DiaBlackJack.GameScene
             if (fadeOutSpeed <= 0f || float.IsNaN(fadeOutSpeed) || float.IsInfinity(fadeOutSpeed))
                 return;
 
-            CompleteSoulLossFlash();
             if (!EnsureColorScreenBlendMaterial())
                 return;
 
@@ -242,69 +248,64 @@ namespace DiaBlackJack.GameScene
                 .OnComplete(() => colorScreenBlendTween = null);
         }
 
-        internal void PlaySoulLossFlashPulse()
+        internal void PlayPlayerDamagePresentation()
         {
-            if (!EnsureColorScreenBlendMaterial())
+            ShakeCameraForDuration(PlayerDamageCameraShakeSeconds);
+            SoundManager.Current?.PlaySfx(PlayerDamageSfxId);
+
+            if (!TryResolvePlayerDamageVignette(out Vignette vignette))
             {
                 return;
             }
 
-            if (!soulLossFlashActive)
+            if (playerDamageVignetteStateCaptured &&
+                playerDamageVignette != vignette)
             {
-                soulLossOriginalScreenColor =
-                    colorScreenBlendMaterial.HasProperty(ColorScreenId)
-                        ? colorScreenBlendMaterial.GetColor(ColorScreenId)
-                        : Color.white;
-                soulLossOriginalBlendStrength =
-                    colorScreenBlendMaterial.GetFloat(BlendStrengthId);
-                soulLossFlashActive = true;
+                RestorePlayerDamageVignetteImmediate();
             }
 
-            if (colorScreenBlendMaterial.HasProperty(ColorScreenId))
+            if (!playerDamageVignetteStateCaptured)
             {
-                colorScreenBlendMaterial.SetColor(
-                    ColorScreenId,
-                    soulLossFlashColor);
+                playerDamageVignette = vignette;
+                playerDamageVignetteOriginalColor = vignette.color.value;
+                playerDamageVignetteOriginalIntensity = vignette.intensity.value;
+                playerDamageVignetteStateCaptured = true;
             }
 
-            KillColorScreenBlendTween();
-            SetColorScreenBlendStrength(soulLossFlashStrength);
-            colorScreenBlendTween = DOTween
-                .To(
-                    () => soulLossFlashStrength,
-                    SetColorScreenBlendStrength,
-                    0f,
-                    Mathf.Max(0.01f, soulLossFlashSeconds))
-                .SetEase(Ease.OutQuad)
-                .OnComplete(() => colorScreenBlendTween = null);
-        }
-
-        internal void CompleteSoulLossFlash()
-        {
-            if (!soulLossFlashActive)
+            playerDamageVignetteTween?.Kill();
+            Sequence sequence = DOTween.Sequence();
+            sequence.Join(DOTween.To(
+                () => vignette.color.value,
+                value => vignette.color.value = value,
+                PlayerDamageVignetteColor,
+                PlayerDamageVignetteInSeconds));
+            sequence.Join(DOTween.To(
+                () => vignette.intensity.value,
+                value => vignette.intensity.value = value,
+                PlayerDamageVignetteIntensity,
+                PlayerDamageVignetteInSeconds));
+            sequence.Append(DOTween.To(
+                () => vignette.color.value,
+                value => vignette.color.value = value,
+                playerDamageVignetteOriginalColor,
+                PlayerDamageVignetteReturnSeconds));
+            sequence.Join(DOTween.To(
+                () => vignette.intensity.value,
+                value => vignette.intensity.value = value,
+                playerDamageVignetteOriginalIntensity,
+                PlayerDamageVignetteReturnSeconds));
+            sequence.OnComplete(() =>
             {
-                return;
-            }
-
-            KillColorScreenBlendTween();
-            if (colorScreenBlendMaterial != null)
-            {
-                if (colorScreenBlendMaterial.HasProperty(BlendStrengthId))
+                if (playerDamageVignetteTween != sequence)
                 {
-                    colorScreenBlendMaterial.SetFloat(
-                        BlendStrengthId,
-                        soulLossOriginalBlendStrength);
+                    return;
                 }
 
-                if (colorScreenBlendMaterial.HasProperty(ColorScreenId))
-                {
-                    colorScreenBlendMaterial.SetColor(
-                        ColorScreenId,
-                        soulLossOriginalScreenColor);
-                }
-            }
-
-            soulLossFlashActive = false;
+                playerDamageVignetteTween = null;
+                playerDamageVignette = null;
+                playerDamageVignetteStateCaptured = false;
+            });
+            playerDamageVignetteTween = sequence;
         }
 
         private void SetMoodWeight(float targetWeight, float duration)
@@ -609,7 +610,6 @@ namespace DiaBlackJack.GameScene
 
         private void ResetColorScreenBlendImmediate()
         {
-            CompleteSoulLossFlash();
             KillColorScreenBlendTween();
             if (colorScreenBlendMaterial != null && colorScreenBlendMaterial.HasProperty(BlendStrengthId))
                 colorScreenBlendMaterial.SetFloat(BlendStrengthId, 0f);
@@ -619,6 +619,35 @@ namespace DiaBlackJack.GameScene
         {
             colorScreenBlendTween?.Kill();
             colorScreenBlendTween = null;
+        }
+
+        private bool TryResolvePlayerDamageVignette(out Vignette vignette)
+        {
+            vignette = null;
+            if (moodVolume == null)
+            {
+                return false;
+            }
+
+            VolumeProfile profile = moodVolume.sharedProfile;
+            profile ??= moodVolume.profile;
+            return profile != null &&
+                profile.TryGet(out vignette) &&
+                vignette != null;
+        }
+
+        private void RestorePlayerDamageVignetteImmediate()
+        {
+            playerDamageVignetteTween?.Kill();
+            playerDamageVignetteTween = null;
+            if (playerDamageVignetteStateCaptured && playerDamageVignette != null)
+            {
+                playerDamageVignette.color.value = playerDamageVignetteOriginalColor;
+                playerDamageVignette.intensity.value = playerDamageVignetteOriginalIntensity;
+            }
+
+            playerDamageVignette = null;
+            playerDamageVignetteStateCaptured = false;
         }
 
         private void SetCameraShakeEnabled(bool enabled)

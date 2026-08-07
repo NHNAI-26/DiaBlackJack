@@ -416,6 +416,16 @@ MonoBehaviour:
     volume: 0.5
     pitch: 1
     loop: 0
+  - id: playerDamage
+    clip: {fileID: 8300000, guid: eb6ea3e6cbe88a545bd173509e29ec20, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
+  - id: enemyDamage
+    clip: {fileID: 8300000, guid: 769e7643a2a7c2a43984810525e2af00, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1

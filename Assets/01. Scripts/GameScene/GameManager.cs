@@ -240,6 +240,10 @@ namespace DiaBlackJack.GameScene
         private long _lastRoundComparisonResolutionId = -1;
         private readonly List<SoulLossRecord> _pendingRoundSoulLossRecords =
             new List<SoulLossRecord>();
+        private readonly HashSet<long> _revolverSoulLossPresentedAtImpact =
+            new HashSet<long>();
+        private readonly HashSet<long> _knifeSoulLossPresentedAtImpact =
+            new HashSet<long>();
         private long _lastQueuedSoulLossRecordId = -1;
         private bool _soulLossPresentationActive;
 
@@ -3900,6 +3904,13 @@ namespace DiaBlackJack.GameScene
                     continue;
                 }
 
+                if (_revolverSoulLossPresentedAtImpact.Contains(record.Id) ||
+                    _knifeSoulLossPresentedAtImpact.Contains(record.Id))
+                {
+                    _pendingRoundSoulLossRecords.RemoveAt(index);
+                    continue;
+                }
+
                 records.Add(record);
                 _pendingRoundSoulLossRecords.RemoveAt(index);
             }
@@ -3943,6 +3954,13 @@ namespace DiaBlackJack.GameScene
                     continue;
                 }
 
+                if (_revolverSoulLossPresentedAtImpact.Contains(record.Id) ||
+                    _knifeSoulLossPresentedAtImpact.Contains(record.Id))
+                {
+                    _lastQueuedSoulLossRecordId = record.Id;
+                    continue;
+                }
+
                 hud?.BeginSoulLossHold(record);
                 _soulLossPresentationActive = true;
                 if (record.Cause == SoulLossCause.RoundDamage)
@@ -3959,7 +3977,10 @@ namespace DiaBlackJack.GameScene
         }
 
         private IEnumerator PlaySoulLossRecords(
-            IReadOnlyList<SoulLossRecord> records)
+            IReadOnlyList<SoulLossRecord> records,
+            bool suppressPlayerDamagePresentation = false,
+            bool suppressEnemyDamagePresentation = false,
+            bool soulAlreadyAppliedAtImpact = false)
         {
             if (records == null || records.Count == 0)
             {
@@ -3971,12 +3992,30 @@ namespace DiaBlackJack.GameScene
             Vector3 enemyAnchor = enemyCharacter != null
                 ? enemyCharacter.SoulLossAnchorWorldPosition
                 : Vector3.zero;
+            HashSet<long> presentedPlayerDamageRecordIds =
+                new HashSet<long>();
+            HashSet<long> presentedEnemyDamageRecordIds =
+                new HashSet<long>();
             Action<SoulLossRecord> onImpact = record =>
             {
-                hud?.ApplySoulLossUnit(record);
-                if (record.TargetSide == CombatantSide.Player)
+                if (!soulAlreadyAppliedAtImpact)
                 {
-                    PresentationManager.Current?.PlaySoulLossFlashPulse();
+                    hud?.ApplySoulLossUnit(record);
+                }
+
+                if (record.TargetSide == CombatantSide.Player &&
+                    !suppressPlayerDamagePresentation &&
+                    presentedPlayerDamageRecordIds.Add(record.Id))
+                {
+                    PresentationManager.Current?.PlayPlayerDamagePresentation();
+                }
+
+                if (record.TargetSide == CombatantSide.Enemy &&
+                    record.Cause == SoulLossCause.RoundDamage &&
+                    !suppressEnemyDamagePresentation &&
+                    presentedEnemyDamageRecordIds.Add(record.Id))
+                {
+                    enemyCharacter?.PlayDamageReaction();
                 }
             };
             Sequence sequence = hud?.PlaySoulLossTokens(
@@ -4005,7 +4044,6 @@ namespace DiaBlackJack.GameScene
                 }
             }
 
-            PresentationManager.Current?.CompleteSoulLossFlash();
             CompleteSoulLossHolds(records);
             _soulLossPresentationActive =
                 _pendingRoundSoulLossRecords.Count > 0;
@@ -4076,8 +4114,9 @@ namespace DiaBlackJack.GameScene
         private void CancelSoulLossPresentation(bool resetHistory)
         {
             hud?.CancelSoulLossPresentation();
-            PresentationManager.Current?.CompleteSoulLossFlash();
             _pendingRoundSoulLossRecords.Clear();
+            _revolverSoulLossPresentedAtImpact.Clear();
+            _knifeSoulLossPresentedAtImpact.Clear();
             _soulLossPresentationActive = false;
             if (resetHistory)
             {
@@ -6195,6 +6234,77 @@ namespace DiaBlackJack.GameScene
             return _revolverEventReceiver;
         }
 
+        private void PresentWeaponSoulLossAtImpact(
+            CombatantSide targetSide,
+            HashSet<long> presentedAtImpact,
+            bool suppressPlayerDamagePresentation,
+            bool suppressEnemyDamagePresentation)
+        {
+            CoreLoopBattle battle = Battle;
+            if (hud == null || battle == null ||
+                !battle.LastResolution.HasValue)
+            {
+                return;
+            }
+
+            RoundResolution resolution = battle.LastResolution.Value;
+            IReadOnlyList<SoulLossRecord> history = battle.SoulLossHistory;
+            if (history == null)
+            {
+                return;
+            }
+
+            List<SoulLossRecord> records = new List<SoulLossRecord>();
+            for (int index = 0; index < history.Count; index++)
+            {
+                SoulLossRecord record = history[index];
+                if (!record.ResolutionId.HasValue ||
+                    record.ResolutionId.Value != resolution.Id ||
+                    record.TargetSide != targetSide ||
+                    record.Cause != SoulLossCause.RoundDamage ||
+                    record.LossAmount <= 0 ||
+                    !presentedAtImpact.Add(record.Id))
+                {
+                    continue;
+                }
+
+                records.Add(record);
+                _pendingRoundSoulLossRecords.RemoveAll(
+                    pendingRecord => pendingRecord.Id == record.Id);
+            }
+
+            if (records.Count == 0)
+            {
+                return;
+            }
+
+            records.Sort((left, right) => left.Id.CompareTo(right.Id));
+            for (int recordIndex = 0;
+                 recordIndex < records.Count;
+                 recordIndex++)
+            {
+                SoulLossRecord record = records[recordIndex];
+                hud.BeginSoulLossHold(record);
+                for (int unit = 0; unit < record.LossAmount; unit++)
+                {
+                    hud.ApplySoulLossUnit(record);
+                }
+            }
+
+            if (targetSide == CombatantSide.Player &&
+                !suppressPlayerDamagePresentation)
+            {
+                PresentationManager.Current?.PlayPlayerDamagePresentation();
+            }
+
+            StartCoroutine(PlaySoulLossRecords(
+                records,
+                suppressPlayerDamagePresentation: true,
+                suppressEnemyDamagePresentation:
+                    suppressEnemyDamagePresentation,
+                soulAlreadyAppliedAtImpact: true));
+        }
+
         private void HandleRevolverShotImpact()
         {
             if (!_revolverImpactPending)
@@ -6205,8 +6315,14 @@ namespace DiaBlackJack.GameScene
             if (_revolverImpactTargetSide == CombatantSide.Enemy)
             {
                 enemyCharacter?.Render(CharacterVisualState.Attacked, "HIT!");
+                enemyCharacter?.PlayDamageReaction(playSound: false);
             }
 
+            PresentWeaponSoulLossAtImpact(
+                _revolverImpactTargetSide,
+                _revolverSoulLossPresentedAtImpact,
+                suppressPlayerDamagePresentation: true,
+                suppressEnemyDamagePresentation: true);
             ClearPendingRevolverImpact();
         }
 
@@ -6266,8 +6382,14 @@ namespace DiaBlackJack.GameScene
             if (_knifeImpactTargetSide == CombatantSide.Enemy)
             {
                 enemyCharacter?.Render(CharacterVisualState.Attacked, "HIT!");
+                enemyCharacter?.PlayDamageReaction(playSound: false);
             }
 
+            PresentWeaponSoulLossAtImpact(
+                _knifeImpactTargetSide,
+                _knifeSoulLossPresentedAtImpact,
+                suppressPlayerDamagePresentation: false,
+                suppressEnemyDamagePresentation: true);
             ClearPendingKnifeImpact();
         }
 
