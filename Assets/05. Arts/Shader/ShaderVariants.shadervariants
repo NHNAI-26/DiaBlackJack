@@ -15,13 +15,21 @@ ShaderVariantCollection:
         passType: 13
       - keywords: FOG_EXP2 _ALPHATEST_ON _DISSOLVE_OBJECT_SPACE _DISSOLVE_ON _METALLICMAP _NORMALMAP _RIM_ON _SMOOTHNESSMAP
         passType: 13
+      - keywords: FOG_EXP2 _ALPHATEST_ON _DISSOLVE_OBJECT_SPACE _METALLICMAP _NORMALMAP _RIM_ON _SMOOTHNESSMAP
+        passType: 13
       - keywords: FOG_EXP2 _DISSOLVE_OBJECT_SPACE _DISSOLVE_ON _NORMALMAP _SMOOTHNESSMAP
         passType: 13
+      - keywords: FOG_EXP2 _DISSOLVE_OBJECT_SPACE _DISSOLVE_ON _NORMALMAP _RIM_ON _SURFACE_TYPE_TRANSPARENT
+        passType: 13
       - keywords: FOG_EXP2 _DISSOLVE_ON
+        passType: 13
+      - keywords: FOG_EXP2 _DISSOLVE_ON _METALLICMAP _SMOOTHNESSMAP
         passType: 13
       - keywords: FOG_EXP2 _DISSOLVE_ON _NORMALMAP _SMOOTHNESSMAP
         passType: 13
       - keywords: FOG_EXP2 _GLASS_GLOW_ON _SMOOTHNESSMAP
+        passType: 13
+      - keywords: FOG_EXP2 _DITHER_ALPHA_ON _METALLICMAP _NORMALMAP _SMOOTHNESSMAP
         passType: 13
       - keywords: FOG_EXP2 _HEIGHT_FADE_ON _METALLICMAP _NORMALMAP _SMOOTHNESSMAP
         passType: 13
@@ -29,9 +37,19 @@ ShaderVariantCollection:
         passType: 13
       - keywords: FOG_EXP2 _METALLICMAP _SMOOTHNESSMAP
         passType: 13
+      - keywords: FOG_EXP2 _METALLICMAP _NORMALMAP _SMOOTHNESSMAP
+        passType: 13
       - keywords: FOG_EXP2 _NORMALMAP _SMOOTHNESSMAP
         passType: 13
+      - keywords: FOG_EXP2 _RIM_ON
+        passType: 13
+      - keywords: FOG_EXP2 _RIM_ON _SURFACE_TYPE_TRANSPARENT
+        passType: 13
       - keywords: FOG_EXP2 _SMOOTHNESSMAP
+        passType: 13
+      - keywords: _STENCIL_OUTLINE_ON
+        passType: 13
+      - keywords: FOG_EXP2 _STENCIL_OUTLINE_ON
         passType: 13
   - first: {fileID: 4800000, guid: a41d39dce1704d7b814385168207f452, type: 3}
     second:
@@ -45,27 +63,217 @@ ShaderVariantCollection:
         passType: 13
       - keywords: FOG_EXP2 _ALPHATEST_ON _DISSOLVE_ON _DISSOLVE_RADIAL _UNLIT_ON
         passType: 13
+      - keywords: FOG_EXP2 _ALPHATEST_ON _DISSOLVE_ON _PIXEL_OUTLINE_ON
+        passType: 13
+      - keywords: FOG_EXP2 _ALPHATEST_ON _DISSOLVE_ON _PIXEL_OUTLINE_ON _UNLIT_ON
+        passType: 13
+      - keywords: FOG_EXP2 _ALPHATEST_ON _DISSOLVE_ON _UNLIT_ON
+        passType: 13
+      - keywords: FOG_EXP2 _ALPHATEST_ON _EMISSION _SURFACE_TYPE_TRANSPARENT
+        passType: 13
       - keywords: FOG_EXP2 _ALPHATEST_ON _PIXEL_OUTLINE_ON
+        passType: 13
+      - keywords: FOG_EXP2 _ALPHATEST_ON _PIXEL_OUTLINE_ON _UNLIT_ON
+        passType: 13
+      - keywords: FOG_EXP2 _ALPHATEST_ON _UNLIT_ON
+        passType: 13
+      - keywords: FOG_EXP2 _DISSOLVE_ON _HEIGHT_FADE_ON _SURFACE_TYPE_TRANSPARENT
         passType: 13
       - keywords: FOG_EXP2 _HEIGHT_FADE_ON _SURFACE_TYPE_TRANSPARENT
         passType: 13
   - first: {fileID: 4800000, guid: 00aff53038424977af3648db4bc34211, type: 3}
     second:
       variants:
+      - keywords: _COLOR_SCREEN_BLEND_ON
+        passType: 0
       - keywords: _COLOR_QUANTIZATION_ON _COLOR_SCREEN_BLEND_ON _ORDERED_DITHER_ON
         passType: 0
   - first: {fileID: 4800000, guid: a226acbd5f55fa043b8e9a5409783bb8, type: 3}
     second:
       variants:
+      - keywords: ""
+        passType: 0
       - keywords: UNITY_UI_ALPHACLIP
+        passType: 0
+      - keywords: _PIXEL_OUTLINE_ON
+        passType: 0
+      - keywords: _UV_ALPHA_FADE_ON
+        passType: 0
+      - keywords: UNITY_UI_ALPHACLIP _PIXEL_OUTLINE_ON
+        passType: 0
+      - keywords: UNITY_UI_ALPHACLIP _UV_ALPHA_FADE_ON
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT UNITY_UI_ALPHACLIP
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT UNITY_UI_ALPHACLIP _PIXEL_OUTLINE_ON
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT UNITY_UI_ALPHACLIP _UV_ALPHA_FADE_ON
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT _PIXEL_OUTLINE_ON
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT _UV_ALPHA_FADE_ON
         passType: 0
   - first: {fileID: 4800000, guid: 4c7801bf8d604856b445066abed3bfc3, type: 3}
     second:
       variants:
       - keywords: 
         passType: 13
+      - keywords: _STENCIL_OUTLINE_ON
+        passType: 13
   - first: {fileID: 4800000, guid: 3e955dc6d92c48ebbc11d7cfa921eba6, type: 3}
     second:
       variants:
       - keywords: FOG_EXP2
+        passType: 13
+  - first: {fileID: 4800000, guid: 877716477ef67404fbe1520b446e08d4, type: 3}
+    second:
+      variants:
+      - keywords: _STENCIL_OUTLINE_ON
+        passType: 13
+  - first: {fileID: 4800000, guid: 68e6db2ebdc24f95958faec2be5558d6, type: 3}
+    second:
+      variants:
+      - keywords: ""
+        passType: 0
+      - keywords: GLOW_ON
+        passType: 0
+      - keywords: UNDERLAY_ON
+        passType: 0
+      - keywords: GLOW_ON UNDERLAY_ON
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT GLOW_ON
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT UNDERLAY_ON
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT GLOW_ON UNDERLAY_ON
+        passType: 0
+      - keywords: UNITY_UI_ALPHACLIP
+        passType: 0
+      - keywords: UNITY_UI_ALPHACLIP GLOW_ON
+        passType: 0
+      - keywords: UNITY_UI_ALPHACLIP UNDERLAY_ON
+        passType: 0
+      - keywords: UNITY_UI_ALPHACLIP GLOW_ON UNDERLAY_ON
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT UNITY_UI_ALPHACLIP
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT UNITY_UI_ALPHACLIP GLOW_ON
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT UNITY_UI_ALPHACLIP UNDERLAY_ON
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT UNITY_UI_ALPHACLIP GLOW_ON UNDERLAY_ON
+        passType: 0
+  - first: {fileID: 4800000, guid: fe393ace9b354375a9cb14cdbbc28be4, type: 3}
+    second:
+      variants:
+      - keywords: OUTLINE_ON
+        passType: 0
+      - keywords: UNDERLAY_ON
+        passType: 0
+      - keywords: OUTLINE_ON UNDERLAY_ON
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT
+        passType: 0
+      - keywords: UNITY_UI_ALPHACLIP
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT UNITY_UI_ALPHACLIP
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT OUTLINE_ON UNDERLAY_ON
+        passType: 0
+      - keywords: UNITY_UI_ALPHACLIP OUTLINE_ON UNDERLAY_ON
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT UNITY_UI_ALPHACLIP OUTLINE_ON UNDERLAY_ON
+        passType: 0
+  - first: {fileID: 4800000, guid: 6b7e6acc194204408b3294f5c220fc1e, type: 3}
+    second:
+      variants:
+      - keywords: ""
+        passType: 0
+      - keywords: DITHER
+        passType: 0
+      - keywords: EDGE_PRESERVE
+        passType: 0
+      - keywords: EDGE_PRESERVE_UPSCALING
+        passType: 0
+      - keywords: DITHER EDGE_PRESERVE
+        passType: 0
+      - keywords: DITHER EDGE_PRESERVE_UPSCALING
+        passType: 0
+  - first: {fileID: 4800000, guid: 1239a0d4a4f7d48518e68f3be63bafb9, type: 3}
+    second:
+      variants:
+      - keywords: DEPTH_PREPASS_ALPHA_TEST
+        passType: 0
+  - first: {fileID: 4800000, guid: f255441391a484a67b9aad0118863143, type: 3}
+    second:
+      variants:
+      - keywords: VL_SPOT
+        passType: 13
+      - keywords: VL_SPOT_COOKIE
+        passType: 13
+      - keywords: VL_POINT
+        passType: 13
+      - keywords: VL_AREA_RECT VL_CAST_DIRECT_LIGHT_ADDITIVE
+        passType: 13
+      - keywords: VL_AREA_RECT VL_CAST_DIRECT_LIGHT_BLEND
+        passType: 13
+      - keywords: VL_AREA_RECT VL_PHYSICAL_ATTEN
+        passType: 13
+      - keywords: VL_AREA_RECT VL_CUSTOM_BOUNDS
+        passType: 13
+      - keywords: VL_AREA_DISC
+        passType: 13
+      - keywords: VF2_DEPTH_PREPASS VL_AREA_RECT VL_CAST_DIRECT_LIGHT_ADDITIVE
+        passType: 13
+  - first: {fileID: 4800000, guid: e36a57882acb945c6b609abd4bd9ebb8, type: 3}
+    second:
+      variants:
+      - keywords: VL_SPOT
+        passType: 13
+      - keywords: VL_SPOT_COOKIE
+        passType: 13
+      - keywords: VL_POINT
+        passType: 13
+      - keywords: VL_AREA_DISC
+        passType: 13
+      - keywords: VL_AREA_RECT VL_SHADOWS
+        passType: 13
+      - keywords: VL_AREA_RECT VL_SHADOWS_CUBEMAP
+        passType: 13
+      - keywords: VL_AREA_RECT VL_CAST_DIRECT_LIGHT_BLEND
+        passType: 13
+      - keywords: VL_AREA_RECT VL_PHYSICAL_ATTEN
+        passType: 13
+      - keywords: VL_AREA_RECT VL_CUSTOM_BOUNDS
+        passType: 13
+      - keywords: VL_NOISE VL_AREA_RECT VL_SHADOWS_TRANSLUCENCY VL_CAST_DIRECT_LIGHT_ADDITIVE
+        passType: 13
+      - keywords: VL_NOISE VL_BLUENOISE VL_AREA_RECT VL_SHADOWS_TRANSLUCENCY VL_CAST_DIRECT_LIGHT_ADDITIVE
+        passType: 13
+      - keywords: VF2_DEPTH_PREPASS VL_NOISE VL_BLUENOISE VL_AREA_RECT VL_SHADOWS_TRANSLUCENCY VL_CAST_DIRECT_LIGHT_ADDITIVE
+        passType: 13
+  - first: {fileID: 4800000, guid: fc2655527708b470d9b23bfe28ede3e9, type: 3}
+    second:
+      variants:
+      - keywords: FOG_EXP2 VL_SPOT
+        passType: 13
+      - keywords: FOG_EXP2 VL_SPOT_COOKIE
+        passType: 13
+      - keywords: FOG_EXP2 VL_POINT
+        passType: 13
+      - keywords: FOG_EXP2 VL_AREA_RECT VL_SHADOWS
+        passType: 13
+      - keywords: FOG_EXP2 VL_AREA_RECT VL_SHADOWS_CUBEMAP
+        passType: 13
+      - keywords: FOG_EXP2 VL_AREA_RECT VL_PHYSICAL_ATTEN
+        passType: 13
+      - keywords: FOG_EXP2 VL_AREA_RECT VL_CUSTOM_BOUNDS
+        passType: 13
+      - keywords: FOG_EXP2 VL_AREA_DISC
+        passType: 13
+      - keywords: FOG_EXP2 VL_AREA_RECT VL_SHADOWS_TRANSLUCENCY
         passType: 13
