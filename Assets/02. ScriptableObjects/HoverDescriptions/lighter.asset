@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.HoverDescriptionSO
   title: "\uB77C\uC774\uD130"
   descriptionTemplate: "\uBCF4\uC720 \uB371\uC5D0\uC11C \uCE74\uB4DC 1\uC7A5\uC744
-    \uC81C\uAC70\uD569\uB2C8\uB2E4. \uAC00\uACA9: {gold} {price}"
+    \uC81C\uAC70\uD569\uB2C8\uB2E4."
   stateDescriptions: []

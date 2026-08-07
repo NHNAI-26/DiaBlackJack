@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.HoverDescriptionSO
   title: "\uB0B4 \uBC84\uB9B0 \uCE74\uB4DC"
   descriptionTemplate: "\uB0B4\uAC00 \uBC84\uB9B0 \uCE74\uB4DC\uAC00 \uC313\uC5EC
-    \uC788\uC2B5\uB2C8\uB2E4. \uD074\uB9AD\uD558\uBA74 \uBC84\uB9B0 \uCE74\uB4DC
+    \uC788\uC2B5\uB2C8\uB2E4. \\n\uD074\uB9AD\uD558\uBA74 \uBC84\uB9B0 \uCE74\uB4DC
     \uAD6C\uC131\uC744 \uD655\uC778\uD569\uB2C8\uB2E4."
   stateDescriptions: []
