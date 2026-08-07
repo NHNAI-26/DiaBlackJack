@@ -1612,6 +1612,21 @@ MonoBehaviour:
   soulRestoreFlashColor: {r: 0.45, g: 0.95, b: 0.45, a: 1}
   soulRestoreScaleMultiplier: 1.25
   soulRestoreFlashSeconds: 0.7
+  soulLossTokenColor: {r: 1, g: 1, b: 1, a: 1}
+  soulLossTokenFontScale: 1
+  soulLossTokenMinimumFontSize: 35
+  soulLossTokenSize: {x: 220, y: 80}
+  soulLossTokenFallSeconds: 0.72
+  soulLossTokenStaggerSeconds: 0.12
+  soulLossTokenImpactSeconds: 0.42
+  soulLossTokenFadeSeconds: 0.2
+  soulLossTokenStartRandomX: 42
+  soulLossTokenStartYRange: {x: -8, y: 12}
+  soulLossTokenDriftX: 24
+  soulLossTokenFallDistanceRange: {x: 145, y: 185}
+  soulLossTokenRotation: 14
+  soulLossPlayerAnchor: {x: 0.5, y: 0.18}
+  soulLossEnemyFallbackAnchor: {x: 0.78, y: 0.68}
   shopLeaveRoot: {fileID: 4184435113356188076}
   shopLeaveButton: {fileID: 5622129818094416469}
   cardHoverTooltipRoot: {fileID: 4314388029343845166}

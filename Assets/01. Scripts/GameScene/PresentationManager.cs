@@ -13,6 +13,7 @@ namespace DiaBlackJack.GameScene
     {
         private static readonly int ColorScreenBlendEnabledId = Shader.PropertyToID("_ColorScreenBlendEnabled");
         private static readonly int BlendStrengthId = Shader.PropertyToID("_BlendStrength");
+        private static readonly int ColorScreenId = Shader.PropertyToID("_ColorScreen");
         private const string ColorScreenBlendKeyword = "_COLOR_SCREEN_BLEND_ON";
         private const int DefaultNormalImpulseChannel = 1;
         private const int DefaultSmallImpulseChannel = 1 << 1;
@@ -38,6 +39,10 @@ namespace DiaBlackJack.GameScene
 
         [Header("Color Screen Blend")]
         [SerializeField] private Material colorScreenBlendMaterial;
+        [SerializeField] private Color soulLossFlashColor =
+            new Color(0.85f, 0.04f, 0.04f, 1f);
+        [SerializeField, Range(0f, 1f)] private float soulLossFlashStrength = 0.65f;
+        [SerializeField, Min(0.01f)] private float soulLossFlashSeconds = 0.18f;
 
         private Tween moodTween;
         private Tween shakeDurationRestoreTween;
@@ -50,6 +55,9 @@ namespace DiaBlackJack.GameScene
         private float originalFieldOfView = -1f;
         private Tween fieldOfViewTween;
         private Tween colorScreenBlendTween;
+        private bool soulLossFlashActive;
+        private Color soulLossOriginalScreenColor;
+        private float soulLossOriginalBlendStrength;
 
         public static PresentationManager Current { get; private set; }
 
@@ -219,6 +227,7 @@ namespace DiaBlackJack.GameScene
             if (fadeOutSpeed <= 0f || float.IsNaN(fadeOutSpeed) || float.IsInfinity(fadeOutSpeed))
                 return;
 
+            CompleteSoulLossFlash();
             if (!EnsureColorScreenBlendMaterial())
                 return;
 
@@ -231,6 +240,71 @@ namespace DiaBlackJack.GameScene
                     1f / fadeOutSpeed)
                 .SetEase(Ease.Linear)
                 .OnComplete(() => colorScreenBlendTween = null);
+        }
+
+        internal void PlaySoulLossFlashPulse()
+        {
+            if (!EnsureColorScreenBlendMaterial())
+            {
+                return;
+            }
+
+            if (!soulLossFlashActive)
+            {
+                soulLossOriginalScreenColor =
+                    colorScreenBlendMaterial.HasProperty(ColorScreenId)
+                        ? colorScreenBlendMaterial.GetColor(ColorScreenId)
+                        : Color.white;
+                soulLossOriginalBlendStrength =
+                    colorScreenBlendMaterial.GetFloat(BlendStrengthId);
+                soulLossFlashActive = true;
+            }
+
+            if (colorScreenBlendMaterial.HasProperty(ColorScreenId))
+            {
+                colorScreenBlendMaterial.SetColor(
+                    ColorScreenId,
+                    soulLossFlashColor);
+            }
+
+            KillColorScreenBlendTween();
+            SetColorScreenBlendStrength(soulLossFlashStrength);
+            colorScreenBlendTween = DOTween
+                .To(
+                    () => soulLossFlashStrength,
+                    SetColorScreenBlendStrength,
+                    0f,
+                    Mathf.Max(0.01f, soulLossFlashSeconds))
+                .SetEase(Ease.OutQuad)
+                .OnComplete(() => colorScreenBlendTween = null);
+        }
+
+        internal void CompleteSoulLossFlash()
+        {
+            if (!soulLossFlashActive)
+            {
+                return;
+            }
+
+            KillColorScreenBlendTween();
+            if (colorScreenBlendMaterial != null)
+            {
+                if (colorScreenBlendMaterial.HasProperty(BlendStrengthId))
+                {
+                    colorScreenBlendMaterial.SetFloat(
+                        BlendStrengthId,
+                        soulLossOriginalBlendStrength);
+                }
+
+                if (colorScreenBlendMaterial.HasProperty(ColorScreenId))
+                {
+                    colorScreenBlendMaterial.SetColor(
+                        ColorScreenId,
+                        soulLossOriginalScreenColor);
+                }
+            }
+
+            soulLossFlashActive = false;
         }
 
         private void SetMoodWeight(float targetWeight, float duration)
@@ -535,6 +609,7 @@ namespace DiaBlackJack.GameScene
 
         private void ResetColorScreenBlendImmediate()
         {
+            CompleteSoulLossFlash();
             KillColorScreenBlendTween();
             if (colorScreenBlendMaterial != null && colorScreenBlendMaterial.HasProperty(BlendStrengthId))
                 colorScreenBlendMaterial.SetFloat(BlendStrengthId, 0f);
