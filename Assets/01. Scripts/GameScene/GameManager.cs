@@ -782,6 +782,8 @@ namespace DiaBlackJack.GameScene
         // ourselves. Table commands and the contract share this same raycast path.
         private void Update()
         {
+            UpdateShopPriceBadges();
+
             if (_deckPreviewSwitchInputLocked &&
                 (deckPreview == null || !deckPreview.IsOpen))
             {
@@ -1370,6 +1372,29 @@ namespace DiaBlackJack.GameScene
                 request.ScreenPosition,
                 _camera,
                 request.TooltipPivot);
+        }
+
+        private void UpdateShopPriceBadges()
+        {
+            if (hud == null)
+            {
+                return;
+            }
+
+            if (shop == null || !shop.IsOpen)
+            {
+                hud.HideShopPriceBadges();
+                return;
+            }
+
+            if (_camera == null)
+            {
+                _camera = Camera.main;
+            }
+
+            hud.RenderShopPriceBadges(
+                shop.ActivePriceTargets,
+                _camera);
         }
 
         private void EnsureDeckPreview()

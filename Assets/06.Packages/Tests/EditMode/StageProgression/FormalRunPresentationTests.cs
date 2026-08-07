@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using DiaBlackJack.CoreLoop;
 using DiaBlackJack.GameScene;
@@ -267,8 +268,14 @@ namespace DiaBlackJack.StageProgression.Tests
                 ShopCardOfferStatusView[] statuses =
                     GetActiveComponents<ShopCardOfferStatusView>(root);
                 Assert.That(statuses, Has.Length.EqualTo(5));
-                Assert.That(statuses[0].PriceLabel, Is.EqualTo("돈 : 3"));
                 Assert.That(CountSoldStatuses(statuses), Is.EqualTo(1));
+                Assert.That(shop.ActivePriceTargets, Has.Count.EqualTo(5));
+                Assert.That(
+                    shop.ActivePriceTargets.Count(target => target.IsSoldOut),
+                    Is.EqualTo(1));
+                Assert.That(
+                    shop.ActivePriceTargets.Any(target => target.Price == 3),
+                    Is.True);
 
                 CardView[] normalCards = GetActiveComponents<CardView>(root);
                 DemonCardView[] demonCards = GetActiveComponents<DemonCardView>(root);
@@ -316,6 +323,7 @@ namespace DiaBlackJack.StageProgression.Tests
 
                 Assert.That(lighter.transform.localPosition, Is.EqualTo(lighterPosition));
                 Assert.That(whiskey.transform.localPosition, Is.EqualTo(whiskeyPosition));
+                Assert.That(shop.ActivePriceTargets, Is.Empty);
             }
             finally
             {
@@ -388,6 +396,7 @@ namespace DiaBlackJack.StageProgression.Tests
 
         [Test]
         [Category("GSH03")]
+        [Category("GSV06")]
         public void GSH03_U02_FormalShopUsesCombatCardDescriptionsAndKeepsPricesSeparate()
         {
             FormalRunSession run = OpenFirstShop();
@@ -440,6 +449,11 @@ namespace DiaBlackJack.StageProgression.Tests
                 Assert.That(normalCards, Has.Length.EqualTo(3));
                 Assert.That(demonCards, Has.Length.EqualTo(2));
                 Assert.That(statuses, Has.Length.EqualTo(5));
+                Assert.That(shop.ActivePriceTargets, Has.Count.EqualTo(7));
+
+                GameObject cameraObject = CreateChild(root, "Price Camera");
+                cameraObject.transform.position = new Vector3(0f, 0f, -50f);
+                Camera camera = cameraObject.AddComponent<Camera>();
 
                 foreach (CardView card in normalCards)
                 {
@@ -469,9 +483,14 @@ namespace DiaBlackJack.StageProgression.Tests
                         Is.EqualTo(definition.CostSummary));
                 }
 
-                foreach (ShopCardOfferStatusView status in statuses)
+                foreach (ShopPriceTarget priceTarget in shop.ActivePriceTargets)
                 {
-                    Assert.That(status.PriceLabel, Does.StartWith("돈 : "));
+                    Assert.That(priceTarget.HasRequiredReferences, Is.True);
+                    Assert.That(priceTarget.ProductName, Is.Not.Empty);
+                    Assert.That(priceTarget.Price, Is.GreaterThanOrEqualTo(0));
+                    Assert.That(
+                        priceTarget.TryCreateRequest(camera, out _),
+                        Is.True);
                 }
 
                 Assert.That(
@@ -504,6 +523,8 @@ namespace DiaBlackJack.StageProgression.Tests
             DemonCardView demonPrefab = demonPrefabObject.AddComponent<DemonCardView>();
             CreateEmbeddedStatus(normalPrefabObject, normalPrefab);
             CreateEmbeddedStatus(demonPrefabObject, demonPrefab);
+            CreatePriceTarget(normalPrefabObject);
+            CreatePriceTarget(demonPrefabObject);
             SetField(shop, "normalCardHolder", normalHolder);
             SetField(shop, "demonCardHolder", demonHolder);
             SetField(shop, "normalCardPrefab", normalPrefab);
@@ -521,14 +542,19 @@ namespace DiaBlackJack.StageProgression.Tests
             Type textType = Type.GetType(
                 "TMPro.TextMeshPro, Unity.TextMeshPro");
             Assert.That(textType, Is.Not.Null);
-            Component price = CreateChild(statusObject, "Price")
-                .AddComponent(textType);
             Component sold = CreateChild(statusObject, "Sold")
                 .AddComponent(textType);
-            SetField(status, "priceText", price);
             SetField(status, "soldOutText", sold);
             SetField(cardView, "shopOfferStatus", status);
             statusObject.SetActive(false);
+        }
+
+        private static void CreatePriceTarget(GameObject cardObject)
+        {
+            GameObject anchor = CreateChild(cardObject, "PriceAnchor");
+            anchor.transform.localPosition = Vector3.up;
+            ShopPriceTarget target = cardObject.AddComponent<ShopPriceTarget>();
+            SetField(target, "priceAnchor", anchor.transform);
         }
 
         private static GameObject CreateChild(GameObject parent, string name)
