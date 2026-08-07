@@ -43,6 +43,7 @@ namespace DiaBlackJack.GameScene
         private GameSceneCombatHudCommandKind? _tutorialRestrictedPrimaryAction;
         private string _tutorialRestrictedContractDefinitionKey;
         private int? _tutorialRestrictedOptionId;
+        private bool _tutorialContractPaperBlocked;
         private TutorialDirector _tutorialDirector;
         private bool _tutorialIntroCompleted;
         private CrystalOrbSelectionView crystalOrbSelection;
@@ -287,12 +288,18 @@ namespace DiaBlackJack.GameScene
 
             _tutorialDirector = null;
             _tutorialIntroCompleted = false;
+            _tutorialContractPaperBlocked = false;
             if (session.IsTutorialRun &&
                 tutorialNarrator != null &&
                 session.ActiveStage?.Id == TutorialBattleFactory.TutorialStageId)
             {
                 _tutorialDirector = new TutorialDirector(this, tutorialNarrator);
                 _tutorialDirector.IntroCompleted += HandleTutorialDirectorIntroCompleted;
+                // Only the contract-candidate gate explicitly lifts this — every other
+                // gate (and every dialogue step, which already blocks all input via the
+                // narrator) needs the contract paper to stay unclickable so the single
+                // highlighted action is genuinely the only thing the player can do.
+                _tutorialContractPaperBlocked = true;
             }
 
             RefreshView();
@@ -396,6 +403,20 @@ namespace DiaBlackJack.GameScene
         internal void SetTutorialContractOptionRestriction(int? optionId)
         {
             _tutorialRestrictedOptionId = optionId;
+            RefreshView();
+        }
+
+        /// <summary>
+        /// Tutorial-only override: when true, the contract paper renders non-interactable
+        /// regardless of <c>PlayerDemonContractAvailability.CanBegin</c> — needed because,
+        /// unlike Hit/Stand/Change, starting a demon contract is not gated by
+        /// <see cref="SetTutorialActionRestriction"/> at all (it is a separate world object
+        /// with its own always-on click path). Defaults to true for the whole tutorial the
+        /// moment it binds; only the contract-candidate gate explicitly sets it false.
+        /// </summary>
+        internal void SetTutorialContractPaperBlocked(bool blocked)
+        {
+            _tutorialContractPaperBlocked = blocked;
             RefreshView();
         }
 
@@ -3255,7 +3276,6 @@ namespace DiaBlackJack.GameScene
                     playedAnimation,
                     waitSeconds);
 
-                _tutorialDirector?.Observe();
                 bool playedResultSpeech = PresentEnemySpeech(
                     vm.EnemySpeechObservation,
                     SpeechPlaybackMoment.AfterAnimation);
@@ -3387,7 +3407,8 @@ namespace DiaBlackJack.GameScene
             RenderDemonContractSelection(combat);
             contractPapers?.Render(ContractPaperPresenter.Create(
                 Battle,
-                isCombatVisible: !isShopOpen));
+                isCombatVisible: !isShopOpen,
+                forceDisabled: _tutorialContractPaperBlocked));
 
             RefreshDeckStacks(vm);
             RefreshShopUtilityItems();
@@ -3469,6 +3490,13 @@ namespace DiaBlackJack.GameScene
             SpeechPlaybackMoment playbackMoment = SpeechPlaybackMoment.Any)
         {
             if (observation == null || enemyCharacter == null)
+            {
+                return false;
+            }
+
+            // The tutorial has its own single narrator (Asmodeus) — the enemy's ordinary
+            // combat barks would talk over it and aren't part of the scripted dialogue.
+            if (_tutorialDirector != null)
             {
                 return false;
             }
