@@ -100,6 +100,11 @@ MonoBehaviour:
     volume: 1
     pitch: 1
     loop: 1
+  - id: mainMenu
+    clip: {fileID: 8300000, guid: 2c4ba51d2859f5540964eba64d481439, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 1
   sfxEntries:
   - id: dissolve
     clip: {fileID: 8300000, guid: 753e4bea79ae5324f8b86dadf0e6bde9, type: 3}
