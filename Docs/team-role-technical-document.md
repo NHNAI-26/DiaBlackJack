@@ -3,7 +3,7 @@
 > 프로젝트: DiaBlackJack  
 > 문서 책임자: 이천서  
 > 버전: v0.1  
-> 최종 갱신: 2026-08-06
+> 최종 갱신: 2026-08-07
 
 ## 1. 기록 목적
 
@@ -972,3 +972,37 @@ DC-00 공통 규칙 개정으로 동일 악마 추가 계약과 계약 임시 �
 - `git status` 확인 중 이미 수정돼 있던 `Normal/{02,03,04}_plain.asset` 3개(빈 description에 "아무 효과가 없습니다." 채움)를 발견 — 사용자가 언급한 본인 SO 변경과 일치해 건드리지 않음.
 - 변경 영역: `CoreLoop/{CardDefinition,CardDescriptionRichTextFormatter(신규)}.cs`, `Content/CardContentCatalogSO.cs`, 테스트 1개.
 - 검증: AI가 컴파일 오류 0 확인. 전체 EditMode 1126개 중 1116개 통과, 무관 베이스라인 10건만 남음. Play 모드 확인 불가로 실제 색상·볼드 렌더링(TMP Rich Text 옵션 포함)은 이천서의 최종 확인 필요.
+
+## 2026-08-07(11) 튜토리얼 시스템 착수 — 레이어 A: 첫 플레이 감지 + 세션 강제 구성
+
+- 이천서: 첫 플레이 시 상대 선택 없이 '겁쟁이 도박사' 고정, 시작 악마도 '바알제붑'·'아스모데우스' 고정인 스크립트 튜토리얼 전투를 요청. 아스모데우스가 계약서 왼쪽에서 나레이터로 등장해 0~6장 대사(타자기 출력)와 함께 정확한 카드 배분·행동 제한을 재현하는 전체 대본을 직접 작성해 전달. "오래 걸려도 되니 차근차근"이라고 명시.
+- 규모가 커서 EnterPlanMode로 전환, Explore 에이전트 3개로 조사 후 레이어 A(첫 플레이 감지+세션 강제)→B(나레이터 UI+타자기)→C(행동 제한 게이트)→D(대본 전체 배선) 계획을 승인받았다.
+- 구현 중 확인: 현재 라이브 프로토타입 세션도 이미 스테이지 0을 포함해 모든 일반 전투에서 상대 선택이 실제로 발생하고 있었고(하드코딩된 프로필은 후보 풀 생성용 템플릿일 뿐), 세션 팩토리가 저장 복원 등에서도 여러 번 불릴 수 있어 "튜토리얼 봤음" 플래그는 세션 생성이 아니라 `TryStartRun()`이 실제로 성공한 시점에 기록하도록 했다.
+- 신규: `TutorialProgressStore`(런 단위로 지워지는 저장과 무관한 영속 플래그), `StartingDemonGrantGenerator`의 첫 호출만 고정 쌍을 반환하는 옵션, `StageProgressionSession`의 스테이지 0 강제 상대 경로(`TrySelectOpponent`와 동일한 재구성 로직 재사용, 스테이지 1 이후는 원래대로), `TutorialBattleFactory`(튜토리얼 스테이지에서만 스크립트 덱, 나머지는 기존 팩토리 위임).
+- 신규 EditMode 테스트 8건 전부 통과 확인. 전체 EditMode 1137개 중 1126개 통과, 무관 베이스라인 10건 + 이번과 무관한 외부 변경 1건만 남음. 씬 파일은 건드리지 않았다(레이어 B에서 발생 예정).
+- 변경 영역: `SaveLoad/TutorialProgressStore.cs`(신규), `StageProgression/{StartingDemonGrant,StageProgressionSession,TutorialBattleFactory(신규),StageBattleFactory}.cs`, `Bootstrap/StageProgressionRuntime.cs`, `UI/StageProgression/StageProgressionController.cs`, 테스트 1개(신규).
+
+## 2026-08-07(12) 튜토리얼 시스템 — 레이어 B: 나레이터 UI + 타자기 텍스트 + 클릭 진행
+
+- 이천서: 레이어 A 확인 후 레이어 B(나레이터 UI) 진행 지시. "튜토리얼 스테이지 한정으로 계약서 왼쪽에 아스모데우스 카드가 앞면으로 나와있으면 되는 거 알지?"로 설계 의도(계획 문서와 일치) 재확인.
+- AI가 나레이터 카드(아스모데우스, 항상 앞면·사용 불가) + 타자기 텍스트(타이핑 중 클릭 시 즉시 완성, 완성 후 클릭 시 다음 대사 요청) + `GameManager` 클릭 게이트를 코드로 작성했으나, Unity Editor/MCP 연결이 안 돼 씬 배선이 막혔다.
+- Unity 쪽에서 MCP for Unity 클라이언트 설정이 "Not Configured" 상태였던 것이 원인 — 이천서가 Unity 창에서 `Configure`로 재등록하고, Claude Code 재시작, Unity 쪽 연결도 한 번 더 끊었다 재연결한 뒤에야 정상적으로 잡혔다.
+- 연결 후 AI가 `GameScene.unity`를 열어 실제 계약서 위치를 확인하고 그 왼쪽에 나레이터 카드 앵커를 배치, 기존 계약 후보 카드와 같은 `DemonCard.prefab`을 재사용하고, 이미 동작 중인 적 캐릭터의 말풍선 오브젝트를 복제해 텍스트 박스로 재활용(레이어·오버레이 카메라 배선을 그대로 물려받음)한 뒤 `GameManager` 필드까지 전부 연결하고 씬을 저장했다.
+- 변경 영역: `GameScene/{TutorialNarratorView,TutorialTypewriterTextView}.cs`(신규), `GameScene/GameManager.cs`, `00. Scenes/GameScene.unity`.
+- 검증: 전체 EditMode 1137개 중 1126개 통과, 실패 11건은 전부 기존 무관 베이스라인과 동일(신규 회귀 없음). Play 모드 확인 불가로 카드/텍스트 박스의 실제 크기·위치는 이천서의 에디터 내 최종 확인 필요(특히 텍스트 박스 스케일은 즉흥값이라 조정 가능성 높음).
+
+## 2026-08-07(13) 튜토리얼 시스템 — 레이어 C: 행동 제한 게이트
+
+- 이천서: 레이어 B 완료 후 실제 플레이에서 나레이터가 안 보인다고 지적 — AI가 "레이어 B는 부품만 만든 것이고, 실제로 띄우는 트리거는 레이어 D 몫"이라고 설명(이 설명이 완료 보고에 빠져있었던 점은 AI 쪽 커뮤니케이션 실수). "레이어 C로 넘어가면 보이냐"는 질문에는 C가 나레이터와 무관한 행동 제한 기능임을 정정하고, 계획대로 C 진행을 지시받았다.
+- AI가 히트/스탠드/체인지 중 하나만 활성화하는 제한(HUD 프레젠테이션 레이어의 순수 함수 확장)과, 허용된 버튼에 기존 호버 강조색을 강제로 유지시키는 하이라이트, 리볼버 숫자 다이얼을 특정 값에 고정하고 확인 전까지 조작을 막는 기능을 코드로 구현했다.
+- 레이어 B와 마찬가지로 이번에도 두 기능 모두 `GameManager`에 호출 가능한 메서드로만 열어뒀을 뿐, 실제로 언제 켜고 끌지는 아직 아무 것도 정해져 있지 않다(레이어 D 몫) — 지금은 화면상 아무 변화도 없는 게 정상이다.
+- 변경 영역: `GameScene/{GameSceneCombatHudPresentation,TableCombatCommandGroup,RevolverNumberSelectorView,GameManager}.cs`, `UI/GameHudView.cs`, 테스트 1개(신규 2건 추가).
+- 검증: 전체 EditMode 1139개 중 1128개 통과, 실패 11건은 전부 기존 무관 베이스라인과 동일(신규 회귀 없음). 씬 파일은 이번엔 전혀 안 건드림.
+
+## 2026-08-07(14) 튜토리얼 시스템 — 레이어 D: 0~6장 대본 전체 배선 (완료)
+
+- 이천서: 레이어 D 진행 지시, 대화 요약으로 유실된 0~6장 대본 원문을 다시 전달. "0~1장 대사 중 적 등장을 동시 진행할지 멈춰둘지" 질문에 "대사 끝날 때까지 대기"로 답변.
+- AI가 계획 수립 중 레이어 B의 실제 버그(카메라 좌우 반전으로 나레이터 카드가 계약서 오른쪽에 있었음)를 스스로 발견해 수정했고, 계획 승인 후 구현 중에도 실제 게임 로직을 직접 실행해보며 대본과 엔진 규칙이 안 맞는 지점 3곳(카드 딜 순서, 카드 효과 사용 시 히든카드 취급, 적 AI의 자발적 체인지 조건)을 발견해 전부 대본의 의도를 최대한 살리는 방식으로 조정했다 — 특히 "적 체인지" 지시문 하나는 실제 엔진 규칙상 재현이 불가능함을 확인하고, 화면에 안 뜨는 괄호 지시문이라 조용히 대체 행동으로 바꿨다.
+- 나레이터 대사 진행·게임플레이 제한 게이트·적 AI·카드 덱·전투 화면 전환 타이밍까지 튜토리얼 전체를 실제로 배선했다. 신규 EditMode 테스트로 라운드 1~3과 최종 계약 피날레 전체를 실제로 플레이해 카드·영혼 피해·결과가 대본과 정확히 일치하는지 검증했다.
+- 변경 영역: `CoreLoop/TutorialEnemyPolicy.cs`(신규), `GameScene/{TutorialDirector(신규),GameManager,GameFlowController,GameSceneCombatHudPresentation,DemonContractSelectionView,TableCombatCommandGroup,RevolverNumberSelectorView}.cs`, `UI/GameHudView.cs`, `StageProgression/TutorialBattleFactory.cs`, 테스트 2개.
+- 검증: 전체 EditMode 1142개 중 1131개 통과, 실패 11건은 기존 무관 베이스라인과 동일(신규 회귀 없음). 씬 파일은 레이어 B의 나레이터 위치 수정 1건 외 이번엔 추가 변경 없음(레이어 D는 순수 코드). Play 모드 확인 불가로 실제 재생 흐름은 이천서의 에디터 내 최종 확인 필요.

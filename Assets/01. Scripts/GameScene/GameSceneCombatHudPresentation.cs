@@ -164,7 +164,10 @@ namespace DiaBlackJack.GameScene
             bool inputLocked,
             bool usesDiegeticCardEffectSelection = false,
             bool hideForPresentation = false,
-            int satanSelectedNumberCount = 0)
+            int satanSelectedNumberCount = 0,
+            GameSceneCombatHudCommandKind? restrictedPrimaryAction = null,
+            string restrictedContractDefinitionKey = null,
+            int? restrictedOptionId = null)
         {
             if (core == null || isShopOpen || hideForPresentation)
             {
@@ -428,7 +431,10 @@ namespace DiaBlackJack.GameScene
                                 choice.Title,
                                 choice.Ability,
                                 choice.Cost,
-                                choice.CanSelect && !inputLocked));
+                                IsContractCandidateAllowed(
+                                    choice.DefinitionKey,
+                                    restrictedContractDefinitionKey) &&
+                                    choice.CanSelect && !inputLocked));
                     }
 
                     return new GameSceneCombatHudViewModel(
@@ -461,7 +467,8 @@ namespace DiaBlackJack.GameScene
                             choice.OptionId,
                             contract.InteractionId ?? -1),
                         label,
-                        choice.CanSelect && !inputLocked,
+                        IsOptionAllowed(choice.OptionId, restrictedOptionId) &&
+                            choice.CanSelect && !inputLocked,
                         placement: IsBottomRightContractAction(
                             contract.InteractionKind,
                             choice.OptionId)
@@ -480,15 +487,24 @@ namespace DiaBlackJack.GameScene
                 CreateAction(
                     GameSceneCombatHudCommandKind.Hit,
                     "HIT",
-                    core.CanHit && !inputLocked),
+                    IsPrimaryActionAllowed(
+                        GameSceneCombatHudCommandKind.Hit,
+                        restrictedPrimaryAction) &&
+                        core.CanHit && !inputLocked),
                 CreateAction(
                     GameSceneCombatHudCommandKind.Stand,
                     "STAND",
-                    core.CanStand && !inputLocked),
+                    IsPrimaryActionAllowed(
+                        GameSceneCombatHudCommandKind.Stand,
+                        restrictedPrimaryAction) &&
+                        core.CanStand && !inputLocked),
                 CreateAction(
                     GameSceneCombatHudCommandKind.BeginChange,
                     FormatChangeLabel(core.ChangeActionText),
-                    core.CanChange && !inputLocked)
+                    IsPrimaryActionAllowed(
+                        GameSceneCombatHudCommandKind.BeginChange,
+                        restrictedPrimaryAction) &&
+                        core.CanChange && !inputLocked)
             };
 
             var activeContractActions = new List<GameSceneCombatHudActionViewModel>();
@@ -597,6 +613,33 @@ namespace DiaBlackJack.GameScene
                 default:
                     return false;
             }
+        }
+
+        private static bool IsPrimaryActionAllowed(
+            GameSceneCombatHudCommandKind kind,
+            GameSceneCombatHudCommandKind? restrictedPrimaryAction)
+        {
+            return !restrictedPrimaryAction.HasValue ||
+                restrictedPrimaryAction.Value == kind;
+        }
+
+        private static bool IsContractCandidateAllowed(
+            string definitionKey,
+            string restrictedContractDefinitionKey)
+        {
+            return string.IsNullOrEmpty(restrictedContractDefinitionKey) ||
+                string.Equals(
+                    definitionKey,
+                    restrictedContractDefinitionKey,
+                    StringComparison.Ordinal);
+        }
+
+        private static bool IsOptionAllowed(
+            int optionId,
+            int? restrictedOptionId)
+        {
+            return !restrictedOptionId.HasValue ||
+                restrictedOptionId.Value == optionId;
         }
 
         private static string FormatChangeLabel(string changeActionText)

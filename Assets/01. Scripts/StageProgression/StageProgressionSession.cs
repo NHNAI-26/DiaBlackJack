@@ -13,6 +13,7 @@ namespace DiaBlackJack.StageProgression
         private readonly GoldRewardCatalog _goldRewardCatalog;
         private readonly bool _usesBattleRewards;
         private readonly StartingDemonGrantGenerator _startingDemonGrantGenerator;
+        private readonly string _forcedFirstStageOpponentProfileKey;
         private OpponentSelectionGenerator _opponentSelectionGenerator;
         private CoreLoopSession _battleSession;
         private CoreLoopBattle _processedBattle;
@@ -25,7 +26,8 @@ namespace DiaBlackJack.StageProgression
             OpponentSelectionGenerator opponentSelectionGenerator = null,
             StartingDemonGrantGenerator startingDemonGrantGenerator = null,
             GoldRewardCatalog goldRewardCatalog = null,
-            bool usesBattleRewards = true)
+            bool usesBattleRewards = true,
+            string forcedFirstStageOpponentProfileKey = null)
         {
             Progress = progress ?? throw new ArgumentNullException(nameof(progress));
             _battleFactory = battleFactory ?? StageBattleFactory.Create;
@@ -37,6 +39,8 @@ namespace DiaBlackJack.StageProgression
             _usesBattleRewards = usesBattleRewards;
             _opponentSelectionGenerator = opponentSelectionGenerator;
             _startingDemonGrantGenerator = startingDemonGrantGenerator;
+            _forcedFirstStageOpponentProfileKey = forcedFirstStageOpponentProfileKey;
+            IsTutorialRun = forcedFirstStageOpponentProfileKey != null;
             ActiveStage = opponentSelectionGenerator == null
                 ? progress.CurrentStage
                 : null;
@@ -47,6 +51,15 @@ namespace DiaBlackJack.StageProgression
         public CoreLoopBattle Battle => _battleSession?.Battle;
 
         public bool IsOpponentSelectionEnabled => _opponentSelectionGenerator != null;
+
+        /// <summary>
+        /// True when this session was constructed with a forced first-stage opponent
+        /// (the scripted tutorial run). Used purely as a marker so the orchestration
+        /// layer can tell, after <see cref="TryStartRun"/> succeeds, whether the
+        /// player has just started the tutorial (and should have it recorded as seen)
+        /// — this session never persists anything itself.
+        /// </summary>
+        public bool IsTutorialRun { get; }
 
         public bool UsesBattleRewards => _usesBattleRewards;
 
@@ -398,6 +411,26 @@ namespace DiaBlackJack.StageProgression
         private void PrepareCurrentStage()
         {
             StageDefinition stage = RefreshStageDefinition(Progress.CurrentStage);
+            if (Progress.CurrentStageIndex == 0 &&
+                _forcedFirstStageOpponentProfileKey != null)
+            {
+                // The scripted tutorial run: the very first stage skips opponent
+                // selection entirely and goes straight to the forced profile, the
+                // same way TrySelectOpponent rebuilds a stage after a real choice —
+                // just with the "choice" fixed in advance instead of player-made.
+                EnemyProfilePreview preview = EnemyCombatProfileCatalog.Default
+                    .GetPreviewByKey(_forcedFirstStageOpponentProfileKey);
+                stage = StageDefinition.CreateForEnemyProfile(
+                    stage.Id,
+                    preview.DisplayName,
+                    stage.Kind,
+                    _forcedFirstStageOpponentProfileKey,
+                    stage.PlayerDeckSeed,
+                    stage.EnemyDeckSeed);
+                ApplyPreparedStage(stage, offer: null, CreateBattleSession(stage));
+                return;
+            }
+
             OpponentSelectionOffer offer = ShouldOfferOpponentSelection(stage)
                 ? _opponentSelectionGenerator.Generate(Progress.CurrentStageIndex)
                 : null;

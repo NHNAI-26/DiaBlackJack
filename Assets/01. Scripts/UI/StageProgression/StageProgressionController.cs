@@ -398,7 +398,7 @@ namespace DiaBlackJack.StageProgression.UI
         {
             if (_runtime.SaveFlow != null)
             {
-                bool started = _runtime.SaveFlow.TryStartRun();
+                bool started = _runtime.TryStartRun();
                 _formalSession = _runtime.FormalSession;
                 return started;
             }

@@ -78,7 +78,7 @@ namespace DiaBlackJack.StageProgression
                     stage.EnemyDeckSeed));
         }
 
-        private static DemonContractDeck CreateEnemyDemonDeck(
+        internal static DemonContractDeck CreateEnemyDemonDeck(
             IReadOnlyList<string> definitionKeys,
             int seed)
         {
@@ -93,7 +93,7 @@ namespace DiaBlackJack.StageProgression
             return new DemonContractDeck(cards, seed);
         }
 
-        private static DemonContractDeck CreateDemonDeck(
+        internal static DemonContractDeck CreateDemonDeck(
             IReadOnlyList<RunDemonDefinition> runCards,
             int seed)
         {
@@ -108,7 +108,7 @@ namespace DiaBlackJack.StageProgression
             return new DemonContractDeck(cards, seed);
         }
 
-        private static int DeriveDemonDeckSeed(int playerDeckSeed)
+        internal static int DeriveDemonDeckSeed(int playerDeckSeed)
         {
             unchecked
             {
@@ -116,7 +116,7 @@ namespace DiaBlackJack.StageProgression
             }
         }
 
-        private static int DeriveEnemyDemonDeckSeed(int enemyDeckSeed)
+        internal static int DeriveEnemyDemonDeckSeed(int enemyDeckSeed)
         {
             unchecked
             {
@@ -124,7 +124,7 @@ namespace DiaBlackJack.StageProgression
             }
         }
 
-        private static int DeriveDemonContractSeed(
+        internal static int DeriveDemonContractSeed(
             int playerDeckSeed,
             int enemyDeckSeed)
         {

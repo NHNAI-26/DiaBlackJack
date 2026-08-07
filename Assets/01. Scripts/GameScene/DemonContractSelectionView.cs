@@ -140,6 +140,32 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        internal void SetHoveredByDefinitionKey(string definitionKey)
+        {
+            if (string.IsNullOrEmpty(definitionKey))
+            {
+                SetHovered(null);
+                return;
+            }
+
+            for (int i = 0; i < _candidateCount; i++)
+            {
+                GameSceneCombatHudContractCandidateViewModel candidate =
+                    _slots[i].Candidate;
+                if (candidate != null &&
+                    string.Equals(
+                        candidate.DefinitionKey,
+                        definitionKey,
+                        System.StringComparison.Ordinal))
+                {
+                    SetHovered(_slots[i].Card);
+                    return;
+                }
+            }
+
+            SetHovered(null);
+        }
+
         public void Hide()
         {
             SetHovered(null);

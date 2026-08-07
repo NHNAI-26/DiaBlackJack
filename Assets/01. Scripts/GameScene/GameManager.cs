@@ -39,6 +39,12 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private DeckPreviewView deckPreview;
         [SerializeField] private CodexController codex;
         [SerializeField] private DemonContractSelectionView demonContractSelection;
+        [SerializeField] private TutorialNarratorView tutorialNarrator;
+        private GameSceneCombatHudCommandKind? _tutorialRestrictedPrimaryAction;
+        private string _tutorialRestrictedContractDefinitionKey;
+        private int? _tutorialRestrictedOptionId;
+        private TutorialDirector _tutorialDirector;
+        private bool _tutorialIntroCompleted;
         private CrystalOrbSelectionView crystalOrbSelection;
         private SatanNumberSelectionView satanNumberSelection;
         [SerializeField] private Sprite satanBrandSprite;
@@ -278,8 +284,46 @@ namespace DiaBlackJack.GameScene
             enemyCharacter?.TrySetEnemyProfile(_activeEnemyProfileKey);
             ApplyEnemyDeckTopTint();
             _inputLocked = !unlockInput;
+
+            _tutorialDirector = null;
+            _tutorialIntroCompleted = false;
+            if (session.IsTutorialRun &&
+                tutorialNarrator != null &&
+                session.ActiveStage?.Id == TutorialBattleFactory.TutorialStageId)
+            {
+                _tutorialDirector = new TutorialDirector(this, tutorialNarrator);
+                _tutorialDirector.IntroCompleted += HandleTutorialDirectorIntroCompleted;
+            }
+
             RefreshView();
             return true;
+        }
+
+        /// <summary>Fires once the tutorial's intro (sections 0-1) dialogue finishes.</summary>
+        internal event Action TutorialIntroCompleted;
+
+        /// <summary>
+        /// True from the moment a tutorial battle binds until its intro dialogue finishes.
+        /// <see cref="GameFlowController"/> uses this to hold the enemy-entrance animation and
+        /// round-1 card-deal reveal off until the player has read through it.
+        /// </summary>
+        internal bool HasPendingTutorialIntro =>
+            _tutorialDirector != null && !_tutorialIntroCompleted;
+
+        internal void BeginTutorialIntroIfNeeded()
+        {
+            if (_tutorialDirector == null || _tutorialIntroCompleted)
+            {
+                return;
+            }
+
+            _tutorialDirector.BeginIntro();
+        }
+
+        private void HandleTutorialDirectorIntroCompleted()
+        {
+            _tutorialIntroCompleted = true;
+            TutorialIntroCompleted?.Invoke();
         }
 
         /// <summary>
@@ -302,6 +346,57 @@ namespace DiaBlackJack.GameScene
             // stays on screen through the whole entrance animation, reading as if the
             // newly-appearing enemy said it.
             enemyCharacter?.HideSpeech();
+        }
+
+        /// <summary>
+        /// Tutorial-only override: when set, only <paramref name="allowedAction"/> among
+        /// Hit/Stand/Change stays interactable — the presentation layer forces the other two
+        /// off regardless of what CoreLoop would otherwise allow. Also forces the matching
+        /// table button to show its hovered highlight so the restriction reads as an
+        /// intentional prompt rather than two buttons randomly going dark. Pass null to lift
+        /// the restriction. Not tied to any script trigger yet — the tutorial director (layer D)
+        /// is what will actually call this at the right beat.
+        /// </summary>
+        internal void SetTutorialActionRestriction(
+            GameSceneCombatHudCommandKind? allowedAction)
+        {
+            _tutorialRestrictedPrimaryAction = allowedAction;
+            RefreshView();
+        }
+
+        /// <summary>
+        /// Tutorial-only override: pins the revolver/lie-detector number dial to
+        /// <paramref name="number"/> and blocks navigation until confirmed. Pass null to lift
+        /// the restriction. See <see cref="SetTutorialActionRestriction"/> for the same
+        /// "mechanism now, trigger later" split.
+        /// </summary>
+        internal void SetTutorialRevolverForcedNumber(int? number)
+        {
+            hud?.SetTutorialRevolverForcedNumber(number);
+        }
+
+        /// <summary>
+        /// Tutorial-only override: when set, only the contract candidate with this
+        /// <c>DefinitionKey</c> stays clickable among the (at most 2) demon-contract
+        /// candidates — the world-space raycast click path is gated directly (see
+        /// <see cref="HandleDemonContractSelectionInput"/>), not just the presentation layer,
+        /// since that path does not otherwise consult <c>IsInteractable</c> before dispatching.
+        /// Pass null to lift the restriction.
+        /// </summary>
+        internal void SetTutorialContractRestriction(string definitionKey)
+        {
+            _tutorialRestrictedContractDefinitionKey = definitionKey;
+            RefreshView();
+        }
+
+        /// <summary>
+        /// Tutorial-only override: when set, only the demon-contract option with this id stays
+        /// clickable (e.g. Asmodeus's turn-start "능력 사용하기"). Pass null to lift.
+        /// </summary>
+        internal void SetTutorialContractOptionRestriction(int? optionId)
+        {
+            _tutorialRestrictedOptionId = optionId;
+            RefreshView();
         }
 
         /// <summary>
@@ -580,6 +675,8 @@ namespace DiaBlackJack.GameScene
                 FindObjectsInactive.Include);
             contractPapers ??= FindFirstObjectByType<ContractPaperView>(
                 FindObjectsInactive.Include);
+            tutorialNarrator ??= FindFirstObjectByType<TutorialNarratorView>(
+                FindObjectsInactive.Include);
             mammonDie ??= FindFirstObjectByType<MammonDieView>(
                 FindObjectsInactive.Include);
             EnsureMammonDie();
@@ -665,6 +762,7 @@ namespace DiaBlackJack.GameScene
             demonContractSelection?.Hide();
             crystalOrbSelection?.Hide();
             satanNumberSelection?.Hide();
+            tutorialNarrator?.Hide();
             hud?.HideDemonContractDetail();
             hud?.SetShopLeaveState(visible: false, interactable: false);
             UpdateDeckStackHover(null);
@@ -713,6 +811,7 @@ namespace DiaBlackJack.GameScene
             demonContractSelection?.Hide();
             crystalOrbSelection?.Hide();
             satanNumberSelection?.Hide();
+            tutorialNarrator?.Hide();
             contractPapers?.Render(null);
             hud?.HideCardHoverBadge();
             hud?.HideDemonContractDetail();
@@ -781,6 +880,24 @@ namespace DiaBlackJack.GameScene
                 {
                     hud?.HideCardHoverBadge();
                 }
+                return;
+            }
+
+            if (tutorialNarrator != null && tutorialNarrator.IsActive)
+            {
+                UpdateDeckStackHover(null);
+                UpdateCodexHover(null);
+                UpdateContractPaperHover(null);
+                UpdateCombatCommandHover(null);
+                UpdateHoverDescriptionTarget(null);
+                hud?.HideCardHoverBadge();
+
+                Mouse tutorialMouse = Mouse.current;
+                if (tutorialMouse != null && tutorialMouse.leftButton.wasPressedThisFrame)
+                {
+                    tutorialNarrator.HandleClick();
+                }
+
                 return;
             }
 
@@ -935,7 +1052,12 @@ namespace DiaBlackJack.GameScene
             UpdateContractPaperHover(pointedContractPaper);
             UpdateCardHoverBadge();
             UpdateShopUtilityItemHover(pointedShopUtilityItem);
-            UpdateCombatCommandHover(pointedCombatCommand);
+            TableCombatCommandView effectiveCombatCommandHover =
+                _tutorialRestrictedPrimaryAction.HasValue
+                    ? tableCombatCommands?.GetView(
+                        _tutorialRestrictedPrimaryAction.Value)
+                    : pointedCombatCommand;
+            UpdateCombatCommandHover(effectiveCombatCommandHover);
             UpdateHoverDescriptionTarget(pointedHoverDescriptionTarget);
 
             if (_inputLocked || _choosingLighterRemoval)
@@ -1099,7 +1221,15 @@ namespace DiaBlackJack.GameScene
             UpdateShopUtilityItemHover(null);
             UpdateCombatCommandHover(null);
             hud?.HideCardHoverBadge();
-            demonContractSelection.SetHovered(pointed);
+            if (_tutorialRestrictedContractDefinitionKey != null)
+            {
+                demonContractSelection.SetHoveredByDefinitionKey(
+                    _tutorialRestrictedContractDefinitionKey);
+            }
+            else
+            {
+                demonContractSelection.SetHovered(pointed);
+            }
 
             GameSceneCombatHudContractCandidateViewModel candidate =
                 demonContractSelection.GetCandidate(pointed);
@@ -1118,7 +1248,9 @@ namespace DiaBlackJack.GameScene
             }
 
             Mouse mouse = Mouse.current;
-            if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
+            if (mouse == null ||
+                !mouse.leftButton.wasPressedThisFrame ||
+                !candidate.IsInteractable)
             {
                 return;
             }
@@ -3123,6 +3255,7 @@ namespace DiaBlackJack.GameScene
                     playedAnimation,
                     waitSeconds);
 
+                _tutorialDirector?.Observe();
                 bool playedResultSpeech = PresentEnemySpeech(
                     vm.EnemySpeechObservation,
                     SpeechPlaybackMoment.AfterAnimation);
@@ -3182,6 +3315,7 @@ namespace DiaBlackJack.GameScene
                 GameScenePresenter.Create(battle, _activeEnemyProfileKey);
             ApplyView(vm);
             MaybeOpenShop(vm);
+            _tutorialDirector?.Observe();
         }
 
         private AppliedAnimationResult ApplyView(
@@ -3226,7 +3360,11 @@ namespace DiaBlackJack.GameScene
                     vm.UsesDiegeticCardEffectSelection,
                     hideForPresentation: hideCombatHudForPresentation,
                     satanSelectedNumberCount:
-                        satanNumberSelection?.SelectedCount ?? 0);
+                        satanNumberSelection?.SelectedCount ?? 0,
+                    restrictedPrimaryAction: _tutorialRestrictedPrimaryAction,
+                    restrictedContractDefinitionKey:
+                        _tutorialRestrictedContractDefinitionKey,
+                    restrictedOptionId: _tutorialRestrictedOptionId);
 
             if (hud != null)
             {
@@ -3774,7 +3912,11 @@ namespace DiaBlackJack.GameScene
                     isShopOpen,
                     _inputLocked,
                     satanSelectedNumberCount:
-                        satanNumberSelection?.SelectedCount ?? 0);
+                        satanNumberSelection?.SelectedCount ?? 0,
+                    restrictedPrimaryAction: _tutorialRestrictedPrimaryAction,
+                    restrictedContractDefinitionKey:
+                        _tutorialRestrictedContractDefinitionKey,
+                    restrictedOptionId: _tutorialRestrictedOptionId);
             hud?.Render(_core, combat);
             tableCombatCommands?.Render(combat);
         }

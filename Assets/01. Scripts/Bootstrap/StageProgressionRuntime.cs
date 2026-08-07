@@ -20,6 +20,8 @@ namespace DiaBlackJack.StageProgression.UI
 
         public RunSaveFlow SaveFlow { get; private set; }
 
+        private TutorialProgressStore _tutorialProgressStore;
+
         public FormalRunSession FormalSession
         {
             get
@@ -93,16 +95,69 @@ namespace DiaBlackJack.StageProgression.UI
             Instance = this;
             DontDestroyOnLoad(gameObject);
             IRunSaveFileStore fileStore = new SystemRunSaveFileStore();
+            _tutorialProgressStore = new TutorialProgressStore(fileStore);
             SaveFlow = new RunSaveFlow(
                 new RunSaveRepository(fileStore, CreatePrototypeStages(seed)),
                 new RunReservationRepository(
                     fileStore,
                     DemonContractCatalog.Default),
                 CreatePrototypeStages,
-                CreatePrototypeSession,
+                CreateSessionForCurrentTutorialState,
                 seed,
                 usesBattleRewards: false);
             _ = FormalSession;
+        }
+
+        /// <summary>
+        /// Starts the active run, exactly like calling <see cref="RunSaveFlow.TryStartRun"/>
+        /// directly, but also records the scripted first-play tutorial as seen the moment a
+        /// tutorial-flavored session is actually started — not merely constructed (the
+        /// session factory below can run speculatively, e.g. while restoring a save, so the
+        /// flag must only flip once a tutorial run is genuinely underway).
+        /// </summary>
+        public bool TryStartRun()
+        {
+            bool started = SaveFlow != null && SaveFlow.TryStartRun();
+            if (started && SaveFlow.Session != null && SaveFlow.Session.IsTutorialRun)
+            {
+                _tutorialProgressStore.TryMarkSeen();
+            }
+
+            return started;
+        }
+
+        private StageProgressionSession CreateSessionForCurrentTutorialState(int rootSeed)
+        {
+            return _tutorialProgressStore.HasSeenTutorial
+                ? CreatePrototypeSession(rootSeed)
+                : CreateTutorialSession(rootSeed);
+        }
+
+        internal static StageProgressionSession CreateTutorialSession(int rootSeed)
+        {
+            return new StageProgressionSession(
+                new RunProgress(
+                    CreatePrototypeStages(rootSeed),
+                    CreatePrototypePlayer()),
+                battleFactory: TutorialBattleFactory.Create,
+                rewardGenerator: new BattleRewardGenerator(
+                    BattleRewardCatalog.CreateDefault(),
+                    unchecked(rootSeed + 1)),
+                opponentSelectionGenerator: new OpponentSelectionGenerator(
+                    EnemyCombatProfileCatalog.Default,
+                    rootSeed),
+                startingDemonGrantGenerator: new StartingDemonGrantGenerator(
+                    DemonContractCatalog.Default,
+                    unchecked(rootSeed + 3),
+                    DemonContractCatalog.PlayerDefaultDemonDeckKeys,
+                    forcedFirstGrantDefinitionKeys: new[]
+                    {
+                        DemonContractCatalog.BeelzebubKey,
+                        DemonContractCatalog.AsmodeusKey
+                    }),
+                usesBattleRewards: false,
+                forcedFirstStageOpponentProfileKey:
+                    EnemyCombatProfileCatalog.CowardlyGamblerKey);
         }
 
         private void OnDestroy()

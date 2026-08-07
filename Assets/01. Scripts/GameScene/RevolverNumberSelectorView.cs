@@ -24,6 +24,7 @@ namespace DiaBlackJack.GameScene
         private IReadOnlyList<GameSceneCombatHudActionViewModel> _options =
             Array.Empty<GameSceneCombatHudActionViewModel>();
         private int _selectedIndex;
+        private int? _forcedSelectionNumber;
 
         public event Action<GameSceneCombatHudCommand> CommandRequested;
 
@@ -93,7 +94,11 @@ namespace DiaBlackJack.GameScene
             bool wasOpen = IsOpen;
             _options = options;
             IsOpen = true;
-            if (!wasOpen || _selectedIndex >= _options.Count)
+            if (_forcedSelectionNumber.HasValue)
+            {
+                ApplyForcedSelectionIfNeeded();
+            }
+            else if (!wasOpen || _selectedIndex >= _options.Count)
             {
                 _selectedIndex = 0;
             }
@@ -130,10 +135,57 @@ namespace DiaBlackJack.GameScene
             gameObject.SetActive(false);
         }
 
+        /// <summary>
+        /// Tutorial-only override: pins the dial to <paramref name="number"/> and blocks every
+        /// navigation input (buttons, arrow keys, scroll) until cleared — only Confirm still
+        /// works. Not cleared automatically by <see cref="Hide"/>; the caller (the tutorial
+        /// director) owns turning it back off once the scripted beat is past.
+        /// </summary>
+        internal void SetForcedSelection(int? number)
+        {
+            _forcedSelectionNumber = number;
+            if (IsOpen)
+            {
+                ApplyForcedSelectionIfNeeded();
+                RefreshSelection();
+            }
+        }
+
+        private void ApplyForcedSelectionIfNeeded()
+        {
+            if (!_forcedSelectionNumber.HasValue)
+            {
+                return;
+            }
+
+            for (int i = 0; i < _options.Count; i++)
+            {
+                if (_options[i].Command.OptionId == _forcedSelectionNumber.Value)
+                {
+                    _selectedIndex = i;
+                    return;
+                }
+            }
+        }
+
         private void Update()
         {
             if (!IsOpen)
             {
+                return;
+            }
+
+            if (_forcedSelectionNumber.HasValue)
+            {
+                Keyboard forcedKeyboard = Keyboard.current;
+                if (forcedKeyboard != null &&
+                    (forcedKeyboard.enterKey.wasPressedThisFrame ||
+                        forcedKeyboard.numpadEnterKey.wasPressedThisFrame ||
+                        forcedKeyboard.spaceKey.wasPressedThisFrame))
+                {
+                    Confirm();
+                }
+
                 return;
             }
 
@@ -192,7 +244,7 @@ namespace DiaBlackJack.GameScene
 
         private void Move(int direction)
         {
-            if (_options.Count == 0)
+            if (_forcedSelectionNumber.HasValue || _options.Count == 0)
             {
                 return;
             }
@@ -227,7 +279,7 @@ namespace DiaBlackJack.GameScene
                 numberText.text = SelectedNumber.ToString();
             }
 
-            bool canNavigate = _options.Count > 1;
+            bool canNavigate = !_forcedSelectionNumber.HasValue && _options.Count > 1;
             if (previousButton != null)
             {
                 previousButton.interactable = canNavigate;
