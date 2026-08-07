@@ -163,8 +163,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 battle.PendingPlayerCardEffect.ChoiceKind,
                 Is.EqualTo(CardEffectChoiceKind.DiscardOpponentFaceUpCard));
             Assert.That(
-                battle.PendingPlayerCardEffect.Prompt,
-                Is.EqualTo("버릴 상대 공개 카드를 선택하세요."));
+                battle.PendingPlayerCardEffect.PromptId,
+                Is.EqualTo(CombatPromptId.ManualThreatHammerChooseOpponentCard));
         }
 
         [Test]

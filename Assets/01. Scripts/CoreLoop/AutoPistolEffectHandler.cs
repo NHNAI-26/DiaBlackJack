@@ -26,7 +26,7 @@ namespace DiaBlackJack.CoreLoop
             return CardEffectStep.AwaitChoice(new PendingCardEffect(
                 context.SourceCard.Id,
                 EffectKind,
-                "상대 비공개 카드의 숫자를 선언하세요.",
+                CombatPromptId.ManualAutoPistolDeclareNumber,
                 CardEffectChoiceKind.DeclareNumber,
                 GuessOptions));
         }

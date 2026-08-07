@@ -44,7 +44,7 @@ namespace DiaBlackJack.CoreLoop
             return AutomaticCardEffectStep.AwaitChoice(
                 context.OwnerSide,
                 AutomaticCardChoiceKind.PocketWatchManualCard,
-                "Choose one used manual card to reactivate, or skip.",
+                CombatPromptId.AutomaticPocketWatchChooseManualCard,
                 options);
         }
 
@@ -99,7 +99,7 @@ namespace DiaBlackJack.CoreLoop
             return AutomaticCardEffectStep.AwaitChoice(
                 context.OwnerSide,
                 AutomaticCardChoiceKind.PocketWatchSourceDisposition,
-                "Choose whether to retain or discard the pocket watch.",
+                CombatPromptId.AutomaticPocketWatchChooseDisposition,
                 SourceDispositionOptions);
         }
 

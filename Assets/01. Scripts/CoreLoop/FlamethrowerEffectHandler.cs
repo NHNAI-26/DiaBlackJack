@@ -90,7 +90,6 @@ namespace DiaBlackJack.CoreLoop
             return CreateDiscardChoice(
                 decisionSide,
                 GetChoiceKind(context, decisionSide),
-                "Choose one of your face-up cards to discard, or skip.",
                 candidates);
         }
 
@@ -106,7 +105,6 @@ namespace DiaBlackJack.CoreLoop
         private static AutomaticCardEffectStep CreateDiscardChoice(
             CombatantSide decisionSide,
             AutomaticCardChoiceKind choiceKind,
-            string prompt,
             IReadOnlyList<BlackjackCard> candidates)
         {
             var options = new List<AutomaticCardChoiceOption>(
@@ -128,7 +126,7 @@ namespace DiaBlackJack.CoreLoop
             return AutomaticCardEffectStep.AwaitChoice(
                 decisionSide,
                 choiceKind,
-                prompt,
+                CombatPromptId.AutomaticFlamethrowerChooseDiscard,
                 options);
         }
 

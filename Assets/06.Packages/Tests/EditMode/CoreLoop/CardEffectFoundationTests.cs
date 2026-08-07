@@ -340,7 +340,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             var pending = new PendingCardEffect(
                 3,
                 CardEffectKind.AutoPistol,
-                "Declare a number.",
+                CombatPromptId.ManualAutoPistolDeclareNumber,
                 CardEffectChoiceKind.DeclareNumber,
                 options);
 
@@ -351,7 +351,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.Throws<ArgumentException>(() => new PendingCardEffect(
                 3,
                 CardEffectKind.AutoPistol,
-                "Declare a number.",
+                CombatPromptId.ManualAutoPistolDeclareNumber,
                 CardEffectChoiceKind.DeclareNumber,
                 new[]
                 {
@@ -524,7 +524,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 return new PendingCardEffect(
                     sourceCardId,
                     CardEffectKind.AutoPistol,
-                    "Declare a number.",
+                    CombatPromptId.ManualAutoPistolDeclareNumber,
                     CardEffectChoiceKind.DeclareNumber,
                     new[]
                     {

@@ -73,7 +73,6 @@ namespace DiaBlackJack.CoreLoop.UI
             bool isResolving,
             int? interactionId,
             DemonContractInteractionKind? interactionKind,
-            string prompt,
             IReadOnlyList<DemonContractChoiceViewModel> choices,
             IReadOnlyList<string> activeContracts,
             IReadOnlyList<ActiveDemonContractActionViewModel> activeActions,
@@ -90,7 +89,6 @@ namespace DiaBlackJack.CoreLoop.UI
             IsResolving = isResolving;
             InteractionId = interactionId;
             InteractionKind = interactionKind;
-            Prompt = prompt ?? string.Empty;
             Choices = choices ?? throw new ArgumentNullException(nameof(choices));
             ActiveContracts = activeContracts ??
                 throw new ArgumentNullException(nameof(activeContracts));
@@ -118,8 +116,6 @@ namespace DiaBlackJack.CoreLoop.UI
         public int? InteractionId { get; }
 
         public DemonContractInteractionKind? InteractionKind { get; }
-
-        public string Prompt { get; }
 
         public IReadOnlyList<DemonContractChoiceViewModel> Choices { get; }
 
@@ -165,7 +161,6 @@ namespace DiaBlackJack.CoreLoop.UI
                 battle.State == CoreLoopState.PlayerResolvingDemonContract,
                 pending?.InteractionId,
                 pending?.Kind,
-                pending?.PublicPrompt,
                 FormatChoices(pending),
                 FormatActiveContracts(battle),
                 FormatActiveActions(battle),

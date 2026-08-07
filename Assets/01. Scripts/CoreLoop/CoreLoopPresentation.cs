@@ -89,7 +89,6 @@ namespace DiaBlackJack.CoreLoop.UI
             string sourceDisplayName,
             CardEffectKind effectKind,
             AutomaticCardChoiceKind choiceKind,
-            string prompt,
             IReadOnlyList<AutomaticCardChoiceViewModel> choices)
         {
             InteractionId = interactionId;
@@ -98,7 +97,6 @@ namespace DiaBlackJack.CoreLoop.UI
                 throw new ArgumentNullException(nameof(sourceDisplayName));
             EffectKind = effectKind;
             ChoiceKind = choiceKind;
-            Prompt = prompt ?? throw new ArgumentNullException(nameof(prompt));
             Choices = choices ??
                 throw new ArgumentNullException(nameof(choices));
         }
@@ -112,8 +110,6 @@ namespace DiaBlackJack.CoreLoop.UI
         public CardEffectKind EffectKind { get; }
 
         public AutomaticCardChoiceKind ChoiceKind { get; }
-
-        public string Prompt { get; }
 
         public IReadOnlyList<AutomaticCardChoiceViewModel> Choices { get; }
     }
@@ -174,7 +170,7 @@ namespace DiaBlackJack.CoreLoop.UI
             bool canChange,
             bool isChoosingChangeCard,
             IReadOnlyList<PlayerCardViewModel> playerCardActions,
-            string cardEffectPrompt,
+            CombatPromptRequest? selectionPrompt,
             CardEffectKind? pendingCardEffectKind,
             IReadOnlyList<CardEffectChoiceViewModel> cardEffectChoices,
             string lastCardEffect,
@@ -217,7 +213,7 @@ namespace DiaBlackJack.CoreLoop.UI
             IsChoosingChangeCard = isChoosingChangeCard;
             PlayerCardActions = playerCardActions ??
                 throw new ArgumentNullException(nameof(playerCardActions));
-            CardEffectPrompt = cardEffectPrompt ?? string.Empty;
+            SelectionPrompt = selectionPrompt;
             PendingCardEffectKind = pendingCardEffectKind;
             CardEffectChoices = cardEffectChoices ??
                 throw new ArgumentNullException(nameof(cardEffectChoices));
@@ -290,7 +286,7 @@ namespace DiaBlackJack.CoreLoop.UI
 
         public IReadOnlyList<PlayerCardViewModel> PlayerCardActions { get; }
 
-        public string CardEffectPrompt { get; }
+        public CombatPromptRequest? SelectionPrompt { get; }
 
         public CardEffectKind? PendingCardEffectKind { get; }
 
@@ -328,6 +324,11 @@ namespace DiaBlackJack.CoreLoop.UI
             bool canPlayerAct = battle.CanPlayerAct;
             EnemyCombatDisplaySnapshot enemyDisplay =
                 EnemyCombatDisplaySnapshotFactory.Create(battle, profileKey);
+            AutomaticCardInteractionViewModel automaticInteraction =
+                FormatAutomaticCardInteraction(
+                    battle.PendingPlayerAutomaticInteraction);
+            DemonContractPanelViewModel demonContract =
+                DemonContractPresenter.Create(battle);
             return new CoreLoopViewModel(
                 battle.State,
                 battle.Outcome,
@@ -358,17 +359,19 @@ namespace DiaBlackJack.CoreLoop.UI
                 battle.CanBeginPlayerChange,
                 battle.CanSelectChangedCard,
                 FormatPlayerCardActions(battle),
-                battle.PendingPlayerCardEffect?.Prompt,
+                CreateSelectionPrompt(
+                    battle,
+                    automaticInteraction,
+                    demonContract),
                 battle.PendingPlayerCardEffect?.EffectKind,
                 FormatCardEffectChoices(battle.PendingPlayerCardEffect),
                 FormatLastCardEffect(battle.LastCardEffectResult),
                 battle.State == CoreLoopState.PlayerResolvingCardEffect,
-                FormatAutomaticCardInteraction(
-                    battle.PendingPlayerAutomaticInteraction),
+                automaticInteraction,
                 FormatAutomaticCardResult(battle),
                 battle.State ==
                     CoreLoopState.ResolvingAutomaticCardEffect,
-                DemonContractPresenter.Create(battle),
+                demonContract,
                 battle.State == CoreLoopState.BattleEnded);
         }
 
@@ -582,8 +585,70 @@ namespace DiaBlackJack.CoreLoop.UI
                 FormatEffectName(interaction.EffectKind),
                 interaction.EffectKind,
                 interaction.ChoiceKind,
-                interaction.Prompt,
                 choices.AsReadOnly());
+        }
+
+        private static CombatPromptRequest? CreateSelectionPrompt(
+            CoreLoopBattle battle,
+            AutomaticCardInteractionViewModel automaticInteraction,
+            DemonContractPanelViewModel demonContract)
+        {
+            if (battle.CanSelectChangedCard)
+            {
+                return new CombatPromptRequest(CombatPromptId.ChangeCard);
+            }
+
+            PendingAutomaticCardInteraction automatic =
+                battle.PendingPlayerAutomaticInteraction;
+            if (automatic != null)
+            {
+                return new CombatPromptRequest(
+                    automatic.PromptId,
+                    automaticInteraction?.SourceDisplayName);
+            }
+
+            PendingCardEffect manual = battle.PendingPlayerCardEffect;
+            if (manual != null)
+            {
+                return new CombatPromptRequest(
+                    manual.PromptId,
+                    FormatEffectName(manual.EffectKind));
+            }
+
+            PendingDemonContractInteraction demon =
+                battle.PendingPlayerDemonContractInteraction;
+            if (demon == null)
+            {
+                return null;
+            }
+
+            int currentCount = 0;
+            int requiredCount = 0;
+            switch (demon.Kind)
+            {
+                case DemonContractInteractionKind.SatanDeclareFirstNumber:
+                    requiredCount = 2;
+                    break;
+                case DemonContractInteractionKind.SatanDeclareSecondNumber:
+                    currentCount = 1;
+                    requiredCount = 2;
+                    break;
+                case DemonContractInteractionKind.BeelzebubChooseOwnerCard:
+                    currentCount = 1;
+                    requiredCount = 2;
+                    break;
+                case DemonContractInteractionKind.BeelzebubChooseOpponentCard:
+                    currentCount = 2;
+                    requiredCount = 2;
+                    break;
+            }
+
+            return new CombatPromptRequest(
+                demon.PromptId,
+                demon.ContractKind?.ToString(),
+                demonContract?.OwnerPreview,
+                currentCount,
+                requiredCount);
         }
 
         private static AutomaticCardResultViewModel

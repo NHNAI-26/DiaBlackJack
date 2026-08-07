@@ -423,7 +423,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 return AutomaticCardEffectStep.AwaitChoice(
                     CombatantSide.Player,
                     AutomaticCardChoiceKind.PoisonDecision,
-                    "테스트 자동 카드 선택",
+                    CombatPromptId.AutomaticPoisonDecision,
                     new[]
                     {
                         new AutomaticCardChoiceOption(

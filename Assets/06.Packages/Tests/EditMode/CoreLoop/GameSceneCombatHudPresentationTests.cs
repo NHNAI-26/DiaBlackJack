@@ -536,7 +536,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 hud.Mode,
                 Is.EqualTo(GameSceneCombatHudMode.DiegeticSelection));
-            Assert.That(hud.Prompt, Is.Empty);
+            Assert.That(
+                hud.SelectionPrompt?.Id,
+                Is.EqualTo(CombatPromptId.ChangeCard));
             Assert.That(hud.OptionActions, Is.Empty);
             Assert.That(scene.CrystalOrbCandidates, Has.Count.EqualTo(2));
             Assert.That(
@@ -574,7 +576,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 candidates.Mode,
                 Is.EqualTo(GameSceneCombatHudMode.ContractCandidates));
-            Assert.That(candidates.Prompt, Is.Empty);
+            Assert.That(
+                candidates.SelectionPrompt?.Id,
+                Is.EqualTo(CombatPromptId.DemonChooseContract));
             Assert.That(
                 candidates.ContractCandidates.Select(
                     candidate => candidate.Command.OptionId),
@@ -714,7 +718,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 isShopOpen: false,
                 inputLocked: false);
             Assert.That(hud.Mode, Is.EqualTo(GameSceneCombatHudMode.Hidden));
-            Assert.That(hud.Prompt, Is.Empty);
+            Assert.That(hud.SelectionPrompt, Is.Null);
             Assert.That(hud.OptionActions, Is.Empty);
         }
 
@@ -833,7 +837,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 hud.Mode,
                 Is.EqualTo(GameSceneCombatHudMode.DiegeticSelection));
-            Assert.That(hud.Prompt, Is.EqualTo(scene.Core.CardEffectPrompt));
+            Assert.That(hud.SelectionPrompt, Is.EqualTo(scene.Core.SelectionPrompt));
             Assert.That(hud.OptionActions, Is.Empty);
 
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
@@ -848,12 +852,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                     .objectReferenceValue as GameObject;
                 ScrollRect optionScroll = serialized.FindProperty("optionScrollRect")
                     .objectReferenceValue as ScrollRect;
-                Component prompt = serialized.FindProperty("combatPromptText")
+                Component prompt = serialized.FindProperty("combatPromptView")
                     .objectReferenceValue as Component;
 
                 Assert.That(optionPanel, Is.Not.Null);
-                Assert.That(optionPanel.activeSelf, Is.True);
-                Assert.That(optionPanel.GetComponent<Graphic>().enabled, Is.False);
+                Assert.That(optionPanel.activeSelf, Is.False);
                 Assert.That(optionScroll, Is.Not.Null);
                 Assert.That(optionScroll.gameObject.activeSelf, Is.False);
                 Assert.That(prompt, Is.Not.Null);
@@ -999,7 +1002,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                     inputLocked: false);
             Assert.That(firstHud.Mode,
                 Is.EqualTo(GameSceneCombatHudMode.SatanNumberSelection));
-            Assert.That(firstHud.Prompt, Does.Contain("(0/2)"));
+            Assert.That(firstHud.SelectionPrompt?.CurrentCount, Is.EqualTo(0));
+            Assert.That(firstHud.SelectionPrompt?.RequiredCount, Is.EqualTo(2));
             Assert.That(firstHud.OptionActions.Count, Is.EqualTo(1));
             Assert.That(firstHud.OptionActions[0].Command.Kind,
                 Is.EqualTo(GameSceneCombatHudCommandKind
@@ -1026,10 +1030,10 @@ namespace DiaBlackJack.CoreLoop.Tests
                     isShopOpen: false,
                     inputLocked: false,
                     satanSelectedNumberCount: 2);
-            Assert.That(oneSelectedHud.Prompt, Does.Contain("(1/2)"));
+            Assert.That(oneSelectedHud.SelectionPrompt?.CurrentCount, Is.EqualTo(1));
             Assert.That(oneSelectedHud.OptionActions[0].IsInteractable,
                 Is.False);
-            Assert.That(twoSelectedHud.Prompt, Does.Contain("(2/2)"));
+            Assert.That(twoSelectedHud.SelectionPrompt?.CurrentCount, Is.EqualTo(2));
             Assert.That(twoSelectedHud.OptionActions[0].IsInteractable,
                 Is.True);
             Assert.That(first.SatanNumberCandidates, Has.Count.EqualTo(10));
@@ -1217,7 +1221,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                     placement: GameSceneCombatHudActionPlacement.BottomRight);
                 var model = new GameSceneCombatHudViewModel(
                     GameSceneCombatHudMode.DiegeticSelection,
-                    "카드를 선택하십시오.",
+                    new CombatPromptRequest(CombatPromptId.ChangeCard),
+                    string.Empty,
                     null,
                     new[] { action },
                     null,
@@ -1334,7 +1339,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                     CreateStartedBattle(2, 5, 7, 8, 9));
                 var model = new GameSceneCombatHudViewModel(
                     GameSceneCombatHudMode.Options,
-                    "처리 중",
+                    selectionPrompt: null,
+                    string.Empty,
                     null,
                     System.Array.Empty<GameSceneCombatHudActionViewModel>(),
                     null,
@@ -1587,7 +1593,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(ownerScene.FocusesEnemyCardsForSelection, Is.False);
             Assert.That(ownerCommand.Kind, Is.EqualTo(
                 GameSceneCombatHudCommandKind.ResolveDemonContractChoice));
-            Assert.That(ownerHud.Prompt, Does.EndWith("(1/2)"));
+            Assert.That(ownerHud.SelectionPrompt?.CurrentCount, Is.EqualTo(1));
+            Assert.That(ownerHud.SelectionPrompt?.RequiredCount, Is.EqualTo(2));
             Assert.That(battle.TryResolvePlayerDemonContract(
                 ownerCommand.InteractionId,
                 ownerCommand.OptionId), Is.True);
@@ -1604,7 +1611,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(opponentScene.FocusesEnemyCardsForSelection, Is.True);
             Assert.That(opponentCommand.Kind, Is.EqualTo(
                 GameSceneCombatHudCommandKind.ResolveDemonContractChoice));
-            Assert.That(opponentHud.Prompt, Does.EndWith("(2/2)"));
+            Assert.That(opponentHud.SelectionPrompt?.CurrentCount, Is.EqualTo(2));
+            Assert.That(opponentHud.SelectionPrompt?.RequiredCount, Is.EqualTo(2));
         }
 
         [Test]
@@ -1768,13 +1776,12 @@ namespace DiaBlackJack.CoreLoop.Tests
                     confirmed = command;
                 };
 
-                selector.Render("숫자를 선택하십시오.", actions);
+                selector.Render(actions);
 
                 Assert.That(selector.IsOpen, Is.True);
                 Assert.That(instance.activeSelf, Is.True);
                 Assert.That(selector.SelectedNumber, Is.EqualTo(1));
-                Assert.That(ReadText(instance.transform.Find("Prompt")),
-                    Is.EqualTo("숫자를 선택하십시오."));
+                Assert.That(instance.transform.Find("Prompt"), Is.Null);
                 Assert.That(ReadText(instance.transform.Find("NumberCircle/Number")),
                     Is.EqualTo("1"));
 
@@ -1881,6 +1888,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 };
                 var model = new GameSceneCombatHudViewModel(
                     GameSceneCombatHudMode.Actions,
+                    selectionPrompt: null,
                     string.Empty,
                     actions,
                     null,

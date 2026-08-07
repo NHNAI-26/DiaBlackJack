@@ -134,7 +134,7 @@ namespace DiaBlackJack.CoreLoop
             DemonContractInteractionKind kind,
             DemonContractKind? contractKind,
             IEnumerable<DemonContractOption> options,
-            string publicPrompt,
+            CombatPromptId promptId,
             int? sourceContractCardId = null,
             int? contextNumericValue = null)
         {
@@ -170,11 +170,17 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentNullException(nameof(options));
             }
 
-            if (string.IsNullOrWhiteSpace(publicPrompt))
+            if (!Enum.IsDefined(typeof(CombatPromptId), promptId) ||
+                promptId == CombatPromptId.None)
+            {
+                throw new ArgumentOutOfRangeException(nameof(promptId));
+            }
+
+            if (promptId != CombatPromptIdMap.ForDemonContract(kind))
             {
                 throw new ArgumentException(
-                    "Demon contract prompt cannot be empty.",
-                    nameof(publicPrompt));
+                    "Demon contract prompt id does not match its interaction kind.",
+                    nameof(promptId));
             }
 
             var copiedOptions = new List<DemonContractOption>();
@@ -525,7 +531,7 @@ namespace DiaBlackJack.CoreLoop
             SourceContractCardId = sourceContractCardId;
             ContextNumericValue = contextNumericValue;
             _options = copiedOptions.AsReadOnly();
-            PublicPrompt = publicPrompt.Trim();
+            PromptId = promptId;
         }
 
         public DemonContractKind? ContractKind { get; }
@@ -538,7 +544,7 @@ namespace DiaBlackJack.CoreLoop
 
         public IReadOnlyList<DemonContractOption> Options => _options;
 
-        public string PublicPrompt { get; }
+        public CombatPromptId PromptId { get; }
 
         public int? SourceContractCardId { get; }
 

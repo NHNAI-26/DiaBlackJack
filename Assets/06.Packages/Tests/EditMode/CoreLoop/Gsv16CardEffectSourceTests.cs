@@ -66,7 +66,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 new PendingCardEffect(
                     enemySource.Id,
                     CardEffectKind.ThreatHammer,
-                    "enemy hammer",
+                    CombatPromptId.ManualThreatHammerChooseOpponentCard,
                     CardEffectChoiceKind.DiscardOpponentFaceUpCard,
                     new[]
                     {
@@ -189,7 +189,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                         new DemonContractOption(0, null, null, "keep"),
                         new DemonContractOption(1, null, null, "move")
                     },
-                    publicPrompt: "contract",
+                    promptId: CombatPromptId.DemonBelphegorTopCard,
                     sourceContractCardId: playerContract.SourceCardId));
             GameSceneViewModel contractPendingModel =
                 GameScenePresenter.Create(playerBattle);
@@ -210,7 +210,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                     ownerSide: CombatantSide.Player,
                     decisionSide: CombatantSide.Player,
                     choiceKind: AutomaticCardChoiceKind.PoisonDecision,
-                    prompt: "nested",
+                    promptId: CombatPromptId.AutomaticPoisonDecision,
                     options: new[]
                     {
                         new AutomaticCardChoiceOption(0, "continue")

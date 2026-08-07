@@ -17,7 +17,7 @@ namespace DiaBlackJack.CoreLoop
             return AutomaticCardEffectStep.AwaitChoice(
                 CombatantSide.Player,
                 GetChoiceKind(context, CombatantSide.Player),
-                "Choose whether to pay 1 soul and redeal your hand.",
+                CombatPromptId.AutomaticResurrectionHerbDecision,
                 CreateDecisionOptions(context, CombatantSide.Player));
         }
 
@@ -42,7 +42,7 @@ namespace DiaBlackJack.CoreLoop
                 return AutomaticCardEffectStep.AwaitChoice(
                     CombatantSide.Enemy,
                     GetChoiceKind(context, CombatantSide.Enemy),
-                    "Choose whether to pay 1 soul and redeal your hand.",
+                    CombatPromptId.AutomaticResurrectionHerbDecision,
                     CreateDecisionOptions(context, CombatantSide.Enemy));
             }
 

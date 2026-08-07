@@ -35,7 +35,7 @@ namespace DiaBlackJack.CoreLoop
             return CardEffectStep.AwaitChoice(new PendingCardEffect(
                 context.SourceCard.Id,
                 EffectKind,
-                "가져올 카드를 선택하세요.",
+                CombatPromptId.ManualCrystalOrbChooseCard,
                 CardEffectChoiceKind.TakePeekedCard,
                 options,
                 peekedCards));

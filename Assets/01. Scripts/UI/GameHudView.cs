@@ -46,7 +46,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private RectTransform actionTooltip;
         [SerializeField] private TMP_Text actionTooltipText;
         [SerializeField] private GameObject optionPanel;
-        [SerializeField] private TMP_Text combatPromptText;
+        [SerializeField] private TMP_Text combatHeaderText;
+        [SerializeField] private CombatPromptView combatPromptView;
         [SerializeField] private ScrollRect optionScrollRect;
         [SerializeField] private GameHudChoiceButton[] optionSlots = Array.Empty<GameHudChoiceButton>();
         [SerializeField] private RevolverNumberSelectorView revolverNumberSelector;
@@ -537,6 +538,15 @@ namespace DiaBlackJack.GameScene
         {
             HideCombatActionTooltip();
 
+            if (combat?.SelectionPrompt is CombatPromptRequest promptRequest)
+            {
+                combatPromptView?.Render(promptRequest);
+            }
+            else
+            {
+                combatPromptView?.Hide();
+            }
+
             if (combat != null &&
                 combat.Mode == GameSceneCombatHudMode.RevolverNumberSelection)
             {
@@ -546,9 +556,7 @@ namespace DiaBlackJack.GameScene
                 }
 
                 SetActive(optionPanel, false);
-                revolverNumberSelector?.Render(
-                    combat.Prompt,
-                    combat.OptionActions);
+                revolverNumberSelector?.Render(combat.OptionActions);
                 return;
             }
 
@@ -571,12 +579,9 @@ namespace DiaBlackJack.GameScene
             bool hasBottomRightAction = HasBottomRightAction(combat.OptionActions);
             bool hasDefaultAction = HasDefaultAction(combat.OptionActions);
             bool hasOptionAction = combat.OptionActions.Count > 0;
-            bool hasDiegeticPrompt =
-                isDiegeticSelection &&
-                !string.IsNullOrEmpty(combat.Prompt);
             SetActive(
                 optionPanel,
-                (hasOptionAction || hasDiegeticPrompt) &&
+                (hasOptionAction || !string.IsNullOrEmpty(combat.HeaderText)) &&
                 (combat.Mode == GameSceneCombatHudMode.Options ||
                  isDiegeticSelection ||
                  combat.Mode == GameSceneCombatHudMode.ReturningToRun ||
@@ -602,7 +607,7 @@ namespace DiaBlackJack.GameScene
 
             if (combat.Mode == GameSceneCombatHudMode.Actions)
             {
-                RenderOptionActions(combat.Prompt, combat.OptionActions);
+                RenderOptionActions(combat.HeaderText, combat.OptionActions);
                 return;
             }
 
@@ -611,7 +616,7 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            RenderOptionActions(combat.Prompt, combat.OptionActions);
+            RenderOptionActions(combat.HeaderText, combat.OptionActions);
         }
 
         private void SetOptionPanelChromeVisible(bool isVisible)
@@ -633,12 +638,12 @@ namespace DiaBlackJack.GameScene
         }
 
         private void RenderOptionActions(
-            string prompt,
+            string headerText,
             System.Collections.Generic.IReadOnlyList<GameSceneCombatHudActionViewModel> actions)
         {
-            if (combatPromptText != null)
+            if (combatHeaderText != null)
             {
-                CurrencyIconText.Set(combatPromptText, prompt);
+                CurrencyIconText.Set(combatHeaderText, headerText);
             }
 
             RestoreOptionSlotLayouts();
@@ -826,6 +831,7 @@ namespace DiaBlackJack.GameScene
         private void HideCombatControls()
         {
             HideCombatActionTooltip();
+            combatPromptView?.Hide();
             revolverNumberSelector?.Hide();
             SetActive(combatControlsRoot, false);
             SetActive(optionPanel, false);

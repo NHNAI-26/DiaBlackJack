@@ -2082,7 +2082,7 @@ namespace DiaBlackJack.CoreLoop
                 DemonContractInteractionKind.ChooseContract,
                 contractKind: null,
                 options,
-                "계약할 악마를 선택하십시오.");
+                CombatPromptId.DemonChooseContract);
         }
 
         private static PendingDemonContractInteraction
@@ -2114,7 +2114,7 @@ namespace DiaBlackJack.CoreLoop
                 DemonContractInteractionKind.LuciferChooseAdditionalContract,
                 DemonContractKind.Lucifer,
                 options,
-                "루시퍼로 추가 계약할 악마를 선택하거나 건너뛰십시오.",
+                CombatPromptId.DemonLuciferChooseAdditionalContract,
                 luciferContract.SourceCardId);
         }
 
@@ -2141,7 +2141,7 @@ namespace DiaBlackJack.CoreLoop
                 DemonContractInteractionKind.BelphegorTopCard,
                 DemonContractKind.Belphegor,
                 options,
-                "확인한 덱 위 카드를 처리하십시오.",
+                CombatPromptId.DemonBelphegorTopCard,
                 sourceContractCardId);
         }
 
@@ -2168,7 +2168,7 @@ namespace DiaBlackJack.CoreLoop
                 DemonContractInteractionKind.MammonApplyDie,
                 DemonContractKind.Mammon,
                 options,
-                "최종 승부에 현재 주사위 값을 포함할지 선택하십시오.",
+                CombatPromptId.DemonMammonApplyDie,
                 activeContract.SourceCardId);
         }
 
@@ -2182,7 +2182,7 @@ namespace DiaBlackJack.CoreLoop
                 DemonContractInteractionKind.SatanDeclareFirstNumber,
                 DemonContractKind.Satan,
                 CreateSatanNumberOptions(excludedNumber: null),
-                "Declare the first number.",
+                CombatPromptId.DemonSatanDeclareFirstNumber,
                 sourceContractCardId);
         }
 
@@ -2197,7 +2197,7 @@ namespace DiaBlackJack.CoreLoop
                 DemonContractInteractionKind.SatanDeclareSecondNumber,
                 DemonContractKind.Satan,
                 CreateSatanNumberOptions(firstNumber),
-                "Declare a different second number.",
+                CombatPromptId.DemonSatanDeclareSecondNumber,
                 sourceContractCardId,
                 firstNumber);
         }
@@ -2249,8 +2249,8 @@ namespace DiaBlackJack.CoreLoop
                 DemonContractKind.Beelzebub,
                 options,
                 choosingOwnerCard
-                    ? "버릴 자신의 공개 카드를 선택하십시오."
-                    : "버릴 상대의 공개 카드를 선택하십시오.",
+                    ? CombatPromptId.DemonBeelzebubChooseOwnerCard
+                    : CombatPromptId.DemonBeelzebubChooseOpponentCard,
                 activeContract.SourceCardId);
         }
 
@@ -2278,7 +2278,7 @@ namespace DiaBlackJack.CoreLoop
                 DemonContractInteractionKind.AsmodeusForceOpponentHit,
                 DemonContractKind.Asmodeus,
                 options,
-                "차례 시작에 상대를 히트시킬지 선택하십시오.",
+                CombatPromptId.DemonAsmodeusForceOpponentHit,
                 activeContract.SourceCardId);
         }
 
@@ -2306,7 +2306,7 @@ namespace DiaBlackJack.CoreLoop
                 DemonContractInteractionKind.SatanTurnStartChoice,
                 DemonContractKind.Satan,
                 options,
-                "차례 시작에 사탄 능력을 사용할지 선택하십시오.",
+                CombatPromptId.DemonSatanTurnStartChoice,
                 activeContract.SourceCardId);
         }
 
@@ -2341,7 +2341,7 @@ namespace DiaBlackJack.CoreLoop
                 DemonContractInteractionKind.PaimonChooseDeck,
                 DemonContractKind.Paimon,
                 options,
-                "전투 동안 카드를 추방할 덱을 선택하십시오.",
+                CombatPromptId.DemonPaimonChooseDeck,
                 activeContract.SourceCardId);
         }
 
@@ -2382,7 +2382,7 @@ namespace DiaBlackJack.CoreLoop
                 DemonContractInteractionKind.PaimonChooseExileCard,
                 DemonContractKind.Paimon,
                 options,
-                "전투 종료까지 추방할 카드를 선택하십시오.",
+                CombatPromptId.DemonPaimonChooseExileCard,
                 activeContract.SourceCardId);
         }
 
@@ -2415,7 +2415,7 @@ namespace DiaBlackJack.CoreLoop
                 DemonContractInteractionKind.BelialChooseOpponentCard,
                 DemonContractKind.Belial,
                 options,
-                "가져와 즉시 사용할 상대 공개 카드를 선택하십시오.",
+                CombatPromptId.DemonBelialChooseOpponentCard,
                 activeContract.SourceCardId);
         }
 
@@ -2945,7 +2945,7 @@ namespace DiaBlackJack.CoreLoop
                         context.OwnerSide,
                         request.DecisionSide,
                         request.ChoiceKind,
-                        request.Prompt,
+                        request.PromptId,
                         request.Options);
                 State = CoreLoopState.ResolvingAutomaticCardEffect;
                 RaiseStepped();
@@ -6587,7 +6587,7 @@ namespace DiaBlackJack.CoreLoop
                 DemonContractInteractionKind.MammonReroll,
                 DemonContractKind.Mammon,
                 options,
-                "현재 값을 유지하고 행동하거나, 다시 굴리고 턴을 종료하십시오.",
+                CombatPromptId.DemonMammonReroll,
                 activeContract.SourceCardId);
         }
 

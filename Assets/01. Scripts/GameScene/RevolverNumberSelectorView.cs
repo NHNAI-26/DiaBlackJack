@@ -12,7 +12,6 @@ namespace DiaBlackJack.GameScene
     [DisallowMultipleComponent]
     public sealed class RevolverNumberSelectorView : MonoBehaviour
     {
-        [SerializeField] private TMP_Text promptText;
         [SerializeField] private TMP_Text numberText;
         [SerializeField] private Button previousButton;
         [SerializeField] private Button nextButton;
@@ -27,7 +26,6 @@ namespace DiaBlackJack.GameScene
         public bool IsOpen { get; private set; }
 
         internal bool HasRequiredReferences =>
-            promptText != null &&
             numberText != null &&
             previousButton != null &&
             nextButton != null &&
@@ -78,7 +76,6 @@ namespace DiaBlackJack.GameScene
         }
 
         public void Render(
-            string prompt,
             IReadOnlyList<GameSceneCombatHudActionViewModel> options)
         {
             if (options == null || options.Count == 0)
@@ -96,11 +93,6 @@ namespace DiaBlackJack.GameScene
             }
 
             gameObject.SetActive(true);
-            if (promptText != null)
-            {
-                CurrencyIconText.Set(promptText, prompt ?? string.Empty);
-            }
-
             RefreshSelection();
         }
 
@@ -109,11 +101,6 @@ namespace DiaBlackJack.GameScene
             IsOpen = false;
             _options = Array.Empty<GameSceneCombatHudActionViewModel>();
             _selectedIndex = 0;
-            if (promptText != null)
-            {
-                promptText.text = string.Empty;
-            }
-
             if (numberText != null)
             {
                 numberText.text = string.Empty;

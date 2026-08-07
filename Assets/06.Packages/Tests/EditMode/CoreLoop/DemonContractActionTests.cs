@@ -265,14 +265,14 @@ namespace DiaBlackJack.CoreLoop.Tests
                     DemonContractInteractionKind.ChooseContract,
                     null,
                     new[] { first, duplicateOption },
-                    "선택"));
+                    CombatPromptId.DemonChooseContract));
             Assert.Throws<ArgumentException>(() =>
                 new PendingDemonContractInteraction(
                     1,
                     DemonContractInteractionKind.ChooseContract,
                     null,
                     new[] { first, duplicateCard },
-                    "선택"));
+                    CombatPromptId.DemonChooseContract));
         }
 
         [Test]

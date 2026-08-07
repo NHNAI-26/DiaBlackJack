@@ -17,7 +17,7 @@ namespace DiaBlackJack.CoreLoop
             return AutomaticCardEffectStep.AwaitChoice(
                 context.OwnerSide,
                 AutomaticCardChoiceKind.LieDetectorNumber,
-                "상대 비공개 카드와 비교할 숫자를 선언하세요.",
+                CombatPromptId.AutomaticLieDetectorDeclareNumber,
                 DeclarationOptions);
         }
 

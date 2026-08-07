@@ -127,14 +127,16 @@ namespace DiaBlackJack.GameScene
     {
         public GameSceneCombatHudViewModel(
             GameSceneCombatHudMode mode,
-            string prompt,
+            CombatPromptRequest? selectionPrompt,
+            string headerText,
             IReadOnlyList<GameSceneCombatHudActionViewModel> primaryActions,
             IReadOnlyList<GameSceneCombatHudActionViewModel> optionActions,
             IReadOnlyList<GameSceneCombatHudContractCandidateViewModel> contractCandidates,
             string automaticCardResult)
         {
             Mode = mode;
-            Prompt = prompt ?? string.Empty;
+            SelectionPrompt = selectionPrompt;
+            HeaderText = headerText ?? string.Empty;
             PrimaryActions = primaryActions ?? Array.Empty<GameSceneCombatHudActionViewModel>();
             OptionActions = optionActions ?? Array.Empty<GameSceneCombatHudActionViewModel>();
             ContractCandidates = contractCandidates ??
@@ -144,7 +146,9 @@ namespace DiaBlackJack.GameScene
 
         public GameSceneCombatHudMode Mode { get; }
 
-        public string Prompt { get; }
+        public CombatPromptRequest? SelectionPrompt { get; }
+
+        public string HeaderText { get; }
 
         public IReadOnlyList<GameSceneCombatHudActionViewModel> PrimaryActions { get; }
 
@@ -172,12 +176,16 @@ namespace DiaBlackJack.GameScene
             }
 
             string automaticCardResult = FormatAutomaticCardResult(core.AutomaticCardResult);
+            CombatPromptRequest? selectionPrompt = inputLocked
+                ? null
+                : core.SelectionPrompt;
             if (core.State == CoreLoopState.BattleEnded)
             {
                 return new GameSceneCombatHudViewModel(
                     isStageBattle
                         ? GameSceneCombatHudMode.ReturningToRun
                         : GameSceneCombatHudMode.Restart,
+                    selectionPrompt: null,
                     isStageBattle ? "RETURNING TO RUN" : "BATTLE ENDED",
                     Array.Empty<GameSceneCombatHudActionViewModel>(),
                     isStageBattle
@@ -197,6 +205,7 @@ namespace DiaBlackJack.GameScene
             {
                 return new GameSceneCombatHudViewModel(
                     GameSceneCombatHudMode.DiegeticSelection,
+                    selectionPrompt,
                     string.Empty,
                     Array.Empty<GameSceneCombatHudActionViewModel>(),
                     Array.Empty<GameSceneCombatHudActionViewModel>(),
@@ -240,7 +249,8 @@ namespace DiaBlackJack.GameScene
                 {
                     return new GameSceneCombatHudViewModel(
                         GameSceneCombatHudMode.RevolverNumberSelection,
-                        $"{interaction.SourceDisplayName}  |  {interaction.Prompt}",
+                        selectionPrompt,
+                        string.Empty,
                         Array.Empty<GameSceneCombatHudActionViewModel>(),
                         options,
                         Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
@@ -252,7 +262,8 @@ namespace DiaBlackJack.GameScene
                 {
                     return new GameSceneCombatHudViewModel(
                         GameSceneCombatHudMode.DiegeticSelection,
-                        $"{interaction.SourceDisplayName}  |  {interaction.Prompt}",
+                        selectionPrompt,
+                        string.Empty,
                         Array.Empty<GameSceneCombatHudActionViewModel>(),
                         options,
                         Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
@@ -260,7 +271,7 @@ namespace DiaBlackJack.GameScene
                 }
 
                 return CreateOptions(
-                    $"{interaction.SourceDisplayName}  |  {interaction.Prompt}",
+                    selectionPrompt,
                     options,
                     automaticCardResult);
             }
@@ -289,7 +300,8 @@ namespace DiaBlackJack.GameScene
 
                     return new GameSceneCombatHudViewModel(
                         GameSceneCombatHudMode.RevolverNumberSelection,
-                        core.CardEffectPrompt,
+                        selectionPrompt,
+                        string.Empty,
                         Array.Empty<GameSceneCombatHudActionViewModel>(),
                         revolverOptions,
                         Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
@@ -323,7 +335,8 @@ namespace DiaBlackJack.GameScene
 
                     return new GameSceneCombatHudViewModel(
                         GameSceneCombatHudMode.DiegeticSelection,
-                        core.CardEffectPrompt,
+                        selectionPrompt,
+                        string.Empty,
                         Array.Empty<GameSceneCombatHudActionViewModel>(),
                         directOptions,
                         Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
@@ -341,7 +354,7 @@ namespace DiaBlackJack.GameScene
                         !inputLocked));
                 }
 
-                return CreateOptions(core.CardEffectPrompt, options, automaticCardResult);
+                return CreateOptions(selectionPrompt, options, automaticCardResult);
             }
 
             DemonContractPanelViewModel contract = core.DemonContract;
@@ -355,8 +368,8 @@ namespace DiaBlackJack.GameScene
                         Math.Min(2, satanSelectedNumberCount));
                     return new GameSceneCombatHudViewModel(
                         GameSceneCombatHudMode.SatanNumberSelection,
-                        BuildContractPrompt(contract) +
-                            $" ({selectedCount}/2)",
+                        selectionPrompt?.WithCounts(selectedCount, 2),
+                        string.Empty,
                         Array.Empty<GameSceneCombatHudActionViewModel>(),
                         new[]
                         {
@@ -384,7 +397,8 @@ namespace DiaBlackJack.GameScene
                 {
                     return new GameSceneCombatHudViewModel(
                         GameSceneCombatHudMode.SatanNumberSelection,
-                        BuildContractPrompt(contract),
+                        selectionPrompt,
+                        string.Empty,
                         Array.Empty<GameSceneCombatHudActionViewModel>(),
                         Array.Empty<GameSceneCombatHudActionViewModel>(),
                         Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
@@ -396,13 +410,10 @@ namespace DiaBlackJack.GameScene
                     contract.InteractionKind ==
                         DemonContractInteractionKind.BeelzebubChooseOpponentCard)
                 {
-                    string progress = contract.InteractionKind ==
-                            DemonContractInteractionKind.BeelzebubChooseOwnerCard
-                        ? " (1/2)"
-                        : " (2/2)";
                     return new GameSceneCombatHudViewModel(
                         GameSceneCombatHudMode.DiegeticSelection,
-                        BuildContractPrompt(contract) + progress,
+                        selectionPrompt,
+                        string.Empty,
                         Array.Empty<GameSceneCombatHudActionViewModel>(),
                         Array.Empty<GameSceneCombatHudActionViewModel>(),
                         Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
@@ -433,6 +444,7 @@ namespace DiaBlackJack.GameScene
 
                     return new GameSceneCombatHudViewModel(
                         GameSceneCombatHudMode.ContractCandidates,
+                        selectionPrompt,
                         string.Empty,
                         Array.Empty<GameSceneCombatHudActionViewModel>(),
                         Array.Empty<GameSceneCombatHudActionViewModel>(),
@@ -470,7 +482,7 @@ namespace DiaBlackJack.GameScene
                 }
 
                 return CreateOptions(
-                    BuildContractPrompt(contract),
+                    selectionPrompt,
                     options,
                     automaticCardResult);
             }
@@ -509,6 +521,7 @@ namespace DiaBlackJack.GameScene
 
             return new GameSceneCombatHudViewModel(
                 GameSceneCombatHudMode.Actions,
+                selectionPrompt: null,
                 activeContractActions.Count == 0 ? string.Empty : "ACTIVE CONTRACTS",
                 primaryActions,
                 activeContractActions,
@@ -520,6 +533,7 @@ namespace DiaBlackJack.GameScene
         {
             return new GameSceneCombatHudViewModel(
                 GameSceneCombatHudMode.Hidden,
+                selectionPrompt: null,
                 string.Empty,
                 Array.Empty<GameSceneCombatHudActionViewModel>(),
                 Array.Empty<GameSceneCombatHudActionViewModel>(),
@@ -528,13 +542,14 @@ namespace DiaBlackJack.GameScene
         }
 
         private static GameSceneCombatHudViewModel CreateOptions(
-            string prompt,
+            CombatPromptRequest? selectionPrompt,
             IReadOnlyList<GameSceneCombatHudActionViewModel> options,
             string automaticCardResult)
         {
             return new GameSceneCombatHudViewModel(
                 GameSceneCombatHudMode.Options,
-                prompt,
+                selectionPrompt,
+                string.Empty,
                 Array.Empty<GameSceneCombatHudActionViewModel>(),
                 options,
                 Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
@@ -602,13 +617,6 @@ namespace DiaBlackJack.GameScene
         private static string FormatChangeLabel(string changeActionText)
         {
             return CurrencyIconMarkup.FormatChangeActionLabel(changeActionText);
-        }
-
-        private static string BuildContractPrompt(DemonContractPanelViewModel contract)
-        {
-            return string.IsNullOrEmpty(contract.OwnerPreview)
-                ? contract.Prompt
-                : contract.Prompt + "  |  " + contract.OwnerPreview;
         }
 
         private static bool HasCardChoice(

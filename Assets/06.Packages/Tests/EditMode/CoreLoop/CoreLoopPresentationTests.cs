@@ -988,7 +988,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(model.CanHit, Is.False);
             Assert.That(model.CanStand, Is.False);
             Assert.That(model.CanChange, Is.False);
-            Assert.That(model.CardEffectPrompt, Is.Not.Empty);
+            Assert.That(
+                model.SelectionPrompt?.Id,
+                Is.EqualTo(CombatPromptId.ManualAutoPistolDeclareNumber));
             Assert.That(
                 model.CardEffectChoices.Select(choice => choice.OptionId),
                 Is.EqualTo(Enumerable.Range(1, 10)));

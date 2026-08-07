@@ -31,7 +31,7 @@ namespace DiaBlackJack.CoreLoop
             return AutomaticCardEffectStep.AwaitChoice(
                 context.OwnerSide,
                 AutomaticCardChoiceKind.PoisonDecision,
-                "독극물의 효과를 선택하세요.",
+                CombatPromptId.AutomaticPoisonDecision,
                 options);
         }
 

@@ -401,7 +401,7 @@ namespace DiaBlackJack.CoreLoop
         public AutomaticCardChoiceRequest(
             CombatantSide decisionSide,
             AutomaticCardChoiceKind choiceKind,
-            string prompt,
+            CombatPromptId promptId,
             IReadOnlyList<AutomaticCardChoiceOption> options)
         {
             if (!Enum.IsDefined(typeof(CombatantSide), decisionSide))
@@ -414,11 +414,17 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentOutOfRangeException(nameof(choiceKind));
             }
 
-            if (string.IsNullOrWhiteSpace(prompt))
+            if (!Enum.IsDefined(typeof(CombatPromptId), promptId) ||
+                promptId == CombatPromptId.None)
+            {
+                throw new ArgumentOutOfRangeException(nameof(promptId));
+            }
+
+            if (promptId != CombatPromptIdMap.ForAutomaticCard(choiceKind))
             {
                 throw new ArgumentException(
-                    "Automatic card prompt cannot be empty.",
-                    nameof(prompt));
+                    "Automatic card prompt id does not match its choice kind.",
+                    nameof(promptId));
             }
 
             if (options == null || options.Count == 0)
@@ -430,7 +436,7 @@ namespace DiaBlackJack.CoreLoop
 
             DecisionSide = decisionSide;
             ChoiceKind = choiceKind;
-            Prompt = prompt;
+            PromptId = promptId;
             Options = options;
         }
 
@@ -438,7 +444,7 @@ namespace DiaBlackJack.CoreLoop
 
         public AutomaticCardChoiceKind ChoiceKind { get; }
 
-        public string Prompt { get; }
+        public CombatPromptId PromptId { get; }
 
         public IReadOnlyList<AutomaticCardChoiceOption> Options { get; }
     }
@@ -471,14 +477,14 @@ namespace DiaBlackJack.CoreLoop
         public static AutomaticCardEffectStep AwaitChoice(
             CombatantSide decisionSide,
             AutomaticCardChoiceKind choiceKind,
-            string prompt,
+            CombatPromptId promptId,
             IReadOnlyList<AutomaticCardChoiceOption> options)
         {
             return new AutomaticCardEffectStep(
                 new AutomaticCardChoiceRequest(
                     decisionSide,
                     choiceKind,
-                    prompt,
+                    promptId,
                     options),
                 sourceDisposition: null,
                 AutomaticCardCompletionFlow.ResumeContinuation);

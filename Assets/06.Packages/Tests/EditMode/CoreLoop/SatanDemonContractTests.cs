@@ -703,7 +703,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 return AutomaticCardEffectStep.AwaitChoice(
                     _decisionSide,
                     AutomaticCardChoiceKind.PoisonDecision,
-                    "Resolve the forced automatic card.",
+                    CombatPromptId.AutomaticPoisonDecision,
                     new[]
                     {
                         new AutomaticCardChoiceOption(ResolveOptionId, "Resolve")

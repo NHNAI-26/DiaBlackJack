@@ -60,13 +60,13 @@ namespace DiaBlackJack.CoreLoop
         public PendingCardEffect(
             int sourceCardId,
             CardEffectKind effectKind,
-            string prompt,
+            CombatPromptId promptId,
             CardEffectChoiceKind choiceKind,
             IEnumerable<CardEffectChoiceOption> options)
             : this(
                 sourceCardId,
                 effectKind,
-                prompt,
+                promptId,
                 choiceKind,
                 options,
                 Array.Empty<BlackjackCard>(),
@@ -77,14 +77,14 @@ namespace DiaBlackJack.CoreLoop
         internal PendingCardEffect(
             int sourceCardId,
             CardEffectKind effectKind,
-            string prompt,
+            CombatPromptId promptId,
             CardEffectChoiceKind choiceKind,
             IEnumerable<CardEffectChoiceOption> options,
             IEnumerable<BlackjackCard> temporaryCards)
             : this(
                 sourceCardId,
                 effectKind,
-                prompt,
+                promptId,
                 choiceKind,
                 options,
                 temporaryCards,
@@ -95,14 +95,14 @@ namespace DiaBlackJack.CoreLoop
         internal PendingCardEffect(
             int sourceCardId,
             CardEffectKind effectKind,
-            string prompt,
+            CombatPromptId promptId,
             CardEffectChoiceKind choiceKind,
             IEnumerable<CardEffectChoiceOption> options,
             int? contextNumericValue)
             : this(
                 sourceCardId,
                 effectKind,
-                prompt,
+                promptId,
                 choiceKind,
                 options,
                 Array.Empty<BlackjackCard>(),
@@ -113,7 +113,7 @@ namespace DiaBlackJack.CoreLoop
         private PendingCardEffect(
             int sourceCardId,
             CardEffectKind effectKind,
-            string prompt,
+            CombatPromptId promptId,
             CardEffectChoiceKind choiceKind,
             IEnumerable<CardEffectChoiceOption> options,
             IEnumerable<BlackjackCard> temporaryCards,
@@ -130,9 +130,17 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentOutOfRangeException(nameof(effectKind));
             }
 
-            if (string.IsNullOrWhiteSpace(prompt))
+            if (!Enum.IsDefined(typeof(CombatPromptId), promptId) ||
+                promptId == CombatPromptId.None)
             {
-                throw new ArgumentException("Card effect prompt cannot be empty.", nameof(prompt));
+                throw new ArgumentOutOfRangeException(nameof(promptId));
+            }
+
+            if (promptId != CombatPromptIdMap.ForManualCard(effectKind))
+            {
+                throw new ArgumentException(
+                    "Card effect prompt id does not match its effect kind.",
+                    nameof(promptId));
             }
 
             if (!Enum.IsDefined(typeof(CardEffectChoiceKind), choiceKind) ||
@@ -177,7 +185,7 @@ namespace DiaBlackJack.CoreLoop
 
             SourceCardId = sourceCardId;
             EffectKind = effectKind;
-            Prompt = prompt;
+            PromptId = promptId;
             ChoiceKind = choiceKind;
             ContextNumericValue = contextNumericValue;
             _options = copiedOptions.AsReadOnly();
@@ -214,7 +222,7 @@ namespace DiaBlackJack.CoreLoop
 
         public IReadOnlyList<CardEffectChoiceOption> Options => _options;
 
-        public string Prompt { get; }
+        public CombatPromptId PromptId { get; }
 
         public int SourceCardId { get; }
 

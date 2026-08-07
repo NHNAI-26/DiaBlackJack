@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f11c3c80c03c8344a3fa6cc5717ad06, type: 3}
+  m_Name: CombatPromptCatalog
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CombatPromptCatalogSO
+  entries:
+  - id: 1
+    template: "\uAD50\uCCB4\uD560 \uCE74\uB4DC\uB97C \uC120\uD0DD\uD558\uC138\uC694."
+  - id: 2
+    template: "\uC0C1\uB300 \uBE44\uACF5\uAC1C \uCE74\uB4DC\uC758 \uC22B\uC790\uB97C
+      \uC120\uD0DD\uD558\uC138\uC694."
+  - id: 3
+    template: "\uAC00\uC838\uC62C \uCE74\uB4DC\uB97C \uC120\uD0DD\uD558\uAC70\uB098
+      \uAC74\uB108\uB6F0\uC138\uC694."
+  - id: 4
+    template: "\uBC84\uB9B4 \uC0C1\uB300 \uACF5\uAC1C \uCE74\uB4DC\uB97C \uC120\uD0DD\uD558\uC138\uC694."
+  - id: 5
+    template: "{source}: \uC0C1\uB300 \uBE44\uACF5\uAC1C \uCE74\uB4DC\uC640 \uBE44\uAD50\uD560
+      \uC22B\uC790\uB97C \uC120\uD0DD\uD558\uC138\uC694."
+  - id: 6
+    template: "{source}: \uB3C5\uADF9\uBB3C\uC758 \uD6A8\uACFC\uB97C \uC120\uD0DD\uD558\uC138\uC694."
+  - id: 7
+    template: "{source}: \uBC84\uB9B4 \uACF5\uAC1C \uCE74\uB4DC \uD55C \uC7A5\uC744
+      \uC120\uD0DD\uD558\uAC70\uB098 \uAC74\uB108\uB6F0\uC138\uC694."
+  - id: 8
+    template: "{source}: \uB2E4\uC2DC \uC0AC\uC6A9\uD560 \uC218\uB3D9 \uCE74\uB4DC
+      \uD55C \uC7A5\uC744 \uC120\uD0DD\uD558\uAC70\uB098 \uAC74\uB108\uB6F0\uC138\uC694."
+  - id: 9
+    template: "{source}: \uD68C\uC911\uC2DC\uACC4\uB97C \uC720\uC9C0\uD560\uC9C0
+      \uBC84\uB9B4\uC9C0 \uC120\uD0DD\uD558\uC138\uC694."
+  - id: 10
+    template: "{source}: \uC601\uD63C 1\uC744 \uC9C0\uBD88\uD558\uACE0 \uD328\uB97C
+      \uB2E4\uC2DC \uBC1B\uC744\uC9C0 \uC120\uD0DD\uD558\uC138\uC694."
+  - id: 11
+    template: "\uACC4\uC57D\uD560 \uC545\uB9C8\uB97C \uC120\uD0DD\uD558\uC138\uC694."
+  - id: 12
+    template: "{context}\n\uD655\uC778\uD55C \uB371 \uC704 \uCE74\uB4DC\uB97C \uCC98\uB9AC\uD558\uC138\uC694."
+  - id: 13
+    template: "\uD604\uC7AC \uAC12\uC744 \uC720\uC9C0\uD560\uC9C0 \uB2E4\uC2DC \uAD74\uB9B4\uC9C0
+      \uC120\uD0DD\uD558\uC138\uC694."
+  - id: 14
+    template: "\uCD5C\uC885 \uC2B9\uBD80\uC5D0 \uD604\uC7AC \uC8FC\uC0AC\uC704 \uAC12\uC744
+      \uD3EC\uD568\uD560\uC9C0 \uC120\uD0DD\uD558\uC138\uC694."
+  - id: 15
+    template: "\uCCAB \uBC88\uC9F8 \uC22B\uC790\uB97C \uC120\uD0DD\uD558\uC138\uC694.
+      ({current}/{required})"
+  - id: 16
+    template: "\uB450 \uBC88\uC9F8 \uC22B\uC790\uB97C \uC120\uD0DD\uD558\uC138\uC694.
+      ({current}/{required})"
+  - id: 17
+    template: "\uBC84\uB9B4 \uB0B4 \uACF5\uAC1C \uCE74\uB4DC\uB97C \uC120\uD0DD\uD558\uC138\uC694.
+      ({current}/{required})"
+  - id: 18
+    template: "\uBC84\uB9B4 \uC0C1\uB300 \uACF5\uAC1C \uCE74\uB4DC\uB97C \uC120\uD0DD\uD558\uC138\uC694.
+      ({current}/{required})"
+  - id: 19
+    template: "\uC0C1\uB300\uB97C \uD788\uD2B8\uC2DC\uD0AC\uC9C0 \uC120\uD0DD\uD558\uC138\uC694."
+  - id: 20
+    template: "\uC0AC\uD0C4 \uB2A5\uB825\uC744 \uC0AC\uC6A9\uD560\uC9C0 \uC120\uD0DD\uD558\uC138\uC694."
+  - id: 21
+    template: "\uCE74\uB4DC\uB97C \uCD94\uBC29\uD560 \uB371\uC744 \uC120\uD0DD\uD558\uC138\uC694."
+  - id: 22
+    template: "\uC804\uD22C \uC885\uB8CC\uAE4C\uC9C0 \uCD94\uBC29\uD560 \uCE74\uB4DC\uB97C
+      \uC120\uD0DD\uD558\uC138\uC694."
+  - id: 23
+    template: "\uAC00\uC838\uC640 \uC989\uC2DC \uC0AC\uC6A9\uD560 \uC0C1\uB300 \uACF5\uAC1C
+      \uCE74\uB4DC\uB97C \uC120\uD0DD\uD558\uC138\uC694."
+  - id: 24
+    template: "\uCD94\uAC00\uB85C \uACC4\uC57D\uD560 \uC545\uB9C8\uB97C \uC120\uD0DD\uD558\uAC70\uB098
+      \uAC74\uB108\uB6F0\uC138\uC694."

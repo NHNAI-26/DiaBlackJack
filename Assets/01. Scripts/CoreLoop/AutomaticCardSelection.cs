@@ -62,7 +62,7 @@ namespace DiaBlackJack.CoreLoop
             CombatantSide ownerSide,
             CombatantSide decisionSide,
             AutomaticCardChoiceKind choiceKind,
-            string prompt,
+            CombatPromptId promptId,
             IReadOnlyList<AutomaticCardChoiceOption> options)
         {
             if (interactionId <= 0)
@@ -70,11 +70,22 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentOutOfRangeException(nameof(interactionId));
             }
 
-            if (string.IsNullOrWhiteSpace(prompt))
+            if (!Enum.IsDefined(typeof(CombatPromptId), promptId) ||
+                promptId == CombatPromptId.None)
+            {
+                throw new ArgumentOutOfRangeException(nameof(promptId));
+            }
+
+            if (!Enum.IsDefined(typeof(AutomaticCardChoiceKind), choiceKind))
+            {
+                throw new ArgumentOutOfRangeException(nameof(choiceKind));
+            }
+
+            if (promptId != CombatPromptIdMap.ForAutomaticCard(choiceKind))
             {
                 throw new ArgumentException(
-                    "Automatic card prompt cannot be empty.",
-                    nameof(prompt));
+                    "Automatic card prompt id does not match its choice kind.",
+                    nameof(promptId));
             }
 
             if (options == null || options.Count == 0)
@@ -111,7 +122,7 @@ namespace DiaBlackJack.CoreLoop
             OwnerSide = ownerSide;
             DecisionSide = decisionSide;
             ChoiceKind = choiceKind;
-            Prompt = prompt;
+            PromptId = promptId;
             _options = copy.AsReadOnly();
         }
 
@@ -127,7 +138,7 @@ namespace DiaBlackJack.CoreLoop
 
         public AutomaticCardChoiceKind ChoiceKind { get; }
 
-        public string Prompt { get; }
+        public CombatPromptId PromptId { get; }
 
         public IReadOnlyList<AutomaticCardChoiceOption> Options => _options;
 

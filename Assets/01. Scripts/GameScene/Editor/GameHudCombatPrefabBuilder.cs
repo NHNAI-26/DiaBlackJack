@@ -3,9 +3,13 @@ using System;
 using System.Collections.Generic;
 using Border.UI;
 using DiaBlackJack.Content;
+using DiaBlackJack.CoreLoop;
+using DiaBlackJack.CoreLoop.UI;
 using TMPro;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace DiaBlackJack.GameScene.Editor
@@ -18,6 +22,12 @@ namespace DiaBlackJack.GameScene.Editor
             "Assets/03. Prefabs/UI/DefaultButton.prefab";
         private const string RevolverNumberSelectorPrefabPath =
             "Assets/03. Prefabs/UI/GameScene/RevolverNumberSelector.prefab";
+        private const string CombatPromptPrefabPath =
+            "Assets/03. Prefabs/UI/GameScene/CombatPrompt.prefab";
+        private const string CombatPromptCatalogPath =
+            "Assets/02. ScriptableObjects/UI/CombatPromptCatalog.asset";
+        private const string CoreLoopTestScenePath =
+            "Assets/00. Scenes/CoreLoopTest.unity";
         private const string BrushAssetPath = "Assets/05. Arts/UI/Brush_UI.psd";
         private const string BrushSelectAssetPath =
             "Assets/05. Arts/UI/brush_select.png";
@@ -32,6 +42,9 @@ namespace DiaBlackJack.GameScene.Editor
         [MenuItem("DiaBlackJack/Build GameScene Combat HUD")]
         private static void Build()
         {
+            CombatPromptCatalogSO promptCatalog =
+                CreateOrLoadCombatPromptCatalog();
+            ValidateCombatPromptPrefabAsset(promptCatalog);
             BuildRevolverNumberSelectorPrefabAsset();
             GameObject hudRoot = PrefabUtility.LoadPrefabContents(HudPrefabPath);
             try
@@ -68,6 +81,8 @@ namespace DiaBlackJack.GameScene.Editor
 
                 RectTransform controls = CreateRect("CombatControls", hudRoot.transform);
                 Stretch(controls);
+                CombatPromptView combatPrompt =
+                    InstallCombatPrompt(controls);
 
                 RectTransform tooltip = CreatePanel(
                     "ActionTooltip", controls, panelBrush, new Color(0.08f, 0.06f, 0.07f, 0.96f));
@@ -92,7 +107,7 @@ namespace DiaBlackJack.GameScene.Editor
 
                 RectTransform optionPanel = CreateOverlay("OptionPanel", controls);
                 TMP_Text optionPrompt = CreateText(
-                    "Prompt", optionPanel, font, 22f, TextAlignmentOptions.Center);
+                    "HeaderText", optionPanel, font, 22f, TextAlignmentOptions.Center);
                 optionPrompt.rectTransform.anchorMin = new Vector2(0.5f, 1f);
                 optionPrompt.rectTransform.anchorMax = new Vector2(0.5f, 1f);
                 optionPrompt.rectTransform.pivot = new Vector2(0.5f, 1f);
@@ -127,6 +142,7 @@ namespace DiaBlackJack.GameScene.Editor
                     tooltipText,
                     optionPanel.gameObject,
                     optionPrompt,
+                    combatPrompt,
                     optionScroll,
                     optionSlots,
                     contractDetailPanel.gameObject,
@@ -163,6 +179,56 @@ namespace DiaBlackJack.GameScene.Editor
             {
                 PrefabUtility.UnloadPrefabContents(hudRoot);
             }
+        }
+
+        [MenuItem("DiaBlackJack/Build Combat Prompt")]
+        private static void BuildCombatPrompt()
+        {
+            CombatPromptCatalogSO catalog = CreateOrLoadCombatPromptCatalog();
+            ValidateCombatPromptPrefabAsset(catalog);
+            BuildRevolverNumberSelectorPrefabAsset();
+
+            GameObject hudRoot = PrefabUtility.LoadPrefabContents(HudPrefabPath);
+            try
+            {
+                GameHudView hud = hudRoot.GetComponent<GameHudView>();
+                Transform controls = hudRoot.transform.Find("CombatControls");
+                if (hud == null || controls == null)
+                {
+                    throw new InvalidOperationException(
+                        "HUD prefab requires GameHudView and CombatControls.");
+                }
+
+                CombatPromptView combatPrompt =
+                    InstallCombatPrompt(controls);
+                TMP_Text header = controls.Find("OptionPanel/HeaderText")
+                    ?.GetComponent<TMP_Text>();
+                if (header == null)
+                {
+                    Transform legacyPrompt = controls.Find("OptionPanel/Prompt");
+                    if (legacyPrompt != null)
+                    {
+                        legacyPrompt.name = "HeaderText";
+                        header = legacyPrompt.GetComponent<TMP_Text>();
+                    }
+                }
+
+                SerializedObject serialized = new SerializedObject(hud);
+                serialized.FindProperty("combatHeaderText").objectReferenceValue = header;
+                serialized.FindProperty("combatPromptView").objectReferenceValue =
+                    combatPrompt;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+
+                InstallRevolverNumberSelector(hudRoot, hud);
+                PrefabUtility.SaveAsPrefabAsset(hudRoot, HudPrefabPath);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(hudRoot);
+            }
+
+            WireCoreLoopTestCatalog(catalog);
+            AssetDatabase.SaveAssets();
         }
 
         [MenuItem("DiaBlackJack/Build Shop Leave Control")]
@@ -266,18 +332,6 @@ namespace DiaBlackJack.GameScene.Editor
                 RectTransform rootRect = root.GetComponent<RectTransform>();
                 Stretch(rootRect);
 
-                TMP_Text prompt = CreateText(
-                    "Prompt",
-                    rootRect,
-                    font,
-                    22f,
-                    TextAlignmentOptions.Center);
-                SetCenteredRect(
-                    prompt.rectTransform,
-                    new Vector2(0f, 145f),
-                    new Vector2(560f, 50f));
-                prompt.color = new Color(0.9f, 0.84f, 0.72f, 1f);
-
                 RectTransform circle = CreateRect("NumberCircle", rootRect);
                 SetCenteredRect(circle, Vector2.zero, new Vector2(180f, 180f));
                 Image circleImage = circle.gameObject.AddComponent<Image>();
@@ -332,7 +386,6 @@ namespace DiaBlackJack.GameScene.Editor
                 RevolverNumberSelectorView selector =
                     root.AddComponent<RevolverNumberSelectorView>();
                 SerializedObject selectorData = new SerializedObject(selector);
-                selectorData.FindProperty("promptText").objectReferenceValue = prompt;
                 selectorData.FindProperty("numberText").objectReferenceValue = number;
                 selectorData.FindProperty("previousButton").objectReferenceValue = previous;
                 selectorData.FindProperty("nextButton").objectReferenceValue = next;
@@ -345,6 +398,195 @@ namespace DiaBlackJack.GameScene.Editor
             finally
             {
                 UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
+        private static CombatPromptCatalogSO CreateOrLoadCombatPromptCatalog()
+        {
+            CombatPromptCatalogSO catalog =
+                AssetDatabase.LoadAssetAtPath<CombatPromptCatalogSO>(
+                    CombatPromptCatalogPath);
+            if (catalog != null)
+            {
+                return catalog;
+            }
+
+            const string parentFolder = "Assets/02. ScriptableObjects";
+            const string uiFolder = parentFolder + "/UI";
+            if (!AssetDatabase.IsValidFolder(uiFolder))
+            {
+                AssetDatabase.CreateFolder(parentFolder, "UI");
+            }
+
+            catalog = ScriptableObject.CreateInstance<CombatPromptCatalogSO>();
+            catalog.ReplaceEntriesForEditor(CreateDefaultPromptEntries());
+            AssetDatabase.CreateAsset(catalog, CombatPromptCatalogPath);
+            EditorUtility.SetDirty(catalog);
+            return catalog;
+        }
+
+        private static IReadOnlyList<CombatPromptCatalogSO.Entry>
+            CreateDefaultPromptEntries()
+        {
+            return new[]
+            {
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.ChangeCard,
+                    "교체할 카드를 선택하세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.ManualAutoPistolDeclareNumber,
+                    "상대 비공개 카드의 숫자를 선택하세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.ManualCrystalOrbChooseCard,
+                    "가져올 카드를 선택하거나 건너뛰세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.ManualThreatHammerChooseOpponentCard,
+                    "버릴 상대 공개 카드를 선택하세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.AutomaticLieDetectorDeclareNumber,
+                    "{source}: 상대 비공개 카드와 비교할 숫자를 선택하세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.AutomaticPoisonDecision,
+                    "{source}: 독극물의 효과를 선택하세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.AutomaticFlamethrowerChooseDiscard,
+                    "{source}: 버릴 공개 카드 한 장을 선택하거나 건너뛰세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.AutomaticPocketWatchChooseManualCard,
+                    "{source}: 다시 사용할 수동 카드 한 장을 선택하거나 건너뛰세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.AutomaticPocketWatchChooseDisposition,
+                    "{source}: 회중시계를 유지할지 버릴지 선택하세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.AutomaticResurrectionHerbDecision,
+                    "{source}: 영혼 1을 지불하고 패를 다시 받을지 선택하세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.DemonChooseContract,
+                    "계약할 악마를 선택하세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.DemonBelphegorTopCard,
+                    "{context}\n확인한 덱 위 카드를 처리하세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.DemonMammonReroll,
+                    "현재 값을 유지할지 다시 굴릴지 선택하세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.DemonMammonApplyDie,
+                    "최종 승부에 현재 주사위 값을 포함할지 선택하세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.DemonSatanDeclareFirstNumber,
+                    "첫 번째 숫자를 선택하세요. ({current}/{required})"),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.DemonSatanDeclareSecondNumber,
+                    "두 번째 숫자를 선택하세요. ({current}/{required})"),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.DemonBeelzebubChooseOwnerCard,
+                    "버릴 내 공개 카드를 선택하세요. ({current}/{required})"),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.DemonBeelzebubChooseOpponentCard,
+                    "버릴 상대 공개 카드를 선택하세요. ({current}/{required})"),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.DemonAsmodeusForceOpponentHit,
+                    "차례 시작에 상대를 히트시킬지 선택하세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.DemonSatanTurnStartChoice,
+                    "차례 시작에 사탄 능력을 사용할지 선택하세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.DemonPaimonChooseDeck,
+                    "카드를 추방할 덱을 선택하세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.DemonPaimonChooseExileCard,
+                    "전투 종료까지 추방할 카드를 선택하세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.DemonBelialChooseOpponentCard,
+                    "가져와 즉시 사용할 상대 공개 카드를 선택하세요."),
+                new CombatPromptCatalogSO.Entry(
+                    CombatPromptId.DemonLuciferChooseAdditionalContract,
+                    "추가로 계약할 악마를 선택하거나 건너뛰세요.")
+            };
+        }
+
+        private static void ValidateCombatPromptPrefabAsset(
+            CombatPromptCatalogSO catalog)
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(CombatPromptPrefabPath);
+            CombatPromptView view = prefab == null
+                ? null
+                : prefab.GetComponent<CombatPromptView>();
+            if (view == null || !view.HasRequiredReferences)
+            {
+                throw new InvalidOperationException(
+                    "Author CombatPrompt.prefab with CombatPromptView and all required references before building the HUD.");
+            }
+
+            SerializedObject serialized = new SerializedObject(view);
+            if (serialized.FindProperty("catalog").objectReferenceValue != catalog)
+            {
+                throw new InvalidOperationException(
+                    "CombatPrompt.prefab must reference the shared CombatPromptCatalog asset.");
+            }
+        }
+
+        private static CombatPromptView InstallCombatPrompt(
+            Transform controls)
+        {
+            Transform existing = controls.Find("CombatPrompt");
+            if (existing != null)
+            {
+                UnityEngine.Object.DestroyImmediate(existing.gameObject);
+            }
+
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(CombatPromptPrefabPath);
+            GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(
+                prefab,
+                controls);
+            instance.name = "CombatPrompt";
+            return instance.GetComponent<CombatPromptView>();
+        }
+
+        private static void WireCoreLoopTestCatalog(CombatPromptCatalogSO catalog)
+        {
+            Scene scene = SceneManager.GetSceneByPath(CoreLoopTestScenePath);
+            bool openedForEdit = !scene.IsValid() || !scene.isLoaded;
+            if (openedForEdit)
+            {
+                scene = EditorSceneManager.OpenScene(
+                    CoreLoopTestScenePath,
+                    OpenSceneMode.Additive);
+            }
+
+            try
+            {
+                CoreLoopView view = null;
+                foreach (GameObject root in scene.GetRootGameObjects())
+                {
+                    view = root.GetComponentInChildren<CoreLoopView>(true);
+                    if (view != null)
+                    {
+                        break;
+                    }
+                }
+
+                if (view == null)
+                {
+                    throw new InvalidOperationException(
+                        "CoreLoopTest scene is missing CoreLoopView.");
+                }
+
+                SerializedObject serialized = new SerializedObject(view);
+                serialized.FindProperty("combatPromptCatalog").objectReferenceValue =
+                    catalog;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
+            }
+            finally
+            {
+                if (openedForEdit && scene.IsValid())
+                {
+                    EditorSceneManager.CloseScene(scene, removeScene: true);
+                }
             }
         }
 
@@ -785,7 +1027,8 @@ namespace DiaBlackJack.GameScene.Editor
             RectTransform tooltip,
             TMP_Text tooltipText,
             GameObject optionPanel,
-            TMP_Text optionPrompt,
+            TMP_Text optionHeader,
+            CombatPromptView combatPrompt,
             ScrollRect optionScroll,
             GameHudChoiceButton[] optionSlots,
             GameObject contractDetailPanel,
@@ -799,7 +1042,8 @@ namespace DiaBlackJack.GameScene.Editor
             serialized.FindProperty("actionTooltip").objectReferenceValue = tooltip;
             serialized.FindProperty("actionTooltipText").objectReferenceValue = tooltipText;
             serialized.FindProperty("optionPanel").objectReferenceValue = optionPanel;
-            serialized.FindProperty("combatPromptText").objectReferenceValue = optionPrompt;
+            serialized.FindProperty("combatHeaderText").objectReferenceValue = optionHeader;
+            serialized.FindProperty("combatPromptView").objectReferenceValue = combatPrompt;
             serialized.FindProperty("optionScrollRect").objectReferenceValue = optionScroll;
             AssignArray(serialized.FindProperty("optionSlots"), optionSlots);
             serialized.FindProperty("contractDetailPanel").objectReferenceValue =

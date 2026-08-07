@@ -351,6 +351,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84be51aae63564741abb80866fbffb79, type: 3}
   m_Name:
   m_EditorClassIdentifier: Border::DiaBlackJack.CoreLoop.UI.CoreLoopView
+  combatPromptCatalog: {fileID: 11400000, guid: 1e70bef003874c54dbcb518c2d12cb37, type: 2}
 --- !u!4 &1836858524
 Transform:
   m_ObjectHideFlags: 0

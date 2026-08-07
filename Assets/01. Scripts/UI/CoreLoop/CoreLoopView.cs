@@ -6,6 +6,8 @@ namespace DiaBlackJack.CoreLoop.UI
 {
     public sealed class CoreLoopView : MonoBehaviour
     {
+        [SerializeField] private CombatPromptCatalogSO combatPromptCatalog;
+
         private CoreLoopViewModel _model;
         private GUIStyle _titleStyle;
         private GUIStyle _headingStyle;
@@ -302,7 +304,7 @@ namespace DiaBlackJack.CoreLoop.UI
         private void DrawChangeCandidates()
         {
             var candidates = _model.ChangeCandidates;
-            GUILayout.Label("CHOOSE A NEW HIDDEN CARD", _headingStyle);
+            DrawSelectionPrompt();
             GUILayout.Space(8f);
             GUILayout.BeginHorizontal();
 
@@ -358,9 +360,7 @@ namespace DiaBlackJack.CoreLoop.UI
         private void DrawCardEffectChoices()
         {
             var choices = _model.CardEffectChoices;
-            GUILayout.Label(
-                CurrencyIconGui.Content(_model.CardEffectPrompt),
-                _headingStyle);
+            DrawSelectionPrompt();
             GUILayout.Space(8f);
 
             const int choicesPerRow = 5;
@@ -428,12 +428,7 @@ namespace DiaBlackJack.CoreLoop.UI
                 return;
             }
 
-            GUILayout.Label(
-                interaction.SourceDisplayName,
-                _headingStyle);
-            GUILayout.Label(
-                CurrencyIconGui.Content(interaction.Prompt),
-                _headingStyle);
+            DrawSelectionPrompt();
             GUILayout.Space(8f);
 
             const int choicesPerRow = 5;
@@ -472,15 +467,7 @@ namespace DiaBlackJack.CoreLoop.UI
         private void DrawDemonContractChoices()
         {
             DemonContractPanelViewModel contract = _model.DemonContract;
-            GUILayout.Label(
-                CurrencyIconGui.Content(contract.Prompt),
-                _headingStyle);
-            if (!string.IsNullOrEmpty(contract.OwnerPreview))
-            {
-                GUILayout.Label(
-                    CurrencyIconGui.Content(contract.OwnerPreview),
-                    _warningStyle);
-            }
+            DrawSelectionPrompt();
 
             GUILayout.Space(6f);
             bool wasEnabled = GUI.enabled;
@@ -540,6 +527,23 @@ namespace DiaBlackJack.CoreLoop.UI
             }
 
             GUI.enabled = wasEnabled;
+        }
+
+        private void DrawSelectionPrompt()
+        {
+            if (_inputLocked ||
+                !_model.SelectionPrompt.HasValue ||
+                combatPromptCatalog == null ||
+                !combatPromptCatalog.TryResolve(
+                    _model.SelectionPrompt.Value,
+                    out string text))
+            {
+                return;
+            }
+
+            GUILayout.Label(
+                CurrencyIconGui.Content(text),
+                _headingStyle);
         }
 
         private void EnsureStyles()

@@ -1118,7 +1118,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 new PendingCardEffect(
                     sourceCard.Id,
                     sourceCard.Definition.Effect,
-                    "retry",
+                    CombatPromptId.ManualAutoPistolDeclareNumber,
                     CardEffectChoiceKind.DeclareNumber,
                     new[]
                     {
