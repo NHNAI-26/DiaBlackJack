@@ -260,6 +260,8 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
+            SetBattleCardObjectsVisible(true);
+
             if (ReferenceEquals(_stageSession, session) &&
                 ReferenceEquals(Battle, session.Battle))
             {
@@ -366,6 +368,7 @@ namespace DiaBlackJack.GameScene
             _inputLocked = !unlockInput;
             _choosingLighterRemoval = keepLighterSelection;
             shop.OpenFormal(model);
+            SetBattleCardObjectsVisible(false);
             if (keepLighterSelection)
             {
                 deckPreview.OpenForSingleSelection(
@@ -375,11 +378,6 @@ namespace DiaBlackJack.GameScene
             hud?.SetGold(currentGold);
             hud?.SetPlayerSoul(model.PlayerSoul);
             hud?.SetEnemyStatusVisible(false);
-            // Outside of battle there is no draw/discard split, so the shop shows the whole
-            // owned deck as a single "remaining" pile rather than leaving it at the empty
-            // height ResetBattlePresentation left it at when combat ended.
-            remainingDeck?.Render(model.ShopOwnedCards.Count);
-            discardDeck?.Render(0);
             UpdateShopLeaveControl();
             return true;
         }
@@ -399,14 +397,32 @@ namespace DiaBlackJack.GameScene
 
         internal void SetEnemyDeckVisible(bool visible)
         {
-            if (enemyRemainingDeck != null)
+            SetComponentActive(enemyRemainingDeck, visible);
+            SetComponentActive(enemyDiscardDeck, visible);
+        }
+
+        internal void SetBattleCardObjectsVisible(bool visible)
+        {
+            if (!visible)
             {
-                enemyRemainingDeck.gameObject.SetActive(visible);
+                UpdateHover(null);
+                UpdateDemonCardHover(null);
+                UpdateDeckStackHover(null);
             }
 
-            if (enemyDiscardDeck != null)
+            SetComponentActive(playerHand, visible);
+            SetComponentActive(enemyHand, visible);
+            SetComponentActive(remainingDeck, visible);
+            SetComponentActive(discardDeck, visible);
+            SetComponentActive(enemyRemainingDeck, visible);
+            SetComponentActive(enemyDiscardDeck, visible);
+        }
+
+        private static void SetComponentActive(Component component, bool active)
+        {
+            if (component != null)
             {
-                enemyDiscardDeck.gameObject.SetActive(visible);
+                component.gameObject.SetActive(active);
             }
         }
 
@@ -885,11 +901,7 @@ namespace DiaBlackJack.GameScene
             TableCombatCommandView pointedCombatCommand = !shopOpen && hasHit
                 ? hit.collider.GetComponentInParent<TableCombatCommandView>()
                 : null;
-            // Unlike combat commands, the deck pile stays clickable in the shop — the
-            // discard pile's collider is already off (DeckStackView.SetVisible hides it
-            // at height 0, see BindFormalShop), so only the remaining/owned-deck pile
-            // can actually be hit here.
-            DeckClickable pointedDeck = hasHit
+            DeckClickable pointedDeck = !shopOpen && hasHit
                 ? hit.collider.GetComponentInParent<DeckClickable>()
                 : null;
             DeckStackView pointedDeckStack =
@@ -1368,21 +1380,13 @@ namespace DiaBlackJack.GameScene
         private void OpenDeckPreview(DeckKind kind)
         {
             CoreLoopBattle battle = Battle;
-            GameSceneDeckViewModel model;
-            if (battle != null)
-            {
-                model = GameScenePresenter.CreateDeckPreview(battle, kind);
-            }
-            else if (shop != null && shop.IsOpen && _formalShopModel != null)
-            {
-                // Outside of battle there is no draw/discard split, so the shop always
-                // browses the whole owned deck regardless of which pile was clicked.
-                model = CreateShopOwnedDeckPreview();
-            }
-            else
+            if (battle == null)
             {
                 return;
             }
+
+            GameSceneDeckViewModel model =
+                GameScenePresenter.CreateDeckPreview(battle, kind);
 
             EnsureDeckPreview();
             if (deckPreview == null)
@@ -1397,36 +1401,6 @@ namespace DiaBlackJack.GameScene
             UpdateCombatCommandHover(null);
             deckPreview.Open(model);
             BeginDeckPreviewSwitchInputLock();
-        }
-
-        private GameSceneDeckViewModel CreateShopOwnedDeckPreview()
-        {
-            IReadOnlyList<ShopOwnedCardViewModel> options =
-                _formalShopModel.ShopOwnedCards;
-            var groups = new List<GameSceneDeckCardGroupViewModel>(options.Count);
-            for (int i = 0; i < options.Count; i++)
-            {
-                ShopOwnedCardViewModel option = options[i];
-                CardDefinition definition =
-                    CardDefinitionCatalog.GetByKey(option.DefinitionKey);
-                var card = new GameSceneCardViewModel(
-                    option.CardId,
-                    option.Rank,
-                    isFaceUp: true,
-                    revealRank: true,
-                    canUse: false,
-                    definition.DisplayName,
-                    option.AbilityDescription,
-                    option.Suit,
-                    showHoverBadgeWhenUnavailable: true,
-                    option.DefinitionKey);
-                groups.Add(new GameSceneDeckCardGroupViewModel(card, 1));
-            }
-
-            return new GameSceneDeckViewModel(
-                DeckKind.Draw,
-                "MY DECK",
-                groups);
         }
 
         private void CloseDeckPreview()
@@ -5487,8 +5461,59 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            OpenStandaloneShop();
+        }
+
+        internal bool DebugOpenStandaloneShop()
+        {
+            if (shop == null || shop.IsOpen)
+            {
+                return false;
+            }
+
+            OpenStandaloneShop();
+            RefreshView();
+            return shop.IsOpen;
+        }
+
+        internal bool DebugCloseStandaloneShop()
+        {
+            if (shop == null || !shop.IsOpen)
+            {
+                return false;
+            }
+
+            bool leftVictoryShop = _session != null && LeaveShop();
+            if (!leftVictoryShop)
+            {
+                CloseStandaloneShop();
+            }
+
+            RefreshView();
+            return !shop.IsOpen;
+        }
+
+        internal void RefreshForDebug()
+        {
+            RefreshView();
+        }
+
+        private void OpenStandaloneShop()
+        {
             CloseDeckPreview();
             shop.Open(CurrentEnemyProfileKey);
+            SetBattleCardObjectsVisible(false);
+        }
+
+        private void CloseStandaloneShop()
+        {
+            CloseDeckPreview();
+            _choosingLighterRemoval = false;
+            UpdateHover(null);
+            UpdateDemonCardHover(null);
+            UpdateShopUtilityItemHover(null);
+            shop.Close();
+            SetBattleCardObjectsVisible(true);
         }
 
         // Leave the shop and start the next battle. Gold is KEPT by ShopController — it accumulates
@@ -5505,11 +5530,7 @@ namespace DiaBlackJack.GameScene
             bool restarted = _session.TryRestart();
             if (restarted && shop != null)
             {
-                _choosingLighterRemoval = false;
-                UpdateHover(null);
-                UpdateDemonCardHover(null);
-                UpdateShopUtilityItemHover(null);
-                shop.Close();
+                CloseStandaloneShop();
             }
 
             return restarted;
@@ -5536,6 +5557,7 @@ namespace DiaBlackJack.GameScene
                 UpdateDemonCardHover(null);
                 UpdateShopUtilityItemHover(null);
                 shop.Close();
+                SetBattleCardObjectsVisible(true);
                 shop.ResetRunEconomy();
                 ResetEnemySpeech();
             }

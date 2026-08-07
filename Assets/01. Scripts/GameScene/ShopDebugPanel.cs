@@ -1,4 +1,3 @@
-using System.Reflection;
 using DiaBlackJack.CoreLoop;
 using UnityEngine;
 
@@ -16,9 +15,6 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameHudView hud;
 
 #if UNITY_EDITOR
-        private const BindingFlags PrivateInstance =
-            BindingFlags.NonPublic | BindingFlags.Instance;
-
         public bool HasGameManager => gameManager != null;
 
         public bool HasShop => shop != null;
@@ -49,39 +45,34 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
-            RefreshGameView();
+            gameManager.RefreshForDebug();
             return true;
         }
 
         public bool DebugOpenShop()
         {
-            if (!Application.isPlaying || shop == null || shop.IsOpen)
+            if (!Application.isPlaying ||
+                gameManager == null ||
+                shop == null ||
+                shop.IsOpen)
             {
                 return false;
             }
 
-            shop.Open(gameManager.CurrentEnemyProfileKey);
-            RefreshGameView();
-            return true;
+            return gameManager.DebugOpenStandaloneShop();
         }
 
         public bool DebugCloseShop()
         {
-            if (!Application.isPlaying || shop == null || !shop.IsOpen)
+            if (!Application.isPlaying ||
+                gameManager == null ||
+                shop == null ||
+                !shop.IsOpen)
             {
                 return false;
             }
 
-            bool leftVictoryShop =
-                gameManager != null &&
-                InvokePrivateBoolean(gameManager, "LeaveShop");
-            if (!leftVictoryShop)
-            {
-                shop.Close();
-            }
-
-            RefreshGameView();
-            return !shop.IsOpen;
+            return gameManager.DebugCloseStandaloneShop();
         }
 
         public bool DebugResetGold()
@@ -100,28 +91,6 @@ namespace DiaBlackJack.GameScene
             return true;
         }
 
-        private void RefreshGameView()
-        {
-            if (gameManager == null)
-            {
-                return;
-            }
-
-            MethodInfo method = typeof(GameManager).GetMethod(
-                "RefreshView",
-                PrivateInstance);
-            method?.Invoke(gameManager, null);
-        }
-
-        private static bool InvokePrivateBoolean(
-            GameManager manager,
-            string methodName)
-        {
-            MethodInfo method = typeof(GameManager).GetMethod(
-                methodName,
-                PrivateInstance);
-            return method?.Invoke(manager, null) is bool result && result;
-        }
 #endif
     }
 }

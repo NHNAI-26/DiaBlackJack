@@ -290,6 +290,115 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("GSV12")]
+        public void GSV12_U01_ShopHidesBothHandsAndAllFourDeckPiles()
+        {
+            GameManager manager = CreateBattleCardVisibilityFixture(
+                out GameObject root,
+                out GameObject[] battleCardObjects);
+
+            try
+            {
+                manager.SetBattleCardObjectsVisible(false);
+
+                Assert.That(
+                    battleCardObjects.All(cardObject => !cardObject.activeSelf),
+                    Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        [Category("GSV12")]
+        public void GSV12_U02_NextCombatRestoresBothHandsAndAllFourDeckPiles()
+        {
+            GameManager manager = CreateBattleCardVisibilityFixture(
+                out GameObject root,
+                out GameObject[] battleCardObjects);
+
+            try
+            {
+                manager.SetBattleCardObjectsVisible(false);
+                manager.SetBattleCardObjectsVisible(true);
+
+                Assert.That(
+                    battleCardObjects.All(cardObject => cardObject.activeSelf),
+                    Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        [Category("GSV12")]
+        public void GSV12_U03_LighterSelectionAndShopOffersRemainVisible()
+        {
+            GameManager manager = CreateBattleCardVisibilityFixture(
+                out GameObject root,
+                out GameObject[] battleCardObjects);
+            GameObject previewObject = InstantiatePreviewPrefab();
+            previewObject.transform.SetParent(root.transform);
+            DeckPreviewView preview = previewObject.GetComponent<DeckPreviewView>();
+            GameObject shopOffers = new GameObject("Shop Offers");
+            shopOffers.transform.SetParent(root.transform);
+            SetReference(manager, "deckPreview", preview);
+
+            try
+            {
+                preview.OpenForSingleSelection(CreateSelectionCards());
+                manager.SetBattleCardObjectsVisible(false);
+
+                Assert.That(preview.IsOpen, Is.True);
+                Assert.That(previewObject.activeSelf, Is.True);
+                Assert.That(shopOffers.activeSelf, Is.True);
+                Assert.That(
+                    battleCardObjects.All(cardObject => !cardObject.activeSelf),
+                    Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        [Category("GSV12")]
+        public void GSV12_U04_ShopDebuggerUsesProductionVisibilityBoundary()
+        {
+            GameManager manager = CreateBattleCardVisibilityFixture(
+                out GameObject root,
+                out GameObject[] battleCardObjects);
+            GameObject shopObject = new GameObject("Shop");
+            shopObject.transform.SetParent(root.transform);
+            ShopController shop = shopObject.AddComponent<ShopController>();
+            SetReference(manager, "shop", shop);
+
+            try
+            {
+                Assert.That(manager.DebugOpenStandaloneShop(), Is.True);
+                Assert.That(shop.IsOpen, Is.True);
+                Assert.That(
+                    battleCardObjects.All(cardObject => !cardObject.activeSelf),
+                    Is.True);
+
+                Assert.That(manager.DebugCloseStandaloneShop(), Is.True);
+                Assert.That(shop.IsOpen, Is.False);
+                Assert.That(
+                    battleCardObjects.All(cardObject => cardObject.activeSelf),
+                    Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void GSV13_U01_DeckCardHoverOutlineMatchesCombatStateColors()
         {
             GameObject source = AssetDatabase.LoadAssetAtPath<GameObject>(
@@ -661,6 +770,60 @@ namespace DiaBlackJack.CoreLoop.Tests
             return Object.Instantiate(prefab);
         }
 
+        private static GameManager CreateBattleCardVisibilityFixture(
+            out GameObject root,
+            out GameObject[] battleCardObjects)
+        {
+            root = new GameObject("Battle Card Visibility Test Root");
+            GameManager manager = root.AddComponent<GameManager>();
+            battleCardObjects = new[]
+            {
+                CreateCardObject<CardHand>(root.transform, "PlayerHand"),
+                CreateCardObject<CardHand>(root.transform, "EnemyHand"),
+                CreateCardObject<DeckStackView>(root.transform, "RemainingDeck"),
+                CreateCardObject<DeckStackView>(root.transform, "DiscardDeck"),
+                CreateCardObject<DeckStackView>(root.transform, "EnemyRemainingDeck"),
+                CreateCardObject<DeckStackView>(root.transform, "EnemyDiscardDeck")
+            };
+
+            SetReference(
+                manager,
+                "playerHand",
+                battleCardObjects[0].GetComponent<CardHand>());
+            SetReference(
+                manager,
+                "enemyHand",
+                battleCardObjects[1].GetComponent<CardHand>());
+            SetReference(
+                manager,
+                "remainingDeck",
+                battleCardObjects[2].GetComponent<DeckStackView>());
+            SetReference(
+                manager,
+                "discardDeck",
+                battleCardObjects[3].GetComponent<DeckStackView>());
+            SetReference(
+                manager,
+                "enemyRemainingDeck",
+                battleCardObjects[4].GetComponent<DeckStackView>());
+            SetReference(
+                manager,
+                "enemyDiscardDeck",
+                battleCardObjects[5].GetComponent<DeckStackView>());
+            return manager;
+        }
+
+        private static GameObject CreateCardObject<T>(
+            Transform parent,
+            string name)
+            where T : Component
+        {
+            GameObject cardObject = new GameObject(name);
+            cardObject.transform.SetParent(parent);
+            cardObject.AddComponent<T>();
+            return cardObject;
+        }
+
         private static DeckPreviewCardView FindSlot(
             GameObject root,
             string name)
@@ -722,6 +885,18 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             SerializedObject serialized = new SerializedObject(owner);
             return serialized.FindProperty(propertyName).objectReferenceValue as T;
+        }
+
+        private static void SetReference(
+            Object owner,
+            string propertyName,
+            Object value)
+        {
+            SerializedObject serialized = new SerializedObject(owner);
+            SerializedProperty property = serialized.FindProperty(propertyName);
+            Assert.That(property, Is.Not.Null, propertyName);
+            property.objectReferenceValue = value;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static GameSceneDeckViewModel CreateSelectionCards()
