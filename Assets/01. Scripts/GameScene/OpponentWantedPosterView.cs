@@ -24,8 +24,9 @@ namespace DiaBlackJack.GameScene
 
         private bool _interactable;
         private bool _isHovered;
+        private bool _hasRestingScale;
         private string _profileKey;
-        private Vector3 _restingScale = Vector3.one;
+        private Vector3 _restingScale;
 
         public event Action<string> Selected;
 
@@ -133,14 +134,18 @@ namespace DiaBlackJack.GameScene
 
         private void CaptureRestingScale()
         {
-            if (!_isHovered)
+            if (!_hasRestingScale && !_isHovered)
             {
                 _restingScale = transform.localScale;
+                _hasRestingScale = true;
             }
         }
 
         private void SetHovered(bool hovered)
         {
+            // The selection root starts inactive, so Hide can run before Awake on
+            // nested poster slots. Capture the prefab-authored scale before any reset.
+            CaptureRestingScale();
             _isHovered = hovered && _interactable;
             if (hoverOutline != null)
             {

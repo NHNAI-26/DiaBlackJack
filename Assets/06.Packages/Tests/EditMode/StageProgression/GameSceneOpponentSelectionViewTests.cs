@@ -318,6 +318,42 @@ namespace DiaBlackJack.StageProgression.Tests
             }
         }
 
+        [Test]
+        public void GSV10_U07_InitialHidePreservesPrefabAuthoredPosterScale()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                OverlayPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = UnityEngine.Object.Instantiate(prefab);
+
+            try
+            {
+                OpponentSelectionView selection =
+                    instance.GetComponent<OpponentSelectionView>();
+                OpponentWantedPosterView[] posters =
+                    instance.GetComponentsInChildren<OpponentWantedPosterView>(true);
+                Vector3[] authoredScales = posters
+                    .Select(poster => poster.transform.localScale)
+                    .ToArray();
+
+                Assert.That(selection, Is.Not.Null);
+                Assert.That(posters.Length, Is.EqualTo(2));
+
+                selection.Hide();
+
+                for (int index = 0; index < posters.Length; index++)
+                {
+                    Assert.That(
+                        posters[index].transform.localScale,
+                        Is.EqualTo(authoredScales[index]));
+                }
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
         private static GameObject CreatePosterInstance()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
