@@ -32,6 +32,31 @@ namespace DiaBlackJack.GameScene
                 _ => throw new ArgumentOutOfRangeException(nameof(direction))
             };
         }
+
+        internal static IReadOnlyList<int> GetFrames(
+            CodexPageTurnDirection direction,
+            int pageTurnCount)
+        {
+            if (pageTurnCount < 1)
+            {
+                throw new ArgumentOutOfRangeException(nameof(pageTurnCount));
+            }
+
+            IReadOnlyList<int> singleTurn = GetFrames(direction);
+            int[] frames = new int[singleTurn.Count * pageTurnCount];
+            for (int turnIndex = 0; turnIndex < pageTurnCount; turnIndex++)
+            {
+                for (int frameIndex = 0;
+                    frameIndex < singleTurn.Count;
+                    frameIndex++)
+                {
+                    frames[(turnIndex * singleTurn.Count) + frameIndex] =
+                        singleTurn[frameIndex];
+                }
+            }
+
+            return frames;
+        }
     }
 
     internal static class CodexQuantityText
@@ -102,6 +127,7 @@ namespace DiaBlackJack.GameScene
         private const int RequiredPageTurnFrameCount = 5;
         private const string OpeningBookSfxId = "openingBook";
         private const string BookPageSfxId = "bookPage";
+        private const string BookManyPageSfxId = "bookManyPage";
         private const string ClosingBookSfxId = "closingBook";
 
         [Header("Overlay")]
@@ -124,7 +150,9 @@ namespace DiaBlackJack.GameScene
         [Min(0f)]
         [SerializeField] private float contentFadeDuration = 0.12f;
         [Min(0f)]
-        [SerializeField] private float pageTurnFrameDuration = 0.08f;
+        [SerializeField] private float pageTurnFrameDuration = 0.05f;
+        [Min(1)]
+        [SerializeField] private int categoryPageTurnCount = 3;
 
         [Header("Enemy page")]
         [SerializeField] private GameObject enemyPageRoot;
@@ -259,6 +287,24 @@ namespace DiaBlackJack.GameScene
             CodexBookViewModel model,
             CodexPageTurnDirection direction)
         {
+            return TryRenderTransition(model, direction, 1);
+        }
+
+        internal bool TryRenderCategoryTransition(
+            CodexBookViewModel model,
+            CodexPageTurnDirection direction)
+        {
+            return TryRenderTransition(
+                model,
+                direction,
+                Mathf.Max(1, categoryPageTurnCount));
+        }
+
+        private bool TryRenderTransition(
+            CodexBookViewModel model,
+            CodexPageTurnDirection direction,
+            int pageTurnCount)
+        {
             if (model == null)
             {
                 throw new ArgumentNullException(nameof(model));
@@ -272,8 +318,9 @@ namespace DiaBlackJack.GameScene
 
             ClearHoveredDeckItem();
             _pageTransition = StartCoroutine(
-                RenderTransition(model, direction));
-            SoundManager.Current?.PlaySfx(BookPageSfxId);
+                RenderTransition(model, direction, pageTurnCount));
+            SoundManager.Current?.PlaySfx(
+                pageTurnCount > 1 ? BookManyPageSfxId : BookPageSfxId);
             return true;
         }
 
@@ -304,13 +351,14 @@ namespace DiaBlackJack.GameScene
 
         private IEnumerator RenderTransition(
             CodexBookViewModel model,
-            CodexPageTurnDirection direction)
+            CodexPageTurnDirection direction,
+            int pageTurnCount)
         {
             SetContentInteraction(false);
             yield return FadeContent(1f, 0f);
 
             IReadOnlyList<int> frameIndices =
-                CodexPageTurnSequence.GetFrames(direction);
+                CodexPageTurnSequence.GetFrames(direction, pageTurnCount);
             foreach (int frameIndex in frameIndices)
             {
                 openBookImage.sprite = pageTurnFrames[frameIndex];

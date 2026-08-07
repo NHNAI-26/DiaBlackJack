@@ -172,7 +172,7 @@ namespace DiaBlackJack.GameScene
                 category == CodexCategory.DemonCard
                     ? CodexPageTurnDirection.Next
                     : CodexPageTurnDirection.Previous;
-            view.TryRenderTransition(CreateCurrentBook(), direction);
+            view.TryRenderCategoryTransition(CreateCurrentBook(), direction);
         }
 
         public void SetAvailable(bool available)

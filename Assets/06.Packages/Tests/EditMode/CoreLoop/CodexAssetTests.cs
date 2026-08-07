@@ -1155,7 +1155,10 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(0.12f));
             Assert.That(
                 serialized.FindProperty("pageTurnFrameDuration").floatValue,
-                Is.EqualTo(0.08f));
+                Is.EqualTo(0.05f));
+            Assert.That(
+                serialized.FindProperty("categoryPageTurnCount").intValue,
+                Is.EqualTo(3));
             for (int index = 0; index < frames.arraySize; index++)
             {
                 Sprite sprite = frames.GetArrayElementAtIndex(index)
@@ -1174,6 +1177,16 @@ namespace DiaBlackJack.CoreLoop.Tests
                 CodexPageTurnSequence.GetFrames(
                     CodexPageTurnDirection.Previous),
                 Is.EqualTo(new[] { 4, 3, 2, 1, 0 }));
+            Assert.That(
+                CodexPageTurnSequence.GetFrames(
+                    CodexPageTurnDirection.Next,
+                    3),
+                Is.EqualTo(new[]
+                {
+                    0, 1, 2, 3, 4,
+                    0, 1, 2, 3, 4,
+                    0, 1, 2, 3, 4
+                }));
         }
 
         [Test]

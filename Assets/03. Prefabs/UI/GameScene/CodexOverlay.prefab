@@ -4667,7 +4667,8 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 9dd53b47b99db4f4d88d35862fa0463b, type: 3}
   - {fileID: 21300000, guid: 4658af70b76466641ac5e9b6824a3846, type: 3}
   contentFadeDuration: 0.12
-  pageTurnFrameDuration: 0.08
+  pageTurnFrameDuration: 0.05
+  categoryPageTurnCount: 3
   enemyPageRoot: {fileID: 2811528658461566340}
   enemyNameText: {fileID: 2079236708178266158}
   enemyPortraitImage: {fileID: 1515898948325393444}
