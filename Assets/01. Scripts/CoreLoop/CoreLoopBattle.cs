@@ -4298,6 +4298,18 @@ namespace DiaBlackJack.CoreLoop
                 hiddenCard.Rank == secondNumber;
             SetPendingDemonContractInteraction(ownerSide, pending: null);
             satanState.CompleteCurrentFaceAbility();
+            // Recorded before the bust check (not after, as the "before" call below might
+            // suggest at a glance) so that if a bust-reactive contract like Beelzebub
+            // intercepts inside HandlePlayerBust/HandleEnemyBust, ITS OWN nested
+            // RaiseStepped() beat already carries a matching ordinal — otherwise
+            // GameScenePresentation's CreateSatanNumberGuessAnimationCue rejects that beat
+            // (ordinal mismatch) and the reveal never gets a beat to animate against before
+            // the bust/replacement is shown, mirroring the beforeBustReplacementPublish
+            // fix already applied to the revolver/knife card-effect path.
+            _lastSatanNumberGuessActionOrdinal = _publicActionHistory.Count;
+            _lastSatanNumberGuessTargetCardId = hiddenCard.Id;
+            _lastSatanNumberGuessActorSide = ownerSide;
+            _lastSatanNumberGuessSucceeded = succeeded;
             OwnerBustHandlingResult handling = OwnerBustHandlingResult.NotHandled;
             if (succeeded)
             {
@@ -4324,10 +4336,6 @@ namespace DiaBlackJack.CoreLoop
                     ? (CombatantSide?)GetOppositeSide(ownerSide)
                     : null,
                 paidSoulCost: 0);
-            _lastSatanNumberGuessActionOrdinal = _publicActionHistory.Count;
-            _lastSatanNumberGuessTargetCardId = hiddenCard.Id;
-            _lastSatanNumberGuessActorSide = ownerSide;
-            _lastSatanNumberGuessSucceeded = succeeded;
             RaiseStepped();
 
             if (succeeded && !bustPrevented)
@@ -4698,14 +4706,28 @@ namespace DiaBlackJack.CoreLoop
                 throw new InvalidOperationException("Validated card could not begin use.");
             }
 
+            bool wasHidden = !card.IsFaceUp;
             card.Reveal();
-            _activeCardEffectContext = context;
-            _activeCardEffectActorSide = actorSide;
             RecordPublicAction(
                 actorSide,
                 PublicCombatActionType.UseCard,
                 card.DefinitionKey,
                 card.Id);
+            if (wasHidden)
+            {
+                // Gives the reveal its own beat, separate from the effect's own
+                // animation cue (revolver, crystal orb, ...), which only becomes
+                // eligible once _cardEffectResolver.Begin below actually runs.
+                // Without this, a previously-hidden card's flip and the effect's
+                // presentation both land in the same Stepped snapshot and the
+                // effect visual — triggered earlier in GameManager.ApplyView than
+                // the hand render — ends up playing before the reveal, instead of
+                // after it finishes.
+                RaiseStepped();
+            }
+
+            _activeCardEffectContext = context;
+            _activeCardEffectActorSide = actorSide;
             CardEffectStep step = _cardEffectResolver.Begin(context);
 
             CardEffectApplicationResult applicationResult = ApplyCardEffectStep(step);

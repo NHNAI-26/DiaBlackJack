@@ -60,6 +60,9 @@ namespace DiaBlackJack.GameScene
         /// <summary>Upper-bound time a triggered roll can take, for callers that need to wait it out.</summary>
         public float RollDuration => rollDuration;
 
+        /// <summary>True while a roll (scripted or physical) is actually still animating/settling.</summary>
+        public bool IsRolling => _rollRoutine != null;
+
         private void Awake()
         {
             Initialize();

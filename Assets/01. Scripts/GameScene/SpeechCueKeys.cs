@@ -70,6 +70,7 @@ namespace DiaBlackJack.GameScene
         public const string ShopUnavailable = "shop.unavailable";
         public const string ShopLighterSuccess = "shop.lighter_success";
         public const string ShopWhiskeySuccess = "shop.whiskey_success";
+        public const string ShopWhiskeySoulFull = "shop.whiskey_soul_full";
         public const string ShopFarewell = "shop.farewell";
 
         private static readonly IReadOnlyList<string> EnemyKeys =
@@ -104,6 +105,7 @@ namespace DiaBlackJack.GameScene
                 ShopUnavailable,
                 ShopLighterSuccess,
                 ShopWhiskeySuccess,
+                ShopWhiskeySoulFull,
                 ShopFarewell,
             });
 

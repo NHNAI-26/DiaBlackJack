@@ -39,7 +39,6 @@ namespace DiaBlackJack.GameScene
         private readonly List<DemonCardView> _spawnedDemonCards =
             new List<DemonCardView>();
         private readonly List<Tween> _demonMoveTweens = new List<Tween>();
-        private bool _hasRenderedLayout;
 
         internal CardView CardPrefab => cardPrefab;
 
@@ -102,8 +101,10 @@ namespace DiaBlackJack.GameScene
 
             HashSet<int> newCardIds = SynchronizeCards(cards);
             HashSet<int> newDemonCardIds = SynchronizeDemonCards(demonCards);
+            // Deliberately animates on the very first render too (not gated on
+            // _hasRenderedLayout) so the initial round-1 deal draws the same way a
+            // later hit does, instead of the cards hard-popping into place.
             bool animateLayout = Application.isPlaying &&
-                _hasRenderedLayout &&
                 (newCardIds.Count > 0 ||
                  demonCards.Count != previousDemonCount ||
                  newDemonCardIds.Count > 0);
@@ -150,14 +151,12 @@ namespace DiaBlackJack.GameScene
                     newDemonCardIds.Contains(model.CardId));
             }
 
-            _hasRenderedLayout = true;
             return anyRevealAnimated;
         }
 
         public void ResetView()
         {
             ClearAll();
-            _hasRenderedLayout = false;
         }
 
         public bool TryGetCardWorldPosition(int cardId, out Vector3 position)
@@ -313,7 +312,6 @@ namespace DiaBlackJack.GameScene
 
             _spawnedDemonCards.Clear();
             _demonMoveTweens.Clear();
-            _hasRenderedLayout = false;
         }
 
         private HashSet<int> SynchronizeCards(
@@ -446,6 +444,24 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            if (!animate &&
+                index >= 0 &&
+                index < _moveTweens.Count &&
+                _moveTweens[index] != null &&
+                _moveTweens[index].IsActive())
+            {
+                // A redundant re-render for an unrelated reason (e.g. RefreshView
+                // firing again in the same frame right after RevealRoundOneHands,
+                // just to refresh button interactability) reports no new cards of
+                // its own, so animate is false here — but this card's own entry
+                // tween from the render that actually added it may still be
+                // running. Snapping it now would kill that tween mid-flight and
+                // make the card look like it popped in instantly. Nothing about
+                // this card's layout changed since that tween started, so just
+                // leave it alone and let it finish.
+                return;
+            }
+
             KillMoveTween(index);
 
             if (!animate)
@@ -491,6 +507,17 @@ namespace DiaBlackJack.GameScene
         {
             if (card == null)
             {
+                return;
+            }
+
+            if (!animate &&
+                index >= 0 &&
+                index < _demonMoveTweens.Count &&
+                _demonMoveTweens[index] != null &&
+                _demonMoveTweens[index].IsActive())
+            {
+                // See the matching comment in MoveCardToLayoutPosition — a redundant
+                // re-render must not kill this card's still-running entry tween.
                 return;
             }
 

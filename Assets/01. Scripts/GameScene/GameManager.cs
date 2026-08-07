@@ -156,6 +156,7 @@ namespace DiaBlackJack.GameScene
         private HoverDescriptionTarget _hoveredDescriptionTarget;
         private object _hoverBadgeOwner;
         private bool _inputLocked;
+        private bool _suppressHandRenderUntilRoundOneStart;
         private bool _pauseInputBlocked;
         private bool _shopUtilityAnimationPlaying;
         private bool _choosingLighterRemoval;
@@ -296,6 +297,37 @@ namespace DiaBlackJack.GameScene
                 ResolveEnemyProfileKey();
             enemyCharacter?.ExitMerchant();
             enemyCharacter?.TrySetEnemyProfile(profileKey);
+            // ExitMerchant only resets sprite/scale/tint, not the speech bubble — without
+            // this, the merchant's last line (e.g. the starting-demon-reveal greeting)
+            // stays on screen through the whole entrance animation, reading as if the
+            // newly-appearing enemy said it.
+            enemyCharacter?.HideSpeech();
+        }
+
+        /// <summary>
+        /// Suppresses player/enemy hand rendering — everything else BindBattle's
+        /// first render produces (deck piles, table buttons, contract papers, HUD
+        /// text) still renders normally. Meant to be called right before
+        /// <see cref="BindBattle"/> at enemy-entrance-end, so round 1's
+        /// already-dealt cards (CoreLoop deals them synchronously in
+        /// <c>Start()</c>) don't visually pop in before the post-entrance hold
+        /// finishes.
+        /// </summary>
+        internal void SuppressHandRenderUntilRoundOneStart()
+        {
+            _suppressHandRenderUntilRoundOneStart = true;
+        }
+
+        /// <summary>
+        /// Ends the suppression begun by <see cref="SuppressHandRenderUntilRoundOneStart"/>
+        /// and re-renders immediately so the now-dealt hands animate in for the
+        /// first time (CardHand's entry tween fires on any card id it hasn't
+        /// rendered before).
+        /// </summary>
+        internal void RevealRoundOneHands()
+        {
+            _suppressHandRenderUntilRoundOneStart = false;
+            RefreshView();
         }
 
         public void UnbindBattle()
@@ -1995,11 +2027,17 @@ namespace DiaBlackJack.GameScene
             bool canUse,
             bool wasUsed,
             int currentGold,
-            int price)
+            int price,
+            bool isSoulFull = false)
         {
             if (wasUsed)
             {
                 return ShopPurchaseAvailability.Unavailable;
+            }
+
+            if (isSoulFull)
+            {
+                return ShopPurchaseAvailability.SoulFull;
             }
 
             if (currentGold < price)
@@ -2279,7 +2317,8 @@ namespace DiaBlackJack.GameScene
                             false,
                             _formalShopModel.IsWhiskeyUsed,
                             _formalShopGold,
-                            _formalShopModel.WhiskeyPriceAmount));
+                            _formalShopModel.WhiskeyPriceAmount,
+                            _formalShopModel.IsPlayerSoulFull));
                     UpdateShopUtilityItemHover(null);
                     return;
                 }
@@ -2319,6 +2358,7 @@ namespace DiaBlackJack.GameScene
             battle.Player.Soul.Restore(restoreAmount);
             shop.ShowMerchantSpeech(SpeechCueKeys.ShopWhiskeySuccess);
             PlayWhiskeyShopAnimation();
+            PlayPlayerSoulRestoredFlourish();
             RefreshView();
             UpdateShopUtilityItemHover(null);
         }
@@ -2511,6 +2551,11 @@ namespace DiaBlackJack.GameScene
 
             StartCoroutine(PlayWhiskeyShopAnimationRoutine());
             return true;
+        }
+
+        internal void PlayPlayerSoulRestoredFlourish()
+        {
+            hud?.PlaySoulRestoredFlourish();
         }
 
         private IEnumerator PlayLighterShopAnimationRoutine()
@@ -3010,6 +3055,7 @@ namespace DiaBlackJack.GameScene
                     scheduleRevolverRetry: false,
                     deferHammerSmashCardRender: true,
                     deferKnifeResultCardRender: revealKnifeCardWithThrow,
+                    deferRevolverResultCardRender: true,
                     showTransientEffectSources: true);
 
                 // The Satan source card can be instantiated by ApplyView when the timeline
@@ -3143,6 +3189,7 @@ namespace DiaBlackJack.GameScene
             bool scheduleRevolverRetry = true,
             bool deferHammerSmashCardRender = false,
             bool deferKnifeResultCardRender = false,
+            bool deferRevolverResultCardRender = false,
             bool showTransientEffectSources = false)
         {
             _core = vm.Core;
@@ -3227,7 +3274,10 @@ namespace DiaBlackJack.GameScene
                 (deferKnifeResultCardRender &&
                  playedKnifeAnimation &&
                  vm.KnifeAnimationCue?.Phase ==
-                    GameSceneKnifeAnimationPhase.Resolved);
+                    GameSceneKnifeAnimationPhase.Resolved) ||
+                (deferRevolverResultCardRender &&
+                 playedRevolverAnimation &&
+                 IsRevolverResolvedCue(vm.RevolverAnimationCue));
 
             // While the shop is open its presentation (merchant, hidden combat objects, goods) is owned
             // by ShopController; skip the combat re-render so it doesn't repaint the enemy over the merchant.
@@ -3242,9 +3292,11 @@ namespace DiaBlackJack.GameScene
                     deferredViewModel: null);
             }
 
+            bool playedCardReveal = false;
             if (!deferredCardRender)
             {
-                RenderHandsAndTotals(vm, showTransientEffectSources);
+                playedCardReveal =
+                    RenderHandsAndTotals(vm, showTransientEffectSources);
             }
 
             RenderCrystalOrbSelection(vm);
@@ -3270,7 +3322,8 @@ namespace DiaBlackJack.GameScene
                 playedPoisonInjectionAnimation,
                 deferredCardRender,
                 deferredCardRender ? vm : null,
-                playedMammonRoll);
+                playedMammonRoll,
+                playedCardReveal);
         }
 
         private bool PresentEnemySpeech(
@@ -3367,7 +3420,7 @@ namespace DiaBlackJack.GameScene
             GameSceneViewModel vm,
             bool showTransientEffectSources)
         {
-            if (vm == null)
+            if (vm == null || _suppressHandRenderUntilRoundOneStart)
             {
                 return false;
             }
@@ -3495,16 +3548,17 @@ namespace DiaBlackJack.GameScene
         // number jumps while the card still looks face-down. Used from non-coroutine call
         // sites (e.g. the default ApplyView render), so the wait runs as its own coroutine
         // rather than blocking the caller.
-        private void RenderHandsAndTotals(
+        private bool RenderHandsAndTotals(
             GameSceneViewModel vm,
             bool showTransientEffectSources)
         {
             if (vm == null)
             {
-                return;
+                return false;
             }
 
-            if (RenderHands(vm, showTransientEffectSources))
+            bool revealAnimated = RenderHands(vm, showTransientEffectSources);
+            if (revealAnimated)
             {
                 StartCoroutine(RenderTotalsAfterRevealFlip(vm));
             }
@@ -3512,6 +3566,8 @@ namespace DiaBlackJack.GameScene
             {
                 RenderTotals(vm);
             }
+
+            return revealAnimated;
         }
 
         // Same as RenderHandsAndTotals, but yieldable so a driving coroutine (PlayTimeline) can
@@ -4701,7 +4757,8 @@ namespace DiaBlackJack.GameScene
             bool playedPoisonInjection = false,
             bool deferredCardRender = false,
             GameSceneViewModel deferredViewModel = null,
-            bool playedMammonRoll = false)
+            bool playedMammonRoll = false,
+            bool playedCardReveal = false)
         {
             float waitSeconds = 0f;
             if (playedRevolver)
@@ -4740,6 +4797,19 @@ namespace DiaBlackJack.GameScene
                     poisonInjectionAnnounce.TotalDurationSeconds);
             }
 
+            // A card that just revealed face-up (e.g. an enemy's automatic-effect
+            // card, drawn face-down then flipped) is its own beat, separate from the
+            // beat where its effect (poison injection, etc.) actually triggers. Without
+            // this, that separate beat only ever waited the generic stepSeconds before
+            // PlayTimeline advanced — if the flip takes longer than that, the next
+            // beat's effect visual could start while the reveal was still mid-animation.
+            if (playedCardReveal)
+            {
+                waitSeconds = Mathf.Max(
+                    waitSeconds,
+                    ResolveCardRevealFaceSwapSeconds());
+            }
+
             return new AppliedAnimationResult(
                 playedRevolver,
                 playedKnife,
@@ -4748,7 +4818,9 @@ namespace DiaBlackJack.GameScene
                 waitSeconds,
                 playedHammer ? _playedHammerAnimationController : null,
                 deferredCardRender,
-                deferredViewModel);
+                deferredViewModel,
+                playedMammonRoll,
+                playedCardReveal);
         }
 
         private void RenderDemonContractSelection(
@@ -4784,6 +4856,13 @@ namespace DiaBlackJack.GameScene
                 cue.Phase == GameSceneHammerAnimationPhase.Smash;
         }
 
+        private static bool IsRevolverResolvedCue(
+            GameSceneRevolverAnimationCue cue)
+        {
+            return cue != null &&
+                cue.Phase != GameSceneRevolverAnimationPhase.Ready;
+        }
+
         private IEnumerator WaitForAnimationOrSeconds(
             AppliedAnimationResult animation,
             float waitSeconds)
@@ -4794,7 +4873,10 @@ namespace DiaBlackJack.GameScene
             bool waitsForPoisonInjection =
                 animation.PlayedPoisonInjection &&
                 poisonInjectionAnnounce != null;
-            if (!waitsForHammer && !waitsForPoisonInjection)
+            bool waitsForMammonRoll =
+                animation.PlayedMammonRoll &&
+                mammonDie != null;
+            if (!waitsForHammer && !waitsForPoisonInjection && !waitsForMammonRoll)
             {
                 yield return new WaitForSeconds(waitSeconds);
                 yield break;
@@ -4805,7 +4887,8 @@ namespace DiaBlackJack.GameScene
                 (waitsForHammer &&
                     animation.HammerController.IsSmashAnimationPlaying) ||
                 (waitsForPoisonInjection &&
-                    poisonInjectionAnnounce.IsPlaying))
+                    poisonInjectionAnnounce.IsPlaying) ||
+                (waitsForMammonRoll && mammonDie.IsRolling))
             {
                 elapsedSeconds += Time.deltaTime;
                 yield return null;
@@ -5348,7 +5431,9 @@ namespace DiaBlackJack.GameScene
                 float waitSeconds,
                 HammerAnimationController hammerController,
                 bool deferredCardRender,
-                GameSceneViewModel deferredViewModel)
+                GameSceneViewModel deferredViewModel,
+                bool playedMammonRoll = false,
+                bool playedCardReveal = false)
             {
                 PlayedRevolver = playedRevolver;
                 PlayedKnife = playedKnife;
@@ -5358,6 +5443,8 @@ namespace DiaBlackJack.GameScene
                 HammerController = hammerController;
                 DeferredCardRender = deferredCardRender;
                 DeferredViewModel = deferredViewModel;
+                PlayedMammonRoll = playedMammonRoll;
+                PlayedCardReveal = playedCardReveal;
             }
 
             public bool PlayedRevolver { get; }
@@ -5368,8 +5455,13 @@ namespace DiaBlackJack.GameScene
 
             public bool PlayedPoisonInjection { get; }
 
+            public bool PlayedMammonRoll { get; }
+
+            public bool PlayedCardReveal { get; }
+
             public bool PlayedAny =>
-                PlayedRevolver || PlayedKnife || PlayedHammer || PlayedPoisonInjection;
+                PlayedRevolver || PlayedKnife || PlayedHammer ||
+                PlayedPoisonInjection || PlayedMammonRoll || PlayedCardReveal;
 
             public float WaitSeconds { get; }
 

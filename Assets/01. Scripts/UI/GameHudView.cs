@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using DiaBlackJack.Content;
 using DiaBlackJack.CoreLoop;
 using DiaBlackJack.CoreLoop.UI;
@@ -21,6 +22,12 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private TMP_Text enemySoulText;
         [SerializeField] private TMP_Text roundText;
         [SerializeField] private TMP_Text goldText;
+
+        [Header("Soul Restore Flourish")]
+        [Tooltip("Color the player soul counter eases toward and back from on a soul restore (e.g. whiskey).")]
+        [SerializeField] private Color soulRestoreFlashColor = new Color(0.45f, 0.95f, 0.45f);
+        [SerializeField] private float soulRestoreScaleMultiplier = 1.25f;
+        [SerializeField] private float soulRestoreFlashSeconds = 0.7f;
 
         [Header("Shop controls")]
         [SerializeField] private GameObject shopLeaveRoot;
@@ -50,6 +57,10 @@ namespace DiaBlackJack.GameScene
         private Canvas _canvas;
         private RevolverNumberSelectorView _revolverNumberSelector;
         private OptionSlotLayout[] _optionSlotLayouts = Array.Empty<OptionSlotLayout>();
+        private Sequence _soulRestoreSequence;
+        private Color _playerSoulBaseColor;
+        private Vector3 _playerSoulBaseScale;
+        private bool _hasPlayerSoulBaseState;
 
         public event Action<GameSceneCombatHudCommand> CombatCommandRequested;
 
@@ -102,6 +113,7 @@ namespace DiaBlackJack.GameScene
                 _revolverNumberSelector.CommandRequested -= RaiseCombatCommand;
             }
 
+            _soulRestoreSequence?.Kill();
             UnbindCombatControls();
             UnbindShopLeaveControl();
         }
@@ -157,6 +169,61 @@ namespace DiaBlackJack.GameScene
                     playerSoulText,
                     $"{CurrencyIconMarkup.SoulTag} {soulText}");
             }
+        }
+
+        /// <summary>
+        /// One-shot "restored" flourish on the player soul counter: eases toward
+        /// <see cref="soulRestoreFlashColor"/> while scaling up, then eases back to its
+        /// original color/scale. Used when whiskey restores soul.
+        /// </summary>
+        public void PlaySoulRestoredFlourish()
+        {
+            if (playerSoulText == null)
+            {
+                return;
+            }
+
+            CapturePlayerSoulBaseState();
+            _soulRestoreSequence?.Kill();
+            playerSoulText.color = _playerSoulBaseColor;
+            playerSoulText.transform.localScale = _playerSoulBaseScale;
+
+            float halfDuration = Mathf.Max(0.05f, soulRestoreFlashSeconds) * 0.5f;
+            Transform textTransform = playerSoulText.transform;
+            Vector3 flashScale = _playerSoulBaseScale * soulRestoreScaleMultiplier;
+            Sequence sequence = DOTween.Sequence();
+            sequence.Append(DOTween.To(
+                    () => playerSoulText.color,
+                    color => playerSoulText.color = color,
+                    soulRestoreFlashColor,
+                    halfDuration)
+                .SetEase(Ease.OutQuad));
+            sequence.Join(textTransform
+                .DOScale(flashScale, halfDuration)
+                .SetEase(Ease.OutQuad));
+            sequence.Append(DOTween.To(
+                    () => playerSoulText.color,
+                    color => playerSoulText.color = color,
+                    _playerSoulBaseColor,
+                    halfDuration)
+                .SetEase(Ease.InQuad));
+            sequence.Join(textTransform
+                .DOScale(_playerSoulBaseScale, halfDuration)
+                .SetEase(Ease.InQuad));
+            sequence.OnComplete(() => _soulRestoreSequence = null);
+            _soulRestoreSequence = sequence;
+        }
+
+        private void CapturePlayerSoulBaseState()
+        {
+            if (_hasPlayerSoulBaseState || playerSoulText == null)
+            {
+                return;
+            }
+
+            _playerSoulBaseColor = playerSoulText.color;
+            _playerSoulBaseScale = playerSoulText.transform.localScale;
+            _hasPlayerSoulBaseState = true;
         }
 
         /// <summary>

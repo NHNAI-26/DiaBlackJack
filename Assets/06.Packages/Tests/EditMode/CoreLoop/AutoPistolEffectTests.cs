@@ -113,7 +113,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CU03_U04_CorrectGuessDealsOneSoulAndStartsNextRound()
+        public void CU03_U04_CorrectGuessDealsBustDamageAndStartsNextRound()
         {
             CoreLoopBattle battle = CreateStartedBattle(
                 playerRanks: new[] { 5, 7, 2, 3 },
@@ -125,7 +125,7 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(accepted, Is.True);
             Assert.That(hiddenEnemyCard.IsFaceUp, Is.False);
-            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(2));
+            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(1));
             Assert.That(battle.RoundNumber, Is.EqualTo(2));
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
             Assert.That(battle.Enemy.Hand.Cards.Select(card => card.Rank), Is.EqualTo(new[] { 2, 3 }));

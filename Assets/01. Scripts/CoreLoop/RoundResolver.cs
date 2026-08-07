@@ -130,7 +130,7 @@ namespace DiaBlackJack.CoreLoop
                     resolutionId,
                     RoundOutcome.EnemyBust,
                     playerDamage: 0,
-                    enemyDamage: 1,
+                    enemyDamage: 2,
                     cause: RoundEndCause.NumericBust);
         }
 
@@ -151,7 +151,7 @@ namespace DiaBlackJack.CoreLoop
                     resolutionId,
                     RoundOutcome.EnemyBust,
                     playerDamage: 0,
-                    enemyDamage: 1,
+                    enemyDamage: 2,
                     cause: RoundEndCause.CardEffectBust,
                     sourceCardKey: sourceCardKey);
         }
@@ -171,7 +171,7 @@ namespace DiaBlackJack.CoreLoop
                     resolutionId,
                     RoundOutcome.EnemyBust,
                     playerDamage: 0,
-                    enemyDamage: 1,
+                    enemyDamage: 2,
                     cause: RoundEndCause.ContractEffectBust);
         }
 
@@ -225,8 +225,11 @@ namespace DiaBlackJack.CoreLoop
             // simply can never win the comparison below, regardless of its raw total.
             if (!player.IsBust && (enemy.IsBust || player.Total >= enemy.Total))
             {
+                // PlayerTwentyOneWin is kept distinct from PlayerWin only for the "21!"
+                // presentation flourish (see GameScenePresentation.cs) — it no longer
+                // deals bonus soul damage.
                 return player.IsTwentyOne
-                    ? new RoundResolution(resolutionId, RoundOutcome.PlayerTwentyOneWin, 0, 2)
+                    ? new RoundResolution(resolutionId, RoundOutcome.PlayerTwentyOneWin, 0, 1)
                     : new RoundResolution(resolutionId, RoundOutcome.PlayerWin, 0, 1);
             }
 

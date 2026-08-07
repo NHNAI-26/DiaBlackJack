@@ -819,9 +819,9 @@ namespace DiaBlackJack.CoreLoop.UI
                 case RoundOutcome.PlayerBust:
                     return "Player bust  |  Player soul -2";
                 case RoundOutcome.EnemyBust:
-                    return "Enemy bust  |  Enemy soul -1";
+                    return "Enemy bust  |  Enemy soul -2";
                 case RoundOutcome.PlayerTwentyOneWin:
-                    return "Player 21  |  Enemy soul -2";
+                    return "Player 21  |  Enemy soul -1";
                 case RoundOutcome.PlayerWin:
                     return "Player wins round  |  Enemy soul -1";
                 case RoundOutcome.EnemyWin:
