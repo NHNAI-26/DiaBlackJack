@@ -1286,12 +1286,11 @@ namespace DiaBlackJack.GameScene
             _hoveredDescriptionTarget = pointed;
             if (_hoveredDescriptionTarget == null)
             {
-                // Only responsible for clearing our own badge — a hovered card/demon
-                // card is already shown (and hidden) by UpdateCardHoverBadge, which
-                // runs earlier in the same per-frame hover pass, so hiding here too
-                // would immediately clobber that legitimate badge every frame a card
-                // is hovered.
-                if (_hoveredCard == null && _hoveredDemonCard == null)
+                // Only responsible for clearing our own badge. Card, demon-card, and
+                // overlay-owned badges are managed by their respective hover paths.
+                if (_hoveredCard == null &&
+                    _hoveredDemonCard == null &&
+                    _hoverBadgeOwner == null)
                 {
                     hud?.HideCardHoverBadge();
                 }

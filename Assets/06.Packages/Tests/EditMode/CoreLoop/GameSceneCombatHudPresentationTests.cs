@@ -1962,6 +1962,87 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("GSH02")]
+        public void GSH02_U07_OverlayOwnedTooltipSurvivesGenericHoverClear()
+        {
+            GameObject hudPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
+            GameObject managerPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(ManagerPrefabPath);
+            Assert.That(hudPrefab, Is.Not.Null);
+            Assert.That(managerPrefab, Is.Not.Null);
+
+            GameObject hudInstance = Object.Instantiate(hudPrefab);
+            GameObject managerInstance = Object.Instantiate(managerPrefab);
+            try
+            {
+                GameHudView hud = hudInstance.GetComponent<GameHudView>();
+                GameManager manager = managerInstance.GetComponent<GameManager>();
+                Assert.That(hud, Is.Not.Null);
+                Assert.That(manager, Is.Not.Null);
+
+                SerializedObject managerData = new SerializedObject(manager);
+                managerData.FindProperty("hud").objectReferenceValue = hud;
+                managerData.ApplyModifiedPropertiesWithoutUndo();
+
+                SerializedObject hudData = new SerializedObject(hud);
+                RectTransform header = hudData
+                    .FindProperty("cardHoverHeaderBadge")
+                    .objectReferenceValue as RectTransform;
+                RectTransform body = hudData
+                    .FindProperty("cardHoverBadge")
+                    .objectReferenceValue as RectTransform;
+                Assert.That(header, Is.Not.Null);
+                Assert.That(body, Is.Not.Null);
+
+                MethodInfo showOverlayBadge = typeof(GameManager).GetMethod(
+                    "ShowOverlayHoverBadge",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                MethodInfo updateDescriptionTarget = typeof(GameManager).GetMethod(
+                    "UpdateHoverDescriptionTarget",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                MethodInfo clearOverlayBadge = typeof(GameManager).GetMethod(
+                    "ClearOverlayHoverBadge",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(showOverlayBadge, Is.Not.Null);
+                Assert.That(updateDescriptionTarget, Is.Not.Null);
+                Assert.That(clearOverlayBadge, Is.Not.Null);
+
+                object owner = new object();
+                showOverlayBadge.Invoke(
+                    manager,
+                    new object[]
+                    {
+                        owner,
+                        new CardHoverBadgeRequest(
+                            "7. Revolver",
+                            "Test description",
+                            new Vector2(960f, 540f),
+                            showBelow: false)
+                    });
+                Assert.That(header.gameObject.activeSelf, Is.True);
+                Assert.That(body.gameObject.activeSelf, Is.True);
+
+                updateDescriptionTarget.Invoke(manager, new object[] { null });
+                Assert.That(header.gameObject.activeSelf, Is.True);
+                Assert.That(body.gameObject.activeSelf, Is.True);
+
+                clearOverlayBadge.Invoke(manager, new[] { new object() });
+                Assert.That(header.gameObject.activeSelf, Is.True);
+                Assert.That(body.gameObject.activeSelf, Is.True);
+
+                clearOverlayBadge.Invoke(manager, new[] { owner });
+                Assert.That(header.gameObject.activeSelf, Is.False);
+                Assert.That(body.gameObject.activeSelf, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(managerInstance);
+                Object.DestroyImmediate(hudInstance);
+            }
+        }
+
+        [Test]
         public void GSH01_U12_ShopDemonUsesDedicatedHoverDetailPrefab()
         {
             GameObject hudPrefab =
