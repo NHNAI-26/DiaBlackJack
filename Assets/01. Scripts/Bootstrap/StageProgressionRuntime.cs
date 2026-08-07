@@ -102,7 +102,7 @@ namespace DiaBlackJack.StageProgression.UI
                     fileStore,
                     DemonContractCatalog.Default),
                 CreatePrototypeStages,
-                CreateSessionForCurrentTutorialState,
+                CreatePrototypeSession,
                 seed,
                 usesBattleRewards: false);
             _ = FormalSession;

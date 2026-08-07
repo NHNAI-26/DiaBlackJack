@@ -25,7 +25,8 @@ namespace DiaBlackJack.GameScene
     {
         public static ContractPaperViewModel Create(
             CoreLoopBattle battle,
-            bool isCombatVisible = true)
+            bool isCombatVisible = true,
+            bool forceDisabled = false)
         {
             if (battle == null || !isCombatVisible)
             {
@@ -42,7 +43,7 @@ namespace DiaBlackJack.GameScene
 
             return new ContractPaperViewModel(
                 visibleCount,
-                battle.PlayerDemonContractAvailability.CanBegin);
+                !forceDisabled && battle.PlayerDemonContractAvailability.CanBegin);
         }
     }
 }

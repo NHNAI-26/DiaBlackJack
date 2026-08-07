@@ -97,6 +97,10 @@ namespace DiaBlackJack.GameScene
             _card.name = "NarratorCard";
             _card.EnableHoverVisualOnly();
             _card.SetUnlitPresentation();
+            // Matches DemonContractSelectionView.EnsureSlots — without this, this card's
+            // TMP text elements (english name, etc.) don't render through the same overlay
+            // camera/layer every other world-space card text uses.
+            TextUIOverlayLayerUtility.ApplyRecursively(_card.gameObject);
         }
 
         private void BindNarratorCard()

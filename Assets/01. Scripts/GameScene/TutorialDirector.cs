@@ -307,11 +307,13 @@ namespace DiaBlackJack.GameScene
                 OnEnter = gm =>
                 {
                     gm.SetTutorialActionRestriction(BlockAllPrimaryActions);
+                    gm.SetTutorialContractPaperBlocked(false);
                     gm.SetTutorialContractRestriction(definitionKey);
                 },
                 OnExit = gm =>
                 {
                     gm.SetTutorialActionRestriction(null);
+                    gm.SetTutorialContractPaperBlocked(true);
                     gm.SetTutorialContractRestriction(null);
                 }
             };

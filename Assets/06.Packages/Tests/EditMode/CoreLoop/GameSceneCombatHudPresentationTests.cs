@@ -1769,9 +1769,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             RectTransform confirm = selector.transform
                 .Find("ConfirmButton")
                 .GetComponent<RectTransform>();
-            Assert.That(circle.sizeDelta, Is.EqualTo(new Vector2(180f, 180f)));
-            Assert.That(previous.sizeDelta, Is.EqualTo(new Vector2(104f, 104f)));
-            Assert.That(next.sizeDelta, Is.EqualTo(new Vector2(104f, 104f)));
+            Assert.That(circle.sizeDelta, Is.EqualTo(new Vector2(400f, 400f)));
+            Assert.That(previous.sizeDelta, Is.EqualTo(new Vector2(170f, 170f)));
+            Assert.That(next.sizeDelta, Is.EqualTo(new Vector2(170f, 170f)));
             Assert.That(confirm.sizeDelta, Is.EqualTo(new Vector2(234f, 66f)));
 
             Assert.That(circle.GetComponent<Image>().sprite.name,

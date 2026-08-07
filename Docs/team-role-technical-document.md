@@ -1006,3 +1006,10 @@ DC-00 공통 규칙 개정으로 동일 악마 추가 계약과 계약 임시 �
 - 나레이터 대사 진행·게임플레이 제한 게이트·적 AI·카드 덱·전투 화면 전환 타이밍까지 튜토리얼 전체를 실제로 배선했다. 신규 EditMode 테스트로 라운드 1~3과 최종 계약 피날레 전체를 실제로 플레이해 카드·영혼 피해·결과가 대본과 정확히 일치하는지 검증했다.
 - 변경 영역: `CoreLoop/TutorialEnemyPolicy.cs`(신규), `GameScene/{TutorialDirector(신규),GameManager,GameFlowController,GameSceneCombatHudPresentation,DemonContractSelectionView,TableCombatCommandGroup,RevolverNumberSelectorView}.cs`, `UI/GameHudView.cs`, `StageProgression/TutorialBattleFactory.cs`, 테스트 2개.
 - 검증: 전체 EditMode 1142개 중 1131개 통과, 실패 11건은 기존 무관 베이스라인과 동일(신규 회귀 없음). 씬 파일은 레이어 B의 나레이터 위치 수정 1건 외 이번엔 추가 변경 없음(레이어 D는 순수 코드). Play 모드 확인 불가로 실제 재생 흐름은 이천서의 에디터 내 최종 확인 필요.
+
+## 2026-08-07(15) 튜토리얼 시스템 — 레이어 D 실제 플레이 확인 후 버그 수정 4건
+
+- 이천서: 에디터에서 직접 플레이하며 스크린샷과 함께 버그 4건 제보 — 계약서가 안 막힘, 히트 후 다음 대사로 안 넘어감, 애니메이션 다 끝나기 전에 다음 대사가 겹쳐 나옴, 나레이터 카드/말풍선 스타일이 이상함(+튜토리얼 한정 상대 말풍선 끄기 요청).
+- AI가 원인을 조사해 "다음 대사로 안 넘어감"과 "애니메이션 겹침"이 사실 같은 근본 원인(대사 진행 판정이 애니메이션 재생 전에 이미 끝난 논리적 상태만 보고 있었음)이었음을 확인해 함께 고쳤고, 계약서 차단 로직 추가, 말풍선을 즉흥 복제본 대신 실제 전용 프리팹으로 재구성, 튜토리얼 한정 상대 말풍선 억제까지 전부 반영했다.
+- 변경 영역: `GameScene/{TutorialDirector,TutorialNarratorView,GameManager,ContractPaperPresentation}.cs`, `00. Scenes/GameScene.unity`.
+- 검증: 전체 EditMode 1142개 중 1131개 통과, 신규 회귀 없음. Play 모드 확인 불가로 실제 화면 재생·나레이터 비주얼은 이천서의 재확인 필요.
