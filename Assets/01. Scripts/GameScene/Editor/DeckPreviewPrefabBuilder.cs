@@ -142,7 +142,7 @@ namespace DiaBlackJack.GameScene.Editor
         {
             GameObject root = CreateUiObject("DeckPreviewOverlay", null);
             Canvas canvas = root.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
             canvas.sortingOrder = 100;
             CanvasScaler scaler = root.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -317,21 +317,6 @@ namespace DiaBlackJack.GameScene.Editor
             face.preserveAspect = true;
             face.raycastTarget = true;
 
-            GameObject selectedRoot = CreateUiObject(
-                "SelectedFrame",
-                root.transform);
-            Stretch(
-                selectedRoot.GetComponent<RectTransform>(),
-                Vector2.zero,
-                Vector2.one,
-                new Vector2(0f, 32f),
-                Vector2.zero);
-            CreateBorder("Top", selectedRoot.transform, new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, -9f), Vector2.zero);
-            CreateBorder("Bottom", selectedRoot.transform, Vector2.zero, new Vector2(1f, 0f), Vector2.zero, new Vector2(0f, 9f));
-            CreateBorder("Left", selectedRoot.transform, Vector2.zero, new Vector2(0f, 1f), Vector2.zero, new Vector2(9f, 0f));
-            CreateBorder("Right", selectedRoot.transform, new Vector2(1f, 0f), Vector2.one, new Vector2(-9f, 0f), Vector2.zero);
-            selectedRoot.SetActive(false);
-
             TMP_Text fallback = CreateText("Fallback", root.transform, 28, TextAlignmentOptions.Center);
             Stretch(
                 fallback.rectTransform,
@@ -359,7 +344,6 @@ namespace DiaBlackJack.GameScene.Editor
             serializedView.FindProperty("faceImage").objectReferenceValue = face;
             serializedView.FindProperty("hoverOutlineMaterial").objectReferenceValue =
                 AssetDatabase.LoadAssetAtPath<Material>(CardHoverOutlineMaterialPath);
-            serializedView.FindProperty("selectedFrame").objectReferenceValue = selectedRoot;
             serializedView.FindProperty("fallbackText").objectReferenceValue = fallback;
             serializedView.FindProperty("countText").objectReferenceValue = count;
             CopyCombatHoverFeel(serializedView);

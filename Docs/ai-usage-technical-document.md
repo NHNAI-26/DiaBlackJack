@@ -1844,6 +1844,15 @@ HUD 선택 슬롯은 `DefaultButton.prefab`의 중첩 인스턴스로 생성하�
 - 검증: 최초 작성 시점에는 Unity MCP 브릿지가 연결되지 않아 AI가 자동 회귀를 실행하지 못했다. 이후 같은 세션에서 브릿지가 연결되어 AI가 컴파일·전체 EditMode를 확인했다: 컴파일 오류 0, 전체 EditMode 1081/1083 통과. 잔여 2건(`GSV13_U01` 카드 도감 호버 색상 정밀도, `GSB01_U11` 말풍선 카메라 스택 알파)은 이번 변경과 무관한 기존 회귀다.
 - 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
 
+## 2026-08-08 라이터 덱 선택 표시·가격 뱃지 겹침 수정
+
+- 이천서: 라이터 카드 제거용 덱 UI가 상점 가격 뱃지 아래에 보이고, 선택 카드의 금색 외곽선 대신 기존 호버 효과가 유지되도록 요청했다. 구현 중 덱 Canvas를 `Screen Space - Overlay`로 바꾼 첫 접근에서 카메라 후처리 Bloom이 사라진 점을 즉시 제보해 최종 접근을 교정했다.
+- `DeckPreviewCardView`가 포인터 호버와 선택 상태를 따로 보관하고, 둘 중 하나가 참이면 기존 확대와 픽셀 외곽광을 유지하도록 변경했다. 포인터가 벗어나도 선택 카드는 강조 상태를 유지하고, 다른 카드를 선택하면 이전 카드는 기본 상태로 복귀한다. 별도 금색 `SelectedFrame`과 생성기·프리팹 직렬화는 제거했다.
+- Bloom 보존을 위해 덱 Canvas는 기존 `Screen Space - Camera`, 정렬 순서 100, `UIOverlayCamera` 연결을 유지했다. 대신 덱 프리뷰 또는 라이터·위스키 연출이 진행되는 동안 HUD 가격 뱃지를 숨기고 종료되면 다시 표시하도록 했다. 연출 시작 메서드에서도 즉시 숨겨 첫 프레임 잔상을 막았다.
+- 변경 파일: `GameScene/{DeckPreviewCardView,GameManager}.cs`, `GameScene/Editor/DeckPreviewPrefabBuilder.cs`, `DeckPreviewCard.prefab`, `GameSceneDeckPreviewTests.cs`.
+- 검증: Unity MCP 컴파일 오류 0. `GSV08` 대상 4/4 통과(job `36263d6fb53140dea22761c0a381db8d`). 라이터·위스키 연출 중 가격 뱃지 숨김 조건을 추가한 뒤 해당 테스트 1/1 통과(job `c6a1f6a3667e43789df0be6938fbe809`). `GameSceneDeckPreviewTests` 전체는 21/22 통과(job `20a658059eb84b55a30075d64cc56292`); 잔여 `GSV13_U01`은 기존 덱/전투 프리팹 호버 색 기대값 불일치이며 이번 diff에서 해당 색 값은 변경되지 않았다. Play Mode에서 라이터 덱을 열고 선택 후 포인터 이탈 상태를 재현해 `ScreenSpaceCamera`/`UIOverlayCamera`, 확대 유지, Bloom 외곽광 복구, 활성 `ShopPriceBadgeView` 0개를 확인했다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 화면 승인은 이천서에게 있다.
+
 ## 2026-08-06 GSB-03 카드 행동별 적 대사 분리
 
 - 이천서: 리볼버·나이프·망치의 사용 전/결과 대사, 실제 보유 악마·자동 카드별 대사, 플레이어 카드 종류별 공통 상대 반응과 기존 공통 cue 폴백 요구를 확정했다.

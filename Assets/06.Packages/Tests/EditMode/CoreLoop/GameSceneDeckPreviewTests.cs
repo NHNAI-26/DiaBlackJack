@@ -7,8 +7,10 @@ using DiaBlackJack.GameScene;
 using DiaBlackJack.StageProgression.UI;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace DiaBlackJack.CoreLoop.Tests
@@ -33,6 +35,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/UI/HUD.prefab";
         private const string DefaultButtonPrefabPath =
             "Assets/03. Prefabs/UI/DefaultButton.prefab";
+        private const string GameScenePath =
+            "Assets/00. Scenes/GameScene.unity";
 
         [Test]
         public void GSV03_U03_DeckPreviewKeepsAllCardsInScrollableModelAndClearsOnClose()
@@ -170,10 +174,14 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("GSV08")]
         public void GSV08_U01_SingleSelectionWaitsForConfirmAndSwitchesHighlight()
         {
             GameObject instance = InstantiatePreviewPrefab();
             DeckPreviewView preview = instance.GetComponent<DeckPreviewView>();
+            GameObject combatCardPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(CombatCardPrefabPath);
+            preview.Configure(combatCardPrefab.GetComponent<CardView>());
             int confirmedCardId = -1;
             int confirmationCount = 0;
             preview.SelectionConfirmed += cardId =>
@@ -194,16 +202,28 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(preview.ConfirmButtonInteractable, Is.False);
                 Assert.That(preview.ConfirmButtonAlpha, Is.EqualTo(0.5f));
 
+                Vector3 firstRestingScale = first.transform.localScale;
+                first.OnPointerEnter(null);
                 Click(first);
+                first.OnPointerExit(null);
                 Assert.That(confirmationCount, Is.Zero);
                 Assert.That(first.IsSelected, Is.True);
+                Assert.That(first.IsVisuallyEmphasized, Is.True);
+                Assert.That(first.transform.localScale.x,
+                    Is.GreaterThan(firstRestingScale.x));
+                Assert.That(first.CurrentHoverOutlineVisibility, Is.EqualTo(1f));
                 Assert.That(second.IsSelected, Is.False);
                 Assert.That(preview.ConfirmButtonInteractable, Is.True);
                 Assert.That(preview.ConfirmButtonAlpha, Is.EqualTo(1f));
 
                 Click(second);
                 Assert.That(first.IsSelected, Is.False);
+                Assert.That(first.IsVisuallyEmphasized, Is.False);
+                Assert.That(first.transform.localScale, Is.EqualTo(firstRestingScale));
+                Assert.That(first.CurrentHoverOutlineVisibility, Is.Zero);
                 Assert.That(second.IsSelected, Is.True);
+                Assert.That(second.IsVisuallyEmphasized, Is.True);
+                Assert.That(second.CurrentHoverOutlineVisibility, Is.EqualTo(1f));
                 Assert.That(confirmationCount, Is.Zero);
 
                 confirm.onClick.Invoke();
@@ -221,6 +241,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("GSV08")]
         public void GSV08_U02_SingleSelectionCancelAndUnavailableCardDoNotConfirm()
         {
             GameObject instance = InstantiatePreviewPrefab();
@@ -235,10 +256,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                 preview.OpenForSingleSelection(CreateSelectionCards());
                 DeckPreviewCardView unavailable =
                     FindSlot(instance, "CardSlot_03");
+                unavailable.OnPointerEnter(null);
                 Click(unavailable);
+                unavailable.OnPointerExit(null);
 
                 Assert.That(unavailable.CanSelect, Is.False);
                 Assert.That(preview.HasSelection, Is.False);
+                Assert.That(unavailable.IsVisuallyEmphasized, Is.False);
                 Assert.That(preview.ConfirmButtonInteractable, Is.False);
 
                 Button close = instance.transform
@@ -257,10 +281,13 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void GSV08_U03_PrefabsSerializeSelectionAndBrushShopLeaveControl()
+        [Category("GSV08")]
+        public void GSV08_U03_PrefabsPreserveCameraBloomAndBrushShopLeaveControl()
         {
             GameObject previewPrefab =
                 AssetDatabase.LoadAssetAtPath<GameObject>(PreviewPrefabPath);
+            GameObject cardSlotPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(CardSlotPrefabPath);
             GameObject hudPrefab =
                 AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
 
@@ -268,12 +295,38 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 previewPrefab.transform.Find("Panel/SelectionFooter"),
                 Is.Not.Null);
-            Assert.That(
-                previewPrefab.GetComponentsInChildren<DeckPreviewCardView>(true)
-                    .All(slot => slot.transform.Find("SelectedFrame") != null),
-                Is.True);
+            Assert.That(cardSlotPrefab, Is.Not.Null);
+            Assert.That(cardSlotPrefab.transform.Find("SelectedFrame"), Is.Null);
 
             Assert.That(hudPrefab, Is.Not.Null);
+            Canvas previewCanvas = previewPrefab.GetComponent<Canvas>();
+            Canvas hudCanvas = hudPrefab.GetComponent<Canvas>();
+            SerializedObject serializedPreviewCanvas =
+                new SerializedObject(previewCanvas);
+            Assert.That(
+                serializedPreviewCanvas.FindProperty("m_RenderMode").intValue,
+                Is.EqualTo((int)RenderMode.ScreenSpaceCamera));
+            Assert.That(previewCanvas.sortingOrder, Is.EqualTo(100));
+            Assert.That(hudCanvas.renderMode,
+                Is.EqualTo(RenderMode.ScreenSpaceOverlay));
+            Assert.That(
+                GameManager.ShouldShowShopPriceBadges(
+                    shopOpen: true,
+                    deckPreviewOpen: true,
+                    shopUtilityAnimationPlaying: false),
+                Is.False);
+            Assert.That(
+                GameManager.ShouldShowShopPriceBadges(
+                    shopOpen: true,
+                    deckPreviewOpen: false,
+                    shopUtilityAnimationPlaying: true),
+                Is.False);
+            Assert.That(
+                GameManager.ShouldShowShopPriceBadges(
+                    shopOpen: true,
+                    deckPreviewOpen: false,
+                    shopUtilityAnimationPlaying: false),
+                Is.True);
             Transform leaveRoot = hudPrefab.transform.Find("ShopLeaveRoot");
             Assert.That(leaveRoot, Is.Not.Null);
             Canvas leaveCanvas = leaveRoot.GetComponent<Canvas>();
@@ -288,6 +341,41 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 leaveButton.Find("Label"),
                 Is.Not.Null);
+        }
+
+        [Test]
+        [Category("GSV08")]
+        public void GSV08_U04_GameSceneUsesCameraDeckPreviewForBloom()
+        {
+            Scene scene = SceneManager.GetSceneByPath(GameScenePath);
+            bool wasLoaded = scene.IsValid() && scene.isLoaded;
+            if (!wasLoaded)
+            {
+                scene = EditorSceneManager.OpenScene(
+                    GameScenePath,
+                    OpenSceneMode.Additive);
+            }
+
+            try
+            {
+                DeckPreviewView preview = scene.GetRootGameObjects()
+                    .SelectMany(root =>
+                        root.GetComponentsInChildren<DeckPreviewView>(true))
+                    .Single();
+                Canvas previewCanvas = preview.GetComponent<Canvas>();
+
+                Assert.That(previewCanvas.renderMode,
+                    Is.EqualTo(RenderMode.ScreenSpaceCamera));
+                Assert.That(previewCanvas.sortingOrder, Is.EqualTo(100));
+                Assert.That(previewCanvas.worldCamera, Is.Not.Null);
+            }
+            finally
+            {
+                if (!wasLoaded && scene.IsValid() && scene.isLoaded)
+                {
+                    EditorSceneManager.CloseScene(scene, true);
+                }
+            }
         }
 
         [Test]

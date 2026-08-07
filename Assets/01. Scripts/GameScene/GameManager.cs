@@ -1639,7 +1639,12 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            if (shop == null || !shop.IsOpen)
+            bool shopOpen = shop != null && shop.IsOpen;
+            bool deckPreviewOpen = deckPreview != null && deckPreview.IsOpen;
+            if (!ShouldShowShopPriceBadges(
+                    shopOpen,
+                    deckPreviewOpen,
+                    _shopUtilityAnimationPlaying))
             {
                 hud.HideShopPriceBadges();
                 return;
@@ -1653,6 +1658,16 @@ namespace DiaBlackJack.GameScene
             hud.RenderShopPriceBadges(
                 shop.ActivePriceTargets,
                 _camera);
+        }
+
+        internal static bool ShouldShowShopPriceBadges(
+            bool shopOpen,
+            bool deckPreviewOpen,
+            bool shopUtilityAnimationPlaying)
+        {
+            return shopOpen &&
+                !deckPreviewOpen &&
+                !shopUtilityAnimationPlaying;
         }
 
         private void EnsureDeckPreview()
@@ -2826,6 +2841,7 @@ namespace DiaBlackJack.GameScene
             }
 
             _shopUtilityAnimationPlaying = true;
+            hud?.HideShopPriceBadges();
             StartCoroutine(PlayLighterShopAnimationRoutine());
             return true;
         }
@@ -2856,6 +2872,8 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
+            _shopUtilityAnimationPlaying = true;
+            hud?.HideShopPriceBadges();
             StartCoroutine(PlayWhiskeyShopAnimationRoutine());
             return true;
         }
@@ -2914,7 +2932,6 @@ namespace DiaBlackJack.GameScene
 
         private IEnumerator PlayWhiskeyShopAnimationRoutine()
         {
-            _shopUtilityAnimationPlaying = true;
             UpdateShopLeaveControl();
             whiskeyAnimationRoot.SetActive(true);
             whiskeyAnimator.Rebind();

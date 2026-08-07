@@ -31,7 +31,6 @@ namespace DiaBlackJack.GameScene
 
         [SerializeField] private Image faceImage;
         [SerializeField] private Material hoverOutlineMaterial;
-        [SerializeField] private GameObject selectedFrame;
         [SerializeField] private TMP_Text fallbackText;
         [SerializeField] private TMP_Text countText;
 
@@ -75,6 +74,7 @@ namespace DiaBlackJack.GameScene
         private Vector3 _hoverRestingScale;
         private Tween _hoverScaleTween;
         private bool _hovered;
+        private bool _pointerHovered;
         private bool _hasHoverRestingScale;
 
         public event Action<DeckPreviewCardView> Clicked;
@@ -86,6 +86,8 @@ namespace DiaBlackJack.GameScene
         public int CardId => _card == null ? -1 : _card.CardId;
 
         public bool IsSelected { get; private set; }
+
+        internal bool IsVisuallyEmphasized => _hovered;
 
         internal Color CurrentHoverOutlineColor => ResolveHoverOutlineColor();
 
@@ -109,6 +111,7 @@ namespace DiaBlackJack.GameScene
         {
             CaptureHoverRestingScale();
             _hovered = false;
+            _pointerHovered = false;
         }
 
         public void Render(
@@ -152,9 +155,7 @@ namespace DiaBlackJack.GameScene
                 countText.text = group == null ? string.Empty : $"x{group.Count}";
             }
 
-            SetHoverFeedback(false);
-            SetHoverOutline(false);
-            SetSelected(false);
+            ResetInteractionState();
         }
 
         internal void RenderCodex(
@@ -200,18 +201,13 @@ namespace DiaBlackJack.GameScene
                 countText.gameObject.SetActive(count.HasValue);
             }
 
-            SetHoverFeedback(false);
-            SetHoverOutline(false);
-            SetSelected(false);
+            ResetInteractionState();
         }
 
         public void SetSelected(bool selected)
         {
             IsSelected = CanSelect && selected;
-            if (selectedFrame != null)
-            {
-                selectedFrame.SetActive(IsSelected);
-            }
+            RefreshVisualEmphasis();
         }
 
         public CardHoverBadgeRequest CreateHoverBadgeRequest()
@@ -232,8 +228,9 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            SetHoverFeedback(true);
-            SetHoverOutline(true);
+            _pointerHovered = true;
+            PlayHoverSound();
+            RefreshVisualEmphasis();
             if (_hoverEnabled)
             {
                 HoverChanged?.Invoke(this, true);
@@ -242,8 +239,8 @@ namespace DiaBlackJack.GameScene
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            SetHoverFeedback(false);
-            SetHoverOutline(false);
+            _pointerHovered = false;
+            RefreshVisualEmphasis();
             if (_hoverEnabled)
             {
                 HoverChanged?.Invoke(this, false);
@@ -270,8 +267,9 @@ namespace DiaBlackJack.GameScene
                 transform.localScale = _hoverRestingScale;
             }
             _hovered = false;
+            _pointerHovered = false;
+            IsSelected = false;
             SetHoverOutline(false);
-            SetSelected(false);
         }
 
         private void OnDestroy()
@@ -378,11 +376,6 @@ namespace DiaBlackJack.GameScene
             }
 
             _hovered = hovered;
-            if (hovered && !string.IsNullOrWhiteSpace(hoverSfxId))
-            {
-                SoundManager.Current?.PlaySfx(hoverSfxId);
-            }
-
             StopHoverScaleTween();
             Vector3 targetScale = hovered
                 ? _hoverRestingScale * hoverScale
@@ -397,6 +390,28 @@ namespace DiaBlackJack.GameScene
                 .DOScale(targetScale, Mathf.Max(hoverScaleDuration, 0.01f))
                 .SetEase(hoverScaleCurve)
                 .SetTarget(this);
+        }
+
+        private void RefreshVisualEmphasis()
+        {
+            bool emphasized = _pointerHovered || IsSelected;
+            SetHoverFeedback(emphasized);
+            SetHoverOutline(emphasized);
+        }
+
+        private void ResetInteractionState()
+        {
+            _pointerHovered = false;
+            IsSelected = false;
+            RefreshVisualEmphasis();
+        }
+
+        private void PlayHoverSound()
+        {
+            if (!string.IsNullOrWhiteSpace(hoverSfxId))
+            {
+                SoundManager.Current?.PlaySfx(hoverSfxId);
+            }
         }
 
         private void CaptureHoverRestingScale()
