@@ -30,6 +30,11 @@ namespace DiaBlackJack.GameScene
         [Tooltip("Hold after the enemy entrance animation finishes, before round 1 begins (HUD activates, battle binds, initial cards deal).")]
         [SerializeField, Min(0f)] private float roundOneStartDelayAfterEntrance = 3f;
 
+        // Mirrors CardHand's enterDuration (0.22s) plus a small buffer — the tutorial's
+        // post-intro dialogue must not appear until the round-1 card-deal tween that
+        // RevealRoundOneHands() kicks off has actually finished playing.
+        private const float RoundOneCardRevealAnimationSeconds = 0.3f;
+
         [Header("Merchant speech")]
         [SerializeField] private SpeechProfileSO merchantSpeechProfile;
         [SerializeField] private int merchantSpeechSeed = 20260804;
@@ -996,6 +1001,11 @@ namespace DiaBlackJack.GameScene
             _waitingForRoundOneReveal = false;
             gameManager.RevealRoundOneHands();
             gameManager.SetPresentationInputLocked(false);
+            // Tutorial-only: the post-intro dialogue was held back at IntroCompleted so it
+            // wouldn't race this entrance + card-deal reveal — only tell it to proceed once
+            // the deal tween just kicked off by RevealRoundOneHands() has actually finished.
+            yield return new WaitForSeconds(RoundOneCardRevealAnimationSeconds);
+            gameManager.NotifyTutorialRoundOneRevealReady();
         }
 
         private void StopRoundOneStartRoutine()

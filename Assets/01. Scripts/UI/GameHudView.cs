@@ -92,9 +92,9 @@ namespace DiaBlackJack.GameScene
             (demonCardHoverDetail != null &&
              demonCardHoverDetail.gameObject.activeInHierarchy);
 
-        internal void SetTutorialRevolverForcedNumber(int? number)
+        internal void SetTutorialRevolverTargetNumber(int? number)
         {
-            revolverNumberSelector?.SetForcedSelection(number);
+            revolverNumberSelector?.SetTutorialTargetNumber(number);
         }
 
         public bool IsRevolverNumberSelectionOpen =>

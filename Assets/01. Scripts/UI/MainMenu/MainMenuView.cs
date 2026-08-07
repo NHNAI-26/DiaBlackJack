@@ -30,6 +30,8 @@ namespace DiaBlackJack.MainMenu.UI
 
         public event Action ResumeReservationRequested;
 
+        public event Action TutorialRequested;
+
         public void Render(RunSaveViewModel model)
         {
             _model = model ?? throw new ArgumentNullException(nameof(model));
@@ -56,7 +58,7 @@ namespace DiaBlackJack.MainMenu.UI
 
             float panelHeight = _model.RequiresNewRunConfirmation
                 ? 430f
-                : 510f;
+                : 572f;
             Rect panel = new Rect(
                 (Screen.width - PanelWidth) * 0.5f,
                 (Screen.height - panelHeight) * 0.5f,
@@ -124,6 +126,15 @@ namespace DiaBlackJack.MainMenu.UI
                 {
                     ResumeReservationRequested?.Invoke();
                 }
+            }
+
+            GUILayout.Space(10f);
+            if (GUILayout.Button(
+                    "TUTORIAL",
+                    _buttonStyle,
+                    GUILayout.Height(ButtonHeight)))
+            {
+                TutorialRequested?.Invoke();
             }
 
             GUILayout.Space(10f);

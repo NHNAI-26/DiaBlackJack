@@ -42,7 +42,12 @@ namespace DiaBlackJack.GameScene
         private void Awake()
         {
             EnsureCard();
-            Hide();
+            IsActive = false;
+            speechText?.Hide();
+            // Awake runs for every GameScene load, tutorial or not — only Show() (the
+            // tutorial actually starting) should make this object, and the card on it,
+            // visible for the first time.
+            gameObject.SetActive(false);
         }
 
         public void Show()
@@ -61,7 +66,9 @@ namespace DiaBlackJack.GameScene
         {
             IsActive = false;
             speechText?.Hide();
-            gameObject.SetActive(false);
+            // Deliberately does NOT deactivate the root — once Show() has made the
+            // Asmodeus card visible, it stays out on the table as a real object for the
+            // rest of the tutorial; only the speech bubble text hides between lines/gates.
         }
 
         public void ShowLine(string text)

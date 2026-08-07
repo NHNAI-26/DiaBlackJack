@@ -20,16 +20,6 @@ namespace DiaBlackJack.StageProgression
         /// </summary>
         public const string TutorialStageId = "normal-1";
 
-        /// <summary>
-        /// CowardlyGambler's profile soul (3) is too low to survive the scripted rounds —
-        /// round 1 costs it 1, round 2's revolver bust costs 2 (already exactly 3), and
-        /// round 3's Asmodeus-forced bust costs another 2. Using the profile's own soul would
-        /// end the whole battle at round 2, before the contract/Asmodeus beats ever play.
-        /// The tutorial overrides it here so the enemy survives with soul left after section 6
-        /// — clearing the stage the rest of the way is left to ordinary (unscripted) play.
-        /// </summary>
-        private const int TutorialEnemyMaximumSoul = 10;
-
         public static CoreLoopBattle Create(StageDefinition stage, PlayerRunState player)
         {
             if (stage == null || stage.Id != TutorialStageId)
@@ -96,12 +86,20 @@ namespace DiaBlackJack.StageProgression
                 player.DemonDeck,
                 StageBattleFactory.DeriveDemonDeckSeed(stage.PlayerDeckSeed));
 
+            // CowardlyGambler's real profile soul (4): round 1 costs it 1 (4->3), round 2's
+            // revolver bust costs 2 (3->1), round 3's Asmodeus-forced bust costs the final 2
+            // (1->-1) — the enemy survives exactly until the scripted finale, no separate
+            // tutorial-only override needed.
+            int enemyMaximumSoul = EnemyCombatProfileCatalog.Default
+                .GetByKey(EnemyCombatProfileCatalog.CowardlyGamblerKey)
+                .MaximumSoul;
+
             return new CoreLoopBattle(
                 playerDeck,
                 enemyDeck,
                 player.MaximumSoul,
                 player.CurrentSoul,
-                TutorialEnemyMaximumSoul,
+                enemyMaximumSoul,
                 enemyPolicy: new TutorialEnemyPolicy(),
                 playerDemonDeck: playerDemonDeck,
                 demonContractSeed: StageBattleFactory.DeriveDemonContractSeed(

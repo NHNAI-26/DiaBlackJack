@@ -18,7 +18,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 catalog,
                 EnemyCombatProfileCatalog.CowardlyGamblerKey,
                 EnemyGrade.Normal,
-                3,
+                4,
                 EnemyBehaviorPolicyCatalog.CowardlyGambler);
             AssertProfile(
                 catalog,
@@ -52,7 +52,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 EnemyBehaviorPolicyCatalog.FinalBoss);
         }
 
-        [TestCase(EnemyCombatProfileCatalog.CowardlyGamblerKey, 3, 18, BattleRewardTier.Normal)]
+        [TestCase(EnemyCombatProfileCatalog.CowardlyGamblerKey, 4, 18, BattleRewardTier.Normal)]
         [TestCase(EnemyCombatProfileCatalog.GunslingerKey, 3, 14, BattleRewardTier.Normal)]
         [TestCase(EnemyCombatProfileCatalog.CultistKey, 5, 20, BattleRewardTier.Normal)]
         [TestCase(EnemyCombatProfileCatalog.TricksterKey, 5, 18, BattleRewardTier.Normal)]

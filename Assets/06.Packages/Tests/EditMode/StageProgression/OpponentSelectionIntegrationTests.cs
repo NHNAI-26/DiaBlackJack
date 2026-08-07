@@ -18,7 +18,7 @@ namespace DiaBlackJack.StageProgression.Tests
 
         [TestCase(
             EnemyCombatProfileCatalog.CowardlyGamblerKey,
-            3,
+            4,
             18,
             "CowardlyGamblerEnemyPolicy")]
         [TestCase(

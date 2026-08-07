@@ -40,10 +40,12 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private CodexController codex;
         [SerializeField] private DemonContractSelectionView demonContractSelection;
         [SerializeField] private TutorialNarratorView tutorialNarrator;
+        [SerializeField] private TutorialScriptSO tutorialScript;
         private GameSceneCombatHudCommandKind? _tutorialRestrictedPrimaryAction;
         private string _tutorialRestrictedContractDefinitionKey;
         private int? _tutorialRestrictedOptionId;
         private bool _tutorialContractPaperBlocked;
+        private bool _tutorialCardUseBlocked;
         private TutorialDirector _tutorialDirector;
         private bool _tutorialIntroCompleted;
         private CrystalOrbSelectionView crystalOrbSelection;
@@ -297,17 +299,30 @@ namespace DiaBlackJack.GameScene
             _tutorialDirector = null;
             _tutorialIntroCompleted = false;
             _tutorialContractPaperBlocked = false;
+            _tutorialCardUseBlocked = false;
             if (session.IsTutorialRun &&
                 tutorialNarrator != null &&
+                tutorialScript != null &&
                 session.ActiveStage?.Id == TutorialBattleFactory.TutorialStageId)
             {
-                _tutorialDirector = new TutorialDirector(this, tutorialNarrator);
+                _tutorialDirector = new TutorialDirector(this, tutorialNarrator, tutorialScript);
                 _tutorialDirector.IntroCompleted += HandleTutorialDirectorIntroCompleted;
+                _tutorialDirector.RoundOneRecapCompleted +=
+                    HandleTutorialRoundOneRecapCompleted;
+                _tutorialDirector.Completed += HandleTutorialDirectorCompleted;
                 // Only the contract-candidate gate explicitly lifts this — every other
                 // gate (and every dialogue step, which already blocks all input via the
                 // narrator) needs the contract paper to stay unclickable so the single
                 // highlighted action is genuinely the only thing the player can do.
                 _tutorialContractPaperBlocked = true;
+                // Same default-deny reasoning as the contract paper above: a card dealt
+                // earlier in the round (e.g. the round-3 face-up Bowie Knife, rank 5-10 and
+                // therefore usable) can still sit in the player's hand during a later gate
+                // that never meant to allow card use (e.g. the contract-candidate gate) —
+                // SetTutorialActionRestriction only ever covered Hit/Stand/Change, never card
+                // clicks. Only RevolverGate, which needs the player to click their own
+                // revolver-ranked card, explicitly lifts this.
+                _tutorialCardUseBlocked = true;
             }
 
             RefreshView();
@@ -339,6 +354,38 @@ namespace DiaBlackJack.GameScene
         {
             _tutorialIntroCompleted = true;
             TutorialIntroCompleted?.Invoke();
+        }
+
+        // Mirrors GameFlowController's RoundOneCardRevealAnimationSeconds — round 2's deal
+        // (held back since the Stand gate) needs the same brief wait after reveal before the
+        // tutorial's next dialogue line is allowed to appear.
+        private const float TutorialRoundTwoRevealAnimationSeconds = 0.3f;
+
+        private void HandleTutorialRoundOneRecapCompleted()
+        {
+            StartCoroutine(RevealRoundTwoAfterRecapRoutine());
+        }
+
+        private IEnumerator RevealRoundTwoAfterRecapRoutine()
+        {
+            // Reuses the round-1 reveal machinery — it's just "stop suppressing hand
+            // render and refresh," which is exactly what round 2's held-back deal needs too.
+            RevealRoundOneHands();
+            yield return new WaitForSeconds(TutorialRoundTwoRevealAnimationSeconds);
+            _tutorialDirector?.NotifyRoundTwoRevealReady();
+        }
+
+        /// <summary>
+        /// The tutorial is a single scripted battle with no progression scene of its own —
+        /// once its final line is dismissed, tear down its throwaway (in-memory-backed)
+        /// runtime singleton and return straight to the main menu, mirroring
+        /// <c>StageProgressionRuntime.CreateTutorialInstance</c>'s outbound trip.
+        /// </summary>
+        private void HandleTutorialDirectorCompleted()
+        {
+            StageProgressionRuntime runtime = _stageRuntime;
+            StageProgressionRuntime.DestroyInstanceForSceneTransition();
+            runtime?.LoadMainMenuScene();
         }
 
         /// <summary>
@@ -380,14 +427,15 @@ namespace DiaBlackJack.GameScene
         }
 
         /// <summary>
-        /// Tutorial-only override: pins the revolver/lie-detector number dial to
-        /// <paramref name="number"/> and blocks navigation until confirmed. Pass null to lift
-        /// the restriction. See <see cref="SetTutorialActionRestriction"/> for the same
-        /// "mechanism now, trigger later" split.
+        /// Tutorial-only override: leaves the revolver/lie-detector number dial fully
+        /// navigable, but keeps its Confirm button disabled until the player dials to
+        /// <paramref name="number"/> themselves. Pass null to lift the restriction. See
+        /// <see cref="SetTutorialActionRestriction"/> for the same "mechanism now, trigger
+        /// later" split.
         /// </summary>
-        internal void SetTutorialRevolverForcedNumber(int? number)
+        internal void SetTutorialRevolverTargetNumber(int? number)
         {
-            hud?.SetTutorialRevolverForcedNumber(number);
+            hud?.SetTutorialRevolverTargetNumber(number);
         }
 
         /// <summary>
@@ -426,6 +474,30 @@ namespace DiaBlackJack.GameScene
         {
             _tutorialContractPaperBlocked = blocked;
             RefreshView();
+        }
+
+        /// <summary>
+        /// Tutorial-only override: when true, clicking any player battle card to use it is
+        /// ignored regardless of <c>CanUse</c> — the click-dispatch site consults this
+        /// directly (see the <c>pointedBattleCard.CanUse</c> check), the same "gate at
+        /// dispatch, not just presentation" approach already used for the contract-candidate
+        /// restriction. Defaults to true for the whole tutorial the moment it binds; only the
+        /// revolver gate, which needs the player to click their own revolver-ranked card,
+        /// explicitly sets it false.
+        /// </summary>
+        internal void SetTutorialCardUseBlocked(bool blocked)
+        {
+            _tutorialCardUseBlocked = blocked;
+        }
+
+        /// <summary>
+        /// Called once the round-1 entrance + card-deal reveal animation has fully finished
+        /// playing — only then may the tutorial's post-intro dialogue actually appear, so it
+        /// doesn't race that animation (see <see cref="TutorialDirector.NotifyRoundOneRevealReady"/>).
+        /// </summary>
+        internal void NotifyTutorialRoundOneRevealReady()
+        {
+            _tutorialDirector?.NotifyRoundOneRevealReady();
         }
 
         /// <summary>
@@ -930,24 +1002,6 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            if (tutorialNarrator != null && tutorialNarrator.IsActive)
-            {
-                UpdateDeckStackHover(null);
-                UpdateCodexHover(null);
-                UpdateContractPaperHover(null);
-                UpdateCombatCommandHover(null);
-                UpdateHoverDescriptionTarget(null);
-                hud?.HideCardHoverBadge();
-
-                Mouse tutorialMouse = Mouse.current;
-                if (tutorialMouse != null && tutorialMouse.leftButton.wasPressedThisFrame)
-                {
-                    tutorialNarrator.HandleClick();
-                }
-
-                return;
-            }
-
             bool shopOpen = shop != null && shop.IsOpen;
             if (_core == null && !shopOpen)
             {
@@ -1103,6 +1157,21 @@ namespace DiaBlackJack.GameScene
             UpdateCombatCommandHover(effectiveCombatCommandHover);
             UpdateHoverDescriptionTarget(pointedHoverDescriptionTarget);
 
+            // The narrator still owns every click while active (advancing dialogue), but
+            // hover updates above already ran normally — other objects (deck, codex,
+            // contract paper, hover-description targets) still preview on hover during
+            // dialogue, they just can't be clicked into their own actions.
+            if (tutorialNarrator != null && tutorialNarrator.IsActive)
+            {
+                Mouse tutorialMouse = Mouse.current;
+                if (tutorialMouse != null && tutorialMouse.leftButton.wasPressedThisFrame)
+                {
+                    tutorialNarrator.HandleClick();
+                }
+
+                return;
+            }
+
             if (_inputLocked || _choosingLighterRemoval)
             {
                 return;
@@ -1167,7 +1236,9 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            if (pointedBattleCard != null && pointedBattleCard.CanUse)
+            if (pointedBattleCard != null &&
+                pointedBattleCard.CanUse &&
+                !_tutorialCardUseBlocked)
             {
                 int cardId = pointedBattleCard.CardId;
                 ProcessInput(() => TryBeginPlayerCardUse(cardId));
@@ -2925,6 +2996,12 @@ namespace DiaBlackJack.GameScene
                         command.OptionId));
                     break;
                 case GameSceneCombatHudCommandKind.ResolveDemonContractChoice:
+                    if (_tutorialRestrictedOptionId.HasValue &&
+                        _tutorialRestrictedOptionId.Value != command.OptionId)
+                    {
+                        break;
+                    }
+
                     bool animateBelphegorReinsert =
                         ShouldAnimateBelphegorReinsert(command);
                     Action onAccepted = null;
@@ -3340,8 +3417,6 @@ namespace DiaBlackJack.GameScene
                 yield return WaitForAnimationOrSeconds(
                     playedAnimation,
                     waitSeconds);
-
-                _tutorialDirector?.Observe();
 
                 if (comparisonBeat)
                 {
@@ -6169,6 +6244,11 @@ namespace DiaBlackJack.GameScene
         private void ReturnToProgressionIfStageBattleEnded()
         {
             if (!IsStageBattle ||
+                // The tutorial has no progression scene of its own — TutorialDirector's
+                // own script (including its post-battle "축하해..." finale) keeps running
+                // regardless of stage/battle state, and HandleTutorialDirectorCompleted
+                // returns to the main menu once that script actually finishes.
+                _stageSession.IsTutorialRun ||
                 _stageSession.Progress.State == StageProgressionState.InBattle ||
                 IsTerminalSpeechHoldBlocking(
                     _terminalSpeechHoldActive,

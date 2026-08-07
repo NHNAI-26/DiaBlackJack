@@ -16,6 +16,8 @@ namespace DiaBlackJack.StageProgression.UI
         [SerializeField] private string mainMenuSceneName = "MainMenuScene";
         [SerializeField] private int seed = 20260719;
 
+        private bool _isTutorialInstance;
+
         public static StageProgressionRuntime Instance { get; private set; }
 
         public RunSaveFlow SaveFlow { get; private set; }
@@ -84,6 +86,50 @@ namespace DiaBlackJack.StageProgression.UI
                 _formalSession.CompletedShopCount,
                 _formalSession.UtilityPriceLevel);
         }
+        /// <summary>
+        /// Tears down the current DontDestroyOnLoad singleton (if any) synchronously — call
+        /// this immediately before loading a scene that carries its own
+        /// <see cref="StageProgressionRuntime"/> instance configured differently from the
+        /// current one (e.g. main menu -> the dedicated tutorial scene). Without this, the
+        /// surviving old instance would still satisfy <c>Instance != null</c> when the new
+        /// scene's own instance runs <see cref="Awake"/>, so the new one would just
+        /// self-destroy instead of taking over.
+        /// </summary>
+        internal static void DestroyInstanceForSceneTransition()
+        {
+            if (Instance == null)
+            {
+                return;
+            }
+
+            GameObject instanceObject = Instance.gameObject;
+            Instance = null;
+            Destroy(instanceObject);
+        }
+
+        /// <summary>
+        /// Spawns a standalone, throwaway runtime configured for the scripted tutorial
+        /// battle — no dedicated scene needed. Destroys any existing singleton first (same
+        /// reasoning as <see cref="DestroyInstanceForSceneTransition"/>) so this becomes the
+        /// new <see cref="Instance"/>, and is backed by <see cref="InMemoryRunSaveFileStore"/>
+        /// rather than <see cref="SystemRunSaveFileStore"/> — the tutorial's prototype run
+        /// must never read or overwrite the player's real save/reservation files on disk.
+        /// </summary>
+        internal static StageProgressionRuntime CreateTutorialInstance()
+        {
+            DestroyInstanceForSceneTransition();
+
+            GameObject runtimeObject = new GameObject(nameof(StageProgressionRuntime));
+            // AddComponent runs Awake synchronously on an active GameObject — stay
+            // inactive until _isTutorialInstance is set so Awake picks it up.
+            runtimeObject.SetActive(false);
+            StageProgressionRuntime runtime =
+                runtimeObject.AddComponent<StageProgressionRuntime>();
+            runtime._isTutorialInstance = true;
+            runtimeObject.SetActive(true);
+            return runtime;
+        }
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -94,7 +140,9 @@ namespace DiaBlackJack.StageProgression.UI
 
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            IRunSaveFileStore fileStore = new SystemRunSaveFileStore();
+            IRunSaveFileStore fileStore = _isTutorialInstance
+                ? new InMemoryRunSaveFileStore()
+                : new SystemRunSaveFileStore();
             _tutorialProgressStore = new TutorialProgressStore(fileStore);
             SaveFlow = new RunSaveFlow(
                 new RunSaveRepository(fileStore, CreatePrototypeStages(seed)),
@@ -102,7 +150,9 @@ namespace DiaBlackJack.StageProgression.UI
                     fileStore,
                     DemonContractCatalog.Default),
                 CreatePrototypeStages,
-                CreatePrototypeSession,
+                _isTutorialInstance
+                    ? (System.Func<int, StageProgressionSession>)CreateTutorialSession
+                    : CreatePrototypeSession,
                 seed,
                 usesBattleRewards: false);
             _ = FormalSession;
@@ -124,13 +174,6 @@ namespace DiaBlackJack.StageProgression.UI
             }
 
             return started;
-        }
-
-        private StageProgressionSession CreateSessionForCurrentTutorialState(int rootSeed)
-        {
-            return _tutorialProgressStore.HasSeenTutorial
-                ? CreatePrototypeSession(rootSeed)
-                : CreateTutorialSession(rootSeed);
         }
 
         internal static StageProgressionSession CreateTutorialSession(int rootSeed)

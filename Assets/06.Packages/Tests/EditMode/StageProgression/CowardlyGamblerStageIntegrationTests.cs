@@ -14,7 +14,7 @@ namespace DiaBlackJack.StageProgression.Tests
                 enemyDeckSeed: 71);
 
             Assert.That(configuration.Grade, Is.EqualTo(EnemyGrade.Normal));
-            Assert.That(configuration.EnemyMaximumSoul, Is.EqualTo(3));
+            Assert.That(configuration.EnemyMaximumSoul, Is.EqualTo(4));
             Assert.That(configuration.EnemyDeckDefinitions.Count, Is.EqualTo(18));
             Assert.That(configuration.ExpectedRewardTier, Is.EqualTo(BattleRewardTier.Normal));
             Assert.That(configuration.BehaviorPolicy, Is.TypeOf<CowardlyGamblerEnemyPolicy>());
@@ -33,7 +33,7 @@ namespace DiaBlackJack.StageProgression.Tests
 
             CoreLoopBattle battle = StageBattleFactory.Create(stage, CreatePlayer());
 
-            Assert.That(battle.Enemy.Soul.Maximum, Is.EqualTo(3));
+            Assert.That(battle.Enemy.Soul.Maximum, Is.EqualTo(4));
             Assert.That(battle.Enemy.Deck.TotalCardCount, Is.EqualTo(18));
             Assert.That(battle.EnemyDemonDeck.TotalCardCount, Is.Zero);
             Assert.That(battle.EnemyBehaviorPolicy, Is.TypeOf<CowardlyGamblerEnemyPolicy>());

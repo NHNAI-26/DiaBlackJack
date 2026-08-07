@@ -25,7 +25,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                     .And.Contain(EnemyCombatProfileCatalog.TricksterKey));
             Assert.That(profile.DisplayName, Is.EqualTo("겁쟁이 도박사"));
             Assert.That(profile.Grade, Is.EqualTo(EnemyGrade.Normal));
-            Assert.That(profile.MaximumSoul, Is.EqualTo(3));
+            Assert.That(profile.MaximumSoul, Is.EqualTo(4));
             Assert.That(
                 profile.BehaviorPolicyKey,
                 Is.EqualTo(EnemyBehaviorPolicyCatalog.CowardlyGambler));

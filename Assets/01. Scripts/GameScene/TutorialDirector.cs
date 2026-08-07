@@ -5,11 +5,12 @@ using DiaBlackJack.CoreLoop;
 namespace DiaBlackJack.GameScene
 {
     /// <summary>
-    /// Drives the first-play tutorial's scripted sequence: shows the user's 0-6 section
-    /// dialogue one line at a time through <see cref="TutorialNarratorView"/>, and — between
-    /// dialogue blocks — opens a single-action gate on <see cref="GameManager"/> (which
-    /// specific Hit/Stand/Change/revolver-number/contract-candidate/contract-option is legal)
-    /// and waits for the player to actually perform it before advancing.
+    /// Drives the first-play tutorial's scripted sequence: shows the 0-6 section dialogue
+    /// (data — see <see cref="TutorialScriptSO"/>, not hardcoded here) one line at a time
+    /// through <see cref="TutorialNarratorView"/>, and — between dialogue blocks — opens a
+    /// single-action gate on <see cref="GameManager"/> (which specific
+    /// Hit/Stand/Change/revolver-number/contract-candidate/contract-option is legal) and
+    /// waits for the player to actually perform it before advancing.
     ///
     /// Not a MonoBehaviour — mirrors <see cref="EnemySpeechDirector"/>'s shape: <see
     /// cref="GameManager"/> owns and constructs it, and drives it by calling <see
@@ -36,7 +37,7 @@ namespace DiaBlackJack.GameScene
         private const GameSceneCombatHudCommandKind BlockAllPrimaryActions =
             GameSceneCombatHudCommandKind.BeginContract;
 
-        private const int AsmodeusForceHitOptionId = 1;
+        private const int RevolverTargetNumber = 5;
 
         private readonly GameManager _gameManager;
         private readonly TutorialNarratorView _narrator;
@@ -46,18 +47,37 @@ namespace DiaBlackJack.GameScene
         private int _stepIndex = -1;
         private int _dialogueLineIndex;
         private bool _gateActive;
+        private bool _awaitingRoundOneReveal;
+        private bool _awaitingRoundTwoReveal;
         private BattleSnapshot _gateEntrySnapshot;
 
-        public TutorialDirector(GameManager gameManager, TutorialNarratorView narrator)
+        public TutorialDirector(
+            GameManager gameManager,
+            TutorialNarratorView narrator,
+            TutorialScriptSO script)
         {
             _gameManager = gameManager ?? throw new ArgumentNullException(nameof(gameManager));
             _narrator = narrator ?? throw new ArgumentNullException(nameof(narrator));
+            if (script == null)
+            {
+                throw new ArgumentNullException(nameof(script));
+            }
+
             _narrator.LineAdvanceRequested += HandleLineAdvanceRequested;
-            _steps = BuildSteps();
+            _steps = BuildSteps(script);
         }
 
         /// <summary>Fires once the intro (sections 0-1) dialogue's last line is dismissed.</summary>
         public event Action IntroCompleted;
+
+        /// <summary>
+        /// Fires once the post-round-1 soul-loss recap dialogue's last line is dismissed —
+        /// only then may round 2's deal (suppressed since the Stand gate) actually appear.
+        /// </summary>
+        public event Action RoundOneRecapCompleted;
+
+        /// <summary>Fires once the entire scripted sequence's final line is dismissed.</summary>
+        public event Action Completed;
 
         public bool IsFinished => _begun && _stepIndex >= _steps.Count;
 
@@ -95,8 +115,13 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            _steps[_stepIndex].OnExit?.Invoke(_gameManager);
+            // Mark the gate closed before firing OnExit — OnExit (e.g.
+            // SetTutorialActionRestriction) synchronously calls back into
+            // RefreshView -> Observe, and without this order flip that reentrant call
+            // still sees an active gate with the same "changed" snapshot and re-fires
+            // OnExit forever (stack overflow).
             _gateActive = false;
+            _steps[_stepIndex].OnExit?.Invoke(_gameManager);
             AdvanceStep();
         }
 
@@ -114,6 +139,7 @@ namespace DiaBlackJack.GameScene
             }
 
             bool wasIntroStep = step.IsIntro;
+            bool wasRoundOneRecapStep = step.DefersRoundTwoReveal;
             _dialogueLineIndex++;
             if (_dialogueLineIndex < step.Lines.Length)
             {
@@ -121,11 +147,63 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            AdvanceStep();
             if (wasIntroStep)
             {
+                // Don't show the next dialogue yet — it would race the enemy-entrance +
+                // round-1 card-deal reveal that IntroCompleted is about to kick off.
+                // NotifyRoundOneRevealReady() is what actually calls AdvanceStep() here,
+                // once that animation has genuinely finished playing.
+                _narrator.Hide();
+                _awaitingRoundOneReveal = true;
                 IntroCompleted?.Invoke();
+                return;
             }
+
+            if (wasRoundOneRecapStep)
+            {
+                // Same idea as the intro case — round 2's deal was suppressed since the
+                // Stand gate specifically so it wouldn't appear before this recap dialogue
+                // finished. NotifyRoundTwoRevealReady() calls AdvanceStep() once it's
+                // actually been revealed.
+                _narrator.Hide();
+                _awaitingRoundTwoReveal = true;
+                RoundOneRecapCompleted?.Invoke();
+                return;
+            }
+
+            AdvanceStep();
+        }
+
+        /// <summary>
+        /// Called once the round-1 entrance + card-deal reveal animation (kicked off by
+        /// <see cref="IntroCompleted"/>) has fully finished playing — only then does the
+        /// post-intro dialogue actually appear. No-ops if the intro hasn't just finished.
+        /// </summary>
+        internal void NotifyRoundOneRevealReady()
+        {
+            if (!_awaitingRoundOneReveal)
+            {
+                return;
+            }
+
+            _awaitingRoundOneReveal = false;
+            AdvanceStep();
+        }
+
+        /// <summary>
+        /// Called once round 2's deal (kicked off by <see cref="RoundOneRecapCompleted"/>)
+        /// has fully finished animating in — only then does the "한참 모자라는군" dialogue
+        /// actually appear. No-ops if the recap dialogue hasn't just finished.
+        /// </summary>
+        internal void NotifyRoundTwoRevealReady()
+        {
+            if (!_awaitingRoundTwoReveal)
+            {
+                return;
+            }
+
+            _awaitingRoundTwoReveal = false;
+            AdvanceStep();
         }
 
         private void AdvanceStep()
@@ -134,6 +212,7 @@ namespace DiaBlackJack.GameScene
             if (_stepIndex >= _steps.Count)
             {
                 _narrator.Hide();
+                Completed?.Invoke();
                 return;
             }
 
@@ -151,132 +230,85 @@ namespace DiaBlackJack.GameScene
             step.OnEnter?.Invoke(_gameManager);
         }
 
-        private static List<Step> BuildSteps()
+        /// <summary>
+        /// Converts each data-only <see cref="TutorialStepEntry"/> in <paramref name="script"/>
+        /// into a driven <see cref="Step"/> — dialogue entries carry their own text straight
+        /// through, gate entries resolve to the matching behavior factory below (the actual
+        /// GameManager wiring is not "content," so it stays in code, not data).
+        /// </summary>
+        private static List<Step> BuildSteps(TutorialScriptSO script)
         {
-            return new List<Step>
+            IReadOnlyList<TutorialStepEntry> entries = script.Steps;
+            var steps = new List<Step>(entries.Count);
+            foreach (TutorialStepEntry entry in entries)
             {
-                Dialogue(
-                    isIntro: true,
-                    "드디어 정신을 차렸군.",
-                    "넌 지금부터 아주 간단한 게임을 하게 될 거야. 블랙잭.",
-                    "그런데 … 그냥 하면 재미 없잖아? 뭐 하나 걸고 하는 편이 스릴 있지 않겠어?",
-                    "돈? 그런 건 따분하지.",
-                    "네 목숨. 그래, 그게 좋겠네.",
-                    "승부에서 패배하면, 패자는 죽는다.",
-                    "살기 위해서 어떤 방법이든 써보라고. 총이든, 칼이든, 아니면 우리 악마들의 힘이든 …",
-                    "블랙잭은 자신의 카드 합을 21에 가깝게 만드는 게임이야.",
-                    "하지만 절대 21을 넘겨서는 안 되지.",
-                    "21을 넘기지 않으면서, 상대보다 21에 가깝게 맞춘 사람이 그 판을 가져간다. 간단하지?",
-                    "한 번 해보자고."),
+                steps.Add(entry.kind == TutorialStepKind.Dialogue
+                    ? BuildDialogueStep(entry)
+                    : BuildGateStep(entry));
+            }
 
-                // Section 2, part 1 — round 1 is already dealt by the time this shows.
-                Dialogue(
-                    "라운드가 시작되면 비공개 카드와 공개 카드를 1장씩 받아.",
-                    "비공개 카드는 자신만 알 수 있지만, 공개 카드는 누구든지 알 수 있지.",
-                    "비공개 카드는 커서를 올리면 바로 알 수 있으니 항상 참고하도록.",
-                    "[히트] 버튼을 누르면, 자신의 덱에서 카드 한 장을 뽑아 공개 카드에 추가할 수 있어."),
-                PrimaryActionGate(GameSceneCombatHudCommandKind.Hit),
-
-                Dialogue(
-                    "내 턴에 행동을 하나 선택하면, 상대 턴으로 차례가 넘어간다.",
-                    "이번엔 상대도 히트를 했군. 21까진 아직 모자라니 한 번 더 [히트]해봐."),
-                PrimaryActionGate(GameSceneCombatHudCommandKind.Hit),
-
-                Dialogue(
-                    "A 카드라, 운이 좋군.",
-                    "A 카드는 1과 11 중 21에 가깝게 자동으로 설정되는 카드지. 딱 마침 합이 21이 됐군.",
-                    "앞으로 어떤 카드가 들어올지 궁금하다면 네 덱을 클릭해봐. 어떤 카드가 남아있는지 알 수 있을테니.",
-                    "숫자 합이 21이 되었으니, 더 이상 진행할 필요는 없겠지.",
-                    "게임 도중 '공개 카드 숫자의 합'이 21 이상이 되면, [버스트]한다. 패배한다는 뜻이지.",
-                    "넌 이미 카드 숫자 합이 21이 되었으니 차례를 더 진행할 필요는 없겠군.",
-                    "[스탠드]를 선택하면 이번 라운드 내 차례를 종료할 수 있어.",
-                    "단, 상대는 혼자서 계속 차례를 진행할 수 있게 되니 반드시 모든 행동을 다 진행했을 때만 선택하도록.",
-                    "이번엔 더 이상 할 수 있는 게 없으니 [스탠드]하자고."),
-                PrimaryActionGate(GameSceneCombatHudCommandKind.Stand),
-
-                // Section 3, continued — round 1 has resolved by now.
-                Dialogue(
-                    "패자는 대가를 치뤄야겠지.",
-                    "라운드에서 패배하면 영혼 1을 잃게 된다.",
-                    "만약 둘 다 21을 넘기면, 둘 다 패배한다.",
-                    "영혼을 모두 잃으면 <b>죽는다.</b> 당연한 일이지.",
-                    "21을 넘기지 않았는데 무승부면 어떻게 되냐고? 참나, 왜 이렇게 캐물어?",
-                    "그래, 기분이다. 그런 경우에는 무조건 네가 승리하게 해줄게. 됐니?"),
-
-                // Section 4 — round 2 is already dealt.
-                Dialogue("한참 모자라는군. [히트]해보라고."),
-                PrimaryActionGate(GameSceneCombatHudCommandKind.Hit),
-
-                Dialogue(
-                    "상대가 바보 같이 비공개 카드를 사용해버렸군. 리볼버를 클릭해서 저 녀석 면상에 총알을 박아보자고.",
-                    "카드 게임에서 무기를 쓰는 게 어딨냐고? 이봐, 성자라도 상대하고 있는 줄 알았어?",
-                    "5~10 사이의 카드들은 내 차례에 사용할 수 있는 카드들이다. 공개 카드든, 비공개 카드든 클릭하면 사용할 수 있지.",
-                    "다만 비공개 카드를 사용하려면 <b>네 카드를 상대에게 보여줘야 한다.</b> 그 리스크를 감수할 수 있다면 사용해봐.",
-                    "리볼버를 사용하면 상대의 비공개 카드를 추측할 수 있는 기회를 갖는다. 맞힌다면 상대를 [버스트]시킬 수 있지.",
-                    "저 녀석의 비공개 카드는 5. 자, 죽이자고."),
-                RevolverGate(),
-
-                // Section 5 — round 3 is already dealt.
-                Dialogue(
-                    "19라. 히트하기엔 너무 크고, 스탠드하기엔 불안한 숫자군.",
-                    "이럴 땐 [체인지]를 하는 것도 방법이지.",
-                    "[체인지]를 선택하면 자신의 덱에서 2장을 뽑아 나만 확인하고, 그 중 1장을 비공개 카드로 바꿀 수 있다.",
-                    "기존 비공개 카드와 선택하지 않은 카드는 버려진다.",
-                    "[체인지]는 한 스테이지 내에서 단 한 번은 무료지만, 그 다음부터는 비용으로 지불해야 하는 영혼이 1씩 오르게 된다.",
-                    "강력한 행동이니만큼, 어떤 게 더 좋을지는 생각해보라고.",
-                    "일단 지금은 공짜니까 한 번 해봐."),
-                PrimaryActionGate(GameSceneCombatHudCommandKind.BeginChange),
-
-                // Section 6 — the enemy's own Hit already ran synchronously as part of the
-                // Change gate above.
-                Dialogue(
-                    "아 … 따분하군. 따분해.",
-                    "이봐, 좀 더 매력적인 게임을 하고 싶지 않아?",
-                    "조금 더 악랄하고 … 강력한 … 그런 게임 말이야.",
-                    "좋지? 그래. 좋아할 줄 알았어. 내가 다 기쁘네.",
-                    "우측의 계약서를 클릭하면, 너의 악마 덱에 있는 악마 카드 중 2장을 뽑고 그 중 1명과 계약할 수 있지.",
-                    "나와 계약하자. 누구도 상상할 수 없는 강한 힘을 주지."),
-                ContractCandidateGate(DemonContractCatalog.AsmodeusKey),
-
-                Dialogue(
-                    "자, 계약은 성사됐다.",
-                    "악마와 계약하면 스테이지 내내 강력한 힘을 얻게 되지만, 그에 상응하는 대가도 함께 얻게 되지.",
-                    "나의 힘은 '자신의 차례를 시작할 때, 상대를 강제로 히트시키는 능력'이다.",
-                    "대신 '더 이상 7 이하의 카드'를 사용할 수 없지.",
-                    "계약할 때는 그런 말 없지 않았냐고? 이봐, 나는 악마라고.",
-                    "모든 악마들은 저마다의 능력과 대가를 가지고 있다. 원한다면, 좌측의 도감을 눌러 모든 악마들과 상대의 정보를 확인해봐.",
-                    "저 멍청이한테 카드 하나 선물해주자고."),
-                ContractOptionGate(AsmodeusForceHitOptionId),
-
-                Dialogue(
-                    "축하해. 첫 데뷔전을 성공적으로 치뤘군.",
-                    "이런 식으로 총 3번 승리하면 널 이 곳에서 내보내주지.",
-                    "스테이지 도중 깎인 영혼은 스테이지 끝났다고 자동으로 회복시켜주지 않으니 명심하도록.",
-                    "그럼 무운을 빌게. 또 만나자고.")
-            };
+            return steps;
         }
 
-        private static Step Dialogue(params string[] lines)
-        {
-            return Dialogue(isIntro: false, lines);
-        }
-
-        private static Step Dialogue(bool isIntro, params string[] lines)
+        private static Step BuildDialogueStep(TutorialStepEntry entry)
         {
             return new Step
             {
                 Kind = StepKind.Dialogue,
-                Lines = lines,
-                IsIntro = isIntro
+                Lines = entry.lines,
+                IsIntro = entry.isIntro,
+                DefersRoundTwoReveal = entry.defersRoundTwoReveal
             };
         }
 
-        private static Step PrimaryActionGate(GameSceneCombatHudCommandKind allowedAction)
+        private static Step BuildGateStep(TutorialStepEntry entry)
+        {
+            switch (entry.gateKind)
+            {
+                case TutorialGateKind.Hit:
+                    return PrimaryActionGate(GameSceneCombatHudCommandKind.Hit);
+                case TutorialGateKind.Stand:
+                    // Round 1's Stand gate: round 2's deal stays visually suppressed until
+                    // the following soul-loss recap dialogue finishes — see
+                    // RoundOneRecapCompleted/NotifyRoundTwoRevealReady.
+                    return PrimaryActionGate(
+                        GameSceneCombatHudCommandKind.Stand,
+                        suppressHandRenderOnEnter: true);
+                case TutorialGateKind.BeginChange:
+                    return PrimaryActionGate(GameSceneCombatHudCommandKind.BeginChange);
+                case TutorialGateKind.Revolver:
+                    return RevolverGate();
+                case TutorialGateKind.ContractCandidate:
+                    return ContractCandidateGate(entry.contractDefinitionKey);
+                case TutorialGateKind.ContractOption:
+                    return ContractOptionGate(entry.contractOptionId);
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(entry),
+                        entry.gateKind,
+                        "Unknown tutorial gate kind.");
+            }
+        }
+
+        private static Step PrimaryActionGate(
+            GameSceneCombatHudCommandKind allowedAction,
+            bool suppressHandRenderOnEnter = false)
         {
             return new Step
             {
                 Kind = StepKind.Gate,
-                OnEnter = gm => gm.SetTutorialActionRestriction(allowedAction),
+                OnEnter = gm =>
+                {
+                    gm.SetTutorialActionRestriction(allowedAction);
+                    if (suppressHandRenderOnEnter)
+                    {
+                        // Reused from the round-1 entrance suppression — keeps round 2's
+                        // deal invisible until RoundOneRecapDialogue finishes (see
+                        // RoundOneRecapCompleted/NotifyRoundTwoRevealReady), so the soul-loss
+                        // explanation reads before the next round's cards appear.
+                        gm.SuppressHandRenderUntilRoundOneStart();
+                    }
+                },
                 OnExit = gm => gm.SetTutorialActionRestriction(null)
             };
         }
@@ -289,12 +321,17 @@ namespace DiaBlackJack.GameScene
                 OnEnter = gm =>
                 {
                     gm.SetTutorialActionRestriction(BlockAllPrimaryActions);
-                    gm.SetTutorialRevolverForcedNumber(5);
+                    // Card use defaults to blocked for the whole tutorial — this is the one
+                    // gate that needs it open, since the player must click their own
+                    // revolver-ranked card to use it.
+                    gm.SetTutorialCardUseBlocked(false);
+                    gm.SetTutorialRevolverTargetNumber(RevolverTargetNumber);
                 },
                 OnExit = gm =>
                 {
                     gm.SetTutorialActionRestriction(null);
-                    gm.SetTutorialRevolverForcedNumber(null);
+                    gm.SetTutorialCardUseBlocked(true);
+                    gm.SetTutorialRevolverTargetNumber(null);
                 }
             };
         }
@@ -340,6 +377,7 @@ namespace DiaBlackJack.GameScene
             public StepKind Kind;
             public string[] Lines;
             public bool IsIntro;
+            public bool DefersRoundTwoReveal;
             public Action<GameManager> OnEnter;
             public Action<GameManager> OnExit;
         }

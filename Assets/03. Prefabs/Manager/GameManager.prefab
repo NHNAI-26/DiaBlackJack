@@ -113,6 +113,7 @@ MonoBehaviour:
   whiskeyDrinkSfxDelaySeconds: 0.93333334
   whiskeyDrinkSfxId: drinkWhiskey
   cameraViewController: {fileID: 0}
+  tutorialScript: {fileID: 11400000, guid: 44ac414656d658443a9417d773d95f7c, type: 2}
 --- !u!114 &1580428981478613470
 MonoBehaviour:
   m_ObjectHideFlags: 0

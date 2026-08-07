@@ -170,7 +170,7 @@ namespace DiaBlackJack.CoreLoop
                     CowardlyGamblerKey,
                     "겁쟁이 도박사",
                     EnemyGrade.Normal,
-                    3,
+                    4,
                     EnemyBehaviorPolicyCatalog.CowardlyGambler,
                     new[]
                     {

@@ -33,6 +33,7 @@ namespace DiaBlackJack.MainMenu.UI
             _view.ContinueRunRequested += RequestContinueRun;
             _view.ResumeReservationRequested += RequestResumeReservation;
             _view.ExitRequested += RequestExit;
+            _view.TutorialRequested += RequestTutorial;
             RefreshView();
         }
 
@@ -49,6 +50,7 @@ namespace DiaBlackJack.MainMenu.UI
             _view.ContinueRunRequested -= RequestContinueRun;
             _view.ResumeReservationRequested -= RequestResumeReservation;
             _view.ExitRequested -= RequestExit;
+            _view.TutorialRequested -= RequestTutorial;
         }
 
         public void RequestNewRun()
@@ -79,6 +81,27 @@ namespace DiaBlackJack.MainMenu.UI
         public void RequestExit()
         {
             Application.Quit();
+        }
+
+        public void RequestTutorial()
+        {
+            StageProgressionRuntime tutorialRuntime =
+                StageProgressionRuntime.CreateTutorialInstance();
+            RunSaveFlow flow = tutorialRuntime.SaveFlow;
+            if (!flow.TryRequestNewRun())
+            {
+                return;
+            }
+
+            if (flow.RequiresNewRunConfirmation && !flow.TryConfirmNewRun())
+            {
+                return;
+            }
+
+            if (!flow.IsMenuVisible)
+            {
+                tutorialRuntime.LoadBattleScene();
+            }
         }
 
         private void ProcessMenuAction(System.Func<bool> action)
