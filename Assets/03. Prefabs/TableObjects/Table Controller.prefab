@@ -1854,7 +1854,6 @@ MonoBehaviour:
   - {fileID: 5970126291640778163}
   codexBook: {fileID: 0}
   codexShopLocalPositionOffset: {x: 0.25, y: 0, z: 0}
-  goldPerWin: 3
   demonCardOfferCount: 2
   demonCardSpacing: 1.1
   normalCardOfferCount: 3
@@ -2176,15 +2175,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8926471034187765097, guid: f869929a665917242a3cf6d945943044, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 1.39
+      value: 1.728
       objectReference: {fileID: 0}
     - target: {fileID: 8926471034187765097, guid: f869929a665917242a3cf6d945943044, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.077
+      value: -0.022
       objectReference: {fileID: 0}
     - target: {fileID: 8926471034187765097, guid: f869929a665917242a3cf6d945943044, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.02
+      value: -0.138
       objectReference: {fileID: 0}
     - target: {fileID: 8926471034187765097, guid: f869929a665917242a3cf6d945943044, type: 3}
       propertyPath: m_LocalRotation.w
