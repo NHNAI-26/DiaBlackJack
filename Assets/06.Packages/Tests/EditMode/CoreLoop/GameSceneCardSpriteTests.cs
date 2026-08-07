@@ -177,6 +177,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         [TestCase("Assets/00. Scenes/StageTest.unity")]
         [TestCase("Assets/00. Scenes/CoreLoopTest.unity")]
         [TestCase("Assets/00. Scenes/GameScene.unity")]
+        [TestCase("Assets/00. Scenes/MainMenuScene.unity")]
         public void CC_U10_EntrySceneContainsValidCardContentBootstrap(string scenePath)
         {
             Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
@@ -194,9 +195,37 @@ namespace DiaBlackJack.CoreLoop.Tests
                     .FindProperty("enemyCatalog")
                     .objectReferenceValue as EnemyContentCatalogSO;
                 Assert.That(enemyCatalog, Is.Not.Null, scenePath);
+                EnemyCombatProfileCatalog enemyProfiles =
+                    enemyCatalog.BuildRuntimeCatalog();
                 Assert.That(
-                    enemyCatalog.BuildRuntimeCatalog().Profiles,
+                    enemyProfiles.Profiles,
                     Has.Count.EqualTo(6));
+
+                if (scenePath == "Assets/00. Scenes/MainMenuScene.unity")
+                {
+                    DiaBlackJack.StageProgression.UI.StageProgressionRuntime runtime =
+                        bootstrap.GetComponent<
+                            DiaBlackJack.StageProgression.UI.StageProgressionRuntime>();
+                    Assert.That(runtime, Is.Not.Null, scenePath);
+                    DefaultExecutionOrder bootstrapOrder =
+                        typeof(CardContentBootstrap).GetCustomAttribute<
+                            DefaultExecutionOrder>();
+                    DefaultExecutionOrder runtimeOrder =
+                        typeof(DiaBlackJack.StageProgression.UI.StageProgressionRuntime)
+                            .GetCustomAttribute<DefaultExecutionOrder>();
+                    Assert.That(bootstrapOrder, Is.Not.Null, scenePath);
+                    Assert.That(runtimeOrder, Is.Not.Null, scenePath);
+                    Assert.That(
+                        bootstrapOrder.order,
+                        Is.LessThan(runtimeOrder.order),
+                        scenePath);
+                    Assert.That(
+                        enemyProfiles.GetByKey(
+                            EnemyCombatProfileCatalog.GunslingerKey)
+                            .MaximumSoul,
+                        Is.EqualTo(4),
+                        scenePath);
+                }
             }
             finally
             {
