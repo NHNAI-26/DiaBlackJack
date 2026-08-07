@@ -34,3 +34,14 @@
 - HUD 빌더 재현성 갱신
 
 검증: 에셋 테스트, 빌더 실행 전후 프리팹 해시 비교, GameScene validation, 해상도별 수동 확인.
+
+## CP-04 — Prompt와 선택 UI 표시 시점 동기화
+
+- 입력 잠금 중 Prompt 선택 상태의 전체 HUD를 `Hidden` 처리
+- 사탄·수정 구슬·카드 교체 월드 선택기를 같은 HUD 가시성에 연결
+- 손패 직접 선택 명령과 강조를 잠금 동안 제거하고 해제 렌더에서 복구
+- CoreLoop 규칙, 선택 결과, 카메라·무기 연출 순서 유지
+
+검증: `[Category("CP04")]`, `CombatPromptTests`,
+`GameSceneCombatHudPresentationTests`, 카드 선택 관련 테스트,
+CoreLoop EditMode 어셈블리, GameScene 해상도별 수동 확인.

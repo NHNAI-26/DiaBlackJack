@@ -178,10 +178,13 @@ namespace DiaBlackJack.GameScene
                 return CreateHidden();
             }
 
+            if (inputLocked && core.SelectionPrompt.HasValue)
+            {
+                return CreateHidden();
+            }
+
             string automaticCardResult = FormatAutomaticCardResult(core.AutomaticCardResult);
-            CombatPromptRequest? selectionPrompt = inputLocked
-                ? null
-                : core.SelectionPrompt;
+            CombatPromptRequest? selectionPrompt = core.SelectionPrompt;
             if (core.State == CoreLoopState.BattleEnded)
             {
                 return new GameSceneCombatHudViewModel(
