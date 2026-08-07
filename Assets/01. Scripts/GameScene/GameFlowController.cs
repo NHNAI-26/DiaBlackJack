@@ -49,6 +49,7 @@ namespace DiaBlackJack.GameScene
         private bool _waitingForRoundOneReveal;
         private bool _isProcessingInput;
         private bool _charactersEntranceWaiting;
+        private bool _pendingHideAfterDoorAnimation;
         private bool _hasPresentedCharacters;
         private bool _playCharacterExitBeforeEntrance;
         private bool _characterExitWaitingForEntrance;
@@ -148,6 +149,23 @@ namespace DiaBlackJack.GameScene
             }
 
             RefreshFlow();
+        }
+
+        /// <summary>
+        /// A freshly code-spawned <see cref="StageProgressionRuntime"/> (e.g. the
+        /// tutorial's throwaway, in-memory-backed instance created just before this scene
+        /// loads) can occasionally still be settling relative to this object's own
+        /// <see cref="Start"/> — if <see cref="TryAdoptFormalRun"/> loses that race, nothing
+        /// else ever retries it, and the whole screen stays permanently stuck (no combat
+        /// transition, no entrance animation, no dialogue). Retry every frame until it
+        /// succeeds; a no-op once <c>_session</c> is set.
+        /// </summary>
+        private void Update()
+        {
+            if (_session == null && TryAdoptFormalRun())
+            {
+                RefreshFlow();
+            }
         }
 
         private void OnDisable()
@@ -732,9 +750,18 @@ namespace DiaBlackJack.GameScene
 
             bool combatCharactersReady =
                 gameManager == null || !gameManager.HasPendingTutorialIntro;
+            // The tutorial's forced first stage skips OpponentSelection entirely, so
+            // StartingDemonReveal -> Combat happens in a single RefreshFlow hop — the
+            // merchant-form character is already on screen (shown for the reveal) at the
+            // exact moment combatCharactersReady flips false (tutorial intro pending).
+            // Normal play never hits "already visible" + "not ready yet" at once (it
+            // always has an OpponentSelection hop in between, or never sets this flag at
+            // all), so skipExitAnimation only ever applies here.
+            bool isTutorialIntroPending = isCombat && !combatCharactersReady;
             UpdateCharactersVisibility(
                 (isCombat && combatCharactersReady) || isStartingReveal ||
-                CurrentScreen == GameFlowScreen.Shop);
+                CurrentScreen == GameFlowScreen.Shop,
+                skipExitAnimation: isTutorialIntroPending);
 
             if (!_characterExitWaitingForEntrance &&
                 (moodController == null ||
@@ -820,7 +847,9 @@ namespace DiaBlackJack.GameScene
             RefreshFlow(enemyExitAlreadyCompleted: true);
         }
 
-        private void UpdateCharactersVisibility(bool shouldShow)
+        private void UpdateCharactersVisibility(
+            bool shouldShow,
+            bool skipExitAnimation = false)
         {
             if (charactersRoot == null)
             {
@@ -851,6 +880,21 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            if (_charactersEntranceWaiting &&
+                moodController != null &&
+                moodController.IsEntranceDoorAnimationPlaying)
+            {
+                // The very first characters-appear call is still waiting on the
+                // one-shot door-opening animation. Cancelling _charactersEntranceWaiting
+                // now (as the code below does) would make
+                // HandleEntranceDoorAnimationCompleted() silently drop the entrance when
+                // the door finishes later — permanently skipping it, since nothing else
+                // ever retries a first-time entrance. Let the door keep playing and
+                // resolve to hidden once it completes instead.
+                _pendingHideAfterDoorAnimation = true;
+                return;
+            }
+
             _playCharacterExitBeforeEntrance = false;
             _characterExitWaitingForEntrance = false;
             CancelEnemyAppearanceDelay();
@@ -867,6 +911,12 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            if (skipExitAnimation)
+            {
+                charactersRoot.SetActive(false);
+                return;
+            }
+
             enemyCharacter.PlayExitAnimation(() =>
             {
                 if (charactersRoot != null)
@@ -880,6 +930,7 @@ namespace DiaBlackJack.GameScene
         {
             StopEnemyAppearanceDelayRoutine();
             _charactersEntranceWaiting = true;
+            _pendingHideAfterDoorAnimation = false;
 
             bool shouldPlayExit =
                 _playCharacterExitBeforeEntrance &&
@@ -901,6 +952,13 @@ namespace DiaBlackJack.GameScene
         {
             if (!_charactersEntranceWaiting || !ShouldShowCharacters())
             {
+                return;
+            }
+
+            if (_pendingHideAfterDoorAnimation)
+            {
+                _pendingHideAfterDoorAnimation = false;
+                _charactersEntranceWaiting = false;
                 return;
             }
 

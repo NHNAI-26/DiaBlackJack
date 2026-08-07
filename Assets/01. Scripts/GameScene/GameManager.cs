@@ -1038,6 +1038,26 @@ namespace DiaBlackJack.GameScene
                 EndCodexSwitchInputLock();
             }
 
+            // The narrator owns every click while active regardless of presentation
+            // input-lock state — it paces scripted tutorial dialogue that plays *before*
+            // any character entrance (e.g. the very first intro lines, while input is
+            // still locked waiting for that entrance). Checking this before the
+            // IsModalInputBlocked/_inputLocked early-returns below is required, not
+            // cosmetic: those returns used to make the narrator permanently unclickable
+            // whenever a presentation was holding input locked, deadlocking the tutorial
+            // (nothing else was ever going to unlock input, since unlocking depends on the
+            // entrance that only starts once this dialogue is dismissed).
+            if (tutorialNarrator != null && tutorialNarrator.IsActive)
+            {
+                Mouse tutorialMouse = Mouse.current;
+                if (tutorialMouse != null && tutorialMouse.leftButton.wasPressedThisFrame)
+                {
+                    tutorialNarrator.HandleClick();
+                }
+
+                return;
+            }
+
             if (IsModalInputBlocked)
             {
                 UpdateDeckStackHover(null);
@@ -1206,21 +1226,6 @@ namespace DiaBlackJack.GameScene
                     : pointedCombatCommand;
             UpdateCombatCommandHover(effectiveCombatCommandHover);
             UpdateHoverDescriptionTarget(pointedHoverDescriptionTarget);
-
-            // The narrator still owns every click while active (advancing dialogue), but
-            // hover updates above already ran normally — other objects (deck, codex,
-            // contract paper, hover-description targets) still preview on hover during
-            // dialogue, they just can't be clicked into their own actions.
-            if (tutorialNarrator != null && tutorialNarrator.IsActive)
-            {
-                Mouse tutorialMouse = Mouse.current;
-                if (tutorialMouse != null && tutorialMouse.leftButton.wasPressedThisFrame)
-                {
-                    tutorialNarrator.HandleClick();
-                }
-
-                return;
-            }
 
             if (_inputLocked || _choosingLighterRemoval)
             {
@@ -3791,8 +3796,6 @@ namespace DiaBlackJack.GameScene
                 yield return WaitForAnimationOrSeconds(
                     playedAnimation,
                     waitSeconds);
-
-				_tutorialDirector?.Observe();
 
 				if (immediateSoulLossRecords.Count > 0)
 				{
