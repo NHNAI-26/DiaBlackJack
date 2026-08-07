@@ -3,7 +3,7 @@ Shader "DiaBlackJack/CardDeckStack"
     Properties
     {
         [MainTexture] _TopTex ("Top Card Sprite", 2D) = "white" {}
-        [MainColor] _TopColor ("Top Tint", Color) = (1, 1, 1, 1)
+        [MainColor] [HDR] _TopColor ("Top Tint", Color) = (1, 1, 1, 1)
         _SideColor ("Side Card Body", Color) = (0.77, 0.72, 0.62, 1)
         _LayerLineColor ("Side Layer Lines", Color) = (0.18, 0.13, 0.1, 1)
         _BottomColor ("Bottom Color", Color) = (0.12, 0.09, 0.08, 1)

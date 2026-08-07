@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: "\uC0AC\uAE30\uAFBC"
   portrait: {fileID: 2911093068676753536, guid: 22aa22444d6050045815396b307d8760, type: 3}
   speechProfile: {fileID: 11400000, guid: 7da099c11a64dc24c8313dba0087c9be, type: 2}
-  deckTopTint: {r: 1.35, g: 1.35, b: 1.35, a: 1}
+  deckTopTint: {r: 0.45600677, g: 0.8679245, b: 0.42168033, a: 1}
   grade: 1
   maximumSoul: 7
   defeatGold: 7
