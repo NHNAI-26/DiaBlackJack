@@ -938,6 +938,19 @@ namespace DiaBlackJack.GameScene
             EnableHoverVisualOnly();
         }
 
+        /// <summary>
+        /// Sets the resting scale used by hover feedback. World-space shop layouts call this after
+        /// applying their authored transform so hover exit and sold-out refreshes restore that scale.
+        /// </summary>
+        internal void SetBaseScale(Vector3 baseScale)
+        {
+            _baseScale = baseScale;
+            StopRevealSequence();
+            _hovered = false;
+            ResetHoverScales();
+            _targetScale = HoverRestingScale();
+        }
+
         internal void SetUnlitPresentation()
         {
             CreateUnlitPresentationMaterial(

@@ -4212,8 +4212,8 @@ namespace DiaBlackJack.GameScene
                     RenderHandsAndTotals(vm, showTransientEffectSources);
             }
 
-            RenderCrystalOrbSelection(vm);
-            RenderSatanNumberSelection(vm);
+            RenderCrystalOrbSelection(vm, combat);
+            RenderSatanNumberSelection(vm, combat);
 
             bool rendersDeferredAttackVisual =
                 deferRoundResultPresentation &&
@@ -4381,7 +4381,8 @@ namespace DiaBlackJack.GameScene
                 anyRevealAnimated |= playerHand.Render(
                     playerCards,
                     vm.PlayerDemonCards,
-                    showTransientEffectSources);
+                    showTransientEffectSources,
+                    showDirectSelectionCommands: !_inputLocked);
             }
 
             if (enemyHand != null)
@@ -4389,7 +4390,8 @@ namespace DiaBlackJack.GameScene
                 anyRevealAnimated |= enemyHand.Render(
                     enemyCards,
                     vm.EnemyDemonCards,
-                    showTransientEffectSources);
+                    showTransientEffectSources,
+                    showDirectSelectionCommands: !_inputLocked);
             }
 
             ClearSatanNumberGuessSuppressionIfTargetIsGone(vm);
@@ -4645,14 +4647,26 @@ namespace DiaBlackJack.GameScene
             return false;
         }
 
-        private void RenderCrystalOrbSelection(GameSceneViewModel vm)
+        internal static bool ShouldShowPromptSelection(
+            GameSceneCombatHudViewModel combat)
+        {
+            return combat != null &&
+                combat.Mode != GameSceneCombatHudMode.Hidden &&
+                combat.SelectionPrompt.HasValue;
+        }
+
+        private void RenderCrystalOrbSelection(
+            GameSceneViewModel vm,
+            GameSceneCombatHudViewModel combat)
         {
             if (crystalOrbSelection == null)
             {
                 return;
             }
 
-            if (vm == null || vm.CrystalOrbCandidates.Count == 0)
+            if (!ShouldShowPromptSelection(combat) ||
+                vm == null ||
+                vm.CrystalOrbCandidates.Count == 0)
             {
                 crystalOrbSelection.Hide();
                 return;
@@ -4666,14 +4680,19 @@ namespace DiaBlackJack.GameScene
             crystalOrbSelection.Render(vm.CrystalOrbCandidates, _camera);
         }
 
-        private void RenderSatanNumberSelection(GameSceneViewModel vm)
+        private void RenderSatanNumberSelection(
+            GameSceneViewModel vm,
+            GameSceneCombatHudViewModel combat)
         {
             if (satanNumberSelection == null)
             {
                 return;
             }
 
-            if (vm == null || vm.SatanNumberCandidates.Count == 0)
+            if (!ShouldShowPromptSelection(combat) ||
+                combat.Mode != GameSceneCombatHudMode.SatanNumberSelection ||
+                vm == null ||
+                vm.SatanNumberCandidates.Count == 0)
             {
                 satanNumberSelection.Hide();
                 StopSatanNumberSelectionHeartSlow();

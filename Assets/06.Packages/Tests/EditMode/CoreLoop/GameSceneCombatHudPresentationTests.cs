@@ -1012,6 +1012,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("CP04")]
         public void DCUI03_U01_SatanShowsTenCardsAndBrandsFirstDeclaration()
         {
             CoreLoopBattle battle = CreateStartedContractBattle(
@@ -1054,8 +1055,22 @@ namespace DiaBlackJack.CoreLoop.Tests
                     isStageBattle: false,
                     isShopOpen: false,
                     inputLocked: false);
+            GameSceneCombatHudViewModel lockedHud =
+                GameSceneCombatHudPresenter.Create(
+                    first.Core,
+                    isStageBattle: false,
+                    isShopOpen: false,
+                    inputLocked: true);
+            Assert.That(lockedHud.Mode,
+                Is.EqualTo(GameSceneCombatHudMode.Hidden));
+            Assert.That(lockedHud.SelectionPrompt, Is.Null);
+            Assert.That(lockedHud.OptionActions, Is.Empty);
+            Assert.That(GameManager.ShouldShowPromptSelection(lockedHud),
+                Is.False);
             Assert.That(firstHud.Mode,
                 Is.EqualTo(GameSceneCombatHudMode.SatanNumberSelection));
+            Assert.That(GameManager.ShouldShowPromptSelection(firstHud),
+                Is.True);
             Assert.That(firstHud.SelectionPrompt?.CurrentCount, Is.EqualTo(0));
             Assert.That(firstHud.SelectionPrompt?.RequiredCount, Is.EqualTo(2));
             Assert.That(firstHud.OptionActions.Count, Is.EqualTo(1));
@@ -1696,6 +1711,65 @@ namespace DiaBlackJack.CoreLoop.Tests
                     Is.EqualTo(command.Kind));
                 Assert.That(view.DirectSelectionCommand.Value.OptionId,
                     Is.EqualTo(7));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        [Category("CP04")]
+        public void CP04_U03_CardHandHidesAndRestoresDirectSelectionCommand()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(TablePrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                CardHand hand = instance.GetComponentsInChildren<CardHand>(true)
+                    .Single(candidate => candidate.name == "PlayerHand");
+                hand.gameObject.SetActive(true);
+                var command = new GameSceneCombatHudCommand(
+                    GameSceneCombatHudCommandKind.ResolveAutomaticCardChoice,
+                    optionId: 7,
+                    interactionId: 11);
+                var card = new GameSceneCardViewModel(
+                    cardId: 21,
+                    rank: 4,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    displayName: "Target",
+                    directSelectionCommand: command);
+                var cards = new[] { card };
+                var demonCards = new GameSceneDemonCardViewModel[0];
+
+                hand.Render(
+                    cards,
+                    demonCards,
+                    showTransientEffectSources: true,
+                    showDirectSelectionCommands: false);
+                Assert.That(hand.TryGetCard(card.CardId, out CardView view),
+                    Is.True);
+                Assert.That(view.DirectSelectionCommand, Is.Null);
+                FieldInfo highlightedField = typeof(CardView).GetField(
+                    "_isEffectHighlighted",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(highlightedField, Is.Not.Null);
+                Assert.That(highlightedField.GetValue(view), Is.False);
+
+                hand.Render(
+                    cards,
+                    demonCards,
+                    showTransientEffectSources: true,
+                    showDirectSelectionCommands: true);
+                Assert.That(view.DirectSelectionCommand.HasValue, Is.True);
+                Assert.That(view.DirectSelectionCommand.Value.Kind,
+                    Is.EqualTo(command.Kind));
+                Assert.That(view.DirectSelectionCommand.Value.OptionId,
+                    Is.EqualTo(command.OptionId));
+                Assert.That(highlightedField.GetValue(view), Is.True);
             }
             finally
             {

@@ -378,6 +378,17 @@ namespace DiaBlackJack.GameScene
             GameSceneCardViewModel card,
             bool showTransientEffectSource)
         {
+            Bind(
+                card,
+                showTransientEffectSource,
+                showDirectSelectionCommand: true);
+        }
+
+        internal void Bind(
+            GameSceneCardViewModel card,
+            bool showTransientEffectSource,
+            bool showDirectSelectionCommand)
+        {
             if (card == null)
             {
                 return;
@@ -411,10 +422,12 @@ namespace DiaBlackJack.GameScene
             DefinitionKey = card.DefinitionKey;
             CanUse = card.CanUse;
             CardEffectChoiceOptionId = card.CardEffectChoiceOptionId;
-            DirectSelectionCommand = card.DirectSelectionCommand;
+            DirectSelectionCommand = showDirectSelectionCommand
+                ? card.DirectSelectionCommand
+                : null;
             _isEffectSource = isEffectSource;
             _isEffectHighlighted = _isEffectSource ||
-                card.DirectSelectionCommand.HasValue;
+                DirectSelectionCommand.HasValue;
             _isUsed = card.IsUsed;
             _hoverOutlineState = card.HoverOutlineState;
             _hasBoundCard = true;

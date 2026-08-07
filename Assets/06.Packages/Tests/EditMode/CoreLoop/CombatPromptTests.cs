@@ -163,6 +163,38 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("CP04")]
+        public void CP04_U01_LockedSelectionHidesEntireHudUntilUnlocked()
+        {
+            CoreLoopBattle battle = CreateStartedBattle();
+            Assert.That(battle.TryBeginPlayerChange(), Is.True);
+            CoreLoopViewModel changing = CoreLoopPresenter.Create(battle);
+
+            GameSceneCombatHudViewModel locked =
+                GameSceneCombatHudPresenter.Create(
+                    changing,
+                    isStageBattle: false,
+                    isShopOpen: false,
+                    inputLocked: true);
+            GameSceneCombatHudViewModel unlocked =
+                GameSceneCombatHudPresenter.Create(
+                    changing,
+                    isStageBattle: false,
+                    isShopOpen: false,
+                    inputLocked: false);
+
+            Assert.That(locked.Mode, Is.EqualTo(GameSceneCombatHudMode.Hidden));
+            Assert.That(locked.SelectionPrompt, Is.Null);
+            Assert.That(locked.PrimaryActions, Is.Empty);
+            Assert.That(locked.OptionActions, Is.Empty);
+            Assert.That(locked.ContractCandidates, Is.Empty);
+            Assert.That(unlocked.Mode,
+                Is.EqualTo(GameSceneCombatHudMode.DiegeticSelection));
+            Assert.That(unlocked.SelectionPrompt?.Id,
+                Is.EqualTo(CombatPromptId.ChangeCard));
+        }
+
+        [Test]
         public void CP01_U05_PromptPrefabAndHudHaveSingleRequiredPromptView()
         {
             GameObject promptPrefab =
