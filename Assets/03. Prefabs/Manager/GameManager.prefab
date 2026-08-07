@@ -68,6 +68,7 @@ MonoBehaviour:
   tableCombatCommands: {fileID: 0}
   contractPapers: {fileID: 0}
   mammonDie: {fileID: 0}
+  actionSkullPrefab: {fileID: 7342495389051088161, guid: 731420770a9692242916321d36f85689, type: 3}
   enemyProfileKey: gunslinger
   speechSeed: 20260804
   terminalSpeechHoldSeconds: 1.5

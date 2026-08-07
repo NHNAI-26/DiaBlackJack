@@ -56,6 +56,9 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private ContractPaperView contractPapers;
         [SerializeField] private MammonDieView mammonDie;
 
+        [Header("Action skull markers")]
+        [SerializeField] private CombatActionSkullView actionSkullPrefab;
+
         [Header("Standalone enemy profile")]
         [SerializeField] private string enemyProfileKey =
             EnemyCombatProfileCatalog.GunslingerKey;
@@ -234,6 +237,13 @@ namespace DiaBlackJack.GameScene
         private CoreLoopBattle _terminalSpeechBattle;
         private bool _terminalSpeechHoldActive;
         private bool _terminalSpeechHoldCompleted;
+        private CombatActionSkullView _playerActionSkull;
+        private CombatActionSkullView _enemyActionSkull;
+        private int _actionSkullRoundNumber = -1;
+        private CombatActionSkullCueKey? _lastEnemyActionSkullCue;
+        private Coroutine _terminalActionSkullRoutine;
+        private CoreLoopBattle _terminalActionSkullBattle;
+        private CoreLoopBattle _completedTerminalActionSkullBattle;
         private bool _roundComparisonActive;
         private PlayerMammonComparisonPlan _pendingPlayerMammonComparison;
         private CardView _comparisonHighlightedCard;
@@ -826,6 +836,7 @@ namespace DiaBlackJack.GameScene
             mammonDie ??= FindFirstObjectByType<MammonDieView>(
                 FindObjectsInactive.Include);
             EnsureMammonDie();
+            EnsureActionSkulls();
 
             if (hud != null)
             {
@@ -1000,6 +1011,7 @@ namespace DiaBlackJack.GameScene
             }
 
             ResetEnemySpeech();
+            ResetActionSkulls();
         }
 
         // Diegetic input: hover any card to enlarge it (usable cards also show a HUD badge), click a
@@ -1275,7 +1287,12 @@ namespace DiaBlackJack.GameScene
                 !_tutorialCardUseBlocked)
             {
                 int cardId = pointedBattleCard.CardId;
-                ProcessInput(() => TryBeginPlayerCardUse(cardId));
+                ProcessInput(
+                    () => TryBeginPlayerCardUse(cardId),
+                    playerActionSkull: new CombatActionSkullRequest(
+                        CombatantSide.Player,
+                        CombatActionSkullTargetKind.NormalCard,
+                        cardId));
                 return;
             }
 
@@ -1284,8 +1301,12 @@ namespace DiaBlackJack.GameScene
                 pointedDemonCard.CanUse)
             {
                 int cardId = pointedDemonCard.CardId;
-                ProcessInput(() =>
-                    TryBeginPlayerActiveDemonContractAction(cardId));
+                ProcessInput(
+                    () => TryBeginPlayerActiveDemonContractAction(cardId),
+                    playerActionSkull: new CombatActionSkullRequest(
+                        CombatantSide.Player,
+                        CombatActionSkullTargetKind.DemonCard,
+                        cardId));
                 return;
             }
 
@@ -2122,6 +2143,8 @@ namespace DiaBlackJack.GameScene
                 Color tint = catalog.GetByKey(_activeEnemyProfileKey).DeckTopTint;
                 enemyRemainingDeck?.SetTopTint(tint);
                 enemyDiscardDeck?.SetTopTint(tint);
+                _enemyActionSkull?.SetTint(
+                    catalog.GetByKey(_activeEnemyProfileKey).SkullTint);
             }
             catch (Exception exception)
                 when (exception is ArgumentException ||
@@ -2129,6 +2152,211 @@ namespace DiaBlackJack.GameScene
             {
                 Debug.LogWarning(exception.Message, this);
             }
+        }
+
+        private void EnsureActionSkulls()
+        {
+            if (actionSkullPrefab == null)
+            {
+                return;
+            }
+
+            if (_playerActionSkull == null)
+            {
+                _playerActionSkull = Instantiate(actionSkullPrefab, transform);
+                _playerActionSkull.name = "PlayerActionSkull";
+                _playerActionSkull.Initialize(
+                    Color.white,
+                    ResolveActionSkullHome(CombatantSide.Player));
+            }
+
+            if (_enemyActionSkull == null)
+            {
+                _enemyActionSkull = Instantiate(actionSkullPrefab, transform);
+                _enemyActionSkull.name = "EnemyActionSkull";
+                _enemyActionSkull.Initialize(
+                    ResolveEnemyActionSkullTint(),
+                    ResolveActionSkullHome(CombatantSide.Enemy));
+            }
+        }
+
+        private Color ResolveEnemyActionSkullTint()
+        {
+            EnemyContentCatalogSO catalog =
+                CardContentBootstrap.Instance?.EnemyCatalog;
+            if (catalog == null ||
+                string.IsNullOrWhiteSpace(_activeEnemyProfileKey))
+            {
+                return Color.white;
+            }
+
+            try
+            {
+                return catalog.GetByKey(_activeEnemyProfileKey).SkullTint;
+            }
+            catch (Exception exception)
+                when (exception is ArgumentException ||
+                      exception is KeyNotFoundException)
+            {
+                Debug.LogWarning(exception.Message, this);
+                return Color.white;
+            }
+        }
+
+        private Vector3 ResolveActionSkullHome(CombatantSide side)
+        {
+            CardHand hand = side == CombatantSide.Player
+                ? playerHand
+                : enemyHand;
+            if (hand != null)
+            {
+                return hand.transform.position + Vector3.up * 0.18f;
+            }
+
+            return transform.position + new Vector3(
+                side == CombatantSide.Player ? -0.5f : 0.5f,
+                0.18f,
+                0f);
+        }
+
+        private void ResetActionSkulls()
+        {
+            _terminalActionSkullRoutine = null;
+            _terminalActionSkullBattle = null;
+            _completedTerminalActionSkullBattle = null;
+            _actionSkullRoundNumber = -1;
+            _lastEnemyActionSkullCue = null;
+            _playerActionSkull?.ResetView(
+                ResolveActionSkullHome(CombatantSide.Player));
+            _enemyActionSkull?.ResetView(
+                ResolveActionSkullHome(CombatantSide.Enemy));
+        }
+
+        private void EnsureActionSkullRound(int roundNumber)
+        {
+            EnsureActionSkulls();
+            if (roundNumber < 1 || roundNumber == _actionSkullRoundNumber)
+            {
+                return;
+            }
+
+            _actionSkullRoundNumber = roundNumber;
+            _lastEnemyActionSkullCue = null;
+            _playerActionSkull?.ResetView(
+                ResolveActionSkullHome(CombatantSide.Player));
+            _enemyActionSkull?.ResetView(
+                ResolveActionSkullHome(CombatantSide.Enemy));
+        }
+
+        private bool TryMoveEnemyActionSkull(GameSceneViewModel vm)
+        {
+            if (vm == null ||
+                !CombatActionSkullPresenter.TryCreateEnemyRequest(
+                    vm.Core.RoundNumber,
+                    vm.PublicActionOrdinal,
+                    vm.Core.State,
+                    vm.LastPublicAction,
+                    vm.LastPublicActionSourceCardId,
+                    vm.EnemyActionSkullDecision,
+                    _lastEnemyActionSkullCue,
+                    out CombatActionSkullRequest request,
+                    out CombatActionSkullCueKey cue) ||
+                !TryMoveActionSkull(request, vm.Core.RoundNumber))
+            {
+                return false;
+            }
+
+            _lastEnemyActionSkullCue = cue;
+            return true;
+        }
+
+        private bool TryMoveActionSkull(
+            CombatActionSkullRequest request,
+            int? roundNumber = null)
+        {
+            EnsureActionSkullRound(
+                roundNumber ?? Battle?.RoundNumber ?? _actionSkullRoundNumber);
+            CombatActionSkullView skull = request.Side == CombatantSide.Player
+                ? _playerActionSkull
+                : _enemyActionSkull;
+            if (skull == null ||
+                !TryResolveActionSkullTarget(
+                    request,
+                    out Transform target,
+                    out Vector3 offset))
+            {
+                return false;
+            }
+
+            return skull.MoveTo(target, offset) != null;
+        }
+
+        private bool TryResolveActionSkullTarget(
+            CombatActionSkullRequest request,
+            out Transform target,
+            out Vector3 offset)
+        {
+            target = null;
+            offset = Vector3.up * 0.14f;
+            GameSceneCombatHudCommandKind commandKind;
+            switch (request.TargetKind)
+            {
+                case CombatActionSkullTargetKind.Hit:
+                    commandKind = GameSceneCombatHudCommandKind.Hit;
+                    break;
+                case CombatActionSkullTargetKind.Stand:
+                    commandKind = GameSceneCombatHudCommandKind.Stand;
+                    break;
+                case CombatActionSkullTargetKind.Change:
+                    commandKind = GameSceneCombatHudCommandKind.BeginChange;
+                    break;
+                case CombatActionSkullTargetKind.NormalCard:
+                {
+                    CardHand hand = request.Side == CombatantSide.Player
+                        ? playerHand
+                        : enemyHand;
+                    if (hand == null ||
+                        !request.CardId.HasValue ||
+                        !hand.TryGetCard(request.CardId.Value, out CardView card))
+                    {
+                        return false;
+                    }
+
+                    target = card.transform;
+                    return true;
+                }
+                case CombatActionSkullTargetKind.DemonCard:
+                {
+                    CardHand hand = request.Side == CombatantSide.Player
+                        ? playerHand
+                        : enemyHand;
+                    if (hand == null ||
+                        !request.CardId.HasValue ||
+                        !hand.TryGetDemonCard(
+                            request.CardId.Value,
+                            out DemonCardView card))
+                    {
+                        return false;
+                    }
+
+                    target = card.transform;
+                    return true;
+                }
+                default:
+                    return false;
+            }
+
+            TableCombatCommandView command =
+                tableCombatCommands?.GetView(commandKind);
+            if (command == null)
+            {
+                return false;
+            }
+
+            target = command.transform;
+            offset = CombatActionSkullPresenter.ResolveSharedButtonOffset(
+                request.Side);
+            return true;
         }
 
         private BlackjackDeck CreatePlayerDeck(int deckSeed)
@@ -3066,13 +3294,25 @@ namespace DiaBlackJack.GameScene
             switch (command.Kind)
             {
                 case GameSceneCombatHudCommandKind.Hit:
-                    ProcessInput(TryPlayerHit);
+                    ProcessInput(
+                        TryPlayerHit,
+                        playerActionSkull: new CombatActionSkullRequest(
+                            CombatantSide.Player,
+                            CombatActionSkullTargetKind.Hit));
                     break;
                 case GameSceneCombatHudCommandKind.Stand:
-                    ProcessInput(TryPlayerStand);
+                    ProcessInput(
+                        TryPlayerStand,
+                        playerActionSkull: new CombatActionSkullRequest(
+                            CombatantSide.Player,
+                            CombatActionSkullTargetKind.Stand));
                     break;
                 case GameSceneCombatHudCommandKind.BeginChange:
-                    ProcessInput(TryBeginPlayerChange);
+                    ProcessInput(
+                        TryBeginPlayerChange,
+                        playerActionSkull: new CombatActionSkullRequest(
+                            CombatantSide.Player,
+                            CombatActionSkullTargetKind.Change));
                     break;
                 case GameSceneCombatHudCommandKind.SelectChangedCard:
                     ProcessInput(() => TrySelectChangedCard(command.OptionId));
@@ -3108,8 +3348,13 @@ namespace DiaBlackJack.GameScene
                         onAccepted);
                     break;
                 case GameSceneCombatHudCommandKind.BeginActiveDemonContractAction:
-                    ProcessInput(() => TryBeginPlayerActiveDemonContractAction(
-                        command.OptionId));
+                    ProcessInput(
+                        () => TryBeginPlayerActiveDemonContractAction(
+                            command.OptionId),
+                        playerActionSkull: new CombatActionSkullRequest(
+                            CombatantSide.Player,
+                            CombatActionSkullTargetKind.DemonCard,
+                            command.OptionId));
                     break;
                 case GameSceneCombatHudCommandKind.Restart:
                     ProcessInput(RestartRun);
@@ -3129,7 +3374,10 @@ namespace DiaBlackJack.GameScene
             }
         }
 
-        private void ProcessInput(Func<bool> action, Action onAccepted = null)
+        private void ProcessInput(
+            Func<bool> action,
+            Action onAccepted = null,
+            CombatActionSkullRequest? playerActionSkull = null)
         {
             if (IsModalInputBlocked || _inputLocked || action == null)
             {
@@ -3152,8 +3400,16 @@ namespace DiaBlackJack.GameScene
             }
 
             bool accepted = action();
+            bool movedPlayerActionSkull = false;
             if (accepted)
             {
+                if (playerActionSkull.HasValue)
+                {
+                    movedPlayerActionSkull = TryMoveActionSkull(
+                        playerActionSkull.Value,
+                        timelineBaseline?.Core.RoundNumber);
+                }
+
                 onAccepted?.Invoke();
             }
 
@@ -3178,7 +3434,9 @@ namespace DiaBlackJack.GameScene
 
             if (accepted && Application.isPlaying && _timeline.Count > 0)
             {
-                StartCoroutine(PlayTimeline(timelineBaseline));
+                StartCoroutine(PlayTimeline(
+                    timelineBaseline,
+                    movedPlayerActionSkull));
             }
             else
             {
@@ -3358,12 +3616,20 @@ namespace DiaBlackJack.GameScene
             _timeline.Add(GameScenePresenter.Create(Battle, _activeEnemyProfileKey));
         }
 
-        private IEnumerator PlayTimeline(GameSceneViewModel timelineBaseline)
+        private IEnumerator PlayTimeline(
+            GameSceneViewModel timelineBaseline,
+            bool waitForPlayerActionSkull)
         {
             List<GameSceneViewModel> timeline =
                 new List<GameSceneViewModel>(_timeline);
             _timeline.Clear();
             GameSceneViewModel pendingKnifeReveal = null;
+
+            if (waitForPlayerActionSkull && _playerActionSkull != null)
+            {
+                yield return new WaitForSecondsRealtime(
+                    _playerActionSkull.MoveDuration);
+            }
 
             for (int index = 0; index < timeline.Count; index++)
             {
@@ -3423,6 +3689,12 @@ namespace DiaBlackJack.GameScene
                 List<SoulLossRecord> immediateSoulLossRecords =
                     new List<SoulLossRecord>();
                 CollectNewSoulLossRecords(vm, immediateSoulLossRecords);
+
+                if (TryMoveEnemyActionSkull(vm))
+                {
+                    yield return new WaitForSecondsRealtime(
+                        _enemyActionSkull.MoveDuration);
+                }
 
                 bool revealKnifeCardWithThrow =
                     pendingKnifeReveal != null &&
@@ -4096,7 +4368,10 @@ namespace DiaBlackJack.GameScene
             GameSceneViewModel vm =
                 GameScenePresenter.Create(battle, _activeEnemyProfileKey);
             ApplyView(vm);
-            MaybeOpenShop(vm);
+            if (!TryBeginTerminalActionSkullSequence(vm))
+            {
+                MaybeOpenShop(vm);
+            }
             _tutorialDirector?.Observe();
         }
 
@@ -4110,6 +4385,7 @@ namespace DiaBlackJack.GameScene
             bool preserveRoundComparisonCardsAndTotals = false,
             bool deferRoundResultPresentation = false)
         {
+            EnsureActionSkullRound(vm.Core.RoundNumber);
             _core = vm.Core;
             _enemyMammonDieValue = vm.EnemyMammonDieValue;
             bool isShopOpen = shop != null && shop.IsOpen;
@@ -4345,6 +4621,84 @@ namespace DiaBlackJack.GameScene
 
             _terminalSpeechHoldActive = false;
             _terminalSpeechHoldCompleted = true;
+            GameSceneViewModel vm =
+                GameScenePresenter.Create(battle, _activeEnemyProfileKey);
+            if (TryBeginTerminalActionSkullSequence(vm))
+            {
+                yield break;
+            }
+
+            if (IsStageBattle)
+            {
+                ReturnToProgressionIfStageBattleEnded();
+                yield break;
+            }
+
+            MaybeOpenShop(vm);
+            if (shop == null || !shop.IsOpen)
+            {
+                UnlockInput();
+            }
+        }
+
+        private bool TryBeginTerminalActionSkullSequence(GameSceneViewModel vm)
+        {
+            CoreLoopBattle battle = Battle;
+            bool isRunning = ReferenceEquals(_terminalActionSkullBattle, battle) &&
+                _terminalActionSkullRoutine != null;
+            bool isCompleted = ReferenceEquals(
+                _completedTerminalActionSkullBattle,
+                battle);
+            if (vm == null ||
+                battle == null ||
+                !CombatActionSkullPresenter.ShouldStartTerminalDissolve(
+                    vm.Core.Outcome,
+                    isRunning,
+                    isCompleted))
+            {
+                return isRunning;
+            }
+
+            if (ReferenceEquals(_terminalSpeechBattle, battle) &&
+                _terminalSpeechHoldActive)
+            {
+                _inputLocked = true;
+                return true;
+            }
+
+            _inputLocked = true;
+            _terminalActionSkullBattle = battle;
+            _terminalActionSkullRoutine = StartCoroutine(
+                PlayTerminalActionSkullSequence(
+                    battle,
+                    vm.Core.Outcome));
+            return true;
+        }
+
+        private IEnumerator PlayTerminalActionSkullSequence(
+            CoreLoopBattle battle,
+            BattleOutcome outcome)
+        {
+            EnsureActionSkulls();
+            CombatActionSkullPresenter.TryResolveLosingSide(
+                outcome,
+                out CombatantSide losingSide);
+            CombatActionSkullView loser = losingSide == CombatantSide.Player
+                ? _playerActionSkull
+                : _enemyActionSkull;
+            if (loser != null)
+            {
+                loser.PlayDissolve();
+                yield return new WaitForSecondsRealtime(loser.DissolveDuration);
+            }
+
+            _terminalActionSkullRoutine = null;
+            if (!ReferenceEquals(Battle, battle))
+            {
+                yield break;
+            }
+
+            _completedTerminalActionSkullBattle = battle;
             if (IsStageBattle)
             {
                 ReturnToProgressionIfStageBattleEnded();
@@ -4358,6 +4712,14 @@ namespace DiaBlackJack.GameScene
             {
                 UnlockInput();
             }
+        }
+
+        private void HideActionSkullsForTransition()
+        {
+            _playerActionSkull?.ResetView(
+                ResolveActionSkullHome(CombatantSide.Player));
+            _enemyActionSkull?.ResetView(
+                ResolveActionSkullHome(CombatantSide.Enemy));
         }
 
         /// <returns>True if any card started its reveal-flip animation this call (back
@@ -6503,6 +6865,7 @@ namespace DiaBlackJack.GameScene
             CloseDeckPreview();
             ResetCameraToCurrentView();
             shop.Open(CurrentEnemyProfileKey);
+            HideActionSkullsForTransition();
             SetShopCardObjectsVisible();
         }
 
@@ -6529,9 +6892,13 @@ namespace DiaBlackJack.GameScene
             }
 
             bool restarted = _session.TryRestart();
-            if (restarted && shop != null)
+            if (restarted)
             {
-                CloseStandaloneShop();
+                ResetActionSkulls();
+                if (shop != null)
+                {
+                    CloseStandaloneShop();
+                }
             }
 
             return restarted;
@@ -6548,8 +6915,9 @@ namespace DiaBlackJack.GameScene
             }
 
             bool restarted = _session.TryRestart();
-            if (restarted && shop != null)
+            if (restarted)
             {
+                ResetActionSkulls();
                 _purchasedNormalCards.Clear();
                 _purchasedDemonContractKeys.Clear();
                 _removedNormalCards.Clear();
@@ -6557,9 +6925,9 @@ namespace DiaBlackJack.GameScene
                 UpdateHover(null);
                 UpdateDemonCardHover(null);
                 UpdateShopUtilityItemHover(null);
-                shop.Close();
+                shop?.Close();
                 SetBattleCardObjectsVisible(true);
-                shop.ResetRunEconomy();
+                shop?.ResetRunEconomy();
                 ResetEnemySpeech();
             }
 
@@ -6579,7 +6947,9 @@ namespace DiaBlackJack.GameScene
                 _stageSession.Progress.State == StageProgressionState.InBattle ||
                 IsTerminalSpeechHoldBlocking(
                     _terminalSpeechHoldActive,
-                    _terminalSpeechHoldCompleted))
+                    _terminalSpeechHoldCompleted) ||
+                (ReferenceEquals(_terminalActionSkullBattle, Battle) &&
+                 _terminalActionSkullRoutine != null))
             {
                 return;
             }

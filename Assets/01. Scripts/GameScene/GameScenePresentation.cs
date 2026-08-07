@@ -847,6 +847,14 @@ namespace DiaBlackJack.GameScene
 
         internal RoundComparisonPlan RoundComparisonPlan { get; set; }
 
+        internal EnemyDecision EnemyActionSkullDecision { get; set; }
+
+        internal PublicCombatAction LastPublicAction { get; set; }
+
+        internal int? LastPublicActionSourceCardId { get; set; }
+
+        internal int PublicActionOrdinal { get; set; }
+
         internal IReadOnlyList<SoulLossRecord> SoulLossHistory { get; set; } =
             Array.AsReadOnly(Array.Empty<SoulLossRecord>());
     }
@@ -984,6 +992,11 @@ namespace DiaBlackJack.GameScene
                 model.SatanNumberGuessAnimationCue);
             model.SoulLossHistory = new List<SoulLossRecord>(
                 battle.SoulLossHistory).AsReadOnly();
+            model.EnemyActionSkullDecision = battle.LastEnemyDecision;
+            model.LastPublicAction = battle.LastPublicAction;
+            model.LastPublicActionSourceCardId =
+                battle.LastPublicActionSourceCardId;
+            model.PublicActionOrdinal = battle.PublicActionHistory.Count;
             return model;
         }
 

@@ -44,6 +44,9 @@ namespace DiaBlackJack.Content
         [ColorUsage(true, true)]
         [SerializeField] private Color deckTopTint =
             new Color(1.35f, 1.35f, 1.35f, 1f);
+        [ColorUsage(true, true)]
+        [SerializeField] private Color skullTint =
+            new Color(1.35f, 1.35f, 1.35f, 1f);
         [SerializeField] private EnemyGrade grade;
         [Min(1)]
         [SerializeField] private int maximumSoul = 1;
@@ -69,6 +72,8 @@ namespace DiaBlackJack.Content
         public int DefeatGold => defeatGold;
 
         public Color DeckTopTint => deckTopTint;
+
+        public Color SkullTint => skullTint;
 
         public string Key => key;
 

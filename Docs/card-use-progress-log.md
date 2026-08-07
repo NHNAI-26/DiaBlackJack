@@ -807,3 +807,17 @@ MCP가 Unity 창의 포커스를 가져가지 않은 상태에서는 게임 프�
 #### 권장 커밋 제목
 
 `feat : 리볼버 숫자 선택 UI를 프리팹화하다`
+
+### 2026-08-08 GSV19 행동 해골 표시 연출
+
+- `Skull.prefab`에 전용 View를 추가하고 `GameManager.prefab`이 플레이어·적 인스턴스를 런타임 생성하도록 연결했다. 승인된 Hit·Stand·Change는 테이블 명령으로, 일반·활성 악마 카드는 정확한 물리 카드 ID의 View로 이동한다. 같은 목표도 0.3초 재착지하며 `skullLay01`~`04` 중 하나를 다시 재생한다.
+- 적 표시는 라운드 번호와 공개 행동 순번을 cue key로 사용하고 `LastEnemyDecision`과 행동 종류·카드 ID가 일치할 때만 타임라인 연출 직전에 실행한다. 자동 발동과 카드·계약 후속 선택은 같은 cue를 만들지 않는다. AI 관측과 `PublicCombatAction` 공개 계약은 변경하지 않았다.
+- 라운드 시작, 재시작, 다음 전투에서 위치·재질·Tween·cue를 초기화한다. 최종 대사 뒤 패자 해골 하나만 기존 `_DISSOLVE_ON`과 `_DissolveAmount` 0→1, `dissolve` 음향으로 제거하며 완료 전 상점·진행 전환과 재시작 입력을 막는다.
+- `EnemyCombatProfileDefinitionSO`에 HDR `skullTint`를 추가하고 적 자산 6종 모두 현재 `deckTopTint`와 같은 값으로 저장했다. 플레이어는 흰색을 유지하고 전투 바인딩마다 적 색을 다시 적용한다.
+- 최종 `[Category("GSV19")]` 8/8(job `a68066a471a24e0996a3d6e3bbdfe43b`)이 통과했다. `GameSceneCombatHudPresentationTests`, `Gsv16CardEffectSourceTests`, `EnemyCommonActionTests`, `DemonContractActionTests`, `CoreLoopFlowTests` 묶음은 120/120(job `03d71f5163774c89a44dbe20ac6f277d`) 통과했다. 스크립트 검증과 Console C# 오류는 0건이었다.
+- 후속 위치 조정으로 버튼 대상 오프셋을 화면 하단 방향으로 옮겼다. GameScene 카메라 투영에서 Hit·Stand·Change 모두 버튼 중심보다 21.6px 아래임을 확인했고, GSV19 8/8(job `d90a0be98fdc4415be4d07a8760352bf`)이 다시 통과했다.
+- 전체 1,000여 개 EditMode suite는 실행하지 않았다. GameScene Play Mode 스모크를 시도했으나 전환 상태가 안정적으로 끝나지 않아 이 세션이 시작한 Play Mode를 종료했다. 따라서 1280×720·1920×1080 수동 화면·음향 검증은 완료 근거로 기록하지 않는다.
+
+#### 권장 커밋 제목
+
+`feat : 전투 행동 해골 표시 연출을 추가하다`
