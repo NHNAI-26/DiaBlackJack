@@ -25,6 +25,9 @@ namespace DiaBlackJack.GameScene
     [DisallowMultipleComponent]
     public sealed class ShopController : MonoBehaviour
     {
+        private const string TableLayoutPreviewPrefix =
+            "__TableLayoutPreview_";
+
         [Tooltip("The enemy character that becomes the merchant while the shop is open.")]
         [SerializeField] private CharacterView merchant;
         [Tooltip("Root of the shop-item sprites shown on the table; toggled active only while the shop is open.")]
@@ -72,6 +75,12 @@ namespace DiaBlackJack.GameScene
             new List<ShopCardOfferStatusView>();
         private readonly List<ShopCardOfferStatusView> _formalNormalStatuses =
             new List<ShopCardOfferStatusView>();
+        private readonly List<ShopPriceTarget> _activePriceTargets =
+            new List<ShopPriceTarget>();
+        private readonly List<ShopOfferLayout> _demonOfferLayouts =
+            new List<ShopOfferLayout>();
+        private readonly List<ShopOfferLayout> _normalOfferLayouts =
+            new List<ShopOfferLayout>();
         private readonly DeterministicRng _random = new DeterministicRng();
         private SpeechLineResolver _speechResolver;
         private int _nextOfferId;
@@ -90,6 +99,9 @@ namespace DiaBlackJack.GameScene
 
         public int FormalNormalOfferCount => _formalNormalOffers.Count;
 
+        public IReadOnlyList<ShopPriceTarget> ActivePriceTargets =>
+            _activePriceTargets;
+
         public int Gold { get; private set; }
 
         public int CurrentLighterPrice => Mathf.Max(0, lighterPrice) +
@@ -104,6 +116,7 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            CaptureAuthoredOfferLayouts();
             SetCombatTableActive(true);
             if (itemsRoot != null)
             {
@@ -127,8 +140,10 @@ namespace DiaBlackJack.GameScene
 
             _lighterPurchasedThisVisit = false;
             _whiskeyPurchasedThisVisit = false;
+            _activePriceTargets.Clear();
             IsOpen = true;
             IsFormal = false;
+            CaptureAuthoredOfferLayouts();
             Gold += GoldRewardCatalog.CreatePrototype().GetAmount(enemyProfileKey);
             int offerSeed = shopRandomSeed + _openCount++;
             GenerateDemonCardOffers(offerSeed);
@@ -160,6 +175,8 @@ namespace DiaBlackJack.GameScene
             IsOpen = true;
             IsFormal = true;
             ClearFormalOffers();
+            _activePriceTargets.Clear();
+            CaptureAuthoredOfferLayouts();
             CreateFormalCardOffers(model);
             BindFormalUtilityItems(model);
 
@@ -186,6 +203,7 @@ namespace DiaBlackJack.GameScene
             IsFormal = false;
             IsOpen = false;
             ClearFormalOffers();
+            _activePriceTargets.Clear();
             lighterItem?.SetHovered(false);
             whiskeyItem?.SetHovered(false);
             ShowMerchantSpeech(SpeechCueKeys.ShopFarewell);
@@ -212,6 +230,7 @@ namespace DiaBlackJack.GameScene
 
             IsOpen = false;
             IsFormal = false;
+            _activePriceTargets.Clear();
 
             ShowMerchantSpeech(SpeechCueKeys.ShopFarewell);
 
@@ -527,10 +546,12 @@ namespace DiaBlackJack.GameScene
             LayoutFormalOffers(
                 _formalNormalOffers,
                 _formalNormalStatuses,
+                _normalOfferLayouts,
                 normalCardSpacing);
             LayoutFormalOffers(
                 _formalDemonOffers,
                 _formalDemonStatuses,
+                _demonOfferLayouts,
                 demonCardSpacing);
         }
 
@@ -551,10 +572,14 @@ namespace DiaBlackJack.GameScene
                 definition,
                 option.CanBuy));
             view.SetShopSoldOut(option.IsSold);
+            BindPriceTarget(
+                view.GetComponent<ShopPriceTarget>(),
+                definition.DisplayName,
+                option.PriceAmount,
+                option.IsSold);
             _formalDemonOffers.Add(view);
             _formalDemonStatuses.Add(PrepareOfferStatus(
                 view.DetachShopOfferStatus(demonCardHolder),
-                option.PriceAmount,
                 option.IsSold));
         }
 
@@ -582,10 +607,14 @@ namespace DiaBlackJack.GameScene
                 definitionKey: option.DefinitionKey,
                 showHoverBadgeWhenUnavailable: true));
             view.SetShopSoldOut(option.IsSold);
+            BindPriceTarget(
+                view.GetComponent<ShopPriceTarget>(),
+                definition.DisplayName,
+                option.PriceAmount,
+                option.IsSold);
             _formalNormalOffers.Add(view);
             _formalNormalStatuses.Add(PrepareOfferStatus(
                 view.DetachShopOfferStatus(normalCardHolder),
-                option.PriceAmount,
                 option.IsSold));
         }
 
@@ -653,6 +682,7 @@ namespace DiaBlackJack.GameScene
         private static void LayoutFormalOffers<T>(
             IReadOnlyList<T> views,
             IReadOnlyList<ShopCardOfferStatusView> statuses,
+            IReadOnlyList<ShopOfferLayout> layouts,
             float spacing)
             where T : Component
         {
@@ -665,12 +695,59 @@ namespace DiaBlackJack.GameScene
                     continue;
                 }
 
-                view.transform.localPosition = new Vector3(
-                    offset + i * spacing,
-                    0f,
-                    i * 0.01f);
-                view.transform.localRotation = Quaternion.identity;
+                ApplyOfferLayout(
+                    view.transform,
+                    i,
+                    layouts,
+                    new Vector3(
+                        offset + i * spacing,
+                        0f,
+                        i * 0.01f));
                 LayoutStatus(statuses, i, view.transform.localPosition);
+            }
+        }
+
+        private void CaptureAuthoredOfferLayouts()
+        {
+            CaptureAuthoredOfferLayouts(
+                demonCardHolder,
+                _demonOfferLayouts);
+            CaptureAuthoredOfferLayouts(
+                normalCardHolder,
+                _normalOfferLayouts);
+        }
+
+        private static void CaptureAuthoredOfferLayouts(
+            Transform holder,
+            List<ShopOfferLayout> layouts)
+        {
+            if (holder == null || layouts.Count > 0)
+            {
+                return;
+            }
+
+            List<Transform> authoredPreviews = new List<Transform>();
+            for (int i = 0; i < holder.childCount; i++)
+            {
+                Transform child = holder.GetChild(i);
+                if (child != null &&
+                    child.name.StartsWith(
+                        TableLayoutPreviewPrefix,
+                        StringComparison.Ordinal))
+                {
+                    authoredPreviews.Add(child);
+                }
+            }
+
+            authoredPreviews.Sort((left, right) =>
+                string.CompareOrdinal(left.name, right.name));
+            foreach (Transform preview in authoredPreviews)
+            {
+                layouts.Add(new ShopOfferLayout(
+                    preview.localPosition,
+                    preview.localRotation,
+                    preview.localScale));
+                preview.gameObject.SetActive(false);
             }
         }
 
@@ -735,7 +812,6 @@ namespace DiaBlackJack.GameScene
                     view,
                     PrepareOfferStatus(
                         view.DetachShopOfferStatus(demonCardHolder),
-                        definition.BasePurchasePrice,
                         isSoldOut: false));
                 _demonOffers.Add(offer);
                 BindOfferView(offer);
@@ -771,7 +847,6 @@ namespace DiaBlackJack.GameScene
                     view,
                     PrepareOfferStatus(
                         view.DetachShopOfferStatus(normalCardHolder),
-                        candidate.Definition.BasePurchasePrice,
                         isSoldOut: false));
                 _normalOffers.Add(offer);
                 BindOfferView(offer);
@@ -847,7 +922,12 @@ namespace DiaBlackJack.GameScene
                 definition,
                 !offer.SoldOut && Gold >= offer.Price));
             offer.View.SetShopSoldOut(offer.SoldOut);
-            offer.Status?.Bind(offer.Price, offer.SoldOut);
+            offer.Status?.Bind(offer.SoldOut);
+            BindPriceTarget(
+                offer.View.GetComponent<ShopPriceTarget>(),
+                definition.DisplayName,
+                offer.Price,
+                offer.SoldOut);
         }
 
         private static GameSceneDemonCardViewModel CreateShopDemonCardViewModel(
@@ -887,10 +967,15 @@ namespace DiaBlackJack.GameScene
                 definitionKey: definition.Key,
                 showHoverBadgeWhenUnavailable: true));
             offer.View.SetShopSoldOut(offer.SoldOut);
-            offer.Status?.Bind(offer.Price, offer.SoldOut);
+            offer.Status?.Bind(offer.SoldOut);
+            BindPriceTarget(
+                offer.View.GetComponent<ShopPriceTarget>(),
+                definition.DisplayName,
+                offer.Price,
+                offer.SoldOut);
         }
 
-        private static void BindUtilityItem(
+        private void BindUtilityItem(
             ShopUtilityItemView item,
             ShopUtilityItemKind kind,
             string displayName,
@@ -918,6 +1003,30 @@ namespace DiaBlackJack.GameScene
                 amount,
                 isPlayerSoulFull,
                 canUse);
+            RegisterPriceTarget(item.ShopPriceTarget);
+        }
+
+        private void BindPriceTarget(
+            ShopPriceTarget target,
+            string displayName,
+            int price,
+            bool isSoldOut)
+        {
+            if (target == null)
+            {
+                return;
+            }
+
+            target.Bind(displayName, price, isSoldOut);
+            RegisterPriceTarget(target);
+        }
+
+        private void RegisterPriceTarget(ShopPriceTarget target)
+        {
+            if (target != null && !_activePriceTargets.Contains(target))
+            {
+                _activePriceTargets.Add(target);
+            }
         }
 
         private void LayoutDemonOfferViews()
@@ -936,11 +1045,14 @@ namespace DiaBlackJack.GameScene
                     continue;
                 }
 
-                offer.View.transform.localPosition = new Vector3(
-                    offset + i * demonCardSpacing,
-                    0f,
-                    i * 0.01f);
-                offer.View.transform.localRotation = Quaternion.identity;
+                ApplyOfferLayout(
+                    offer.View.transform,
+                    i,
+                    _demonOfferLayouts,
+                    new Vector3(
+                        offset + i * demonCardSpacing,
+                        0f,
+                        i * 0.01f));
                 LayoutStatus(offer.Status, offer.View.transform.localPosition);
             }
         }
@@ -961,18 +1073,41 @@ namespace DiaBlackJack.GameScene
                     continue;
                 }
 
-                offer.View.transform.localPosition = new Vector3(
-                    offset + i * normalCardSpacing,
-                    0f,
-                    i * 0.01f);
-                offer.View.transform.localRotation = Quaternion.identity;
+                ApplyOfferLayout(
+                    offer.View.transform,
+                    i,
+                    _normalOfferLayouts,
+                    new Vector3(
+                        offset + i * normalCardSpacing,
+                        0f,
+                        i * 0.01f));
                 LayoutStatus(offer.Status, offer.View.transform.localPosition);
             }
         }
 
+        private static void ApplyOfferLayout(
+            Transform offer,
+            int index,
+            IReadOnlyList<ShopOfferLayout> layouts,
+            Vector3 fallbackLocalPosition)
+        {
+            if (layouts != null &&
+                index >= 0 &&
+                index < layouts.Count)
+            {
+                ShopOfferLayout layout = layouts[index];
+                offer.localPosition = layout.LocalPosition;
+                offer.localRotation = layout.LocalRotation;
+                offer.localScale = layout.LocalScale;
+                return;
+            }
+
+            offer.localPosition = fallbackLocalPosition;
+            offer.localRotation = Quaternion.identity;
+        }
+
         private static ShopCardOfferStatusView PrepareOfferStatus(
             ShopCardOfferStatusView status,
-            int price,
             bool isSoldOut)
         {
             if (status == null)
@@ -980,7 +1115,7 @@ namespace DiaBlackJack.GameScene
                 return null;
             }
 
-            status.Bind(price, isSoldOut);
+            status.Bind(isSoldOut);
             return status;
         }
 
@@ -1119,6 +1254,25 @@ namespace DiaBlackJack.GameScene
             public ShopCardOfferStatusView Status { get; }
 
             public DemonCardView View { get; }
+        }
+
+        private readonly struct ShopOfferLayout
+        {
+            public ShopOfferLayout(
+                Vector3 localPosition,
+                Quaternion localRotation,
+                Vector3 localScale)
+            {
+                LocalPosition = localPosition;
+                LocalRotation = localRotation;
+                LocalScale = localScale;
+            }
+
+            public Vector3 LocalPosition { get; }
+
+            public Quaternion LocalRotation { get; }
+
+            public Vector3 LocalScale { get; }
         }
 
         private readonly struct NormalCardOfferData

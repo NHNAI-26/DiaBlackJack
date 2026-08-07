@@ -16,9 +16,10 @@
 > **현행 상점 규칙 변경 안내 (2026-07-29)**
 > 현행 기획은 일반 카드 3장·악마 카드 2장, 슬롯별 재고 1개와 구매 후 `SOLD OUT`, 방문 전체 카드 구매 상한 없음, 새로고침·재입고 없음이다. 라이터와 위스키는 방문당 각각 1회이며 둘 다 이용할 수 있고, 하나 이상 이용한 방문마다 다음 상점의 두 서비스 가격이 함께 1단계 오른다. 이용 개수는 상승폭에 영향을 주지 않는다. GameScene MVP의 기본 2골드·상승 +1은 임시값이며 정식 구현은 `Docs/formal-run-flow-design.md` v0.7을 우선 적용한다.
 
-> **GSV-06 판매 슬롯 표시 결정 (2026-08-02)**
-> 일반·악마 카드 아래에는 `돈 : {실제 가격}`을 표시한다. 구매한 카드는 제거하거나 남은 상품을 재정렬하지 않고 같은 슬롯에 어둡게 유지하며 중앙에 `SOLD OUT`을 겹쳐 표시한다. 판매 완료 가격표는 같은 위치에 회색으로 남긴다. 골드 부족은 판매 완료가 아니며 카드 외형과 가격표를 유지한다.
-> 가격 위치와 크기는 `Card.prefab > ShopCardOfferStatus > Price`에서 저작하고 악마 카드는 `DemonCard.prefab`에서 상속값을 Override할 수 있다. 런타임에는 상태 뷰를 카드 Holder의 형제로 분리해 호버 확대 영향을 차단한다.
+> **GSV-06 판매 슬롯 표시 개정 (2026-08-07)**
+> 일반 카드 3장, 악마 카드 2장, 라이터, 위스키는 상점이 열려 있는 동안 각 상품의 상점 전용 월드 앵커를 Screen Space UI로 투영한 가격 배지를 항상 가진다. 배지는 상품명 없이 `CurrencyIconMarkup.GoldTag × 가격`만 표시한다. 기존 호버 설명은 그대로 독립 동작한다.
+> 일반·악마 카드는 `Card.prefab`의 호버용 `TopPosition`·`BottomPosition`과 분리된 `ShopPriceAnchor`, 라이터·위스키는 각 프리팹의 독립 `PriceAnchor`를 사용한다. `ShopPriceBadge.prefab`의 피벗은 `(0.5, 1)`로 유지한다. 화면 밖으로 투영되는 배지는 방향을 전환하지 않고 HUD 컨테이너 안으로 제한한다. HUD는 직렬화된 전용 컨테이너에 이를 풀링한다. `ShopCardOfferStatusView`는 월드 가격을 그리지 않고 중앙 `SOLD OUT`만 담당한다. 구매 성공 카드의 배지 텍스트만 `품절`로 변경하며 실패·골드 부족·중복 입력은 상태와 슬롯을 바꾸지 않는다. 상점 종료나 상품 비활성화에는 배지를 숨기며 모든 Graphic Raycast를 끈다. 가격 컨테이너는 HUD의 첫 번째 sibling과 최저 Canvas sorting order를 사용해 다른 UI보다 뒤에 렌더한다.
+> `ShopController`는 `Table Controller.prefab`에 저장된 Shop 미리보기 카드 5개의 로컬 위치·회전·크기를 상점 진입 전에 캡처하고 미리보기 오브젝트를 숨긴다. 단독·정식 상점의 실제 카드는 같은 순서의 캡처 Transform으로 생성하며, 저장 배치가 없을 때만 spacing 계산으로 대체한다. 라이터·위스키는 배치된 실제 Transform을 변경하지 않는다.
 
 > **GSV-08 라이터 선택·나가기 UI 계약 (2026-08-03)**
 > `DeckPreviewView`는 기존 열람 모드를 보존하면서 단일 선택 모드와 `SelectionConfirmed(int)`·`SelectionCancelled`를 제공한다. 각 물리 카드를 1슬롯으로 표시하고 클릭은 강조만 수행하며 비활성 카드는 입력을 받지 않는다. `GameHudView`는 `ShopLeaveRequested`와 표시·활성 API를 제공한다. `ShopLeaveRoot` Canvas는 덱 오버레이 100보다 높은 150이며, 버튼 배경은 `Brush_UI_9`다.
@@ -307,6 +308,8 @@ RF-04 구현에서 `StageProgressionRuntime.FormalSession`은 현재 저장 흐�
 - 1280×720·1920×1080 레이아웃
 - 전체 EditMode, 실제 두 씬 왕복, Console Error·Exception 0
 - GSV-08 선택 변경·확인 1회·취소 무변경·선택 불가 카드 차단과 100슬롯·선택 프레임·확인 버튼·`Brush_UI_9` 직렬화
+- GSV-06 7개 상품별 유효 앵커·항상 표시 가격 요청, Table Controller 저작 Transform과 런타임 7상품 배치 일치, 구매 성공 카드만 `품절`, 중앙 `SOLD OUT` 유지, 실패 원자성, 비활성/상점 종료 숨김, Raycast 비차단
+- Scene View Shop 미리보기의 카드 5개·아이템 2개 앵커 연결선·마커·라벨
 
 ### 9.4 RFM02 실제 게임 진입 계약
 
@@ -327,6 +330,7 @@ RF-04 구현에서 `StageProgressionRuntime.FormalSession`은 현재 저장 흐�
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-08-07 | HONG | GSV-06 상점 가격 표시를 상품별 월드 앵커→Screen Space UI 계약으로 개정했다. 후속으로 상품명을 제거하고 독립 가격 프리팹·HUD 최하단 Canvas·7개 요청·골드 아이콘 가격·`품절`·중앙 `SOLD OUT`·비활성/종료 숨김·비차단 Graphic을 테스트 기준에 반영했다. |
 | 2026-07-31 | 이천서 | RF-05 실화면 게이트를 완료했다. 진행 IMGUI의 보유 카드는 720p에서 4열, 그보다 큰 화면에서 5열로 배치하고 서비스·나가기 버튼은 남은 너비를 균등 사용한다. 1280×720 정식 런 왕복과 1920×1080 상대 선택을 확인했으며 `FormalRunPresentationTests` 6/6(작업 `b50ce54dc6dc43dfba83d08d684e2b9f`)·전체 EditMode 798/798(작업 `96c65780a79e41a48a0d850c06f868d4`)을 통과했다. Console의 Exception 1건은 Test Framework 결과 저장 안내이며 게임 코드 오류는 0이다. |
 | 2026-07-30 | 이천서 | RFM02 진입 책임을 정정했다. GameScene 직접 실행은 Runtime·진행 선택 UI를 만들지 않고 기존 독립 `CoreLoopSession`을 즉시 시작한다. 외부 진행 세션이 `InBattle`과 Battle을 보유한 경우에만 GameManager가 그 전투를 채택한다. StageTest의 기존 세션 팩터리는 유지한다. |
 | 2026-07-30 | 이천서 | RF-05 반복 검증 8건을 추가했다. 10회 전체 승리·재시작, 상점 네 행동과 중복 거부, 오래된 상대·상점 입력, 세 전투 위치별 10회 패배·재시작, 네 일반 프로필 선택·골드, 두 씬 Build Settings·Runtime 목적지·필수 컴포넌트·누락 스크립트를 검증했다. 전체 EditMode 744/744 통과. |

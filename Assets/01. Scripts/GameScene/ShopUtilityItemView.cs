@@ -16,6 +16,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private ShopUtilityItemKind kind;
         [SerializeField] private TMP_Text nameText;
         [SerializeField] private HoverDescriptionTarget hoverDescriptionTarget;
+        [SerializeField] private ShopPriceTarget shopPriceTarget;
 
         [Header("Display model")]
         [SerializeField] private GameObject displayModelPrefab;
@@ -38,6 +39,8 @@ namespace DiaBlackJack.GameScene
 
         internal HoverDescriptionTarget HoverDescriptionTarget =>
             hoverDescriptionTarget;
+
+        internal ShopPriceTarget ShopPriceTarget => shopPriceTarget;
 
         private void Awake()
         {
@@ -98,6 +101,17 @@ namespace DiaBlackJack.GameScene
                 new HoverDescriptionValue("gold", CurrencyIconMarkup.GoldTag),
                 new HoverDescriptionValue("price", price),
                 new HoverDescriptionValue("amount", amount));
+
+            string priceDisplayName = hoverDescriptionTarget != null &&
+                hoverDescriptionTarget.Description != null &&
+                !string.IsNullOrWhiteSpace(
+                    hoverDescriptionTarget.Description.Title)
+                        ? hoverDescriptionTarget.Description.Title
+                        : displayName;
+            shopPriceTarget?.Bind(
+                priceDisplayName,
+                price,
+                isSoldOut: false);
         }
 
         public void SetHovered(bool hovered)
@@ -160,6 +174,7 @@ namespace DiaBlackJack.GameScene
         {
             hoverOutlineWidthPixels = Mathf.Max(0f, hoverOutlineWidthPixels);
             hoverDescriptionTarget ??= GetComponent<HoverDescriptionTarget>();
+            shopPriceTarget ??= GetComponent<ShopPriceTarget>();
         }
 
         private void FaceLabelsToCamera()

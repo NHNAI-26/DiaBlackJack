@@ -190,15 +190,15 @@ namespace DiaBlackJack.CoreLoop.Tests
                 normalHolder.GetComponentsInChildren<CardView>(true);
             DemonCardView[] demonCards =
                 demonHolder.GetComponentsInChildren<DemonCardView>(true);
-            ShopCardOfferStatusView[] statuses = normalHolder
-                .GetComponentsInChildren<ShopCardOfferStatusView>(true)
+            ShopPriceTarget[] priceTargets = normalHolder
+                .GetComponentsInChildren<ShopPriceTarget>(true)
                 .Concat(demonHolder.GetComponentsInChildren<
-                    ShopCardOfferStatusView>(true))
+                    ShopPriceTarget>(true))
                 .ToArray();
 
             Assert.That(normalCards, Has.Length.EqualTo(3));
             Assert.That(demonCards, Has.Length.EqualTo(2));
-            Assert.That(statuses, Has.Length.EqualTo(5));
+            Assert.That(priceTargets, Has.Length.EqualTo(5));
 
             foreach (CardView card in normalCards)
             {
@@ -222,9 +222,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                     Is.EqualTo(definition.CostSummary));
             }
 
-            foreach (ShopCardOfferStatusView status in statuses)
+            foreach (ShopPriceTarget priceTarget in priceTargets)
             {
-                Assert.That(status.PriceLabel, Does.StartWith("돈 : "));
+                Assert.That(priceTarget.ProductName, Is.Not.Empty);
+                Assert.That(priceTarget.Price, Is.GreaterThan(0));
+                Assert.That(priceTarget.IsSoldOut, Is.False);
             }
         }
 
@@ -444,10 +446,16 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(normalStatuses, Has.Length.EqualTo(3));
             Assert.That(demonStatuses, Has.Length.EqualTo(2));
             Assert.That(
+                normalCards.All(card =>
+                    card.GetComponent<ShopPriceTarget>() != null),
+                Is.True);
+            Assert.That(
+                demonCards.All(card =>
+                    card.GetComponent<ShopPriceTarget>() != null),
+                Is.True);
+            Assert.That(
                 normalPositions.Average(position => position.x),
                 Is.EqualTo(0f).Within(0.0001f));
-            Assert.That(normalStatuses[0].PriceLabel, Does.StartWith("돈 : "));
-            Assert.That(demonStatuses[0].PriceLabel, Does.StartWith("돈 : "));
             Assert.That(
                 normalCards.All(card =>
                     !string.IsNullOrWhiteSpace(card.DefinitionKey)),
@@ -489,10 +497,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                     demonPositions[0] + DemonStatusOffset).IsSoldOut,
                 Is.True);
             Assert.That(
-                FindStatusAt(
-                    normalStatuses,
-                    normalPositions[0] + NormalStatusOffset).PriceColor,
-                Is.EqualTo(new Color(0.42f, 0.42f, 0.42f, 1f)));
+                normalCards[0].GetComponent<ShopPriceTarget>().IsSoldOut,
+                Is.True);
+            Assert.That(
+                demonCards[0].GetComponent<ShopPriceTarget>().IsSoldOut,
+                Is.True);
             Assert.That(normalStatuses.All(status => status.IsDetached), Is.True);
             Assert.That(demonStatuses.All(status => status.IsDetached), Is.True);
             Vector3 statusScale = normalStatuses[0].transform.localScale;
@@ -523,6 +532,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             CardView card = holder.GetComponentInChildren<CardView>(true);
             ShopCardOfferStatusView status =
                 holder.GetComponentInChildren<ShopCardOfferStatusView>(true);
+            ShopPriceTarget priceTarget =
+                card.GetComponent<ShopPriceTarget>();
             Vector3 position = card.transform.localPosition;
 
             Assert.That(card.CanUse, Is.False);
@@ -531,10 +542,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 card.GetComponentInChildren<SpriteRenderer>().color,
                 Is.EqualTo(Color.white));
             Assert.That(status.IsSoldOut, Is.False);
-            Assert.That(status.PriceLabel, Does.StartWith("돈 : "));
-            Assert.That(
-                status.PriceColor,
-                Is.EqualTo(new Color(0.95f, 0.82f, 0.55f, 1f)));
+            Assert.That(priceTarget, Is.Not.Null);
+            Assert.That(priceTarget.IsSoldOut, Is.False);
             Assert.That(
                 _shop.TryPurchaseNormalCard(card.CardId, out _, out _),
                 Is.False);
@@ -542,10 +551,11 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(card.transform.localPosition, Is.EqualTo(position));
             Assert.That(card.IsShopSoldOut, Is.False);
             Assert.That(status.IsSoldOut, Is.False);
+            Assert.That(priceTarget.IsSoldOut, Is.False);
         }
 
         [Test]
-        public void GSV06_U04_StatusPrefabUsesKoreanFontAndDoesNotBlockInput()
+        public void GSV06_U04_StatusPrefabKeepsSoldOutAndDisablesWorldPrice()
         {
             const string prefabPath =
                 "Assets/03. Prefabs/Shop/ShopCardOfferStatus.prefab";
@@ -557,16 +567,15 @@ namespace DiaBlackJack.CoreLoop.Tests
                 ShopCardOfferStatusView status =
                     instance.GetComponent<ShopCardOfferStatusView>();
                 Assert.That(status, Is.Not.Null);
-                status.Bind(3, isSoldOut: true);
+                status.Bind(isSoldOut: true);
 
-                Assert.That(status.PriceLabel, Is.EqualTo("돈 : 3"));
                 Assert.That(status.IsSoldOut, Is.True);
                 Assert.That(
                     instance.GetComponentsInChildren<Collider>(true),
                     Is.Empty);
                 Assert.That(
-                    instance.transform.Find("Price").localScale.x,
-                    Is.EqualTo(0.22f).Within(0.001f));
+                    instance.transform.Find("Price"),
+                    Is.Null);
 
                 int textCount = 0;
                 foreach (Component component in
@@ -588,7 +597,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                     Assert.That(raycastTarget, Is.False);
                 }
 
-                Assert.That(textCount, Is.EqualTo(2));
+                Assert.That(textCount, Is.EqualTo(1));
             }
             finally
             {
@@ -597,7 +606,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void GSV06_U05_CardPrefabsAuthorPricePositionAndScale()
+        public void GSV06_U05_ProductPrefabsAuthorIndependentShopPriceAnchors()
         {
             GameObject cardPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 "Assets/03. Prefabs/Card/Card.prefab");
@@ -606,33 +615,42 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(cardPrefab, Is.Not.Null);
             Assert.That(demonPrefab, Is.Not.Null);
 
-            ShopCardOfferStatusView cardStatus =
-                cardPrefab.GetComponentInChildren<ShopCardOfferStatusView>(true);
-            ShopCardOfferStatusView demonStatus =
-                demonPrefab.GetComponentInChildren<ShopCardOfferStatusView>(true);
-            Assert.That(cardStatus, Is.Not.Null);
-            Assert.That(demonStatus, Is.Not.Null);
-            Assert.That(
-                GetPrivateField<ShopCardOfferStatusView>(
-                    cardPrefab.GetComponent<CardView>(),
-                    "shopOfferStatus"),
-                Is.SameAs(cardStatus));
-            Assert.That(
-                GetPrivateField<ShopCardOfferStatusView>(
-                    demonPrefab.GetComponent<DemonCardView>(),
-                    "shopOfferStatus"),
-                Is.SameAs(demonStatus));
-
-            RectTransform cardPrice =
-                cardStatus.transform.Find("Price") as RectTransform;
-            RectTransform demonPrice =
-                demonStatus.transform.Find("Price") as RectTransform;
+            ShopPriceTarget cardPrice = cardPrefab.GetComponent<ShopPriceTarget>();
+            ShopPriceTarget demonPrice = demonPrefab.GetComponent<ShopPriceTarget>();
             Assert.That(cardPrice, Is.Not.Null);
             Assert.That(demonPrice, Is.Not.Null);
-            Assert.That(cardPrice.anchoredPosition.y, Is.LessThan(0f));
-            Assert.That(demonPrice.anchoredPosition.y, Is.LessThan(0f));
-            Assert.That(cardStatus.transform.localScale.x, Is.GreaterThan(0f));
-            Assert.That(demonStatus.transform.localScale.x, Is.GreaterThan(0f));
+            Assert.That(cardPrice.PriceAnchor.name, Is.EqualTo("ShopPriceAnchor"));
+            Assert.That(demonPrice.PriceAnchor.name, Is.EqualTo("ShopPriceAnchor"));
+            Assert.That(
+                cardPrice.PriceAnchor,
+                Is.Not.SameAs(cardPrefab.transform.Find("BottomPosition")));
+            Assert.That(
+                cardPrice.PriceAnchor,
+                Is.Not.SameAs(cardPrefab.transform.Find("TopPosition")));
+            Assert.That(
+                demonPrice.PriceAnchor,
+                Is.Not.SameAs(demonPrefab.transform.Find("BottomPosition")));
+            Assert.That(
+                demonPrice.PriceAnchor,
+                Is.Not.SameAs(demonPrefab.transform.Find("TopPosition")));
+
+            GameObject lighter = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/03. Prefabs/Shop/ShopItem_Lighter.prefab");
+            GameObject whiskey = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/03. Prefabs/Shop/ShopItem_Whiskey.prefab");
+            ShopPriceTarget lighterPrice = lighter.GetComponent<ShopPriceTarget>();
+            ShopPriceTarget whiskeyPrice = whiskey.GetComponent<ShopPriceTarget>();
+            Assert.That(lighterPrice.PriceAnchor.name, Is.EqualTo("PriceAnchor"));
+            Assert.That(whiskeyPrice.PriceAnchor.name, Is.EqualTo("PriceAnchor"));
+            Assert.That(
+                lighterPrice.PriceAnchor.localPosition.y,
+                Is.LessThan(0f));
+            Assert.That(
+                whiskeyPrice.PriceAnchor.localPosition.y,
+                Is.LessThan(0f));
+            Assert.That(
+                lighterPrice.PriceAnchor.localPosition.y,
+                Is.Not.EqualTo(whiskeyPrice.PriceAnchor.localPosition.y));
 
             GameObject cardInstance = Object.Instantiate(cardPrefab);
             GameObject demonInstance = Object.Instantiate(demonPrefab);
@@ -658,11 +676,125 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
         }
 
+        [Test]
+        [Category("GSV06")]
+        public void GSV06_U07_ShopUsesTableControllerAuthoredProductTransforms()
+        {
+            Transform normalHolder = CreateHolder("Normal Card Holder");
+            Transform demonHolder = CreateHolder("Demon Card Holder");
+            Vector3[] normalPositions =
+            {
+                new Vector3(-0.64f, 0.04f, 0f),
+                new Vector3(0.03f, 0.02f, 0.01f),
+                new Vector3(0.71f, -0.01f, 0.02f),
+            };
+            Vector3[] demonPositions =
+            {
+                new Vector3(-0.32f, 0.08f, 0f),
+                new Vector3(0.37f, 0.05f, 0.01f),
+            };
+            Transform[] normalLayouts = CreateAuthoredLayouts(
+                normalHolder,
+                "NormalCard",
+                normalPositions);
+            Transform[] demonLayouts = CreateAuthoredLayouts(
+                demonHolder,
+                "DemonCard",
+                demonPositions);
+            normalLayouts[1].localRotation = Quaternion.Euler(0f, 0f, 4f);
+            normalLayouts[2].localScale = new Vector3(0.74f, 0.72f, 0.7f);
+            demonLayouts[0].localRotation = Quaternion.Euler(0f, 0f, -3f);
+            demonLayouts[1].localScale = new Vector3(0.68f, 0.7f, 0.72f);
+
+            SetPrivateField("normalCardHolder", normalHolder);
+            SetPrivateField("demonCardHolder", demonHolder);
+            SetPrivateField("normalCardPrefab", CreateNormalCardPrefab());
+            SetPrivateField("demonCardPrefab", CreateDemonCardPrefab());
+            SetPrivateField("normalCardOfferCount", normalPositions.Length);
+            SetPrivateField("demonCardOfferCount", demonPositions.Length);
+            SetPrivateField("normalCardSpacing", 9f);
+            SetPrivateField("demonCardSpacing", 9f);
+
+            GameObject lighterObject = new GameObject("Lighter");
+            lighterObject.transform.SetParent(_root.transform, false);
+            lighterObject.transform.localPosition =
+                new Vector3(0.44f, 0.12f, 1.3f);
+            ShopUtilityItemView lighter =
+                lighterObject.AddComponent<ShopUtilityItemView>();
+            GameObject whiskeyObject = new GameObject("Whiskey");
+            whiskeyObject.transform.SetParent(_root.transform, false);
+            whiskeyObject.transform.localPosition =
+                new Vector3(-0.51f, 0.09f, 1.24f);
+            ShopUtilityItemView whiskey =
+                whiskeyObject.AddComponent<ShopUtilityItemView>();
+            SetPrivateField("lighterItem", lighter);
+            SetPrivateField("whiskeyItem", whiskey);
+            Vector3 lighterPosition = lighterObject.transform.localPosition;
+            Vector3 whiskeyPosition = whiskeyObject.transform.localPosition;
+
+            _shop.Open(EnemyCombatProfileCatalog.GunslingerKey);
+            _shop.RefreshUtilityItems(2, 5, 12);
+
+            CardView[] normalCards = normalHolder
+                .GetComponentsInChildren<CardView>(true)
+                .OrderBy(card => card.transform.GetSiblingIndex())
+                .ToArray();
+            DemonCardView[] demonCards = demonHolder
+                .GetComponentsInChildren<DemonCardView>(true)
+                .OrderBy(card => card.transform.GetSiblingIndex())
+                .ToArray();
+            AssertLocalPositions(normalCards, normalPositions);
+            AssertLocalPositions(demonCards, demonPositions);
+            Assert.That(
+                Quaternion.Angle(
+                    normalCards[1].transform.localRotation,
+                    normalLayouts[1].localRotation),
+                Is.LessThan(0.001f));
+            Assert.That(
+                normalCards[2].transform.localScale,
+                Is.EqualTo(normalLayouts[2].localScale));
+            Assert.That(
+                Quaternion.Angle(
+                    demonCards[0].transform.localRotation,
+                    demonLayouts[0].localRotation),
+                Is.LessThan(0.001f));
+            Assert.That(
+                demonCards[1].transform.localScale,
+                Is.EqualTo(demonLayouts[1].localScale));
+            Assert.That(normalLayouts.All(layout => !layout.gameObject.activeSelf));
+            Assert.That(demonLayouts.All(layout => !layout.gameObject.activeSelf));
+            Assert.That(
+                lighterObject.transform.localPosition,
+                Is.EqualTo(lighterPosition));
+            Assert.That(
+                whiskeyObject.transform.localPosition,
+                Is.EqualTo(whiskeyPosition));
+        }
+
         private Transform CreateHolder(string name)
         {
             GameObject holder = new GameObject(name);
             holder.transform.SetParent(_root.transform);
             return holder.transform;
+        }
+
+        private static Transform[] CreateAuthoredLayouts(
+            Transform holder,
+            string label,
+            IReadOnlyList<Vector3> positions)
+        {
+            Transform[] layouts = new Transform[positions.Count];
+            for (int i = 0; i < positions.Count; i++)
+            {
+                GameObject layout = new GameObject(
+                    $"__TableLayoutPreview_{label}_{i}");
+                layout.transform.SetParent(holder, false);
+                layout.transform.localPosition = positions[i];
+                layout.transform.localScale = Vector3.one * 0.7f;
+                layouts[i] = layout.transform;
+            }
+
+            return layouts;
         }
 
         private CardView CreateNormalCardPrefab()
@@ -679,6 +811,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 NormalStatusOffset,
                 Vector3.one * 1.4f);
             SetPrivateField(prefab, "shopOfferStatus", status);
+            CreatePriceTarget(prefabObject);
             return prefab;
         }
 
@@ -696,6 +829,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 DemonStatusOffset,
                 Vector3.one);
             SetPrivateField(prefab, "shopOfferStatus", status);
+            CreatePriceTarget(prefabObject);
             return prefab;
         }
 
@@ -710,12 +844,20 @@ namespace DiaBlackJack.CoreLoop.Tests
             prefabObject.transform.localScale = localScale;
             ShopCardOfferStatusView prefab =
                 prefabObject.AddComponent<ShopCardOfferStatusView>();
-            Component priceText = CreateText("Price", prefabObject.transform);
             Component soldOutText = CreateText("Sold Out", prefabObject.transform);
-            SetPrivateField(prefab, "priceText", priceText);
             SetPrivateField(prefab, "soldOutText", soldOutText);
             prefabObject.SetActive(false);
             return prefab;
+        }
+
+        private static ShopPriceTarget CreatePriceTarget(GameObject owner)
+        {
+            GameObject anchor = new GameObject("PriceAnchor");
+            anchor.transform.SetParent(owner.transform, false);
+            anchor.transform.localPosition = Vector3.up;
+            ShopPriceTarget target = owner.AddComponent<ShopPriceTarget>();
+            SetPrivateField(target, "priceAnchor", anchor.transform);
+            return target;
         }
 
         private static Component CreateText(string name, Transform parent)

@@ -113,9 +113,36 @@ namespace DiaBlackJack.GameScene.Editor
             }
 
             EditorGUILayout.HelpBox(
-                "Preview cards are temporary and are not saved to the scene. " +
-                "Press a preview button again after changing counts or spacing.",
+                "Saved Shop preview card transforms in Table Controller are " +
+                "used as the runtime offer layout. Unsaved previews are temporary. " +
+                "Cyan markers show every product's Screen Space price anchor. " +
+                "Move the saved Shop cards to author each product position.",
                 MessageType.None);
+        }
+
+        private void OnSceneGUI()
+        {
+            ShopController controller = target as ShopController;
+            if (controller == null)
+            {
+                return;
+            }
+
+            GameObject itemsRoot = GetItemsRoot();
+            ShopPriceTarget[] priceTargets =
+                Resources.FindObjectsOfTypeAll<ShopPriceTarget>();
+            foreach (ShopPriceTarget priceTarget in priceTargets)
+            {
+                if (priceTarget == null ||
+                    priceTarget.PriceAnchor == null ||
+                    priceTarget.gameObject.scene != controller.gameObject.scene ||
+                    !BelongsToShopPreview(priceTarget.transform, itemsRoot))
+                {
+                    continue;
+                }
+
+                DrawPriceAnchor(priceTarget);
+            }
         }
 
         internal static void ClearAllPreviewObjects()
@@ -125,6 +152,8 @@ namespace DiaBlackJack.GameScene.Editor
             foreach (GameObject gameObject in objects)
             {
                 if (gameObject == null ||
+                    EditorUtility.IsPersistent(gameObject) ||
+                    (gameObject.hideFlags & HideFlags.DontSaveInEditor) == 0 ||
                     !gameObject.name.StartsWith(
                         PreviewObjectPrefix,
                         StringComparison.Ordinal))
@@ -278,6 +307,28 @@ namespace DiaBlackJack.GameScene.Editor
                 return;
             }
 
+            bool hasAuthoredLayout = false;
+            string authoredNamePrefix =
+                PreviewObjectPrefix + label + "_";
+            for (int i = 0; i < holder.childCount; i++)
+            {
+                Transform child = holder.GetChild(i);
+                if (child != null &&
+                    child.name.StartsWith(
+                        authoredNamePrefix,
+                        StringComparison.Ordinal) &&
+                    (child.gameObject.hideFlags & HideFlags.DontSaveInEditor) == 0)
+                {
+                    child.gameObject.SetActive(true);
+                    hasAuthoredLayout = true;
+                }
+            }
+
+            if (hasAuthoredLayout)
+            {
+                return;
+            }
+
             float offset = -(count - 1) * 0.5f * spacing;
             for (int i = 0; i < count; i++)
             {
@@ -389,6 +440,54 @@ namespace DiaBlackJack.GameScene.Editor
                 HideFlags.DontSaveInBuild;
             preview.SetActive(true);
             return preview;
+        }
+
+        private static bool BelongsToShopPreview(
+            Transform target,
+            GameObject itemsRoot)
+        {
+            if (itemsRoot != null && target.IsChildOf(itemsRoot.transform))
+            {
+                return true;
+            }
+
+            Transform current = target;
+            while (current != null)
+            {
+                if (current.name.StartsWith(
+                        PreviewObjectPrefix,
+                        StringComparison.Ordinal))
+                {
+                    return true;
+                }
+
+                current = current.parent;
+            }
+
+            return false;
+        }
+
+        private static void DrawPriceAnchor(ShopPriceTarget target)
+        {
+            Transform anchor = target.PriceAnchor;
+            float size = HandleUtility.GetHandleSize(anchor.position) * 0.08f;
+            Handles.color = new Color(0.15f, 0.9f, 1f, 1f);
+            Handles.DrawDottedLine(
+                target.transform.position,
+                anchor.position,
+                4f);
+            Handles.SphereHandleCap(
+                0,
+                anchor.position,
+                Quaternion.identity,
+                size,
+                EventType.Repaint);
+            string label = string.IsNullOrEmpty(target.ProductName)
+                ? target.gameObject.name
+                : target.ProductName;
+            Handles.Label(
+                anchor.position + Vector3.up * size,
+                label + " PRICE UI");
         }
 
         private GameObject GetItemsRoot()

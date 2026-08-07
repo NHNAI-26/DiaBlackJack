@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using DG.Tweening;
 using DiaBlackJack.Content;
 using DiaBlackJack.CoreLoop;
@@ -41,6 +42,10 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private RectTransform cardHoverHeaderBadge;
         [SerializeField] private TMP_Text cardHoverHeaderText;
 
+        [Header("Shop price badges")]
+        [SerializeField] private RectTransform shopPriceBadgeContainer;
+        [SerializeField] private ShopPriceBadgeView shopPriceBadgePrefab;
+
         [Header("Combat controls")]
         [SerializeField] private GameObject combatControlsRoot;
         [SerializeField] private RectTransform actionTooltip;
@@ -59,6 +64,8 @@ namespace DiaBlackJack.GameScene
         private Canvas _canvas;
         private OptionSlotLayout[] _optionSlotLayouts = Array.Empty<OptionSlotLayout>();
         private Sequence _soulRestoreSequence;
+        private readonly List<ShopPriceBadgeView> _shopPriceBadges =
+            new List<ShopPriceBadgeView>();
         private Color _playerSoulBaseColor;
         private Vector3 _playerSoulBaseScale;
         private bool _hasPlayerSoulBaseState;
@@ -103,6 +110,7 @@ namespace DiaBlackJack.GameScene
             }
             CaptureOptionSlotLayouts();
             HideCardHoverBadge();
+            HideShopPriceBadges();
             HideDemonContractDetail();
             BindCombatControls();
             HideCombatControls();
@@ -388,6 +396,95 @@ namespace DiaBlackJack.GameScene
             if (cardHoverHeaderBadge != null)
             {
                 cardHoverHeaderBadge.gameObject.SetActive(false);
+            }
+        }
+
+        public void RenderShopPriceBadges(
+            IReadOnlyList<ShopPriceTarget> targets,
+            Camera worldCamera)
+        {
+            if (targets == null ||
+                targets.Count == 0 ||
+                worldCamera == null ||
+                shopPriceBadgeContainer == null ||
+                shopPriceBadgePrefab == null)
+            {
+                HideShopPriceBadges();
+                return;
+            }
+
+            if (_canvas == null)
+            {
+                _canvas = GetComponentInParent<Canvas>();
+            }
+
+            Camera uiCamera = _canvas != null &&
+                _canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                    ? _canvas.worldCamera != null
+                        ? _canvas.worldCamera
+                        : worldCamera
+                    : null;
+            int visibleCount = 0;
+            for (int i = 0; i < targets.Count; i++)
+            {
+                ShopPriceTarget target = targets[i];
+                if (target == null ||
+                    !target.TryCreateRequest(
+                        worldCamera,
+                        out ShopPriceBadgeRequest request) ||
+                    !RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                        shopPriceBadgeContainer,
+                        request.ScreenPosition,
+                        uiCamera,
+                        out Vector2 localPosition))
+                {
+                    continue;
+                }
+
+                ShopPriceBadgeView badge =
+                    GetOrCreateShopPriceBadge(visibleCount++);
+                if (badge == null)
+                {
+                    continue;
+                }
+
+                badge.Render(request);
+                badge.SetLocalPosition(
+                    localPosition,
+                    shopPriceBadgeContainer);
+            }
+
+            HideShopPriceBadgesFrom(visibleCount);
+        }
+
+        public void HideShopPriceBadges()
+        {
+            HideShopPriceBadgesFrom(0);
+        }
+
+        private ShopPriceBadgeView GetOrCreateShopPriceBadge(
+            int index)
+        {
+            while (_shopPriceBadges.Count <= index)
+            {
+                ShopPriceBadgeView badge = Instantiate(
+                    shopPriceBadgePrefab,
+                    shopPriceBadgeContainer,
+                    worldPositionStays: false);
+                badge.name =
+                    $"ShopPriceBadge_{_shopPriceBadges.Count + 1}";
+                badge.Hide();
+                _shopPriceBadges.Add(badge);
+            }
+
+            return _shopPriceBadges[index];
+        }
+
+        private void HideShopPriceBadgesFrom(int startIndex)
+        {
+            for (int i = Mathf.Max(0, startIndex); i < _shopPriceBadges.Count; i++)
+            {
+                _shopPriceBadges[i]?.Hide();
             }
         }
 

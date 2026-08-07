@@ -234,6 +234,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8358169800489736741}
   - component: {fileID: 1191069393801395701}
+  - component: {fileID: 919260807000000010}
   m_Layer: 0
   m_Name: ShopUtilityItem
   m_TagString: Untagged
@@ -257,6 +258,7 @@ Transform:
   - {fileID: 7553110662055141979}
   - {fileID: 4293402406934222925}
   - {fileID: 232994453288053923}
+  - {fileID: 919260807000000012}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1191069393801395701
@@ -274,10 +276,55 @@ MonoBehaviour:
   kind: 0
   nameText: {fileID: 3879847998483440863}
   hoverDescriptionTarget: {fileID: 0}
+  shopPriceTarget: {fileID: 919260807000000010}
   displayModelPrefab: {fileID: 0}
   placeholderRenderer: {fileID: 3795005150099411801}
   hoverOutlineColor: {r: 1, g: 0.72, b: 0.08, a: 1}
   hoverOutlineWidthPixels: 4
+--- !u!114 &919260807000000010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6158096078959212752}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 938f654a35d6adc40a0c37d02eac72cb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.ShopPriceTarget
+  priceAnchor: {fileID: 919260807000000012}
+--- !u!1 &919260807000000011
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 919260807000000012}
+  m_Layer: 0
+  m_Name: PriceAnchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &919260807000000012
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 919260807000000011}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.78, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8358169800489736741}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &9196873438216898575
 GameObject:
   m_ObjectHideFlags: 0
