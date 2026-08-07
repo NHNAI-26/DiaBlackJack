@@ -97,10 +97,12 @@ namespace DiaBlackJack.GameScene
         private float _ditherAlpha = 1f;
         private Material[] _ditherMaterials;
         private bool _appearanceInitialized;
+        private bool _inputEnabled = true;
         private bool _isAppearancePlaying;
         private bool _appearanceVisible = true;
 
         public float CurrentHandleAngle => _handleAngle;
+        public bool IsInputEnabled => _inputEnabled;
         public bool IsAppearancePlaying => _isAppearancePlaying;
 
         private void Awake()
@@ -123,7 +125,7 @@ namespace DiaBlackJack.GameScene
 
         private void Update()
         {
-            if (_isAppearancePlaying || !_appearanceVisible)
+            if (!_inputEnabled || _isAppearancePlaying || !_appearanceVisible)
             {
                 SetHoveredButton(null);
                 return;
@@ -204,6 +206,15 @@ namespace DiaBlackJack.GameScene
                     .SetEase(appearanceEnterMoveEase))
                 .Join(CreateDitherAlphaTween(0f, 1f, appearanceEnterDuration))
                 .OnComplete(() => CompleteEntranceAnimation(onComplete));
+        }
+
+        public void SetInputEnabled(bool enabled)
+        {
+            _inputEnabled = enabled;
+            if (!enabled)
+            {
+                ClearHoverState();
+            }
         }
 
         public void PlayExitAnimation(Action onComplete = null)

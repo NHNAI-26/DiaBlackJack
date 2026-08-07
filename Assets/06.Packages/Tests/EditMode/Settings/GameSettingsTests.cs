@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Border.Settings;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DiaBlackJack.Settings.Tests
 {
@@ -165,6 +168,117 @@ namespace DiaBlackJack.Settings.Tests
             Assert.That(
                 UISettingsArrowSelector.WrapIndex(index, count),
                 Is.EqualTo(expected));
+        }
+
+        [Test]
+        [Category("MMUI01")]
+        public void MMUI01_U02_SettingsOnlyPanelClosesWithoutChangingTimeScale()
+        {
+            GameObject settingsSystemInstance = null;
+            GameObject settingsCanvasInstance = null;
+            float previousTimeScale = Time.timeScale;
+            try
+            {
+                GameObject settingsSystemPrefab =
+                    AssetDatabase.LoadAssetAtPath<GameObject>(
+                        "Assets/03. Prefabs/Manager/SettingsSystem.prefab");
+                GameObject settingsCanvasPrefab =
+                    AssetDatabase.LoadAssetAtPath<GameObject>(
+                        "Assets/03. Prefabs/UI/PauseSettingsCanvas.prefab");
+                Assert.That(settingsSystemPrefab, Is.Not.Null);
+                Assert.That(settingsCanvasPrefab, Is.Not.Null);
+
+                settingsSystemInstance =
+                    UnityEngine.Object.Instantiate(settingsSystemPrefab);
+                SettingsSystem settingsSystem =
+                    settingsSystemInstance.GetComponent<SettingsSystem>();
+                typeof(SettingsSystem)
+                    .GetField(
+                        "_current",
+                        BindingFlags.Static | BindingFlags.NonPublic)
+                    .SetValue(null, settingsSystem);
+                typeof(SettingsSystem)
+                    .GetField(
+                        "_repository",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(settingsSystem, _repository);
+                typeof(SettingsSystem)
+                    .GetField(
+                        "_snapshot",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(
+                        settingsSystem,
+                        new GameSettingsSnapshot(
+                            1920,
+                            1080,
+                            GameWindowMode.Windowed,
+                            1f,
+                            0.8f,
+                            1f));
+                settingsCanvasInstance =
+                    UnityEngine.Object.Instantiate(settingsCanvasPrefab);
+                PauseSettingsController controller =
+                    settingsCanvasInstance.GetComponent<PauseSettingsController>();
+                Assert.That(controller, Is.Not.Null);
+
+                SerializedObject serializedController =
+                    new SerializedObject(controller);
+                serializedController.FindProperty("settingsOnlyMode").boolValue =
+                    true;
+                serializedController.ApplyModifiedPropertiesWithoutUndo();
+                typeof(PauseSettingsController)
+                    .GetMethod(
+                        "Awake",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(controller, null);
+
+                int closedCount = 0;
+                controller.SettingsPanelClosed += () => closedCount++;
+                Time.timeScale = 0.75f;
+
+                Assert.That(controller.OpenSettingsPanel(), Is.True);
+                Assert.That(
+                    controller.State,
+                    Is.EqualTo(PauseMenuState.Settings));
+                Assert.That(Time.timeScale, Is.EqualTo(0.75f));
+
+                Button backButton = null;
+                Button[] buttons =
+                    settingsCanvasInstance.GetComponentsInChildren<Button>(true);
+                for (int i = 0; i < buttons.Length; i++)
+                {
+                    if (buttons[i].name == "BackButton")
+                    {
+                        backButton = buttons[i];
+                        break;
+                    }
+                }
+
+                Assert.That(backButton, Is.Not.Null);
+                backButton.onClick.Invoke();
+
+                Assert.That(controller.State, Is.EqualTo(PauseMenuState.Hidden));
+                Assert.That(Time.timeScale, Is.EqualTo(0.75f));
+                Assert.That(closedCount, Is.EqualTo(1));
+            }
+            finally
+            {
+                Time.timeScale = previousTimeScale;
+                typeof(SettingsSystem)
+                    .GetField(
+                        "_current",
+                        BindingFlags.Static | BindingFlags.NonPublic)
+                    .SetValue(null, null);
+                if (settingsCanvasInstance != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(settingsCanvasInstance);
+                }
+
+                if (settingsSystemInstance != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(settingsSystemInstance);
+                }
+            }
         }
     }
 }

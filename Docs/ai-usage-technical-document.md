@@ -1844,6 +1844,15 @@ HUD 선택 슬롯은 `DefaultButton.prefab`의 중첩 인스턴스로 생성하�
 - 검증: 최초 작성 시점에는 Unity MCP 브릿지가 연결되지 않아 AI가 자동 회귀를 실행하지 못했다. 이후 같은 세션에서 브릿지가 연결되어 AI가 컴파일·전체 EditMode를 확인했다: 컴파일 오류 0, 전체 EditMode 1081/1083 통과. 잔여 2건(`GSV13_U01` 카드 도감 호버 색상 정밀도, `GSB01_U11` 말풍선 카메라 스택 알파)은 이번 변경과 무관한 기존 회귀다.
 - 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
 
+## 2026-08-08 MMUI-01 메인메뉴 월드 UI 개편
+
+- 기존 `MainMenuView` IMGUI 버튼을 제거하고 GameScene에서 사용하던 Telegraph를 새 게임·튜토리얼·설정 입력으로 연결했다. 새 게임은 기존 저장이 있으면 확인 상태를 즉시 확정해 한 번의 선택으로 새 예약을 만든다.
+- MainMenuScene에 GameScene Map의 5개 프리팹, Sound/Settings 시스템, 설정 전용 `PauseSettingsCanvas`, EventSystem을 배치했다. 상단에는 `DiaBlackJackLogo.png`를 표시하고, 새 게임·튜토리얼 성공 시 Telegraph 퇴장과 로고 페이드가 끝난 뒤 기존 `LoadBattleScene()`을 호출한다.
+- `MoodController`에 `MainMenu.asset`과 GameScene에서 복사한 창문·조명·문 본/커브를 연결해 문 연출과 `mainMenu` BGM을 사용한다. 원본 GameScene과 Map/Telegraph 프리팹은 변경하지 않았다.
+- 신규 `MMUI01` 4/4 통과(job `34a0b9a4272d496a93fbeaeaa3219499`). 영향 클래스 106개 중 104개 통과(job `fb71fae032f844569ddfd9fafcffe4f2`); 실패 2개는 작업 범위 밖 기존 CardContent rank와 Card prefab collider 기대값이다. MainMenuScene validation은 issue/missing script/broken prefab 모두 0, 최종 재컴파일 Console Error 0이다.
+- 1280×720 캡처에서 Map·상단 로고·상태 문구 배치를 확인했다. 자동화 Editor가 Play 전환 플래그에 머물고 `Application.isPlaying=false`여서 런타임 애니메이션·클릭 육안 검증은 완료하지 못했다.
+- MMUI 검증 종료 뒤 다른 세션의 CombatPrompt/HUD 변경이 작업 트리에 들어오며 해당 코드의 타입 불일치 컴파일 오류 4건이 새로 발생했다. MMUI 직후 Console Error 0 및 위 테스트 job 결과와 분리해 기록하며, 타 세션 소유 파일은 수정하지 않았다.
+
 ## 2026-08-08 라이터 덱 선택 표시·가격 뱃지 겹침 수정
 
 - 이천서: 라이터 카드 제거용 덱 UI가 상점 가격 뱃지 아래에 보이고, 선택 카드의 금색 외곽선 대신 기존 호버 효과가 유지되도록 요청했다. 구현 중 덱 Canvas를 `Screen Space - Overlay`로 바꾼 첫 접근에서 카메라 후처리 Bloom이 사라진 점을 즉시 제보해 최종 접근을 교정했다.

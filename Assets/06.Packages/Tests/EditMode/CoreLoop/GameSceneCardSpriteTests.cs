@@ -233,6 +233,113 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
         }
 
+        [Test]
+        [Category("MMUI01")]
+        public void MMUI01_U03_TelegraphInputCanBeLockedWithoutDisablingVisuals()
+        {
+            GameObject root = new GameObject("TelegraphTest");
+            try
+            {
+                Telegraph telegraph = root.AddComponent<Telegraph>();
+                Assert.That(telegraph.IsInputEnabled, Is.True);
+                Assert.That(telegraph.enabled, Is.True);
+
+                telegraph.SetInputEnabled(false);
+
+                Assert.That(telegraph.IsInputEnabled, Is.False);
+                Assert.That(telegraph.enabled, Is.True);
+
+                telegraph.SetInputEnabled(true);
+                Assert.That(telegraph.IsInputEnabled, Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        [Category("MMUI01")]
+        public void MMUI01_U04_MainMenuSceneWiresWorldMenuAssets()
+        {
+            const string scenePath =
+                "Assets/00. Scenes/MainMenuScene.unity";
+            Scene scene = EditorSceneManager.OpenScene(
+                scenePath,
+                OpenSceneMode.Additive);
+            try
+            {
+                GameObject map = null;
+                GameObject telegraphRoot = null;
+                GameObject mainMenu = null;
+                GameObject canvas = null;
+                GameObject settings = null;
+                GameObject[] roots = scene.GetRootGameObjects();
+                for (int i = 0; i < roots.Length; i++)
+                {
+                    Assert.That(
+                        GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(
+                            roots[i]),
+                        Is.EqualTo(0),
+                        roots[i].name);
+                    switch (roots[i].name)
+                    {
+                        case "Map":
+                            map = roots[i];
+                            break;
+                        case "Telegraph":
+                            telegraphRoot = roots[i];
+                            break;
+                        case "MainMenu":
+                            mainMenu = roots[i];
+                            break;
+                        case "MainMenuCanvas":
+                            canvas = roots[i];
+                            break;
+                        case "UISettings":
+                            settings = roots[i];
+                            break;
+                    }
+                }
+
+                Assert.That(map, Is.Not.Null);
+                Assert.That(map.transform.childCount, Is.EqualTo(5));
+                CollectionAssert.AreEquivalent(
+                    new[] { "Environment", "Light", "Volume", "Camera", "Weapon" },
+                    GetChildNames(map.transform));
+
+                Assert.That(
+                    telegraphRoot.GetComponent<Telegraph>(),
+                    Is.Not.Null);
+                Assert.That(mainMenu, Is.Not.Null);
+                Assert.That(
+                    mainMenu.GetComponent<DiaBlackJack.GameScene.MoodController>(),
+                    Is.Not.Null);
+                Assert.That(
+                    mainMenu.GetComponent<DiaBlackJack.MainMenu.UI.MainMenuView>(),
+                    Is.Not.Null);
+
+                Assert.That(canvas, Is.Not.Null);
+                UnityEngine.UI.Image logo =
+                    canvas.transform.Find("Logo")
+                        .GetComponent<UnityEngine.UI.Image>();
+                Assert.That(logo.sprite, Is.Not.Null);
+                Assert.That(
+                    AssetDatabase.GetAssetPath(logo.sprite),
+                    Is.EqualTo("Assets/05. Arts/UI/DiaBlackJackLogo.png"));
+
+                Assert.That(settings, Is.Not.Null);
+                Border.Settings.PauseSettingsController settingsController =
+                    settings.GetComponent<Border.Settings.PauseSettingsController>();
+                Assert.That(settingsController, Is.Not.Null);
+                Assert.That(settingsController.SettingsOnlyMode, Is.True);
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
         [TestCase(CardDefinitionCatalog.ResurrectionHerbKey, 1)]
         [TestCase(CardDefinitionCatalog.PoisonKey, 2)]
         [TestCase(CardDefinitionCatalog.PocketWatchKey, 3)]
@@ -1784,6 +1891,17 @@ namespace DiaBlackJack.CoreLoop.Tests
             {
                 Object.DestroyImmediate(instance);
             }
+        }
+
+        private static string[] GetChildNames(Transform parent)
+        {
+            string[] names = new string[parent.childCount];
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                names[i] = parent.GetChild(i).name;
+            }
+
+            return names;
         }
 
         private static SpriteRenderer GetFrontRenderer(CardView view)

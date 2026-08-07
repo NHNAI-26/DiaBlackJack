@@ -4,6 +4,7 @@ using System.Linq;
 using Border.SaveLoad;
 using Border.SaveLoad.UI;
 using DiaBlackJack.CoreLoop;
+using DiaBlackJack.MainMenu.UI;
 using DiaBlackJack.StageProgression.UI;
 using NUnit.Framework;
 
@@ -284,6 +285,36 @@ namespace DiaBlackJack.StageProgression.Tests
                 secondReservation.RootSeed,
                 Is.Not.EqualTo(firstReservation.RootSeed));
             Assert.That(seedIndex, Is.EqualTo(2));
+        }
+
+        [Test]
+        [Category("MMUI01")]
+        public void MMUI01_U01_NewGameImmediatelyReplacesExistingSave()
+        {
+            MemoryRunFileStore files = new MemoryRunFileStore();
+            RunSaveFlow first = CreateFlow(files, "existing-run");
+            Assert.That(first.TryRequestNewRun(), Is.True);
+            Assert.That(first.TryCompleteStartingDemonReveal(), Is.True);
+
+            RunSaveFlow replacement = CreateFlow(files, "replacement-run");
+            Assert.That(replacement.CanContinueRun, Is.True);
+
+            Assert.That(
+                MainMenuController.TryStartNewRunImmediately(replacement),
+                Is.True);
+            Assert.That(replacement.RequiresNewRunConfirmation, Is.False);
+            Assert.That(replacement.IsMenuVisible, Is.False);
+            Assert.That(replacement.Session, Is.Not.Null);
+
+            RunReservationLoadResult reservation =
+                new RunReservationRepository(
+                    files,
+                    DemonContractCatalog.Default)
+                    .Load();
+            Assert.That(reservation.Reservation, Is.Not.Null);
+            Assert.That(
+                reservation.Reservation.RunId,
+                Is.EqualTo("replacement-run"));
         }
 
         [Test]

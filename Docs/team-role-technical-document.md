@@ -1066,3 +1066,11 @@ DC-00 공통 규칙 개정으로 동일 악마 추가 계약과 계약 임시 �
 - 변경 영역: `GameScene/{TutorialNarratorView,TutorialDirector,GameManager,GameFlowController,RevolverNumberSelectorView,TutorialScriptSO(신규)}.cs`, `CoreLoop/EnemyProfiles/EnemyCombatProfileCatalog.cs`, `StageProgression/TutorialBattleFactory.cs`, 씬/프리팹/신규 데이터 에셋, 테스트 4개.
 - 검증: 컴파일 0 오류 확인(중간에 MCP 연결이 한 번 끊겨 재연결). 관련 테스트 137개 전부 통과, 데이터 에셋 무결성도 재조회로 직접 확인.
 - Play 모드 확인 불가로, 특히 "첫 대사 자동 출력"과 "적 등장 연출"은 재현 가능한 원인을 코드로 못 찾은 상태라 이천서의 에디터 내 재확인이 반드시 필요하다.
+
+## 2026-08-08 MMUI-01 메인메뉴 월드 UI 개편
+
+- HONG 요청으로 MainMenuScene을 GameScene Map·MainMenu mood·Telegraph 기반 월드 메뉴로 교체하고 상단 로고와 설정 전용 기존 설정 패널을 연결했다.
+- 새 게임은 기존 저장을 즉시 교체하며, 새 게임·튜토리얼은 UI 퇴장 완료 뒤 기존 GameScene 흐름으로 진입한다. Continue/Resume/Exit UI만 제거했고 저장 도메인 API는 유지했다.
+- 신규 4/4 통과, 영향 클래스 104/106 통과. 남은 2건은 변경하지 않은 기존 카드 콘텐츠/프리팹 기대값 실패다. 씬 validation 0건, 컴파일 Console Error 0건이다.
+- 1280×720 정적 캡처로 Map·로고 배치를 확인했다. 자동화 Play 전환이 완료되지 않아 실제 문/Telegraph 퇴장·설정 클릭은 HONG의 Editor 육안 확인이 필요하다.
+- MMUI 검증 뒤 유입된 다른 세션 CombatPrompt/HUD 변경의 컴파일 오류 4건은 범위 밖이라 보존했다. MMUI 자체의 Error 0 및 테스트 결과는 그 유입 전 완료했다.

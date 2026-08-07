@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DiaBlackJack.GameScene;
 using TMPro;
@@ -19,6 +20,7 @@ namespace Border.Settings
         };
 
         [Header("Panels")]
+        [SerializeField] private bool settingsOnlyMode;
         [SerializeField] private GameObject backdrop;
         [SerializeField] private GameObject pausePanel;
         [SerializeField] private GameObject settingsPanel;
@@ -54,6 +56,10 @@ namespace Border.Settings
         private bool _listenersRegistered;
 
         internal PauseMenuState State => _state;
+
+        internal bool SettingsOnlyMode => settingsOnlyMode;
+
+        public event Action SettingsPanelClosed;
 
         private void Awake()
         {
@@ -94,7 +100,15 @@ namespace Border.Settings
 
             if (_state != PauseMenuState.Hidden)
             {
-                ResumeGame();
+                if (settingsOnlyMode)
+                {
+                    SettingsSystem.Current?.Save();
+                    ShowState(PauseMenuState.Hidden);
+                }
+                else
+                {
+                    ResumeGame();
+                }
             }
         }
 
@@ -180,7 +194,10 @@ namespace Border.Settings
             switch (_state)
             {
                 case PauseMenuState.Hidden:
-                    OpenPauseMenu();
+                    if (!settingsOnlyMode)
+                    {
+                        OpenPauseMenu();
+                    }
                     break;
                 case PauseMenuState.PauseMenu:
                     ResumeGame();
@@ -196,6 +213,11 @@ namespace Border.Settings
 
         private void OpenPauseMenu()
         {
+            if (settingsOnlyMode)
+            {
+                return;
+            }
+
             _gameManager ??= FindFirstObjectByType<GameManager>();
             if (_gameManager != null &&
                 _gameManager.TryCloseTransientOverlay())
@@ -239,9 +261,32 @@ namespace Border.Settings
             Select(settingsBackButton);
         }
 
+        public bool OpenSettingsPanel()
+        {
+            if (SettingsSystem.Current == null)
+            {
+                return false;
+            }
+
+            OpenSettings();
+            return _state == PauseMenuState.Settings;
+        }
+
         private void CloseSettings()
         {
             SettingsSystem.Current?.Save();
+            if (settingsOnlyMode)
+            {
+                ShowState(PauseMenuState.Hidden);
+                if (EventSystem.current != null)
+                {
+                    EventSystem.current.SetSelectedGameObject(null);
+                }
+
+                SettingsPanelClosed?.Invoke();
+                return;
+            }
+
             ShowState(PauseMenuState.PauseMenu);
             Select(settingsButton);
         }

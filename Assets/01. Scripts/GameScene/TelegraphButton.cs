@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -26,6 +27,8 @@ namespace DiaBlackJack.GameScene
         public TelegraphButtonKind ButtonKind => buttonKind;
         public Telegraph Telegraph => _telegraph;
 
+        internal event Action<TelegraphButtonKind> Clicked;
+
         internal float TargetAngle => buttonKind switch
         {
             TelegraphButtonKind.NewGame => 45f,
@@ -47,6 +50,7 @@ namespace DiaBlackJack.GameScene
         internal void InvokeClick()
         {
             onClicked?.Invoke();
+            Clicked?.Invoke(buttonKind);
         }
 
         private void AutoBindTelegraph()

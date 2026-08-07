@@ -1199,3 +1199,12 @@ Test Framework 준비·결과 저장·정리 안내였으며 컴파일·게임 �
 - 신규 GF-01 5/5, 전체 EditMode 803/803 통과. Console 컴파일 오류 0.
 - `MainMenuScene` 유효성 검사에서 누락 스크립트·깨진 프리팹·기타 문제 0.
 - 런타임·씬·프리팹·Packages·외부 에셋·오픈소스·새 의존성 변경 없음.
+
+## 2026-08-08 MMUI-01 메인메뉴 월드 UI
+
+- `MainMenuScene`은 GameScene의 `Environment`, `Light`, `Volume`, `Camera`, `Weapon` 프리팹을 동일한 Map 하위 구조로 재사용한다.
+- 기존 IMGUI 버튼은 제거하고 `Telegraph.prefab`의 새 게임·튜토리얼·설정 콜라이더만 입력으로 사용한다.
+- `DiaBlackJackLogo.png`는 Screen Space Overlay Canvas 상단 중앙에 표시되며, 새 게임·튜토리얼 진입 때 Telegraph와 함께 퇴장한다.
+- `MoodController`는 `MainMenu.asset`을 즉시 적용해 문 연출과 `mainMenu` BGM을 시작한다.
+- `PauseSettingsCanvas`는 설정 전용 모드로 열려 Pause/Quit와 `Time.timeScale`을 변경하지 않는다.
+- 새 게임은 `TryRequestNewRun()` 뒤 필요한 확인을 즉시 확정하므로 기존 저장·예약을 한 번의 선택으로 교체한다. Continue/Resume/Exit UI는 제거했지만 저장 도메인 API는 유지한다.

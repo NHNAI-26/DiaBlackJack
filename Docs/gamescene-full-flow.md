@@ -3,13 +3,13 @@
 작성일: 2026-07-31  
 범위: 제품 시작 화면은 `MainMenuScene`, 실제 런 전체는 `GameScene`에서 진행.
 
-> 2026-07-31 현재 상태: `MainMenuScene`과 저장 흐름 기반 새 런·이어하기·시작 예약 재개 진입을 구현했다. GF-01 흐름 계약 테스트와 GF-02 단일 씬 흐름 제어 기반도 완료했다. 성공한 메뉴 입력은 이제 `GameScene`으로 이동하며, `GameFlowController`가 시작 악마 공개·상대 선택·전투·상점·결과 화면을 도메인 상태에서 판정한다. 실제 시작 악마 공개·상대 선택 월드 UI는 GF-03 범위다. 테이블 도감 후속 작업 DX-00~DX-03은 완료했으며 세부 구현·검증은 `Docs/codex-progress-log.md`에 기록한다.
+> 2026-08-08 현재 상태: `MainMenuScene`은 GameScene의 Map 프리팹과 `MainMenu` mood를 재사용하는 월드 메뉴다. Telegraph의 새 게임·튜토리얼·설정만 제공하며, 새 게임은 기존 저장을 즉시 덮어쓴다. 성공한 진입은 Telegraph·로고 퇴장 후 `GameScene`으로 이동한다. `GameFlowController`는 시작 악마 공개·상대 선택·전투·상점·결과 화면을 도메인 상태에서 판정한다.
 
 ## 1. 목표
 
-제품은 `MainMenuScene`에서 시작한다. 메뉴에서 새 게임 또는 이어하기를 선택하면 `GameScene`으로 이동하고, 이후 정식 런은 다른 진행 씬으로 왕복하지 않고 GameScene 안에서 끝까지 진행한다.
+제품은 `MainMenuScene`에서 시작한다. 메뉴에서 새 게임 또는 튜토리얼을 선택하면 퇴장 연출 뒤 `GameScene`으로 이동하고, 이후 정식 런은 다른 진행 씬으로 왕복하지 않고 GameScene 안에서 끝까지 진행한다.
 
-1. `MainMenuScene`: 새 게임/이어하기/시작 예약 재개/종료. 설정은 후속 구현 자리만 비활성 표시
+1. `MainMenuScene`: Telegraph 새 게임/튜토리얼/설정, 상단 로고, GameScene Map 기반 배경
 2. `GameScene`: 시작 악마 2장 자동 지급·공개
 3. 상대 선택
 4. 전투
@@ -115,11 +115,11 @@ RunDefeat
 
 `MainMenuScene`은 게임 규칙이나 런 진행을 소유하지 않는다.
 
-- 새 게임: 기존 저장 초기화/새 런 예약 후 `GameScene` 로드
+- 새 게임: 기존 저장·예약을 확인 없이 교체하고 새 런 예약 후 퇴장 연출, `GameScene` 로드
 - 새 게임마다 새 무작위 루트 시드 생성
-- 이어하기: 유효한 저장이 있을 때만 활성화, 복원 예약 후 `GameScene` 로드
-- 설정: 기존 설정 시스템 재사용
-- 종료: Player 빌드에서 종료, Editor에서는 무동작 또는 개발 로그
+- 튜토리얼: 인메모리 튜토리얼 런 생성 후 같은 퇴장 연출과 `GameScene` 로드
+- 설정: 기존 `SettingsSystem`/`PauseSettingsCanvas`의 설정 패널만 재사용하며 시간 정지·Pause/Quit 패널은 사용하지 않음
+- 이어하기·시작 예약 재개·종료는 메인메뉴에서 노출하지 않으며 기반 저장 API는 유지
 
 `StageProgressionRuntime`/`RunSaveFlow`가 실제 세션 생성·복원을 계속 담당한다. 메뉴는 저장 존재 여부와 진입 의도만 전달한다. `MainMenuScene`에서 전투·상점·상대 선택 상태를 직접 만들지 않는다.
 

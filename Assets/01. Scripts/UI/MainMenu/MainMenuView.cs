@@ -1,5 +1,9 @@
 using System;
+using System.Collections.Generic;
 using Border.SaveLoad.UI;
+using DG.Tweening;
+using DiaBlackJack.GameScene;
+using TMPro;
 using UnityEngine;
 
 namespace DiaBlackJack.MainMenu.UI
@@ -7,234 +11,200 @@ namespace DiaBlackJack.MainMenu.UI
     [DisallowMultipleComponent]
     public sealed class MainMenuView : MonoBehaviour
     {
-        private const float PanelWidth = 460f;
-        private const float ButtonHeight = 52f;
+        [SerializeField] private Telegraph telegraph;
+        [SerializeField] private CanvasGroup logoCanvasGroup;
+        [SerializeField] private TMP_Text statusText;
+        [SerializeField, Min(0f)] private float logoExitDuration = 0.5f;
 
-        private RunSaveViewModel _model;
-        private GUIStyle _buttonStyle;
-        private GUIStyle _statusStyle;
-        private GUIStyle _subtitleStyle;
-        private GUIStyle _titleStyle;
-        private Texture2D _backgroundTexture;
-        private Texture2D _panelTexture;
-
-        public event Action CancelNewRunRequested;
-
-        public event Action ContinueRunRequested;
-
-        public event Action ExitRequested;
-
-        public event Action NewRunConfirmed;
+        private readonly List<TelegraphButton> _buttons =
+            new List<TelegraphButton>();
+        private Tween _logoTween;
+        private string _authoredStatusText;
+        private bool _statusTextCaptured;
+        private bool _inputEnabled = true;
+        private bool _exitInProgress;
 
         public event Action NewRunRequested;
 
-        public event Action ResumeReservationRequested;
+        public event Action SettingsRequested;
 
         public event Action TutorialRequested;
 
-        public void Render(RunSaveViewModel model)
+        private void Awake()
         {
-            _model = model ?? throw new ArgumentNullException(nameof(model));
+            ResolveReferences();
+            CaptureAuthoredStatusText();
+            SubscribeToButtons();
+            if (logoCanvasGroup != null)
+            {
+                logoCanvasGroup.alpha = 1f;
+            }
         }
 
         private void OnDestroy()
         {
-            DestroyTexture(_backgroundTexture);
-            DestroyTexture(_panelTexture);
+            UnsubscribeFromButtons();
+            _logoTween?.Kill();
+            _logoTween = null;
         }
 
-        private void OnGUI()
+        public void Render(
+            RunSaveViewModel model,
+            bool showRuntimeStatus = false)
         {
-            if (_model == null)
+            if (model == null)
+            {
+                throw new ArgumentNullException(nameof(model));
+            }
+
+            if (statusText == null)
             {
                 return;
             }
 
-            EnsureStyles();
-            GUI.DrawTexture(
-                new Rect(0f, 0f, Screen.width, Screen.height),
-                _backgroundTexture,
-                ScaleMode.StretchToFill);
-
-            float panelHeight = _model.RequiresNewRunConfirmation
-                ? 430f
-                : 572f;
-            Rect panel = new Rect(
-                (Screen.width - PanelWidth) * 0.5f,
-                (Screen.height - panelHeight) * 0.5f,
-                PanelWidth,
-                panelHeight);
-            GUI.DrawTexture(panel, _panelTexture, ScaleMode.StretchToFill);
-
-            GUILayout.BeginArea(new Rect(
-                panel.x + 36f,
-                panel.y + 32f,
-                panel.width - 72f,
-                panel.height - 64f));
-            GUILayout.Label("DIA BLACKJACK", _titleStyle);
-            GUILayout.Label("SOULS ON THE TABLE", _subtitleStyle);
-            GUILayout.Space(30f);
-
-            if (_model.RequiresNewRunConfirmation)
-            {
-                DrawConfirmation();
-            }
-            else
-            {
-                DrawMainActions();
-            }
-
-            GUILayout.FlexibleSpace();
-            if (!string.IsNullOrEmpty(_model.StatusMessage))
-            {
-                GUILayout.Label(_model.StatusMessage, _statusStyle);
-            }
-
-            GUILayout.EndArea();
+            CaptureAuthoredStatusText();
+            statusText.text = showRuntimeStatus &&
+                !string.IsNullOrEmpty(model.StatusMessage)
+                    ? model.StatusMessage
+                    : _authoredStatusText;
+            statusText.gameObject.SetActive(
+                !string.IsNullOrEmpty(statusText.text));
         }
 
-        private void DrawMainActions()
+        public void SetInputEnabled(bool enabled)
         {
-            if (GUILayout.Button(
-                    "NEW RUN",
-                    _buttonStyle,
-                    GUILayout.Height(ButtonHeight)))
+            _inputEnabled = enabled && !_exitInProgress;
+            telegraph?.SetInputEnabled(_inputEnabled);
+        }
+
+        public void PlayExitAnimation(Action onComplete)
+        {
+            if (_exitInProgress)
             {
-                NewRunRequested?.Invoke();
+                return;
             }
 
-            GUILayout.Space(10f);
-            bool previousEnabled = GUI.enabled;
-            GUI.enabled = _model.CanContinueRun;
-            if (GUILayout.Button(
-                    "CONTINUE",
-                    _buttonStyle,
-                    GUILayout.Height(ButtonHeight)))
+            _exitInProgress = true;
+            SetInputEnabled(false);
+            _logoTween?.Kill();
+            _logoTween = null;
+
+            int remainingParts = 0;
+            if (telegraph != null)
             {
-                ContinueRunRequested?.Invoke();
+                remainingParts++;
             }
 
-            GUI.enabled = previousEnabled;
-
-            if (_model.CanResumeReservation)
+            if (logoCanvasGroup != null && logoExitDuration > 0f)
             {
-                GUILayout.Space(10f);
-                if (GUILayout.Button(
-                        "RESUME START",
-                        _buttonStyle,
-                        GUILayout.Height(ButtonHeight)))
+                remainingParts++;
+            }
+            else if (logoCanvasGroup != null)
+            {
+                logoCanvasGroup.alpha = 0f;
+            }
+
+            if (remainingParts == 0)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            Action completePart = () =>
+            {
+                remainingParts--;
+                if (remainingParts == 0)
                 {
-                    ResumeReservationRequested?.Invoke();
+                    onComplete?.Invoke();
+                }
+            };
+
+            if (telegraph != null)
+            {
+                telegraph.PlayExitAnimation(completePart);
+            }
+
+            if (logoCanvasGroup != null && logoExitDuration > 0f)
+            {
+                _logoTween = DOVirtual
+                    .Float(
+                        logoCanvasGroup.alpha,
+                        0f,
+                        logoExitDuration,
+                        value => logoCanvasGroup.alpha = value)
+                    .SetUpdate(true)
+                    .OnComplete(() =>
+                    {
+                        _logoTween = null;
+                        completePart();
+                    });
+            }
+        }
+
+        private void ResolveReferences()
+        {
+            telegraph ??= FindFirstObjectByType<Telegraph>(
+                FindObjectsInactive.Include);
+        }
+
+        private void CaptureAuthoredStatusText()
+        {
+            if (_statusTextCaptured || statusText == null)
+            {
+                return;
+            }
+
+            _authoredStatusText = statusText.text;
+            _statusTextCaptured = true;
+        }
+
+        private void SubscribeToButtons()
+        {
+            if (telegraph == null)
+            {
+                return;
+            }
+
+            _buttons.Clear();
+            _buttons.AddRange(
+                telegraph.GetComponentsInChildren<TelegraphButton>(true));
+            for (int i = 0; i < _buttons.Count; i++)
+            {
+                _buttons[i].Clicked += HandleButtonClicked;
+            }
+        }
+
+        private void UnsubscribeFromButtons()
+        {
+            for (int i = 0; i < _buttons.Count; i++)
+            {
+                if (_buttons[i] != null)
+                {
+                    _buttons[i].Clicked -= HandleButtonClicked;
                 }
             }
 
-            GUILayout.Space(10f);
-            if (GUILayout.Button(
-                    "TUTORIAL",
-                    _buttonStyle,
-                    GUILayout.Height(ButtonHeight)))
-            {
-                TutorialRequested?.Invoke();
-            }
-
-            GUILayout.Space(10f);
-            previousEnabled = GUI.enabled;
-            GUI.enabled = false;
-            GUILayout.Button(
-                "SETTINGS (LATER)",
-                _buttonStyle,
-                GUILayout.Height(ButtonHeight));
-            GUI.enabled = previousEnabled;
-
-            GUILayout.Space(10f);
-            if (GUILayout.Button(
-                    "EXIT",
-                    _buttonStyle,
-                    GUILayout.Height(ButtonHeight)))
-            {
-                ExitRequested?.Invoke();
-            }
+            _buttons.Clear();
         }
 
-        private void DrawConfirmation()
+        private void HandleButtonClicked(TelegraphButtonKind buttonKind)
         {
-            GUILayout.Label(
-                "A saved run already exists.\nStarting a new run will replace it.",
-                _statusStyle);
-            GUILayout.Space(24f);
-            if (GUILayout.Button(
-                    "START NEW RUN",
-                    _buttonStyle,
-                    GUILayout.Height(ButtonHeight)))
-            {
-                NewRunConfirmed?.Invoke();
-            }
-
-            GUILayout.Space(10f);
-            if (GUILayout.Button(
-                    "CANCEL",
-                    _buttonStyle,
-                    GUILayout.Height(ButtonHeight)))
-            {
-                CancelNewRunRequested?.Invoke();
-            }
-        }
-
-        private void EnsureStyles()
-        {
-            if (_titleStyle != null)
+            if (!_inputEnabled || _exitInProgress)
             {
                 return;
             }
 
-            _backgroundTexture = CreateTexture(
-                new Color(0.018f, 0.012f, 0.012f, 1f));
-            _panelTexture = CreateTexture(
-                new Color(0.08f, 0.055f, 0.05f, 0.97f));
-            _titleStyle = new GUIStyle(GUI.skin.label)
+            switch (buttonKind)
             {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 38,
-                fontStyle = FontStyle.Bold,
-                normal = { textColor = new Color(0.86f, 0.72f, 0.48f) }
-            };
-            _subtitleStyle = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 14,
-                normal = { textColor = new Color(0.55f, 0.42f, 0.34f) }
-            };
-            _statusStyle = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 14,
-                wordWrap = true,
-                normal = { textColor = new Color(0.76f, 0.68f, 0.6f) }
-            };
-            _buttonStyle = new GUIStyle(GUI.skin.button)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 18,
-                fontStyle = FontStyle.Bold
-            };
-        }
-
-        private static Texture2D CreateTexture(Color color)
-        {
-            var texture = new Texture2D(1, 1)
-            {
-                hideFlags = HideFlags.HideAndDontSave
-            };
-            texture.SetPixel(0, 0, color);
-            texture.Apply();
-            return texture;
-        }
-
-        private static void DestroyTexture(Texture2D texture)
-        {
-            if (texture != null)
-            {
-                Destroy(texture);
+                case TelegraphButtonKind.NewGame:
+                    NewRunRequested?.Invoke();
+                    break;
+                case TelegraphButtonKind.Tutorial:
+                    TutorialRequested?.Invoke();
+                    break;
+                case TelegraphButtonKind.Setting:
+                    SettingsRequested?.Invoke();
+                    break;
             }
         }
     }

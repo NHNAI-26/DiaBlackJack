@@ -1,5 +1,8 @@
+using System;
 using Border.SaveLoad;
 using Border.SaveLoad.UI;
+using Border.Settings;
+using DiaBlackJack.GameScene;
 using DiaBlackJack.StageProgression.UI;
 using UnityEngine;
 
@@ -9,8 +12,14 @@ namespace DiaBlackJack.MainMenu.UI
     [RequireComponent(typeof(MainMenuView))]
     public sealed class MainMenuController : MonoBehaviour
     {
+        private const string MainMenuMoodId = "mainMenu";
+
+        [SerializeField] private MoodController moodController;
+        [SerializeField] private PauseSettingsController settingsController;
+
         private MainMenuView _view;
         private StageProgressionRuntime _runtime;
+        private bool _transitioning;
 
         private void Awake()
         {
@@ -27,106 +36,129 @@ namespace DiaBlackJack.MainMenu.UI
                     $"{nameof(StageProgressionRuntime)} is required.");
             }
 
+            moodController ??= FindFirstObjectByType<MoodController>(
+                FindObjectsInactive.Include);
+            settingsController ??=
+                FindFirstObjectByType<PauseSettingsController>(
+                    FindObjectsInactive.Include);
+
             _view.NewRunRequested += RequestNewRun;
-            _view.NewRunConfirmed += RequestConfirmNewRun;
-            _view.CancelNewRunRequested += RequestCancelNewRun;
-            _view.ContinueRunRequested += RequestContinueRun;
-            _view.ResumeReservationRequested += RequestResumeReservation;
-            _view.ExitRequested += RequestExit;
+            _view.SettingsRequested += RequestSettings;
             _view.TutorialRequested += RequestTutorial;
+            if (settingsController != null)
+            {
+                settingsController.SettingsPanelClosed +=
+                    HandleSettingsPanelClosed;
+            }
+
             RefreshView();
+        }
+
+        private void Start()
+        {
+            if (moodController != null &&
+                moodController.TryBlendToMood(MainMenuMoodId, 0f))
+            {
+                moodController.PlayPendingBgm();
+            }
         }
 
         private void OnDestroy()
         {
-            if (_view == null)
+            if (_view != null)
             {
-                return;
+                _view.NewRunRequested -= RequestNewRun;
+                _view.SettingsRequested -= RequestSettings;
+                _view.TutorialRequested -= RequestTutorial;
             }
 
-            _view.NewRunRequested -= RequestNewRun;
-            _view.NewRunConfirmed -= RequestConfirmNewRun;
-            _view.CancelNewRunRequested -= RequestCancelNewRun;
-            _view.ContinueRunRequested -= RequestContinueRun;
-            _view.ResumeReservationRequested -= RequestResumeReservation;
-            _view.ExitRequested -= RequestExit;
-            _view.TutorialRequested -= RequestTutorial;
+            if (settingsController != null)
+            {
+                settingsController.SettingsPanelClosed -=
+                    HandleSettingsPanelClosed;
+            }
         }
 
         public void RequestNewRun()
         {
-            ProcessMenuAction(_runtime.SaveFlow.TryRequestNewRun);
-        }
-
-        public void RequestConfirmNewRun()
-        {
-            ProcessMenuAction(_runtime.SaveFlow.TryConfirmNewRun);
-        }
-
-        public void RequestCancelNewRun()
-        {
-            ProcessMenuAction(_runtime.SaveFlow.TryCancelNewRun);
-        }
-
-        public void RequestContinueRun()
-        {
-            ProcessMenuAction(_runtime.SaveFlow.TryContinueRun);
-        }
-
-        public void RequestResumeReservation()
-        {
-            ProcessMenuAction(_runtime.SaveFlow.TryResumeReservation);
-        }
-
-        public void RequestExit()
-        {
-            Application.Quit();
-        }
-
-        public void RequestTutorial()
-        {
-            StageProgressionRuntime tutorialRuntime =
-                StageProgressionRuntime.CreateTutorialInstance();
-            RunSaveFlow flow = tutorialRuntime.SaveFlow;
-            if (!flow.TryRequestNewRun())
+            if (_transitioning)
             {
-                return;
-            }
-
-            if (flow.RequiresNewRunConfirmation && !flow.TryConfirmNewRun())
-            {
-                return;
-            }
-
-            if (!flow.IsMenuVisible)
-            {
-                tutorialRuntime.LoadBattleScene();
-            }
-        }
-
-        private void ProcessMenuAction(System.Func<bool> action)
-        {
-            if (!action())
-            {
-                RefreshView();
                 return;
             }
 
             RunSaveFlow flow = _runtime.SaveFlow;
-            if (!flow.IsMenuVisible)
+            if (!TryStartNewRunImmediately(flow) || flow.IsMenuVisible)
             {
-                _runtime.LoadBattleScene();
+                RefreshView(showRuntimeStatus: true);
                 return;
             }
 
-            RefreshView();
+            BeginSceneTransition(_runtime.LoadBattleScene);
         }
 
-        private void RefreshView()
+        public void RequestTutorial()
+        {
+            if (_transitioning)
+            {
+                return;
+            }
+
+            StageProgressionRuntime tutorialRuntime =
+                StageProgressionRuntime.CreateTutorialInstance();
+            RunSaveFlow flow = tutorialRuntime.SaveFlow;
+            if (!TryStartNewRunImmediately(flow) || flow.IsMenuVisible)
+            {
+                RefreshView(showRuntimeStatus: true);
+                return;
+            }
+
+            BeginSceneTransition(tutorialRuntime.LoadBattleScene);
+        }
+
+        public void RequestSettings()
+        {
+            if (_transitioning || settingsController == null)
+            {
+                return;
+            }
+
+            _view.SetInputEnabled(false);
+            if (!settingsController.OpenSettingsPanel())
+            {
+                _view.SetInputEnabled(true);
+            }
+        }
+
+        internal static bool TryStartNewRunImmediately(RunSaveFlow flow)
+        {
+            if (flow == null || !flow.TryRequestNewRun())
+            {
+                return false;
+            }
+
+            return !flow.RequiresNewRunConfirmation ||
+                flow.TryConfirmNewRun();
+        }
+
+        private void BeginSceneTransition(Action loadScene)
+        {
+            _transitioning = true;
+            _view.PlayExitAnimation(loadScene);
+        }
+
+        private void HandleSettingsPanelClosed()
+        {
+            if (!_transitioning)
+            {
+                _view.SetInputEnabled(true);
+            }
+        }
+
+        private void RefreshView(bool showRuntimeStatus = false)
         {
             RunSaveViewModel model =
                 RunSavePresenter.Create(_runtime.SaveFlow);
-            _view.Render(model);
+            _view.Render(model, showRuntimeStatus);
         }
     }
 }
