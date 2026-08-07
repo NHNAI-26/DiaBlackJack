@@ -20,6 +20,14 @@ namespace DiaBlackJack.GameScene
         private const string EnemyEntranceSfxId = "enemyIn";
         private const string EnemyExitSfxId01 = "enemyOut01";
         private const string EnemyExitSfxId02 = "enemyOut02";
+        private const string EnemyDamageSfxId = "enemyDamage";
+        private const string EmissionKeyword = "_EMISSION";
+        private static readonly int EmissionColorId =
+            Shader.PropertyToID("_EmissionColor");
+        private static readonly int EmissionEnabledId =
+            Shader.PropertyToID("_EmissionEnabled");
+        private static readonly int EmissionIntensityId =
+            Shader.PropertyToID("_EmissionIntensity");
 
         [Serializable]
         private sealed class EnemySpriteProfile
@@ -78,15 +86,35 @@ namespace DiaBlackJack.GameScene
         [SerializeField, Min(0f)] private float entranceSfxDelay;
         [SerializeField, Min(0f)] private float exitSfxDelay;
 
+        [Header("Damage reaction")]
+        [SerializeField] private Vector3 punchRotation =
+            new Vector3(0f, 0f, 12f);
+        [SerializeField] private Vector3 punchPos =
+            new Vector3(0.06f, 0f, 0f);
+        [SerializeField, Min(0.01f)] private float punchDuration = 0.2f;
+        [SerializeField, Min(1)] private int punchVibrato = 25;
+        [SerializeField, Range(0f, 1f)] private float punchElasticity = 0.7f;
+        [SerializeField, Min(0.01f)] private float damageFlashDuration = 0.2f;
+        [SerializeField, Min(0f)] private float damageFlashEmissionIntensity = 2f;
+
         private Vector3 _baseScale;
         private Quaternion _baseLocalRotation;
         private Vector3 _baseLocalEulerAngles;
+        private Vector3 _baseAppearanceLocalPosition;
         private Color _baseColor;
         private Sprite _defaultSprite;
         private EnemySpriteProfile _activeEnemySpriteProfile;
         private CharacterVisualState _lastVisualState;
         private Tween _appearanceTween;
         private Tween _appearanceSfxDelayTween;
+        private Tween _damageReactionTween;
+        private Tween _damageEmissionTween;
+        private Material _spriteMaterial;
+        private bool _damageEmissionStateCaptured;
+        private Color _damageEmissionOriginalColor;
+        private float _damageEmissionOriginalEnabled;
+        private float _damageEmissionOriginalIntensity;
+        private bool _damageEmissionOriginalKeywordEnabled;
         private bool _initialized;
         private bool _isMerchantMode;
 
@@ -116,6 +144,27 @@ namespace DiaBlackJack.GameScene
         private void OnDisable()
         {
             KillAppearanceAnimation();
+            KillDamageReaction();
+        }
+
+        private void OnDestroy()
+        {
+            KillDamageReaction();
+            if (_spriteMaterial == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(_spriteMaterial);
+            }
+            else
+            {
+                DestroyImmediate(_spriteMaterial);
+            }
+
+            _spriteMaterial = null;
         }
 
         public void PlayEntranceAnimation(Action onComplete = null)
@@ -204,6 +253,42 @@ namespace DiaBlackJack.GameScene
             {
                 ApplyEnemySprite(state);
             }
+        }
+
+        public void PlayDamageReaction(bool playSound = true)
+        {
+            EnsureInitialized();
+            if (sprite == null || !gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
+            KillDamageReaction();
+            RenderVisual(CharacterVisualState.Attacked);
+            if (playSound)
+            {
+                SoundManager.Current?.PlaySfx(EnemyDamageSfxId);
+            }
+            PlayDamageEmissionFlash();
+
+            if (appearanceTarget == null)
+            {
+                return;
+            }
+
+            _damageReactionTween = DOTween.Sequence()
+                .Append(appearanceTarget.DOPunchPosition(
+                    punchPos,
+                    Mathf.Max(punchDuration, 0.01f),
+                    Mathf.Max(punchVibrato, 1),
+                    Mathf.Clamp01(punchElasticity)))
+                .Join(appearanceTarget.DOPunchRotation(
+                    punchRotation,
+                    Mathf.Max(punchDuration, 0.01f),
+                    Mathf.Max(punchVibrato, 1),
+                    Mathf.Clamp01(punchElasticity)))
+                .SetTarget(this)
+                .OnComplete(() => _damageReactionTween = null);
         }
 
         internal void ShowSpeech(string message)
@@ -351,6 +436,7 @@ namespace DiaBlackJack.GameScene
             _baseScale = transform.localScale;
             _baseLocalRotation = appearanceTarget.localRotation;
             _baseLocalEulerAngles = appearanceTarget.localEulerAngles;
+            _baseAppearanceLocalPosition = appearanceTarget.localPosition;
             _baseColor = sprite != null ? sprite.color : Color.white;
             _defaultSprite = sprite != null ? sprite.sprite : null;
             _initialized = true;
@@ -369,6 +455,137 @@ namespace DiaBlackJack.GameScene
             _appearanceTween = null;
             _appearanceSfxDelayTween?.Kill();
             _appearanceSfxDelayTween = null;
+        }
+
+        private void KillDamageReaction()
+        {
+            _damageReactionTween?.Kill(complete: true);
+            _damageReactionTween = null;
+            if (appearanceTarget != null && _initialized)
+            {
+                appearanceTarget.localPosition = _baseAppearanceLocalPosition;
+                appearanceTarget.localRotation = _baseLocalRotation;
+            }
+
+            RestoreDamageEmissionImmediate();
+        }
+
+        private void PlayDamageEmissionFlash()
+        {
+            Material material = ResolveSpriteMaterial();
+            if (material == null ||
+                !material.HasProperty(EmissionColorId) ||
+                !material.HasProperty(EmissionIntensityId))
+            {
+                return;
+            }
+
+            RestoreDamageEmissionImmediate();
+            _spriteMaterial = material;
+            _damageEmissionOriginalColor = material.GetColor(EmissionColorId);
+            _damageEmissionOriginalIntensity =
+                material.GetFloat(EmissionIntensityId);
+            _damageEmissionOriginalEnabled =
+                material.HasProperty(EmissionEnabledId)
+                    ? material.GetFloat(EmissionEnabledId)
+                    : 0f;
+            _damageEmissionOriginalKeywordEnabled =
+                material.IsKeywordEnabled(EmissionKeyword);
+            _damageEmissionStateCaptured = true;
+
+            material.SetColor(EmissionColorId, Color.white);
+            if (material.HasProperty(EmissionEnabledId))
+            {
+                material.SetFloat(EmissionEnabledId, 1f);
+            }
+
+            material.EnableKeyword(EmissionKeyword);
+            float duration = Mathf.Max(damageFlashDuration, 0.01f);
+            float targetIntensity = Mathf.Max(
+                damageFlashEmissionIntensity,
+                _damageEmissionOriginalIntensity);
+            _damageEmissionTween = DOTween.Sequence()
+                .Append(DOVirtual.Float(
+                    _damageEmissionOriginalIntensity,
+                    targetIntensity,
+                    duration * 0.15f,
+                    value => material.SetFloat(EmissionIntensityId, value)))
+                .Append(DOVirtual.Float(
+                    targetIntensity,
+                    _damageEmissionOriginalIntensity,
+                    duration * 0.2f,
+                    value => material.SetFloat(EmissionIntensityId, value)))
+                .Append(DOVirtual.Float(
+                    _damageEmissionOriginalIntensity,
+                    targetIntensity,
+                    duration * 0.15f,
+                    value => material.SetFloat(EmissionIntensityId, value)))
+                .Append(DOVirtual.Float(
+                    targetIntensity,
+                    _damageEmissionOriginalIntensity,
+                    duration * 0.5f,
+                    value => material.SetFloat(EmissionIntensityId, value)))
+                .SetTarget(this)
+                .OnComplete(() =>
+                {
+                    if (_damageEmissionTween != null)
+                    {
+                        _damageEmissionTween = null;
+                    }
+
+                    RestoreDamageEmissionImmediate();
+                });
+        }
+
+        private Material ResolveSpriteMaterial()
+        {
+            if (_spriteMaterial != null)
+            {
+                return _spriteMaterial;
+            }
+
+            if (sprite == null)
+            {
+                return null;
+            }
+
+            _spriteMaterial = sprite.material;
+            return _spriteMaterial;
+        }
+
+        private void RestoreDamageEmissionImmediate()
+        {
+            _damageEmissionTween?.Kill();
+            _damageEmissionTween = null;
+            if (!_damageEmissionStateCaptured || _spriteMaterial == null)
+            {
+                _damageEmissionStateCaptured = false;
+                return;
+            }
+
+            _spriteMaterial.SetColor(
+                EmissionColorId,
+                _damageEmissionOriginalColor);
+            _spriteMaterial.SetFloat(
+                EmissionIntensityId,
+                _damageEmissionOriginalIntensity);
+            if (_spriteMaterial.HasProperty(EmissionEnabledId))
+            {
+                _spriteMaterial.SetFloat(
+                    EmissionEnabledId,
+                    _damageEmissionOriginalEnabled);
+            }
+
+            if (_damageEmissionOriginalKeywordEnabled)
+            {
+                _spriteMaterial.EnableKeyword(EmissionKeyword);
+            }
+            else
+            {
+                _spriteMaterial.DisableKeyword(EmissionKeyword);
+            }
+
+            _damageEmissionStateCaptured = false;
         }
 
         private void ScheduleAppearanceSfx(string sfxId, float delay)
