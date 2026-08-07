@@ -140,6 +140,7 @@ half4 NHNUberLitFragment(NHNForwardVaryings input) : SV_Target
     InitializeNHNUberLitSurfaceData(input.rawUV, surfaceData, dissolveEdge);
 #endif
 #endif
+    NHNApplyDitherAlpha(surfaceData.alpha, input.positionCS);
     InputData inputData;
     NHNInitializeInputData(input, surfaceData.normalTS, inputData);
 #if defined(NHN_SPRITE_UBER) && defined(_UNLIT_ON)

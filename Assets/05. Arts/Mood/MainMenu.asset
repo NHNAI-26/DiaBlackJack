@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c16b9f4af1f4ce4890f946de6a7e4c1, type: 3}
+  m_Name: MainMenu
+  m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.MoodProfileSO
+  id: mainMenu
+  bgmIds:
+  - mainMenu
+  enableAudioReactiveLightning: 0
+  lightningSfxIds: []
+  lightningSfxPlayChance: 0.35
+  lightningSfxInterval: 1
+  lightningSensitivity: 35
+  lightningThreshold: 0.08
+  lightningMaxBoost: 0.8
+  lightningAttackSpeed: 12
+  lightningReleaseSpeed: 4
+  windowGlassGlowColor: {r: 0, g: 0, b: 0, a: 1}
+  volumetricLightColor: {r: 0, g: 0, b: 0, a: 1}
+  enemyLightColor: {r: 0, g: 0, b: 0, a: 1}
+  enteranceLightColor: {r: 0, g: 0, b: 0, a: 1}

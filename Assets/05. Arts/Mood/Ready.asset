@@ -16,7 +16,16 @@ MonoBehaviour:
   bgmIds:
   - readyStage01
   - readyStage02
+  enableAudioReactiveLightning: 0
+  lightningSfxIds: []
+  lightningSfxPlayChance: 0.35
+  lightningSfxInterval: 1
+  lightningSensitivity: 35
+  lightningThreshold: 0.08
+  lightningMaxBoost: 0.8
+  lightningAttackSpeed: 12
+  lightningReleaseSpeed: 4
   windowGlassGlowColor: {r: 0, g: 0, b: 0, a: 1}
   volumetricLightColor: {r: 0, g: 0, b: 0, a: 1}
-  enemyLightColor: {r: 0, g: 0, b: 0, a: 1}
+  enemyLightColor: {r: 0.6603774, g: 0.17132434, b: 0.17132434, a: 1}
   enteranceLightColor: {r: 0.5943396, g: 0.5943396, b: 0.5943396, a: 1}

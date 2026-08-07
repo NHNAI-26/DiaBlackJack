@@ -73,6 +73,60 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void TU_U09_RestrictedPrimaryActionOnlyKeepsAllowedActionInteractable()
+        {
+            CoreLoopBattle battle = CreateStartedBattle(10, 2, 4, 9);
+            CoreLoopViewModel core = CoreLoopPresenter.Create(battle);
+
+            GameSceneCombatHudViewModel restricted = GameSceneCombatHudPresenter.Create(
+                core,
+                isStageBattle: false,
+                isShopOpen: false,
+                inputLocked: false,
+                restrictedPrimaryAction: GameSceneCombatHudCommandKind.Stand);
+
+            Assert.That(
+                restricted.PrimaryActions
+                    .Single(action => action.Command.Kind ==
+                        GameSceneCombatHudCommandKind.Stand)
+                    .IsInteractable,
+                Is.True);
+            Assert.That(
+                restricted.PrimaryActions
+                    .Single(action => action.Command.Kind ==
+                        GameSceneCombatHudCommandKind.Hit)
+                    .IsInteractable,
+                Is.False);
+            Assert.That(
+                restricted.PrimaryActions
+                    .Single(action => action.Command.Kind ==
+                        GameSceneCombatHudCommandKind.BeginChange)
+                    .IsInteractable,
+                Is.False);
+        }
+
+        [Test]
+        public void TU_U10_RestrictedPrimaryActionStaysDisabledIfUnderlyingRuleForbidsIt()
+        {
+            CoreLoopBattle battle = CreateStartedBattle(10, 2, 4, 9);
+            CoreLoopViewModel core = CoreLoopPresenter.Create(battle);
+
+            GameSceneCombatHudViewModel restricted = GameSceneCombatHudPresenter.Create(
+                core,
+                isStageBattle: false,
+                isShopOpen: false,
+                inputLocked: true,
+                restrictedPrimaryAction: GameSceneCombatHudCommandKind.Hit);
+
+            Assert.That(
+                restricted.PrimaryActions
+                    .Single(action => action.Command.Kind ==
+                        GameSceneCombatHudCommandKind.Hit)
+                    .IsInteractable,
+                Is.False);
+        }
+
+        [Test]
         public void DCUI01_U01_PlayerClickImmediatelyConsumesTopPaper()
         {
             CoreLoopBattle battle = CreateStartedContractBattle(

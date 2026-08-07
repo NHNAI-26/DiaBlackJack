@@ -86,6 +86,7 @@ namespace DiaBlackJack.StageProgression
         private readonly ReadOnlyCollection<DemonContractDefinition>
             _candidateDefinitions;
         private readonly DeterministicRng _random = new DeterministicRng();
+        private readonly DemonContractDefinition[] _forcedFirstGrantDefinitions;
         private int _nextGrantId;
 
         public StartingDemonGrantGenerator(
@@ -101,7 +102,8 @@ namespace DiaBlackJack.StageProgression
         public StartingDemonGrantGenerator(
             DemonContractCatalog catalog,
             int seed,
-            IEnumerable<string> candidateDefinitionKeys)
+            IEnumerable<string> candidateDefinitionKeys,
+            IReadOnlyList<string> forcedFirstGrantDefinitionKeys = null)
         {
             if (catalog == null)
             {
@@ -140,6 +142,26 @@ namespace DiaBlackJack.StageProgression
 
             _candidateDefinitions = candidates.AsReadOnly();
             _random.Reseed(seed);
+
+            if (forcedFirstGrantDefinitionKeys != null)
+            {
+                if (forcedFirstGrantDefinitionKeys.Count != 2 ||
+                    string.Equals(
+                        forcedFirstGrantDefinitionKeys[0],
+                        forcedFirstGrantDefinitionKeys[1],
+                        StringComparison.Ordinal))
+                {
+                    throw new ArgumentException(
+                        "A forced starting demon grant requires exactly two distinct keys.",
+                        nameof(forcedFirstGrantDefinitionKeys));
+                }
+
+                _forcedFirstGrantDefinitions = new[]
+                {
+                    catalog.GetByKey(forcedFirstGrantDefinitionKeys[0]),
+                    catalog.GetByKey(forcedFirstGrantDefinitionKeys[1])
+                };
+            }
         }
 
         public StartingDemonGrant Generate()
@@ -148,6 +170,24 @@ namespace DiaBlackJack.StageProgression
             {
                 throw new InvalidOperationException(
                     "Starting demon grant ids are exhausted.");
+            }
+
+            // The forced pair (tutorial run) only overrides the very first grant a
+            // fresh generator ever produces — later grants (e.g. a restarted run
+            // reusing the same generator instance) fall back to the normal random
+            // pick, same as every other run.
+            if (_nextGrantId == 0 && _forcedFirstGrantDefinitions != null)
+            {
+                int forcedGrantId = _nextGrantId++;
+                return new StartingDemonGrant(
+                    forcedGrantId,
+                    new[]
+                    {
+                        new StartingDemonGrantCard(
+                            _forcedFirstGrantDefinitions[0]),
+                        new StartingDemonGrantCard(
+                            _forcedFirstGrantDefinitions[1])
+                    });
             }
 
             int firstIndex = _random.Next(_candidateDefinitions.Count);

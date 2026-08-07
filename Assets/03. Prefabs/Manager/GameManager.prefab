@@ -59,6 +59,8 @@ MonoBehaviour:
   totals: {fileID: 0}
   remainingDeck: {fileID: 0}
   discardDeck: {fileID: 0}
+  enemyRemainingDeck: {fileID: 0}
+  enemyDiscardDeck: {fileID: 0}
   deckPreview: {fileID: 0}
   codex: {fileID: 9135478435222243788}
   demonContractSelection: {fileID: 0}
@@ -100,6 +102,9 @@ MonoBehaviour:
   satanNumberGuessFovReturnSpeed: 120
   satanNumberGuessChromaticRiseSpeed: 4
   satanNumberGuessChromaticReturnSpeed: 2
+  cardSelectionHeartFadeOutSeconds: 0.35
+  poisonInjectionAnnounce: {fileID: 0}
+  poisonInjectionCardCatalog: {fileID: 0}
   lighterAnimationRoot: {fileID: 0}
   lighterAnimator: {fileID: 0}
   whiskeyAnimationRoot: {fileID: 0}
@@ -186,6 +191,7 @@ MonoBehaviour:
   gameManager: {fileID: 0}
   startingDemonReveal: {fileID: 0}
   opponentSelection: {fileID: 0}
+  finalBossReveal: {fileID: 0}
   resultView: {fileID: 0}
   codex: {fileID: 9135478435222243788}
   hudRoot: {fileID: 0}
@@ -195,6 +201,9 @@ MonoBehaviour:
   moodController: {fileID: 8419550313967010365}
   moodTransitionDuration: 1
   enemyAppearanceDelayAfterDoor: 0
+  roundOneStartDelayAfterEntrance: 3
+  merchantSpeechProfile: {fileID: 0}
+  merchantSpeechSeed: 20260804
 --- !u!114 &2737482733934021627
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -248,6 +257,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.MoodController
   moodProfiles:
+  - {fileID: 11400000, guid: 1e8893c33f449c64185bda5f04c9a603, type: 2}
   - {fileID: 11400000, guid: 1e221fee84296d44197e266146540906, type: 2}
   - {fileID: 11400000, guid: 7d50472d217b9f94ab0f04378dd33e70, type: 2}
   - {fileID: 11400000, guid: 6d2a7d087d8c33a4e8fcde1ce0b9c343, type: 2}
@@ -328,4 +338,5 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  doorOpenSfxDelay: 0
   transitionMode: 0

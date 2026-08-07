@@ -578,8 +578,23 @@ namespace DiaBlackJack.GameScene
                     gameManager.enabled = true;
                     gameManager.SuppressHandRenderUntilRoundOneStart();
                     gameManager.BindBattle(_session.CombatSession, unlockInput: false);
-                    _waitingForRoundOneReveal = true;
-                    BeginCharacterEntranceUnlockSafety();
+                    if (gameManager.HasPendingTutorialIntro)
+                    {
+                        // The tutorial's sections 0-1 (background + blackjack-rules
+                        // dialogue) play before the enemy ever appears — RenderFlowScreen's
+                        // UpdateCharactersVisibility call below already checks
+                        // HasPendingTutorialIntro and holds charactersRoot inactive while
+                        // this is true, so the entrance/round-1 reveal below is simply
+                        // deferred until the dialogue finishes.
+                        gameManager.TutorialIntroCompleted +=
+                            HandleTutorialIntroCompleted;
+                        gameManager.BeginTutorialIntroIfNeeded();
+                    }
+                    else
+                    {
+                        _waitingForRoundOneReveal = true;
+                        BeginCharacterEntranceUnlockSafety();
+                    }
                 }
                 else
                 {
@@ -710,8 +725,10 @@ namespace DiaBlackJack.GameScene
                 hudRoot.SetActive(ShouldShowHudRoot(CurrentScreen));
             }
 
+            bool combatCharactersReady =
+                gameManager == null || !gameManager.HasPendingTutorialIntro;
             UpdateCharactersVisibility(
-                isCombat || isStartingReveal ||
+                (isCombat && combatCharactersReady) || isStartingReveal ||
                 CurrentScreen == GameFlowScreen.Shop);
 
             if (!_characterExitWaitingForEntrance &&
@@ -990,6 +1007,17 @@ namespace DiaBlackJack.GameScene
 
             StopCoroutine(_roundOneStartRoutine);
             _roundOneStartRoutine = null;
+        }
+
+        private void HandleTutorialIntroCompleted()
+        {
+            gameManager.TutorialIntroCompleted -= HandleTutorialIntroCompleted;
+            _waitingForRoundOneReveal = true;
+            BeginCharacterEntranceUnlockSafety();
+            // combatCharactersReady in RenderFlowScreen only re-reads HasPendingTutorialIntro
+            // on its next call — force one now so the entrance actually starts this frame
+            // instead of waiting for some unrelated future re-render.
+            RenderFlowScreen();
         }
 
         private void BeginCharacterEntranceUnlockSafety()

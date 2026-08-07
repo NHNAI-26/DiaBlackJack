@@ -21,7 +21,7 @@ struct NHNDepthAttributes
 
 struct NHNSilhouetteVaryings
 {
-#if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON) || defined(_UV_ALPHA_FADE_U) || defined(_UV_ALPHA_FADE_V)
+#if defined(_ALPHATEST_ON) || defined(_DITHER_ALPHA_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON) || defined(_UV_ALPHA_FADE_U) || defined(_UV_ALPHA_FADE_V)
     float2 rawUV : TEXCOORD0;
 #endif
 #if defined(NHN_SPRITE_UBER)
@@ -35,7 +35,8 @@ struct NHNSilhouetteVaryings
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
-inline void NHNClipSilhouette(float2 rawUV, float3 positionOS, half vertexAlpha)
+inline void NHNClipSilhouette(float2 rawUV, float3 positionOS, half vertexAlpha,
+    float4 positionCS)
 {
     half dissolveEdge;
 #if defined(_ALPHATEST_ON)
@@ -43,12 +44,14 @@ inline void NHNClipSilhouette(float2 rawUV, float3 positionOS, half vertexAlpha)
 #else
     half baseAlpha = 1.0h;
 #endif
-    NHNApplySurfaceClipping(rawUV, positionOS, baseAlpha, vertexAlpha, dissolveEdge);
+    half alpha = NHNApplySurfaceClipping(rawUV, positionOS, baseAlpha,
+        vertexAlpha, dissolveEdge);
+    NHNApplyDitherAlpha(alpha, positionCS);
 }
 
-inline void NHNClipSilhouette(float2 rawUV, half vertexAlpha)
+inline void NHNClipSilhouette(float2 rawUV, half vertexAlpha, float4 positionCS)
 {
-    NHNClipSilhouette(rawUV, float3(0.0, 0.0, 0.0), vertexAlpha);
+    NHNClipSilhouette(rawUV, float3(0.0, 0.0, 0.0), vertexAlpha, positionCS);
 }
 
 NHNSilhouetteVaryings NHNShadowVertex(NHNDepthAttributes input)
@@ -57,7 +60,7 @@ NHNSilhouetteVaryings NHNShadowVertex(NHNDepthAttributes input)
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
-#if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON) || defined(_UV_ALPHA_FADE_U) || defined(_UV_ALPHA_FADE_V)
+#if defined(_ALPHATEST_ON) || defined(_DITHER_ALPHA_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON) || defined(_UV_ALPHA_FADE_U) || defined(_UV_ALPHA_FADE_V)
     output.rawUV = input.uv;
 #endif
 #if defined(NHN_SPRITE_UBER)
@@ -88,7 +91,7 @@ NHNSilhouetteVaryings NHNDepthOnlyVertex(NHNDepthAttributes input)
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
-#if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON) || defined(_UV_ALPHA_FADE_U) || defined(_UV_ALPHA_FADE_V)
+#if defined(_ALPHATEST_ON) || defined(_DITHER_ALPHA_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON) || defined(_UV_ALPHA_FADE_U) || defined(_UV_ALPHA_FADE_V)
     output.rawUV = input.uv;
 #endif
 #if defined(NHN_SPRITE_UBER)
@@ -105,13 +108,13 @@ half4 NHNSilhouetteFragment(NHNSilhouetteVaryings input) : SV_Target
 {
     UNITY_SETUP_INSTANCE_ID(input);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-#if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON) || defined(_UV_ALPHA_FADE_U) || defined(_UV_ALPHA_FADE_V)
+#if defined(_ALPHATEST_ON) || defined(_DITHER_ALPHA_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON) || defined(_UV_ALPHA_FADE_U) || defined(_UV_ALPHA_FADE_V)
 #if defined(NHN_SPRITE_UBER)
-    NHNClipSilhouette(input.rawUV, input.vertexAlpha);
+    NHNClipSilhouette(input.rawUV, input.vertexAlpha, input.positionCS);
 #elif defined(_DISSOLVE_OBJECT_SPACE)
-    NHNClipSilhouette(input.rawUV, input.positionOS, 1.0h);
+    NHNClipSilhouette(input.rawUV, input.positionOS, 1.0h, input.positionCS);
 #else
-    NHNClipSilhouette(input.rawUV, 1.0h);
+    NHNClipSilhouette(input.rawUV, 1.0h, input.positionCS);
 #endif
 #endif
     return 0.0h;
@@ -119,7 +122,7 @@ half4 NHNSilhouetteFragment(NHNSilhouetteVaryings input) : SV_Target
 
 struct NHNDepthNormalsVaryings
 {
-#if defined(_NORMALMAP) || defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON) || defined(_UV_ALPHA_FADE_U) || defined(_UV_ALPHA_FADE_V)
+#if defined(_NORMALMAP) || defined(_ALPHATEST_ON) || defined(_DITHER_ALPHA_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON) || defined(_UV_ALPHA_FADE_U) || defined(_UV_ALPHA_FADE_V)
     float2 rawUV : TEXCOORD0;
 #endif
     half3 normalWS : TEXCOORD1;
@@ -150,7 +153,7 @@ NHNDepthNormalsVaryings NHNDepthNormalsVertex(NHNDepthAttributes input)
 #else
     VertexNormalInputs normalInputs = GetVertexNormalInputs(input.normalOS, input.tangentOS);
 #endif
-#if defined(_NORMALMAP) || defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON) || defined(_UV_ALPHA_FADE_U) || defined(_UV_ALPHA_FADE_V)
+#if defined(_NORMALMAP) || defined(_ALPHATEST_ON) || defined(_DITHER_ALPHA_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON) || defined(_UV_ALPHA_FADE_U) || defined(_UV_ALPHA_FADE_V)
     output.rawUV = input.uv;
 #endif
 #if defined(NHN_SPRITE_UBER)
@@ -192,15 +195,19 @@ half4 NHNDepthNormalsFragment(NHNDepthNormalsVaryings input) : SV_Target
     surfaceUV = TRANSFORM_TEX(input.rawUV, _BaseMap);
 #endif
 #endif
-#if defined(_ALPHATEST_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON) || defined(_UV_ALPHA_FADE_U) || defined(_UV_ALPHA_FADE_V)
+#if defined(_ALPHATEST_ON) || defined(_DITHER_ALPHA_ON) || defined(_DISSOLVE_ON) || defined(_PIXEL_OUTLINE_ON) || defined(_UV_ALPHA_FADE_U) || defined(_UV_ALPHA_FADE_V)
     half dissolveEdge;
+    half alpha;
 #if defined(NHN_SPRITE_UBER)
-    NHNApplySurfaceClipping(input.rawUV, baseAlpha, input.vertexAlpha, dissolveEdge);
+    alpha = NHNApplySurfaceClipping(input.rawUV, baseAlpha, input.vertexAlpha,
+        dissolveEdge);
 #elif defined(_DISSOLVE_OBJECT_SPACE)
-    NHNApplySurfaceClipping(input.rawUV, input.positionOS, baseAlpha, 1.0h, dissolveEdge);
+    alpha = NHNApplySurfaceClipping(input.rawUV, input.positionOS, baseAlpha,
+        1.0h, dissolveEdge);
 #else
-    NHNApplySurfaceClipping(input.rawUV, baseAlpha, dissolveEdge);
+    alpha = NHNApplySurfaceClipping(input.rawUV, baseAlpha, dissolveEdge);
 #endif
+    NHNApplyDitherAlpha(alpha, input.positionCS);
 #endif
 #if defined(_NORMALMAP)
     half3 normalTS = SampleNormal(surfaceUV, TEXTURE2D_ARGS(_BumpMap, sampler_BumpMap), _BumpScale);

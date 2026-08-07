@@ -100,6 +100,11 @@ MonoBehaviour:
     volume: 1
     pitch: 1
     loop: 1
+  - id: mainMenu
+    clip: {fileID: 8300000, guid: 2c4ba51d2859f5540964eba64d481439, type: 3}
+    volume: 1
+    pitch: 1
+    loop: 1
   sfxEntries:
   - id: dissolve
     clip: {fileID: 8300000, guid: 753e4bea79ae5324f8b86dadf0e6bde9, type: 3}
@@ -349,6 +354,56 @@ MonoBehaviour:
   - id: deckHover
     clip: {fileID: 8300000, guid: 2e5d96a3cfc029f4088bd66d808c5e2c, type: 3}
     volume: 0.2
+    pitch: 1
+    loop: 0
+  - id: telegraphIn
+    clip: {fileID: 8300000, guid: b2aceacc8b9286b4fa2e89e77964048d, type: 3}
+    volume: 0.3
+    pitch: 0.5
+    loop: 0
+  - id: telegraphOut
+    clip: {fileID: 8300000, guid: b2aceacc8b9286b4fa2e89e77964048d, type: 3}
+    volume: 0.3
+    pitch: 1
+    loop: 0
+  - id: telegraphMove
+    clip: {fileID: 8300000, guid: b53219da7f7f40b4385360ea12e2cf4c, type: 3}
+    volume: 0.2
+    pitch: 1.5
+    loop: 0
+  - id: telegraphDest
+    clip: {fileID: 8300000, guid: 88e1a70371abfa64c9c3958b4a675b42, type: 3}
+    volume: 0.2
+    pitch: 1
+    loop: 0
+  - id: telegraphSelect
+    clip: {fileID: 8300000, guid: 2a750e343c2a72d4d8dc5254659c992c, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: buttonPress
+    clip: {fileID: 8300000, guid: 37244a1dbdeb28c40955f4d34457ae3d, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: skullLay01
+    clip: {fileID: 8300000, guid: f6aeea8d055c9ab4b93acd326b510e6e, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: skullLay02
+    clip: {fileID: 8300000, guid: 31ff838d852fa794b8a79a951866d71e, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: skullLay03
+    clip: {fileID: 8300000, guid: 43c73a3e0f66f2047baac52b9a4b1464, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: skullLay04
+    clip: {fileID: 8300000, guid: 3a6a4d8b37199eb4d94474e1ebda50be, type: 3}
+    volume: 0.5
     pitch: 1
     loop: 0
   crossfadeDuration: 1

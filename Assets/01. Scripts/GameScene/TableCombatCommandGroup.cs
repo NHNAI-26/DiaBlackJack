@@ -44,6 +44,21 @@ namespace DiaBlackJack.GameScene
             gameObject.SetActive(false);
         }
 
+        internal TableCombatCommandView GetView(GameSceneCombatHudCommandKind kind)
+        {
+            switch (kind)
+            {
+                case GameSceneCombatHudCommandKind.Hit:
+                    return hit;
+                case GameSceneCombatHudCommandKind.Stand:
+                    return stand;
+                case GameSceneCombatHudCommandKind.BeginChange:
+                    return change;
+                default:
+                    return null;
+            }
+        }
+
         private static bool HasCommand(
             TableCombatCommandView view,
             GameSceneCombatHudCommandKind kind)
