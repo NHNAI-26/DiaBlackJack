@@ -406,6 +406,16 @@ MonoBehaviour:
     volume: 0.5
     pitch: 1
     loop: 0
+  - id: soulDamage
+    clip: {fileID: 8300000, guid: edfe0ac9b9ab32a4f8fb84f63544936d, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: click
+    clip: {fileID: 8300000, guid: 98837ade18b478d41b1adff38fe7b48c, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1

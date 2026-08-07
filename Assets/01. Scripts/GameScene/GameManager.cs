@@ -147,6 +147,7 @@ namespace DiaBlackJack.GameScene
             "heartSoundSlow";
         private const string CardSelectionHeartFastSfxId =
             "heartSoundFast";
+        private const string ComparisonCardSfxId = "click";
 
         [Header("Cinematic camera")]
         [SerializeField] private GameSceneCameraViewController cameraViewController;
@@ -3698,6 +3699,7 @@ namespace DiaBlackJack.GameScene
                 side,
                 step.Total,
                 comparisonCountSeconds);
+            SoundManager.Current?.PlaySfx(ComparisonCardSfxId);
             if (comparisonCountSeconds > 0f)
             {
                 yield return new WaitForSeconds(comparisonCountSeconds);
