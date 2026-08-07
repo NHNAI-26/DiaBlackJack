@@ -198,6 +198,7 @@ namespace DiaBlackJack.GameScene
         private bool _isUsed;
         private bool _isEffectSource;
         private bool _isEffectHighlighted;
+        private bool _comparisonHighlighted;
         private bool _matchSelectionHoverGlowIntensity;
         private GameSceneCardHoverOutlineState _hoverOutlineState =
             GameSceneCardHoverOutlineState.Basic;
@@ -255,6 +256,15 @@ namespace DiaBlackJack.GameScene
         public float RevealFaceSwapSeconds =>
             Mathf.Max(revealFlipDuration, 0.01f) *
                 Mathf.Clamp01(revealFaceSwapNormalizedTime);
+
+        /// <summary>Full reveal duration used by ordered showdown presentation.</summary>
+        public float RevealDurationSeconds =>
+            Mathf.Max(revealFlipDuration, 0.01f);
+
+        internal bool IsComparisonHighlighted => _comparisonHighlighted;
+
+        internal bool HasEffectiveHighlight =>
+            _hovered || _isEffectHighlighted || _comparisonHighlighted;
 
         /// <summary>Whether the shared HUD badge should currently be visible for this card.</summary>
         public bool ShouldShowHoverBadge =>
@@ -326,6 +336,7 @@ namespace DiaBlackJack.GameScene
             ResetHoverScales();
             _hovered = false;
             _isEffectSource = false;
+            _comparisonHighlighted = false;
             ApplyHoverOutline(false);
             ApplyHoverCardBlend(false);
             ShowUsedMarkInstant(_isUsed);
@@ -376,7 +387,8 @@ namespace DiaBlackJack.GameScene
             ResetSatanNumberGuessPresentation();
 
             bool sameCard = _hasBoundCard && CardId == card.CardId;
-            bool wasEmphasized = _hovered || _isEffectSource;
+            bool wasEmphasized =
+                _hovered || _isEffectSource || _comparisonHighlighted;
             Transform scaleTarget = HoverScaleTarget();
             Vector3 preservedScale = scaleTarget.localScale;
             bool isEffectSource = card.IsEffectSource &&
@@ -460,7 +472,7 @@ namespace DiaBlackJack.GameScene
             }
 
             Vector3 restingScale = HoverRestingScale();
-            Vector3 targetScale = _isEffectSource
+            Vector3 targetScale = _isEffectSource || _comparisonHighlighted
                 ? restingScale * hoverScale
                 : restingScale;
             if ((HoverScaleTarget().localScale - targetScale).sqrMagnitude >
@@ -468,7 +480,8 @@ namespace DiaBlackJack.GameScene
             {
                 PlayHoverScaleTween(targetScale);
             }
-            ApplyHoverOutline(_isEffectHighlighted);
+            ApplyHoverOutline(
+                _isEffectHighlighted || _comparisonHighlighted);
             ApplyUsedMark(animateUsedMark);
             if (animateReveal)
             {
@@ -493,7 +506,8 @@ namespace DiaBlackJack.GameScene
             StopScaleTween();
             ResetHoverScales();
             _hovered = false;
-            ApplyHoverOutline(_isEffectHighlighted);
+            ApplyHoverOutline(
+                _isEffectHighlighted || _comparisonHighlighted);
             ApplyHoverCardBlend(false);
             PlayRevealFlip();
         }
@@ -521,11 +535,33 @@ namespace DiaBlackJack.GameScene
             PlayHoverSfx(hovered);
             Vector3 restingScale = HoverRestingScale();
             PlayHoverScaleTween(
-                hovered || _isEffectSource
+                hovered || _isEffectSource || _comparisonHighlighted
                     ? restingScale * hoverScale
                     : restingScale);
-            ApplyHoverOutline(hovered || _isEffectHighlighted);
+            ApplyHoverOutline(
+                hovered || _isEffectHighlighted || _comparisonHighlighted);
             ApplyHoverCardBlend(hovered);
+        }
+
+        /// <summary>
+        /// Reuses hover scale and outline for comparison without emitting hover audio or tooltip.
+        /// Effect-source emphasis remains authoritative when this temporary layer is removed.
+        /// </summary>
+        internal void SetComparisonHighlighted(bool highlighted)
+        {
+            if (_comparisonHighlighted == highlighted)
+            {
+                return;
+            }
+
+            _comparisonHighlighted = highlighted;
+            Vector3 restingScale = HoverRestingScale();
+            PlayHoverScaleTween(
+                _hovered || _isEffectSource || _comparisonHighlighted
+                    ? restingScale * hoverScale
+                    : restingScale);
+            ApplyHoverOutline(
+                _hovered || _isEffectHighlighted || _comparisonHighlighted);
         }
 
         internal bool IsSatanNumberGuessAnimationPlaying =>
@@ -1480,7 +1516,7 @@ namespace DiaBlackJack.GameScene
             EnsureCardMaterialInstance(renderer);
             EnablePixelOutlineKeyword(renderer);
 
-            Color outlineColor = _hovered
+            Color outlineColor = _hovered || _comparisonHighlighted
                 ? ResolveHoverOutlineColor()
                 : ResolveEffectHighlightOutlineColor(renderer);
             if (visible && outlineColor.a <= 0f)

@@ -842,6 +842,10 @@ namespace DiaBlackJack.GameScene
         internal EnemySpeechCue EnemySpeechCue { get; set; }
 
         internal EnemySpeechObservation EnemySpeechObservation { get; set; }
+
+        internal PlayerMammonComparisonPlan PlayerMammonComparisonPlan { get; set; }
+
+        internal RoundComparisonPlan RoundComparisonPlan { get; set; }
     }
 
     public static class GameScenePresenter
@@ -965,6 +969,16 @@ namespace DiaBlackJack.GameScene
             model.EnemySpeechObservation = CreateEnemySpeechObservation(
                 battle,
                 speechCues);
+            model.PlayerMammonComparisonPlan =
+                RoundComparisonPresenter.CreatePlayerMammonPending(
+                    battle,
+                    model.PlayerCards);
+            model.RoundComparisonPlan = RoundComparisonPresenter.CreateResolved(
+                battle,
+                model.PlayerCards,
+                model.EnemyCards,
+                model.RevolverAnimationCue,
+                model.SatanNumberGuessAnimationCue);
             return model;
         }
 

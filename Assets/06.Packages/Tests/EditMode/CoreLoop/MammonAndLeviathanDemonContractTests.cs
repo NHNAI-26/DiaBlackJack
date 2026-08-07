@@ -196,6 +196,62 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(expectedEnemySoul));
         }
 
+        [TestCase(false, 0)]
+        [TestCase(true, 3)]
+        [Category("GSV17")]
+        public void GSV17_U05_MammonPrefixHidesEnemyAndResolutionResumesWithBonus(
+            bool applyDie,
+            int expectedBonus)
+        {
+            CoreLoopBattle battle = CreateMammonBattle(
+                playerRanks: new[] { 10, 5, 2, 3 },
+                enemyRanks: new[] { 10, 7, 2, 3 },
+                new SequenceEnemyPolicy(EnemyActionType.Stand),
+                dieValues: new[] { 3, 2 });
+            ActivateFirstContract(battle);
+            KeepMammonAndContinue(battle);
+            Assert.That(battle.TryPlayerStand(), Is.True);
+
+            GameSceneViewModel awaiting = GameScenePresenter.Create(battle);
+            PlayerMammonComparisonPlan prefix =
+                awaiting.PlayerMammonComparisonPlan;
+            Assert.That(prefix, Is.Not.Null);
+            Assert.That(prefix.Player.HiddenStep, Is.Not.Null);
+            Assert.That(
+                prefix.RevealedPlayerCards.All(card => card.IsFaceUp),
+                Is.True);
+            Assert.That(
+                awaiting.EnemyCards.Single(card => !card.IsFaceUp).Rank,
+                Is.Zero);
+            Assert.That(awaiting.RoundComparisonPlan, Is.Null);
+
+            GameSceneViewModel resolving = null;
+            battle.Stepped += () =>
+            {
+                if (battle.State == CoreLoopState.ResolvingRound)
+                {
+                    resolving = GameScenePresenter.Create(battle);
+                }
+            };
+            int optionId = applyDie
+                ? MammonDemonContractHandler.ApplyDieOptionId
+                : MammonDemonContractHandler.DoNotApplyDieOptionId;
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                prefix.InteractionId,
+                optionId), Is.True);
+
+            Assert.That(resolving, Is.Not.Null);
+            Assert.That(resolving.PlayerMammonComparisonPlan, Is.Null);
+            Assert.That(
+                resolving.RoundComparisonPlan.Player.Bonus,
+                Is.EqualTo(expectedBonus));
+            Assert.That(
+                resolving.RoundComparisonPlan.Player.FinalTotal,
+                Is.EqualTo(
+                    resolving.RoundComparisonPlan.Player.CardTotal +
+                    expectedBonus));
+        }
+
         [Test]
         public void DCR03_U05_MammonAppliedDieCanPushPlayerOverTwentyOneIntoAnOrdinaryLoss()
         {

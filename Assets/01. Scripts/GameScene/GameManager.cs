@@ -61,6 +61,8 @@ namespace DiaBlackJack.GameScene
         [Header("Presentation pacing")]
         [SerializeField] private float stepSeconds = 1.0f;
         [SerializeField] private float resolveHoldSeconds = 2.5f;
+        [SerializeField, Min(0.01f)] private float comparisonCountSeconds = 0.28f;
+        [SerializeField, Min(0f)] private float comparisonStepGapSeconds = 0.12f;
 
         internal const float MinimumRoundResultHoldSeconds = 2.5f;
 
@@ -221,6 +223,10 @@ namespace DiaBlackJack.GameScene
         private CoreLoopBattle _terminalSpeechBattle;
         private bool _terminalSpeechHoldActive;
         private bool _terminalSpeechHoldCompleted;
+        private bool _roundComparisonActive;
+        private PlayerMammonComparisonPlan _pendingPlayerMammonComparison;
+        private CardView _comparisonHighlightedCard;
+        private long _lastRoundComparisonResolutionId = -1;
 
         internal const float DefaultTerminalSpeechHoldSeconds = 1.5f;
 
@@ -643,6 +649,7 @@ namespace DiaBlackJack.GameScene
 
         private void OnDisable()
         {
+            CancelRoundComparison(resetResolutionHistory: true);
             StopRevolverHideRoutine();
             StopRevolverReadyCameraRoutine();
             StopRevolverShotRoutine();
@@ -705,6 +712,7 @@ namespace DiaBlackJack.GameScene
         private void ResetBattlePresentation()
         {
             StopAllCoroutines();
+            CancelRoundComparison(resetResolutionHistory: true);
             EndSatanNumberGuessCameraSequence();
             PresentationManager.Current?.ForceRestoreTransientCameraEffects();
             ResetSatanNumberGuessAnimationState();
@@ -2696,6 +2704,15 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            if (_pendingPlayerMammonComparison != null &&
+                (command.Kind !=
+                    GameSceneCombatHudCommandKind.ResolveDemonContractChoice ||
+                 command.InteractionId !=
+                    _pendingPlayerMammonComparison.InteractionId))
+            {
+                return;
+            }
+
             if (_revolverReadyActive &&
                 !_revolverSelectionReady &&
                 command.Kind ==
@@ -2817,7 +2834,17 @@ namespace DiaBlackJack.GameScene
             else
             {
                 UnlockInput();
-                RefreshView();
+                if (_pendingPlayerMammonComparison != null &&
+                    timelineBaseline != null)
+                {
+                    ApplyView(
+                        timelineBaseline,
+                        preserveRoundComparisonCardsAndTotals: true);
+                }
+                else
+                {
+                    RefreshView();
+                }
                 ReturnToProgressionIfStageBattleEnded();
             }
         }
@@ -2995,6 +3022,38 @@ namespace DiaBlackJack.GameScene
                 GameSceneViewModel previous = index == 0
                     ? timelineBaseline
                     : timeline[index - 1];
+                RoundComparisonPlan comparisonPlan = vm.RoundComparisonPlan;
+                if (_pendingPlayerMammonComparison != null &&
+                    comparisonPlan == null)
+                {
+                    // The choice resolves synchronously and may publish an enemy Mammon decision
+                    // before the final resolution. Keep the already-counted player prefix intact.
+                    continue;
+                }
+
+                bool comparisonBeat = ShouldPlayRoundComparison(
+                    _lastRoundComparisonResolutionId,
+                    comparisonPlan);
+                bool directResolutionBeat =
+                    ShouldSkipRoundComparisonForDecisiveHiddenGuess(
+                        _lastRoundComparisonResolutionId,
+                        comparisonPlan);
+                if (comparisonPlan != null &&
+                    !comparisonBeat &&
+                    !directResolutionBeat)
+                {
+                    continue;
+                }
+
+                PlayerMammonComparisonPlan mammonPrefixPlan =
+                    vm.PlayerMammonComparisonPlan;
+                bool beginsPlayerMammonComparison =
+                    mammonPrefixPlan != null &&
+                    _pendingPlayerMammonComparison == null;
+                if (beginsPlayerMammonComparison)
+                {
+                    BeginPlayerMammonComparison(mammonPrefixPlan);
+                }
                 // Searches the rest of the timeline (not just index + 1) because an
                 // automatic-activation card (e.g. poison) drawn mid-knife-effect inserts
                 // its own beat(s) between the reveal and the knife's resolved beat —
@@ -3030,7 +3089,10 @@ namespace DiaBlackJack.GameScene
                     deferHammerSmashCardRender: true,
                     deferKnifeResultCardRender: revealKnifeCardWithThrow,
                     deferRevolverResultCardRender: true,
-                    showTransientEffectSources: true);
+                    showTransientEffectSources: true,
+                    preserveRoundComparisonCardsAndTotals:
+                        beginsPlayerMammonComparison,
+                    deferRoundResultPresentation: comparisonBeat);
 
                 // The Satan source card can be instantiated by ApplyView when the timeline
                 // starts from a stale/empty hand. Retry after rendering so the attack cannot be
@@ -3078,7 +3140,11 @@ namespace DiaBlackJack.GameScene
                 }
 
                 bool resolveBeat = vm.Core.State == CoreLoopState.ResolvingRound;
-                float waitSeconds = resolveBeat
+                float waitSeconds = comparisonBeat
+                    ? 0f
+                    : beginsPlayerMammonComparison
+                    ? 0f
+                    : resolveBeat
                     ? Mathf.Max(resolveHoldSeconds, MinimumRoundResultHoldSeconds)
                     : stepSeconds;
                 if (IsKnifeConcealedCardBeat(previous, vm))
@@ -3097,6 +3163,21 @@ namespace DiaBlackJack.GameScene
                     playedAnimation,
                     waitSeconds);
 
+                if (comparisonBeat)
+                {
+                    yield return PlayRoundComparison(vm, comparisonPlan);
+                    pendingKnifeReveal = null;
+                    continue;
+                }
+
+                if (mammonPrefixPlan != null)
+                {
+                    yield return PlayPlayerMammonComparisonPrefix(
+                        vm,
+                        mammonPrefixPlan);
+                    yield break;
+                }
+
                 bool playedResultSpeech = PresentEnemySpeech(
                     vm.EnemySpeechObservation,
                     SpeechPlaybackMoment.AfterAnimation);
@@ -3110,6 +3191,11 @@ namespace DiaBlackJack.GameScene
                     yield return RenderHandsThenTotalsAfterRevealFlip(
                         playedAnimation.DeferredViewModel,
                         showTransientEffectSources: true);
+                }
+
+                if (directResolutionBeat)
+                {
+                    CompleteDirectRoundResolutionPresentation(comparisonPlan);
                 }
 
                 pendingKnifeReveal = null;
@@ -3144,6 +3230,304 @@ namespace DiaBlackJack.GameScene
             ReturnToProgressionIfStageBattleEnded();
         }
 
+        internal static bool ShouldPlayRoundComparison(
+            long lastResolutionId,
+            RoundComparisonPlan plan)
+        {
+            return plan != null &&
+                plan.ResolutionId != lastResolutionId &&
+                plan.PlaybackMode == RoundComparisonPlaybackMode.CountTotals;
+        }
+
+        internal static bool ShouldSkipRoundComparisonForDecisiveHiddenGuess(
+            long lastResolutionId,
+            RoundComparisonPlan plan)
+        {
+            return plan != null &&
+                plan.ResolutionId != lastResolutionId &&
+                plan.PlaybackMode ==
+                    RoundComparisonPlaybackMode.SkipForDecisiveHiddenGuess;
+        }
+
+        internal static bool ShouldHideCombatHudForPresentation(
+            bool inputLocked,
+            bool roundComparisonActive,
+            bool deferRoundResultPresentation,
+            bool hasBlockingAnimationCue)
+        {
+            return inputLocked &&
+                (roundComparisonActive ||
+                 deferRoundResultPresentation ||
+                 hasBlockingAnimationCue);
+        }
+
+        private void BeginPlayerMammonComparison(
+            PlayerMammonComparisonPlan plan)
+        {
+            _roundComparisonActive = true;
+            _pendingPlayerMammonComparison = plan;
+            totals?.BeginComparison();
+        }
+
+        private IEnumerator PlayPlayerMammonComparisonPrefix(
+            GameSceneViewModel vm,
+            PlayerMammonComparisonPlan plan)
+        {
+            yield return PlayComparisonSteps(
+                CombatantSide.Player,
+                playerHand,
+                plan.Player.PublicSteps);
+            yield return RevealComparisonHand(
+                playerHand,
+                plan.RevealedPlayerCards,
+                vm.PlayerDemonCards);
+            yield return PlayComparisonStep(
+                CombatantSide.Player,
+                playerHand,
+                plan.Player.HiddenStep);
+
+            UnlockInput();
+            ApplyView(
+                vm,
+                showTransientEffectSources: true,
+                preserveRoundComparisonCardsAndTotals: true);
+        }
+
+        private IEnumerator PlayRoundComparison(
+            GameSceneViewModel vm,
+            RoundComparisonPlan plan)
+        {
+            bool resumesPlayerMammon = _pendingPlayerMammonComparison != null;
+            if (!resumesPlayerMammon)
+            {
+                _roundComparisonActive = true;
+                totals?.BeginComparison();
+                yield return PlayComparisonSteps(
+                    CombatantSide.Player,
+                    playerHand,
+                    plan.Player.PublicSteps);
+                yield return PlayComparisonSteps(
+                    CombatantSide.Enemy,
+                    enemyHand,
+                    plan.Enemy.PublicSteps);
+                yield return RevealComparisonHand(
+                    playerHand,
+                    vm.PlayerCards,
+                    vm.PlayerDemonCards);
+                yield return PlayComparisonStep(
+                    CombatantSide.Player,
+                    playerHand,
+                    plan.Player.HiddenStep);
+            }
+            else
+            {
+                // Keep the player side visually synchronized with the captured resolving model;
+                // this does not reveal or render any enemy card.
+                playerHand?.Render(
+                    vm.PlayerCards,
+                    vm.PlayerDemonCards,
+                    showTransientEffectSources: true);
+            }
+
+            if (plan.Player.Bonus > 0)
+            {
+                yield return PlayComparisonBonus(
+                    CombatantSide.Player,
+                    plan.Player.FinalTotal);
+            }
+
+            if (resumesPlayerMammon)
+            {
+                yield return PlayComparisonSteps(
+                    CombatantSide.Enemy,
+                    enemyHand,
+                    plan.Enemy.PublicSteps);
+            }
+
+            yield return RevealComparisonHand(
+                enemyHand,
+                vm.EnemyCards,
+                vm.EnemyDemonCards);
+            yield return PlayComparisonStep(
+                CombatantSide.Enemy,
+                enemyHand,
+                plan.Enemy.HiddenStep);
+            if (plan.Enemy.Bonus > 0)
+            {
+                yield return PlayComparisonBonus(
+                    CombatantSide.Enemy,
+                    plan.Enemy.FinalTotal);
+            }
+
+            ApplyView(
+                vm,
+                showTransientEffectSources: true,
+                preserveRoundComparisonCardsAndTotals: true);
+            PresentEnemySpeech(
+                vm.EnemySpeechObservation,
+                SpeechPlaybackMoment.AfterAnimation);
+
+            yield return new WaitForSeconds(
+                Mathf.Max(resolveHoldSeconds, MinimumRoundResultHoldSeconds));
+
+            OnRoundResolutionResultHeld(plan);
+            totals?.CompleteComparison(
+                vm.PlayerTotalsText,
+                vm.EnemyTotalsText);
+            ClearComparisonHighlight();
+            _lastRoundComparisonResolutionId = plan.ResolutionId;
+            _pendingPlayerMammonComparison = null;
+            _roundComparisonActive = false;
+        }
+
+        private void CompleteDirectRoundResolutionPresentation(
+            RoundComparisonPlan plan)
+        {
+            if (plan == null)
+            {
+                return;
+            }
+
+            OnRoundResolutionResultHeld(plan);
+            _lastRoundComparisonResolutionId = plan.ResolutionId;
+            _pendingPlayerMammonComparison = null;
+            _roundComparisonActive = false;
+        }
+
+        private IEnumerator PlayComparisonSteps(
+            CombatantSide side,
+            CardHand hand,
+            IReadOnlyList<RoundComparisonStep> steps)
+        {
+            if (steps == null)
+            {
+                yield break;
+            }
+
+            for (int index = 0; index < steps.Count; index++)
+            {
+                yield return PlayComparisonStep(side, hand, steps[index]);
+            }
+        }
+
+        private IEnumerator PlayComparisonStep(
+            CombatantSide side,
+            CardHand hand,
+            RoundComparisonStep step)
+        {
+            if (step == null)
+            {
+                yield break;
+            }
+
+            ClearComparisonHighlight();
+            if (hand != null &&
+                hand.TryGetCard(step.CardId, out CardView card))
+            {
+                _comparisonHighlightedCard = card;
+                card.SetComparisonHighlighted(true);
+            }
+
+            totals?.AnimateComparisonTotal(
+                side,
+                step.Total,
+                comparisonCountSeconds);
+            if (comparisonCountSeconds > 0f)
+            {
+                yield return new WaitForSeconds(comparisonCountSeconds);
+            }
+
+            ClearComparisonHighlight();
+            if (comparisonStepGapSeconds > 0f)
+            {
+                yield return new WaitForSeconds(comparisonStepGapSeconds);
+            }
+        }
+
+        private IEnumerator PlayComparisonBonus(
+            CombatantSide side,
+            int finalTotal)
+        {
+            ClearComparisonHighlight();
+            totals?.AnimateComparisonTotal(
+                side,
+                finalTotal,
+                comparisonCountSeconds);
+            if (comparisonCountSeconds > 0f)
+            {
+                yield return new WaitForSeconds(comparisonCountSeconds);
+            }
+
+            if (comparisonStepGapSeconds > 0f)
+            {
+                yield return new WaitForSeconds(comparisonStepGapSeconds);
+            }
+        }
+
+        private IEnumerator RevealComparisonHand(
+            CardHand hand,
+            IReadOnlyList<GameSceneCardViewModel> cards,
+            IReadOnlyList<GameSceneDemonCardViewModel> demonCards)
+        {
+            if (hand == null || cards == null)
+            {
+                yield break;
+            }
+
+            bool revealAnimated = hand.Render(
+                cards,
+                demonCards ?? Array.Empty<GameSceneDemonCardViewModel>(),
+                showTransientEffectSources: true);
+            if (revealAnimated)
+            {
+                yield return new WaitForSeconds(
+                    ResolveCardRevealDurationSeconds());
+            }
+        }
+
+        private float ResolveCardRevealDurationSeconds()
+        {
+            CardView prefab = playerHand != null ? playerHand.CardPrefab : null;
+            prefab ??= enemyHand != null ? enemyHand.CardPrefab : null;
+            return prefab != null ? prefab.RevealDurationSeconds : 0f;
+        }
+
+        private void ClearComparisonHighlight()
+        {
+            if (_comparisonHighlightedCard == null)
+            {
+                return;
+            }
+
+            _comparisonHighlightedCard.SetComparisonHighlighted(false);
+            _comparisonHighlightedCard = null;
+        }
+
+        private void CancelRoundComparison(bool resetResolutionHistory)
+        {
+            ClearComparisonHighlight();
+            if (totals != null && totals.IsComparisonActive)
+            {
+                totals.CancelComparison();
+            }
+
+            _roundComparisonActive = false;
+            _pendingPlayerMammonComparison = null;
+            if (resetResolutionHistory)
+            {
+                _lastRoundComparisonResolutionId = -1;
+            }
+        }
+
+        /// <summary>
+        /// Single extension seam for the follow-up shared soul-loss presentation. The immutable
+        /// plan already carries both damage values and the resolution id at this exact beat.
+        /// </summary>
+        private static void OnRoundResolutionResultHeld(RoundComparisonPlan plan)
+        {
+            _ = plan;
+        }
+
         private void RefreshView()
         {
             CoreLoopBattle battle = Battle;
@@ -3164,7 +3548,9 @@ namespace DiaBlackJack.GameScene
             bool deferHammerSmashCardRender = false,
             bool deferKnifeResultCardRender = false,
             bool deferRevolverResultCardRender = false,
-            bool showTransientEffectSources = false)
+            bool showTransientEffectSources = false,
+            bool preserveRoundComparisonCardsAndTotals = false,
+            bool deferRoundResultPresentation = false)
         {
             _core = vm.Core;
             _enemyMammonDieValue = vm.EnemyMammonDieValue;
@@ -3184,13 +3570,18 @@ namespace DiaBlackJack.GameScene
             {
                 mammonDie?.PlayRoll(vm.PlayerMammonDieValue.Value);
             }
+            bool hasBlockingAnimationCue =
+                vm.HammerAnimationCue != null ||
+                vm.RevolverAnimationCue != null ||
+                vm.KnifeAnimationCue != null ||
+                vm.SatanAttackAnimationCue != null ||
+                vm.SatanNumberGuessAnimationCue != null;
             bool hideCombatHudForPresentation =
-                _inputLocked &&
-                (vm.HammerAnimationCue != null ||
-                 vm.RevolverAnimationCue != null ||
-                 vm.KnifeAnimationCue != null ||
-                 vm.SatanAttackAnimationCue != null ||
-                 vm.SatanNumberGuessAnimationCue != null);
+                ShouldHideCombatHudForPresentation(
+                    _inputLocked,
+                    _roundComparisonActive,
+                    deferRoundResultPresentation,
+                    hasBlockingAnimationCue);
             GameSceneCombatHudViewModel combat =
                 GameSceneCombatHudPresenter.Create(
                     vm.Core,
@@ -3267,7 +3658,9 @@ namespace DiaBlackJack.GameScene
             }
 
             bool playedCardReveal = false;
-            if (!deferredCardRender)
+            if (!deferredCardRender &&
+                !preserveRoundComparisonCardsAndTotals &&
+                !deferRoundResultPresentation)
             {
                 playedCardReveal =
                     RenderHandsAndTotals(vm, showTransientEffectSources);
@@ -3276,7 +3669,13 @@ namespace DiaBlackJack.GameScene
             RenderCrystalOrbSelection(vm);
             RenderSatanNumberSelection(vm);
 
-            if (enemyCharacter != null)
+            bool rendersDeferredAttackVisual =
+                deferRoundResultPresentation &&
+                (playedRevolverAnimation ||
+                 playedKnifeAnimation ||
+                 playedHammerAnimation);
+            if (enemyCharacter != null &&
+                (!deferRoundResultPresentation || rendersDeferredAttackVisual))
             {
                 enemyCharacter.RenderVisual(
                     ResolveKnifeTimedVisual(
@@ -3284,9 +3683,12 @@ namespace DiaBlackJack.GameScene
                         ResolveRevolverTimedVisual(
                             CombatantSide.Enemy,
                             vm.EnemyVisual)));
-                PresentEnemySpeech(
-                    vm.EnemySpeechObservation,
-                    SpeechPlaybackMoment.BeforeAnimation);
+                if (!deferRoundResultPresentation)
+                {
+                    PresentEnemySpeech(
+                        vm.EnemySpeechObservation,
+                        SpeechPlaybackMoment.BeforeAnimation);
+                }
             }
 
             return CreateAppliedAnimationResult(

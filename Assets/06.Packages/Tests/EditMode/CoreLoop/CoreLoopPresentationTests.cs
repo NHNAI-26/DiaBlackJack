@@ -246,6 +246,337 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("GSV17")]
+        public void GSV17_U01_ComparisonCountsBothSidesFromScreenRight()
+        {
+            var battle = new CoreLoopBattle(
+                CreateDeck(new[] { 2, 2, 5, 10, 1, 3, 4, 6 }),
+                CreateDeck(new[] { 10, 7, 2, 3, 4, 5 }),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3,
+                enemyPolicy: new StandPolicy());
+            Assert.That(battle.Start(), Is.True);
+            GameSceneViewModel resolvingModel = null;
+            battle.Stepped += () =>
+            {
+                if (battle.State == CoreLoopState.ResolvingRound)
+                {
+                    resolvingModel = GameScenePresenter.Create(battle);
+                }
+            };
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(battle.TryPlayerStand(), Is.True);
+
+            RoundComparisonPlan plan = resolvingModel?.RoundComparisonPlan;
+            Assert.That(plan, Is.Not.Null);
+            Assert.That(
+                plan.Player.PublicSteps.Select(step => step.CardId),
+                Is.EqualTo(resolvingModel.PlayerCards
+                    .Where(card => plan.Player.HiddenStep == null ||
+                        card.CardId != plan.Player.HiddenStep.CardId)
+                    .Select(card => card.CardId)));
+            Assert.That(
+                plan.Player.PublicSteps.Select(step => step.Total),
+                Is.EqualTo(new[] { 11, 21, 16, 18 }));
+            Assert.That(plan.Player.HiddenStep.Total, Is.EqualTo(20));
+            Assert.That(
+                plan.Enemy.PublicSteps.Select(step => step.CardId),
+                Is.EqualTo(resolvingModel.EnemyCards
+                    .Where(card => card.CardId != plan.Enemy.HiddenStep.CardId)
+                    .Select(card => card.CardId)));
+            Assert.That(plan.Enemy.PublicSteps.Single().Total, Is.EqualTo(10));
+            Assert.That(plan.Enemy.HiddenStep.Total, Is.EqualTo(17));
+            Assert.That(plan.PlayerDamage, Is.Zero);
+            Assert.That(plan.EnemyDamage, Is.EqualTo(1));
+        }
+
+        [Test]
+        [Category("GSV17")]
+        public void GSV17_U02_ComparisonColorMovesToGoldThenTurnsRed()
+        {
+            Assert.That(
+                TableTotalsView.ResolveComparisonColor(15),
+                Is.EqualTo(Color.white));
+            Assert.That(
+                TableTotalsView.ResolveComparisonBloomStrength(15),
+                Is.Zero);
+            Assert.That(
+                TableTotalsView.ResolveComparisonBloomStrength(16),
+                Is.GreaterThan(0f));
+            Assert.That(
+                TableTotalsView.ResolveComparisonBloomStrength(21),
+                Is.EqualTo(1f));
+            Assert.That(
+                TableTotalsView.ResolveComparisonColor(21).r,
+                Is.GreaterThan(1f));
+            Assert.That(
+                TableTotalsView.ResolveComparisonColor(22),
+                Is.EqualTo(new Color(1f, 0.055f, 0.035f, 1f)));
+            Assert.That(
+                TableTotalsView.ResolveComparisonBloomStrength(22),
+                Is.Zero);
+        }
+
+        [Test]
+        [Category("GSV17")]
+        public void GSV17_U03_ComparisonHighlightPreservesEffectHighlight()
+        {
+            var gameObject = new GameObject("comparison-card-test");
+            try
+            {
+                CardView view = gameObject.AddComponent<CardView>();
+                view.Bind(new GameSceneCardViewModel(
+                    10,
+                    5,
+                    isFaceUp: true,
+                    revealRank: true,
+                    canUse: false,
+                    "Effect source",
+                    isEffectSource: true,
+                    isEffectSourcePersistent: true));
+
+                view.SetComparisonHighlighted(true);
+                Assert.That(view.IsComparisonHighlighted, Is.True);
+                view.SetComparisonHighlighted(false);
+
+                Assert.That(view.IsComparisonHighlighted, Is.False);
+                Assert.That(view.HasEffectiveHighlight, Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+            }
+        }
+
+        [Test]
+        [Category("GSV17")]
+        public void GSV17_U04_CancelAndResolutionIdPreventTemporaryReplayState()
+        {
+            var gameObject = new GameObject("comparison-total-test");
+            try
+            {
+                TableTotalsView view = gameObject.AddComponent<TableTotalsView>();
+                view.BeginComparison();
+                Assert.That(view.IsComparisonActive, Is.True);
+                view.CancelComparison();
+                Assert.That(view.IsComparisonActive, Is.False);
+
+                var side = new RoundComparisonSidePlan(
+                    System.Array.Empty<RoundComparisonStep>(),
+                    hiddenStep: null,
+                    cardTotal: 0,
+                    bonus: 0);
+                var plan = new RoundComparisonPlan(
+                    7,
+                    RoundOutcome.PlayerWin,
+                    RoundEndCause.TotalComparison,
+                    0,
+                    1,
+                    side,
+                    side);
+                Assert.That(
+                    GameManager.ShouldPlayRoundComparison(-1, plan),
+                    Is.True);
+                Assert.That(
+                    GameManager.ShouldPlayRoundComparison(7, plan),
+                    Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(gameObject);
+            }
+        }
+
+        [TestCase(CombatantSide.Player)]
+        [TestCase(CombatantSide.Enemy)]
+        [Category("GSV17")]
+        public void GSV17_U06_DecisiveRevolverGuessSkipsComparisonForEitherSide(
+            CombatantSide actorSide)
+        {
+            RoundResolution resolution = CreateHiddenGuessResolution(
+                actorSide,
+                RoundEndCause.CardEffectBust);
+            var cue = new GameSceneRevolverAnimationCue(
+                1,
+                10,
+                actorSide,
+                GameSceneRevolverAnimationPhase.Resolved,
+                succeeded: true);
+
+            RoundComparisonPlaybackMode mode =
+                RoundComparisonPresenter.ResolvePlaybackMode(
+                    resolution,
+                    cue,
+                    satanNumberGuessCue: null);
+            RoundComparisonPlan plan = CreateComparisonPlan(resolution, mode);
+
+            Assert.That(
+                mode,
+                Is.EqualTo(
+                    RoundComparisonPlaybackMode.SkipForDecisiveHiddenGuess));
+            Assert.That(
+                GameManager.ShouldSkipRoundComparisonForDecisiveHiddenGuess(
+                    -1,
+                    plan),
+                Is.True);
+            Assert.That(
+                GameManager.ShouldPlayRoundComparison(-1, plan),
+                Is.False);
+            Assert.That(plan.PlayerDamage, Is.EqualTo(resolution.PlayerDamage));
+            Assert.That(plan.EnemyDamage, Is.EqualTo(resolution.EnemyDamage));
+            Assert.That(
+                GameManager.ShouldSkipRoundComparisonForDecisiveHiddenGuess(
+                    resolution.Id,
+                    plan),
+                Is.False);
+        }
+
+        [TestCase(CombatantSide.Player)]
+        [TestCase(CombatantSide.Enemy)]
+        [Category("GSV17")]
+        public void GSV17_U07_DecisiveSatanGuessSkipsComparisonForEitherSide(
+            CombatantSide actorSide)
+        {
+            RoundResolution resolution = CreateHiddenGuessResolution(
+                actorSide,
+                RoundEndCause.ContractEffectBust);
+            var cue = new GameSceneSatanNumberGuessAnimationCue(
+                1,
+                20,
+                actorSide,
+                30,
+                succeeded: true,
+                actionOrdinal: 1);
+
+            RoundComparisonPlaybackMode mode =
+                RoundComparisonPresenter.ResolvePlaybackMode(
+                    resolution,
+                    revolverCue: null,
+                    satanNumberGuessCue: cue);
+
+            Assert.That(
+                mode,
+                Is.EqualTo(
+                    RoundComparisonPlaybackMode.SkipForDecisiveHiddenGuess));
+        }
+
+        [Test]
+        [Category("GSV17")]
+        public void GSV17_U08_NonDecisiveGuessKeepsComparison()
+        {
+            RoundResolution revolverResolution = CreateHiddenGuessResolution(
+                CombatantSide.Player,
+                RoundEndCause.CardEffectBust);
+            var failedRevolver = new GameSceneRevolverAnimationCue(
+                1,
+                10,
+                CombatantSide.Player,
+                GameSceneRevolverAnimationPhase.Resolved,
+                succeeded: false);
+            var successfulSatan = new GameSceneSatanNumberGuessAnimationCue(
+                1,
+                20,
+                CombatantSide.Player,
+                30,
+                succeeded: true,
+                actionOrdinal: 1);
+
+            Assert.That(
+                RoundComparisonPresenter.ResolvePlaybackMode(
+                    revolverResolution,
+                    failedRevolver,
+                    satanNumberGuessCue: null),
+                Is.EqualTo(RoundComparisonPlaybackMode.CountTotals));
+            Assert.That(
+                RoundComparisonPresenter.ResolvePlaybackMode(
+                    revolverResolution,
+                    revolverCue: null,
+                    successfulSatan),
+                Is.EqualTo(RoundComparisonPlaybackMode.CountTotals));
+
+            var ordinaryResolution = new RoundResolution(
+                2,
+                RoundOutcome.PlayerWin,
+                playerDamage: 0,
+                enemyDamage: 1,
+                cause: RoundEndCause.TotalComparison);
+            Assert.That(
+                RoundComparisonPresenter.ResolvePlaybackMode(
+                    ordinaryResolution,
+                    revolverCue: null,
+                    satanNumberGuessCue: null),
+                Is.EqualTo(RoundComparisonPlaybackMode.CountTotals));
+        }
+
+        [Test]
+        [Category("GSV17")]
+        public void GSV17_U09_MammonChoiceHudAppearsOnlyAfterPrefixUnlocks()
+        {
+            Assert.That(
+                GameManager.ShouldHideCombatHudForPresentation(
+                    inputLocked: true,
+                    roundComparisonActive: true,
+                    deferRoundResultPresentation: false,
+                    hasBlockingAnimationCue: false),
+                Is.True);
+            Assert.That(
+                GameManager.ShouldHideCombatHudForPresentation(
+                    inputLocked: false,
+                    roundComparisonActive: true,
+                    deferRoundResultPresentation: false,
+                    hasBlockingAnimationCue: false),
+                Is.False);
+        }
+
+        private static RoundResolution CreateHiddenGuessResolution(
+            CombatantSide actorSide,
+            RoundEndCause cause)
+        {
+            return actorSide == CombatantSide.Player
+                ? new RoundResolution(
+                    7,
+                    RoundOutcome.EnemyBust,
+                    playerDamage: 0,
+                    enemyDamage: 2,
+                    cause: cause,
+                    sourceCardKey: cause == RoundEndCause.CardEffectBust
+                        ? "auto-pistol-7"
+                        : null)
+                : new RoundResolution(
+                    7,
+                    RoundOutcome.PlayerBust,
+                    playerDamage: 2,
+                    enemyDamage: 0,
+                    cause: cause,
+                    sourceCardKey: cause == RoundEndCause.CardEffectBust
+                        ? "auto-pistol-7"
+                        : null);
+        }
+
+        private static RoundComparisonPlan CreateComparisonPlan(
+            RoundResolution resolution,
+            RoundComparisonPlaybackMode playbackMode)
+        {
+            var side = new RoundComparisonSidePlan(
+                System.Array.Empty<RoundComparisonStep>(),
+                hiddenStep: null,
+                cardTotal: 0,
+                bonus: 0);
+            return new RoundComparisonPlan(
+                resolution.Id,
+                resolution.Outcome,
+                resolution.Cause,
+                resolution.PlayerDamage,
+                resolution.EnemyDamage,
+                side,
+                side,
+                playbackMode);
+        }
+
+        [Test]
         public void CUM05_U01_EnemyHoverInfoUsesSafePlaceholderUntilRevealed()
         {
             CoreLoopBattle battle = CreateBattle(

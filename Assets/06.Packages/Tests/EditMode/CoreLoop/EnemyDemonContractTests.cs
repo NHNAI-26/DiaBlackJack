@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DiaBlackJack.CoreLoop.UI;
+using DiaBlackJack.GameScene;
 using DiaBlackJack.StageProgression;
 using NUnit.Framework;
 
@@ -203,6 +204,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("GSV17")]
         public void DC07_U09_EnemyMammonCanApplyItsDieAtFinalComparison()
         {
             var resolver = new DemonContractResolver(
@@ -216,6 +218,14 @@ namespace DiaBlackJack.CoreLoop.Tests
                 enemyMaximumSoul: 4,
                 enemyRanks: new[] { 10, 7, 2, 2, 2 },
                 demonContractResolver: resolver);
+            GameSceneViewModel resolving = null;
+            battle.Stepped += () =>
+            {
+                if (battle.State == CoreLoopState.ResolvingRound)
+                {
+                    resolving = GameScenePresenter.Create(battle);
+                }
+            };
 
             Assert.That(battle.TryPlayerHit(), Is.True);
             Assert.That(battle.TryPlayerStand(), Is.True);
@@ -226,6 +236,12 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(MammonDemonContractHandler.ApplyDieOptionId));
             Assert.That(battle.LastResolution.Value.Outcome,
                 Is.EqualTo(RoundOutcome.EnemyWin));
+            Assert.That(resolving, Is.Not.Null);
+            Assert.That(resolving.RoundComparisonPlan.Enemy.Bonus, Is.EqualTo(3));
+            Assert.That(
+                resolving.RoundComparisonPlan.Enemy.FinalTotal,
+                Is.EqualTo(
+                    resolving.RoundComparisonPlan.Enemy.CardTotal + 3));
         }
 
         [Test]
