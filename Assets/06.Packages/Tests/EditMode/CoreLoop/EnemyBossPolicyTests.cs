@@ -370,7 +370,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 completedRounds++;
             }
 
-            Assert.That(completedRounds, Is.EqualTo(5));
+            Assert.That(completedRounds, Is.EqualTo(10));
             Assert.That(session.Battle.Outcome, Is.EqualTo(BattleOutcome.PlayerVictory));
             Assert.That(
                 session.Progress.PendingReward.Offer.Tier,

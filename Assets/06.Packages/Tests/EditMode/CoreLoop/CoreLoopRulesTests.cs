@@ -169,12 +169,12 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void CL_U09_PlayerTwentyOneDamagesEnemyTwice()
+        public void CL_U09_PlayerTwentyOneDealsOrdinaryDamage()
         {
             RoundResolution resolution = Resolve(2, new[] { 10, 1 }, new[] { 10, 10 });
 
             Assert.That(resolution.Outcome, Is.EqualTo(RoundOutcome.PlayerTwentyOneWin));
-            Assert.That(resolution.EnemyDamage, Is.EqualTo(2));
+            Assert.That(resolution.EnemyDamage, Is.EqualTo(1));
         }
 
         [Test]

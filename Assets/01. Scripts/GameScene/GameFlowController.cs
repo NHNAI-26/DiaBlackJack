@@ -27,6 +27,8 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private MoodController moodController;
         [SerializeField] private float moodTransitionDuration = 1f;
         [SerializeField, Min(0f)] private float enemyAppearanceDelayAfterDoor = 1f;
+        [Tooltip("Hold after the enemy entrance animation finishes, before round 1 begins (HUD activates, battle binds, initial cards deal).")]
+        [SerializeField, Min(0f)] private float roundOneStartDelayAfterEntrance = 3f;
 
         [Header("Merchant speech")]
         [SerializeField] private SpeechProfileSO merchantSpeechProfile;
@@ -39,7 +41,7 @@ namespace DiaBlackJack.GameScene
         private int? _focusedOpponentOfferId;
         private string _focusedOpponentProfileKey;
         private string _acknowledgedFinalBossStageId;
-        private StageProgressionSession _pendingCombatBindSession;
+        private bool _waitingForRoundOneReveal;
         private bool _isProcessingInput;
         private bool _charactersEntranceWaiting;
         private bool _hasPresentedCharacters;
@@ -48,6 +50,7 @@ namespace DiaBlackJack.GameScene
         private bool _shopTransitionWaitingForEnemyExit;
         private bool _unlockInputAfterCharacterEntrance;
         private Coroutine _characterEntranceUnlockSafetyRoutine;
+        private Coroutine _roundOneStartRoutine;
         private string _currentMoodId;
 
         // The entrance-animation completion callback that unlocks input
@@ -184,9 +187,10 @@ namespace DiaBlackJack.GameScene
             UnsubscribeFromMoodController();
             CancelEnemyAppearanceDelay();
             StopCharacterEntranceUnlockSafety();
+            StopRoundOneStartRoutine();
             _shopTransitionWaitingForEnemyExit = false;
             _unlockInputAfterCharacterEntrance = false;
-            _pendingCombatBindSession = null;
+            _waitingForRoundOneReveal = false;
         }
 
         public bool RequestCompleteStartingDemonReveal()
@@ -332,7 +336,8 @@ namespace DiaBlackJack.GameScene
             _session = null;
             ClearFocusedOpponent();
             _acknowledgedFinalBossStageId = null;
-            _pendingCombatBindSession = null;
+            StopRoundOneStartRoutine();
+            _waitingForRoundOneReveal = false;
             if (!TryAdoptFormalRun())
             {
                 return false;
@@ -479,6 +484,7 @@ namespace DiaBlackJack.GameScene
                 if (succeeded)
                 {
                     gameManager?.PlayWhiskeyShopAnimation();
+                    gameManager?.PlayPlayerSoulRestoredFlourish();
                 }
             }
 
@@ -559,20 +565,25 @@ namespace DiaBlackJack.GameScene
                 {
                     // Sequenced as: enemy appearance is set immediately (so the
                     // entrance shows the actual opponent, not whatever the
-                    // character was last displaying), then the entrance plays
-                    // with nothing else bound yet, then CompleteCharacterEntrance
-                    // binds the battle (table/cards/HUD appear) and only then
-                    // unlocks input — not all three at once the moment the screen
-                    // switches. gameManager stays disabled meanwhile so nothing
-                    // renders off unbound state while entrance plays.
+                    // character was last displaying), then the battle binds right
+                    // away too — table/deck piles/buttons/contract papers/codex/HUD
+                    // all appear from this point on, before the entrance animation
+                    // even starts, per the intro sequence's step 0. charactersRoot
+                    // itself stays inactive until ShowCharactersWithEntrance, so
+                    // binding this early does not reveal the enemy early — only the
+                    // table. Hand rendering is suppressed until round 1's
+                    // post-entrance hold elapses, so the already-dealt cards don't
+                    // pop in before then either.
                     gameManager.PrepareEnemyAppearance(_session.CombatSession);
-                    gameManager.enabled = false;
-                    _pendingCombatBindSession = _session.CombatSession;
+                    gameManager.enabled = true;
+                    gameManager.SuppressHandRenderUntilRoundOneStart();
+                    gameManager.BindBattle(_session.CombatSession, unlockInput: false);
+                    _waitingForRoundOneReveal = true;
                     BeginCharacterEntranceUnlockSafety();
                 }
                 else
                 {
-                    _pendingCombatBindSession = null;
+                    _waitingForRoundOneReveal = false;
                     if (!gameManager.BindBattle(
                             _session.CombatSession,
                             unlockInput: true))
@@ -936,18 +947,14 @@ namespace DiaBlackJack.GameScene
         private void CompleteCharacterEntrance()
         {
             StopCharacterEntranceUnlockSafety();
-            if (_pendingCombatBindSession != null)
+            if (_waitingForRoundOneReveal)
             {
-                StageProgressionSession session = _pendingCombatBindSession;
-                _pendingCombatBindSession = null;
-                gameManager.enabled = true;
-                // Object setup (BindBattle, unlocked: false) and button
-                // activation (SetPresentationInputLocked(false)) stay as two
-                // separate calls/renders — even though nothing currently
-                // animates between them — so the sequence is explicit rather
-                // than baked into a single BindBattle(unlockInput: true) call.
-                gameManager.BindBattle(session, unlockInput: false);
-                gameManager.SetPresentationInputLocked(false);
+                // The battle already bound the instant the screen entered Combat
+                // (see RefreshFlow) — this only starts the hold that gates the
+                // card-deal reveal and input unlock.
+                StopRoundOneStartRoutine();
+                _roundOneStartRoutine = StartCoroutine(
+                    BeginRoundOneAfterEntranceHold());
                 return;
             }
 
@@ -958,6 +965,31 @@ namespace DiaBlackJack.GameScene
 
             _unlockInputAfterCharacterEntrance = false;
             gameManager?.SetPresentationInputLocked(false);
+        }
+
+        // Round 1's card deal (hidden + face-up card per side, animated the same
+        // way a later hit is) and input unlock only happen once this hold elapses —
+        // everything else (deck piles, table buttons, contract papers, codex, HUD
+        // text, the enemy's appearance/battle-start line) is already showing from
+        // the immediate BindBattle in RefreshFlow's combat transition.
+        private IEnumerator BeginRoundOneAfterEntranceHold()
+        {
+            yield return new WaitForSeconds(roundOneStartDelayAfterEntrance);
+            _roundOneStartRoutine = null;
+            _waitingForRoundOneReveal = false;
+            gameManager.RevealRoundOneHands();
+            gameManager.SetPresentationInputLocked(false);
+        }
+
+        private void StopRoundOneStartRoutine()
+        {
+            if (_roundOneStartRoutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(_roundOneStartRoutine);
+            _roundOneStartRoutine = null;
         }
 
         private void BeginCharacterEntranceUnlockSafety()
@@ -982,12 +1014,14 @@ namespace DiaBlackJack.GameScene
         {
             yield return new WaitForSeconds(CharacterEntranceUnlockSafetySeconds);
             _characterEntranceUnlockSafetyRoutine = null;
-            if (_pendingCombatBindSession != null)
+            // The battle itself already bound the instant the screen entered
+            // Combat (see RefreshFlow) — this fallback only needs to make sure
+            // the card-deal reveal and input unlock still happen if
+            // CompleteCharacterEntrance's own chain never fired.
+            if (_waitingForRoundOneReveal)
             {
-                StageProgressionSession session = _pendingCombatBindSession;
-                _pendingCombatBindSession = null;
-                gameManager.enabled = true;
-                gameManager.BindBattle(session, unlockInput: false);
+                _waitingForRoundOneReveal = false;
+                gameManager.RevealRoundOneHands();
             }
 
             _unlockInputAfterCharacterEntrance = false;

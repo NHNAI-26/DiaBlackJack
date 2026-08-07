@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
   key: standard-plain-3
   displayName: "\uAE30\uBCF8 \uCE74\uB4DC"
-  description: 
+  description: "\uC544\uBB34 \uD6A8\uACFC\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4."
   basePurchasePrice: 1
   shopWeight: 3
   rank: 3

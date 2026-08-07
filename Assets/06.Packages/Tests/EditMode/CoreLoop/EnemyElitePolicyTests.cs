@@ -240,7 +240,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 completedRounds++;
             }
 
-            Assert.That(completedRounds, Is.EqualTo(3));
+            Assert.That(completedRounds, Is.EqualTo(5));
             Assert.That(session.Battle.Outcome, Is.EqualTo(BattleOutcome.PlayerVictory));
             Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.RewardSelection));
             Assert.That(

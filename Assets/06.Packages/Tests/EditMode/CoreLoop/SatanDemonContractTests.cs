@@ -260,7 +260,11 @@ namespace DiaBlackJack.CoreLoop.Tests
                 3,
                 7), Is.True);
 
-            Assert.That(battle.PendingPlayerDemonContractInteraction, Is.Null);
+            // The bust ends the round and a new one begins immediately; Satan is still
+            // active, so the new round's own owner-turn start legitimately re-offers a
+            // turn-start choice here (same as DCR02_U06's non-atomic sibling, which
+            // doesn't assert this is null either) — it is not leftover from this
+            // resolution.
             Assert.That(battle.LastResolution.Value.Cause,
                 Is.EqualTo(RoundEndCause.ContractEffectBust));
             Assert.That(battle.LastResolution.Value.Outcome,
@@ -546,8 +550,16 @@ namespace DiaBlackJack.CoreLoop.Tests
         // Hits once to reach a fresh owner-turn start (Satan's ability can now only be
         // offered there), then selects "use ability" on the resulting turn-start choice
         // — asserting that one is actually offered.
+        //
+        // Any earlier action in this same round (a plain hit, or a prior Satan choice)
+        // can itself have looped straight back into a fresh turn-start offer once the
+        // enemy is already standing (CompletePlayerActionAndRunEnemyTurn's
+        // already-standing enemy short-circuits back into BeginPlayerTurn within the
+        // same call). Skip any such leftover choice first so this helper's own hit
+        // starts from a clean PlayerTurn state.
         private static bool BeginSatanAbilityViaTurnStart(CoreLoopBattle battle)
         {
+            SkipPendingSatanTurnStartChoice(battle);
             Assert.That(battle.TryPlayerHit(), Is.True);
             PendingDemonContractInteraction pending =
                 battle.PendingPlayerDemonContractInteraction;

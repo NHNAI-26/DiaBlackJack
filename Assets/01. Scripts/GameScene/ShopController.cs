@@ -15,6 +15,7 @@ namespace DiaBlackJack.GameScene
         InsufficientGold,
         SoldOut,
         Unavailable,
+        SoulFull,
     }
 
     /// <summary>
@@ -464,10 +465,14 @@ namespace DiaBlackJack.GameScene
             if (!IsOpen ||
                 _whiskeyPurchasedThisVisit ||
                 playerCurrentSoul < 0 ||
-                playerMaximumSoul <= 0 ||
-                playerCurrentSoul >= playerMaximumSoul)
+                playerMaximumSoul <= 0)
             {
                 return ShopPurchaseAvailability.Unavailable;
+            }
+
+            if (playerCurrentSoul >= playerMaximumSoul)
+            {
+                return ShopPurchaseAvailability.SoulFull;
             }
 
             return Gold < CurrentWhiskeyPrice
@@ -498,6 +503,8 @@ namespace DiaBlackJack.GameScene
                     return SpeechCueKeys.ShopSoldOut;
                 case ShopPurchaseAvailability.Available:
                     return SpeechCueKeys.ShopPurchaseSuccess;
+                case ShopPurchaseAvailability.SoulFull:
+                    return SpeechCueKeys.ShopWhiskeySoulFull;
                 default:
                     return SpeechCueKeys.ShopUnavailable;
             }

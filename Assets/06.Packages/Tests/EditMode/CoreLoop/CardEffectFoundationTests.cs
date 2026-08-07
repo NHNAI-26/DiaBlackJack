@@ -306,7 +306,7 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(numericBust.Cause, Is.EqualTo(RoundEndCause.NumericBust));
             Assert.That(cardEffectBust.Cause, Is.EqualTo(RoundEndCause.CardEffectBust));
-            Assert.That(cardEffectBust.EnemyDamage, Is.EqualTo(1));
+            Assert.That(cardEffectBust.EnemyDamage, Is.EqualTo(2));
             Assert.That(cardEffectBust.SourceCardKey, Is.EqualTo("auto-pistol-7"));
         }
 

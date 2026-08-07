@@ -242,7 +242,15 @@ namespace DiaBlackJack.GameScene
                     ref selectedPriority);
             }
 
-            if (observation.RoundNumber > 0 &&
+            // Round 1's start is already announced by BattleStart (which always wins
+            // priority over RoundStart in the same call anyway) — but if the very
+            // first post-bind snapshot is rendered before RoundNumber settles at 1,
+            // a later refresh could otherwise see RoundNumber go 0 -> 1 and fire
+            // RoundStart on its own, stomping the still-fresh appearance line before
+            // the player has had a chance to read it. Gating on > 1 makes that
+            // impossible regardless of exact call ordering: only round 2+ ever gets
+            // its own RoundStart cue.
+            if (observation.RoundNumber > 1 &&
                 observation.RoundNumber != _lastRoundNumber)
             {
                 _lastRoundNumber = observation.RoundNumber;

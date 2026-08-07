@@ -46,6 +46,10 @@ MonoBehaviour:
     lines:
     - "\uAE30\uC6B4\uC774 \uC880 \uB3CC\uC544\uC654\uACA0\uC9C0."
     - "\uD55C \uC794\uC774\uBA74 \uCDA9\uBD84\uD558\uACA0\uC9C0."
+  - cueKey: shop.whiskey_soul_full
+    lines:
+    - "\uC774\uBBF8 \uAC00\uB4DD \uCC3C\uB294\uB370 \uBB58 \uB354 \uB9C8\uC2DC\uB824\uACE0."
+    - "\uB118\uCE58\uB294 \uC794\uC5D0 \uC220\uC744 \uB354 \uBD80\uC5B4 \uBB50 \uD558\uB098."
   - cueKey: shop.farewell
     lines:
     - "\uB2E4\uC74C\uC5D0 \uB610 \uBCF4\uC9C0."
