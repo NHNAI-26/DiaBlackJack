@@ -42,13 +42,13 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private TMP_Text combatPromptText;
         [SerializeField] private ScrollRect optionScrollRect;
         [SerializeField] private GameHudChoiceButton[] optionSlots = Array.Empty<GameHudChoiceButton>();
+        [SerializeField] private RevolverNumberSelectorView revolverNumberSelector;
         [SerializeField] private DemonCardHoverDetailView demonCardHoverDetail;
         [SerializeField] private GameObject automaticCardResultPanel;
         [SerializeField] private TMP_Text automaticCardResultText;
         [SerializeField] private CardContentCatalogSO cardContentCatalog;
 
         private Canvas _canvas;
-        private RevolverNumberSelectorView _revolverNumberSelector;
         private OptionSlotLayout[] _optionSlotLayouts = Array.Empty<OptionSlotLayout>();
 
         public event Action<GameSceneCombatHudCommand> CombatCommandRequested;
@@ -62,6 +62,9 @@ namespace DiaBlackJack.GameScene
 
         public bool HasCombatCandidateContentReference => cardContentCatalog != null;
 
+        internal bool HasRevolverNumberSelectorReference =>
+            revolverNumberSelector != null;
+
         public bool HasCombatContractDetailReference =>
             demonCardHoverDetail != null &&
             demonCardHoverDetail.HasRequiredReferences;
@@ -71,7 +74,7 @@ namespace DiaBlackJack.GameScene
              demonCardHoverDetail.gameObject.activeInHierarchy);
 
         public bool IsRevolverNumberSelectionOpen =>
-            _revolverNumberSelector != null && _revolverNumberSelector.IsOpen;
+            revolverNumberSelector != null && revolverNumberSelector.IsOpen;
 
         public bool IsShopLeaveVisible =>
             shopLeaveRoot != null && shopLeaveRoot.activeSelf;
@@ -82,10 +85,10 @@ namespace DiaBlackJack.GameScene
         private void Awake()
         {
             _canvas = GetComponentInParent<Canvas>();
-            _revolverNumberSelector =
-                GetComponent<RevolverNumberSelectorView>() ??
-                gameObject.AddComponent<RevolverNumberSelectorView>();
-            _revolverNumberSelector.CommandRequested += RaiseCombatCommand;
+            if (revolverNumberSelector != null)
+            {
+                revolverNumberSelector.CommandRequested += RaiseCombatCommand;
+            }
             CaptureOptionSlotLayouts();
             HideCardHoverBadge();
             HideDemonContractDetail();
@@ -97,9 +100,9 @@ namespace DiaBlackJack.GameScene
 
         private void OnDestroy()
         {
-            if (_revolverNumberSelector != null)
+            if (revolverNumberSelector != null)
             {
-                _revolverNumberSelector.CommandRequested -= RaiseCombatCommand;
+                revolverNumberSelector.CommandRequested -= RaiseCombatCommand;
             }
 
             UnbindCombatControls();
@@ -476,13 +479,13 @@ namespace DiaBlackJack.GameScene
                 }
 
                 SetActive(optionPanel, false);
-                _revolverNumberSelector?.Render(
+                revolverNumberSelector?.Render(
                     combat.Prompt,
                     combat.OptionActions);
                 return;
             }
 
-            _revolverNumberSelector?.Hide();
+            revolverNumberSelector?.Hide();
 
             if (combat == null || combat.Mode == GameSceneCombatHudMode.Hidden)
             {
@@ -756,7 +759,7 @@ namespace DiaBlackJack.GameScene
         private void HideCombatControls()
         {
             HideCombatActionTooltip();
-            _revolverNumberSelector?.Hide();
+            revolverNumberSelector?.Hide();
             SetActive(combatControlsRoot, false);
             SetActive(optionPanel, false);
             SetActive(automaticCardResultPanel, false);

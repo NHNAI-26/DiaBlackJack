@@ -693,5 +693,6 @@ Docs/
 
 - `CoreLoopViewModel.PendingCardEffectKind`로 리볼버 대기 상태를 표시 경계에 전달한다.
 - `GameSceneCombatHudMode.RevolverNumberSelection`은 1~10 선택 명령을 보존하되 일반 선택지 목록을 렌더하지 않는다.
-- `RevolverNumberSelectorView`가 숫자 순환·확정과 키보드·마우스 입력을 담당한다. 도메인 판정 API는 변경하지 않는다.
+- `RevolverNumberSelectorView`는 직렬화된 TMP·Button 참조로 독립 `RevolverNumberSelector.prefab`을 렌더하며 숫자 순환·확정과 키보드·마우스 입력을 담당한다. `GameHudView`는 HUD에 중첩된 인스턴스를 직렬화 참조하고 런타임 생성 경로를 두지 않는다. 도메인 판정 API는 변경하지 않는다.
+- 프리팹은 `brush_select_circle/left/right`와 중첩 `DefaultButton.prefab`을 사용한다. 좌우·확정 버튼에는 `UIButtonScaleFeedback(1.08/0.92/0.12초)`를 적용하고 중앙 원은 표시 전용으로 유지한다.
 - 선택 UI가 열린 동안 `GameManager`의 월드 레이캐스트 입력을 차단한다.

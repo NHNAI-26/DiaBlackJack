@@ -795,3 +795,15 @@ MCP가 Unity 창의 포커스를 가져가지 않은 상태에서는 게임 프�
 #### 권장 커밋 제목
 
 `fix : 카드 사용 중 원본 강조를 유지한다`
+
+### 2026-08-07 CU-M13 리볼버 숫자 선택 UI 프리팹화
+
+- `RevolverNumberSelectorView`의 `OnGUI`와 `GameHudView.Awake`의 동적 `AddComponent`를 제거했다. 독립 `RevolverNumberSelector.prefab`을 `HUD.prefab/CombatControls`에 중첩하고 직렬화된 TMP·Button 참조로만 렌더한다.
+- 중앙 180×180 원과 좌우 104×104 삼각형은 `brush_select_circle/left/right`를 사용한다. 원 아래에는 234×66 `DefaultButton.prefab` 확정 버튼을 중첩했다. 좌우·확정 버튼 모두 공용 `UIButtonScaleFeedback`의 호버 1.08배, 누름 0.92배, 0.12초 값을 사용한다.
+- 신규 `[Category("CUM13")]` 2/2(job `183b7e2105344a01a8f36837ce3e19d4`)와 `CoreLoopPresentationTests`·`GameSceneCombatHudPresentationTests` 123/123(job `4ab6acc17f264609962df1f6593cee25`)이 통과했다. 후자는 준비 중 선택 숨김과 입력 잠금 회귀도 포함한다. 전체 EditMode는 실행하지 않았다.
+- GameScene validation은 0 issues다. Play Mode 1920×1080에서 새 선택기와 숫자·안내·확정 위계를 확인했고 버튼 상태를 직접 완료해 `1.08 → 0.92 → 1.08 → 1.00` 복귀를 확인했다. 1280×720 실제 Game View 전환은 Editor가 해상도 변경을 반영하지 않아 완료 근거로 기록하지 않는다.
+- 최종 C# 컴파일 오류와 새 UI 런타임 오류는 0건이다. Console에는 병행 변경 영역의 기존 `CardView` Material Drawer와 `_DissolveObjectAxis` 오류 2건이 재현돼 전체 Error 0 게이트는 미충족이다. 씬·`brush_select`·Animator·애니메이션 클립은 변경하지 않았다.
+
+#### 권장 커밋 제목
+
+`feat : 리볼버 숫자 선택 UI를 프리팹화하다`

@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using Border.UI;
 using DiaBlackJack.Content;
 using TMPro;
 using UnityEditor;
@@ -15,7 +16,11 @@ namespace DiaBlackJack.GameScene.Editor
         private const string HudPrefabPath = "Assets/03. Prefabs/UI/HUD.prefab";
         private const string DefaultButtonPrefabPath =
             "Assets/03. Prefabs/UI/DefaultButton.prefab";
+        private const string RevolverNumberSelectorPrefabPath =
+            "Assets/03. Prefabs/UI/GameScene/RevolverNumberSelector.prefab";
         private const string BrushAssetPath = "Assets/05. Arts/UI/Brush_UI.psd";
+        private const string BrushSelectAssetPath =
+            "Assets/05. Arts/UI/brush_select.png";
         private const string DefaultFontAssetPath =
             "Assets/05. Arts/Fonts/전주완판본체/전주완판본 순R SDF.asset";
         private const string CardContentCatalogPath =
@@ -27,6 +32,7 @@ namespace DiaBlackJack.GameScene.Editor
         [MenuItem("DiaBlackJack/Build GameScene Combat HUD")]
         private static void Build()
         {
+            BuildRevolverNumberSelectorPrefabAsset();
             GameObject hudRoot = PrefabUtility.LoadPrefabContents(HudPrefabPath);
             try
             {
@@ -128,6 +134,29 @@ namespace DiaBlackJack.GameScene.Editor
                     automaticResult.gameObject,
                     automaticResultText,
                     contentCatalog);
+                InstallRevolverNumberSelector(hudRoot, hud);
+                PrefabUtility.SaveAsPrefabAsset(hudRoot, HudPrefabPath);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(hudRoot);
+            }
+        }
+
+        [MenuItem("DiaBlackJack/Build Revolver Number Selector")]
+        private static void BuildRevolverNumberSelector()
+        {
+            BuildRevolverNumberSelectorPrefabAsset();
+            GameObject hudRoot = PrefabUtility.LoadPrefabContents(HudPrefabPath);
+            try
+            {
+                GameHudView hud = hudRoot.GetComponent<GameHudView>();
+                if (hud == null)
+                {
+                    throw new InvalidOperationException("HUD prefab is missing GameHudView.");
+                }
+
+                InstallRevolverNumberSelector(hudRoot, hud);
                 PrefabUtility.SaveAsPrefabAsset(hudRoot, HudPrefabPath);
             }
             finally
@@ -174,7 +203,8 @@ namespace DiaBlackJack.GameScene.Editor
                 typeof(RectTransform),
                 typeof(CanvasRenderer),
                 typeof(Image),
-                typeof(Button));
+                typeof(Button),
+                typeof(UIButtonScaleFeedback));
             try
             {
                 RectTransform rect = root.GetComponent<RectTransform>();
@@ -204,6 +234,179 @@ namespace DiaBlackJack.GameScene.Editor
             {
                 UnityEngine.Object.DestroyImmediate(root);
             }
+        }
+
+        private static void BuildRevolverNumberSelectorPrefabAsset()
+        {
+            TMP_FontAsset font =
+                AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(DefaultFontAssetPath);
+            GameObject defaultButtonPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(DefaultButtonPrefabPath);
+            if (font == null || defaultButtonPrefab == null)
+            {
+                throw new InvalidOperationException(
+                    "Revolver selector requires the default TMP font and button prefab.");
+            }
+
+            Sprite circleSprite = FindSprite(
+                BrushSelectAssetPath,
+                "brush_select_circle");
+            Sprite leftSprite = FindSprite(
+                BrushSelectAssetPath,
+                "brush_select_left");
+            Sprite rightSprite = FindSprite(
+                BrushSelectAssetPath,
+                "brush_select_right");
+
+            GameObject root = new GameObject(
+                "RevolverNumberSelector",
+                typeof(RectTransform));
+            try
+            {
+                RectTransform rootRect = root.GetComponent<RectTransform>();
+                Stretch(rootRect);
+
+                TMP_Text prompt = CreateText(
+                    "Prompt",
+                    rootRect,
+                    font,
+                    22f,
+                    TextAlignmentOptions.Center);
+                SetCenteredRect(
+                    prompt.rectTransform,
+                    new Vector2(0f, 145f),
+                    new Vector2(560f, 50f));
+                prompt.color = new Color(0.9f, 0.84f, 0.72f, 1f);
+
+                RectTransform circle = CreateRect("NumberCircle", rootRect);
+                SetCenteredRect(circle, Vector2.zero, new Vector2(180f, 180f));
+                Image circleImage = circle.gameObject.AddComponent<Image>();
+                circleImage.sprite = circleSprite;
+                circleImage.type = Image.Type.Simple;
+                circleImage.preserveAspect = true;
+                circleImage.color = new Color(0.03f, 0.025f, 0.025f, 0.98f);
+                circleImage.raycastTarget = false;
+
+                TMP_Text number = CreateText(
+                    "Number",
+                    circle,
+                    font,
+                    72f,
+                    TextAlignmentOptions.Center);
+                number.fontStyle = FontStyles.Bold;
+                number.fontSizeMin = 42f;
+                Stretch(number.rectTransform, 18f);
+
+                Button previous = CreateSelectorArrow(
+                    "PreviousButton",
+                    rootRect,
+                    leftSprite,
+                    new Vector2(-160f, 0f));
+                Button next = CreateSelectorArrow(
+                    "NextButton",
+                    rootRect,
+                    rightSprite,
+                    new Vector2(160f, 0f));
+
+                GameObject confirmObject =
+                    (GameObject)PrefabUtility.InstantiatePrefab(
+                        defaultButtonPrefab,
+                        rootRect);
+                confirmObject.name = "ConfirmButton";
+                RectTransform confirmRect = confirmObject.GetComponent<RectTransform>();
+                Button confirm = confirmObject.GetComponent<Button>();
+                TMP_Text confirmLabel =
+                    confirmObject.transform.Find("Label")?.GetComponent<TMP_Text>();
+                if (confirmRect == null || confirm == null || confirmLabel == null)
+                {
+                    throw new InvalidOperationException(
+                        "Default button prefab is missing RectTransform, Button, or Label.");
+                }
+
+                SetCenteredRect(
+                    confirmRect,
+                    new Vector2(0f, -132f),
+                    new Vector2(234f, 66f));
+                confirmLabel.text = "확정";
+
+                RevolverNumberSelectorView selector =
+                    root.AddComponent<RevolverNumberSelectorView>();
+                SerializedObject selectorData = new SerializedObject(selector);
+                selectorData.FindProperty("promptText").objectReferenceValue = prompt;
+                selectorData.FindProperty("numberText").objectReferenceValue = number;
+                selectorData.FindProperty("previousButton").objectReferenceValue = previous;
+                selectorData.FindProperty("nextButton").objectReferenceValue = next;
+                selectorData.FindProperty("confirmButton").objectReferenceValue = confirm;
+                selectorData.ApplyModifiedPropertiesWithoutUndo();
+
+                root.SetActive(false);
+                PrefabUtility.SaveAsPrefabAsset(root, RevolverNumberSelectorPrefabPath);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
+        private static Button CreateSelectorArrow(
+            string name,
+            Transform parent,
+            Sprite sprite,
+            Vector2 position)
+        {
+            RectTransform root = CreateRect(name, parent);
+            SetCenteredRect(root, position, new Vector2(104f, 104f));
+            Image image = root.gameObject.AddComponent<Image>();
+            image.sprite = sprite;
+            image.type = Image.Type.Simple;
+            image.preserveAspect = true;
+            image.color = new Color(0.03f, 0.025f, 0.025f, 0.98f);
+
+            Button button = root.gameObject.AddComponent<Button>();
+            button.targetGraphic = image;
+            button.transition = Selectable.Transition.None;
+            button.navigation = new Navigation { mode = Navigation.Mode.None };
+            root.gameObject.AddComponent<UIButtonScaleFeedback>();
+            return button;
+        }
+
+        private static void InstallRevolverNumberSelector(
+            GameObject hudRoot,
+            GameHudView hud)
+        {
+            Transform controls = hudRoot.transform.Find("CombatControls");
+            GameObject selectorPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(
+                    RevolverNumberSelectorPrefabPath);
+            if (controls == null || selectorPrefab == null)
+            {
+                throw new InvalidOperationException(
+                    "HUD CombatControls or revolver selector prefab was not found.");
+            }
+
+            Transform existing = controls.Find("RevolverNumberSelector");
+            if (existing != null)
+            {
+                UnityEngine.Object.DestroyImmediate(existing.gameObject);
+            }
+
+            GameObject instance =
+                (GameObject)PrefabUtility.InstantiatePrefab(selectorPrefab, controls);
+            instance.name = "RevolverNumberSelector";
+            Stretch(instance.GetComponent<RectTransform>());
+            instance.SetActive(false);
+
+            RevolverNumberSelectorView selector =
+                instance.GetComponent<RevolverNumberSelectorView>();
+            if (selector == null)
+            {
+                throw new InvalidOperationException(
+                    "Revolver selector prefab is missing its view component.");
+            }
+
+            SerializedObject hudData = new SerializedObject(hud);
+            hudData.FindProperty("revolverNumberSelector").objectReferenceValue = selector;
+            hudData.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void CreateShopLeaveControl(
@@ -547,7 +750,12 @@ namespace DiaBlackJack.GameScene.Editor
 
         private static Sprite FindSprite(string name)
         {
-            foreach (UnityEngine.Object asset in AssetDatabase.LoadAllAssetsAtPath(BrushAssetPath))
+            return FindSprite(BrushAssetPath, name);
+        }
+
+        private static Sprite FindSprite(string assetPath, string name)
+        {
+            foreach (UnityEngine.Object asset in AssetDatabase.LoadAllAssetsAtPath(assetPath))
             {
                 Sprite sprite = asset as Sprite;
                 if (sprite != null && string.Equals(sprite.name, name, StringComparison.Ordinal))
@@ -557,6 +765,18 @@ namespace DiaBlackJack.GameScene.Editor
             }
 
             throw new InvalidOperationException($"Brush sprite '{name}' was not found.");
+        }
+
+        private static void SetCenteredRect(
+            RectTransform rectTransform,
+            Vector2 anchoredPosition,
+            Vector2 sizeDelta)
+        {
+            rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rectTransform.anchoredPosition = anchoredPosition;
+            rectTransform.sizeDelta = sizeDelta;
         }
 
         private static void AssignHudReferences(

@@ -222,7 +222,7 @@
 - `Table Controller.prefab`의 `CombatCommands`는 테이블 중앙에 아이보리 실선 영역 `HIT`·`STAND`·`CHANGE -N` 3개를 배치한다. 계약서 오브젝트와 입력은 별도 팀 변경이 소유한다.
 - 월드 명령은 `Actions` 모드에서만 표시한다. 사용 가능 상태는 아이보리, 호버는 혈색, 사용 불가는 회색 35%로 표시하고 콜라이더를 비활성화한다. 상점·선택 모달·카드 연출 중에는 그룹 전체를 숨긴다.
 - 툴팁은 카드 호버 배지와 분리한다. 월드 오브젝트 중심을 화면 좌표로 투영해 행동 의미와 `ChangeActionText`의 현재 영혼 비용/불가 사유를 표시한다.
-- 선택 모달은 프리팹에 미리 배치한 스크롤 가능 슬롯 100개를 재사용한다. 계약 후보는 기존 테이블 월드 카드와 HUD 상세를 유지하며, 런타임 전용 UI 오브젝트를 생성하지 않는다.
+- 선택 모달은 프리팹에 미리 배치한 스크롤 가능 슬롯 100개를 재사용한다. 리볼버·거짓말 탐지기 숫자 선택은 `brush_select` 원·좌우 삼각형과 중첩 `DefaultButton`으로 구성한 독립 `RevolverNumberSelector.prefab`을 HUD에 중첩한다. 세 버튼은 호버 1.08배·누름 0.92배·0.12초 복귀 피드백을 사용한다. 계약 후보는 기존 테이블 월드 카드와 HUD 상세를 유지하며, 런타임 전용 UI 오브젝트를 생성하지 않는다.
 - `GameManager`는 New Input System 포인터 레이캐스트로 카드·덱과 함께 테이블 명령을 감지하고, 유효 클릭을 기존 `HandleCombatCommand` → `ProcessInput` → `Try*` 경로로 전달한다. 전투용 `OnGUI`·즉시형 그리기는 제거했고, 상점·라이터 선택 패널만 `OnGUI`로 유지한다.
 - 카드 호버 툴팁의 헤더·본문·스타일은 독립 `CardHoverTooltip.prefab`이 소유하고 `HUD.prefab`은 이를 중첩 프리팹으로 1개만 재사용한다. 일반·악마 카드 프리팹의 기존 상단/하단 Anchor를 화면 좌표로 투영하며 추가 Screen Offset 없이 해당 Anchor에 툴팁 피벗을 정확히 맞춘다. 카드마다 UI 인스턴스를 만들지 않으며, Card/DemonCard 프리팹 루트를 선택하면 Scene View에서 TOP은 청록색, BOTTOM은 주황색 Gizmo로 생성 위치를 미리 본다.
 - 일반 `CardView` 호버는 기존 픽셀 아웃라인 셰이더·키워드·폭·알파 임계값을 그대로 사용하고 `_PixelOutlineColor`만 바꾼다. 기본/패시브는 흰색, 수동 사용 불가는 빨강, 수동 사용 가능은 초록, 자동 사용은 기존 HDR 노랑, 이미 사용은 회색이며 다섯 HDR 색상은 `Card.prefab` Inspector에서 조정한다. 이미 사용 상태가 최우선이고, 호버가 없는 카드 효과 대상 강조는 기존 재질 노랑을 유지한다. Card 프리팹 루트 Inspector의 `Hover Outline Preview`에서 다섯 상태를 선택해 Scene View 결과를 확인하며, 미리보기는 임시 `MaterialPropertyBlock`만 사용하고 해제·선택 변경 시 원래 렌더 상태를 복구한다.
@@ -250,6 +250,7 @@
 
 | 날짜 | 작성자 | 변경 내용 |
 | --- | --- | --- |
+| 2026-08-07 | HONG | CU-M13 후속으로 리볼버·거짓말 탐지기 숫자 선택을 독립 `RevolverNumberSelector.prefab` 기반 uGUI로 교체했다. `brush_select` 원·삼각형과 중첩 기본 확정 버튼, 1.08/0.92/0.12초 스케일 피드백을 연결했고 신규 2/2·영향 클래스 123/123·GameScene validation 0 issues를 확인했다. |
 | 2026-08-06 | HONG | GSV16에서 플레이어·적의 일반 수동·자동 발동·악마 계약 카드 원본을 선택 대기와 현재 연출 박자 동안 기존 호버 크기로 유지하도록 확정했다. 일반 원본만 노란 HDR 윤곽을 합성하고, 툴팁·`cardHover` SFX·직접 선택 대상의 자동 확대는 제외한다. 중첩 자동 카드 우선순위와 최종 갱신·라운드 종료·재시작 해제 기준도 반영했다. |
 | 2026-08-05 | HONG | GSV14에서 덱·도감 카드 호버를 전투 카드의 실제 프리팹 값과 맞췄다. 전투와 같은 1px 8방향 실루엣 판정, 상태별 HDR 색, 1.02배·0.08초 확대 곡선과 `cardHover` SFX를 사용하고, Screen Space Overlay에서 외곽선이 잘리지 않도록 메시 여백 및 전투 Bloom 강도 0.35에 대응하는 광륜을 추가했다. 집중 EditMode 5/5(job `81d363de94d94d5aace76ff363ad94d4`), 전체 EditMode 1066/1073(job `364ff460c0524426a955ed8fe15ef65d`), GameScene validation 0 issues와 컴파일 오류 0을 확인했다. 전체 실패 7건은 도감 레이아웃·전투 카드 프리팹·HUD 등 병행 변경 영역이다. 1280×720 Game View에서 덱 18장과 호버 외곽선·1.02 최종 스케일을 직접 확인했으며, Play 중 기존 URP Material Drawer 오류 1건이 재현됐다. |
 | 2026-08-05 | HONG | GSV13에서 덱·라이터·도감 공용 카드에 전투 상태색 픽셀 외곽선을 적용하고 확인 버튼의 미선택/선택 alpha와 활성 호버·누름 Tint를 연결했다. 동시 작업의 전용 도감 악마 썸네일도 유지해 흰색 외곽선을 병합했다. 신규 5/5(job `560a9e487c97402a8cd67b0cf9de87a3`), 전체 EditMode 1066/1072(job `05c1856140ec4523b0e842ad646b767c`), GameScene validation 0 issues와 C# 컴파일 오류 0을 확인했다. 최종 Console의 기존 셰이더·URP Material Drawer 오류 2건과 전체 실패 6건은 병행 영역이며, 1280×720·1920×1080 수동 확인은 공유 Editor 충돌을 피하려고 완료로 기록하지 않았다. |

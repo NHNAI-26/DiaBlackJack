@@ -1,31 +1,81 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace DiaBlackJack.GameScene
 {
-    /// <summary>Focused 1-10 dial used for revolver predictions and lie-detector declarations.</summary>
+    /// <summary>Authored 1-10 dial used for revolver predictions and lie-detector declarations.</summary>
     [DisallowMultipleComponent]
     public sealed class RevolverNumberSelectorView : MonoBehaviour
     {
+        [SerializeField] private TMP_Text promptText;
+        [SerializeField] private TMP_Text numberText;
+        [SerializeField] private Button previousButton;
+        [SerializeField] private Button nextButton;
+        [SerializeField] private Button confirmButton;
+
         private IReadOnlyList<GameSceneCombatHudActionViewModel> _options =
             Array.Empty<GameSceneCombatHudActionViewModel>();
-        private string _prompt = string.Empty;
         private int _selectedIndex;
-        private GUIStyle _panelStyle;
-        private GUIStyle _arrowStyle;
-        private GUIStyle _numberStyle;
-        private GUIStyle _promptStyle;
-        private GUIStyle _confirmStyle;
 
         public event Action<GameSceneCombatHudCommand> CommandRequested;
 
         public bool IsOpen { get; private set; }
 
+        internal bool HasRequiredReferences =>
+            promptText != null &&
+            numberText != null &&
+            previousButton != null &&
+            nextButton != null &&
+            confirmButton != null;
+
         internal int SelectedNumber => _options.Count == 0
             ? 0
             : _options[_selectedIndex].Command.OptionId;
+
+        internal Button PreviousButton => previousButton;
+        internal Button NextButton => nextButton;
+        internal Button ConfirmButton => confirmButton;
+
+        private void Awake()
+        {
+            if (previousButton != null)
+            {
+                previousButton.onClick.AddListener(SelectPrevious);
+            }
+
+            if (nextButton != null)
+            {
+                nextButton.onClick.AddListener(SelectNext);
+            }
+
+            if (confirmButton != null)
+            {
+                confirmButton.onClick.AddListener(Confirm);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (previousButton != null)
+            {
+                previousButton.onClick.RemoveListener(SelectPrevious);
+            }
+
+            if (nextButton != null)
+            {
+                nextButton.onClick.RemoveListener(SelectNext);
+            }
+
+            if (confirmButton != null)
+            {
+                confirmButton.onClick.RemoveListener(Confirm);
+            }
+        }
 
         public void Render(
             string prompt,
@@ -38,21 +88,43 @@ namespace DiaBlackJack.GameScene
             }
 
             bool wasOpen = IsOpen;
-            _prompt = prompt ?? string.Empty;
             _options = options;
             IsOpen = true;
             if (!wasOpen || _selectedIndex >= _options.Count)
             {
                 _selectedIndex = 0;
             }
+
+            gameObject.SetActive(true);
+            if (promptText != null)
+            {
+                CurrencyIconText.Set(promptText, prompt ?? string.Empty);
+            }
+
+            RefreshSelection();
         }
 
         public void Hide()
         {
             IsOpen = false;
-            _prompt = string.Empty;
             _options = Array.Empty<GameSceneCombatHudActionViewModel>();
             _selectedIndex = 0;
+            if (promptText != null)
+            {
+                promptText.text = string.Empty;
+            }
+
+            if (numberText != null)
+            {
+                numberText.text = string.Empty;
+            }
+
+            if (confirmButton != null)
+            {
+                confirmButton.interactable = false;
+            }
+
+            gameObject.SetActive(false);
         }
 
         private void Update()
@@ -103,72 +175,16 @@ namespace DiaBlackJack.GameScene
             }
         }
 
-        private void OnGUI()
+        private void SelectPrevious()
         {
-            if (!IsOpen || _options.Count == 0)
-            {
-                return;
-            }
+            Move(-1);
+            ClearSelectedButton();
+        }
 
-            EnsureStyles();
-            float scale = Mathf.Clamp(Screen.height / 720f, 0.8f, 1.5f);
-            float width = 420f * scale;
-            float height = 260f * scale;
-            var panel = new Rect(
-                (Screen.width - width) * 0.5f,
-                Screen.height * 0.5f - height * 0.48f,
-                width,
-                height);
-            GUI.Box(panel, GUIContent.none, _panelStyle);
-
-            GUI.Label(
-                new Rect(panel.x + 20f, panel.y + 18f, panel.width - 40f, 34f * scale),
-                _prompt,
-                _promptStyle);
-
-            float arrowSize = 72f * scale;
-            float numberWidth = 130f * scale;
-            float selectorY = panel.y + 67f * scale;
-            if (GUI.Button(
-                    new Rect(panel.x + 42f * scale, selectorY, arrowSize, arrowSize),
-                    "◀",
-                    _arrowStyle))
-            {
-                Move(-1);
-            }
-
-            GUI.Label(
-                new Rect(
-                    panel.center.x - numberWidth * 0.5f,
-                    selectorY - 9f * scale,
-                    numberWidth,
-                    92f * scale),
-                SelectedNumber.ToString(),
-                _numberStyle);
-
-            if (GUI.Button(
-                    new Rect(
-                        panel.xMax - (42f * scale) - arrowSize,
-                        selectorY,
-                        arrowSize,
-                        arrowSize),
-                    "▶",
-                    _arrowStyle))
-            {
-                Move(1);
-            }
-
-            if (GUI.Button(
-                    new Rect(
-                        panel.center.x - 82f * scale,
-                        panel.yMax - 62f * scale,
-                        164f * scale,
-                        38f * scale),
-                    "확정",
-                    _confirmStyle))
-            {
-                Confirm();
-            }
+        private void SelectNext()
+        {
+            Move(1);
+            ClearSelectedButton();
         }
 
         private void Move(int direction)
@@ -180,10 +196,12 @@ namespace DiaBlackJack.GameScene
 
             _selectedIndex = (_selectedIndex + direction + _options.Count) %
                 _options.Count;
+            RefreshSelection();
         }
 
         private void Confirm()
         {
+            ClearSelectedButton();
             if (_options.Count == 0 || !_options[_selectedIndex].IsInteractable)
             {
                 return;
@@ -192,51 +210,34 @@ namespace DiaBlackJack.GameScene
             CommandRequested?.Invoke(_options[_selectedIndex].Command);
         }
 
-        private void EnsureStyles()
+        private void RefreshSelection()
         {
-            if (_panelStyle != null)
+            if (numberText != null)
             {
-                return;
+                numberText.text = SelectedNumber.ToString();
             }
 
-            Texture2D panelTexture = new Texture2D(1, 1);
-            panelTexture.SetPixel(0, 0, new Color(0.025f, 0.018f, 0.018f, 0.96f));
-            panelTexture.Apply();
-            panelTexture.hideFlags = HideFlags.HideAndDontSave;
-            _panelStyle = new GUIStyle(GUI.skin.box)
+            bool canNavigate = _options.Count > 1;
+            if (previousButton != null)
             {
-                normal = { background = panelTexture },
-                border = new RectOffset(2, 2, 2, 2)
-            };
-            _promptStyle = new GUIStyle(GUI.skin.label)
+                previousButton.interactable = canNavigate;
+            }
+
+            if (nextButton != null)
             {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 18,
-                normal = { textColor = new Color(0.9f, 0.84f, 0.72f) }
-            };
-            _numberStyle = new GUIStyle(GUI.skin.label)
+                nextButton.interactable = canNavigate;
+            }
+
+            if (confirmButton != null)
             {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 72,
-                fontStyle = FontStyle.Bold,
-                normal = { textColor = Color.white }
-            };
-            _arrowStyle = new GUIStyle(GUI.skin.button)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 34,
-                fontStyle = FontStyle.Bold,
-                normal = { textColor = new Color(0.85f, 0.16f, 0.12f) },
-                hover = { textColor = Color.white }
-            };
-            _confirmStyle = new GUIStyle(GUI.skin.button)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 18,
-                fontStyle = FontStyle.Bold,
-                normal = { textColor = Color.white },
-                hover = { textColor = new Color(1f, 0.72f, 0.55f) }
-            };
+                confirmButton.interactable =
+                    _options.Count > 0 && _options[_selectedIndex].IsInteractable;
+            }
+        }
+
+        private static void ClearSelectedButton()
+        {
+            EventSystem.current?.SetSelectedGameObject(null);
         }
     }
 }

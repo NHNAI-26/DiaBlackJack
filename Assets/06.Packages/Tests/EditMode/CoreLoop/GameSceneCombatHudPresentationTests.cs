@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Border.UI;
 using DiaBlackJack.CoreLoop;
 using DiaBlackJack.CoreLoop.UI;
 using DiaBlackJack.GameScene;
@@ -15,6 +16,10 @@ namespace DiaBlackJack.CoreLoop.Tests
     public sealed class GameSceneCombatHudPresentationTests
     {
         private const string HudPrefabPath = "Assets/03. Prefabs/UI/HUD.prefab";
+        private const string RevolverNumberSelectorPrefabPath =
+            "Assets/03. Prefabs/UI/GameScene/RevolverNumberSelector.prefab";
+        private const string DefaultButtonPrefabPath =
+            "Assets/03. Prefabs/UI/DefaultButton.prefab";
         private const string CardHoverTooltipPrefabPath =
             "Assets/03. Prefabs/UI/CardHoverTooltip.prefab";
         private const string ManagerPrefabPath =
@@ -1664,6 +1669,145 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(selection.HasCandidatePrefab, Is.True);
             Assert.That(selection.Capacity, Is.EqualTo(2));
 
+        }
+
+        [Test]
+        [Category("CUM13")]
+        public void CUM13_U03_HudAuthorsRevolverSelectorPrefabAndBrushButtons()
+        {
+            GameObject selectorPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(
+                    RevolverNumberSelectorPrefabPath);
+            GameObject hudPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
+            Assert.That(selectorPrefab, Is.Not.Null);
+            Assert.That(hudPrefab, Is.Not.Null);
+
+            GameHudView hud = hudPrefab.GetComponent<GameHudView>();
+            RevolverNumberSelectorView selector = hudPrefab
+                .GetComponentsInChildren<RevolverNumberSelectorView>(true)
+                .Single();
+            Assert.That(hud, Is.Not.Null);
+            Assert.That(hud.HasRevolverNumberSelectorReference, Is.True);
+            Assert.That(selector.HasRequiredReferences, Is.True);
+            Assert.That(
+                PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(
+                    selector.gameObject),
+                Is.EqualTo(RevolverNumberSelectorPrefabPath));
+
+            RectTransform circle = selector.transform
+                .Find("NumberCircle")
+                .GetComponent<RectTransform>();
+            RectTransform previous = selector.transform
+                .Find("PreviousButton")
+                .GetComponent<RectTransform>();
+            RectTransform next = selector.transform
+                .Find("NextButton")
+                .GetComponent<RectTransform>();
+            RectTransform confirm = selector.transform
+                .Find("ConfirmButton")
+                .GetComponent<RectTransform>();
+            Assert.That(circle.sizeDelta, Is.EqualTo(new Vector2(180f, 180f)));
+            Assert.That(previous.sizeDelta, Is.EqualTo(new Vector2(104f, 104f)));
+            Assert.That(next.sizeDelta, Is.EqualTo(new Vector2(104f, 104f)));
+            Assert.That(confirm.sizeDelta, Is.EqualTo(new Vector2(234f, 66f)));
+
+            Assert.That(circle.GetComponent<Image>().sprite.name,
+                Is.EqualTo("brush_select_circle"));
+            Assert.That(previous.GetComponent<Image>().sprite.name,
+                Is.EqualTo("brush_select_left"));
+            Assert.That(next.GetComponent<Image>().sprite.name,
+                Is.EqualTo("brush_select_right"));
+            Assert.That(
+                PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(
+                    confirm.gameObject),
+                Is.EqualTo(DefaultButtonPrefabPath));
+
+            UIButtonScaleFeedback[] feedbacks = selector
+                .GetComponentsInChildren<UIButtonScaleFeedback>(true);
+            Assert.That(feedbacks, Has.Length.EqualTo(3));
+            foreach (UIButtonScaleFeedback feedback in feedbacks)
+            {
+                SerializedObject data = new SerializedObject(feedback);
+                Assert.That(data.FindProperty("hoverScale").floatValue,
+                    Is.EqualTo(1.08f));
+                Assert.That(data.FindProperty("pressedScale").floatValue,
+                    Is.EqualTo(0.92f));
+                Assert.That(data.FindProperty("animationDuration").floatValue,
+                    Is.EqualTo(0.12f));
+            }
+        }
+
+        [Test]
+        [Category("CUM13")]
+        public void CUM13_U04_RevolverSelectorCyclesAndConfirmsAuthoredButtons()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                RevolverNumberSelectorPrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                RevolverNumberSelectorView selector =
+                    instance.GetComponent<RevolverNumberSelectorView>();
+                typeof(RevolverNumberSelectorView)
+                    .GetMethod("Awake", BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(selector, null);
+                var actions = Enumerable.Range(1, 10)
+                    .Select(number => new GameSceneCombatHudActionViewModel(
+                        new GameSceneCombatHudCommand(
+                            GameSceneCombatHudCommandKind.ResolveCardEffectChoice,
+                            optionId: number),
+                        number.ToString(),
+                        true))
+                    .ToArray();
+                GameSceneCombatHudCommand confirmed = default;
+                bool commandReceived = false;
+                selector.CommandRequested += command =>
+                {
+                    commandReceived = true;
+                    confirmed = command;
+                };
+
+                selector.Render("숫자를 선택하십시오.", actions);
+
+                Assert.That(selector.IsOpen, Is.True);
+                Assert.That(instance.activeSelf, Is.True);
+                Assert.That(selector.SelectedNumber, Is.EqualTo(1));
+                Assert.That(ReadText(instance.transform.Find("Prompt")),
+                    Is.EqualTo("숫자를 선택하십시오."));
+                Assert.That(ReadText(instance.transform.Find("NumberCircle/Number")),
+                    Is.EqualTo("1"));
+
+                selector.PreviousButton.onClick.Invoke();
+                Assert.That(selector.SelectedNumber, Is.EqualTo(10));
+                selector.NextButton.onClick.Invoke();
+                selector.NextButton.onClick.Invoke();
+                Assert.That(selector.SelectedNumber, Is.EqualTo(2));
+
+                selector.ConfirmButton.onClick.Invoke();
+                Assert.That(commandReceived, Is.True);
+                Assert.That(confirmed.Kind, Is.EqualTo(
+                    GameSceneCombatHudCommandKind.ResolveCardEffectChoice));
+                Assert.That(confirmed.OptionId, Is.EqualTo(2));
+
+                selector.Hide();
+                Assert.That(selector.IsOpen, Is.False);
+                Assert.That(instance.activeSelf, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        private static string ReadText(Transform target)
+        {
+            Component textComponent = target
+                .GetComponents<Component>()
+                .Single(component => component.GetType().Name == "TextMeshProUGUI");
+            PropertyInfo textProperty = textComponent.GetType().GetProperty("text");
+            Assert.That(textProperty, Is.Not.Null);
+            return (string)textProperty.GetValue(textComponent);
         }
 
         [Test]
