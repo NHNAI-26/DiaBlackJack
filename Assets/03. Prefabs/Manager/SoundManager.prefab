@@ -381,6 +381,11 @@ MonoBehaviour:
     volume: 0.5
     pitch: 1
     loop: 0
+  - id: buttonPress
+    clip: {fileID: 8300000, guid: 37244a1dbdeb28c40955f4d34457ae3d, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1

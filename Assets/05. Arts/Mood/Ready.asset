@@ -27,5 +27,5 @@ MonoBehaviour:
   lightningReleaseSpeed: 4
   windowGlassGlowColor: {r: 0, g: 0, b: 0, a: 1}
   volumetricLightColor: {r: 0, g: 0, b: 0, a: 1}
-  enemyLightColor: {r: 0.41509432, g: 0.20558916, b: 0.20558916, a: 1}
+  enemyLightColor: {r: 0.6603774, g: 0.17132434, b: 0.17132434, a: 1}
   enteranceLightColor: {r: 0.5943396, g: 0.5943396, b: 0.5943396, a: 1}

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Border.Audio;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -12,6 +13,8 @@ namespace DiaBlackJack.GameScene
     [DisallowMultipleComponent]
     public sealed class RevolverNumberSelectorView : MonoBehaviour
     {
+        private const string ButtonPressSfxId = "buttonPress";
+
         [SerializeField] private TMP_Text promptText;
         [SerializeField] private TMP_Text numberText;
         [SerializeField] private Button previousButton;
@@ -194,8 +197,14 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            int previousIndex = _selectedIndex;
             _selectedIndex = (_selectedIndex + direction + _options.Count) %
                 _options.Count;
+            if (_selectedIndex != previousIndex)
+            {
+                SoundManager.Current?.PlaySfx(ButtonPressSfxId);
+            }
+
             RefreshSelection();
         }
 
@@ -207,6 +216,7 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            SoundManager.Current?.PlaySfx(ButtonPressSfxId);
             CommandRequested?.Invoke(_options[_selectedIndex].Command);
         }
 
