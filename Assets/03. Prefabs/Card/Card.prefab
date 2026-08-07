@@ -605,9 +605,9 @@ MonoBehaviour:
   hoverOutlineWidth: 1.5
   hoverOutlineAlphaThreshold: 0.5
   basicHoverOutlineColor: {r: 5.3403134, g: 5.3403134, b: 5.3403134, a: 1}
-  unavailableHoverOutlineColor: {r: 2.1145804, g: 0.6420973, b: 0.6084406, a: 1}
-  availableHoverOutlineColor: {r: 1.9118087, g: 3.4278064, b: 0.48455897, a: 1}
-  automaticHoverOutlineColor: {r: 3.9999995, g: 3.3765495, b: 0, a: 1}
+  unavailableHoverOutlineColor: {r: 4.687463, g: 0.103399895, b: 0, a: 1}
+  availableHoverOutlineColor: {r: 0.84004724, g: 3.7560942, b: 0, a: 1}
+  automaticHoverOutlineColor: {r: 4.483848, g: 3.0758486, b: 0, a: 1}
   usedHoverOutlineColor: {r: 0, g: 0, b: 0, a: 1}
   hiddenCardBlendAmount: 0.5
   revealFlipDuration: 0.7
