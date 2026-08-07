@@ -402,3 +402,9 @@ RF-05와 GameScene 후속 GF-00~GF-06은 완료됐다. 사건 시스템은 프�
 - 2026-08-07 후속 변경에서 상점 진입 중 플레이어 덱 유지 요구를 반영했다. GSV-12 집중 EditMode 4/4 통과(job `87ffd3b5e38d4551beebc8af465af921`), 상점·정식 화면 전환 영향 클래스 24/25 통과(job `9b4f5d9f8c0a46549fec4539d46bd2f6`), Unity 컴파일과 Console Error 0을 확인했다. 잔여 1건은 이번 변경과 무관한 `GSH02_U07_StandaloneShopInjectsPriceRecoveryAndSoulFullState`의 기존 상점 설명 기대값 불일치다.
 - 2026-08-07 두 번째 후속 변경에서 상점의 플레이어 덱 더미 raycast 차단을 제거하고 정식 상점 보유 덱 미리보기를 복원했다. GSV-12 집중 EditMode 5/5 통과(job `cbbbc8ea242f4c7698cb24b61fae2481`), 덱 미리보기 전체 클래스 20/21 통과(job `c07da28142264923924822c65a95c08c`), 스크립트 컴파일 오류 0을 확인했다. 잔여 테스트 1건은 이번 변경과 무관한 `GSV13_U01_DeckCardHoverOutlineMatchesCombatStateColors`의 기존 외곽선 색상 에셋 기대값 불일치다. 테스트 후 Console Error 필터 3건은 기존 머티리얼 drawer 2건과 Test Runner 결과 저장 예외 로그 1건이다.
 
+## 2026-08-08 GSV-06 상점 카드 작성 배율 유지
+
+- `Table Controller`의 `__TableLayoutPreview_*`에 작성된 크기를 상점 카드의 hover 기준 크기로 동기화했다. 구매 갱신, hover 해제와 `SOLD OUT` 전환 뒤에도 프리팹 기본 크기가 아니라 작성 배율로 복귀한다.
+- 일반카드는 기존 `CardView.SetBaseScale`을 재사용하고 악마카드에 같은 내부 경계를 추가했다. `Table Controller` 프리팹과 작성된 위치·회전·크기는 변경하지 않았다.
+- 변경 회귀 2/2 통과(job `4fd9ab63a5634500b5eb07fe053563cf`). 영향 클래스는 25개 중 21개 통과(job `97be302af75649c79331dad467456d8b`)했고, 잔여 4건은 기존 상점 설명 3건과 가격 앵커 1건의 기대값 불일치다. 스크립트 컴파일은 성공했으며 공유 Editor의 Play Mode 전환이 완료되지 않아 실화면 자동 검증은 수행하지 않았다.
+

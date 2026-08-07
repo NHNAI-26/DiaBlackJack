@@ -754,12 +754,37 @@ namespace DiaBlackJack.CoreLoop.Tests
                 normalCards[2].transform.localScale,
                 Is.EqualTo(normalLayouts[2].localScale));
             Assert.That(
+                GetPrivateField<Vector3>(normalCards[2], "_baseScale"),
+                Is.EqualTo(normalLayouts[2].localScale));
+            Assert.That(
                 Quaternion.Angle(
                     demonCards[0].transform.localRotation,
                     demonLayouts[0].localRotation),
                 Is.LessThan(0.001f));
             Assert.That(
                 demonCards[1].transform.localScale,
+                Is.EqualTo(demonLayouts[1].localScale));
+            Assert.That(
+                GetPrivateField<Vector3>(demonCards[1], "_baseScale"),
+                Is.EqualTo(demonLayouts[1].localScale));
+            Assert.That(
+                GetPrivateField<Vector3>(demonCards[1], "_targetScale"),
+                Is.EqualTo(demonLayouts[1].localScale));
+
+            _shop.GrantGoldForTesting(1000);
+            demonCards[0].SetHovered(true);
+            demonCards[1].SetHovered(true);
+            Assert.That(
+                _shop.TryPurchaseDemonCard(
+                    demonCards[0].CardId,
+                    out string purchasedDefinitionKey),
+                Is.True);
+            Assert.That(purchasedDefinitionKey, Is.Not.Empty);
+            Assert.That(
+                GetPrivateField<Vector3>(demonCards[0], "_targetScale"),
+                Is.EqualTo(demonLayouts[0].localScale));
+            Assert.That(
+                GetPrivateField<Vector3>(demonCards[1], "_targetScale"),
                 Is.EqualTo(demonLayouts[1].localScale));
             Assert.That(normalLayouts.All(layout => !layout.gameObject.activeSelf));
             Assert.That(demonLayouts.All(layout => !layout.gameObject.activeSelf));

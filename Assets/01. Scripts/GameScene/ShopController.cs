@@ -696,7 +696,7 @@ namespace DiaBlackJack.GameScene
                 }
 
                 ApplyOfferLayout(
-                    view.transform,
+                    view,
                     i,
                     layouts,
                     new Vector3(
@@ -1046,7 +1046,7 @@ namespace DiaBlackJack.GameScene
                 }
 
                 ApplyOfferLayout(
-                    offer.View.transform,
+                    offer.View,
                     i,
                     _demonOfferLayouts,
                     new Vector3(
@@ -1074,7 +1074,7 @@ namespace DiaBlackJack.GameScene
                 }
 
                 ApplyOfferLayout(
-                    offer.View.transform,
+                    offer.View,
                     i,
                     _normalOfferLayouts,
                     new Vector3(
@@ -1086,24 +1086,35 @@ namespace DiaBlackJack.GameScene
         }
 
         private static void ApplyOfferLayout(
-            Transform offer,
+            Component offer,
             int index,
             IReadOnlyList<ShopOfferLayout> layouts,
             Vector3 fallbackLocalPosition)
         {
+            Transform offerTransform = offer.transform;
             if (layouts != null &&
                 index >= 0 &&
                 index < layouts.Count)
             {
                 ShopOfferLayout layout = layouts[index];
-                offer.localPosition = layout.LocalPosition;
-                offer.localRotation = layout.LocalRotation;
-                offer.localScale = layout.LocalScale;
-                return;
+                offerTransform.localPosition = layout.LocalPosition;
+                offerTransform.localRotation = layout.LocalRotation;
+                offerTransform.localScale = layout.LocalScale;
+            }
+            else
+            {
+                offerTransform.localPosition = fallbackLocalPosition;
+                offerTransform.localRotation = Quaternion.identity;
             }
 
-            offer.localPosition = fallbackLocalPosition;
-            offer.localRotation = Quaternion.identity;
+            if (offer is CardView cardView)
+            {
+                cardView.SetBaseScale(offerTransform.localScale);
+            }
+            else if (offer is DemonCardView demonCardView)
+            {
+                demonCardView.SetBaseScale(offerTransform.localScale);
+            }
         }
 
         private static ShopCardOfferStatusView PrepareOfferStatus(

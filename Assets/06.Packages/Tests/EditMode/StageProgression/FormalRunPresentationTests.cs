@@ -234,6 +234,7 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
+        [Category("GSV06")]
         public void GSV06_U03_FormalRefreshKeepsFiveSlotsAndSoldOptionOrder()
         {
             FormalRunSession run = OpenFirstShop();
@@ -246,13 +247,18 @@ namespace DiaBlackJack.StageProgression.Tests
             GameObject root = new GameObject("GSV06 Formal Shop Test");
             try
             {
-                ShopController shop = CreateFormalShopController(root);
+                ShopController shop = CreateFormalShopController(
+                    root,
+                    useAuthoredLayouts: true);
                 shop.OpenFormal(before);
                 Vector3[] firstPositions = GetActiveOfferPositions(root);
                 CardView[] firstNormalCards = GetActiveComponents<CardView>(root);
+                DemonCardView[] firstDemonCards =
+                    GetActiveComponents<DemonCardView>(root);
                 Assert.That(
                     AverageLocalX(firstNormalCards),
                     Is.EqualTo(0f).Within(0.0001f));
+                AssertOfferBaseScales(firstNormalCards, firstDemonCards, 0.7f);
 
                 Assert.That(run.TryBuyShopCard(
                     before.ShopOfferId.Value,
@@ -280,6 +286,7 @@ namespace DiaBlackJack.StageProgression.Tests
                 CardView[] normalCards = GetActiveComponents<CardView>(root);
                 DemonCardView[] demonCards = GetActiveComponents<DemonCardView>(root);
                 Assert.That(normalCards.Length + demonCards.Length, Is.EqualTo(5));
+                AssertOfferBaseScales(normalCards, demonCards, 0.7f);
                 Assert.That(FindOfferCanUse(
                     normalCards,
                     demonCards,
@@ -512,11 +519,19 @@ namespace DiaBlackJack.StageProgression.Tests
             }
         }
 
-        private static ShopController CreateFormalShopController(GameObject root)
+        private static ShopController CreateFormalShopController(
+            GameObject root,
+            bool useAuthoredLayouts = false)
         {
             ShopController shop = root.AddComponent<ShopController>();
             Transform normalHolder = CreateChild(root, "Normal Holder").transform;
             Transform demonHolder = CreateChild(root, "Demon Holder").transform;
+            if (useAuthoredLayouts)
+            {
+                CreateAuthoredLayouts(normalHolder, "NormalCard", 3, 0.64f);
+                CreateAuthoredLayouts(demonHolder, "DemonCard", 2, 0.32f);
+            }
+
             GameObject normalPrefabObject = CreateChild(root, "Normal Prefab");
             CardView normalPrefab = normalPrefabObject.AddComponent<CardView>();
             GameObject demonPrefabObject = CreateChild(root, "Demon Prefab");
@@ -530,6 +545,46 @@ namespace DiaBlackJack.StageProgression.Tests
             SetField(shop, "normalCardPrefab", normalPrefab);
             SetField(shop, "demonCardPrefab", demonPrefab);
             return shop;
+        }
+
+        private static void CreateAuthoredLayouts(
+            Transform holder,
+            string label,
+            int count,
+            float spacing)
+        {
+            float offset = -(count - 1) * 0.5f * spacing;
+            for (int i = 0; i < count; i++)
+            {
+                GameObject preview = new GameObject(
+                    $"__TableLayoutPreview_{label}_{i}");
+                preview.transform.SetParent(holder, false);
+                preview.transform.localPosition = new Vector3(
+                    offset + i * spacing,
+                    0f,
+                    i * 0.01f);
+                preview.transform.localScale = Vector3.one * 0.7f;
+            }
+        }
+
+        private static void AssertOfferBaseScales(
+            IReadOnlyList<CardView> normalCards,
+            IReadOnlyList<DemonCardView> demonCards,
+            float expectedScale)
+        {
+            Vector3 expected = Vector3.one * expectedScale;
+            foreach (CardView card in normalCards)
+            {
+                Assert.That(card.transform.localScale, Is.EqualTo(expected));
+                Assert.That(GetField<Vector3>(card, "_baseScale"), Is.EqualTo(expected));
+            }
+
+            foreach (DemonCardView card in demonCards)
+            {
+                Assert.That(card.transform.localScale, Is.EqualTo(expected));
+                Assert.That(GetField<Vector3>(card, "_baseScale"), Is.EqualTo(expected));
+                Assert.That(GetField<Vector3>(card, "_targetScale"), Is.EqualTo(expected));
+            }
         }
 
         private static void CreateEmbeddedStatus(
@@ -807,6 +862,15 @@ namespace DiaBlackJack.StageProgression.Tests
                 fieldName,
                 BindingFlags.Instance | BindingFlags.NonPublic);
             field.SetValue(target, value);
+        }
+
+        private static T GetField<T>(object target, string fieldName)
+        {
+            FieldInfo field = target.GetType().GetField(
+                fieldName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, fieldName);
+            return (T)field.GetValue(target);
         }
 
         private static void Invoke(object target, string methodName)
