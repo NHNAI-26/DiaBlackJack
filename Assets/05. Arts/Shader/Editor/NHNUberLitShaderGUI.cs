@@ -9,6 +9,7 @@ public class NHNUberLitShaderGUI : LWGUI.LWGUI
         SeedKeyword(properties, "_LightingMode", "_UNLIT_ON");
         SeedKeyword(properties, "_EmissionEnabled", "_EMISSION");
         SeedKeyword(properties, "_RimEnabled", "_RIM_ON");
+        SeedKeyword(properties, "_DitherAlphaEnabled", "_DITHER_ALPHA_ON");
         SeedKeyword(properties, "_PixelOutlineEnabled", "_PIXEL_OUTLINE_ON");
         SeedKeyword(properties, "_StencilOutlineEnabled", "_STENCIL_OUTLINE_ON");
         SeedEnumKeyword(properties, "_UVAlphaFadeAxis", "_UV_ALPHA_FADE_U", "_UV_ALPHA_FADE_V");
@@ -43,6 +44,7 @@ public class NHNUberLitShaderGUI : LWGUI.LWGUI
             RestoreKeyword(material, "_LightingMode", "_UNLIT_ON");
             RestoreKeyword(material, "_NormalMapEnabled", "_NORMALMAP");
             RestoreKeyword(material, "_EmissionEnabled", "_EMISSION");
+            RestoreKeyword(material, "_DitherAlphaEnabled", "_DITHER_ALPHA_ON");
             RestoreKeyword(material, "_PixelOutlineEnabled", "_PIXEL_OUTLINE_ON");
             RestoreKeyword(material, "_StencilOutlineEnabled", "_STENCIL_OUTLINE_ON");
             RestoreEnumKeyword(material, "_UVAlphaFadeAxis", "_UV_ALPHA_FADE_U", "_UV_ALPHA_FADE_V");

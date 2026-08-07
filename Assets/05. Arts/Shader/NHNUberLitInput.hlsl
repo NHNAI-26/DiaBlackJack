@@ -65,6 +65,8 @@ CBUFFER_START(UnityPerMaterial)
     half _DissolveEdgeIntensity;
     half _StencilOutlineEnabled;
     half _StencilOutlineWidth;
+    half _DitherAlphaEnabled;
+    half _DitherAlpha;
     half _Surface;
     half _Cull;
 CBUFFER_END
@@ -448,6 +450,68 @@ inline half NHNApplySurfaceClipping(float2 rawUV, float3 positionOS, half baseAl
 #endif
 
     return alpha;
+}
+
+inline half NHNBayer4x4(float2 screenPosition)
+{
+    float2 pixel = floor(frac(screenPosition * 0.25) * 4.0);
+    half threshold = 0.0h;
+
+    if (pixel.y < 1.0)
+    {
+        if (pixel.x < 1.0)
+            threshold = 0.0h;
+        else if (pixel.x < 2.0)
+            threshold = 8.0h;
+        else if (pixel.x < 3.0)
+            threshold = 2.0h;
+        else
+            threshold = 10.0h;
+    }
+    else if (pixel.y < 2.0)
+    {
+        if (pixel.x < 1.0)
+            threshold = 12.0h;
+        else if (pixel.x < 2.0)
+            threshold = 4.0h;
+        else if (pixel.x < 3.0)
+            threshold = 14.0h;
+        else
+            threshold = 6.0h;
+    }
+    else if (pixel.y < 3.0)
+    {
+        if (pixel.x < 1.0)
+            threshold = 3.0h;
+        else if (pixel.x < 2.0)
+            threshold = 11.0h;
+        else if (pixel.x < 3.0)
+            threshold = 1.0h;
+        else
+            threshold = 9.0h;
+    }
+    else
+    {
+        if (pixel.x < 1.0)
+            threshold = 15.0h;
+        else if (pixel.x < 2.0)
+            threshold = 7.0h;
+        else if (pixel.x < 3.0)
+            threshold = 13.0h;
+        else
+            threshold = 5.0h;
+    }
+
+    return (threshold + 0.5h) / 16.0h;
+}
+
+inline void NHNApplyDitherAlpha(inout half alpha, float4 positionCS)
+{
+#if defined(_DITHER_ALPHA_ON)
+    alpha *= saturate(_DitherAlpha);
+    float2 screenPosition = GetNormalizedScreenSpaceUV(positionCS) * _ScreenParams.xy;
+    clip(alpha - NHNBayer4x4(screenPosition));
+#endif
 }
 
 inline half NHNApplySurfaceClipping(float2 rawUV, half baseAlpha, half vertexAlpha,

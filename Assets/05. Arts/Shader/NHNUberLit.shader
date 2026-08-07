@@ -8,6 +8,8 @@ Shader "Shader/Uber Lit"
         [KWEnum(Surface_SURFACE_TYPE_TRANSPARENT, Alpha, _, Premultiply, _ALPHAPREMULTIPLY_ON, Additive, _, Multiply, _ALPHAMODULATE_ON)] _Blend("Blend Mode", Float) = 0
         [SubToggle(Surface, _ALPHATEST_ON)] _AlphaClip("Alpha Clipping", Float) = 0
         [Sub(Surface_ALPHATEST_ON)] _Cutoff("Threshold", Range(0,1)) = 0.5
+        [Main(DitherAlpha, _DITHER_ALPHA_ON, on)] _DitherAlphaEnabled("Dithered Alpha", Float) = 0
+        [Sub(DitherAlpha_DITHER_ALPHA_ON)] _DitherAlpha("Alpha", Range(0,1)) = 1
         [SubToggle(Surface, _)] _ReceiveShadows("Receive Shadows", Float) = 1
         [SubToggle(Surface, _)] _CastShadows("Cast Shadows", Float) = 1
         [KWEnum(Surface, Both, _, Front, _, Back, _)] _Cull("Render Face", Float) = 2
@@ -118,6 +120,7 @@ Shader "Shader/Uber Lit"
             #pragma multi_compile_local_fragment _ _HEIGHT_FADE_ON
             #pragma multi_compile_local_fragment _ _GLASS_GLOW_ON
             #pragma shader_feature_local_fragment _ALPHATEST_ON
+            #pragma shader_feature_local_fragment _DITHER_ALPHA_ON
             #pragma shader_feature_local_fragment _SURFACE_TYPE_TRANSPARENT
             #pragma shader_feature_local_fragment _ _ALPHAPREMULTIPLY_ON _ALPHAMODULATE_ON
             #pragma shader_feature_local _RECEIVE_SHADOWS_OFF
@@ -182,6 +185,7 @@ Shader "Shader/Uber Lit"
             #pragma vertex NHNShadowVertex
             #pragma fragment NHNSilhouetteFragment
             #pragma shader_feature_local _ALPHATEST_ON
+            #pragma shader_feature_local _DITHER_ALPHA_ON
             #pragma shader_feature_local _DISSOLVE_ON
             #pragma shader_feature_local _DISSOLVE_OBJECT_SPACE
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
@@ -203,6 +207,7 @@ Shader "Shader/Uber Lit"
             #pragma vertex NHNDepthOnlyVertex
             #pragma fragment NHNSilhouetteFragment
             #pragma shader_feature_local _ALPHATEST_ON
+            #pragma shader_feature_local _DITHER_ALPHA_ON
             #pragma shader_feature_local _DISSOLVE_ON
             #pragma shader_feature_local _DISSOLVE_OBJECT_SPACE
             #pragma multi_compile_instancing
@@ -223,6 +228,7 @@ Shader "Shader/Uber Lit"
             #pragma fragment NHNDepthNormalsFragment
             #pragma shader_feature_local _NORMALMAP
             #pragma shader_feature_local _ALPHATEST_ON
+            #pragma shader_feature_local _DITHER_ALPHA_ON
             #pragma shader_feature_local _DISSOLVE_ON
             #pragma shader_feature_local _DISSOLVE_OBJECT_SPACE
             #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
