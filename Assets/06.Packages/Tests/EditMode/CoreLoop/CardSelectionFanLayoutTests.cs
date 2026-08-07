@@ -258,6 +258,16 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(cards, Has.Length.EqualTo(10));
                 Assert.That(cards.All(card => card.gameObject.activeInHierarchy),
                     Is.True);
+                Color expectedFrontTint =
+                    new Color32(0xB2, 0xA9, 0x92, 0xFF);
+                Assert.That(cards.All(card => card
+                    .GetComponentsInChildren<SpriteRenderer>(true)
+                    .Single(renderer => renderer.gameObject.name == "Front")
+                    .color == expectedFrontTint), Is.True);
+                SpriteRenderer prefabFront = cardPrefab
+                    .GetComponentsInChildren<SpriteRenderer>(true)
+                    .Single(renderer => renderer.gameObject.name == "Front");
+                Assert.That(prefabFront.color, Is.EqualTo(Color.white));
                 Assert.That(view.FanLayout, Is.SameAs(layout));
                 Assert.That(cards.Single(card => card.CardId == 101).CanUse,
                     Is.False);
@@ -411,6 +421,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                 InvokeUpdateSlotPose(view, 0);
                 CardView card = root.GetComponentsInChildren<CardView>(true)
                     .Single(candidate => candidate.CardId == 301);
+                Color expectedFrontTint =
+                    new Color32(0xB2, 0xA9, 0x92, 0xFF);
+                Assert.That(root.GetComponentsInChildren<CardView>(true)
+                    .All(candidate => candidate
+                        .GetComponentsInChildren<SpriteRenderer>(true)
+                        .Single(renderer => renderer.gameObject.name == "Front")
+                        .color == expectedFrontTint), Is.True);
                 BoxCollider collider = card.GetComponent<BoxCollider>();
                 Vector3 rootPosition = card.transform.position;
                 Quaternion rootRotation = card.transform.rotation;

@@ -718,6 +718,12 @@ namespace DiaBlackJack.CoreLoop.Tests
                     GetPrivateField<List<CardView>>(hand, "_spawned");
                 CardView firstView = initialViews[0];
                 CardView secondView = initialViews[1];
+                Assert.That(
+                    GetFrontRenderer(firstView).color,
+                    Is.EqualTo(Color.white));
+                Assert.That(
+                    GetFrontRenderer(secondView).color,
+                    Is.EqualTo(Color.white));
 
                 hand.Render(new[] { secondCard, firstCard });
                 List<CardView> reorderedViews =

@@ -81,6 +81,7 @@ namespace DiaBlackJack.GameScene
                 slot.Anchor.gameObject.SetActive(true);
                 slot.Candidate = candidates[i];
                 slot.Card.Bind(slot.Candidate);
+                slot.Card.ApplySelectionFrontTint();
                 slot.Card.SetUnlitPresentation();
                 slot.Card.SetSortingOrder(BaseSortingOrder + i);
                 slot.BrandRenderer.sprite = _brandSprite;

@@ -21,6 +21,9 @@ namespace DiaBlackJack.GameScene
     [DisallowMultipleComponent]
     public sealed class CardView : MonoBehaviour
     {
+        private static readonly Color SelectionFrontTint =
+            new Color32(0xB2, 0xA9, 0x92, 0xFF);
+
         [SerializeField] private GameObject front;
         [SerializeField] private GameObject back;
         [SerializeField] private TMP_Text rankText;
@@ -935,6 +938,15 @@ namespace DiaBlackJack.GameScene
             CaptureShopColors();
             ApplyShopTint(FrontSpriteRenderer(), _shopFrontColor, isSoldOut);
             ApplyShopTint(BackSpriteRenderer(), _shopBackColor, isSoldOut);
+        }
+
+        internal void ApplySelectionFrontTint()
+        {
+            SpriteRenderer frontRenderer = FrontSpriteRenderer();
+            if (frontRenderer != null)
+            {
+                frontRenderer.color = SelectionFrontTint;
+            }
         }
 
         internal void SetSortingOrder(int sortingOrder)
