@@ -420,13 +420,15 @@ namespace DiaBlackJack.GameScene
             int roundNumber,
             int sourceCardId,
             CombatantSide actorSide,
-            bool succeeded)
+            bool succeeded,
+            int actionOrdinal = 0)
             : this(
                 roundNumber,
                 sourceCardId,
                 actorSide,
                 GameSceneRevolverAnimationPhase.Resolved,
-                succeeded)
+                succeeded,
+                actionOrdinal)
         {
         }
 
@@ -435,7 +437,8 @@ namespace DiaBlackJack.GameScene
             int sourceCardId,
             CombatantSide actorSide,
             GameSceneRevolverAnimationPhase phase,
-            bool succeeded = false)
+            bool succeeded = false,
+            int actionOrdinal = 0)
         {
             if (roundNumber < 1)
             {
@@ -457,12 +460,20 @@ namespace DiaBlackJack.GameScene
                 throw new ArgumentOutOfRangeException(nameof(phase));
             }
 
+            if (actionOrdinal < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(actionOrdinal));
+            }
+
             RoundNumber = roundNumber;
             SourceCardId = sourceCardId;
             ActorSide = actorSide;
             Phase = phase;
             Succeeded = succeeded;
+            ActionOrdinal = actionOrdinal;
         }
+
+        public int ActionOrdinal { get; }
 
         public int RoundNumber { get; }
 
@@ -488,7 +499,8 @@ namespace DiaBlackJack.GameScene
             int sourceCardId,
             CombatantSide actorSide,
             GameSceneKnifeAnimationPhase phase,
-            bool succeeded = false)
+            bool succeeded = false,
+            int actionOrdinal = 0)
         {
             if (roundNumber < 1)
             {
@@ -510,12 +522,20 @@ namespace DiaBlackJack.GameScene
                 throw new ArgumentOutOfRangeException(nameof(phase));
             }
 
+            if (actionOrdinal < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(actionOrdinal));
+            }
+
             RoundNumber = roundNumber;
             SourceCardId = sourceCardId;
             ActorSide = actorSide;
             Phase = phase;
             Succeeded = succeeded;
+            ActionOrdinal = actionOrdinal;
         }
+
+        public int ActionOrdinal { get; }
 
         public int RoundNumber { get; }
 
@@ -989,7 +1009,8 @@ namespace DiaBlackJack.GameScene
                 model.PlayerCards,
                 model.EnemyCards,
                 model.RevolverAnimationCue,
-                model.SatanNumberGuessAnimationCue);
+                model.SatanNumberGuessAnimationCue,
+                model.KnifeAnimationCue);
             model.SoulLossHistory = new List<SoulLossRecord>(
                 battle.SoulLossHistory).AsReadOnly();
             model.EnemyActionSkullDecision = battle.LastEnemyDecision;
@@ -1491,9 +1512,18 @@ namespace DiaBlackJack.GameScene
         private static GameSceneRevolverAnimationCue CreateRevolverAnimationCue(
             CoreLoopBattle battle)
         {
+            int actionOrdinal = ResolveLastUseCardActionOrdinal(
+                battle,
+                CardEffectKind.AutoPistol);
+            if (actionOrdinal < 0)
+            {
+                return null;
+            }
+
             if (battle.HasPendingLeviathanAutoPistolRetry &&
                 battle.LastCardEffectResult.HasValue &&
-                battle.LastCardEffectActorSide.HasValue)
+                battle.LastCardEffectActorSide.HasValue &&
+                battle.LastCardEffectResultActionOrdinal == actionOrdinal)
             {
                 CardEffectResult retryResult = battle.LastCardEffectResult.Value;
                 return new GameSceneRevolverAnimationCue(
@@ -1501,7 +1531,8 @@ namespace DiaBlackJack.GameScene
                     retryResult.SourceCardId,
                     battle.LastCardEffectActorSide.Value,
                     GameSceneRevolverAnimationPhase.ResolvedWithRetry,
-                    retryResult.Succeeded);
+                    retryResult.Succeeded,
+                    actionOrdinal);
             }
 
             PendingCardEffect pendingPlayerEffect = battle.PendingPlayerCardEffect;
@@ -1512,7 +1543,8 @@ namespace DiaBlackJack.GameScene
                     battle.RoundNumber,
                     pendingPlayerEffect.SourceCardId,
                     CombatantSide.Player,
-                    GameSceneRevolverAnimationPhase.Ready);
+                    GameSceneRevolverAnimationPhase.Ready,
+                    actionOrdinal: actionOrdinal);
             }
 
             if (battle.PendingEnemyCardEffect != null ||
@@ -1524,7 +1556,8 @@ namespace DiaBlackJack.GameScene
 
             CardEffectResult result = battle.LastCardEffectResult.Value;
             if (result.EffectKind != CardEffectKind.AutoPistol ||
-                !IsLastUseCardEffect(battle, result.EffectKind))
+                !IsLastUseCardEffect(battle, result.EffectKind) ||
+                battle.LastCardEffectResultActionOrdinal != actionOrdinal)
             {
                 return null;
             }
@@ -1533,12 +1566,21 @@ namespace DiaBlackJack.GameScene
                 battle.RoundNumber,
                 result.SourceCardId,
                 battle.LastCardEffectActorSide.Value,
-                result.Succeeded);
+                result.Succeeded,
+                actionOrdinal);
         }
 
         private static GameSceneKnifeAnimationCue CreateKnifeAnimationCue(
             CoreLoopBattle battle)
         {
+            int actionOrdinal = ResolveLastUseCardActionOrdinal(
+                battle,
+                CardEffectKind.MilitaryKnife);
+            if (actionOrdinal < 0)
+            {
+                return null;
+            }
+
             // Checked before the "still active" branch below: a bust-replacement contract
             // (e.g. Beelzebub) can publish the knife's result and then suspend the effect
             // for a player choice before CompleteCardEffectResult ever clears
@@ -1550,14 +1592,16 @@ namespace DiaBlackJack.GameScene
             {
                 CardEffectResult resolvedResult = battle.LastCardEffectResult.Value;
                 if (resolvedResult.EffectKind == CardEffectKind.MilitaryKnife &&
-                    IsLastUseCardEffect(battle, CardEffectKind.MilitaryKnife))
+                    IsLastUseCardEffect(battle, CardEffectKind.MilitaryKnife) &&
+                    battle.LastCardEffectResultActionOrdinal == actionOrdinal)
                 {
                     return new GameSceneKnifeAnimationCue(
                         battle.RoundNumber,
                         resolvedResult.SourceCardId,
                         battle.LastCardEffectActorSide.Value,
                         GameSceneKnifeAnimationPhase.Resolved,
-                        resolvedResult.EndedRound);
+                        resolvedResult.EndedRound,
+                        actionOrdinal);
                 }
             }
 
@@ -1570,7 +1614,8 @@ namespace DiaBlackJack.GameScene
                     battle.RoundNumber,
                     battle.ActiveCardEffectSourceCardId.Value,
                     battle.ActiveCardEffectActorSide.Value,
-                    GameSceneKnifeAnimationPhase.Ready);
+                    GameSceneKnifeAnimationPhase.Ready,
+                    actionOrdinal: actionOrdinal);
             }
 
             return null;
@@ -1674,6 +1719,33 @@ namespace DiaBlackJack.GameScene
             return CardDefinitionCatalog
                 .GetByKey(last.SourceCardDefinitionKey)
                 .Effect == effectKind;
+        }
+
+        private static int ResolveLastUseCardActionOrdinal(
+            CoreLoopBattle battle,
+            CardEffectKind effectKind)
+        {
+            IReadOnlyList<PublicCombatAction> history =
+                battle.PublicActionHistory;
+            for (int index = history.Count - 1; index >= 0; index--)
+            {
+                PublicCombatAction action = history[index];
+                if (action == null ||
+                    action.ActionType != PublicCombatActionType.UseCard ||
+                    string.IsNullOrWhiteSpace(action.SourceCardDefinitionKey))
+                {
+                    continue;
+                }
+
+                CardDefinition definition = CardDefinitionCatalog.GetByKey(
+                    action.SourceCardDefinitionKey);
+                if (definition.Effect == effectKind)
+                {
+                    return index + 1;
+                }
+            }
+
+            return -1;
         }
 
         // MVP presentation: derive one coarse visual + short action label per side from public

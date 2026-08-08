@@ -39,10 +39,15 @@ namespace DiaBlackJack.GameScene
         private readonly List<DemonCardView> _spawnedDemonCards =
             new List<DemonCardView>();
         private readonly List<Tween> _demonMoveTweens = new List<Tween>();
+        private int? _preservedDemonCardId;
 
         internal CardView CardPrefab => cardPrefab;
 
         internal DemonCardView DemonCardPrefab => demonCardPrefab;
+
+        internal float DiscardAnimationSeconds => discardDuration;
+
+        internal float EntryAnimationSeconds => enterDuration;
 
         private void OnValidate()
         {
@@ -121,7 +126,7 @@ namespace DiaBlackJack.GameScene
                 (newCardIds.Count > 0 ||
                  demonCards.Count != previousDemonCount ||
                  newDemonCardIds.Count > 0);
-            int totalCardCount = cards.Count + demonCards.Count;
+            int totalCardCount = cards.Count + _spawnedDemonCards.Count;
             float offset = -(totalCardCount - 1) * 0.5f * spacing;
             bool anyRevealAnimated = false;
             for (int i = 0; i < cards.Count; i++)
@@ -150,8 +155,24 @@ namespace DiaBlackJack.GameScene
             {
                 int combinedIndex = cards.Count + i;
                 DemonCardView card = _spawnedDemonCards[i];
-                GameSceneDemonCardViewModel model =
-                    demonCards[demonCards.Count - 1 - i];
+                int modelIndex = FindDemonCardModelIndex(
+                    demonCards,
+                    card.CardId);
+                if (modelIndex < 0 && i < demonCards.Count)
+                {
+                    // Newly instantiated views are not bound yet, so CardId is still its
+                    // default value. SynchronizeDemonCards stores current models in reverse
+                    // order; use that stable slot for the first bind. A preserved, ended
+                    // tutorial speaker is appended after all live model slots and skips it.
+                    modelIndex = demonCards.Count - 1 - i;
+                }
+
+                if (modelIndex < 0)
+                {
+                    continue;
+                }
+
+                GameSceneDemonCardViewModel model = demonCards[modelIndex];
                 Vector3 targetPosition = new Vector3(
                     offset + combinedIndex * spacing,
                     0f,
@@ -172,7 +193,13 @@ namespace DiaBlackJack.GameScene
 
         public void ResetView()
         {
+            _preservedDemonCardId = null;
             ClearAll();
+        }
+
+        internal void PreserveDemonCard(int? cardId)
+        {
+            _preservedDemonCardId = cardId;
         }
 
         public bool TryGetCardWorldPosition(int cardId, out Vector3 position)
@@ -411,6 +438,14 @@ namespace DiaBlackJack.GameScene
                     continue;
                 }
 
+                if (_preservedDemonCardId.HasValue &&
+                    previousCards[i].CardId == _preservedDemonCardId.Value)
+                {
+                    _spawnedDemonCards.Add(previousCards[i]);
+                    _demonMoveTweens.Add(previousTweens[i]);
+                    continue;
+                }
+
                 previousTweens[i]?.Kill();
                 AnimateDemonDiscard(previousCards[i]);
             }
@@ -440,6 +475,21 @@ namespace DiaBlackJack.GameScene
             for (int i = 0; i < cards.Count; i++)
             {
                 if (cards[i] != null && cards[i].CardId == cardId)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private static int FindDemonCardModelIndex(
+            IReadOnlyList<GameSceneDemonCardViewModel> models,
+            int cardId)
+        {
+            for (int i = 0; i < models.Count; i++)
+            {
+                if (models[i].CardId == cardId)
                 {
                     return i;
                 }

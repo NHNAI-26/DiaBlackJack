@@ -1404,7 +1404,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(slot.parent, Is.EqualTo(optionPanel));
                 Assert.That(slot.anchorMin, Is.EqualTo(new Vector2(1f, 0f)));
                 Assert.That(slot.anchorMax, Is.EqualTo(new Vector2(1f, 0f)));
-                Assert.That(slot.anchoredPosition, Is.EqualTo(new Vector2(-48f, 48f)));
+                Assert.That(slot.pivot, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+                Assert.That(slot.anchoredPosition, Is.EqualTo(new Vector2(-238f, 80f)));
                 Assert.That(slot.sizeDelta, Is.EqualTo(new Vector2(380f, 64f)));
             }
             finally

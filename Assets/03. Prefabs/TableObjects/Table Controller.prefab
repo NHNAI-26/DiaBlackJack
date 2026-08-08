@@ -1649,6 +1649,8 @@ MonoBehaviour:
   speechText: {fileID: 8986006433804763395}
   charactersPerSecond: 40
   narratorDefinitionKey: asmodeus
+  speechScreenOffset: {x: 0, y: 72}
+  speechScreenMargin: 24
 --- !u!1 &7622204401950776379
 GameObject:
   m_ObjectHideFlags: 0

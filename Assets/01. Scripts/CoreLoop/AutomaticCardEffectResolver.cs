@@ -700,6 +700,18 @@ namespace DiaBlackJack.CoreLoop
 
         public int? SourceContractCardId { get; }
 
+        public long EnemyTurnExecutionId { get; private set; }
+
+        public void BindEnemyTurnExecution(long executionId)
+        {
+            if (executionId <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(executionId));
+            }
+
+            EnemyTurnExecutionId = executionId;
+        }
+
         public static AutomaticCardContinuation ForPlayerHit()
         {
             return new AutomaticCardContinuation(

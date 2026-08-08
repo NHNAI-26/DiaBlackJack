@@ -55,6 +55,17 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        internal bool ContainsScreenPoint(Vector2 screenPoint, Camera eventCamera)
+        {
+            return isActiveAndEnabled &&
+                gameObject.activeInHierarchy &&
+                transform is RectTransform rectTransform &&
+                RectTransformUtility.RectangleContainsScreenPoint(
+                    rectTransform,
+                    screenPoint,
+                    eventCamera);
+        }
+
         private void HandleClick()
         {
             if (_isInteractable)

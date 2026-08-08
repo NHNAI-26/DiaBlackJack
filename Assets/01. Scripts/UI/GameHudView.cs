@@ -132,6 +132,29 @@ namespace DiaBlackJack.GameScene
         public bool IsRevolverNumberSelectionOpen =>
             revolverNumberSelector != null && revolverNumberSelector.IsOpen;
 
+        internal bool IsPointerOverActiveCombatChoice(Vector2 screenPoint)
+        {
+            if (optionPanel == null || !optionPanel.activeInHierarchy ||
+                optionSlots == null)
+            {
+                return false;
+            }
+
+            Camera eventCamera = _canvas != null &&
+                _canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                    ? _canvas.worldCamera
+                    : null;
+            foreach (GameHudChoiceButton slot in optionSlots)
+            {
+                if (slot != null && slot.ContainsScreenPoint(screenPoint, eventCamera))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public bool IsShopLeaveVisible =>
             shopLeaveRoot != null && shopLeaveRoot.activeSelf;
 
@@ -1106,9 +1129,11 @@ namespace DiaBlackJack.GameScene
             rect.SetParent(optionPanel.transform, false);
             rect.anchorMin = new Vector2(1f, 0f);
             rect.anchorMax = new Vector2(1f, 0f);
-            rect.pivot = new Vector2(1f, 0f);
-            rect.anchoredPosition = new Vector2(-48f, 48f + index * 76f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(-238f, 80f + index * 76f);
             rect.sizeDelta = new Vector2(380f, 64f);
+            slot.GetComponent<Border.UI.UIButtonScaleFeedback>()?
+                .SynchronizeRestingGeometry();
         }
 
         private void PositionCenter(GameHudChoiceButton slot)
@@ -1125,6 +1150,8 @@ namespace DiaBlackJack.GameScene
             rect.pivot = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = Vector2.zero;
             rect.sizeDelta = new Vector2(380f, 64f);
+            slot.GetComponent<Border.UI.UIButtonScaleFeedback>()?
+                .SynchronizeRestingGeometry();
         }
 
         private static bool HasBottomRightAction(

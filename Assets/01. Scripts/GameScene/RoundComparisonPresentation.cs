@@ -8,6 +8,7 @@ namespace DiaBlackJack.GameScene
     {
         CountTotals,
         SkipForDecisiveHiddenGuess,
+        SkipForDirectBust,
     }
 
     internal sealed class RoundComparisonStep
@@ -182,7 +183,8 @@ namespace DiaBlackJack.GameScene
             IReadOnlyList<GameSceneCardViewModel> playerCards,
             IReadOnlyList<GameSceneCardViewModel> enemyCards,
             GameSceneRevolverAnimationCue revolverCue = null,
-            GameSceneSatanNumberGuessAnimationCue satanNumberGuessCue = null)
+            GameSceneSatanNumberGuessAnimationCue satanNumberGuessCue = null,
+            GameSceneKnifeAnimationCue knifeCue = null)
         {
             if (battle == null)
             {
@@ -213,13 +215,15 @@ namespace DiaBlackJack.GameScene
                 ResolvePlaybackMode(
                     resolution,
                     revolverCue,
-                    satanNumberGuessCue));
+                    satanNumberGuessCue,
+                    knifeCue));
         }
 
         internal static RoundComparisonPlaybackMode ResolvePlaybackMode(
             RoundResolution resolution,
             GameSceneRevolverAnimationCue revolverCue,
-            GameSceneSatanNumberGuessAnimationCue satanNumberGuessCue)
+            GameSceneSatanNumberGuessAnimationCue satanNumberGuessCue,
+            GameSceneKnifeAnimationCue knifeCue = null)
         {
             if (revolverCue != null &&
                 revolverCue.Phase == GameSceneRevolverAnimationPhase.Resolved &&
@@ -238,6 +242,16 @@ namespace DiaBlackJack.GameScene
                     satanNumberGuessCue.ActorSide))
             {
                 return RoundComparisonPlaybackMode.SkipForDecisiveHiddenGuess;
+            }
+
+            if (knifeCue != null &&
+                knifeCue.Phase == GameSceneKnifeAnimationPhase.Resolved &&
+                knifeCue.Succeeded &&
+                (resolution.Cause == RoundEndCause.CardEffectBust ||
+                    resolution.Cause == RoundEndCause.NumericBust) &&
+                IsWinningResolutionForActor(resolution, knifeCue.ActorSide))
+            {
+                return RoundComparisonPlaybackMode.SkipForDirectBust;
             }
 
             return RoundComparisonPlaybackMode.CountTotals;

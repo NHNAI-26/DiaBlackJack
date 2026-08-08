@@ -192,7 +192,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         public void EP03_U07_GunslingerUsesOneNormalActionBeforePlayerReturns()
         {
             var battle = new CoreLoopBattle(
-                CreateRankDeck(2, 7, 7, 7),
+                CreateRankDeck(2, 7, 7),
                 CreateDefinitionDeck(
                     "auto-pistol-7",
                     "standard-plain-2",
@@ -202,19 +202,33 @@ namespace DiaBlackJack.CoreLoop.Tests
                 enemyMaximumSoul: 3,
                 enemyPolicy: new GunslingerEnemyPolicy());
             Assert.That(battle.Start(), Is.True);
-            int maximumEnemyUseCount = 0;
+            var observedEnemyUses = new HashSet<string>();
+            bool playerDrawPileWasEmptyAtEnemyUse = false;
             battle.Stepped += () =>
             {
-                maximumEnemyUseCount = Math.Max(
-                    maximumEnemyUseCount,
-                    battle.PublicActionHistory.Count(action =>
-                        action.ActorSide == CombatantSide.Enemy &&
-                        action.ActionType == PublicCombatActionType.UseCard));
+                IReadOnlyList<PublicCombatAction> actions =
+                    battle.PublicActionHistory;
+                if (actions.Count == 0)
+                {
+                    return;
+                }
+
+                PublicCombatAction action = actions[actions.Count - 1];
+                if (action.ActorSide == CombatantSide.Enemy &&
+                    action.ActionType == PublicCombatActionType.UseCard)
+                {
+                    playerDrawPileWasEmptyAtEnemyUse |=
+                        battle.Player.Deck.DrawCount == 0;
+                    observedEnemyUses.Add(
+                        $"{battle.RoundNumber}:{actions.Count}:{action.SourceCardDefinitionKey}");
+                }
             };
 
             Assert.That(battle.TryPlayerHit(), Is.True);
 
-            Assert.That(maximumEnemyUseCount, Is.EqualTo(1));
+            Assert.That(playerDrawPileWasEmptyAtEnemyUse, Is.True);
+            Assert.That(battle.LastCardEffectResult.Value.Succeeded, Is.True);
+            Assert.That(observedEnemyUses, Has.Count.EqualTo(1));
         }
 
         [Test]

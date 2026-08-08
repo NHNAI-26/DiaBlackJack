@@ -818,6 +818,75 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void UIFX01_U02_DynamicButtonLayoutResynchronizesCenteredPivot()
+        {
+            GameObject buttonObject = new GameObject(
+                "Dynamic Scale Feedback Position Test",
+                typeof(RectTransform),
+                typeof(Image),
+                typeof(Button),
+                typeof(UIButtonScaleFeedback));
+            try
+            {
+                RectTransform rect = buttonObject.GetComponent<RectTransform>();
+                UIButtonScaleFeedback feedback =
+                    buttonObject.GetComponent<UIButtonScaleFeedback>();
+                rect.sizeDelta = new Vector2(380f, 64f);
+                rect.pivot = new Vector2(1f, 0f);
+                rect.anchoredPosition = new Vector2(-48f, 48f);
+                Vector3 worldCenter = rect.TransformPoint(rect.rect.center);
+
+                feedback.SynchronizeRestingGeometry();
+
+                Assert.That(rect.pivot, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+                Assert.That(
+                    Vector3.Distance(
+                        rect.TransformPoint(rect.rect.center),
+                        worldCenter),
+                    Is.LessThan(0.0001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(buttonObject);
+            }
+        }
+
+        [Test]
+        public void UIFX01_U03_ActiveHudChoiceBlocksItsScreenRectangle()
+        {
+            GameObject buttonObject = new GameObject(
+                "HUD Choice Pointer Priority Test",
+                typeof(RectTransform),
+                typeof(Image),
+                typeof(Button),
+                typeof(GameHudChoiceButton));
+            try
+            {
+                RectTransform rect = buttonObject.GetComponent<RectTransform>();
+                rect.sizeDelta = new Vector2(200f, 80f);
+                rect.position = new Vector3(320f, 180f, 0f);
+                GameHudChoiceButton choice =
+                    buttonObject.GetComponent<GameHudChoiceButton>();
+
+                Assert.That(
+                    choice.ContainsScreenPoint(new Vector2(320f, 180f), null),
+                    Is.True);
+                Assert.That(
+                    choice.ContainsScreenPoint(new Vector2(600f, 400f), null),
+                    Is.False);
+
+                buttonObject.SetActive(false);
+                Assert.That(
+                    choice.ContainsScreenPoint(new Vector2(320f, 180f), null),
+                    Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(buttonObject);
+            }
+        }
+
+        [Test]
         public void UIFX01_U02_AllAuthoredButtonPrefabsUseSharedClickSound()
         {
             string[] prefabPaths =

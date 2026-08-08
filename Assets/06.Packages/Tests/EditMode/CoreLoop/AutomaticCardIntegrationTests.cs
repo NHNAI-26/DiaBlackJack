@@ -274,6 +274,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                     out int resolvedIndex),
                 Is.True);
             Assert.That(resolvedIndex, Is.GreaterThan(revealIndex + 1));
+            Assert.That(
+                timeline[revealIndex].KnifeAnimationCue.ActionOrdinal,
+                Is.GreaterThan(0));
+            Assert.That(
+                timeline[resolvedIndex].KnifeAnimationCue.ActionOrdinal,
+                Is.EqualTo(
+                    timeline[revealIndex].KnifeAnimationCue.ActionOrdinal));
         }
 
         [Test]

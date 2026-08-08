@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DiaBlackJack.CoreLoop;
+using UnityEngine;
 
 namespace DiaBlackJack.GameScene
 {
@@ -48,7 +49,12 @@ namespace DiaBlackJack.GameScene
         private int _dialogueLineIndex;
         private bool _gateActive;
         private bool _awaitingRoundOneReveal;
+        private bool _roundOneStartRequested;
+        private bool _roundOneRevealReady;
+        private bool _awaitingRoundOneComparisonPresentation;
         private bool _awaitingRoundTwoReveal;
+        private bool _awaitingBattleEndPresentation;
+        private int _gateActivatedFrame = -1;
         private BattleSnapshot _gateEntrySnapshot;
 
         public TutorialDirector(
@@ -70,6 +76,8 @@ namespace DiaBlackJack.GameScene
         /// <summary>Fires once the intro (sections 0-1) dialogue's last line is dismissed.</summary>
         public event Action IntroCompleted;
 
+        public event Action RoundOneStartRequested;
+
         /// <summary>
         /// Fires once the post-round-1 soul-loss recap dialogue's last line is dismissed —
         /// only then may round 2's deal (suppressed since the Stand gate) actually appear.
@@ -80,6 +88,28 @@ namespace DiaBlackJack.GameScene
         public event Action Completed;
 
         public bool IsFinished => _begun && _stepIndex >= _steps.Count;
+
+        internal bool BlocksCombatInput =>
+            ShouldBlockCombatInput(
+                _begun,
+                IsFinished,
+                _gateActive,
+                _gateActivatedFrame,
+                Time.frameCount);
+
+        internal bool IsGateActive => _gateActive;
+
+        internal static bool ShouldBlockCombatInput(
+            bool begun,
+            bool finished,
+            bool gateActive,
+            int gateActivatedFrame,
+            int currentFrame)
+        {
+            return begun &&
+                !finished &&
+                (!gateActive || currentFrame <= gateActivatedFrame);
+        }
 
         public void BeginIntro()
         {
@@ -144,6 +174,7 @@ namespace DiaBlackJack.GameScene
             if (_dialogueLineIndex < step.Lines.Length)
             {
                 _narrator.ShowLine(step.Lines[_dialogueLineIndex]);
+                TryRequestRoundOneStart(step);
                 return;
             }
 
@@ -156,6 +187,11 @@ namespace DiaBlackJack.GameScene
                 _narrator.Hide();
                 _awaitingRoundOneReveal = true;
                 IntroCompleted?.Invoke();
+                if (_roundOneRevealReady)
+                {
+                    _awaitingRoundOneReveal = false;
+                    AdvanceStep();
+                }
                 return;
             }
 
@@ -181,6 +217,7 @@ namespace DiaBlackJack.GameScene
         /// </summary>
         internal void NotifyRoundOneRevealReady()
         {
+            _roundOneRevealReady = true;
             if (!_awaitingRoundOneReveal)
             {
                 return;
@@ -206,6 +243,28 @@ namespace DiaBlackJack.GameScene
             AdvanceStep();
         }
 
+        internal void NotifyRoundOneComparisonPresentationReady()
+        {
+            if (!_awaitingRoundOneComparisonPresentation)
+            {
+                return;
+            }
+
+            _awaitingRoundOneComparisonPresentation = false;
+            PresentCurrentStep();
+        }
+
+        internal void NotifyBattleEndPresentationReady()
+        {
+            if (!_awaitingBattleEndPresentation)
+            {
+                return;
+            }
+
+            _awaitingBattleEndPresentation = false;
+            PresentCurrentStep();
+        }
+
         private void AdvanceStep()
         {
             _stepIndex++;
@@ -217,39 +276,43 @@ namespace DiaBlackJack.GameScene
             }
 
             Step step = _steps[_stepIndex];
+            if (step.DefersRoundTwoReveal &&
+                !_gameManager.IsTutorialRoundComparisonPresentationComplete)
+            {
+                _narrator.Hide();
+                _awaitingRoundOneComparisonPresentation = true;
+                return;
+            }
+
+            if (step.WaitForBattleEndPresentation &&
+                !_gameManager.IsTutorialBattleEndPresentationComplete)
+            {
+                _narrator.Hide();
+                _awaitingBattleEndPresentation = true;
+                return;
+            }
+
+            PresentCurrentStep();
+        }
+
+        private void PresentCurrentStep()
+        {
+            Step step = _steps[_stepIndex];
             if (step.Kind == StepKind.Dialogue)
             {
-                int? upcomingRestrictedOptionId =
-                    GetUpcomingRestrictedOptionId();
-                if (upcomingRestrictedOptionId.HasValue)
-                {
-                    _gameManager.SetTutorialContractOptionRestriction(
-                        upcomingRestrictedOptionId.Value);
-                }
-
+                _gameManager.SetTutorialNarratorSpeaker(step.Speaker);
                 _dialogueLineIndex = 0;
                 _narrator.ShowLine(step.Lines[0]);
+                TryRequestRoundOneStart(step);
+                _gameManager.RefreshTutorialInputState();
                 return;
             }
 
             _narrator.Hide();
             _gateEntrySnapshot = new BattleSnapshot(_gameManager.Battle);
             _gateActive = true;
+            _gateActivatedFrame = Time.frameCount;
             step.OnEnter?.Invoke(_gameManager);
-        }
-
-        private int? GetUpcomingRestrictedOptionId()
-        {
-            int nextStepIndex = _stepIndex + 1;
-            if (nextStepIndex >= _steps.Count)
-            {
-                return null;
-            }
-
-            Step nextStep = _steps[nextStepIndex];
-            return nextStep.Kind == StepKind.Gate
-                ? nextStep.RestrictedOptionId
-                : null;
         }
 
         /// <summary>
@@ -279,8 +342,26 @@ namespace DiaBlackJack.GameScene
                 Kind = StepKind.Dialogue,
                 Lines = entry.lines,
                 IsIntro = entry.isIntro,
-                DefersRoundTwoReveal = entry.defersRoundTwoReveal
+                RoundOneStartLineIndex = entry.roundOneStartLineIndex,
+                DefersRoundTwoReveal = entry.defersRoundTwoReveal,
+                Speaker = entry.speaker,
+                WaitForBattleEndPresentation =
+                    entry.waitForBattleEndPresentation
             };
+        }
+
+        private void TryRequestRoundOneStart(Step step)
+        {
+            if (_roundOneStartRequested ||
+                !step.IsIntro ||
+                step.RoundOneStartLineIndex < 0 ||
+                _dialogueLineIndex < step.RoundOneStartLineIndex)
+            {
+                return;
+            }
+
+            _roundOneStartRequested = true;
+            RoundOneStartRequested?.Invoke();
         }
 
         private static Step BuildGateStep(TutorialStepEntry entry)
@@ -400,7 +481,10 @@ namespace DiaBlackJack.GameScene
             public StepKind Kind;
             public string[] Lines;
             public bool IsIntro;
+            public int RoundOneStartLineIndex;
             public bool DefersRoundTwoReveal;
+            public TutorialSpeakerKind Speaker;
+            public bool WaitForBattleEndPresentation;
             public int? RestrictedOptionId;
             public Action<GameManager> OnEnter;
             public Action<GameManager> OnExit;

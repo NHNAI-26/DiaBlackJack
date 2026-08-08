@@ -464,6 +464,61 @@ namespace DiaBlackJack.CoreLoop.Tests
                     RoundComparisonPlaybackMode.SkipForDecisiveHiddenGuess));
         }
 
+        [TestCase(CombatantSide.Player, RoundEndCause.CardEffectBust)]
+        [TestCase(CombatantSide.Enemy, RoundEndCause.CardEffectBust)]
+        [TestCase(CombatantSide.Player, RoundEndCause.NumericBust)]
+        [TestCase(CombatantSide.Enemy, RoundEndCause.NumericBust)]
+        [Category("GSV23")]
+        public void GSV23_U01_KnifeDirectBustSkipsTotalComparison(
+            CombatantSide actorSide,
+            RoundEndCause cause)
+        {
+            RoundResolution resolution = CreateHiddenGuessResolution(
+                actorSide,
+                cause);
+            var cue = new GameSceneKnifeAnimationCue(
+                1,
+                11,
+                actorSide,
+                GameSceneKnifeAnimationPhase.Resolved,
+                succeeded: true);
+
+            RoundComparisonPlaybackMode mode =
+                RoundComparisonPresenter.ResolvePlaybackMode(
+                    resolution,
+                    revolverCue: null,
+                    satanNumberGuessCue: null,
+                    knifeCue: cue);
+            RoundComparisonPlan plan = CreateComparisonPlan(resolution, mode);
+
+            Assert.That(
+                mode,
+                Is.EqualTo(RoundComparisonPlaybackMode.SkipForDirectBust));
+            Assert.That(
+                GameManager.ShouldPlayRoundComparison(-1, plan),
+                Is.False);
+            Assert.That(
+                GameManager.ShouldSkipRoundComparisonForDecisiveHiddenGuess(
+                    -1,
+                    plan),
+                Is.True);
+        }
+
+        [Test]
+        [Category("GSV23")]
+        public void GSV23_U02_RevolverCuePreservesActionOrdinal()
+        {
+            var cue = new GameSceneRevolverAnimationCue(
+                2,
+                12,
+                CombatantSide.Enemy,
+                GameSceneRevolverAnimationPhase.Resolved,
+                succeeded: true,
+                actionOrdinal: 7);
+
+            Assert.That(cue.ActionOrdinal, Is.EqualTo(7));
+        }
+
         [Test]
         [Category("GSV17")]
         public void GSV17_U08_NonDecisiveGuessKeepsComparison()
@@ -1381,12 +1436,18 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.Enemy.Draw(faceUp: true), Is.Not.Null);
             BlackjackCard sourceCard = battle.Player.Hand.Cards[0];
             GameSceneViewModel resolvedModel = null;
+            GameSceneViewModel comparisonModel = null;
             battle.Stepped += () =>
             {
                 GameSceneViewModel model = GameScenePresenter.Create(battle);
                 if (model.KnifeAnimationCue?.Phase == GameSceneKnifeAnimationPhase.Resolved)
                 {
                     resolvedModel = model;
+                }
+
+                if (model.RoundComparisonPlan != null)
+                {
+                    comparisonModel = model;
                 }
             };
 
@@ -1398,6 +1459,120 @@ namespace DiaBlackJack.CoreLoop.Tests
                 resolvedModel.EnemyVisual,
                 Is.EqualTo(CharacterVisualState.Attacked));
             Assert.That(resolvedModel.EnemyActionLabel, Is.Empty);
+            Assert.That(comparisonModel, Is.Not.Null);
+            Assert.That(
+                comparisonModel.RoundComparisonPlan.PlaybackMode,
+                Is.EqualTo(RoundComparisonPlaybackMode.SkipForDirectBust));
+        }
+
+        [Test]
+        public void CUM18_U01_SecondKnifeDoesNotReuseFirstResolvedCue()
+        {
+            var battle = new CoreLoopBattle(
+                CreateDefinitionDeck(
+                    "military-knife-9",
+                    "military-knife-9",
+                    "standard-plain-2",
+                    "standard-plain-3"),
+                CreateRankDeck(5, 1, 2, 3, 4, 5),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 5,
+                enemyPolicy: new StandPolicy());
+            Assert.That(battle.Start(), Is.True);
+
+            BlackjackCard firstKnife = battle.Player.Hand.Cards
+                .Single(card => card.IsFaceUp);
+            BlackjackCard secondKnife = battle.Player.Hand.Cards
+                .Single(card => !card.IsFaceUp);
+            Assert.That(battle.TryBeginPlayerCardUse(firstKnife.Id), Is.True);
+
+            var secondTimeline = new List<GameSceneViewModel>();
+            battle.Stepped += () =>
+                secondTimeline.Add(GameScenePresenter.Create(battle));
+            Assert.That(battle.TryBeginPlayerCardUse(secondKnife.Id), Is.True);
+
+            GameSceneKnifeAnimationCue[] cues = secondTimeline
+                .Select(model => model.KnifeAnimationCue)
+                .Where(cue => cue != null)
+                .ToArray();
+            Assert.That(cues, Is.Not.Empty);
+            Assert.That(
+                cues[0].Phase,
+                Is.EqualTo(GameSceneKnifeAnimationPhase.Ready));
+            Assert.That(
+                cues.Select(cue => cue.ActionOrdinal).Distinct().Count(),
+                Is.EqualTo(1));
+        }
+
+        [Test]
+        public void CUM18_U02_SecondHiddenRevolverDoesNotReuseFirstResolvedCue()
+        {
+            var battle = new CoreLoopBattle(
+                CreateDefinitionDeck(
+                    "auto-pistol-7",
+                    "auto-pistol-7",
+                    "standard-plain-2",
+                    "standard-plain-3"),
+                CreateRankDeck(5, 1, 2, 3, 4, 5),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 5,
+                enemyPolicy: new StandPolicy());
+            Assert.That(battle.Start(), Is.True);
+
+            BlackjackCard firstRevolver = battle.Player.Hand.Cards
+                .Single(card => card.IsFaceUp);
+            BlackjackCard secondRevolver = battle.Player.Hand.Cards
+                .Single(card => !card.IsFaceUp);
+            Assert.That(
+                battle.TryBeginPlayerCardUse(firstRevolver.Id),
+                Is.True);
+            Assert.That(battle.TryResolvePlayerCardChoice(6), Is.True);
+
+            var secondTimeline = new List<GameSceneViewModel>();
+            battle.Stepped += () =>
+                secondTimeline.Add(GameScenePresenter.Create(battle));
+            Assert.That(
+                battle.TryBeginPlayerCardUse(secondRevolver.Id),
+                Is.True);
+
+            GameSceneRevolverAnimationCue[] cues = secondTimeline
+                .Select(model => model.RevolverAnimationCue)
+                .Where(cue => cue != null)
+                .ToArray();
+            Assert.That(
+                cues.All(cue =>
+                    cue.Phase == GameSceneRevolverAnimationPhase.Ready),
+                Is.True);
+
+            GameSceneRevolverAnimationCue readyCue =
+                GameScenePresenter.Create(battle).RevolverAnimationCue;
+            Assert.That(readyCue, Is.Not.Null);
+            Assert.That(
+                readyCue.Phase,
+                Is.EqualTo(GameSceneRevolverAnimationPhase.Ready));
+            Assert.That(
+                readyCue.ActionOrdinal,
+                Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void GSV24_U01_FirstRoundPoisonInjectionCreatesPresentationCue()
+        {
+            var battle = new CoreLoopBattle(
+                CreateRankDeck(2, 3, 4, 5, 6, 7),
+                CreateRankDeck(2, 3, 4, 5, 6, 7),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 5,
+                enemyPolicy: new StandPolicy(),
+                injectsPoisonIntoPlayerDeckEachRound: true);
+
+            Assert.That(battle.Start(), Is.True);
+            GameSceneViewModel model = GameScenePresenter.Create(battle);
+
+            Assert.That(model.PoisonInjectionAnimationCue, Is.Not.Null);
+            Assert.That(
+                model.PoisonInjectionAnimationCue.RoundNumber,
+                Is.EqualTo(1));
         }
 
         [Test]

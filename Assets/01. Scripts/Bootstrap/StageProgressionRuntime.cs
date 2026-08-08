@@ -107,6 +107,15 @@ namespace DiaBlackJack.StageProgression.UI
             Destroy(instanceObject);
         }
 
+        internal static void ReturnToMainMenuAndDestroyInstance()
+        {
+            string sceneName = Instance != null
+                ? Instance.mainMenuSceneName
+                : "MainMenuScene";
+            DestroyInstanceForSceneTransition();
+            SceneManager.LoadScene(sceneName);
+        }
+
         /// <summary>
         /// Spawns a standalone, throwaway runtime configured for the scripted tutorial
         /// battle — no dedicated scene needed. Destroys any existing singleton first (same

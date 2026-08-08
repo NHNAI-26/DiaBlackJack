@@ -1207,6 +1207,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.PoisonInjectionAnnounceView
   cardImage: {fileID: 1097737198}
+  fadeInSeconds: 0.25
   holdSeconds: 0.6
   dropSeconds: 0.6
   dropDistancePixels: 700
@@ -2187,6 +2188,8 @@ MonoBehaviour:
   speechText: {fileID: 2060621172}
   charactersPerSecond: 40
   narratorDefinitionKey: asmodeus
+  speechScreenOffset: {x: 0, y: 72}
+  speechScreenMargin: 24
 --- !u!134 &1653652575
 PhysicsMaterial:
   m_ObjectHideFlags: 0

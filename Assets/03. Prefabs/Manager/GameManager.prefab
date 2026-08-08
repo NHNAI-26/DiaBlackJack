@@ -94,6 +94,8 @@ MonoBehaviour:
   knifeBaseStateName: Base Layer.Empty
   playerKnifeReadyStateName: Base Layer.Knife_Start
   enemyKnifeReadyStateName: Base Layer.Knife_Start_Enemy
+  playerKnifeLoopStateName: Base Layer.Knife_Loop
+  enemyKnifeLoopStateName: Base Layer.Knife_Loop_Enemy
   playerKnifeSuccessStateName: Base Layer.Knife_Attack
   enemyKnifeSuccessStateName: Base Layer.Knife_Attack_Enemy
   playerKnifeFailStateName: Base Layer.Knife_Disappear

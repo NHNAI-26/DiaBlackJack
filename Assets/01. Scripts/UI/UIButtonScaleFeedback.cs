@@ -109,6 +109,26 @@ namespace Border.UI
             _baseScale = _rectTransform.localScale;
         }
 
+        public void SynchronizeRestingGeometry()
+        {
+            _scaleTween?.Kill();
+            _scaleTween = null;
+            if (_rectTransform == null)
+            {
+                _rectTransform = transform as RectTransform;
+            }
+
+            if (_rectTransform == null)
+            {
+                return;
+            }
+
+            _rectTransform.localScale = _baseScale;
+            CenterPivotWithoutMovingVisuals(_rectTransform);
+            _baseScale = _rectTransform.localScale;
+            Refresh();
+        }
+
         internal static void CenterPivotWithoutMovingVisuals(
             RectTransform rectTransform)
         {

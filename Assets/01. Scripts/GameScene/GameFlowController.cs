@@ -30,11 +30,6 @@ namespace DiaBlackJack.GameScene
         [Tooltip("Hold after the enemy entrance animation finishes, before round 1 begins (HUD activates, battle binds, initial cards deal).")]
         [SerializeField, Min(0f)] private float roundOneStartDelayAfterEntrance = 3f;
 
-        // Mirrors CardHand's enterDuration (0.22s) plus a small buffer — the tutorial's
-        // post-intro dialogue must not appear until the round-1 card-deal tween that
-        // RevealRoundOneHands() kicks off has actually finished playing.
-        private const float RoundOneCardRevealAnimationSeconds = 0.3f;
-
         [Header("Merchant speech")]
         [SerializeField] private SpeechProfileSO merchantSpeechProfile;
         [SerializeField] private int merchantSpeechSeed = 20260804;
@@ -51,6 +46,8 @@ namespace DiaBlackJack.GameScene
         private bool _charactersEntranceWaiting;
         private bool _pendingHideAfterDoorAnimation;
         private bool _hasPresentedCharacters;
+        private bool _characterEntranceInProgress;
+        private int _characterEntranceRequestId;
         private bool _playCharacterExitBeforeEntrance;
         private bool _characterExitWaitingForEntrance;
         private bool _shopTransitionWaitingForEnemyExit;
@@ -167,23 +164,6 @@ namespace DiaBlackJack.GameScene
                 RefreshFlow();
             }
 
-            EnsureTutorialIntroStarted();
-        }
-
-        private void EnsureTutorialIntroStarted()
-        {
-            if (CurrentScreen != GameFlowScreen.Combat ||
-                gameManager == null ||
-                !gameManager.HasPendingTutorialIntro)
-            {
-                return;
-            }
-
-            gameManager.TutorialIntroCompleted -=
-                HandleTutorialIntroCompleted;
-            gameManager.TutorialIntroCompleted +=
-                HandleTutorialIntroCompleted;
-            gameManager.BeginTutorialIntroIfNeeded();
         }
 
         private void OnDisable()
@@ -631,17 +611,9 @@ namespace DiaBlackJack.GameScene
 
                     if (gameManager.HasPendingTutorialIntro)
                     {
-                        // The tutorial's sections 0-1 (background + blackjack-rules
-                        // dialogue) play before the enemy ever appears — RenderFlowScreen's
-                        // UpdateCharactersVisibility call below already checks
-                        // HasPendingTutorialIntro and holds charactersRoot inactive while
-                        // this is true, so the entrance/round-1 reveal below is simply
-                        // deferred until the dialogue finishes.
-                        gameManager.TutorialIntroCompleted -=
-                            HandleTutorialIntroCompleted;
-                        gameManager.TutorialIntroCompleted +=
-                            HandleTutorialIntroCompleted;
-                        gameManager.BeginTutorialIntroIfNeeded();
+                        _waitingForRoundOneReveal = true;
+                        _hasPresentedCharacters = false;
+                        BeginCharacterEntranceUnlockSafety();
                     }
                     else
                     {
@@ -778,20 +750,9 @@ namespace DiaBlackJack.GameScene
                 hudRoot.SetActive(ShouldShowHudRoot(CurrentScreen));
             }
 
-            bool combatCharactersReady =
-                gameManager == null || !gameManager.HasPendingTutorialIntro;
-            // The tutorial's forced first stage skips OpponentSelection entirely, so
-            // StartingDemonReveal -> Combat happens in a single RefreshFlow hop — the
-            // merchant-form character is already on screen (shown for the reveal) at the
-            // exact moment combatCharactersReady flips false (tutorial intro pending).
-            // Normal play never hits "already visible" + "not ready yet" at once (it
-            // always has an OpponentSelection hop in between, or never sets this flag at
-            // all), so skipExitAnimation only ever applies here.
-            bool isTutorialIntroPending = isCombat && !combatCharactersReady;
             UpdateCharactersVisibility(
-                (isCombat && combatCharactersReady) || isStartingReveal ||
-                CurrentScreen == GameFlowScreen.Shop,
-                skipExitAnimation: isTutorialIntroPending);
+                isCombat || isStartingReveal ||
+                CurrentScreen == GameFlowScreen.Shop);
 
             if (!_characterExitWaitingForEntrance &&
                 (moodController == null ||
@@ -927,6 +888,8 @@ namespace DiaBlackJack.GameScene
 
             _playCharacterExitBeforeEntrance = false;
             _characterExitWaitingForEntrance = false;
+            _characterEntranceInProgress = false;
+            _characterEntranceRequestId++;
             CancelEnemyAppearanceDelay();
             _charactersEntranceWaiting = false;
 
@@ -1030,19 +993,31 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            if (_characterEntranceInProgress)
+            {
+                return;
+            }
+
             bool wasVisible = charactersRoot.activeSelf;
+            bool shouldAnimate = !wasVisible || !_hasPresentedCharacters;
+            if (shouldAnimate && enemyCharacter != null)
+            {
+                enemyCharacter.PrepareEntranceAnimation();
+            }
             charactersRoot.SetActive(true);
-            if (!wasVisible || !_hasPresentedCharacters)
+            if (shouldAnimate)
             {
                 ApplyCharacterModeForCurrentScreen();
+                int requestId = ++_characterEntranceRequestId;
                 if (enemyCharacter != null)
                 {
+                    _characterEntranceInProgress = true;
                     enemyCharacter.PlayEntranceAnimation(
-                        CompleteCharacterEntrance);
+                        () => CompleteCharacterEntrance(requestId));
                 }
                 else
                 {
-                    CompleteCharacterEntrance();
+                    CompleteCharacterEntrance(requestId);
                 }
                 if (enemyCharacter != null)
                 {
@@ -1054,11 +1029,24 @@ namespace DiaBlackJack.GameScene
             _charactersEntranceWaiting = false;
         }
 
-        private void CompleteCharacterEntrance()
+        private void CompleteCharacterEntrance(int requestId)
         {
+            if (requestId != _characterEntranceRequestId)
+            {
+                return;
+            }
+
+            _characterEntranceInProgress = false;
             StopCharacterEntranceUnlockSafety();
             if (_waitingForRoundOneReveal)
             {
+                if (gameManager != null && gameManager.HasPendingTutorialIntro)
+                {
+                    _waitingForRoundOneReveal = false;
+                    gameManager.BeginTutorialIntroIfNeeded();
+                    return;
+                }
+
                 // The battle already bound the instant the screen entered Combat
                 // (see RefreshFlow) — this only starts the hold that gates the
                 // card-deal reveal and input unlock.
@@ -1087,12 +1075,8 @@ namespace DiaBlackJack.GameScene
             yield return new WaitForSeconds(roundOneStartDelayAfterEntrance);
             _roundOneStartRoutine = null;
             _waitingForRoundOneReveal = false;
-            gameManager.RevealRoundOneHands();
+            yield return gameManager.PresentRoundOneHands();
             gameManager.SetPresentationInputLocked(false);
-            // Tutorial-only: the post-intro dialogue was held back at IntroCompleted so it
-            // wouldn't race this entrance + card-deal reveal — only tell it to proceed once
-            // the deal tween just kicked off by RevealRoundOneHands() has actually finished.
-            yield return new WaitForSeconds(RoundOneCardRevealAnimationSeconds);
             gameManager.NotifyTutorialRoundOneRevealReady();
         }
 
@@ -1105,19 +1089,6 @@ namespace DiaBlackJack.GameScene
 
             StopCoroutine(_roundOneStartRoutine);
             _roundOneStartRoutine = null;
-        }
-
-        private void HandleTutorialIntroCompleted()
-        {
-            gameManager.TutorialIntroCompleted -= HandleTutorialIntroCompleted;
-            _waitingForRoundOneReveal = true;
-            _hasPresentedCharacters = false;
-            ResolveSceneReferences();
-            BeginCharacterEntranceUnlockSafety();
-            // combatCharactersReady in RenderFlowScreen only re-reads HasPendingTutorialIntro
-            // on its next call — force one now so the entrance actually starts this frame
-            // instead of waiting for some unrelated future re-render.
-            RenderFlowScreen();
         }
 
         private void BeginCharacterEntranceUnlockSafety()
@@ -1153,7 +1124,7 @@ namespace DiaBlackJack.GameScene
                 !_session.CombatSession.IsTutorialRun)
             {
                 _waitingForRoundOneReveal = false;
-                gameManager.RevealRoundOneHands();
+                yield return gameManager.PresentRoundOneHands();
                 _unlockInputAfterCharacterEntrance = false;
                 gameManager.SetPresentationInputLocked(false);
                 yield break;
@@ -1311,9 +1282,41 @@ namespace DiaBlackJack.GameScene
             // Formal screens decide visibility in RenderFlowScreen; standalone combat keeps
             // the authored HUD state so the enemy soul counter remains visible.
             startingDemonReveal?.BindHud(hud);
+            ResolveCharacterReferencesIncludingInactive();
+        }
+
+        private void ResolveCharacterReferencesIncludingInactive()
+        {
             if (charactersRoot == null)
             {
-                charactersRoot = GameObject.Find("Characters");
+                Transform[] transforms = FindObjectsByType<Transform>(
+                    FindObjectsInactive.Include,
+                    FindObjectsSortMode.None);
+                Transform bestCandidate = null;
+                for (int index = 0; index < transforms.Length; index++)
+                {
+                    Transform candidate = transforms[index];
+                    if (candidate != null &&
+                        candidate.gameObject.scene == gameObject.scene &&
+                        candidate.name == "Characters")
+                    {
+                        bool candidatePreferred = bestCandidate == null ||
+                            (!candidate.gameObject.activeInHierarchy &&
+                                bestCandidate.gameObject.activeInHierarchy) ||
+                            (candidate.gameObject.activeInHierarchy ==
+                                bestCandidate.gameObject.activeInHierarchy &&
+                                candidate.GetInstanceID() >
+                                    bestCandidate.GetInstanceID());
+                        if (candidatePreferred)
+                        {
+                            bestCandidate = candidate;
+                        }
+                    }
+                }
+
+                charactersRoot = bestCandidate == null
+                    ? null
+                    : bestCandidate.gameObject;
             }
 
             if (enemyCharacter == null && charactersRoot != null)
@@ -1323,6 +1326,40 @@ namespace DiaBlackJack.GameScene
                 enemyCharacter = enemy == null
                     ? null
                     : enemy.GetComponent<CharacterView>();
+            }
+
+            if (enemyCharacter != null)
+            {
+                return;
+            }
+
+            CharacterView[] characters = FindObjectsByType<CharacterView>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+            for (int index = 0; index < characters.Length; index++)
+            {
+                CharacterView candidate = characters[index];
+                if (candidate == null ||
+                    candidate.gameObject.scene != gameObject.scene ||
+                    candidate.name != "EnemyCharacter")
+                {
+                    continue;
+                }
+
+                enemyCharacter = candidate;
+                Transform ancestor = candidate.transform.parent;
+                while (charactersRoot == null && ancestor != null)
+                {
+                    if (ancestor.name == "Characters")
+                    {
+                        charactersRoot = ancestor.gameObject;
+                        break;
+                    }
+
+                    ancestor = ancestor.parent;
+                }
+
+                break;
             }
         }
 

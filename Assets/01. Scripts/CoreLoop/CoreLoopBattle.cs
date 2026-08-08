@@ -76,6 +76,11 @@ namespace DiaBlackJack.CoreLoop
         private bool _isBeginningAutomaticCardEffect;
         private bool _isResolvingEnemyAutomaticChoice;
         private bool _isContinuingEnemyTurn;
+        private long _nextEnemyTurnExecutionId = 1;
+        private long _activeEnemyTurnExecutionId;
+        private int _enemyTurnExecutionRoundNumber;
+        private bool _enemyNormalActionConsumed;
+        private bool _enemyTurnAllowsContinuousActions;
         private bool _playerPoisonSoulDeathDeferred;
         private bool _enemyPoisonSoulDeathDeferred;
         private int _nextAutomaticCardInteractionId = 1;
@@ -412,6 +417,8 @@ namespace DiaBlackJack.CoreLoop
         public CardEffectResult? LastCardEffectResult { get; private set; }
 
         public CombatantSide? LastCardEffectActorSide { get; private set; }
+
+        internal int LastCardEffectResultActionOrdinal { get; private set; } = -1;
 
         public EnemyDecision LastEnemyDecision { get; private set; }
 
@@ -2937,6 +2944,12 @@ namespace DiaBlackJack.CoreLoop
             _activeAutomaticCardEffectContext =
                 new AutomaticCardEffectContext(this, ownerSide, sourceCard);
             _automaticCardContinuation = continuation;
+            if (continuation.ActorSide == CombatantSide.Enemy &&
+                _activeEnemyTurnExecutionId > 0)
+            {
+                continuation.BindEnemyTurnExecution(
+                    _activeEnemyTurnExecutionId);
+            }
             CoreLoopState stateBeforeAutomaticChoice = State;
             _isBeginningAutomaticCardEffect = true;
             try
@@ -4687,6 +4700,14 @@ namespace DiaBlackJack.CoreLoop
             AutomaticCardContinuation continuation,
             AutomaticCardResult result)
         {
+            if (continuation.ActorSide == CombatantSide.Enemy &&
+                continuation.EnemyTurnExecutionId > 0 &&
+                continuation.EnemyTurnExecutionId !=
+                    _activeEnemyTurnExecutionId)
+            {
+                return;
+            }
+
             switch (continuation.Kind)
             {
                 case AutomaticCardContinuationKind.PlayerHit:
@@ -4999,6 +5020,8 @@ namespace DiaBlackJack.CoreLoop
                         // ever played.
                         LastCardEffectResult = resumedResult;
                         LastCardEffectActorSide = _activeCardEffectActorSide;
+                        LastCardEffectResultActionOrdinal =
+                            PublicActionHistory.Count;
                     });
                 if (handling == OwnerBustHandlingResult.Prevented)
                 {
@@ -5107,6 +5130,8 @@ namespace DiaBlackJack.CoreLoop
                             result.Succeeded);
                     LastCardEffectResult = result;
                     LastCardEffectActorSide = actorSide;
+                    LastCardEffectResultActionOrdinal =
+                        PublicActionHistory.Count;
                     _pendingCardEffect = repeatedStep.PendingEffect;
                     State = actorSide == CombatantSide.Player
                         ? CoreLoopState.PlayerResolvingCardEffect
@@ -5155,6 +5180,7 @@ namespace DiaBlackJack.CoreLoop
 
             LastCardEffectResult = result;
             LastCardEffectActorSide = actorSide;
+            LastCardEffectResultActionOrdinal = PublicActionHistory.Count;
             _pendingCardEffect = null;
             _activeCardEffectContext = null;
             _activeCardEffectActorSide = null;
@@ -5588,6 +5614,10 @@ namespace DiaBlackJack.CoreLoop
 
         private void StartRound()
         {
+            // A round transition is a hard boundary for enemy-turn continuations.
+            // Round-start effects may temporarily enter EnemyTurn before the player
+            // receives control, so they must not inherit the completed round's ID.
+            EndEnemyTurnExecution();
             State = CoreLoopState.StartingRound;
             RoundNumber++;
             TurnNumber = 0;
@@ -5720,11 +5750,13 @@ namespace DiaBlackJack.CoreLoop
             }
 
             NotifyNormalTurnEnded(CombatantSide.Player);
+            BeginEnemyTurnExecution();
             RunEnemyTurn();
         }
 
         private void BeginPlayerTurn()
         {
+            EndEnemyTurnExecution();
             _resolvedPlayerTurnStartContractIds.Clear();
             State = CoreLoopState.PlayerTurn;
             if (!HandleNormalTurnStarted(
@@ -5747,6 +5779,11 @@ namespace DiaBlackJack.CoreLoop
 
         private void RunEnemyTurn()
         {
+            if (_activeEnemyTurnExecutionId == 0)
+            {
+                BeginEnemyTurnExecution();
+            }
+
             _resolvedEnemyTurnStartContractIds.Clear();
             State = CoreLoopState.EnemyTurn;
 
@@ -5794,6 +5831,13 @@ namespace DiaBlackJack.CoreLoop
             {
                 while (State == CoreLoopState.EnemyTurn)
                 {
+                    if (_enemyTurnExecutionRoundNumber != RoundNumber)
+                    {
+                        EndEnemyTurnExecution();
+                        BeginPlayerTurn();
+                        return;
+                    }
+
                     if (Enemy.IsStanding &&
                         PendingEnemyCardEffect == null &&
                         _pendingEnemyDemonContractInteraction == null)
@@ -5807,6 +5851,15 @@ namespace DiaBlackJack.CoreLoop
                             BeginPlayerTurn();
                         }
 
+                        return;
+                    }
+
+                    if (_enemyNormalActionConsumed &&
+                        !_enemyTurnAllowsContinuousActions &&
+                        PendingEnemyCardEffect == null &&
+                        _pendingEnemyDemonContractInteraction == null)
+                    {
+                        BeginPlayerTurn();
                         return;
                     }
 
@@ -5891,6 +5944,8 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
+            bool continuesExistingAction = PendingEnemyCardEffect != null ||
+                _pendingEnemyDemonContractInteraction != null;
             bool executed;
             switch (decision.ActionType)
             {
@@ -5982,6 +6037,11 @@ namespace DiaBlackJack.CoreLoop
 
             if (executed)
             {
+                if (!continuesExistingAction)
+                {
+                    _enemyNormalActionConsumed = true;
+                }
+
                 _enemyDecisionOrdinal++;
             }
 
@@ -6128,6 +6188,22 @@ namespace DiaBlackJack.CoreLoop
             {
                 return (RoundNumber * 397) ^ _enemyDecisionOrdinal;
             }
+        }
+
+        private void BeginEnemyTurnExecution()
+        {
+            _activeEnemyTurnExecutionId = _nextEnemyTurnExecutionId++;
+            _enemyTurnExecutionRoundNumber = RoundNumber;
+            _enemyNormalActionConsumed = false;
+            _enemyTurnAllowsContinuousActions = Player.IsStanding;
+        }
+
+        private void EndEnemyTurnExecution()
+        {
+            _activeEnemyTurnExecutionId = 0;
+            _enemyTurnExecutionRoundNumber = 0;
+            _enemyNormalActionConsumed = false;
+            _enemyTurnAllowsContinuousActions = false;
         }
 
         private void RaiseStepped()
