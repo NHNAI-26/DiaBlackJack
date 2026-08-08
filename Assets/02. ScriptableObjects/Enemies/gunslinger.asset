@@ -20,7 +20,7 @@ MonoBehaviour:
   skullTint: {r: 1.7346646, g: 0.94797355, b: 0.67913747, a: 1}
   grade: 0
   maximumSoul: 4
-  defeatGold: 4
+  defeatGold: 120
   behaviorPolicyKey: gunslinger-public-inference
   startingDeck:
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120001, type: 2}

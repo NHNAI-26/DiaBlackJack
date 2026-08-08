@@ -19,8 +19,8 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(run.Phase, Is.EqualTo(FormalRunPhase.Shop));
             Assert.That(run.ActiveShop.Offer.VisitIndex, Is.Zero);
             Assert.That(run.CompletedShopCount, Is.Zero);
-            Assert.That(run.LastGoldReward, Is.EqualTo(4));
-            Assert.That(run.CombatSession.Progress.Player.CurrentGold, Is.EqualTo(4));
+            Assert.That(run.LastGoldReward, Is.EqualTo(120));
+            Assert.That(run.CombatSession.Progress.Player.CurrentGold, Is.EqualTo(120));
             Assert.That(run.CombatSession.Progress.CurrentStageIndex, Is.Zero);
             Assert.That(
                 run.CombatSession.Progress.State,
@@ -63,8 +63,8 @@ namespace DiaBlackJack.StageProgression.Tests
 
             Assert.That(run.Phase, Is.EqualTo(FormalRunPhase.Shop));
             Assert.That(run.ActiveShop.Offer.VisitIndex, Is.EqualTo(1));
-            Assert.That(run.LastGoldReward, Is.EqualTo(9));
-            Assert.That(run.CombatSession.Progress.Player.CurrentGold, Is.EqualTo(13));
+            Assert.That(run.LastGoldReward, Is.EqualTo(300));
+            Assert.That(run.CombatSession.Progress.Player.CurrentGold, Is.EqualTo(420));
             Assert.That(run.CombatSession.Progress.CurrentStageIndex, Is.EqualTo(1));
             Assert.That(run.CombatSession.Progress.PendingReward, Is.Null);
         }
@@ -92,8 +92,8 @@ namespace DiaBlackJack.StageProgression.Tests
             WinCurrentBattle(run.CombatSession, StageProgressionState.RunVictory);
 
             Assert.That(run.Phase, Is.EqualTo(FormalRunPhase.RunVictory));
-            Assert.That(run.LastGoldReward, Is.EqualTo(15));
-            Assert.That(run.CombatSession.Progress.Player.CurrentGold, Is.EqualTo(28));
+            Assert.That(run.LastGoldReward, Is.Zero);
+            Assert.That(run.CombatSession.Progress.Player.CurrentGold, Is.EqualTo(420));
             Assert.That(run.ActiveShop, Is.Null);
             Assert.That(run.CombatSession.Progress.State, Is.EqualTo(StageProgressionState.RunVictory));
             Assert.That(run.CombatSession.Progress.PendingReward, Is.Null);
@@ -163,7 +163,7 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(observedSoul, Is.EqualTo(12));
             Assert.That(observedDeckCount, Is.EqualTo(player.Deck.Count));
             Assert.That(observedDeckCount, Is.EqualTo(5));
-            Assert.That(run.UtilityPriceLevel, Is.EqualTo(1));
+            Assert.That(run.UtilityPriceLevel, Is.Zero);
         }
 
         [Test]
@@ -273,8 +273,8 @@ namespace DiaBlackJack.StageProgression.Tests
 
             Assert.That(restored.Phase, Is.EqualTo(FormalRunPhase.Shop));
             Assert.That(restored.ActiveShop.Offer.OfferId, Is.EqualTo(expected.OfferId));
-            Assert.That(restored.ActiveShop.Offer.LighterPrice, Is.EqualTo(3));
-            Assert.That(restored.ActiveShop.Offer.WhiskeyPrice, Is.EqualTo(3));
+            Assert.That(restored.ActiveShop.Offer.LighterPrice, Is.EqualTo(70));
+            Assert.That(restored.ActiveShop.Offer.WhiskeyPrice, Is.EqualTo(50));
             Assert.That(
                 restored.ActiveShop.Offer.CardOptions
                     .Select(option => option.DefinitionKey),

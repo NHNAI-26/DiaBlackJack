@@ -1910,9 +1910,9 @@ MonoBehaviour:
   demonCardSpacing: 1.1
   normalCardOfferCount: 3
   normalCardSpacing: 0.95
-  lighterPrice: 2
-  whiskeyPrice: 2
-  lighterPriceIncreasePerUsedVisit: 1
+  lighterPrice: 50
+  whiskeyPrice: 50
+  lighterPriceIncreasePerUsedVisit: 20
   whiskeySoulRestore: 2
   shopRandomSeed: 20260726
   merchantSpeechProfile: {fileID: 11400000, guid: 0fb23cb8f2399b54cb64d57d5dec38bf, type: 2}

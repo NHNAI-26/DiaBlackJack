@@ -17,7 +17,7 @@ MonoBehaviour:
   description: "\uB371 \uC704 \uCE74\uB4DC 2\uC7A5\uC744 \uD655\uC778\uD569\uB2C8\uB2E4.
     \uCD5C\uB300 1\uC7A5\uC744 \uACF5\uAC1C \uCE74\uB4DC\uB85C \uAC00\uC838\uC624\uACE0,
     \uB098\uBA38\uC9C0\uB294 \uB371\uC5D0 \uB3CC\uB824\uB193\uC2B5\uB2C8\uB2E4."
-  basePurchasePrice: 2
+  basePurchasePrice: 40
   shopWeight: 3
   rank: 5
   activation: 2

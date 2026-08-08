@@ -20,7 +20,7 @@ MonoBehaviour:
   skullTint: {r: 2.994795, g: 1.5962822, b: 1.5962822, a: 1}
   grade: 2
   maximumSoul: 9
-  defeatGold: 15
+  defeatGold: 0
   behaviorPolicyKey: final-boss-three-phase
   startingDeck:
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120001, type: 2}

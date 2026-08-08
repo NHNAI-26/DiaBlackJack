@@ -2,6 +2,7 @@ using DiaBlackJack.GameScene;
 using DiaBlackJack.GameScene.Editor;
 using DiaBlackJack.Content;
 using DiaBlackJack.Bootstrap;
+using DiaBlackJack.StageProgression;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,8 +38,47 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/Card/DemonCard.prefab";
         private const string CatalogPath =
             "Assets/02. ScriptableObjects/Cards/CardContentCatalog.asset";
+        private const string EnemyCatalogPath =
+            "Assets/02. ScriptableObjects/Enemies/EnemyContentCatalog.asset";
         private const string UsedMarkTexturePath =
             "Assets/05. Arts/Texture/CardSprite/Overlay/UsedCardPencilStroke.png";
+
+        [Test]
+        public void ECON01_U01_CardContentAssetsUseConfiguredPurchasePrices()
+        {
+            CardContentCatalog catalog = LoadCatalog().BuildRuntimeCatalog();
+
+            foreach (CardDefinition definition in catalog.NormalDefinitions)
+            {
+                Assert.That(
+                    definition.BasePurchasePrice,
+                    Is.EqualTo(GetExpectedNormalPurchasePrice(definition.Key)),
+                    definition.Key);
+            }
+
+            foreach (DemonContractDefinition definition in catalog.DemonDefinitions)
+            {
+                Assert.That(
+                    definition.BasePurchasePrice,
+                    Is.EqualTo(GetExpectedDemonPurchasePrice(definition.Key)),
+                    definition.Key);
+            }
+        }
+
+        [Test]
+        public void ECON01_U02_EnemyContentAssetsUseConfiguredGoldRewards()
+        {
+            EnemyContentCatalogSO enemyCatalog =
+                AssetDatabase.LoadAssetAtPath<EnemyContentCatalogSO>(EnemyCatalogPath);
+            GoldRewardCatalog rewards = enemyCatalog.BuildGoldRewardCatalog();
+
+            Assert.That(rewards.GetAmount(EnemyCombatProfileCatalog.CowardlyGamblerKey), Is.EqualTo(100));
+            Assert.That(rewards.GetAmount(EnemyCombatProfileCatalog.GunslingerKey), Is.EqualTo(120));
+            Assert.That(rewards.GetAmount(EnemyCombatProfileCatalog.CultistKey), Is.EqualTo(200));
+            Assert.That(rewards.GetAmount(EnemyCombatProfileCatalog.TricksterKey), Is.EqualTo(300));
+            Assert.That(rewards.GetAmount(EnemyCombatProfileCatalog.EnforcerKey), Is.EqualTo(300));
+            Assert.That(rewards.GetAmount(EnemyCombatProfileCatalog.FinalBossKey), Is.Zero);
+        }
 
         [Test]
         public void CC_U06_CardContentAssetBuildsAllDefinitions()
@@ -58,8 +98,14 @@ namespace DiaBlackJack.CoreLoop.Tests
                     definition.Description,
                     isEffectlessPlainCard ? Is.Empty : Is.Not.Empty,
                     definition.Key);
-                Assert.That(definition.BasePurchasePrice, Is.EqualTo(3), definition.Key);
-                Assert.That(definition.ShopWeight, Is.EqualTo(1), definition.Key);
+                Assert.That(
+                    definition.BasePurchasePrice,
+                    Is.EqualTo(GetExpectedNormalPurchasePrice(definition.Key)),
+                    definition.Key);
+                Assert.That(
+                    definition.ShopWeight,
+                    Is.EqualTo(GetExpectedNormalShopWeight(definition.Key)),
+                    definition.Key);
             }
 
             for (int rank = 1; rank <= 10; rank++)
@@ -74,8 +120,91 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(definition.DisplayName, Is.Not.Empty, definition.Key);
                 Assert.That(definition.Summary, Is.Not.Empty, definition.Key);
                 Assert.That(definition.CostSummary, Is.Not.Empty, definition.Key);
-                Assert.That(definition.BasePurchasePrice, Is.EqualTo(3), definition.Key);
-                Assert.That(definition.ShopWeight, Is.EqualTo(1), definition.Key);
+                Assert.That(
+                    definition.BasePurchasePrice,
+                    Is.EqualTo(GetExpectedDemonPurchasePrice(definition.Key)),
+                    definition.Key);
+                Assert.That(
+                    definition.ShopWeight,
+                    Is.EqualTo(GetExpectedDemonShopWeight(definition.Key)),
+                    definition.Key);
+            }
+        }
+
+        private static int GetExpectedNormalPurchasePrice(string definitionKey)
+        {
+            switch (definitionKey)
+            {
+                case "standard-plain-2":
+                case "standard-plain-3":
+                case "standard-plain-4":
+                    return 25;
+                case "poison-1":
+                    return 30;
+                case "crystal-orb-5":
+                case "threat-hammer-6":
+                    return 40;
+                case "standard-ace-1":
+                case "auto-pistol-7":
+                case "auto-pistol-8":
+                case "military-knife-9":
+                case "military-knife-10":
+                case "resurrection-herb-2":
+                case "lie-detector-3":
+                    return 60;
+                case "flamethrower-4":
+                case "pocket-watch-5":
+                    return 80;
+                default:
+                    throw new AssertionException(
+                        $"Unknown normal card price for '{definitionKey}'.");
+            }
+        }
+
+        private static int GetExpectedDemonPurchasePrice(string definitionKey)
+        {
+            switch (definitionKey)
+            {
+                case "beelzebub":
+                case "mammon":
+                    return 70;
+                case "satan":
+                    return 75;
+                case "asmodeus":
+                    return 80;
+                case "belphegor":
+                    return 90;
+                case "azazel":
+                    return 120;
+                default:
+                    return 3;
+            }
+        }
+
+        private static int GetExpectedNormalShopWeight(string definitionKey)
+        {
+            return definitionKey == "poison-1" ||
+                definitionKey == "resurrection-herb-2" ||
+                definitionKey == "lie-detector-3" ||
+                definitionKey == "flamethrower-4" ||
+                definitionKey == "pocket-watch-5"
+                ? 2
+                : 3;
+        }
+
+        private static int GetExpectedDemonShopWeight(string definitionKey)
+        {
+            switch (definitionKey)
+            {
+                case "beelzebub":
+                case "mammon":
+                case "satan":
+                case "asmodeus":
+                    return 3;
+                case "belphegor":
+                    return 2;
+                default:
+                    return 1;
             }
         }
 

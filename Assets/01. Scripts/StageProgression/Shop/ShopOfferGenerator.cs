@@ -7,9 +7,9 @@ namespace DiaBlackJack.StageProgression
 {
     public sealed class ShopOfferGenerator
     {
-        public const int DefaultLighterPrice = 2;
-        public const int DefaultWhiskeyPrice = 2;
-        public const int DefaultUtilityPriceIncrease = 1;
+        public const int DefaultLighterPrice = 50;
+        public const int DefaultWhiskeyPrice = 50;
+        public const int DefaultUtilityPriceIncrease = 20;
         public const int DefaultWhiskeyRecovery = 2;
 
         private readonly CardContentCatalog _cardContentCatalog;
@@ -106,7 +106,7 @@ namespace DiaBlackJack.StageProgression
                 utilityPriceLevel);
             int whiskeyPrice = CalculateUtilityPrice(
                 _whiskeyBasePrice,
-                utilityPriceLevel);
+                0);
             var options = new List<ShopCardOption>(5);
             AddNormalOptions(options, followsEliteVictory);
             AddDemonOptions(options, ownedDemonDefinitionKeys);

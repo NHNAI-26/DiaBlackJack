@@ -28,11 +28,11 @@ namespace DiaBlackJack.StageProgression
                         nameof(rewards));
                 }
 
-                if (reward.Value <= 0)
+                if (reward.Value < 0)
                 {
                     throw new ArgumentOutOfRangeException(
                         nameof(rewards),
-                        "Gold reward amount must be positive.");
+                        "Gold reward amount cannot be negative.");
                 }
 
                 if (!_amountsByProfileKey.TryAdd(reward.Key, reward.Value))
@@ -66,12 +66,12 @@ namespace DiaBlackJack.StageProgression
         {
             return new GoldRewardCatalog(new[]
             {
-                CreateReward(EnemyCombatProfileCatalog.CowardlyGamblerKey, 3),
-                CreateReward(EnemyCombatProfileCatalog.GunslingerKey, 4),
-                CreateReward(EnemyCombatProfileCatalog.CultistKey, 6),
-                CreateReward(EnemyCombatProfileCatalog.TricksterKey, 7),
-                CreateReward(EnemyCombatProfileCatalog.EnforcerKey, 9),
-                CreateReward(EnemyCombatProfileCatalog.FinalBossKey, 15)
+                CreateReward(EnemyCombatProfileCatalog.CowardlyGamblerKey, 100),
+                CreateReward(EnemyCombatProfileCatalog.GunslingerKey, 120),
+                CreateReward(EnemyCombatProfileCatalog.CultistKey, 200),
+                CreateReward(EnemyCombatProfileCatalog.TricksterKey, 300),
+                CreateReward(EnemyCombatProfileCatalog.EnforcerKey, 300),
+                CreateReward(EnemyCombatProfileCatalog.FinalBossKey, 0)
             });
         }
 

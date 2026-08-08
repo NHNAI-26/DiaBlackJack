@@ -33,7 +33,7 @@ MonoBehaviour:
     \uC218 \uC5C6\uB294 \uACF3\uC5D0 \uB3C4\uCC29\uD558\uBA74 \uC544\uC2A4\uBAA8\uB370\uC6B0\uC2A4\uB294
     \uC544\uC9C1 \uD55C \uAC78\uC74C\uC774 \uB354 \uB0A8\uC558\uB2E4\uACE0 \uC18D\uC0AD\uC778\uB2E4."
   baseSoulCost: 1
-  basePurchasePrice: 3
+  basePurchasePrice: 80
   shopWeight: 3
   kind: 6
   faceSprite: {fileID: 21300000, guid: acb5af161e8bc9241b82bac12269e39b, type: 3}

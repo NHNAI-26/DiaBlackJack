@@ -12,16 +12,16 @@ namespace DiaBlackJack.StageProgression.Tests
         {
             GoldRewardCatalog catalog = GoldRewardCatalog.CreatePrototype();
 
-            Assert.That(catalog.GetAmount(EnemyCombatProfileCatalog.CowardlyGamblerKey), Is.EqualTo(3));
-            Assert.That(catalog.GetAmount(EnemyCombatProfileCatalog.GunslingerKey), Is.EqualTo(4));
-            Assert.That(catalog.GetAmount(EnemyCombatProfileCatalog.CultistKey), Is.EqualTo(6));
-            Assert.That(catalog.GetAmount(EnemyCombatProfileCatalog.TricksterKey), Is.EqualTo(7));
-            Assert.That(catalog.GetAmount(EnemyCombatProfileCatalog.EnforcerKey), Is.EqualTo(9));
-            Assert.That(catalog.GetAmount(EnemyCombatProfileCatalog.FinalBossKey), Is.EqualTo(15));
+            Assert.That(catalog.GetAmount(EnemyCombatProfileCatalog.CowardlyGamblerKey), Is.EqualTo(100));
+            Assert.That(catalog.GetAmount(EnemyCombatProfileCatalog.GunslingerKey), Is.EqualTo(120));
+            Assert.That(catalog.GetAmount(EnemyCombatProfileCatalog.CultistKey), Is.EqualTo(200));
+            Assert.That(catalog.GetAmount(EnemyCombatProfileCatalog.TricksterKey), Is.EqualTo(300));
+            Assert.That(catalog.GetAmount(EnemyCombatProfileCatalog.EnforcerKey), Is.EqualTo(300));
+            Assert.That(catalog.GetAmount(EnemyCombatProfileCatalog.FinalBossKey), Is.Zero);
         }
 
         [Test]
-        public void RF01B_U02_EliteAndBossRewardsExceedLowerGrades()
+        public void RF01B_U02_EliteRewardsMatchBalanceAndBossAwardsNoGold()
         {
             GoldRewardCatalog catalog = GoldRewardCatalog.CreatePrototype();
             int largestNormalReward = Math.Max(
@@ -34,8 +34,8 @@ namespace DiaBlackJack.StageProgression.Tests
             int eliteReward = catalog.GetAmount(EnemyCombatProfileCatalog.EnforcerKey);
             int bossReward = catalog.GetAmount(EnemyCombatProfileCatalog.FinalBossKey);
 
-            Assert.That(eliteReward, Is.GreaterThan(largestNormalReward));
-            Assert.That(bossReward, Is.GreaterThan(eliteReward));
+            Assert.That(eliteReward, Is.EqualTo(largestNormalReward));
+            Assert.That(bossReward, Is.Zero);
         }
 
         [Test]
@@ -50,7 +50,7 @@ namespace DiaBlackJack.StageProgression.Tests
             }));
             Assert.Throws<ArgumentOutOfRangeException>(() => new GoldRewardCatalog(new[]
             {
-                new KeyValuePair<string, int>("profile", 0)
+                new KeyValuePair<string, int>("profile", -1)
             }));
             Assert.Throws<ArgumentException>(() => new GoldRewardCatalog(new[]
             {
@@ -68,12 +68,12 @@ namespace DiaBlackJack.StageProgression.Tests
         {
             var expectedRewards = new[]
             {
-                new KeyValuePair<string, int>(EnemyCombatProfileCatalog.CowardlyGamblerKey, 3),
-                new KeyValuePair<string, int>(EnemyCombatProfileCatalog.GunslingerKey, 4),
-                new KeyValuePair<string, int>(EnemyCombatProfileCatalog.CultistKey, 6),
-                new KeyValuePair<string, int>(EnemyCombatProfileCatalog.TricksterKey, 7),
-                new KeyValuePair<string, int>(EnemyCombatProfileCatalog.EnforcerKey, 9),
-                new KeyValuePair<string, int>(EnemyCombatProfileCatalog.FinalBossKey, 15)
+                new KeyValuePair<string, int>(EnemyCombatProfileCatalog.CowardlyGamblerKey, 100),
+                new KeyValuePair<string, int>(EnemyCombatProfileCatalog.GunslingerKey, 120),
+                new KeyValuePair<string, int>(EnemyCombatProfileCatalog.CultistKey, 200),
+                new KeyValuePair<string, int>(EnemyCombatProfileCatalog.TricksterKey, 300),
+                new KeyValuePair<string, int>(EnemyCombatProfileCatalog.EnforcerKey, 300),
+                new KeyValuePair<string, int>(EnemyCombatProfileCatalog.FinalBossKey, 0)
             };
 
             foreach (KeyValuePair<string, int> expected in expectedRewards)
@@ -107,7 +107,7 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
-        public void RF01B_I02_FinalBossVictoryAwardsBossGold()
+        public void RF01B_I02_FinalBossVictoryAwardsNoGold()
         {
             StageProgressionSession session = CreateSession(
                 EnemyCombatProfileCatalog.FinalBossKey,
@@ -118,7 +118,7 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(session.TryPlayerStand(), Is.True);
 
             Assert.That(session.Progress.State, Is.EqualTo(StageProgressionState.RewardSelection));
-            Assert.That(session.Progress.Player.CurrentGold, Is.EqualTo(15));
+            Assert.That(session.Progress.Player.CurrentGold, Is.Zero);
             Assert.That(
                 session.Progress.PendingReward.CompletionTarget,
                 Is.EqualTo(BattleRewardCompletionTarget.RunVictory));

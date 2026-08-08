@@ -20,7 +20,7 @@ MonoBehaviour:
   skullTint: {r: 0.45600677, g: 0.8679245, b: 0.42168033, a: 1}
   grade: 1
   maximumSoul: 7
-  defeatGold: 7
+  defeatGold: 300
   behaviorPolicyKey: trickster-information-control
   startingDeck:
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120001, type: 2}

@@ -20,7 +20,7 @@ MonoBehaviour:
   skullTint: {r: 3.1630478, g: 2.313543, b: 1.2980433, a: 1}
   grade: 0
   maximumSoul: 4
-  defeatGold: 3
+  defeatGold: 100
   behaviorPolicyKey: cowardly-gambler-low-risk
   startingDeck:
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120001, type: 2}
