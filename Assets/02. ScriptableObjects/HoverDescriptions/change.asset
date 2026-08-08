@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: change
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.HoverDescriptionSO
   title: "\uCCB4\uC778\uC9C0"
-  descriptionTemplate: "\uD788\uB4E0 \uCE74\uB4DC\uB97C \uACF5\uAC1C\uD574 \uBC84\uB9B0
-    \uB4A4, \\n\uD6C4\uBCF4 \uCE74\uB4DC 2\uC7A5 \uC911 1\uC7A5\uC744 \uC120\uD0DD\uD569\uB2C8\uB2E4."
+  descriptionTemplate: "\uB0B4 \uB371\uC5D0\uC11C \uCE74\uB4DC 2\uC7A5\uC744 \uBF51\uC544
+    \uADF8 \uC911 1\uC7A5\uC744 \uBE44\uACF5\uAC1C \uCE74\uB4DC\uB85C \uBC14\uAFC9\uB2C8\uB2E4."
   stateDescriptions: []

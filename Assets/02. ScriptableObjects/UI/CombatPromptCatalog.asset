@@ -19,10 +19,9 @@ MonoBehaviour:
     template: "\uC0C1\uB300 \uBE44\uACF5\uAC1C \uCE74\uB4DC\uC758 \uC22B\uC790\uB97C
       \uC120\uD0DD\uD558\uC138\uC694."
   - id: 3
-    template: "\uAC00\uC838\uC62C \uCE74\uB4DC\uB97C \uC120\uD0DD\uD558\uAC70\uB098
-      \uAC74\uB108\uB6F0\uC138\uC694."
+    template: "\uAC00\uC838\uC62C \uCE74\uB4DC\uB97C \uC120\uD0DD\uD558\uC138\uC694."
   - id: 4
-    template: "\uBC84\uB9B4 \uC0C1\uB300 \uACF5\uAC1C \uCE74\uB4DC\uB97C \uC120\uD0DD\uD558\uC138\uC694."
+    template: "\uBC84\uB9B4 \uC0C1\uB300\uC758 \uACF5\uAC1C \uCE74\uB4DC\uB97C \uC120\uD0DD\uD558\uC138\uC694."
   - id: 5
     template: "{source}: \uC0C1\uB300 \uBE44\uACF5\uAC1C \uCE74\uB4DC\uC640 \uBE44\uAD50\uD560
       \uC22B\uC790\uB97C \uC120\uD0DD\uD558\uC138\uC694."
@@ -30,32 +29,28 @@ MonoBehaviour:
     template: "{source}: \uB3C5\uADF9\uBB3C\uC758 \uD6A8\uACFC\uB97C \uC120\uD0DD\uD558\uC138\uC694."
   - id: 7
     template: "{source}: \uBC84\uB9B4 \uACF5\uAC1C \uCE74\uB4DC \uD55C \uC7A5\uC744
-      \uC120\uD0DD\uD558\uAC70\uB098 \uAC74\uB108\uB6F0\uC138\uC694."
+      \uC120\uD0DD\uD558\uC138\uC694."
   - id: 8
-    template: "{source}: \uB2E4\uC2DC \uC0AC\uC6A9\uD560 \uC218\uB3D9 \uCE74\uB4DC
-      \uD55C \uC7A5\uC744 \uC120\uD0DD\uD558\uAC70\uB098 \uAC74\uB108\uB6F0\uC138\uC694."
+    template: "{source}: \uB2E4\uC2DC \uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC0C1\uD0DC\uB85C
+      \uB9CC\uB4E4 \uCE74\uB4DC \uD55C \uC7A5\uC744 \uC120\uD0DD\uD558\uC138\uC694."
   - id: 9
-    template: "{source}: \uD68C\uC911\uC2DC\uACC4\uB97C \uC720\uC9C0\uD560\uC9C0
-      \uBC84\uB9B4\uC9C0 \uC120\uD0DD\uD558\uC138\uC694."
+    template: "{source}: \uD68C\uC911\uC2DC\uACC4\uB97C \uBC84\uB9AC\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?"
   - id: 10
     template: "{source}: \uC601\uD63C 1\uC744 \uC9C0\uBD88\uD558\uACE0 \uD328\uB97C
-      \uB2E4\uC2DC \uBC1B\uC744\uC9C0 \uC120\uD0DD\uD558\uC138\uC694."
+      \uB2E4\uC2DC \uBC1B\uC73C\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?"
   - id: 11
     template: "\uACC4\uC57D\uD560 \uC545\uB9C8\uB97C \uC120\uD0DD\uD558\uC138\uC694."
   - id: 12
-    template: "{context}\n\uD655\uC778\uD55C \uB371 \uC704 \uCE74\uB4DC\uB97C \uCC98\uB9AC\uD558\uC138\uC694."
+    template: "{context}\n\uD655\uC778\uD55C \uB371 \uC704 \uCE74\uB4DC\uB97C \uD788\uD2B8\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?"
   - id: 13
     template: "\uD604\uC7AC \uAC12\uC744 \uC720\uC9C0\uD560\uC9C0 \uB2E4\uC2DC \uAD74\uB9B4\uC9C0
       \uC120\uD0DD\uD558\uC138\uC694."
   - id: 14
-    template: "\uCD5C\uC885 \uC2B9\uBD80\uC5D0 \uD604\uC7AC \uC8FC\uC0AC\uC704 \uAC12\uC744
-      \uD3EC\uD568\uD560\uC9C0 \uC120\uD0DD\uD558\uC138\uC694."
+    template: "\uCD1D\uD569\uC5D0 \uD604\uC7AC \uC8FC\uC0AC\uC704 \uC218\uB97C \uB354\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?"
   - id: 15
-    template: "\uCCAB \uBC88\uC9F8 \uC22B\uC790\uB97C \uC120\uD0DD\uD558\uC138\uC694.
-      ({current}/{required})"
+    template: "\uC22B\uC790 2\uAC1C\uB97C \uC120\uD0DD\uD558\uC138\uC694. ({current}/{required})"
   - id: 16
-    template: "\uB450 \uBC88\uC9F8 \uC22B\uC790\uB97C \uC120\uD0DD\uD558\uC138\uC694.
-      ({current}/{required})"
+    template: "\uC22B\uC790 2\uAC1C\uB97C \uC120\uD0DD\uD558\uC138\uC694. ({current}/{required})"
   - id: 17
     template: "\uBC84\uB9B4 \uB0B4 \uACF5\uAC1C \uCE74\uB4DC\uB97C \uC120\uD0DD\uD558\uC138\uC694.
       ({current}/{required})"
@@ -63,9 +58,9 @@ MonoBehaviour:
     template: "\uBC84\uB9B4 \uC0C1\uB300 \uACF5\uAC1C \uCE74\uB4DC\uB97C \uC120\uD0DD\uD558\uC138\uC694.
       ({current}/{required})"
   - id: 19
-    template: "\uC0C1\uB300\uB97C \uD788\uD2B8\uC2DC\uD0AC\uC9C0 \uC120\uD0DD\uD558\uC138\uC694."
+    template: "\uC0C1\uB300\uB97C \uD788\uD2B8\uC2DC\uD0A4\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?"
   - id: 20
-    template: "\uC0AC\uD0C4 \uB2A5\uB825\uC744 \uC0AC\uC6A9\uD560\uC9C0 \uC120\uD0DD\uD558\uC138\uC694."
+    template: "\uC0AC\uD0C4 \uB2A5\uB825\uC744 \uC0AC\uC6A9\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?"
   - id: 21
     template: "\uCE74\uB4DC\uB97C \uCD94\uBC29\uD560 \uB371\uC744 \uC120\uD0DD\uD558\uC138\uC694."
   - id: 22
@@ -79,72 +74,82 @@ MonoBehaviour:
       \uAC74\uB108\uB6F0\uC138\uC694."
   automaticResultEntries:
   - id: 1
-    template: "{ownerPossessive} [{source}] 효과가 발동했습니다.\n{outcome}"
-    comparisonTemplate: ""
-    playerOwnerLabel: "나"
-    playerPossessiveLabel: "내"
-    enemyOwnerLabel: "적"
-    discardDispositionLabel: "사용 후 버려졌습니다."
-    retainDispositionLabel: "공개 상태로 남았습니다."
+    template: "{ownerPossessive} [{source}] \uD6A8\uACFC\uAC00 \uBC1C\uB3D9\uD588\uC2B5\uB2C8\uB2E4.\n{outcome}"
+    comparisonTemplate: 
+    playerOwnerLabel: "\uB098"
+    playerPossessiveLabel: "\uB0B4"
+    enemyOwnerLabel: "\uC801"
+    discardDispositionLabel: "\uC0AC\uC6A9 \uD6C4 \uBC84\uB824\uC84C\uC2B5\uB2C8\uB2E4."
+    retainDispositionLabel: "\uACF5\uAC1C \uC0C1\uD0DC\uB85C \uB0A8\uC558\uC2B5\uB2C8\uB2E4."
     acceptedDecisionLabel: "\uC218\uB77D"
     declinedDecisionLabel: "\uAC70\uC808"
-    atLeastComparisonLabel: "이상입니다."
-    belowComparisonLabel: "미만입니다."
-    reservedOutcomeLabel: "승리하면 영혼을 회복합니다."
-    resolvedOutcomeLabel: "영혼 회복 없이 효과가 끝났습니다."
+    atLeastComparisonLabel: "\uC774\uC0C1\uC785\uB2C8\uB2E4."
+    belowComparisonLabel: "\uBBF8\uB9CC\uC785\uB2C8\uB2E4."
+    reservedOutcomeLabel: "\uC2B9\uB9AC\uD558\uBA74 \uC601\uD63C\uC744 \uD68C\uBCF5\uD569\uB2C8\uB2E4."
+    resolvedOutcomeLabel: "\uC601\uD63C \uD68C\uBCF5 \uC5C6\uC774 \uD6A8\uACFC\uAC00
+      \uB05D\uB0AC\uC2B5\uB2C8\uB2E4."
   - id: 2
-    template: "{ownerPossessive} [{source}] 효과가 발동했습니다.\n나는 {playerDecision}. {enemy} 측에서는 {enemyDecision}.\n카드는 {disposition}"
-    comparisonTemplate: ""
-    playerOwnerLabel: "나"
-    playerPossessiveLabel: "내"
-    enemyOwnerLabel: "적"
-    discardDispositionLabel: "사용 후 버려졌습니다."
-    retainDispositionLabel: "공개 상태로 남았습니다."
-    acceptedDecisionLabel: "영혼 1을 지불했습니다"
-    declinedDecisionLabel: "효과를 거절했습니다"
-    atLeastComparisonLabel: "이상입니다."
-    belowComparisonLabel: "미만입니다."
-    reservedOutcomeLabel: "승리하면 영혼을 회복합니다."
-    resolvedOutcomeLabel: "영혼 회복 없이 효과가 끝났습니다."
+    template: "{ownerPossessive} [{source}] \uD6A8\uACFC\uAC00 \uBC1C\uB3D9\uD588\uC2B5\uB2C8\uB2E4.\n\uB098\uB294
+      {playerDecision}. {enemy} \uCE21\uC5D0\uC11C\uB294 {enemyDecision}."
+    comparisonTemplate: 
+    playerOwnerLabel: "\uB098"
+    playerPossessiveLabel: "\uB0B4"
+    enemyOwnerLabel: "\uC801"
+    discardDispositionLabel: "\uC0AC\uC6A9 \uD6C4 \uBC84\uB824\uC84C\uC2B5\uB2C8\uB2E4."
+    retainDispositionLabel: "\uACF5\uAC1C \uC0C1\uD0DC\uB85C \uB0A8\uC558\uC2B5\uB2C8\uB2E4."
+    acceptedDecisionLabel: "\uC601\uD63C 1\uC744 \uC9C0\uBD88\uD588\uC2B5\uB2C8\uB2E4"
+    declinedDecisionLabel: "\uD6A8\uACFC\uB97C \uAC70\uC808\uD588\uC2B5\uB2C8\uB2E4"
+    atLeastComparisonLabel: "\uC774\uC0C1\uC785\uB2C8\uB2E4."
+    belowComparisonLabel: "\uBBF8\uB9CC\uC785\uB2C8\uB2E4."
+    reservedOutcomeLabel: "\uC2B9\uB9AC\uD558\uBA74 \uC601\uD63C\uC744 \uD68C\uBCF5\uD569\uB2C8\uB2E4."
+    resolvedOutcomeLabel: "\uC601\uD63C \uD68C\uBCF5 \uC5C6\uC774 \uD6A8\uACFC\uAC00
+      \uB05D\uB0AC\uC2B5\uB2C8\uB2E4."
   - id: 3
-    template: "{ownerPossessive} [{source}] 효과로 숫자 {declared}을 선언했습니다.\n카드는 {disposition}"
-    comparisonTemplate: "\n확인 결과, {enemy}의 비공개 카드는 선언한 숫자 {comparison}"
-    playerOwnerLabel: "나"
-    playerPossessiveLabel: "내"
-    enemyOwnerLabel: "적"
-    discardDispositionLabel: "사용 후 버려졌습니다."
-    retainDispositionLabel: "공개 상태로 남았습니다."
+    template: "{ownerPossessive} [{source}] \uD6A8\uACFC\uB85C \uC22B\uC790 {declared}\uC744
+      \uC120\uC5B8\uD588\uC2B5\uB2C8\uB2E4."
+    comparisonTemplate: "\n\uD655\uC778 \uACB0\uACFC, {enemy}\uC758 \uBE44\uACF5\uAC1C
+      \uCE74\uB4DC\uB294 \uC120\uC5B8\uD55C \uC22B\uC790 {comparison}"
+    playerOwnerLabel: "\uB098"
+    playerPossessiveLabel: "\uB0B4"
+    enemyOwnerLabel: "\uC801"
+    discardDispositionLabel: "\uC0AC\uC6A9 \uD6C4 \uBC84\uB824\uC84C\uC2B5\uB2C8\uB2E4."
+    retainDispositionLabel: "\uACF5\uAC1C \uC0C1\uD0DC\uB85C \uB0A8\uC558\uC2B5\uB2C8\uB2E4."
     acceptedDecisionLabel: "\uC218\uB77D"
     declinedDecisionLabel: "\uAC70\uC808"
-    atLeastComparisonLabel: "이상입니다."
-    belowComparisonLabel: "미만입니다."
-    reservedOutcomeLabel: "승리하면 영혼을 회복합니다."
-    resolvedOutcomeLabel: "영혼 회복 없이 효과가 끝났습니다."
+    atLeastComparisonLabel: "\uC774\uC0C1\uC785\uB2C8\uB2E4."
+    belowComparisonLabel: "\uBBF8\uB9CC\uC785\uB2C8\uB2E4."
+    reservedOutcomeLabel: "\uC2B9\uB9AC\uD558\uBA74 \uC601\uD63C\uC744 \uD68C\uBCF5\uD569\uB2C8\uB2E4."
+    resolvedOutcomeLabel: "\uC601\uD63C \uD68C\uBCF5 \uC5C6\uC774 \uD6A8\uACFC\uAC00
+      \uB05D\uB0AC\uC2B5\uB2C8\uB2E4."
   - id: 4
-    template: "{ownerPossessive} [{source}] 효과가 발동했습니다.\n나는 {playerDecision}. {enemy} 측에서는 {enemyDecision}.\n카드는 {disposition}"
-    comparisonTemplate: ""
-    playerOwnerLabel: "나"
-    playerPossessiveLabel: "내"
-    enemyOwnerLabel: "적"
-    discardDispositionLabel: "사용 후 버려졌습니다."
-    retainDispositionLabel: "공개 상태로 남았습니다."
-    acceptedDecisionLabel: "카드를 버렸습니다"
-    declinedDecisionLabel: "카드를 버리지 않았습니다"
-    atLeastComparisonLabel: "이상입니다."
-    belowComparisonLabel: "미만입니다."
-    reservedOutcomeLabel: "승리하면 영혼을 회복합니다."
-    resolvedOutcomeLabel: "영혼 회복 없이 효과가 끝났습니다."
+    template: "{ownerPossessive} [{source}] \uD6A8\uACFC\uAC00 \uBC1C\uB3D9\uD588\uC2B5\uB2C8\uB2E4.\n\uB098\uB294
+      {playerDecision}. {enemy} \uCE21\uC5D0\uC11C\uB294 {enemyDecision}."
+    comparisonTemplate: 
+    playerOwnerLabel: "\uB098"
+    playerPossessiveLabel: "\uB0B4"
+    enemyOwnerLabel: "\uC801"
+    discardDispositionLabel: "\uC0AC\uC6A9 \uD6C4 \uBC84\uB824\uC84C\uC2B5\uB2C8\uB2E4."
+    retainDispositionLabel: "\uACF5\uAC1C \uC0C1\uD0DC\uB85C \uB0A8\uC558\uC2B5\uB2C8\uB2E4."
+    acceptedDecisionLabel: "\uCE74\uB4DC\uB97C \uBC84\uB838\uC2B5\uB2C8\uB2E4"
+    declinedDecisionLabel: "\uCE74\uB4DC\uB97C \uBC84\uB9AC\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4"
+    atLeastComparisonLabel: "\uC774\uC0C1\uC785\uB2C8\uB2E4."
+    belowComparisonLabel: "\uBBF8\uB9CC\uC785\uB2C8\uB2E4."
+    reservedOutcomeLabel: "\uC2B9\uB9AC\uD558\uBA74 \uC601\uD63C\uC744 \uD68C\uBCF5\uD569\uB2C8\uB2E4."
+    resolvedOutcomeLabel: "\uC601\uD63C \uD68C\uBCF5 \uC5C6\uC774 \uD6A8\uACFC\uAC00
+      \uB05D\uB0AC\uC2B5\uB2C8\uB2E4."
   - id: 5
-    template: "{ownerPossessive} [{source}] 효과가 발동했습니다.\n이 카드는 {disposition}"
-    comparisonTemplate: ""
-    playerOwnerLabel: "나"
-    playerPossessiveLabel: "내"
-    enemyOwnerLabel: "적"
-    discardDispositionLabel: "사용 후 버려졌습니다."
-    retainDispositionLabel: "공개 상태로 남았습니다."
+    template: "{ownerPossessive} [{source}] \uD6A8\uACFC\uAC00 \uBC1C\uB3D9\uD588\uC2B5\uB2C8\uB2E4.\n\uD788\uC911\uC2DC\uACC4\uB294
+      {disposition}"
+    comparisonTemplate: 
+    playerOwnerLabel: "\uB098"
+    playerPossessiveLabel: "\uB0B4"
+    enemyOwnerLabel: "\uC801"
+    discardDispositionLabel: "\uC0AC\uC6A9 \uD6C4 \uBC84\uB824\uC84C\uC2B5\uB2C8\uB2E4."
+    retainDispositionLabel: "\uBC84\uB824\uC9C0\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4."
     acceptedDecisionLabel: "\uC218\uB77D"
     declinedDecisionLabel: "\uAC70\uC808"
-    atLeastComparisonLabel: "이상입니다."
-    belowComparisonLabel: "미만입니다."
-    reservedOutcomeLabel: "승리하면 영혼을 회복합니다."
-    resolvedOutcomeLabel: "영혼 회복 없이 효과가 끝났습니다."
+    atLeastComparisonLabel: "\uC774\uC0C1\uC785\uB2C8\uB2E4."
+    belowComparisonLabel: "\uBBF8\uB9CC\uC785\uB2C8\uB2E4."
+    reservedOutcomeLabel: "\uC2B9\uB9AC\uD558\uBA74 \uC601\uD63C\uC744 \uD68C\uBCF5\uD569\uB2C8\uB2E4."
+    resolvedOutcomeLabel: "\uC601\uD63C \uD68C\uBCF5 \uC5C6\uC774 \uD6A8\uACFC\uAC00
+      \uB05D\uB0AC\uC2B5\uB2C8\uB2E4."

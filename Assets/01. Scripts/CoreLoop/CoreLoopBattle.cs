@@ -5615,7 +5615,6 @@ namespace DiaBlackJack.CoreLoop
             _publicActionHistory.Clear();
             _lastPublicActionSourceCardId = null;
             _lastAutomaticCardResultActionOrdinal = -1;
-            _automaticCardResultPrompt = null;
             _lastSatanForcedDrawActionOrdinal = -1;
             _lastSatanNumberGuessActionOrdinal = -1;
             _lastSatanNumberGuessTargetCardId = -1;
@@ -6158,6 +6157,11 @@ namespace DiaBlackJack.CoreLoop
                     nameof(sourceCardId));
             }
 
+            if (actorSide == CombatantSide.Player)
+            {
+                _automaticCardResultPrompt = null;
+            }
+
             _publicActionHistory.Add(new PublicCombatAction(
                 actorSide,
                 actionType,
@@ -6563,7 +6567,6 @@ namespace DiaBlackJack.CoreLoop
         private void NotifyNormalTurnEnded(CombatantSide actorSide)
         {
             TurnNumber++;
-            _automaticCardResultPrompt = null;
 
             IReadOnlyList<ActiveDemonContract> activeContracts =
                 actorSide == CombatantSide.Player
@@ -7226,6 +7229,7 @@ namespace DiaBlackJack.CoreLoop
         {
             ClearPlayerDemonContractInteraction();
             ClearEnemyDemonContractInteraction();
+            _automaticCardResultPrompt = null;
             _pendingBeelzebubBustResolution = null;
             _activeAzazelCardEffectSequence = null;
             _playerAzazelBustPending = false;

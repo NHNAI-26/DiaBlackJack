@@ -265,8 +265,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(AutomaticCardResultPromptIdMap.ForEffect(effectKind)));
             Assert.That(
                 CoreLoopPresenter.Create(battle).AutomaticCardResult,
-                Is.Null,
-                "The prompt result must be gone after the action turn ends.");
+                battle.LastResolution.HasValue ? Is.Null : Is.Not.Null,
+                "The prompt result must survive ordinary turn completion but clear when round resolution begins.");
         }
 
         [Test]
@@ -371,6 +371,88 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(catalog.TryResolve(request, out string fallbackText),
                 Is.True);
             Assert.That(fallbackText, Does.Contain("적의 [회중시계]"));
+        }
+
+        [Test]
+        public void CP04_U09_ResultSurvivesRejectedInputAndClearsOnNextPlayerAction()
+        {
+            CoreLoopBattle battle = AutomaticCardDebugPanel.CreateBattle(
+                CombatantSide.Player,
+                CardEffectKind.LieDetector);
+            Assert.That(battle.Start(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+
+            PendingAutomaticCardInteraction pending =
+                battle.PendingPlayerAutomaticInteraction;
+            Assert.That(pending, Is.Not.Null);
+            Assert.That(
+                battle.TryResolvePlayerAutomaticCardChoice(
+                    pending.InteractionId,
+                    pending.Options[0].OptionId),
+                Is.True);
+            Assert.That(
+                battle.AutomaticCardResultPrompt.HasValue,
+                Is.True);
+
+            Assert.That(
+                battle.TryResolvePlayerAutomaticCardChoice(-1, -1),
+                Is.False);
+            Assert.That(
+                battle.AutomaticCardResultPrompt.HasValue,
+                Is.True,
+                "Rejected input must not dismiss the result prompt.");
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(
+                battle.AutomaticCardResultPrompt.HasValue,
+                Is.False,
+                "The next accepted player action must dismiss the result prompt.");
+        }
+
+        [Test]
+        public void CP04_U10_ResultClearsWhenRoundResolutionBegins()
+        {
+            CoreLoopBattle battle = AutomaticCardDebugPanel.CreateBattle(
+                CombatantSide.Player,
+                CardEffectKind.Poison);
+            Assert.That(battle.Start(), Is.True);
+            int roundBeforeHit = battle.RoundNumber;
+            bool observedRoundResolution = false;
+            bool promptWasVisibleDuringRoundResolution = true;
+
+            battle.Stepped += () =>
+            {
+                if (battle.State != CoreLoopState.ResolvingRound ||
+                    !battle.LastResolution.HasValue)
+                {
+                    return;
+                }
+
+                observedRoundResolution = true;
+                promptWasVisibleDuringRoundResolution =
+                    battle.AutomaticCardResultPrompt.HasValue;
+            };
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            PendingAutomaticCardInteraction pending =
+                battle.PendingPlayerAutomaticInteraction;
+            Assert.That(pending, Is.Not.Null);
+            Assert.That(
+                battle.TryResolvePlayerAutomaticCardChoice(
+                    pending.InteractionId,
+                    pending.Options[0].OptionId),
+                Is.True);
+
+            Assert.That(battle.RoundNumber, Is.GreaterThan(roundBeforeHit));
+            Assert.That(observedRoundResolution, Is.True);
+            Assert.That(
+                promptWasVisibleDuringRoundResolution,
+                Is.False,
+                "The prompt must be gone before the comparison presentation is published.");
+            Assert.That(
+                battle.AutomaticCardResultPrompt.HasValue,
+                Is.False,
+                "A resolved prompt must not carry into the next round.");
         }
 
         private static void AssertResolved(

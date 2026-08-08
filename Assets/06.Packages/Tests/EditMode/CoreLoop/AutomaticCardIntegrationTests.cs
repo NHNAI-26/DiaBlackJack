@@ -37,7 +37,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             CoreLoopViewModel resultModel =
                 CoreLoopPresenter.Create(session.Battle);
             Assert.That(resultModel.AutomaticCardInteraction, Is.Null);
-            Assert.That(resultModel.AutomaticCardResult, Is.Null);
+            Assert.That(resultModel.AutomaticCardResult.HasValue, Is.True);
+            Assert.That(
+                resultModel.AutomaticCardResult.Value.Id,
+                Is.EqualTo(AutomaticCardResultPromptId.Poison));
             Assert.That(
                 session.Battle.LastAutomaticCardResult.Value.EffectKind,
                 Is.EqualTo(CardEffectKind.Poison));
