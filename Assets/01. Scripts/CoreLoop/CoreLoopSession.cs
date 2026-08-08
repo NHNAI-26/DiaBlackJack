@@ -74,6 +74,11 @@ namespace DiaBlackJack.CoreLoop
                 secondNumber);
         }
 
+        internal bool TryContinuePostEffectBustReplacement()
+        {
+            return Battle.TryContinuePostEffectBustReplacement();
+        }
+
         public bool TryBeginPlayerMammonReroll(int sourceContractCardId)
         {
             return Battle.TryBeginPlayerMammonReroll(sourceContractCardId);

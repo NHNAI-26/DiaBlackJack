@@ -4334,6 +4334,43 @@ namespace DiaBlackJack.GameScene
                 }
             }
 
+            CoreLoopBattle battle = Battle;
+            if (battle != null &&
+                battle.HasPendingPostEffectBustReplacement)
+            {
+                GameSceneViewModel continuationBaseline = timeline.Count > 0
+                    ? timeline[timeline.Count - 1]
+                    : timelineBaseline;
+                _timeline.Clear();
+                bool continued;
+                battle.Stepped += OnBattleStepped;
+                try
+                {
+                    continued = IsStageBattle
+                        ? _stageSession.TryContinuePostEffectBustReplacement()
+                        : _session.TryContinuePostEffectBustReplacement();
+                }
+                finally
+                {
+                    battle.Stepped -= OnBattleStepped;
+                }
+
+                if (!continued)
+                {
+                    Debug.LogError(
+                        "Failed to continue the pending post-effect bust replacement.",
+                        this);
+                }
+                else if (_timeline.Count > 0)
+                {
+                    yield return PlayTimeline(
+                        continuationBaseline,
+                        playerActionSkull: null,
+                        waitForPlayerActionSkull: false);
+                    yield break;
+                }
+            }
+
             while (ShouldHoldInputForRevolverReady(
                        _revolverReadyActive,
                        _revolverSelectionReady,

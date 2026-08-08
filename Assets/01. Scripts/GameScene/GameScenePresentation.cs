@@ -1556,27 +1556,28 @@ namespace DiaBlackJack.GameScene
                     actionOrdinal: actionOrdinal);
             }
 
-            if (battle.PendingEnemyCardEffect != null ||
-                !battle.LastCardEffectResult.HasValue ||
-                !battle.LastCardEffectActorSide.HasValue)
+            // A lethal result intercepted by Beelzebub deliberately keeps the active
+            // card-effect context until the weapon presentation finishes. Read the matching
+            // completed result before treating PendingEnemyCardEffect as an unresolved Ready
+            // state; otherwise the revolver result cue appears only after Beelzebub resolves.
+            if (battle.LastCardEffectResult.HasValue &&
+                battle.LastCardEffectActorSide.HasValue)
             {
-                return null;
+                CardEffectResult result = battle.LastCardEffectResult.Value;
+                if (result.EffectKind == CardEffectKind.AutoPistol &&
+                    IsLastUseCardEffect(battle, result.EffectKind) &&
+                    battle.LastCardEffectResultActionOrdinal == actionOrdinal)
+                {
+                    return new GameSceneRevolverAnimationCue(
+                        battle.RoundNumber,
+                        result.SourceCardId,
+                        battle.LastCardEffectActorSide.Value,
+                        result.Succeeded,
+                        actionOrdinal);
+                }
             }
 
-            CardEffectResult result = battle.LastCardEffectResult.Value;
-            if (result.EffectKind != CardEffectKind.AutoPistol ||
-                !IsLastUseCardEffect(battle, result.EffectKind) ||
-                battle.LastCardEffectResultActionOrdinal != actionOrdinal)
-            {
-                return null;
-            }
-
-            return new GameSceneRevolverAnimationCue(
-                battle.RoundNumber,
-                result.SourceCardId,
-                battle.LastCardEffectActorSide.Value,
-                result.Succeeded,
-                actionOrdinal);
+            return null;
         }
 
         private static GameSceneKnifeAnimationCue CreateKnifeAnimationCue(

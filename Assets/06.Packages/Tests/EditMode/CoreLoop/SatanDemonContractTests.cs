@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DiaBlackJack.CoreLoop.UI;
+using DiaBlackJack.GameScene;
 using NUnit.Framework;
 
 namespace DiaBlackJack.CoreLoop.Tests
@@ -274,6 +275,68 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void DCR02_U15_LethalSatanWaitsBeforeEnemyBeelzebubReplacement()
+        {
+            DemonContractCatalog catalog = DemonContractCatalog.Default;
+            var enemyDemonDeck = new DemonContractDeck(
+                new[]
+                {
+                    new DemonContractCard(
+                        200,
+                        catalog.GetByKey(DemonContractCatalog.BeelzebubKey)),
+                    new DemonContractCard(
+                        201,
+                        catalog.GetByKey(DemonContractCatalog.AsmodeusKey))
+                },
+                seed: 83);
+            var fixedPhases = new[]
+            {
+                new FixedDemonContractPhaseDefinition(
+                    activationSoulThreshold: null,
+                    DemonContractCatalog.BeelzebubKey,
+                    DemonContractCatalog.AsmodeusKey)
+            };
+            CoreLoopBattle battle = CreateStartedBattle(
+                CreatePlainDeck(LowRanks(12)),
+                BlackjackDeck.CreateInDrawOrder(
+                    CreateCards(new[] { 10, 7, 2, 2, 2, 2 }, startId: 100)),
+                new StandPolicy(),
+                CreateRepeatedSatanDeck(),
+                playerCurrentSoul: 12,
+                enemyMaximumSoul: 5,
+                enemyDemonDeck,
+                fixedEnemyDemonContractPhases: fixedPhases);
+            ActivateSatan(battle);
+            int soulBeforeSatan = battle.Enemy.Soul.Current;
+
+            Assert.That(BeginSatanAbilityViaTurnStart(battle), Is.True);
+            PendingDemonContractInteraction pending =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(battle.TryResolvePlayerSatanNumbers(
+                pending.InteractionId,
+                3,
+                7), Is.True);
+
+            Assert.That(battle.HasPendingPostEffectBustReplacement, Is.True);
+            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(soulBeforeSatan));
+            Assert.That(battle.LastDemonContractEffectResult.BustedTarget,
+                Is.EqualTo(CombatantSide.Enemy));
+            GameSceneSatanNumberGuessAnimationCue satanCue =
+                GameScenePresenter.Create(battle)
+                    .SatanNumberGuessAnimationCue;
+            Assert.That(satanCue, Is.Not.Null);
+            Assert.That(satanCue.Succeeded, Is.True);
+
+            Assert.That(
+                battle.TryContinuePostEffectBustReplacement(),
+                Is.True);
+
+            Assert.That(battle.HasPendingPostEffectBustReplacement, Is.False);
+            Assert.That(battle.Enemy.Soul.Current,
+                Is.EqualTo(soulBeforeSatan - 1));
+        }
+
+        [Test]
         public void DCR02_U14_InvalidAtomicNumbersPreservePendingInteraction()
         {
             CoreLoopBattle battle = CreateSatanBattle(
@@ -484,7 +547,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             int enemyMaximumSoul,
             DemonContractDeck enemyDemonDeck = null,
             AutomaticCardEffectResolver automaticCardEffectResolver = null,
-            IAutomaticCardDecisionPolicy enemyAutomaticCardDecisionPolicy = null)
+            IAutomaticCardDecisionPolicy enemyAutomaticCardDecisionPolicy = null,
+            IReadOnlyList<FixedDemonContractPhaseDefinition>
+                fixedEnemyDemonContractPhases = null)
         {
             var battle = new CoreLoopBattle(
                 playerDeck,
@@ -498,7 +563,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 DemonContractResolver.CreateDefault(),
                 enemyDemonDeck,
                 automaticCardEffectResolver,
-                enemyAutomaticCardDecisionPolicy);
+                enemyAutomaticCardDecisionPolicy,
+                fixedEnemyDemonContractPhases:
+                    fixedEnemyDemonContractPhases);
             Assert.That(battle.Start(), Is.True);
             return battle;
         }

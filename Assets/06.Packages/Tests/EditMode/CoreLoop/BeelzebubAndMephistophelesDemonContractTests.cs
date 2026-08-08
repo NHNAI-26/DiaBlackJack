@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DiaBlackJack.GameScene;
 using NUnit.Framework;
 
 namespace DiaBlackJack.CoreLoop.Tests
@@ -104,6 +105,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             var effectKinds = new List<CardEffectKind?>();
             var playerSouls = new List<int>();
             var pendingKinds = new List<DemonContractInteractionKind?>();
+            var revolverPhases =
+                new List<GameSceneRevolverAnimationPhase?>();
+            var lastActionTypes = new List<PublicCombatActionType?>();
             battle.Stepped += () =>
             {
                 effectKinds.Add(
@@ -111,6 +115,10 @@ namespace DiaBlackJack.CoreLoop.Tests
                 playerSouls.Add(battle.Player.Soul.Current);
                 pendingKinds.Add(
                     battle.PendingPlayerDemonContractInteraction?.Kind);
+                revolverPhases.Add(
+                    GameScenePresenter.Create(battle)
+                        .RevolverAnimationCue?.Phase);
+                lastActionTypes.Add(battle.LastPublicAction?.ActionType);
             };
 
             ActivateFirstContract(battle);
@@ -120,6 +128,22 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(weaponResultIndex, Is.GreaterThanOrEqualTo(0));
             Assert.That(playerSouls[weaponResultIndex], Is.EqualTo(11));
             Assert.That(pendingKinds[weaponResultIndex], Is.Null);
+            Assert.That(revolverPhases[weaponResultIndex],
+                Is.EqualTo(GameSceneRevolverAnimationPhase.Resolved),
+                $"phases={string.Join(",", revolverPhases)}; " +
+                $"actions={string.Join(",", lastActionTypes)}");
+            Assert.That(battle.HasPendingPostEffectBustReplacement, Is.True);
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.EnemyTurn));
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(11));
+            Assert.That(battle.PendingPlayerDemonContractInteraction, Is.Null);
+            Assert.That(pendingKinds, Has.None.EqualTo(
+                DemonContractInteractionKind.BeelzebubChooseOwnerCard));
+
+            Assert.That(
+                battle.TryContinuePostEffectBustReplacement(),
+                Is.True);
+
+            Assert.That(battle.HasPendingPostEffectBustReplacement, Is.False);
             int beelzebubIndex = pendingKinds.FindIndex(
                 weaponResultIndex + 1,
                 kind => kind ==
@@ -317,6 +341,43 @@ namespace DiaBlackJack.CoreLoop.Tests
                 ownerCardId: null,
                 opponentCardId), Is.True);
             Assert.That(battle.Enemy.Hand.Contains(opponentCardId), Is.False);
+        }
+
+        [Test]
+        public void DCR04_U11_LethalKnifeWaitsBeforeBeelzebubReplacement()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                PlainDeck(new[] { 10, 7, 5, 10, 2, 2, 2, 2 }),
+                KnifeDeck(startId: 100),
+                new SequencePolicy(
+                    EnemyActionType.Hit,
+                    EnemyActionType.UseCard),
+                DemonContractKind.Beelzebub,
+                playerCurrentSoul: 12);
+
+            ActivateFirstContract(battle);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+
+            Assert.That(battle.LastCardEffectResult, Is.Not.Null);
+            Assert.That(battle.LastCardEffectResult.Value.EffectKind,
+                Is.EqualTo(CardEffectKind.MilitaryKnife));
+            Assert.That(battle.LastCardEffectResult.Value.EndedRound, Is.True);
+            Assert.That(battle.HasPendingPostEffectBustReplacement, Is.True);
+            Assert.That(
+                GameScenePresenter.Create(battle).KnifeAnimationCue?.Phase,
+                Is.EqualTo(GameSceneKnifeAnimationPhase.Resolved));
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(11));
+            Assert.That(battle.PendingPlayerDemonContractInteraction, Is.Null);
+
+            Assert.That(
+                battle.TryContinuePostEffectBustReplacement(),
+                Is.True);
+
+            Assert.That(battle.HasPendingPostEffectBustReplacement, Is.False);
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(10));
+            Assert.That(battle.PendingPlayerDemonContractInteraction.Kind,
+                Is.EqualTo(
+                    DemonContractInteractionKind.BeelzebubChooseOwnerCard));
         }
 
         private static CoreLoopBattle CreateBattle(

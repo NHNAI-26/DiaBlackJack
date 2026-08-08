@@ -14,6 +14,7 @@ namespace DiaBlackJack.CoreLoop
     {
         NotHandled,
         Prevented,
+        PendingPostEffectContinuation,
         PendingSelection,
         Resumed,
         BattleEnded
@@ -86,6 +87,8 @@ namespace DiaBlackJack.CoreLoop
         private int _nextAutomaticCardInteractionId = 1;
         private int _enemyDecisionOrdinal;
         private int _nextDemonContractInteractionId = 1;
+        private PendingPostEffectBustReplacement
+            _pendingPostEffectBustReplacement;
         private PendingBeelzebubBustResolution _pendingBeelzebubBustResolution;
         private bool _isResolvingEnemyBeelzebubChoice;
         private PendingPaimonExileResolution _pendingPaimonExileResolution;
@@ -419,6 +422,9 @@ namespace DiaBlackJack.CoreLoop
         public CombatantSide? LastCardEffectActorSide { get; private set; }
 
         internal int LastCardEffectResultActionOrdinal { get; private set; } = -1;
+
+        internal bool HasPendingPostEffectBustReplacement =>
+            _pendingPostEffectBustReplacement != null;
 
         public EnemyDecision LastEnemyDecision { get; private set; }
 
@@ -2852,6 +2858,26 @@ namespace DiaBlackJack.CoreLoop
                 healAmount);
         }
 
+        private sealed class PendingPostEffectBustReplacement
+        {
+            public PendingPostEffectBustReplacement(
+                ActiveDemonContract activeContract,
+                CoreLoopState resumeState,
+                Action resume)
+            {
+                ActiveContract = activeContract ??
+                    throw new ArgumentNullException(nameof(activeContract));
+                ResumeState = resumeState;
+                Resume = resume ?? throw new ArgumentNullException(nameof(resume));
+            }
+
+            public ActiveDemonContract ActiveContract { get; }
+
+            public Action Resume { get; }
+
+            public CoreLoopState ResumeState { get; }
+        }
+
         internal void DeferPoisonSoulDeathUntilRoundEnd(
             CombatantSide ownerSide)
         {
@@ -4472,10 +4498,12 @@ namespace DiaBlackJack.CoreLoop
             {
                 CombatantSide targetSide = GetOppositeSide(ownerSide);
                 handling = targetSide == CombatantSide.Player
-                    ? HandlePlayerBust(() =>
-                        CompleteSatanAfterPreventedTargetBust(ownerSide))
-                    : HandleEnemyBust(() =>
-                        CompleteSatanAfterPreventedTargetBust(ownerSide));
+                    ? HandlePlayerBust(
+                        () => CompleteSatanAfterPreventedTargetBust(ownerSide),
+                        () => PublishSatanBustResult(targetSide))
+                    : HandleEnemyBust(
+                        () => CompleteSatanAfterPreventedTargetBust(ownerSide),
+                        () => PublishSatanBustResult(targetSide));
             }
 
             if (handling != OwnerBustHandlingResult.NotHandled &&
@@ -4558,10 +4586,12 @@ namespace DiaBlackJack.CoreLoop
             if (busted)
             {
                 handling = opponentSide == CombatantSide.Player
-                    ? HandlePlayerBust(() =>
-                        CompleteSatanAfterPreventedTargetBust(ownerSide))
-                    : HandleEnemyBust(() =>
-                        CompleteSatanAfterPreventedTargetBust(ownerSide));
+                    ? HandlePlayerBust(
+                        () => CompleteSatanAfterPreventedTargetBust(ownerSide),
+                        () => PublishSatanBustResult(opponentSide))
+                    : HandleEnemyBust(
+                        () => CompleteSatanAfterPreventedTargetBust(ownerSide),
+                        () => PublishSatanBustResult(opponentSide));
                 if (handling != OwnerBustHandlingResult.NotHandled &&
                     handling != OwnerBustHandlingResult.Prevented)
                 {
@@ -4603,6 +4633,14 @@ namespace DiaBlackJack.CoreLoop
                 ? CoreLoopState.PlayerTurn
                 : CoreLoopState.EnemyTurn;
             CompleteSatanContractAction(ownerSide);
+        }
+
+        private void PublishSatanBustResult(CombatantSide bustedTarget)
+        {
+            LastDemonContractEffectResult = new DemonContractEffectResult(
+                triggered: true,
+                bustedTarget,
+                paidSoulCost: 0);
         }
 
         private void CompleteSatanContractAction(CombatantSide ownerSide)
@@ -5067,7 +5105,7 @@ namespace DiaBlackJack.CoreLoop
                         // any snapshot until the contract's interaction resolves, so the
                         // interception would appear to happen before the weapon's presentation
                         // ever played.
-                        LastCardEffectResult = resumedResult;
+                        LastCardEffectResult = result;
                         LastCardEffectActorSide = _activeCardEffectActorSide;
                         LastCardEffectResultActionOrdinal =
                             PublicActionHistory.Count;
@@ -5265,7 +5303,8 @@ namespace DiaBlackJack.CoreLoop
                             actorSide,
                             completedLeviathanSequence,
                             result,
-                            resumedContractResult));
+                            resumedContractResult),
+                        beforeBustReplacementPublish: () => { });
                     if (handling == OwnerBustHandlingResult.Prevented)
                     {
                         contractResolution = null;
@@ -5682,6 +5721,7 @@ namespace DiaBlackJack.CoreLoop
             _enemyPoisonSoulDeathDeferred = false;
             ClearPlayerDemonContractInteraction();
             ClearEnemyDemonContractInteraction();
+            _pendingPostEffectBustReplacement = null;
             _pendingBeelzebubBustResolution = null;
             _pendingPaimonExileResolution = null;
             _belialForcedCardEffectContinuation = null;
@@ -5880,6 +5920,11 @@ namespace DiaBlackJack.CoreLoop
             {
                 while (State == CoreLoopState.EnemyTurn)
                 {
+                    if (_pendingPostEffectBustReplacement != null)
+                    {
+                        return;
+                    }
+
                     if (_enemyTurnExecutionRoundNumber != RoundNumber)
                     {
                         EndEnemyTurnExecution();
@@ -6188,7 +6233,8 @@ namespace DiaBlackJack.CoreLoop
         {
             if (State != CoreLoopState.EnemyTurn ||
                 PendingEnemyCardEffect != null ||
-                _pendingEnemyDemonContractInteraction != null)
+                _pendingEnemyDemonContractInteraction != null ||
+                _pendingPostEffectBustReplacement != null)
             {
                 return;
             }
@@ -6425,8 +6471,51 @@ namespace DiaBlackJack.CoreLoop
             {
                 beforeBustReplacementPublish();
                 RaiseStepped();
+                if (_pendingPostEffectBustReplacement != null)
+                {
+                    throw new InvalidOperationException(
+                        "A post-effect bust replacement is already pending.");
+                }
+
+                _pendingPostEffectBustReplacement =
+                    new PendingPostEffectBustReplacement(
+                        replacementContract,
+                        State,
+                        resume);
+                return OwnerBustHandlingResult.PendingPostEffectContinuation;
             }
 
+            return BeginOwnerBustReplacement(
+                replacementContract,
+                State,
+                resume);
+        }
+
+        internal bool TryContinuePostEffectBustReplacement()
+        {
+            PendingPostEffectBustReplacement pending =
+                _pendingPostEffectBustReplacement;
+            if (pending == null ||
+                _pendingBeelzebubBustResolution != null ||
+                State == CoreLoopState.BattleEnded)
+            {
+                return false;
+            }
+
+            _pendingPostEffectBustReplacement = null;
+            BeginOwnerBustReplacement(
+                pending.ActiveContract,
+                pending.ResumeState,
+                pending.Resume);
+            return true;
+        }
+
+        private OwnerBustHandlingResult BeginOwnerBustReplacement(
+            ActiveDemonContract replacementContract,
+            CoreLoopState resumeState,
+            Action resume)
+        {
+            CombatantSide ownerSide = replacementContract.OwnerSide;
             DemonContractEffectResult result =
                 _demonContractResolver.ReplaceOwnerBust(
                     this,
@@ -6439,7 +6528,6 @@ namespace DiaBlackJack.CoreLoop
                 return OwnerBustHandlingResult.BattleEnded;
             }
 
-            CoreLoopState resumeState = State;
             _pendingBeelzebubBustResolution =
                 new PendingBeelzebubBustResolution(
                     replacementContract,
@@ -6723,6 +6811,7 @@ namespace DiaBlackJack.CoreLoop
             _automaticCardBattleState.ClearRoundState();
             ClearPlayerDemonContractInteraction();
             ClearEnemyDemonContractInteraction();
+            _pendingPostEffectBustReplacement = null;
             _pendingBeelzebubBustResolution = null;
             _activeAzazelCardEffectSequence = null;
             _pendingFixedEnemyAzazelActivation = false;
@@ -7382,6 +7471,7 @@ namespace DiaBlackJack.CoreLoop
         {
             ClearPlayerDemonContractInteraction();
             ClearEnemyDemonContractInteraction();
+            _pendingPostEffectBustReplacement = null;
             _pendingBeelzebubBustResolution = null;
             _activeAzazelCardEffectSequence = null;
             _playerAzazelBustPending = false;
