@@ -524,6 +524,28 @@ namespace DiaBlackJack.GameScene
             _tutorialSpotlight?.Hide();
         }
 
+        internal bool HideTutorialHighlightIfTarget(
+            TutorialHighlightTarget completedTarget)
+        {
+            if (!ShouldHideTutorialHighlight(
+                    _tutorialHighlightTarget,
+                    completedTarget))
+            {
+                return false;
+            }
+
+            HideTutorialHighlight();
+            return true;
+        }
+
+        internal static bool ShouldHideTutorialHighlight(
+            TutorialHighlightTarget currentTarget,
+            TutorialHighlightTarget completedTarget)
+        {
+            return currentTarget != TutorialHighlightTarget.None &&
+                currentTarget == completedTarget;
+        }
+
         internal void BeginTutorialIntroIfNeeded()
         {
             if (_tutorialDirector == null || _tutorialIntroCompleted)
@@ -1613,6 +1635,8 @@ namespace DiaBlackJack.GameScene
                 int cardId = pointedBattleCard.CardId;
                 ProcessInput(
                     () => TryBeginPlayerCardUse(cardId),
+                    onAccepted: () => HideTutorialHighlightIfTarget(
+                        TutorialHighlightTarget.RevolverCard),
                     playerActionSkull: new CombatActionSkullRequest(
                         CombatantSide.Player,
                         CombatActionSkullTargetKind.NormalCard,
@@ -2420,8 +2444,20 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            float radius = Mathf.Max(screenRect.width, screenRect.height) * 0.5f + 24f;
-            _tutorialSpotlight.Show(screenRect.center, radius);
+            float radius =
+                Mathf.Max(screenRect.width, screenRect.height) * 0.5f + 24f;
+            bool emphasizesDrawDeck =
+                _tutorialHighlightTarget ==
+                TutorialHighlightTarget.PlayerDrawDeck;
+            _tutorialSpotlight.Show(
+                screenRect.center,
+                radius,
+                emphasizesDrawDeck
+                    ? 0.84f
+                    : TutorialSpotlightView.DefaultDimAlpha,
+                emphasizesDrawDeck
+                    ? 10f
+                    : TutorialSpotlightView.DefaultFeatherPixels);
         }
 
         private bool TryGetTutorialHighlightBounds(
@@ -4009,6 +4045,8 @@ namespace DiaBlackJack.GameScene
                 case GameSceneCombatHudCommandKind.Hit:
                     ProcessInput(
                         TryPlayerHit,
+                        onAccepted: () => HideTutorialHighlightIfTarget(
+                            TutorialHighlightTarget.Hit),
                         playerActionSkull: new CombatActionSkullRequest(
                             CombatantSide.Player,
                             CombatActionSkullTargetKind.Hit));
@@ -4016,6 +4054,8 @@ namespace DiaBlackJack.GameScene
                 case GameSceneCombatHudCommandKind.Stand:
                     ProcessInput(
                         TryPlayerStand,
+                        onAccepted: () => HideTutorialHighlightIfTarget(
+                            TutorialHighlightTarget.Stand),
                         playerActionSkull: new CombatActionSkullRequest(
                             CombatantSide.Player,
                             CombatActionSkullTargetKind.Stand));
@@ -4023,6 +4063,8 @@ namespace DiaBlackJack.GameScene
                 case GameSceneCombatHudCommandKind.BeginChange:
                     ProcessInput(
                         TryBeginPlayerChange,
+                        onAccepted: () => HideTutorialHighlightIfTarget(
+                            TutorialHighlightTarget.Change),
                         playerActionSkull: new CombatActionSkullRequest(
                             CombatantSide.Player,
                             CombatActionSkullTargetKind.Change));
@@ -7871,6 +7913,8 @@ namespace DiaBlackJack.GameScene
             demonContractSelection.Render(
                 combat.ContractCandidates,
                 _camera);
+            HideTutorialHighlightIfTarget(
+                TutorialHighlightTarget.ContractPaper);
             hud?.HideDemonContractDetail();
         }
 

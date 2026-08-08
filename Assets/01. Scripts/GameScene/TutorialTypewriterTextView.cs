@@ -19,6 +19,10 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private TMP_Text messageText;
         [SerializeField] private bool faceCamera = true;
         [SerializeField] private bool preserveWorldScale = true;
+        [SerializeField] private Vector2 narratorBubbleAnchoredPosition =
+            new Vector2(-115f, 0f);
+        [SerializeField] private Vector2 contractedBubbleAnchoredPosition =
+            new Vector2(126.6f, 30.743f);
 
         private Camera _camera;
         private Vector3 _authoredLocalScale;
@@ -27,10 +31,17 @@ namespace DiaBlackJack.GameScene
         private bool _playRequested;
         private Coroutine _typingRoutine;
         private int _totalCharacterCount;
+        private RectTransform _bubbleVisualRoot;
+        private RectTransform _textVisualRoot;
+        private Vector3 _authoredBubbleVisualScale;
+        private Vector3 _authoredTextVisualScale;
+        private bool _bubbleMirrored;
 
         public bool IsComplete { get; private set; } = true;
 
         public bool IsVisible => gameObject.activeSelf;
+
+        internal bool IsBubbleMirrored => _bubbleMirrored;
 
         private void Awake()
         {
@@ -104,6 +115,13 @@ namespace DiaBlackJack.GameScene
         internal void SetCameraForTesting(Camera camera)
         {
             _camera = camera;
+        }
+
+        internal void SetBubbleMirrored(bool mirrored)
+        {
+            EnsureInitialized();
+            _bubbleMirrored = mirrored;
+            ApplyBubbleMirroring();
         }
 
         private IEnumerator TypeRoutine(float charactersPerSecond)
@@ -206,7 +224,42 @@ namespace DiaBlackJack.GameScene
             _authoredParentLossyScale = transform.parent == null
                 ? Vector3.one
                 : transform.parent.lossyScale;
+            ResolveBubbleVisualRoots();
             _initialized = true;
+        }
+
+        private void ResolveBubbleVisualRoots()
+        {
+            _textVisualRoot = messageText.transform.parent as RectTransform;
+            _bubbleVisualRoot = _textVisualRoot?.parent as RectTransform;
+            if (_bubbleVisualRoot == null || _textVisualRoot == null)
+            {
+                return;
+            }
+
+            _authoredBubbleVisualScale = _bubbleVisualRoot.localScale;
+            _authoredTextVisualScale = _textVisualRoot.localScale;
+        }
+
+        private void ApplyBubbleMirroring()
+        {
+            if (_bubbleVisualRoot == null || _textVisualRoot == null)
+            {
+                return;
+            }
+
+            float direction = _bubbleMirrored ? -1f : 1f;
+            _bubbleVisualRoot.anchoredPosition = _bubbleMirrored
+                ? contractedBubbleAnchoredPosition
+                : narratorBubbleAnchoredPosition;
+            _bubbleVisualRoot.localScale = new Vector3(
+                Mathf.Abs(_authoredBubbleVisualScale.x) * direction,
+                _authoredBubbleVisualScale.y,
+                _authoredBubbleVisualScale.z);
+            _textVisualRoot.localScale = new Vector3(
+                Mathf.Abs(_authoredTextVisualScale.x) * direction,
+                _authoredTextVisualScale.y,
+                _authoredTextVisualScale.z);
         }
 
         private static float CompensateScale(

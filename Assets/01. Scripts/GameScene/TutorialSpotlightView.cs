@@ -7,7 +7,8 @@ namespace DiaBlackJack.GameScene
     internal sealed class TutorialSpotlightView : MaskableGraphic
     {
         private const int SegmentCount = 96;
-        private const float DefaultFeatherPixels = 16f;
+        internal const float DefaultDimAlpha = 0.72f;
+        internal const float DefaultFeatherPixels = 16f;
         private Vector2 _screenCenter;
         private float _screenRadius;
         private float _featherPixels = DefaultFeatherPixels;
@@ -28,16 +29,24 @@ namespace DiaBlackJack.GameScene
             rect.SetAsLastSibling();
 
             TutorialSpotlightView view = root.GetComponent<TutorialSpotlightView>();
-            view.color = new Color(0f, 0f, 0f, 0.72f);
+            view.color = new Color(0f, 0f, 0f, DefaultDimAlpha);
             view.raycastTarget = false;
             view.gameObject.SetActive(false);
             return view;
         }
 
-        internal void Show(Vector2 screenCenter, float screenRadius)
+        internal float FeatherPixels => _featherPixels;
+
+        internal void Show(
+            Vector2 screenCenter,
+            float screenRadius,
+            float dimAlpha = DefaultDimAlpha,
+            float featherPixels = DefaultFeatherPixels)
         {
             _screenCenter = screenCenter;
             _screenRadius = Mathf.Max(1f, screenRadius);
+            _featherPixels = Mathf.Max(0f, featherPixels);
+            color = new Color(0f, 0f, 0f, Mathf.Clamp01(dimAlpha));
             if (!gameObject.activeSelf)
             {
                 gameObject.SetActive(true);

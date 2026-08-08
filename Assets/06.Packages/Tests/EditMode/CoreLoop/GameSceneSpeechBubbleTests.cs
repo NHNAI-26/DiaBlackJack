@@ -31,6 +31,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/02. ScriptableObjects/Speech/merchant_speech.asset";
         private const string TutorialScriptPath =
             "Assets/04. Data/Tutorial/TutorialScript.asset";
+        private const string TableControllerPrefabPath =
+            "Assets/03. Prefabs/TableObjects/Table Controller.prefab";
 
         [Test]
         public void GFH01_U04_InactiveTutorialNarratorShowsOnFirstRequest()
@@ -295,6 +297,149 @@ namespace DiaBlackJack.CoreLoop.Tests
                     gateActive,
                     presentationIdle),
                 Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void TUT02_U01_HighlightOnlyHidesForAcceptedTarget()
+        {
+            Assert.That(
+                GameManager.ShouldHideTutorialHighlight(
+                    TutorialHighlightTarget.Hit,
+                    TutorialHighlightTarget.Hit),
+                Is.True);
+            Assert.That(
+                GameManager.ShouldHideTutorialHighlight(
+                    TutorialHighlightTarget.Hit,
+                    TutorialHighlightTarget.Stand),
+                Is.False);
+            Assert.That(
+                GameManager.ShouldHideTutorialHighlight(
+                    TutorialHighlightTarget.None,
+                    TutorialHighlightTarget.Hit),
+                Is.False);
+        }
+
+        [Test]
+        public void TUT02_U02_DrawDeckSpotlightUsesStrongerStyle()
+        {
+            var canvasObject = new GameObject(
+                "TutorialSpotlightStyleCanvas",
+                typeof(RectTransform),
+                typeof(Canvas));
+            try
+            {
+                TutorialSpotlightView spotlight =
+                    TutorialSpotlightView.Create(canvasObject.transform);
+
+                spotlight.Show(
+                    new Vector2(640f, 360f),
+                    80f,
+                    dimAlpha: 0.84f,
+                    featherPixels: 10f);
+
+                Assert.That(spotlight.color.a, Is.EqualTo(0.84f).Within(0.001f));
+                Assert.That(spotlight.FeatherPixels, Is.EqualTo(10f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(canvasObject);
+            }
+        }
+
+        [Test]
+        public void TUT02_U03_NarratorAndContractedSpeakersUseOppositeOffsets()
+        {
+            Vector2 narratorOffset = new Vector2(-56f, 72f);
+            Vector2 contractedOffset = new Vector2(56f, 72f);
+
+            Assert.That(
+                TutorialNarratorView.ResolveSpeechScreenOffset(
+                    false,
+                    narratorOffset,
+                    contractedOffset),
+                Is.EqualTo(narratorOffset));
+            Assert.That(
+                TutorialNarratorView.ResolveSpeechScreenOffset(
+                    true,
+                    narratorOffset,
+                    contractedOffset),
+                Is.EqualTo(contractedOffset));
+        }
+
+        [Test]
+        public void TUT02_U04_ContractedBubbleMirrorsVisualButKeepsTextReadable()
+        {
+            GameObject instance = InstantiatePrefab(SpeechBubblePrefabPath);
+            try
+            {
+                UnityEngine.Object.DestroyImmediate(
+                    instance.GetComponent<SpeechBubbleView>());
+                TutorialTypewriterTextView view =
+                    instance.AddComponent<TutorialTypewriterTextView>();
+                Transform bubbleVisual =
+                    instance.transform.Find("SpeechTextBubble");
+                Transform textVisual =
+                    bubbleVisual?.Find("TextUICanvas");
+
+                Assert.That(bubbleVisual, Is.Not.Null);
+                Assert.That(textVisual, Is.Not.Null);
+
+                view.SetBubbleMirrored(true);
+
+                Assert.That(view.IsBubbleMirrored, Is.True);
+                Assert.That(
+                    ((RectTransform)bubbleVisual).anchoredPosition,
+                    Is.EqualTo(new Vector2(126.6f, 30.743f)));
+                Assert.That(bubbleVisual.localScale.x, Is.LessThan(0f));
+                Assert.That(textVisual.localScale.x, Is.LessThan(0f));
+                Assert.That(
+                    bubbleVisual.localScale.x * textVisual.localScale.x,
+                    Is.GreaterThan(0f));
+
+                view.SetBubbleMirrored(false);
+
+                Assert.That(
+                    ((RectTransform)bubbleVisual).anchoredPosition,
+                    Is.EqualTo(new Vector2(-115f, 0f)));
+                Assert.That(bubbleVisual.localScale.x, Is.GreaterThan(0f));
+                Assert.That(textVisual.localScale.x, Is.GreaterThan(0f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void TUT02_U05_TableControllerStoresSpeakerSpecificOffsets()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                TableControllerPrefabPath);
+            TutorialNarratorView narrator =
+                prefab.GetComponentInChildren<TutorialNarratorView>(true);
+            Assert.That(narrator, Is.Not.Null);
+            var serialized = new SerializedObject(narrator);
+            Assert.That(
+                serialized.FindProperty("narratorSpeechScreenOffset")
+                    .vector2Value,
+                Is.EqualTo(new Vector2(-56f, 72f)));
+            Assert.That(
+                serialized.FindProperty("contractedSpeechScreenOffset")
+                    .vector2Value,
+                Is.EqualTo(new Vector2(56f, 72f)));
+
+            TutorialTypewriterTextView speech =
+                prefab.GetComponentInChildren<TutorialTypewriterTextView>(true);
+            Assert.That(speech, Is.Not.Null);
+            var speechSerialized = new SerializedObject(speech);
+            Assert.That(
+                speechSerialized.FindProperty("narratorBubbleAnchoredPosition")
+                    .vector2Value,
+                Is.EqualTo(new Vector2(-115f, 0f)));
+            Assert.That(
+                speechSerialized.FindProperty("contractedBubbleAnchoredPosition")
+                    .vector2Value,
+                Is.EqualTo(new Vector2(126.6f, 30.743f)));
         }
 
         [Test]

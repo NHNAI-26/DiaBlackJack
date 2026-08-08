@@ -1649,7 +1649,8 @@ MonoBehaviour:
   speechText: {fileID: 8986006433804763395}
   charactersPerSecond: 40
   narratorDefinitionKey: asmodeus
-  speechScreenOffset: {x: 0, y: 72}
+  narratorSpeechScreenOffset: {x: -56, y: 72}
+  contractedSpeechScreenOffset: {x: 56, y: 72}
   speechScreenMargin: 24
 --- !u!1 &7622204401950776379
 GameObject:
@@ -2304,6 +2305,8 @@ MonoBehaviour:
   messageText: {fileID: 0}
   faceCamera: 1
   preserveWorldScale: 1
+  narratorBubbleAnchoredPosition: {x: -115, y: 0}
+  contractedBubbleAnchoredPosition: {x: 126.6, y: 30.743}
 --- !u!224 &7846795944097611362 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5742458960792561318, guid: 655f191923921d043921a8d1ccb890ea, type: 3}

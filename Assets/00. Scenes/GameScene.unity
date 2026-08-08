@@ -2016,7 +2016,8 @@ MonoBehaviour:
   speechText: {fileID: 2060621172}
   charactersPerSecond: 40
   narratorDefinitionKey: asmodeus
-  speechScreenOffset: {x: 0, y: 72}
+  narratorSpeechScreenOffset: {x: -56, y: 72}
+  contractedSpeechScreenOffset: {x: 56, y: 72}
   speechScreenMargin: 24
 --- !u!134 &1653652575
 PhysicsMaterial:
@@ -2586,6 +2587,8 @@ MonoBehaviour:
   messageText: {fileID: 0}
   faceCamera: 1
   preserveWorldScale: 1
+  narratorBubbleAnchoredPosition: {x: -115, y: 0}
+  contractedBubbleAnchoredPosition: {x: 126.6, y: 30.743}
 --- !u!114 &2086358791 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2742796214420980071, guid: 7d59c8a3c7b503d41974cac34503f7bc, type: 3}

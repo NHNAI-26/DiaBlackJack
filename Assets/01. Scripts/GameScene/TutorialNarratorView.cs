@@ -28,7 +28,10 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float charactersPerSecond = 40f;
         [SerializeField] private string narratorDefinitionKey =
             DemonContractCatalog.AsmodeusKey;
-        [SerializeField] private Vector2 speechScreenOffset = new Vector2(0f, 72f);
+        [SerializeField] private Vector2 narratorSpeechScreenOffset =
+            new Vector2(-56f, 72f);
+        [SerializeField] private Vector2 contractedSpeechScreenOffset =
+            new Vector2(56f, 72f);
         [SerializeField, Min(0f)] private float speechScreenMargin = 24f;
 
         private DemonCardView _card;
@@ -100,9 +103,18 @@ namespace DiaBlackJack.GameScene
         internal void ResetView()
         {
             _externalSpeaker = null;
+            if (speechText != null)
+            {
+                speechText.SetBubbleMirrored(false);
+            }
+
             _showRequested = false;
             IsActive = false;
-            speechText?.Hide();
+            if (speechText != null)
+            {
+                speechText.Hide();
+            }
+
             gameObject.SetActive(false);
         }
 
@@ -116,6 +128,7 @@ namespace DiaBlackJack.GameScene
         internal void UseNarratorCard()
         {
             _externalSpeaker = null;
+            speechText?.SetBubbleMirrored(false);
             EnsureCard();
             if (_card != null)
             {
@@ -126,6 +139,7 @@ namespace DiaBlackJack.GameScene
         internal void UseExternalSpeaker(DemonCardView speaker)
         {
             _externalSpeaker = speaker;
+            speechText?.SetBubbleMirrored(true);
             if (_card != null)
             {
                 _card.gameObject.SetActive(false);
@@ -198,15 +212,27 @@ namespace DiaBlackJack.GameScene
             }
 
             Rect safe = Screen.safeArea;
+            Vector2 screenOffset = ResolveSpeechScreenOffset(
+                _externalSpeaker != null,
+                narratorSpeechScreenOffset,
+                contractedSpeechScreenOffset);
             screen.x = Mathf.Clamp(
-                screen.x + speechScreenOffset.x,
+                screen.x + screenOffset.x,
                 safe.xMin + speechScreenMargin,
                 safe.xMax - speechScreenMargin);
             screen.y = Mathf.Clamp(
-                screen.y + speechScreenOffset.y,
+                screen.y + screenOffset.y,
                 safe.yMin + speechScreenMargin,
                 safe.yMax - speechScreenMargin);
             speechText.transform.position = camera.ScreenToWorldPoint(screen);
+        }
+
+        internal static Vector2 ResolveSpeechScreenOffset(
+            bool usesContractedSpeaker,
+            Vector2 narratorOffset,
+            Vector2 contractedOffset)
+        {
+            return usesContractedSpeaker ? contractedOffset : narratorOffset;
         }
 
         private static bool TryGetSpeakerTopCenter(
