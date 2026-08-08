@@ -1416,22 +1416,21 @@ namespace DiaBlackJack.CoreLoop.Tests
 
         [Test]
         [Category("GSH01")]
-        public void GSH01_U21_CenteredChoiceUsesSceneAuthoredLayoutSource()
+        public void GSH01_U21_CenteredChoiceUsesDedicatedPrefabLayout()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 HudPrefabPath);
             GameObject instance = Object.Instantiate(prefab);
             try
             {
-                var layoutRoot = new GameObject(
-                    "ConfirmDemonsRoot",
-                    typeof(RectTransform));
-                layoutRoot.transform.SetParent(instance.transform, false);
-                var layoutObject = new GameObject(
-                    "ConfirmDemonsButton",
-                    typeof(RectTransform));
-                RectTransform layout = layoutObject.GetComponent<RectTransform>();
-                layout.SetParent(layoutRoot.transform, false);
+                RectTransform startingButton = instance.transform.Find(
+                    "ConfirmDemonsRoot/ConfirmDemonsButton") as RectTransform;
+                Assert.That(startingButton, Is.Not.Null);
+                startingButton.anchoredPosition = new Vector2(700f, 700f);
+
+                RectTransform layout = instance.transform.Find(
+                    "SatanConfirmLayout") as RectTransform;
+                Assert.That(layout, Is.Not.Null);
                 layout.anchorMin = new Vector2(0.5f, 0f);
                 layout.anchorMax = new Vector2(0.5f, 0f);
                 layout.pivot = new Vector2(0.5f, 0f);
@@ -1478,6 +1477,24 @@ namespace DiaBlackJack.CoreLoop.Tests
             {
                 Object.DestroyImmediate(instance);
             }
+        }
+
+        [Test]
+        [Category("GSH01")]
+        public void GSH01_U22_HudPrefabOwnsSceneIndependentOverlayLayouts()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                HudPrefabPath);
+
+            Assert.That(
+                prefab.transform.Find("SatanConfirmLayout"),
+                Is.Not.Null);
+            Assert.That(
+                prefab.transform.Find("ConfirmDemonsRoot/ConfirmDemonsButton"),
+                Is.Not.Null);
+            Assert.That(
+                prefab.GetComponentInChildren<PoisonInjectionAnnounceView>(true),
+                Is.Not.Null);
         }
 
         [TestCase(

@@ -11,6 +11,8 @@ namespace DiaBlackJack.GameScene
     [DisallowMultipleComponent]
     public sealed class StartingDemonRevealView : MonoBehaviour
     {
+        private const string ConfirmButtonRootPath = "ConfirmDemonsRoot";
+
         [SerializeField] private GameObject demonCardPrefab;
         [Tooltip("Root of the confirm button, toggled active only while confirmation is available.")]
         [SerializeField] private GameObject confirmButtonRoot;
@@ -62,12 +64,30 @@ namespace DiaBlackJack.GameScene
 
         private void Awake()
         {
+            ResolveConfirmButtonReferences();
             if (confirmButton != null)
             {
                 confirmButton.onClick.AddListener(HandleConfirmClicked);
             }
 
             SetConfirmVisible(false);
+        }
+
+        private void ResolveConfirmButtonReferences()
+        {
+            if (confirmButtonRoot == null)
+            {
+                GameHudView hud = FindFirstObjectByType<GameHudView>(
+                    FindObjectsInactive.Include);
+                Transform root = hud?.transform.Find(ConfirmButtonRootPath);
+                confirmButtonRoot = root?.gameObject;
+            }
+
+            if (confirmButton == null && confirmButtonRoot != null)
+            {
+                confirmButton = confirmButtonRoot.GetComponentInChildren<Button>(
+                    includeInactive: true);
+            }
         }
 
         private void OnDestroy()

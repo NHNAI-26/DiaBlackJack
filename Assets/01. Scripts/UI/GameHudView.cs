@@ -21,7 +21,7 @@ namespace DiaBlackJack.GameScene
     public sealed class GameHudView : MonoBehaviour
     {
         private const string DefaultCenterActionLayoutPath =
-            "ConfirmDemonsRoot/ConfirmDemonsButton";
+            "SatanConfirmLayout";
 
         [SerializeField] private TMP_Text playerSoulText;
         [SerializeField] private TMP_Text enemySoulText;

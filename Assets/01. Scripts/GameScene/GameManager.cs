@@ -1006,6 +1006,9 @@ namespace DiaBlackJack.GameScene
                 FindObjectsInactive.Include);
             contractPapers ??= FindFirstObjectByType<ContractPaperView>(
                 FindObjectsInactive.Include);
+            poisonInjectionAnnounce ??=
+                FindFirstObjectByType<PoisonInjectionAnnounceView>(
+                    FindObjectsInactive.Include);
             tutorialNarrator ??= FindFirstObjectByType<TutorialNarratorView>(
                 FindObjectsInactive.Include);
             mammonDie ??= FindFirstObjectByType<MammonDieView>(
