@@ -56,6 +56,10 @@ namespace DiaBlackJack.GameScene
         private int? _tutorialRestrictedOptionId;
         private bool _tutorialContractPaperBlocked;
         private bool _tutorialCardUseBlocked;
+        private bool _tutorialDeckPreviewGateActive;
+        private bool _tutorialDeckPreviewWasOpened;
+        private bool _tutorialCombatPresentationActive;
+        private bool _tutorialViewRefreshPending;
         private TutorialDirector _tutorialDirector;
         private bool _tutorialIntroCompleted;
         private TutorialSpeakerKind _tutorialSpeaker =
@@ -64,6 +68,8 @@ namespace DiaBlackJack.GameScene
         private bool _tutorialRoundComparisonPresentationComplete;
         private Coroutine _tutorialRoundTransitionRoutine;
         private Coroutine _tutorialRoundOneRevealRoutine;
+        private TutorialSpotlightView _tutorialSpotlight;
+        private TutorialHighlightTarget _tutorialHighlightTarget;
         private CrystalOrbSelectionView crystalOrbSelection;
         private SatanNumberSelectionView satanNumberSelection;
         [SerializeField] private Sprite satanBrandSprite;
@@ -201,10 +207,12 @@ namespace DiaBlackJack.GameScene
         private ContractPaperClickable _hoveredContractPaper;
         private ShopUtilityItemView _hoveredShopUtilityItem;
         private TableCombatCommandView _hoveredCombatCommand;
+        private bool _hoveredCombatCommandAllowsDisabled;
         private HoverDescriptionTarget _hoveredDescriptionTarget;
         private object _hoverBadgeOwner;
         private bool _inputLocked;
         private bool _suppressHandRenderUntilRoundOneStart;
+        private bool _holdTutorialRoundTransitionPresentation;
         private bool _pauseInputBlocked;
         private bool _shopUtilityAnimationPlaying;
         private bool _choosingLighterRemoval;
@@ -392,6 +400,7 @@ namespace DiaBlackJack.GameScene
                 _tutorialDirector.RoundOneRecapCompleted +=
                     HandleTutorialRoundOneRecapCompleted;
                 _tutorialDirector.Completed += HandleTutorialDirectorCompleted;
+                tutorialNarrator.ShowCardOnly();
                 // Only the contract-candidate gate explicitly lifts this — every other
                 // gate (and every dialogue step, which already blocks all input via the
                 // narrator) needs the contract paper to stay unclickable so the single
@@ -428,6 +437,51 @@ namespace DiaBlackJack.GameScene
         internal bool IsTutorialRoundComparisonPresentationComplete =>
             _tutorialRoundComparisonPresentationComplete;
 
+        internal bool IsTutorialCombatPresentationIdle =>
+            !_tutorialCombatPresentationActive;
+
+        internal bool IsTutorialRevolverSelectionReady =>
+            HasEnteredTutorialRevolverSelection(
+                hud != null && hud.IsRevolverNumberSelectionOpen,
+                Battle?.PendingPlayerCardEffect?.EffectKind);
+
+        internal bool IsTutorialRevolverResolutionComplete =>
+            HasCompletedTutorialRevolverResolution(
+                IsTutorialCombatPresentationIdle,
+                hud != null && hud.IsRevolverNumberSelectionOpen,
+                Battle?.PendingPlayerCardEffect?.EffectKind);
+
+        internal static bool HasEnteredTutorialRevolverSelection(
+            bool selectorOpen,
+            CardEffectKind? pendingEffectKind)
+        {
+            return selectorOpen &&
+                pendingEffectKind == CardEffectKind.AutoPistol;
+        }
+
+        internal static bool HasCompletedTutorialRevolverResolution(
+            bool presentationIdle,
+            bool selectorOpen,
+            CardEffectKind? pendingEffectKind)
+        {
+            return presentationIdle && !selectorOpen &&
+                !pendingEffectKind.HasValue;
+        }
+
+        internal bool IsTutorialDeckPreviewGateComplete =>
+            HasCompletedTutorialDeckPreviewGate(
+                _tutorialDeckPreviewGateActive,
+                _tutorialDeckPreviewWasOpened,
+                deckPreview != null && deckPreview.IsOpen);
+
+        internal static bool HasCompletedTutorialDeckPreviewGate(
+            bool active,
+            bool wasOpened,
+            bool isOpen)
+        {
+            return active && wasOpened && !isOpen;
+        }
+
         private bool IsTutorialCombatInputBlocked =>
             _tutorialDirector != null &&
             _tutorialDirector.BlocksCombatInput;
@@ -444,7 +498,30 @@ namespace DiaBlackJack.GameScene
 
         internal void RefreshTutorialInputState()
         {
+            RequestTutorialViewRefresh();
+        }
+
+        private void RequestTutorialViewRefresh()
+        {
+            if (_tutorialCombatPresentationActive)
+            {
+                _tutorialViewRefreshPending = true;
+                return;
+            }
+
             RefreshView();
+        }
+
+        internal void ShowTutorialHighlight(TutorialHighlightTarget target)
+        {
+            _tutorialHighlightTarget = target;
+            RefreshTutorialHighlight();
+        }
+
+        internal void HideTutorialHighlight()
+        {
+            _tutorialHighlightTarget = TutorialHighlightTarget.None;
+            _tutorialSpotlight?.Hide();
         }
 
         internal void BeginTutorialIntroIfNeeded()
@@ -581,7 +658,7 @@ namespace DiaBlackJack.GameScene
             GameSceneCombatHudCommandKind? allowedAction)
         {
             _tutorialRestrictedPrimaryAction = allowedAction;
-            RefreshView();
+            RequestTutorialViewRefresh();
         }
 
         /// <summary>
@@ -607,7 +684,7 @@ namespace DiaBlackJack.GameScene
         internal void SetTutorialContractRestriction(string definitionKey)
         {
             _tutorialRestrictedContractDefinitionKey = definitionKey;
-            RefreshView();
+            RequestTutorialViewRefresh();
         }
 
         /// <summary>
@@ -617,7 +694,7 @@ namespace DiaBlackJack.GameScene
         internal void SetTutorialContractOptionRestriction(int? optionId)
         {
             _tutorialRestrictedOptionId = optionId;
-            RefreshView();
+            RequestTutorialViewRefresh();
         }
 
         /// <summary>
@@ -631,7 +708,7 @@ namespace DiaBlackJack.GameScene
         internal void SetTutorialContractPaperBlocked(bool blocked)
         {
             _tutorialContractPaperBlocked = blocked;
-            RefreshView();
+            RequestTutorialViewRefresh();
         }
 
         /// <summary>
@@ -646,6 +723,16 @@ namespace DiaBlackJack.GameScene
         internal void SetTutorialCardUseBlocked(bool blocked)
         {
             _tutorialCardUseBlocked = blocked;
+        }
+
+        internal void SetTutorialDeckPreviewGate(bool active)
+        {
+            _tutorialDeckPreviewGateActive = active;
+            _tutorialDeckPreviewWasOpened = false;
+            if (!active)
+            {
+                HideTutorialHighlight();
+            }
         }
 
         /// <summary>
@@ -672,6 +759,11 @@ namespace DiaBlackJack.GameScene
             _suppressHandRenderUntilRoundOneStart = true;
         }
 
+        internal void HoldTutorialRoundTransitionPresentation()
+        {
+            _holdTutorialRoundTransitionPresentation = true;
+        }
+
         /// <summary>
         /// Ends the suppression begun by <see cref="SuppressHandRenderUntilRoundOneStart"/>
         /// and re-renders immediately so the now-dealt hands animate in for the
@@ -681,6 +773,7 @@ namespace DiaBlackJack.GameScene
         internal void RevealRoundOneHands()
         {
             _suppressHandRenderUntilRoundOneStart = false;
+            _holdTutorialRoundTransitionPresentation = false;
             RefreshView();
         }
 
@@ -1102,7 +1195,7 @@ namespace DiaBlackJack.GameScene
             demonContractSelection?.Hide();
             crystalOrbSelection?.Hide();
             satanNumberSelection?.Hide();
-            tutorialNarrator?.Hide();
+            tutorialNarrator?.ResetView();
             hud?.HideDemonContractDetail();
             hud?.SetShopLeaveState(visible: false, interactable: false);
             UpdateDeckStackHover(null);
@@ -1130,6 +1223,12 @@ namespace DiaBlackJack.GameScene
             StopAllCoroutines();
             _tutorialRoundTransitionRoutine = null;
             _tutorialRoundOneRevealRoutine = null;
+            _holdTutorialRoundTransitionPresentation = false;
+            _tutorialDeckPreviewGateActive = false;
+            _tutorialDeckPreviewWasOpened = false;
+            _tutorialCombatPresentationActive = false;
+            _tutorialViewRefreshPending = false;
+            HideTutorialHighlight();
             CancelRoundComparison(resetResolutionHistory: true);
             EndSatanNumberGuessCameraSequence();
             PresentationManager.Current?.ForceRestoreTransientCameraEffects();
@@ -1155,7 +1254,7 @@ namespace DiaBlackJack.GameScene
             demonContractSelection?.Hide();
             crystalOrbSelection?.Hide();
             satanNumberSelection?.Hide();
-            tutorialNarrator?.Hide();
+            tutorialNarrator?.ResetView();
             contractPapers?.Render(null);
             hud?.HideCardHoverBadge();
             hud?.HideDemonContractDetail();
@@ -1203,6 +1302,8 @@ namespace DiaBlackJack.GameScene
         private void Update()
         {
             UpdateShopPriceBadges();
+            RefreshTutorialHighlight();
+            _tutorialDirector?.Observe();
 
             if (_deckPreviewSwitchInputLocked &&
                 (deckPreview == null || !deckPreview.IsOpen))
@@ -1227,6 +1328,7 @@ namespace DiaBlackJack.GameScene
             // entrance that only starts once this dialogue is dismissed).
             if (tutorialNarrator != null && tutorialNarrator.IsActive)
             {
+                UpdateTutorialNarratorHover();
                 Mouse tutorialMouse = Mouse.current;
                 if (tutorialMouse != null && tutorialMouse.leftButton.wasPressedThisFrame)
                 {
@@ -1430,6 +1532,24 @@ namespace DiaBlackJack.GameScene
 
             if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
             {
+                return;
+            }
+
+            if (_tutorialDeckPreviewGateActive)
+            {
+                if (pointedDeck != null &&
+                    pointedDeck.Kind == DeckKind.Draw &&
+                    pointedDeckStack == remainingDeck)
+                {
+                    OpenDeckPreview(DeckKind.Draw);
+                    _tutorialDeckPreviewWasOpened =
+                        deckPreview != null && deckPreview.IsOpen;
+                    if (_tutorialDeckPreviewWasOpened)
+                    {
+                        HideTutorialHighlight();
+                    }
+                }
+
                 return;
             }
 
@@ -1806,13 +1926,19 @@ namespace DiaBlackJack.GameScene
             }
         }
 
-        private void UpdateCombatCommandHover(TableCombatCommandView pointed)
+        private void UpdateCombatCommandHover(
+            TableCombatCommandView pointed,
+            bool allowWhenDisabled = false)
         {
-            if (_hoveredCombatCommand != pointed)
+            if (_hoveredCombatCommand != pointed ||
+                _hoveredCombatCommandAllowsDisabled != allowWhenDisabled)
             {
                 _hoveredCombatCommand?.SetHovered(false);
                 _hoveredCombatCommand = pointed;
-                _hoveredCombatCommand?.SetHovered(true);
+                _hoveredCombatCommandAllowsDisabled = allowWhenDisabled;
+                _hoveredCombatCommand?.SetHovered(
+                    true,
+                    allowWhenDisabled);
             }
 
             hud?.HideCombatActionTooltip();
@@ -2191,6 +2317,11 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            if (_camera == null)
+            {
+                _camera = Camera.main;
+            }
+
             if (_hoveredDemonCard == null ||
                 !_hoveredDemonCard.ShouldShowHoverBadge ||
                 _hoveredDemonCard.BoundCard == null)
@@ -2200,8 +2331,237 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            if (tutorialNarrator != null &&
+                tutorialNarrator.OwnsNarratorCard(_hoveredDemonCard) &&
+                _hoveredDemonCard.TryGetHoverBadgeScreenPosition(
+                    _camera,
+                    out Vector2 narratorScreenPosition))
+            {
+                hud.HideDemonContractDetail();
+                hud.ShowCardHoverBadge(
+                    _hoveredDemonCard.HoverBadgeTitle,
+                    _hoveredDemonCard.HoverBadgeDescription,
+                    narratorScreenPosition,
+                    _camera,
+                    showBelow: false);
+                return;
+            }
+
             hud.HideCardHoverBadge();
             hud.ShowDemonContractDetail(_hoveredDemonCard.BoundCard);
+        }
+
+        private void UpdateTutorialNarratorHover()
+        {
+            bool hasHit = RaycastPointer(out RaycastHit hit);
+            CardView pointedCard = hasHit
+                ? hit.collider.GetComponentInParent<CardView>()
+                : null;
+            DemonCardView pointedDemonCard = hasHit
+                ? hit.collider.GetComponentInParent<DemonCardView>()
+                : null;
+            DeckClickable pointedDeck = hasHit
+                ? hit.collider.GetComponentInParent<DeckClickable>()
+                : null;
+            DeckStackView pointedDeckStack =
+                ResolvePointedDeckStack(pointedDeck);
+            CodexClickable pointedCodex = hasHit &&
+                codex != null &&
+                codex.IsAvailable
+                    ? hit.collider.GetComponentInParent<CodexClickable>()
+                    : null;
+            ContractPaperClickable pointedContractPaper = hasHit
+                ? hit.collider.GetComponentInParent<ContractPaperClickable>()
+                : null;
+            TableCombatCommandView pointedCombatCommand = hasHit
+                ? hit.collider.GetComponentInParent<TableCombatCommandView>()
+                : null;
+            HoverDescriptionTarget pointedDescription = hasHit
+                ? hit.collider.GetComponentInParent<HoverDescriptionTarget>()
+                : null;
+            if (pointedCard != null || pointedDemonCard != null)
+            {
+                pointedDescription = null;
+            }
+
+            UpdateHover(pointedCard);
+            UpdateDemonCardHover(pointedDemonCard);
+            UpdateDeckStackHover(pointedDeckStack);
+            UpdateCodexHover(pointedCodex);
+            UpdateContractPaperHover(pointedContractPaper);
+            UpdateShopUtilityItemHover(null);
+            UpdateCombatCommandHover(
+                pointedCombatCommand,
+                allowWhenDisabled: true);
+            UpdateHoverDescriptionTarget(pointedDescription);
+            UpdateCardHoverBadge();
+        }
+
+        private void RefreshTutorialHighlight()
+        {
+            if (_tutorialHighlightTarget == TutorialHighlightTarget.None ||
+                hud == null)
+            {
+                _tutorialSpotlight?.Hide();
+                return;
+            }
+
+            if (_tutorialSpotlight == null)
+            {
+                _tutorialSpotlight = TutorialSpotlightView.Create(hud.transform);
+            }
+
+            if (!TryGetTutorialHighlightBounds(
+                    _tutorialHighlightTarget,
+                    out Bounds bounds) ||
+                !TryProjectBoundsToScreen(bounds, out Rect screenRect))
+            {
+                _tutorialSpotlight.Hide();
+                return;
+            }
+
+            float radius = Mathf.Max(screenRect.width, screenRect.height) * 0.5f + 24f;
+            _tutorialSpotlight.Show(screenRect.center, radius);
+        }
+
+        private bool TryGetTutorialHighlightBounds(
+            TutorialHighlightTarget target,
+            out Bounds bounds)
+        {
+            Component component = null;
+            switch (target)
+            {
+                case TutorialHighlightTarget.Hit:
+                    component = tableCombatCommands?.GetView(
+                        GameSceneCombatHudCommandKind.Hit);
+                    break;
+                case TutorialHighlightTarget.Stand:
+                    component = tableCombatCommands?.GetView(
+                        GameSceneCombatHudCommandKind.Stand);
+                    break;
+                case TutorialHighlightTarget.Change:
+                    component = tableCombatCommands?.GetView(
+                        GameSceneCombatHudCommandKind.BeginChange);
+                    break;
+                case TutorialHighlightTarget.RevolverCard:
+                    if (playerHand != null &&
+                        playerHand.TryGetFirstCardByDefinitionPrefix(
+                            "auto-pistol-",
+                            out CardView revolver))
+                    {
+                        component = revolver;
+                    }
+                    break;
+                case TutorialHighlightTarget.ContractPaper:
+                    component = ResolveTutorialContractPaper();
+                    break;
+                case TutorialHighlightTarget.PlayerDrawDeck:
+                    component = remainingDeck;
+                    break;
+            }
+
+            return TryGetRendererBounds(component, out bounds);
+        }
+
+        private ContractPaperClickable ResolveTutorialContractPaper()
+        {
+            if (contractPapers == null)
+            {
+                return null;
+            }
+
+            ContractPaperClickable[] papers =
+                contractPapers.GetComponentsInChildren<ContractPaperClickable>(false);
+            ContractPaperClickable best = null;
+            for (int i = 0; i < papers.Length; i++)
+            {
+                ContractPaperClickable paper = papers[i];
+                if (paper == null || !paper.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                if (paper.IsInteractable)
+                {
+                    return paper;
+                }
+
+                if (best == null || paper.SortingOrder > best.SortingOrder)
+                {
+                    best = paper;
+                }
+            }
+
+            return best;
+        }
+
+        private static bool TryGetRendererBounds(
+            Component component,
+            out Bounds bounds)
+        {
+            bounds = default;
+            if (component == null || !component.gameObject.activeInHierarchy)
+            {
+                return false;
+            }
+
+            Renderer[] renderers = component.GetComponentsInChildren<Renderer>(true);
+            bool found = false;
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                Renderer renderer = renderers[i];
+                if (renderer == null || !renderer.enabled)
+                {
+                    continue;
+                }
+
+                if (!found)
+                {
+                    bounds = renderer.bounds;
+                    found = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
+            }
+
+            return found;
+        }
+
+        private bool TryProjectBoundsToScreen(Bounds bounds, out Rect screenRect)
+        {
+            _camera ??= Camera.main;
+            if (_camera == null)
+            {
+                screenRect = default;
+                return false;
+            }
+
+            Vector3 min = bounds.min;
+            Vector3 max = bounds.max;
+            Vector2 screenMin = new Vector2(float.PositiveInfinity, float.PositiveInfinity);
+            Vector2 screenMax = new Vector2(float.NegativeInfinity, float.NegativeInfinity);
+            for (int corner = 0; corner < 8; corner++)
+            {
+                Vector3 world = new Vector3(
+                    (corner & 1) == 0 ? min.x : max.x,
+                    (corner & 2) == 0 ? min.y : max.y,
+                    (corner & 4) == 0 ? min.z : max.z);
+                Vector3 screen = _camera.WorldToScreenPoint(world);
+                if (screen.z <= 0f)
+                {
+                    screenRect = default;
+                    return false;
+                }
+
+                screenMin = Vector2.Min(screenMin, screen);
+                screenMax = Vector2.Max(screenMax, screen);
+            }
+
+            screenRect = Rect.MinMaxRect(
+                screenMin.x, screenMin.y, screenMax.x, screenMax.y);
+            return true;
         }
 
         private void UpdateDemonCardHover(DemonCardView pointed)
@@ -2455,7 +2815,10 @@ namespace DiaBlackJack.GameScene
         private void EnsureActionSkullRound(int roundNumber)
         {
             EnsureActionSkulls();
-            if (roundNumber < 1 || roundNumber == _actionSkullRoundNumber)
+            if (!ShouldResetActionSkullsForRound(
+                    _actionSkullRoundNumber,
+                    roundNumber,
+                    _holdTutorialRoundTransitionPresentation))
             {
                 return;
             }
@@ -2467,6 +2830,19 @@ namespace DiaBlackJack.GameScene
                 ResolveActionSkullHome(CombatantSide.Player));
             _enemyActionSkull?.ResetView(
                 ResolveActionSkullHome(CombatantSide.Enemy));
+        }
+
+        internal static bool ShouldResetActionSkullsForRound(
+            int currentRoundNumber,
+            int nextRoundNumber,
+            bool holdTutorialRoundTransition)
+        {
+            if (nextRoundNumber < 1 || nextRoundNumber == currentRoundNumber)
+            {
+                return false;
+            }
+
+            return !holdTutorialRoundTransition || currentRoundNumber < 1;
         }
 
         private bool TryCreateEnemyActionSkullRequest(
@@ -3754,6 +4130,11 @@ namespace DiaBlackJack.GameScene
             }
 
             _inputLocked = true;
+            bool trackTutorialPresentation = _tutorialDirector != null;
+            if (trackTutorialPresentation)
+            {
+                _tutorialCombatPresentationActive = true;
+            }
             UpdateShopLeaveControl();
 
             // The battle runs the whole turn synchronously; Stepped fires once per sub-step, so we
@@ -3803,13 +4184,23 @@ namespace DiaBlackJack.GameScene
 
             if (accepted && Application.isPlaying && _timeline.Count > 0)
             {
-                StartCoroutine(PlayTimeline(
-                    timelineBaseline,
-                    playerActionSkull,
-                    movedPlayerActionSkull));
+                IEnumerator routine = trackTutorialPresentation
+                    ? PlayTutorialTimeline(
+                        timelineBaseline,
+                        playerActionSkull,
+                        movedPlayerActionSkull)
+                    : PlayTimeline(
+                        timelineBaseline,
+                        playerActionSkull,
+                        movedPlayerActionSkull);
+                StartCoroutine(routine);
             }
             else
             {
+                if (trackTutorialPresentation)
+                {
+                    _tutorialCombatPresentationActive = false;
+                }
                 UnlockInput();
                 if (_pendingPlayerMammonComparison != null &&
                     timelineBaseline != null)
@@ -3823,6 +4214,33 @@ namespace DiaBlackJack.GameScene
                     RefreshView();
                 }
                 ReturnToProgressionIfStageBattleEnded();
+            }
+        }
+
+        private IEnumerator PlayTutorialTimeline(
+            GameSceneViewModel timelineBaseline,
+            CombatActionSkullRequest? playerActionSkull,
+            bool waitForPlayerActionSkull)
+        {
+            try
+            {
+                yield return PlayTimeline(
+                    timelineBaseline,
+                    playerActionSkull,
+                    waitForPlayerActionSkull);
+            }
+            finally
+            {
+                _tutorialCombatPresentationActive = false;
+                if (_tutorialViewRefreshPending)
+                {
+                    _tutorialViewRefreshPending = false;
+                    RefreshView();
+                }
+                else
+                {
+                    _tutorialDirector?.Observe();
+                }
             }
         }
 
@@ -5541,7 +5959,9 @@ namespace DiaBlackJack.GameScene
             GameSceneViewModel vm,
             bool showTransientEffectSources)
         {
-            if (vm == null || _suppressHandRenderUntilRoundOneStart)
+            if (vm == null ||
+                _suppressHandRenderUntilRoundOneStart ||
+                _holdTutorialRoundTransitionPresentation)
             {
                 return false;
             }
@@ -5667,6 +6087,11 @@ namespace DiaBlackJack.GameScene
             if (_suppressHandRenderUntilRoundOneStart)
             {
                 totals.Render(string.Empty, string.Empty);
+                return;
+            }
+
+            if (_holdTutorialRoundTransitionPresentation)
+            {
                 return;
             }
 
@@ -5945,6 +6370,11 @@ namespace DiaBlackJack.GameScene
 
         private void RefreshDeckStacks(GameSceneViewModel vm)
         {
+            if (_holdTutorialRoundTransitionPresentation)
+            {
+                return;
+            }
+
             if (vm == null)
             {
                 remainingDeck?.Render(0);

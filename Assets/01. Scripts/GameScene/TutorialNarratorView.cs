@@ -44,6 +44,11 @@ namespace DiaBlackJack.GameScene
 
         public bool IsLineComplete => speechText == null || speechText.IsComplete;
 
+        internal DemonCardView NarratorCard => _card;
+
+        internal bool OwnsNarratorCard(DemonCardView card) =>
+            card != null && card == _card;
+
         private void LateUpdate()
         {
             UpdateSpeechPosition();
@@ -65,6 +70,12 @@ namespace DiaBlackJack.GameScene
 
         public void Show()
         {
+            ShowCardOnly();
+            IsActive = true;
+        }
+
+        internal void ShowCardOnly()
+        {
             _showRequested = true;
             EnsureCard();
             if (!_cardBound && _card != null)
@@ -73,7 +84,8 @@ namespace DiaBlackJack.GameScene
             }
 
             gameObject.SetActive(true);
-            IsActive = true;
+            IsActive = false;
+            speechText?.Hide();
         }
 
         public void Hide()
@@ -83,6 +95,15 @@ namespace DiaBlackJack.GameScene
             // Deliberately does NOT deactivate the root — once Show() has made the
             // Asmodeus card visible, it stays out on the table as a real object for the
             // rest of the tutorial; only the speech bubble text hides between lines/gates.
+        }
+
+        internal void ResetView()
+        {
+            _externalSpeaker = null;
+            _showRequested = false;
+            IsActive = false;
+            speechText?.Hide();
+            gameObject.SetActive(false);
         }
 
         public void ShowLine(string text)
@@ -212,16 +233,15 @@ namespace DiaBlackJack.GameScene
 
         private void BindNarratorCard()
         {
-            DemonContractDefinition definition =
-                DemonContractCatalog.Default.GetByKey(narratorDefinitionKey);
             _card.Bind(new GameSceneDemonCardViewModel(
                 NarratorCardId,
                 narratorDefinitionKey,
                 isFaceUp: true,
                 canUse: false,
-                displayName: definition.DisplayName,
-                summary: definition.Summary,
-                costSummary: definition.CostSummary));
+                displayName: "아스모데우스",
+                summary: "최고로 유능하고, 최고로 아름다운 악마지.",
+                costSummary: "나랑 대화할 수 있는 걸 가문의 영광으로 알라고.",
+                showHoverBadgeWhenUnavailable: true));
             _cardBound = true;
         }
     }

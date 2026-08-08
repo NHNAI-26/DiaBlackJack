@@ -77,9 +77,12 @@ namespace DiaBlackJack.GameScene
             ApplyColor();
         }
 
-        public void SetHovered(bool isHovered)
+        public void SetHovered(
+            bool isHovered,
+            bool allowWhenDisabled = false)
         {
-            _isHovered = isHovered && IsInteractable;
+            _isHovered = isHovered &&
+                (IsInteractable || allowWhenDisabled);
             ApplyColor();
         }
 
@@ -102,10 +105,10 @@ namespace DiaBlackJack.GameScene
 
         private void ApplyColor()
         {
-            Color color = !IsInteractable
-                ? disabledColor
-                : _isHovered
-                    ? hoveredColor
+            Color color = _isHovered
+                ? hoveredColor
+                : !IsInteractable
+                    ? disabledColor
                     : interactableColor;
             if (artworkRenderer != null)
             {

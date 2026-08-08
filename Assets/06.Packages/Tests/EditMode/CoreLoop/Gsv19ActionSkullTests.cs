@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Border.Audio;
 using DiaBlackJack.Content;
 using DiaBlackJack.GameScene;
@@ -323,6 +324,59 @@ namespace DiaBlackJack.CoreLoop.Tests
             {
                 UnityEngine.Object.DestroyImmediate(instance);
             }
+        }
+
+        [Test]
+        public void GSV19_U16_GameManagerRoundStartKeepsBothSkullsHidden()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                GameManagerPrefabPath);
+            GameObject instance = UnityEngine.Object.Instantiate(prefab);
+            try
+            {
+                GameManager manager = instance.GetComponent<GameManager>();
+                MethodInfo ensureRound = typeof(GameManager).GetMethod(
+                    "EnsureActionSkullRound",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(ensureRound, Is.Not.Null);
+                ensureRound.Invoke(manager, new object[] { 1 });
+
+                var playerField = typeof(GameManager).GetField(
+                    "_playerActionSkull",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                var enemyField = typeof(GameManager).GetField(
+                    "_enemyActionSkull",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(playerField, Is.Not.Null);
+                Assert.That(enemyField, Is.Not.Null);
+                var player = (CombatActionSkullView)playerField.GetValue(manager);
+                var enemy = (CombatActionSkullView)enemyField.GetValue(manager);
+
+                Assert.That(player.IsVisible, Is.False);
+                Assert.That(enemy.IsVisible, Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
+        [TestCase(-1, 1, true, true)]
+        [TestCase(1, 1, false, false)]
+        [TestCase(1, 2, false, true)]
+        [TestCase(1, 2, true, false)]
+        public void GSV19_U17_RoundResetWaitsForHeldTutorialTransition(
+            int currentRound,
+            int nextRound,
+            bool holdTransition,
+            bool expected)
+        {
+            Assert.That(
+                GameManager.ShouldResetActionSkullsForRound(
+                    currentRound,
+                    nextRound,
+                    holdTransition),
+                Is.EqualTo(expected));
         }
 
         [Test]

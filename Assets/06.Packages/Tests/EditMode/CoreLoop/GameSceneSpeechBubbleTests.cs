@@ -29,6 +29,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/02. ScriptableObjects/Enemies/EnemyContentCatalog.asset";
         private const string MerchantSpeechPath =
             "Assets/02. ScriptableObjects/Speech/merchant_speech.asset";
+        private const string TutorialScriptPath =
+            "Assets/04. Data/Tutorial/TutorialScript.asset";
 
         [Test]
         public void GFH01_U04_InactiveTutorialNarratorShowsOnFirstRequest()
@@ -80,6 +82,264 @@ namespace DiaBlackJack.CoreLoop.Tests
             finally
             {
                 UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void TUT01_U01_TutorialMarkupSupportsNestedBoldAndWordColor()
+        {
+            TutorialMarkupResult result = TutorialMarkupFormatter.Format(
+                "패자는 **(빨강)죽는다.** 다음");
+
+            Assert.That(
+                result.Text,
+                Is.EqualTo(
+                    "패자는 <b><color=#B71C1C>죽는다.</color></b> 다음"));
+            Assert.That(result.Highlight, Is.EqualTo(TutorialHighlightTarget.None));
+        }
+
+        [Test]
+        public void TUT01_U02_TutorialMarkupSupportsWholeLineColor()
+        {
+            TutorialMarkupResult result = TutorialMarkupFormatter.Format(
+                "주의: **(전체 보라)반드시 끝까지 읽도록.**");
+
+            Assert.That(
+                result.Text,
+                Is.EqualTo(
+                    "주의: <b><color=#9C27B0>반드시 끝까지 읽도록.</color></b>"));
+        }
+
+        [Test]
+        public void TUT01_U03_HighlightDirectiveIsConsumedInsteadOfDisplayed()
+        {
+            TutorialMarkupResult result = TutorialMarkupFormatter.Format(
+                "**(파랑)히트**해봐. (히트 버튼 하이라이트)");
+
+            Assert.That(result.Highlight, Is.EqualTo(TutorialHighlightTarget.Hit));
+            Assert.That(result.Text, Does.Not.Contain("하이라이트"));
+            Assert.That(
+                result.Text,
+                Is.EqualTo(
+                    "<b><color=#2196F3>히트</color></b>해봐."));
+        }
+
+        [Test]
+        public void TUT01_U04_TutorialScriptStartsRulesTwoSecondsAfterDeal()
+        {
+            TutorialScriptSO script =
+                AssetDatabase.LoadAssetAtPath<TutorialScriptSO>(TutorialScriptPath);
+
+            Assert.That(script, Is.Not.Null);
+            Assert.That(script.Steps.Count, Is.GreaterThan(2));
+            Assert.That(script.Steps[0].isIntro, Is.True);
+            Assert.That(script.Steps[0].lines, Has.Length.EqualTo(7));
+            Assert.That(script.Steps[1].delayBeforeSeconds, Is.EqualTo(2f));
+            Assert.That(
+                script.Steps[1].lines[0],
+                Is.EqualTo("블랙잭은 자신의 카드 합을 21에 가깝게 만드는 게임이야."));
+        }
+
+        [Test]
+        public void TUT01_U07_TutorialScriptIncludesCameraHintAndUpdatedHitLine()
+        {
+            TutorialScriptSO script =
+                AssetDatabase.LoadAssetAtPath<TutorialScriptSO>(TutorialScriptPath);
+
+            Assert.That(script, Is.Not.Null);
+            Assert.That(
+                script.Steps.SelectMany(step => step.lines ?? Array.Empty<string>()),
+                Does.Contain(
+                    "만약 상대 카드가 잘 보이지 않는다면, **W**, **D** 키로 " +
+                    "카메라 시점을 바꿀 수 있으니 적극 활용해봐.").And.Contain(
+                    "21까진 한참 모자라는군. " +
+                    "**(파랑)히트**(색 빼기)해보라고. " +
+                    "(히트 버튼 하이라이트)"));
+        }
+
+        [Test]
+        public void TUT01_U08_ColorResetKeepsBoldButStopsColor()
+        {
+            TutorialMarkupResult result = TutorialMarkupFormatter.Format(
+                "**(보라)영혼(색 빼기)을 2 잃게 되니**");
+
+            Assert.That(result.Text, Does.Not.Contain("색 빼기"));
+            Assert.That(
+                result.Text,
+                Is.EqualTo(
+                    "<b><color=#9C27B0>영혼</color>을 2 잃게 되니</b>"));
+        }
+
+        [Test]
+        public void TUT01_U09_TutorialScriptAddsDeckAndRevolverResolutionGates()
+        {
+            TutorialScriptSO script =
+                AssetDatabase.LoadAssetAtPath<TutorialScriptSO>(TutorialScriptPath);
+            TutorialStepEntry[] steps = script.Steps.ToArray();
+
+            int deckGate = Array.FindIndex(
+                steps,
+                step => step.kind == TutorialStepKind.Gate &&
+                    step.gateKind == TutorialGateKind.DeckPreview);
+            int revolverCardGate = Array.FindIndex(
+                steps,
+                step => step.kind == TutorialStepKind.Gate &&
+                    step.gateKind == TutorialGateKind.Revolver);
+            int revolverResolveGate = Array.FindIndex(
+                steps,
+                step => step.kind == TutorialStepKind.Gate &&
+                    step.gateKind == TutorialGateKind.RevolverResolve);
+
+            Assert.That(deckGate, Is.GreaterThan(0));
+            Assert.That(revolverCardGate, Is.GreaterThan(deckGate));
+            Assert.That(revolverResolveGate, Is.GreaterThan(revolverCardGate));
+            Assert.That(
+                steps[revolverResolveGate + 1].defersRoundTwoReveal,
+                Is.True);
+            Assert.That(
+                steps[revolverResolveGate + 2].lines[0],
+                Does.StartWith("19라."));
+        }
+
+        [Test]
+        public void TUT01_U10_DeckGateRequiresOpenThenClose()
+        {
+            Assert.That(
+                GameManager.HasCompletedTutorialDeckPreviewGate(
+                    active: true,
+                    wasOpened: false,
+                    isOpen: false),
+                Is.False);
+            Assert.That(
+                GameManager.HasCompletedTutorialDeckPreviewGate(
+                    active: true,
+                    wasOpened: true,
+                    isOpen: true),
+                Is.False);
+            Assert.That(
+                GameManager.HasCompletedTutorialDeckPreviewGate(
+                    active: true,
+                    wasOpened: true,
+                    isOpen: false),
+                Is.True);
+        }
+
+        [Test]
+        public void TUT01_U11_DialogueWaitsForCombatPresentationIdle()
+        {
+            Assert.That(
+                TutorialDirector.ShouldDeferDialoguePresentation(
+                    isDialogue: true,
+                    presentationIdle: false),
+                Is.True);
+            Assert.That(
+                TutorialDirector.ShouldDeferDialoguePresentation(
+                    isDialogue: true,
+                    presentationIdle: true),
+                Is.False);
+        }
+
+        [Test]
+        public void TUT01_U12_RevolverCardGateCompletesWhenSelectorOpens()
+        {
+            Assert.That(
+                GameManager.HasEnteredTutorialRevolverSelection(
+                    selectorOpen: false,
+                    pendingEffectKind: CardEffectKind.AutoPistol),
+                Is.False);
+            Assert.That(
+                GameManager.HasEnteredTutorialRevolverSelection(
+                    selectorOpen: true,
+                    pendingEffectKind: CardEffectKind.LieDetector),
+                Is.False);
+            Assert.That(
+                GameManager.HasEnteredTutorialRevolverSelection(
+                    selectorOpen: true,
+                    pendingEffectKind: CardEffectKind.AutoPistol),
+                Is.True);
+        }
+
+        [Test]
+        public void TUT01_U13_RevolverResultWaitsForEffectAndPresentation()
+        {
+            Assert.That(
+                GameManager.HasCompletedTutorialRevolverResolution(
+                    presentationIdle: false,
+                    selectorOpen: false,
+                    pendingEffectKind: null),
+                Is.False);
+            Assert.That(
+                GameManager.HasCompletedTutorialRevolverResolution(
+                    presentationIdle: true,
+                    selectorOpen: true,
+                    pendingEffectKind: CardEffectKind.AutoPistol),
+                Is.False);
+            Assert.That(
+                GameManager.HasCompletedTutorialRevolverResolution(
+                    presentationIdle: true,
+                    selectorOpen: false,
+                    pendingEffectKind: null),
+                Is.True);
+        }
+
+        [TestCase(true, false, false)]
+        [TestCase(true, true, true)]
+        [TestCase(false, true, false)]
+        public void TUT01_U14_GateEvaluationRequiresIdlePresentation(
+            bool gateActive,
+            bool presentationIdle,
+            bool expected)
+        {
+            Assert.That(
+                TutorialDirector.ShouldEvaluateGate(
+                    gateActive,
+                    presentationIdle),
+                Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void TUT01_U05_CardOnlyNarratorActivatesWithoutOpeningDialogue()
+        {
+            var root = new GameObject("CardOnlyTutorialNarrator");
+            root.SetActive(false);
+            try
+            {
+                TutorialNarratorView narrator =
+                    root.AddComponent<TutorialNarratorView>();
+
+                narrator.ShowCardOnly();
+
+                Assert.That(root.activeSelf, Is.True);
+                Assert.That(narrator.IsActive, Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void TUT01_U06_SpotlightNeverConsumesPointerInput()
+        {
+            var canvasObject = new GameObject(
+                "TutorialSpotlightCanvas",
+                typeof(RectTransform),
+                typeof(Canvas));
+            try
+            {
+                TutorialSpotlightView spotlight =
+                    TutorialSpotlightView.Create(canvasObject.transform);
+                spotlight.Show(new Vector2(640f, 360f), 80f);
+
+                Assert.That(spotlight.gameObject.activeSelf, Is.True);
+                Assert.That(spotlight.raycastTarget, Is.False);
+
+                spotlight.Hide();
+                Assert.That(spotlight.gameObject.activeSelf, Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(canvasObject);
             }
         }
 

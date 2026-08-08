@@ -16,13 +16,26 @@ namespace DiaBlackJack.GameScene
         BeginChange,
         Revolver,
         ContractCandidate,
-        ContractOption
+        ContractOption,
+        DeckPreview,
+        RevolverResolve
     }
 
     public enum TutorialSpeakerKind
     {
         NarratorAsmodeus,
         PlayerContractedAsmodeus
+    }
+
+    public enum TutorialHighlightTarget
+    {
+        None,
+        Hit,
+        Stand,
+        Change,
+        RevolverCard,
+        ContractPaper,
+        PlayerDrawDeck
     }
 
     /// <summary>
@@ -42,8 +55,9 @@ namespace DiaBlackJack.GameScene
         [Tooltip("Section 0-1 intro dialogue — its completion holds the enemy entrance/round-1 reveal until dismissed.")]
         public bool isIntro;
 
-        [Tooltip("Intro dialogue only: zero-based line index that begins the round-1 card deal. Negative disables it.")]
-        public int roundOneStartLineIndex = -1;
+        [Min(0f)]
+        [Tooltip("Delay before the first line of this dialogue block is shown.")]
+        public float delayBeforeSeconds;
 
         [Tooltip("Round-1 soul-loss recap dialogue — its completion is what reveals round 2's held-back deal.")]
         public bool defersRoundTwoReveal;

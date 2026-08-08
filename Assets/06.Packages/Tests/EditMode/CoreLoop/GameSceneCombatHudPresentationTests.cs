@@ -2209,6 +2209,12 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(
                     hit.GetComponent<HoverDescriptionTarget>(),
                     Is.Not.Null);
+                hit.SetHovered(true, allowWhenDisabled: true);
+                Assert.That(
+                    hit.GetComponent<SpriteRenderer>().color,
+                    Is.Not.EqualTo(
+                        new Color(0.35f, 0.35f, 0.35f, 0.35f)));
+                Assert.That(hit.TryGetCommand(out _), Is.False);
 
                 TableCombatCommandView stand = group
                     .GetComponentsInChildren<TableCombatCommandView>(true)

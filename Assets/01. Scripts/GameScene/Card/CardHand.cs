@@ -257,6 +257,28 @@ namespace DiaBlackJack.GameScene
             return false;
         }
 
+        internal bool TryGetFirstCardByDefinitionPrefix(
+            string definitionPrefix,
+            out CardView card)
+        {
+            for (int i = 0; i < _spawned.Count; i++)
+            {
+                CardView candidate = _spawned[i];
+                if (candidate != null &&
+                    candidate.gameObject.activeInHierarchy &&
+                    candidate.DefinitionKey.StartsWith(
+                        definitionPrefix,
+                        StringComparison.Ordinal))
+                {
+                    card = candidate;
+                    return true;
+                }
+            }
+
+            card = null;
+            return false;
+        }
+
         internal bool TryGetDemonCardWorldPosition(
             int cardId,
             out Vector3 position)
