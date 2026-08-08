@@ -1,7 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Reflection;
 using Border.Settings;
+using DiaBlackJack.GameScene;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -12,12 +12,14 @@ namespace DiaBlackJack.Settings.Tests
     public sealed class GameSettingsTests
     {
         private PlayerPrefsSettingsRepository _repository;
+        private string _prefix;
 
         [SetUp]
         public void SetUp()
         {
-            _repository = new PlayerPrefsSettingsRepository(
-                "DiaBlackJack.Tests.Settings." + Guid.NewGuid().ToString("N"));
+            _prefix =
+                "DiaBlackJack.Tests.Settings." + Guid.NewGuid().ToString("N");
+            _repository = new PlayerPrefsSettingsRepository(_prefix);
         }
 
         [TearDown]
@@ -27,20 +29,19 @@ namespace DiaBlackJack.Settings.Tests
         }
 
         [Test]
-        public void SET01_U01_DefaultsUseBorderlessAndExpectedVolumes()
+        [Category("SET06")]
+        public void SET06_U01_DefaultsUseNormalTooltipAndExpectedVolumes()
         {
             GameSettingsDefaultsSO defaults =
                 ScriptableObject.CreateInstance<GameSettingsDefaultsSO>();
             try
             {
                 GameSettingsSnapshot snapshot =
-                    defaults.CreateSnapshot(2560, 1440);
+                    defaults.CreateSnapshot();
 
-                Assert.That(snapshot.ResolutionWidth, Is.EqualTo(2560));
-                Assert.That(snapshot.ResolutionHeight, Is.EqualTo(1440));
                 Assert.That(
-                    snapshot.WindowMode,
-                    Is.EqualTo(GameWindowMode.BorderlessFullscreen));
+                    snapshot.HoverTooltipSize,
+                    Is.EqualTo(HoverTooltipSize.Normal));
                 Assert.That(snapshot.MasterVolume, Is.EqualTo(1f));
                 Assert.That(snapshot.BgmVolume, Is.EqualTo(0.8f));
                 Assert.That(snapshot.SfxVolume, Is.EqualTo(1f));
@@ -52,31 +53,29 @@ namespace DiaBlackJack.Settings.Tests
         }
 
         [Test]
-        public void SET01_U02_SnapshotClampsInvalidAudioAndWindowMode()
+        [Category("SET06")]
+        public void SET06_U02_SnapshotClampsInvalidAudioAndTooltipSize()
         {
             GameSettingsSnapshot snapshot = new GameSettingsSnapshot(
-                1920,
-                1080,
-                (GameWindowMode)999,
+                (HoverTooltipSize)999,
                 float.NaN,
                 -0.2f,
                 float.PositiveInfinity);
 
             Assert.That(
-                snapshot.WindowMode,
-                Is.EqualTo(GameWindowMode.BorderlessFullscreen));
+                    snapshot.HoverTooltipSize,
+                    Is.EqualTo(HoverTooltipSize.Normal));
             Assert.That(snapshot.MasterVolume, Is.EqualTo(0f));
             Assert.That(snapshot.BgmVolume, Is.EqualTo(0f));
             Assert.That(snapshot.SfxVolume, Is.EqualTo(1f));
         }
 
         [Test]
-        public void SET01_U03_PlayerPrefsRepositoryRoundTripsAllSettings()
+        [Category("SET06")]
+        public void SET06_U03_PlayerPrefsRepositoryRoundTripsAllSettings()
         {
             GameSettingsSnapshot expected = new GameSettingsSnapshot(
-                1920,
-                1080,
-                GameWindowMode.ExclusiveFullscreen,
+                HoverTooltipSize.Large,
                 0.75f,
                 0.5f,
                 0.25f);
@@ -89,7 +88,8 @@ namespace DiaBlackJack.Settings.Tests
         }
 
         [Test]
-        public void SET01_U04_MissingPlayerPrefsReturnsFalse()
+        [Category("SET06")]
+        public void SET06_U04_MissingPlayerPrefsReturnsFalse()
         {
             Assert.That(
                 _repository.TryLoad(out GameSettingsSnapshot snapshot),
@@ -97,62 +97,67 @@ namespace DiaBlackJack.Settings.Tests
             Assert.That(snapshot, Is.EqualTo(default(GameSettingsSnapshot)));
         }
 
-        [Test]
-        public void SET02_U01_ResolutionCatalogDeduplicatesAndKeepsHighestRate()
+        [TestCase(HoverTooltipSize.Small, 1f)]
+        [TestCase(HoverTooltipSize.Normal, 1.3f)]
+        [TestCase(HoverTooltipSize.Large, 1.5f)]
+        [Category("SET06")]
+        public void SET06_U05_TooltipSizesMapToExpectedScale(
+            HoverTooltipSize size,
+            float expected)
         {
-            List<DisplayResolutionOption> source =
-                new List<DisplayResolutionOption>
-            {
-                new DisplayResolutionOption(1920, 1080, 60, 1),
-                new DisplayResolutionOption(1280, 720, 60, 1),
-                new DisplayResolutionOption(1920, 1080, 144, 1),
-                new DisplayResolutionOption(0, 0, 60, 1)
-            };
+            Vector3 scale = HoverTooltipSizeUtility.GetScale(size);
 
-            List<DisplayResolutionOption> options =
-                SettingsGraphicsUtility.BuildResolutionOptions(
-                    source,
-                    new DisplayResolutionOption(2560, 1440, 60, 1));
-
-            Assert.That(options.Count, Is.EqualTo(2));
-            Assert.That(options[0].Width, Is.EqualTo(1280));
-            Assert.That(options[0].Height, Is.EqualTo(720));
-            Assert.That(options[1].Width, Is.EqualTo(1920));
-            Assert.That(options[1].Height, Is.EqualTo(1080));
-            Assert.That(options[1].RefreshRate, Is.EqualTo(144d));
+            Assert.That(scale.x, Is.EqualTo(expected));
+            Assert.That(scale.y, Is.EqualTo(expected));
+            Assert.That(scale.z, Is.EqualTo(1f));
         }
 
         [Test]
-        public void SET02_U02_EmptyResolutionCatalogUsesFallback()
+        [Category("SET06")]
+        public void SET06_U06_VersionOnePreservesAudioAndUsesNormalTooltip()
         {
-            DisplayResolutionOption fallback =
-                new DisplayResolutionOption(2560, 1440, 120, 1);
+            PlayerPrefs.SetInt(_prefix + ".Version", 1);
+            PlayerPrefs.SetInt(_prefix + ".ResolutionWidth", 1280);
+            PlayerPrefs.SetInt(_prefix + ".ResolutionHeight", 720);
+            PlayerPrefs.SetInt(_prefix + ".WindowMode", 0);
+            PlayerPrefs.SetFloat(_prefix + ".MasterVolume", 0.7f);
+            PlayerPrefs.SetFloat(_prefix + ".BgmVolume", 0.6f);
+            PlayerPrefs.SetFloat(_prefix + ".SfxVolume", 0.5f);
 
-            List<DisplayResolutionOption> options =
-                SettingsGraphicsUtility.BuildResolutionOptions(
-                    Array.Empty<DisplayResolutionOption>(),
-                    fallback);
-
-            Assert.That(options, Has.Count.EqualTo(1));
-            Assert.That(options[0], Is.EqualTo(fallback));
-        }
-
-        [TestCase(
-            GameWindowMode.Windowed,
-            FullScreenMode.Windowed)]
-        [TestCase(
-            GameWindowMode.ExclusiveFullscreen,
-            FullScreenMode.ExclusiveFullScreen)]
-        [TestCase(
-            GameWindowMode.BorderlessFullscreen,
-            FullScreenMode.FullScreenWindow)]
-        public void SET02_U03_WindowModesMapToUnityModes(
-            GameWindowMode mode,
-            FullScreenMode expected)
-        {
             Assert.That(
-                SettingsGraphicsUtility.GetFullScreenMode(mode),
-                Is.EqualTo(expected));
+                _repository.TryLoad(out GameSettingsSnapshot snapshot),
+                Is.True);
+            Assert.That(
+                snapshot.HoverTooltipSize,
+                Is.EqualTo(HoverTooltipSize.Normal));
+            Assert.That(snapshot.MasterVolume, Is.EqualTo(0.7f));
+            Assert.That(snapshot.BgmVolume, Is.EqualTo(0.6f));
+            Assert.That(snapshot.SfxVolume, Is.EqualTo(0.5f));
+        }
+
+        [Test]
+        [Category("SET06")]
+        public void SET06_U07_SaveRemovesDeprecatedDisplayKeys()
+        {
+            PlayerPrefs.SetInt(_prefix + ".ResolutionWidth", 1280);
+            PlayerPrefs.SetInt(_prefix + ".ResolutionHeight", 720);
+            PlayerPrefs.SetInt(_prefix + ".WindowMode", 0);
+            GameSettingsSnapshot snapshot = new GameSettingsSnapshot(
+                HoverTooltipSize.Small,
+                1f,
+                0.8f,
+                1f);
+
+            Assert.That(_repository.TrySave(snapshot), Is.True);
+            Assert.That(
+                PlayerPrefs.HasKey(_prefix + ".ResolutionWidth"),
+                Is.False);
+            Assert.That(
+                PlayerPrefs.HasKey(_prefix + ".ResolutionHeight"),
+                Is.False);
+            Assert.That(
+                PlayerPrefs.HasKey(_prefix + ".WindowMode"),
+                Is.False);
         }
 
         [TestCase(-1, 3, 2)]
@@ -168,6 +173,186 @@ namespace DiaBlackJack.Settings.Tests
             Assert.That(
                 UISettingsArrowSelector.WrapIndex(index, count),
                 Is.EqualTo(expected));
+        }
+
+        [Test]
+        [Category("SET06")]
+        public void SET06_U08_SettingsPrefabUsesOnlyTooltipSizeSelector()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/03. Prefabs/UI/PauseSettingsCanvas.prefab");
+
+            Assert.That(prefab, Is.Not.Null);
+            Transform settingsPanel = prefab.transform.Find("SettingsPanel");
+            Assert.That(settingsPanel, Is.Not.Null);
+            Assert.That(
+                settingsPanel.Find("TooltipSizeSelector"),
+                Is.Not.Null);
+            Assert.That(
+                settingsPanel.Find("ResolutionSelector"),
+                Is.Null);
+            Assert.That(
+                settingsPanel.Find("WindowModeSelector"),
+                Is.Null);
+
+            PauseSettingsController controller =
+                prefab.GetComponent<PauseSettingsController>();
+            SerializedObject serializedController =
+                new SerializedObject(controller);
+            Assert.That(
+                serializedController.FindProperty("tooltipSizeSelector")
+                    .objectReferenceValue,
+                Is.Not.Null);
+        }
+
+        [Test]
+        [Category("SET06")]
+        public void SET06_U09_HudRespondsToTooltipSizePreview()
+        {
+            GameObject settingsSystemInstance = null;
+            GameObject hudInstance = null;
+            try
+            {
+                typeof(SettingsSystem)
+                    .GetField(
+                        "_current",
+                        BindingFlags.Static | BindingFlags.NonPublic)
+                    .SetValue(null, null);
+                GameObject settingsSystemPrefab =
+                    AssetDatabase.LoadAssetAtPath<GameObject>(
+                        "Assets/03. Prefabs/Manager/SettingsSystem.prefab");
+                GameObject hudPrefab =
+                    AssetDatabase.LoadAssetAtPath<GameObject>(
+                        "Assets/03. Prefabs/UI/HUD.prefab");
+                Assert.That(settingsSystemPrefab, Is.Not.Null);
+                Assert.That(hudPrefab, Is.Not.Null);
+
+                settingsSystemInstance =
+                    UnityEngine.Object.Instantiate(settingsSystemPrefab);
+                SettingsSystem settingsSystem =
+                    settingsSystemInstance.GetComponent<SettingsSystem>();
+                typeof(SettingsSystem)
+                    .GetField(
+                        "_current",
+                        BindingFlags.Static | BindingFlags.NonPublic)
+                    .SetValue(null, settingsSystem);
+                typeof(SettingsSystem)
+                    .GetField(
+                        "_repository",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(settingsSystem, _repository);
+                typeof(SettingsSystem)
+                    .GetField(
+                        "_snapshot",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    .SetValue(
+                        settingsSystem,
+                        new GameSettingsSnapshot(
+                            HoverTooltipSize.Normal,
+                            1f,
+                            0.8f,
+                            1f));
+
+                hudInstance = UnityEngine.Object.Instantiate(hudPrefab);
+                GameHudView hud = hudInstance.GetComponent<GameHudView>();
+                Assert.That(hud, Is.Not.Null);
+                typeof(GameHudView)
+                    .GetMethod(
+                        "Awake",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(hud, null);
+                RectTransform tooltip = hudInstance.transform
+                    .Find("CardHoverTooltipRoot") as RectTransform;
+                Assert.That(tooltip, Is.Not.Null);
+                Assert.That(tooltip.localScale.x, Is.EqualTo(1.3f));
+
+                settingsSystem.PreviewHoverTooltipSize(
+                    HoverTooltipSize.Large);
+                Assert.That(tooltip.localScale, Is.EqualTo(
+                    new Vector3(1.5f, 1.5f, 1f)));
+
+                settingsSystem.PreviewHoverTooltipSize(
+                    HoverTooltipSize.Small);
+                Assert.That(tooltip.localScale, Is.EqualTo(Vector3.one));
+            }
+            finally
+            {
+                typeof(SettingsSystem)
+                    .GetField(
+                        "_current",
+                        BindingFlags.Static | BindingFlags.NonPublic)
+                    .SetValue(null, null);
+                if (hudInstance != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(hudInstance);
+                }
+
+                if (settingsSystemInstance != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(
+                        settingsSystemInstance);
+                }
+            }
+        }
+
+        [Test]
+        [Category("SET06")]
+        public void SET06_U10_TooltipSelectorCyclesBothDirections()
+        {
+            GameObject instance = null;
+            try
+            {
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                    "Assets/03. Prefabs/UI/PauseSettingsCanvas.prefab");
+                Assert.That(prefab, Is.Not.Null);
+
+                instance = UnityEngine.Object.Instantiate(prefab);
+                Transform selectorRoot = instance.transform.Find(
+                    "SettingsPanel/TooltipSizeSelector");
+                UISettingsArrowSelector selector =
+                    selectorRoot.GetComponent<UISettingsArrowSelector>();
+                typeof(UISettingsArrowSelector)
+                    .GetMethod(
+                        "Awake",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(selector, null);
+                selector.SetOptions(
+                    new[] { "작게", "보통", "크게" },
+                    (int)HoverTooltipSize.Normal);
+
+                Button left = selectorRoot.Find("LeftButton")
+                    .GetComponent<Button>();
+                Button right = selectorRoot.Find("RightButton")
+                    .GetComponent<Button>();
+                Component value = selectorRoot.Find("Value").gameObject
+                    .GetComponent("TextMeshProUGUI");
+                SerializedObject serializedValue =
+                    new SerializedObject(value);
+                SerializedProperty valueText =
+                    serializedValue.FindProperty("m_text");
+
+                serializedValue.Update();
+                Assert.That(valueText.stringValue, Is.EqualTo("보통"));
+                right.onClick.Invoke();
+                Assert.That(selector.Index, Is.EqualTo(2));
+                serializedValue.Update();
+                Assert.That(valueText.stringValue, Is.EqualTo("크게"));
+                right.onClick.Invoke();
+                Assert.That(selector.Index, Is.Zero);
+                serializedValue.Update();
+                Assert.That(valueText.stringValue, Is.EqualTo("작게"));
+                left.onClick.Invoke();
+                Assert.That(selector.Index, Is.EqualTo(2));
+                serializedValue.Update();
+                Assert.That(valueText.stringValue, Is.EqualTo("크게"));
+            }
+            finally
+            {
+                if (instance != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(instance);
+                }
+            }
         }
 
         [Test]
@@ -209,9 +394,7 @@ namespace DiaBlackJack.Settings.Tests
                     .SetValue(
                         settingsSystem,
                         new GameSettingsSnapshot(
-                            1920,
-                            1080,
-                            GameWindowMode.Windowed,
+                            HoverTooltipSize.Normal,
                             1f,
                             0.8f,
                             1f));

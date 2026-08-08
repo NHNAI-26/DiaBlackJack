@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Border.Settings;
 using DG.Tweening;
 using DiaBlackJack.Content;
 using DiaBlackJack.CoreLoop;
@@ -85,6 +86,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private CardContentCatalogSO cardContentCatalog;
 
         private Canvas _canvas;
+        private SettingsSystem _settingsSystem;
         private OptionSlotLayout[] _optionSlotLayouts = Array.Empty<OptionSlotLayout>();
         private Sequence _soulRestoreSequence;
         private Sequence _playerSoulDamageSequence;
@@ -168,6 +170,18 @@ namespace DiaBlackJack.GameScene
         private void Awake()
         {
             _canvas = GetComponentInParent<Canvas>();
+            _settingsSystem = SettingsSystem.Current;
+            if (_settingsSystem != null)
+            {
+                _settingsSystem.Changed += HandleSettingsChanged;
+                ApplyHoverTooltipSize(
+                    _settingsSystem.Snapshot.HoverTooltipSize);
+            }
+            else
+            {
+                ApplyHoverTooltipSize(HoverTooltipSize.Normal);
+            }
+
             if (revolverNumberSelector != null)
             {
                 revolverNumberSelector.CommandRequested += RaiseCombatCommand;
@@ -185,6 +199,11 @@ namespace DiaBlackJack.GameScene
 
         private void OnDestroy()
         {
+            if (_settingsSystem != null)
+            {
+                _settingsSystem.Changed -= HandleSettingsChanged;
+            }
+
             if (revolverNumberSelector != null)
             {
                 revolverNumberSelector.CommandRequested -= RaiseCombatCommand;
@@ -196,6 +215,20 @@ namespace DiaBlackJack.GameScene
             _soulLossPresentation = null;
             UnbindCombatControls();
             UnbindShopLeaveControl();
+        }
+
+        private void HandleSettingsChanged(GameSettingsSnapshot snapshot)
+        {
+            ApplyHoverTooltipSize(snapshot.HoverTooltipSize);
+        }
+
+        internal void ApplyHoverTooltipSize(HoverTooltipSize size)
+        {
+            if (cardHoverTooltipRoot != null)
+            {
+                cardHoverTooltipRoot.localScale =
+                    HoverTooltipSizeUtility.GetScale(size);
+            }
         }
 
         public void Render(CoreLoopViewModel core)

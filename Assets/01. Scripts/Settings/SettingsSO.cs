@@ -16,8 +16,6 @@ namespace Border.Settings
         private float masterVolume;
         private float musicVolume;
         private float sfxVolume;
-        private int resolutionIndex;
-        private int windowModeIndex = SettingsGraphicsUtility.BorderlessWindowModeIndex;
         private bool isHudOn = false;
         private bool isCameraShakeOn = true;
         private string languageCode = DefaultLanguageCode;
@@ -25,8 +23,6 @@ namespace Border.Settings
         public float MasterVolume => masterVolume;
         public float MusicVolume => musicVolume;
         public float SfxVolume => sfxVolume;
-        public int ResolutionIndex => resolutionIndex;
-        public int WindowModeIndex => windowModeIndex;
         public bool IsHudOn => isHudOn;
         public bool IsCameraShakeOn => isCameraShakeOn;
         public string LanguageCode => string.IsNullOrWhiteSpace(languageCode) ? DefaultLanguageCode : languageCode;
@@ -42,17 +38,6 @@ namespace Border.Settings
             this.masterVolume = masterVolume;
             this.musicVolume = musicVolume;
             this.sfxVolume = sfxVolume;
-        }
-
-        /// <summary>
-        /// 그래픽 관련 설정값(해상도 인덱스, 전체화면 여부)을 저장한다.
-        /// </summary>
-        /// <param name="resolutionIndex">해상도 목록 인덱스</param>
-        /// <param name="windowModeIndex">전체화면 여부</param>
-        public void SaveGraphicsSettings(int resolutionIndex, int windowModeIndex)
-        {
-            this.resolutionIndex = resolutionIndex;
-            this.windowModeIndex = windowModeIndex;
         }
 
         /// <summary>

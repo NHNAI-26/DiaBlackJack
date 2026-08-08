@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0020f6f01103df74b8023f6663d46896, type: 3}
   m_Name: GameSettingsDefaults
   m_EditorClassIdentifier: Border::Border.Settings.GameSettingsDefaultsSO
-  windowMode: 2
+  hoverTooltipSize: 1
   masterVolume: 1
   bgmVolume: 0.8
   sfxVolume: 1

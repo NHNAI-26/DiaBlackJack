@@ -20,7 +20,6 @@ namespace Border.Settings
         [Header("Settings")]
         [SerializeField] private SettingsSO currentSettings;
         [SerializeField] private UISettingsAudioComponent audioComponent;
-        [SerializeField] private UISettingsGraphicsComponent graphicsComponent;
         //[SerializeField] private UISettingsCheck enableHudButton;
         [SerializeField] private UISettingsCheck cameraShakeButton;
         [SerializeField] private UISettingsDropdown languageDropdown;
@@ -100,7 +99,6 @@ namespace Border.Settings
         private void ShowSettingPanel()
         {
             audioComponent.Setup(currentSettings.MasterVolume, currentSettings.MusicVolume, currentSettings.SfxVolume);
-            graphicsComponent.Setup(currentSettings.ResolutionIndex, currentSettings.WindowModeIndex);
 
             //if (enableHudButton != null)
             //{
@@ -129,7 +127,6 @@ namespace Border.Settings
         private void SaveSettings()
         {
             audioComponent.SaveVolumes(currentSettings);
-            graphicsComponent.SaveGraphics(currentSettings);
 
             //if (enableHudButton != null)
             //{
@@ -150,7 +147,6 @@ namespace Border.Settings
         private void ResetSettings()
         {
             audioComponent.ResetVolumes(currentSettings);
-            graphicsComponent.ResetGraphics(currentSettings);
 
             //if (enableHudButton != null)
             //{

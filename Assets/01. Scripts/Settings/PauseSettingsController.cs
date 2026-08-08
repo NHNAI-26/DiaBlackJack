@@ -1,10 +1,10 @@
 using System;
-using System.Collections.Generic;
 using DiaBlackJack.GameScene;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Border.Settings
@@ -12,11 +12,11 @@ namespace Border.Settings
     [DisallowMultipleComponent]
     public sealed class PauseSettingsController : MonoBehaviour
     {
-        private static readonly string[] WindowModeNames =
+        private static readonly string[] HoverTooltipSizeNames =
         {
-            "창모드",
-            "전체화면",
-            "테두리없는 전체화면"
+            "작게",
+            "보통",
+            "크게"
         };
 
         [Header("Panels")]
@@ -32,8 +32,8 @@ namespace Border.Settings
         [SerializeField] private Button quitButton;
 
         [Header("Settings")]
-        [SerializeField] private UISettingsArrowSelector resolutionSelector;
-        [SerializeField] private UISettingsArrowSelector windowModeSelector;
+        [FormerlySerializedAs("resolutionSelector")]
+        [SerializeField] private UISettingsArrowSelector tooltipSizeSelector;
         [SerializeField] private Slider masterVolumeSlider;
         [SerializeField] private Slider bgmVolumeSlider;
         [SerializeField] private Slider sfxVolumeSlider;
@@ -46,9 +46,6 @@ namespace Border.Settings
         [SerializeField] private Button confirmQuitButton;
         [SerializeField] private Button cancelQuitButton;
 
-        private readonly List<DisplayResolutionOption> _resolutionOptions =
-            new List<DisplayResolutionOption>();
-        private readonly List<string> _resolutionNames = new List<string>();
         private InputAction _pauseAction;
         private GameManager _gameManager;
         private PauseMenuState _state;
@@ -132,14 +129,10 @@ namespace Border.Settings
             settingsBackButton?.onClick.AddListener(CloseSettings);
             confirmQuitButton?.onClick.AddListener(QuitGame);
             cancelQuitButton?.onClick.AddListener(CloseQuitConfirmation);
-            if (resolutionSelector != null)
+            if (tooltipSizeSelector != null)
             {
-                resolutionSelector.ValueChanged += HandleResolutionChanged;
-            }
-
-            if (windowModeSelector != null)
-            {
-                windowModeSelector.ValueChanged += HandleWindowModeChanged;
+                tooltipSizeSelector.ValueChanged +=
+                    HandleTooltipSizeChanged;
             }
 
             masterVolumeSlider?.onValueChanged.AddListener(
@@ -165,14 +158,10 @@ namespace Border.Settings
             settingsBackButton?.onClick.RemoveListener(CloseSettings);
             confirmQuitButton?.onClick.RemoveListener(QuitGame);
             cancelQuitButton?.onClick.RemoveListener(CloseQuitConfirmation);
-            if (resolutionSelector != null)
+            if (tooltipSizeSelector != null)
             {
-                resolutionSelector.ValueChanged -= HandleResolutionChanged;
-            }
-
-            if (windowModeSelector != null)
-            {
-                windowModeSelector.ValueChanged -= HandleWindowModeChanged;
+                tooltipSizeSelector.ValueChanged -=
+                    HandleTooltipSizeChanged;
             }
 
             masterVolumeSlider?.onValueChanged.RemoveListener(
@@ -255,7 +244,6 @@ namespace Border.Settings
                 return;
             }
 
-            BuildResolutionOptions();
             RefreshSettings(SettingsSystem.Current.Snapshot);
             ShowState(PauseMenuState.Settings);
             Select(settingsBackButton);
@@ -312,59 +300,17 @@ namespace Border.Settings
 #endif
         }
 
-        private void BuildResolutionOptions()
-        {
-            _resolutionOptions.Clear();
-            _resolutionOptions.AddRange(
-                SettingsGraphicsUtility.GetResolutionOptions());
-            _resolutionNames.Clear();
-            for (int i = 0; i < _resolutionOptions.Count; i++)
-            {
-                _resolutionNames.Add(_resolutionOptions[i].DisplayName);
-            }
-        }
-
         private void RefreshSettings(GameSettingsSnapshot snapshot)
         {
-            if (_resolutionOptions.Count == 0)
-            {
-                BuildResolutionOptions();
-            }
-
-            int resolutionIndex = FindResolutionIndex(
-                snapshot.ResolutionWidth,
-                snapshot.ResolutionHeight);
-            resolutionSelector?.SetOptions(
-                _resolutionNames,
-                resolutionIndex);
-            windowModeSelector?.SetOptions(
-                WindowModeNames,
-                (int)snapshot.WindowMode);
+            tooltipSizeSelector?.SetOptions(
+                HoverTooltipSizeNames,
+                (int)snapshot.HoverTooltipSize);
 
             masterVolumeSlider?.SetValueWithoutNotify(
                 snapshot.MasterVolume);
             bgmVolumeSlider?.SetValueWithoutNotify(snapshot.BgmVolume);
             sfxVolumeSlider?.SetValueWithoutNotify(snapshot.SfxVolume);
             RefreshVolumeLabels(snapshot);
-            RefreshResolutionAvailability(snapshot.WindowMode);
-        }
-
-        private void RefreshResolutionAvailability(GameWindowMode mode)
-        {
-            if (resolutionSelector == null)
-            {
-                return;
-            }
-
-            bool enabled =
-                mode != GameWindowMode.BorderlessFullscreen;
-            resolutionSelector.SetInteractable(enabled);
-            if (!enabled)
-            {
-                Resolution native = Screen.currentResolution;
-                resolutionSelector.SetDisplayText(
-                    $"{native.width} x {native.height}");
-            }
         }
 
         private void HandleSettingsChanged(GameSettingsSnapshot snapshot)
@@ -375,26 +321,7 @@ namespace Border.Settings
             }
         }
 
-        private void HandleResolutionChanged(int index)
-        {
-            SettingsSystem settings = SettingsSystem.Current;
-            if (settings == null ||
-                settings.Snapshot.WindowMode ==
-                GameWindowMode.BorderlessFullscreen ||
-                index < 0 ||
-                index >= _resolutionOptions.Count)
-            {
-                return;
-            }
-
-            DisplayResolutionOption option = _resolutionOptions[index];
-            settings.PreviewDisplay(
-                option.Width,
-                option.Height,
-                settings.Snapshot.WindowMode);
-        }
-
-        private void HandleWindowModeChanged(int index)
+        private void HandleTooltipSizeChanged(int index)
         {
             SettingsSystem settings = SettingsSystem.Current;
             if (settings == null)
@@ -402,23 +329,8 @@ namespace Border.Settings
                 return;
             }
 
-            int resolutionIndex = resolutionSelector == null
-                ? 0
-                : resolutionSelector.Index;
-            if (resolutionIndex < 0 ||
-                resolutionIndex >= _resolutionOptions.Count)
-            {
-                resolutionIndex = FindResolutionIndex(
-                    settings.Snapshot.ResolutionWidth,
-                    settings.Snapshot.ResolutionHeight);
-            }
-
-            DisplayResolutionOption option =
-                _resolutionOptions[resolutionIndex];
-            settings.PreviewDisplay(
-                option.Width,
-                option.Height,
-                (GameWindowMode)UISettingsArrowSelector.WrapIndex(index, 3));
+            settings.PreviewHoverTooltipSize(
+                (HoverTooltipSize)UISettingsArrowSelector.WrapIndex(index, 3));
         }
 
         private void HandleMasterVolumeChanged(float value)
@@ -471,20 +383,6 @@ namespace Border.Settings
             SetPercent(masterVolumeValue, snapshot.MasterVolume);
             SetPercent(bgmVolumeValue, snapshot.BgmVolume);
             SetPercent(sfxVolumeValue, snapshot.SfxVolume);
-        }
-
-        private int FindResolutionIndex(int width, int height)
-        {
-            for (int i = 0; i < _resolutionOptions.Count; i++)
-            {
-                if (_resolutionOptions[i].Width == width &&
-                    _resolutionOptions[i].Height == height)
-                {
-                    return i;
-                }
-            }
-
-            return Mathf.Max(0, _resolutionOptions.Count - 1);
         }
 
         private void ShowState(PauseMenuState state)

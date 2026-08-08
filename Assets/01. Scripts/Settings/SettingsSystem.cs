@@ -1,6 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using Border.Core;
 using Border.Events;
 using UnityEngine;
@@ -20,7 +18,6 @@ namespace Border.Settings
         [SerializeField] private FloatEventChannelSO changeSfxVolumeEvent;
 
         private ISettingsRepository _repository;
-        private Coroutine _displayVerification;
         private GameSettingsSnapshot _snapshot;
         private static SettingsSystem _current;
 
@@ -63,21 +60,17 @@ namespace Border.Settings
             DontDestroyOnLoad(gameObject);
             _repository = new PlayerPrefsSettingsRepository();
 
-            Resolution native = Screen.currentResolution;
             GameSettingsSnapshot fallback = defaults != null
-                ? defaults.CreateSnapshot(native.width, native.height)
+                ? defaults.CreateSnapshot()
                 : new GameSettingsSnapshot(
-                    native.width,
-                    native.height,
-                    GameWindowMode.BorderlessFullscreen,
+                    HoverTooltipSize.Normal,
                     1f,
                     0.8f,
                     1f);
             _snapshot = _repository.TryLoad(
                 out GameSettingsSnapshot loaded)
-                ? Validate(loaded, fallback)
+                ? loaded
                 : fallback;
-            SettingsGraphicsUtility.Apply(_snapshot);
         }
 
         private void OnEnable()
@@ -103,32 +96,10 @@ namespace Border.Settings
             }
         }
 
-        public void PreviewDisplay(
-            int width,
-            int height,
-            GameWindowMode mode)
+        public void PreviewHoverTooltipSize(HoverTooltipSize size)
         {
-            List<DisplayResolutionOption> options =
-                SettingsGraphicsUtility.GetResolutionOptions();
-            DisplayResolutionOption selected =
-                SettingsGraphicsUtility.ValidateResolution(
-                    options,
-                    width,
-                    height);
-            GameSettingsSnapshot previous = _snapshot;
-            _snapshot = _snapshot.WithDisplay(
-                selected.Width,
-                selected.Height,
-                mode);
-            SettingsGraphicsUtility.Apply(_snapshot);
+            _snapshot = _snapshot.WithHoverTooltipSize(size);
             Changed?.Invoke(_snapshot);
-
-            if (_displayVerification != null)
-            {
-                StopCoroutine(_displayVerification);
-            }
-            _displayVerification = StartCoroutine(
-                VerifyDisplayChange(previous, _snapshot));
         }
 
         public void PreviewAudio(
@@ -168,62 +139,5 @@ namespace Border.Settings
             changeSfxVolumeEvent?.RaiseEvent(_snapshot.SfxVolume);
         }
 
-        private IEnumerator VerifyDisplayChange(
-            GameSettingsSnapshot previous,
-            GameSettingsSnapshot requested)
-        {
-            yield return null;
-            yield return null;
-
-            FullScreenMode expectedMode =
-                SettingsGraphicsUtility.GetFullScreenMode(
-                    requested.WindowMode);
-            bool modeApplied = Screen.fullScreenMode == expectedMode;
-            bool resolutionApplied =
-                requested.WindowMode ==
-                    GameWindowMode.BorderlessFullscreen ||
-                (Screen.width == requested.ResolutionWidth &&
-                 Screen.height == requested.ResolutionHeight);
-
-            if (Application.isEditor ||
-                (modeApplied && resolutionApplied))
-            {
-                _displayVerification = null;
-                yield break;
-            }
-
-            Log.W(
-                $"[SettingsSystem] Display change failed: " +
-                $"{requested.ResolutionWidth}x{requested.ResolutionHeight}.",
-                this);
-            _snapshot = previous;
-            SettingsGraphicsUtility.Apply(_snapshot);
-            Changed?.Invoke(_snapshot);
-            _displayVerification = null;
-        }
-
-        private static GameSettingsSnapshot Validate(
-            GameSettingsSnapshot loaded,
-            GameSettingsSnapshot fallback)
-        {
-            List<DisplayResolutionOption> options =
-                SettingsGraphicsUtility.GetResolutionOptions();
-            DisplayResolutionOption resolution =
-                SettingsGraphicsUtility.ValidateResolution(
-                    options,
-                    loaded.ResolutionWidth,
-                    loaded.ResolutionHeight);
-            GameWindowMode mode =
-                GameSettingsSnapshot.IsValidWindowMode(loaded.WindowMode)
-                    ? loaded.WindowMode
-                    : fallback.WindowMode;
-            return new GameSettingsSnapshot(
-                resolution.Width,
-                resolution.Height,
-                mode,
-                loaded.MasterVolume,
-                loaded.BgmVolume,
-                loaded.SfxVolume);
-        }
     }
 }

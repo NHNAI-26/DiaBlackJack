@@ -6,39 +6,28 @@ namespace Border.Settings
     public readonly struct GameSettingsSnapshot : IEquatable<GameSettingsSnapshot>
     {
         public GameSettingsSnapshot(
-            int resolutionWidth,
-            int resolutionHeight,
-            GameWindowMode windowMode,
+            HoverTooltipSize hoverTooltipSize,
             float masterVolume,
             float bgmVolume,
             float sfxVolume)
         {
-            ResolutionWidth = resolutionWidth;
-            ResolutionHeight = resolutionHeight;
-            WindowMode = IsValidWindowMode(windowMode)
-                ? windowMode
-                : GameWindowMode.BorderlessFullscreen;
+            HoverTooltipSize =
+                HoverTooltipSizeUtility.Normalize(hoverTooltipSize);
             MasterVolume = ClampVolume(masterVolume);
             BgmVolume = ClampVolume(bgmVolume);
             SfxVolume = ClampVolume(sfxVolume);
         }
 
-        public int ResolutionWidth { get; }
-        public int ResolutionHeight { get; }
-        public GameWindowMode WindowMode { get; }
+        public HoverTooltipSize HoverTooltipSize { get; }
         public float MasterVolume { get; }
         public float BgmVolume { get; }
         public float SfxVolume { get; }
 
-        public GameSettingsSnapshot WithDisplay(
-            int resolutionWidth,
-            int resolutionHeight,
-            GameWindowMode windowMode)
+        public GameSettingsSnapshot WithHoverTooltipSize(
+            HoverTooltipSize hoverTooltipSize)
         {
             return new GameSettingsSnapshot(
-                resolutionWidth,
-                resolutionHeight,
-                windowMode,
+                hoverTooltipSize,
                 MasterVolume,
                 BgmVolume,
                 SfxVolume);
@@ -50,9 +39,7 @@ namespace Border.Settings
             float sfxVolume)
         {
             return new GameSettingsSnapshot(
-                ResolutionWidth,
-                ResolutionHeight,
-                WindowMode,
+                HoverTooltipSize,
                 masterVolume,
                 bgmVolume,
                 sfxVolume);
@@ -60,9 +47,7 @@ namespace Border.Settings
 
         public bool Equals(GameSettingsSnapshot other)
         {
-            return ResolutionWidth == other.ResolutionWidth &&
-                ResolutionHeight == other.ResolutionHeight &&
-                WindowMode == other.WindowMode &&
+            return HoverTooltipSize == other.HoverTooltipSize &&
                 MasterVolume.Equals(other.MasterVolume) &&
                 BgmVolume.Equals(other.BgmVolume) &&
                 SfxVolume.Equals(other.SfxVolume);
@@ -77,9 +62,7 @@ namespace Border.Settings
         {
             unchecked
             {
-                int hash = ResolutionWidth;
-                hash = (hash * 397) ^ ResolutionHeight;
-                hash = (hash * 397) ^ (int)WindowMode;
+                int hash = (int)HoverTooltipSize;
                 hash = (hash * 397) ^ MasterVolume.GetHashCode();
                 hash = (hash * 397) ^ BgmVolume.GetHashCode();
                 hash = (hash * 397) ^ SfxVolume.GetHashCode();
@@ -99,13 +82,6 @@ namespace Border.Settings
             GameSettingsSnapshot right)
         {
             return !left.Equals(right);
-        }
-
-        internal static bool IsValidWindowMode(GameWindowMode windowMode)
-        {
-            return windowMode == GameWindowMode.Windowed ||
-                windowMode == GameWindowMode.ExclusiveFullscreen ||
-                windowMode == GameWindowMode.BorderlessFullscreen;
         }
 
         internal static float ClampVolume(float value)
