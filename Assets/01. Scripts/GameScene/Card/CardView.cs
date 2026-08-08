@@ -73,6 +73,11 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Color usedHoverOutlineColor =
             new Color(2f, 2f, 2f, 1f);
 
+        [Header("Comparison outline")]
+        [ColorUsage(true, true)]
+        [SerializeField] private Color comparisonHighlightOutlineColor =
+            new Color(3.9999995f, 3.3765495f, 0f, 1f);
+
         [Header("Player hidden card")]
         [Tooltip("Blends the real face over the card back while only the player may see its rank.")]
         [Range(0f, 1f)]
@@ -557,7 +562,8 @@ namespace DiaBlackJack.GameScene
         }
 
         /// <summary>
-        /// Reuses hover scale and outline for comparison without emitting hover audio or tooltip.
+        /// Reuses hover scale with a dedicated comparison outline color without emitting hover
+        /// audio or tooltip.
         /// Effect-source emphasis remains authoritative when this temporary layer is removed.
         /// </summary>
         internal void SetComparisonHighlighted(bool highlighted)
@@ -1529,9 +1535,7 @@ namespace DiaBlackJack.GameScene
             EnsureCardMaterialInstance(renderer);
             EnablePixelOutlineKeyword(renderer);
 
-            Color outlineColor = _hovered || _comparisonHighlighted
-                ? ResolveHoverOutlineColor()
-                : ResolveEffectHighlightOutlineColor(renderer);
+            Color outlineColor = ResolveOutlineColor(renderer);
             if (visible && outlineColor.a <= 0f)
             {
                 outlineColor.a = 1f;
@@ -1569,6 +1573,18 @@ namespace DiaBlackJack.GameScene
             }
 
             return effectHighlightOutlineColor;
+        }
+
+        private Color ResolveOutlineColor(Renderer renderer)
+        {
+            if (_comparisonHighlighted)
+            {
+                return comparisonHighlightOutlineColor;
+            }
+
+            return _hovered
+                ? ResolveHoverOutlineColor()
+                : ResolveEffectHighlightOutlineColor(renderer);
         }
 
         private Color ResolveHoverOutlineColor()

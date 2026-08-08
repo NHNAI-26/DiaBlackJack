@@ -609,6 +609,7 @@ MonoBehaviour:
   availableHoverOutlineColor: {r: 0.84004724, g: 3.7560942, b: 0, a: 1}
   automaticHoverOutlineColor: {r: 4.483848, g: 3.0758486, b: 0, a: 1}
   usedHoverOutlineColor: {r: 0, g: 0, b: 0, a: 1}
+  comparisonHighlightOutlineColor: {r: 3.9999995, g: 3.3765495, b: 0, a: 1}
   hiddenCardBlendAmount: 0.5
   revealFlipDuration: 0.7
   revealFaceSwapNormalizedTime: 0.35

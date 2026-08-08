@@ -1218,6 +1218,135 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("GSV17")]
+        public void GSV17_U10_ComparisonHighlightUsesDedicatedHdrColorAcrossHoverStates()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                SpriteRenderer renderer = GetFrontRenderer(view);
+                Color comparisonColor = GetPrivateField<Color>(
+                    view,
+                    "comparisonHighlightOutlineColor");
+                Color effectHighlightColor =
+                    renderer.sharedMaterial.GetColor(PixelOutlineColorId);
+                GameSceneCardViewModel[] models =
+                {
+                    CreateHoverOutlineCard(
+                        CardDefinitionCatalog.GetDefaultForRank(2),
+                        canUse: false),
+                    CreateHoverOutlineCard(
+                        CardDefinitionCatalog.GetDefaultForRank(5),
+                        canUse: false),
+                    CreateHoverOutlineCard(
+                        CardDefinitionCatalog.GetDefaultForRank(5),
+                        canUse: true),
+                    CreateHoverOutlineCard(
+                        CardDefinitionCatalog.GetByKey(CardDefinitionCatalog.PoisonKey),
+                        canUse: false),
+                    CreateHoverOutlineCard(
+                        CardDefinitionCatalog.GetDefaultForRank(7),
+                        canUse: false,
+                        isUsed: true),
+                };
+                var properties = new MaterialPropertyBlock();
+
+                AssertColor(comparisonColor, effectHighlightColor);
+                Assert.That(comparisonColor.maxColorComponent, Is.GreaterThan(1f));
+
+                foreach (GameSceneCardViewModel model in models)
+                {
+                    view.Bind(model);
+                    view.SetComparisonHighlighted(true);
+                    renderer.GetPropertyBlock(properties);
+
+                    AssertColor(
+                        properties.GetColor(PixelOutlineColorId),
+                        comparisonColor);
+                    Assert.That(
+                        properties.GetFloat(PixelOutlineVisibilityId),
+                        Is.EqualTo(1f));
+
+                    view.SetComparisonHighlighted(false);
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        [Category("GSV17")]
+        public void GSV17_U11_ComparisonHighlightClearRestoresUnderlyingHighlight()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                SpriteRenderer renderer = GetFrontRenderer(view);
+                Color comparisonColor = new Color(8f, 1f, 4f, 1f);
+                Color hoverColor = GetPrivateField<Color>(
+                    view,
+                    "availableHoverOutlineColor");
+                Color effectHighlightColor =
+                    renderer.sharedMaterial.GetColor(PixelOutlineColorId);
+                var properties = new MaterialPropertyBlock();
+                SetPrivateField(
+                    view,
+                    "comparisonHighlightOutlineColor",
+                    comparisonColor);
+
+                view.Bind(CreateHoverOutlineCard(
+                    CardDefinitionCatalog.GetDefaultForRank(5),
+                    canUse: true));
+                view.SetHovered(true);
+                view.SetComparisonHighlighted(true);
+                renderer.GetPropertyBlock(properties);
+                AssertColor(
+                    properties.GetColor(PixelOutlineColorId),
+                    comparisonColor);
+
+                view.SetComparisonHighlighted(false);
+                renderer.GetPropertyBlock(properties);
+                AssertColor(
+                    properties.GetColor(PixelOutlineColorId),
+                    hoverColor);
+
+                view.SetHovered(false);
+                view.Bind(CreateHoverOutlineCard(
+                    CardDefinitionCatalog.GetDefaultForRank(5),
+                    canUse: true,
+                    isEffectSource: true));
+                view.SetComparisonHighlighted(true);
+                renderer.GetPropertyBlock(properties);
+                AssertColor(
+                    properties.GetColor(PixelOutlineColorId),
+                    comparisonColor);
+
+                view.SetComparisonHighlighted(false);
+                renderer.GetPropertyBlock(properties);
+                AssertColor(
+                    properties.GetColor(PixelOutlineColorId),
+                    effectHighlightColor);
+                Assert.That(
+                    properties.GetFloat(PixelOutlineVisibilityId),
+                    Is.EqualTo(1f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
         public void GSV09_U05_RebindClearsSelectionPresentation()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
