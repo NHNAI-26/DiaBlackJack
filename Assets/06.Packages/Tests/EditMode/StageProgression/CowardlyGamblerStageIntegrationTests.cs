@@ -40,7 +40,7 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
-        public void EPR01_I03_OpponentSelectionCanOfferAllFourNormalProfiles()
+        public void EPR01_I03_OpponentSelectionCanOfferAllNonBossProfiles()
         {
             var generator = new OpponentSelectionGenerator(
                 EnemyCombatProfileCatalog.Default,
@@ -61,7 +61,8 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(offeredKeys, Does.Contain(EnemyCombatProfileCatalog.GunslingerKey));
             Assert.That(offeredKeys, Does.Contain(EnemyCombatProfileCatalog.CultistKey));
             Assert.That(offeredKeys, Does.Contain(EnemyCombatProfileCatalog.TricksterKey));
-            Assert.That(offeredKeys.Count, Is.EqualTo(4));
+            Assert.That(offeredKeys, Does.Contain(EnemyCombatProfileCatalog.EnforcerKey));
+            Assert.That(offeredKeys.Count, Is.EqualTo(5));
         }
 
         private static PlayerRunState CreatePlayer()

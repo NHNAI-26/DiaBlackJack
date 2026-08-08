@@ -57,12 +57,27 @@ namespace DiaBlackJack.StageProgression.Tests
                 for (int iteration = 0; iteration < RepeatCount; iteration++)
                 {
                     StageProgressionSession session = CreateSelectionSession(
-                        includeSecondNormalStage: false,
+                        includeSecondNormalStage: true,
                         eliteChancePercent: 100);
                     Assert.That(session.TryStartRun(), Is.True,
                         GradeIterationLabel(targetGrade, iteration));
+                    if (targetGrade == EnemyGrade.Elite)
+                    {
+                        OpponentSelectionOffer firstOffer =
+                            session.PendingOpponentSelection;
+                        OpponentSelectionCandidate firstNormal =
+                            firstOffer.Candidates.First(candidate =>
+                                candidate.Preview.Grade == EnemyGrade.Normal);
+                        Assert.That(session.TrySelectOpponent(
+                            firstOffer.OfferId,
+                            firstNormal.ProfileKey), Is.True);
+                        WinCurrentBattle(session, iteration);
+                        Assert.That(session.TrySkipBattleReward(), Is.True);
+                        Assert.That(session.TryAdvanceToNextStage(), Is.True);
+                    }
+
                     OpponentSelectionOffer offer = session.PendingOpponentSelection;
-                    OpponentSelectionCandidate selected = offer.Candidates.Single(
+                    OpponentSelectionCandidate selected = offer.Candidates.First(
                         candidate => candidate.Preview.Grade == targetGrade);
 
                     Assert.That(
@@ -106,7 +121,7 @@ namespace DiaBlackJack.StageProgression.Tests
 
                 CompleteSelectedStage(
                     session,
-                    selectElite: iteration % 2 == 0,
+                    selectElite: false,
                     selectReward: true,
                     iteration);
                 Assert.That(session.TryAdvanceToNextStage(), Is.True,
@@ -287,6 +302,8 @@ namespace DiaBlackJack.StageProgression.Tests
                 {
                     defaultCatalog.GetByKey(EnemyCombatProfileCatalog.GunslingerKey),
                     defaultCatalog.GetByKey(EnemyCombatProfileCatalog.CultistKey),
+                    defaultCatalog.GetByKey(
+                        EnemyCombatProfileCatalog.CowardlyGamblerKey),
                     defaultCatalog.GetByKey(EnemyCombatProfileCatalog.EnforcerKey)
                 });
             return new StageProgressionSession(
@@ -397,7 +414,7 @@ namespace DiaBlackJack.StageProgression.Tests
             EnemyGrade targetGrade = selectElite
                 ? EnemyGrade.Elite
                 : EnemyGrade.Normal;
-            OpponentSelectionCandidate candidate = offer.Candidates.Single(
+            OpponentSelectionCandidate candidate = offer.Candidates.First(
                 item => item.Preview.Grade == targetGrade);
             Assert.That(session.TrySelectOpponent(
                 offer.OfferId,

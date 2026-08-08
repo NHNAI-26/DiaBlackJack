@@ -8,7 +8,7 @@ namespace DiaBlackJack.CoreLoop.Tests
     public sealed class CowardlyGamblerProfileTests
     {
         [Test]
-        public void EPR01_U01_ProfileAddsFourthNormalOpponentWithoutReplacingExistingProfiles()
+        public void EPR01_U01_ProfileRemainsNormalAfterTricksterBecomesElite()
         {
             EnemyCombatProfileCatalog catalog = EnemyCombatProfileCatalog.Default;
             EnemyCombatProfile profile = catalog.GetByKey(
@@ -17,7 +17,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(catalog.Profiles.Count, Is.EqualTo(6));
             Assert.That(
                 catalog.Profiles.Count(candidate => candidate.Grade == EnemyGrade.Normal),
-                Is.EqualTo(4));
+                Is.EqualTo(3));
             Assert.That(
                 catalog.Profiles.Select(candidate => candidate.Key),
                 Does.Contain(EnemyCombatProfileCatalog.GunslingerKey)

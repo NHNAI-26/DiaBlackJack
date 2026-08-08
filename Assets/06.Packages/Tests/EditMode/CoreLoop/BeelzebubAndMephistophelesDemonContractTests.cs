@@ -101,8 +101,31 @@ namespace DiaBlackJack.CoreLoop.Tests
                 new ExactAutoPistolPolicy(guess: 7),
                 DemonContractKind.Beelzebub,
                 playerCurrentSoul: 12);
+            var effectKinds = new List<CardEffectKind?>();
+            var playerSouls = new List<int>();
+            var pendingKinds = new List<DemonContractInteractionKind?>();
+            battle.Stepped += () =>
+            {
+                effectKinds.Add(
+                    battle.LastCardEffectResult?.EffectKind);
+                playerSouls.Add(battle.Player.Soul.Current);
+                pendingKinds.Add(
+                    battle.PendingPlayerDemonContractInteraction?.Kind);
+            };
 
             ActivateFirstContract(battle);
+
+            int weaponResultIndex = effectKinds.FindIndex(
+                kind => kind == CardEffectKind.AutoPistol);
+            Assert.That(weaponResultIndex, Is.GreaterThanOrEqualTo(0));
+            Assert.That(playerSouls[weaponResultIndex], Is.EqualTo(11));
+            Assert.That(pendingKinds[weaponResultIndex], Is.Null);
+            int beelzebubIndex = pendingKinds.FindIndex(
+                weaponResultIndex + 1,
+                kind => kind ==
+                    DemonContractInteractionKind.BeelzebubChooseOwnerCard);
+            Assert.That(beelzebubIndex, Is.GreaterThan(weaponResultIndex));
+            Assert.That(playerSouls[beelzebubIndex], Is.EqualTo(10));
 
             ResolveBeelzebubDiscardChoices(
                 battle,

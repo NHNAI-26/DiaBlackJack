@@ -49,7 +49,9 @@ namespace DiaBlackJack.StageProgression.Tests
         {
             StageProgressionSession session = CreateSelectionSession(profileKey);
             Assert.That(session.TryStartRun(), Is.True);
-            OpponentSelectionOffer offer = session.PendingOpponentSelection;
+            OpponentSelectionOffer offer = AdvanceToTargetOffer(
+                session,
+                profileKey);
             StageDefinition template = session.Progress.CurrentStage;
 
             Assert.That(session.TrySelectOpponent(offer.OfferId, profileKey), Is.True);
@@ -154,7 +156,9 @@ namespace DiaBlackJack.StageProgression.Tests
                 profileKey,
                 CreateDeterministicVictoryBattle);
             Assert.That(session.TryStartRun(), Is.True);
-            OpponentSelectionOffer offer = session.PendingOpponentSelection;
+            OpponentSelectionOffer offer = AdvanceToTargetOffer(
+                session,
+                profileKey);
             Assert.That(session.TrySelectOpponent(offer.OfferId, profileKey), Is.True);
 
             WinCurrentBattle(session);
@@ -256,8 +260,10 @@ namespace DiaBlackJack.StageProgression.Tests
             string guaranteedProfileKey,
             Func<StageDefinition, PlayerRunState, CoreLoopBattle> battleFactory = null)
         {
+            bool targetIsElite = EnemyCombatProfileCatalog.Default
+                .GetByKey(guaranteedProfileKey).Grade == EnemyGrade.Elite;
             return new StageProgressionSession(
-                CreateProgress(includeSecondNormalStage: false),
+                CreateProgress(includeSecondNormalStage: targetIsElite),
                 battleFactory,
                 opponentSelectionGenerator: CreateGeneratorForProfile(
                     guaranteedProfileKey));
@@ -298,6 +304,8 @@ namespace DiaBlackJack.StageProgression.Tests
                                 EnemyCombatProfileCatalog.GunslingerKey),
                             defaultCatalog.GetByKey(
                                 EnemyCombatProfileCatalog.CultistKey),
+                            defaultCatalog.GetByKey(
+                                EnemyCombatProfileCatalog.CowardlyGamblerKey),
                             target
                         }),
                     20260720,
@@ -316,6 +324,30 @@ namespace DiaBlackJack.StageProgression.Tests
                     }),
                 20260720,
                 0);
+        }
+
+        private static OpponentSelectionOffer AdvanceToTargetOffer(
+            StageProgressionSession session,
+            string profileKey)
+        {
+            if (EnemyCombatProfileCatalog.Default.GetByKey(profileKey).Grade !=
+                EnemyGrade.Elite)
+            {
+                return session.PendingOpponentSelection;
+            }
+
+            OpponentSelectionOffer first = session.PendingOpponentSelection;
+            Assert.That(session.TrySelectOpponent(
+                first.OfferId,
+                first.Candidates[0].ProfileKey), Is.True);
+            WinCurrentBattle(session);
+            Assert.That(session.TrySkipBattleReward(), Is.True);
+            Assert.That(session.TryAdvanceToNextStage(), Is.True);
+            Assert.That(
+                session.PendingOpponentSelection.Candidates.Any(
+                    candidate => candidate.ProfileKey == profileKey),
+                Is.True);
+            return session.PendingOpponentSelection;
         }
 
         private static RunProgress CreateProgress(bool includeSecondNormalStage)

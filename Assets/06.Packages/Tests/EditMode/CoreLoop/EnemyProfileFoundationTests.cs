@@ -35,7 +35,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             AssertProfile(
                 catalog,
                 EnemyCombatProfileCatalog.TricksterKey,
-                EnemyGrade.Normal,
+                EnemyGrade.Elite,
                 5,
                 EnemyBehaviorPolicyCatalog.Trickster);
             AssertProfile(
@@ -55,7 +55,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         [TestCase(EnemyCombatProfileCatalog.CowardlyGamblerKey, 4, 18, BattleRewardTier.Normal)]
         [TestCase(EnemyCombatProfileCatalog.GunslingerKey, 3, 14, BattleRewardTier.Normal)]
         [TestCase(EnemyCombatProfileCatalog.CultistKey, 5, 20, BattleRewardTier.Normal)]
-        [TestCase(EnemyCombatProfileCatalog.TricksterKey, 5, 18, BattleRewardTier.Normal)]
+        [TestCase(EnemyCombatProfileCatalog.TricksterKey, 5, 18, BattleRewardTier.HighGrade)]
         [TestCase(EnemyCombatProfileCatalog.EnforcerKey, 5, 19, BattleRewardTier.HighGrade)]
         [TestCase(EnemyCombatProfileCatalog.FinalBossKey, 9, 25, BattleRewardTier.HighGrade)]
         public void EPR04_U01_RevisedProfilesFlowThroughBattleConfiguration(

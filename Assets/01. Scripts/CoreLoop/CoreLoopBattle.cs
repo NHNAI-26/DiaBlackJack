@@ -6360,17 +6360,25 @@ namespace DiaBlackJack.CoreLoop
                 return OwnerBustHandlingResult.Prevented;
             }
 
-            if (!_demonContractResolver.TryReplaceOwnerBust(
+            if (!_demonContractResolver.TryGetOwnerBustReplacement(
                 this,
                 activeContracts,
                 ownerSide,
-                out DemonContractEffectResult result,
                 out ActiveDemonContract replacementContract))
             {
                 return OwnerBustHandlingResult.NotHandled;
             }
 
-            beforeBustReplacementPublish?.Invoke();
+            if (beforeBustReplacementPublish != null)
+            {
+                beforeBustReplacementPublish();
+                RaiseStepped();
+            }
+
+            DemonContractEffectResult result =
+                _demonContractResolver.ReplaceOwnerBust(
+                    this,
+                    replacementContract);
             LastDemonContractEffectResult = result;
             RaiseStepped();
             if (IsSoulDeathDueNow(ownerSide))

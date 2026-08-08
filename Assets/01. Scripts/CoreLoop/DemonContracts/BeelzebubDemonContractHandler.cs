@@ -25,22 +25,19 @@ namespace DiaBlackJack.CoreLoop
                 MaximumRestrictedFaceUpCardCount;
         }
 
-        public bool TryReplaceOwnerBust(
-            DemonContractContext context,
-            out DemonContractEffectResult result)
+        public bool CanReplaceOwnerBust(DemonContractContext context)
         {
-            result = null;
-            if (!context.CanChooseBeelzebubDiscardCards)
-            {
-                return false;
-            }
+            return context.CanChooseBeelzebubDiscardCards;
+        }
 
+        public DemonContractEffectResult ReplaceOwnerBust(
+            DemonContractContext context)
+        {
             context.ApplyOwnerSoulDamage(BustSoulCost);
-            result = new DemonContractEffectResult(
+            return new DemonContractEffectResult(
                 triggered: true,
                 bustedTarget: null,
                 paidSoulCost: BustSoulCost);
-            return true;
         }
     }
 }

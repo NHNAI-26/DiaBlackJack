@@ -7609,6 +7609,44 @@ namespace DiaBlackJack.GameScene
             RefreshView();
         }
 
+#if UNITY_EDITOR
+        internal bool DebugStartStandaloneEnemyBattle(string profileKey)
+        {
+            if (!Application.isPlaying || string.IsNullOrWhiteSpace(profileKey))
+            {
+                return false;
+            }
+
+            try
+            {
+                EnemyCombatProfileCatalog.Default.GetByKey(profileKey);
+            }
+            catch (Exception exception)
+                when (exception is ArgumentException ||
+                      exception is KeyNotFoundException)
+            {
+                return false;
+            }
+
+            ResetBattlePresentation();
+            _stageSession = null;
+            _completedStageSession = null;
+            _activeEnemyProfileKey = profileKey;
+            _session = new CoreLoopSession(CreateBattle);
+            _activeEnemySpeechProfile = ResolveActiveEnemySpeechProfile();
+            _suppressHandRenderUntilRoundOneStart = false;
+            _tutorialDirector = null;
+            enemyCharacter?.ExitMerchant();
+            enemyCharacter?.TrySetEnemyProfile(_activeEnemyProfileKey);
+            ApplyEnemyDeckTopTint();
+            SetBattleCardObjectsVisible(true);
+            _inputLocked = false;
+            SynchronizeSoulLossCursor();
+            RefreshView();
+            return true;
+        }
+#endif
+
         private void OpenStandaloneShop()
         {
             CloseDeckPreview();
