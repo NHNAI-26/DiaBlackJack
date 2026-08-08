@@ -73,3 +73,11 @@
   현재 확인된 관련 경고는 중첩 `SettingsSystem`의 비루트 영속화였으며 수정 완료했다.
 - 테스트 러너의 Performance Testing 준비·정리 메시지와 개발 빌드의 MCP 로컬 연결
   실패 메시지는 제품 설정 로직 오류와 구분한다.
+
+## 4. UIR01 brush/default 프리팹 전환
+
+- `PauseSettingsCanvas.prefab`의 일시정지·설정·종료 확인 패널 3개에 `Brush_UI_8` sliced 배경을 적용했다.
+- 계속하기·설정·게임 종료·뒤로·예·아니오 6개 일반 버튼을 `DefaultButton.prefab` 중첩 인스턴스로 교체했다. 해상도·창 모드 화살표는 기존 `TriangleArrow`, 슬라이더와 선택기 구조는 유지했다.
+- 기존 직렬화 필드, 배치, `settingsOnlyMode`, 뒤로가기와 `timeScale` 계약을 유지했다. 같은 설정 프리팹을 참조하는 `GameScene`과 `MainMenuScene`에 별도 씬 중복 수정 없이 반영된다.
+- `UIR01_U07` 단독 1/1(job `074ce40322864817876f22622e6130ce`)과 기존 설정 회귀를 포함한 Settings EditMode 16/16(job `7059400cbedc4d31ba7b8149b00efeba`)이 통과했다. 런타임에서 설정 패널 활성, 뒤로 버튼 입력 후 패널 비활성, `timeScale` 1 유지와 한국어 버튼 라벨·전용 화살표 보존을 확인했다.
+- 두 씬의 설정 프리팹 인스턴스는 각각 1개이며 missing script 0, broken prefab 0이다. 컴파일·씬 검증 직후 Console Error는 0건이었고, Play QA에서는 설정과 무관한 기존 머티리얼 drawer 오류 2건이 재현됐다.

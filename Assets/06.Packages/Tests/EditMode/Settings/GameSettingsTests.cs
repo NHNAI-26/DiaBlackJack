@@ -280,5 +280,46 @@ namespace DiaBlackJack.Settings.Tests
                 }
             }
         }
+
+        [Test]
+        [Category("UIR01")]
+        public void UIR01_U07_SettingsPrefabUsesBrushPanelsAndNestedDefaultButtons()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/03. Prefabs/UI/PauseSettingsCanvas.prefab");
+            Assert.That(prefab, Is.Not.Null);
+            string[] panelPaths =
+            {
+                "PausePanel", "SettingsPanel", "QuitConfirmationPanel"
+            };
+            for (int index = 0; index < panelPaths.Length; index++)
+            {
+                Image image = prefab.transform.Find(panelPaths[index])
+                    .GetComponent<Image>();
+                Assert.That(image.sprite.name, Is.EqualTo("Brush_UI_8"));
+                Assert.That(image.type, Is.EqualTo(Image.Type.Sliced));
+            }
+
+            string[] buttonPaths =
+            {
+                "PausePanel/ContinueButton",
+                "PausePanel/SettingsButton",
+                "PausePanel/QuitButton",
+                "SettingsPanel/BackButton",
+                "QuitConfirmationPanel/ConfirmQuitButton",
+                "QuitConfirmationPanel/CancelQuitButton"
+            };
+            for (int index = 0; index < buttonPaths.Length; index++)
+            {
+                GameObject button = prefab.transform.Find(buttonPaths[index])
+                    .gameObject;
+                GameObject source =
+                    PrefabUtility.GetCorrespondingObjectFromSource(button);
+                Assert.That(
+                    AssetDatabase.GetAssetPath(source),
+                    Is.EqualTo("Assets/03. Prefabs/UI/DefaultButton.prefab"),
+                    buttonPaths[index]);
+            }
+        }
     }
 }
