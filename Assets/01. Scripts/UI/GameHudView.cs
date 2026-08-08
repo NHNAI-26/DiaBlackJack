@@ -19,6 +19,9 @@ namespace DiaBlackJack.GameScene
     [DisallowMultipleComponent]
     public sealed class GameHudView : MonoBehaviour
     {
+        private const string DefaultCenterActionLayoutPath =
+            "ConfirmDemonsRoot/ConfirmDemonsButton";
+
         [SerializeField] private TMP_Text playerSoulText;
         [SerializeField] private TMP_Text enemySoulText;
         [SerializeField] private TMP_Text roundText;
@@ -87,6 +90,7 @@ namespace DiaBlackJack.GameScene
         private Sequence _playerSoulDamageSequence;
         private Sequence _enemySoulDamageSequence;
         private SoulLossPresentation _soulLossPresentation;
+        private RectTransform _centerActionLayoutSource;
         private readonly List<ShopPriceBadgeView> _shopPriceBadges =
             new List<ShopPriceBadgeView>();
         private Color _playerSoulBaseColor;
@@ -1145,13 +1149,37 @@ namespace DiaBlackJack.GameScene
             }
 
             rect.SetParent(optionPanel.transform, false);
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 0.5f);
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = new Vector2(380f, 64f);
+            RectTransform layoutSource = ResolveCenterActionLayoutSource();
+            if (layoutSource != null)
+            {
+                rect.anchorMin = layoutSource.anchorMin;
+                rect.anchorMax = layoutSource.anchorMax;
+                rect.pivot = layoutSource.pivot;
+                rect.anchoredPosition = layoutSource.anchoredPosition;
+                rect.sizeDelta = layoutSource.sizeDelta;
+            }
+            else
+            {
+                rect.anchorMin = new Vector2(0.5f, 0.5f);
+                rect.anchorMax = new Vector2(0.5f, 0.5f);
+                rect.pivot = new Vector2(0.5f, 0.5f);
+                rect.anchoredPosition = Vector2.zero;
+                rect.sizeDelta = new Vector2(380f, 64f);
+            }
+
             slot.GetComponent<Border.UI.UIButtonScaleFeedback>()?
                 .SynchronizeRestingGeometry();
+        }
+
+        private RectTransform ResolveCenterActionLayoutSource()
+        {
+            if (_centerActionLayoutSource == null)
+            {
+                _centerActionLayoutSource =
+                    transform.Find(DefaultCenterActionLayoutPath) as RectTransform;
+            }
+
+            return _centerActionLayoutSource;
         }
 
         private static bool HasBottomRightAction(

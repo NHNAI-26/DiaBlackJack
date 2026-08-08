@@ -1414,6 +1414,72 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
         }
 
+        [Test]
+        [Category("GSH01")]
+        public void GSH01_U21_CenteredChoiceUsesSceneAuthoredLayoutSource()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                HudPrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                var layoutRoot = new GameObject(
+                    "ConfirmDemonsRoot",
+                    typeof(RectTransform));
+                layoutRoot.transform.SetParent(instance.transform, false);
+                var layoutObject = new GameObject(
+                    "ConfirmDemonsButton",
+                    typeof(RectTransform));
+                RectTransform layout = layoutObject.GetComponent<RectTransform>();
+                layout.SetParent(layoutRoot.transform, false);
+                layout.anchorMin = new Vector2(0.5f, 0f);
+                layout.anchorMax = new Vector2(0.5f, 0f);
+                layout.pivot = new Vector2(0.5f, 0f);
+                layout.anchoredPosition = new Vector2(32f, 96f);
+                layout.sizeDelta = new Vector2(420f, 60f);
+
+                GameHudView hud = instance.GetComponent<GameHudView>();
+                CoreLoopViewModel core = CoreLoopPresenter.Create(
+                    CreateStartedBattle(2, 5, 7, 8, 9));
+                var action = new GameSceneCombatHudActionViewModel(
+                    new GameSceneCombatHudCommand(
+                        GameSceneCombatHudCommandKind
+                            .ConfirmSatanNumberSelection),
+                    "선택 완료",
+                    true,
+                    placement: GameSceneCombatHudActionPlacement.Center);
+                var model = new GameSceneCombatHudViewModel(
+                    GameSceneCombatHudMode.SatanNumberSelection,
+                    new CombatPromptRequest(
+                        CombatPromptId.DemonSatanDeclareFirstNumber),
+                    string.Empty,
+                    null,
+                    new[] { action },
+                    null,
+                    automaticCardResult: null);
+
+                hud.Render(core, model);
+
+                RectTransform slot = instance
+                    .GetComponentsInChildren<RectTransform>(true)
+                    .Single(child => child.name == "OptionSlot_001");
+                Assert.That(slot.anchorMin, Is.EqualTo(layout.anchorMin));
+                Assert.That(slot.anchorMax, Is.EqualTo(layout.anchorMax));
+                Assert.That(slot.pivot, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+                Assert.That(
+                    slot.anchoredPosition.x,
+                    Is.EqualTo(32f).Within(0.001f));
+                Assert.That(
+                    slot.anchoredPosition.y,
+                    Is.EqualTo(126f).Within(0.001f));
+                Assert.That(slot.sizeDelta, Is.EqualTo(layout.sizeDelta));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
         [TestCase(
             DemonContractInteractionKind.BelphegorTopCard,
             BelphegorDemonContractHandler.MoveTopCardToBottomOptionId,
