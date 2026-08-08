@@ -87,6 +87,11 @@ namespace DiaBlackJack.CoreLoop
                 healAmount);
         }
 
+        public void DeferPoisonSoulDeathUntilRoundEnd()
+        {
+            Battle.DeferPoisonSoulDeathUntilRoundEnd(OwnerSide);
+        }
+
         public bool CanPayResurrectionHerbSoul(CombatantSide side)
         {
             return Battle.GetParticipant(side).Soul.Current > 0;

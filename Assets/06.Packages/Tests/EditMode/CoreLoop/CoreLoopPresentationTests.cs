@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using InvalidOperationException = System.InvalidOperationException;
 using DiaBlackJack.CoreLoop.UI;
 using DiaBlackJack.GameScene;
 using NUnit.Framework;
@@ -1448,6 +1449,44 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void CUM17_U03_HiddenEnemyKnifePublishesReadyAndResolvedCues()
+        {
+            var battle = new CoreLoopBattle(
+                CreateRankDeck(5, 2, 3, 4, 6, 7),
+                CreateDefinitionDeck(
+                    "standard-plain-2",
+                    "military-knife-9",
+                    "standard-plain-3",
+                    "standard-plain-4"),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3,
+                enemyPolicy: new UseKnifeThenStandPolicy());
+            Assert.That(battle.Start(), Is.True);
+            GameSceneViewModel baseline = GameScenePresenter.Create(battle);
+            Assert.That(
+                baseline.EnemyCards.Single(card => card.CardId == 1).IsFaceUp,
+                Is.False);
+            var timeline = new List<GameSceneViewModel>();
+            battle.Stepped += () => timeline.Add(GameScenePresenter.Create(battle));
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+
+            GameSceneViewModel ready = timeline.FirstOrDefault(model =>
+                model.KnifeAnimationCue?.ActorSide == CombatantSide.Enemy &&
+                model.KnifeAnimationCue.Phase ==
+                    GameSceneKnifeAnimationPhase.Ready);
+            GameSceneViewModel resolved = timeline.FirstOrDefault(model =>
+                model.KnifeAnimationCue?.ActorSide == CombatantSide.Enemy &&
+                model.KnifeAnimationCue.Phase ==
+                    GameSceneKnifeAnimationPhase.Resolved);
+            Assert.That(ready, Is.Not.Null);
+            Assert.That(resolved, Is.Not.Null);
+            Assert.That(
+                GameManager.IsMatchingKnifeResolvedBeat(ready, resolved),
+                Is.True);
+        }
+
+        [Test]
         [Category("GSDECK")]
         public void GSDECK_U01_DeckCountsStayBoundToTimelineSnapshot()
         {
@@ -1674,6 +1713,41 @@ namespace DiaBlackJack.CoreLoop.Tests
             public EnemyDecision Decide(EnemyObservation observation)
             {
                 return new EnemyDecision(EnemyActionType.Stand, "test-stand");
+            }
+        }
+
+        private sealed class UseKnifeThenStandPolicy : IEnemyBehaviorPolicy
+        {
+            public EnemyDecision Decide(EnemyObservation observation)
+            {
+                foreach (EnemyActionCandidate candidate in
+                    observation.ActionCandidates)
+                {
+                    if (candidate.ActionType == EnemyActionType.UseCard &&
+                        !candidate.CardEffectOptionId.HasValue &&
+                        CardDefinitionCatalog
+                            .GetByKey(candidate.CardDefinitionKey)
+                            .Effect == CardEffectKind.MilitaryKnife)
+                    {
+                        return EnemyDecision.FromCandidate(
+                            candidate,
+                            "test-hidden-enemy-knife");
+                    }
+                }
+
+                foreach (EnemyActionCandidate candidate in
+                    observation.ActionCandidates)
+                {
+                    if (candidate.ActionType == EnemyActionType.Stand)
+                    {
+                        return EnemyDecision.FromCandidate(
+                            candidate,
+                            "test-stand-after-knife");
+                    }
+                }
+
+                throw new InvalidOperationException(
+                    "Enemy has no knife or stand candidate.");
             }
         }
     }

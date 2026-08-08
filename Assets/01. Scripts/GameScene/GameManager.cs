@@ -98,7 +98,19 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float knifeReadySeconds = 0.7f;
         [SerializeField] private float knifeSuspenseSeconds = 2.5f;
         [SerializeField] private float knifeResultSeconds = 3.1f;
-        [SerializeField] private string knifeBaseStateName = "Knife_Empty";
+        [SerializeField] private string knifeBaseStateName = "Base Layer.Empty";
+        [SerializeField] private string playerKnifeReadyStateName =
+            "Base Layer.Knife_Start";
+        [SerializeField] private string enemyKnifeReadyStateName =
+            "Base Layer.Knife_Start_Enemy";
+        [SerializeField] private string playerKnifeSuccessStateName =
+            "Base Layer.Knife_Attack";
+        [SerializeField] private string enemyKnifeSuccessStateName =
+            "Base Layer.Knife_Attack_Enemy";
+        [SerializeField] private string playerKnifeFailStateName =
+            "Base Layer.Knife_Disappear";
+        [SerializeField] private string enemyKnifeFailStateName =
+            "Base Layer.Knife_Disappear_Enemy";
         [SerializeField] private string playerKnifeStartTrigger = "PlayerStart";
         [SerializeField] private string enemyKnifeStartTrigger = "EnemyStart";
         [SerializeField] private string knifeSuccessTrigger = "Success";
@@ -3333,9 +3345,21 @@ namespace DiaBlackJack.GameScene
                     ProcessInput(() => TryResolvePlayerCardChoice(command.OptionId));
                     break;
                 case GameSceneCombatHudCommandKind.ResolveAutomaticCardChoice:
+                    CombatActionSkullRequest? automaticChoiceSkull = null;
+                    if (CombatActionSkullPresenter
+                        .TryCreatePlayerAutomaticChoiceRequest(
+                            Battle?.PendingPlayerAutomaticInteraction,
+                            command.InteractionId,
+                            command.OptionId,
+                            out CombatActionSkullRequest poisonStandSkull))
+                    {
+                        automaticChoiceSkull = poisonStandSkull;
+                    }
+
                     ProcessInput(() => TryResolvePlayerAutomaticCardChoice(
                         command.InteractionId,
-                        command.OptionId));
+                        command.OptionId),
+                        playerActionSkull: automaticChoiceSkull);
                     break;
                 case GameSceneCombatHudCommandKind.ResolveDemonContractChoice:
                     if (_tutorialRestrictedOptionId.HasValue &&
@@ -3672,6 +3696,14 @@ namespace DiaBlackJack.GameScene
                 GameSceneViewModel previous = index == 0
                     ? timelineBaseline
                     : timeline[index - 1];
+                if (vm.KnifeAnimationCue?.Phase ==
+                        GameSceneKnifeAnimationPhase.Ready &&
+                    TryPlayKnifeAnimation(vm.KnifeAnimationCue))
+                {
+                    yield return new WaitForSeconds(
+                        Mathf.Max(0f, knifeReadySeconds));
+                }
+
                 RoundComparisonPlan comparisonPlan = vm.RoundComparisonPlan;
                 if (_pendingPlayerMammonComparison != null &&
                     comparisonPlan == null)
@@ -3734,6 +3766,8 @@ namespace DiaBlackJack.GameScene
                 bool revealKnifeCardWithThrow =
                     pendingKnifeReveal != null &&
                     IsMatchingKnifeResolvedBeat(pendingKnifeReveal, vm);
+                bool playedDeferredKnifeResult = false;
+
                 DemonCardView satanAttackSource;
                 bool playedSatanAttack = TryPlaySatanAttackAnimation(
                     vm.SatanAttackAnimationCue,
@@ -3741,6 +3775,15 @@ namespace DiaBlackJack.GameScene
                 if (playedSatanAttack)
                 {
                     yield return WaitForSatanAttackAnimation(satanAttackSource);
+                }
+
+                if (revealKnifeCardWithThrow)
+                {
+                    yield return RenderHandsThenTotalsAfterRevealFlip(
+                        pendingKnifeReveal,
+                        showTransientEffectSources: true);
+                    playedDeferredKnifeResult =
+                        TryPlayKnifeAnimation(vm.KnifeAnimationCue);
                 }
 
                 AppliedAnimationResult playedAnimation = ApplyView(
@@ -3769,11 +3812,10 @@ namespace DiaBlackJack.GameScene
                     }
                 }
 
-                if (revealKnifeCardWithThrow)
+                if (playedDeferredKnifeResult)
                 {
-                    yield return RenderHandsThenTotalsAfterRevealFlip(
-                        pendingKnifeReveal,
-                        showTransientEffectSources: true);
+                    yield return new WaitForSeconds(
+                        Mathf.Max(0f, knifeResultSeconds));
                 }
 
                 CardView satanNumberGuessTarget;
@@ -4544,7 +4586,6 @@ namespace DiaBlackJack.GameScene
                  playedHammerAnimation &&
                  IsHammerSmashCue(vm.HammerAnimationCue)) ||
                 (deferKnifeResultCardRender &&
-                 playedKnifeAnimation &&
                  vm.KnifeAnimationCue?.Phase ==
                     GameSceneKnifeAnimationPhase.Resolved) ||
                 (deferRevolverResultCardRender &&
@@ -5329,7 +5370,6 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
-            RememberKnifeAnimationCue(cue);
             GameObject root = ResolveKnifeRoot();
             if (root != null && !root.activeSelf)
             {
@@ -5348,10 +5388,16 @@ namespace DiaBlackJack.GameScene
             {
                 ClearPendingKnifeImpact();
                 ResetKnifeAnimatorToBase();
-                animator.SetTrigger(
-                    cue.ActorSide == CombatantSide.Player
-                        ? playerKnifeStartTrigger
-                        : enemyKnifeStartTrigger);
+                if (!TryPlayKnifeState(
+                        animator,
+                        cue.ActorSide == CombatantSide.Player
+                            ? playerKnifeReadyStateName
+                            : enemyKnifeReadyStateName))
+                {
+                    return false;
+                }
+
+                RememberKnifeAnimationCue(cue);
                 ApplyCinematicCamera(
                     ResolveKnifeCameraView(cue.ActorSide),
                     knifeReadySeconds);
@@ -5369,8 +5415,20 @@ namespace DiaBlackJack.GameScene
                 ClearPendingKnifeImpact();
             }
 
-            animator.SetTrigger(
-                cue.Succeeded ? knifeSuccessTrigger : knifeFailTrigger);
+            string resultStateName = cue.ActorSide == CombatantSide.Player
+                ? cue.Succeeded
+                    ? playerKnifeSuccessStateName
+                    : playerKnifeFailStateName
+                : cue.Succeeded
+                    ? enemyKnifeSuccessStateName
+                    : enemyKnifeFailStateName;
+            if (!TryPlayKnifeState(animator, resultStateName))
+            {
+                ClearPendingKnifeImpact();
+                return false;
+            }
+
+            RememberKnifeAnimationCue(cue);
             ApplyCinematicCamera(
                 ResolveKnifeCameraView(cue.ActorSide),
                 knifeResultSeconds);
@@ -5654,6 +5712,31 @@ namespace DiaBlackJack.GameScene
 
             RememberSatanAttackAnimationCue(cue);
             return true;
+        }
+
+        private static bool TryPlayKnifeState(
+            Animator animator,
+            string stateName)
+        {
+            if (animator == null ||
+                !animator.gameObject.activeInHierarchy ||
+                string.IsNullOrWhiteSpace(stateName))
+            {
+                return false;
+            }
+
+            int stateHash = Animator.StringToHash(stateName);
+            if (!animator.HasState(0, stateHash))
+            {
+                Debug.LogError(
+                    $"[GameManager] Knife Animator state '{stateName}' does not exist.",
+                    animator);
+                return false;
+            }
+
+            animator.Play(stateHash, 0, 0f);
+            animator.Update(0f);
+            return animator.GetCurrentAnimatorStateInfo(0).IsName(stateName);
         }
 
         internal static bool ShouldThreatenEnemyDuringPlayerSatanAbility(

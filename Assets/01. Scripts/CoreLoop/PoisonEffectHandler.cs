@@ -63,9 +63,7 @@ namespace DiaBlackJack.CoreLoop
                     context.ApplyOwnerSoulDamage(SoulCost);
                     if (context.IsOwnerSoulDepleted)
                     {
-                        return AutomaticCardEffectStep.Complete(
-                            AutomaticCardSourceDisposition.RetainFaceUp,
-                            AutomaticCardCompletionFlow.EndBattle);
+                        context.DeferPoisonSoulDeathUntilRoundEnd();
                     }
 
                     context.RegisterPoisonWinReward(WinHealAmount);

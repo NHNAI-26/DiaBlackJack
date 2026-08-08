@@ -82,6 +82,29 @@ namespace DiaBlackJack.GameScene
 
     internal static class CombatActionSkullPresenter
     {
+        public static bool TryCreatePlayerAutomaticChoiceRequest(
+            PendingAutomaticCardInteraction pending,
+            int interactionId,
+            int optionId,
+            out CombatActionSkullRequest request)
+        {
+            request = default;
+            if (pending == null ||
+                pending.InteractionId != interactionId ||
+                pending.OwnerSide != CombatantSide.Player ||
+                pending.DecisionSide != CombatantSide.Player ||
+                pending.ChoiceKind != AutomaticCardChoiceKind.PoisonDecision ||
+                optionId != PoisonEffectHandler.StandNowOptionId)
+            {
+                return false;
+            }
+
+            request = new CombatActionSkullRequest(
+                CombatantSide.Player,
+                CombatActionSkullTargetKind.Stand);
+            return true;
+        }
+
         public static bool ShouldStartTerminalDissolve(
             BattleOutcome outcome,
             bool isRunning,

@@ -189,6 +189,35 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void EP03_U07_GunslingerUsesOneNormalActionBeforePlayerReturns()
+        {
+            var battle = new CoreLoopBattle(
+                CreateRankDeck(2, 7, 7, 7),
+                CreateDefinitionDeck(
+                    "auto-pistol-7",
+                    "standard-plain-2",
+                    "auto-pistol-8",
+                    "standard-plain-3"),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3,
+                enemyPolicy: new GunslingerEnemyPolicy());
+            Assert.That(battle.Start(), Is.True);
+            int maximumEnemyUseCount = 0;
+            battle.Stepped += () =>
+            {
+                maximumEnemyUseCount = Math.Max(
+                    maximumEnemyUseCount,
+                    battle.PublicActionHistory.Count(action =>
+                        action.ActorSide == CombatantSide.Enemy &&
+                        action.ActionType == PublicCombatActionType.UseCard));
+            };
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+
+            Assert.That(maximumEnemyUseCount, Is.EqualTo(1));
+        }
+
+        [Test]
         public void EP03_U02_GunslingerFiresPistolBeforeStandAtLowConfidence()
         {
             EnemyActionCandidate pistol = CreateCardCandidate(1, "auto-pistol-7");
@@ -461,5 +490,6 @@ namespace DiaBlackJack.CoreLoop.Tests
                 return EnemyDecision.FromCandidate(stand, "capture-stand");
             }
         }
+
     }
 }

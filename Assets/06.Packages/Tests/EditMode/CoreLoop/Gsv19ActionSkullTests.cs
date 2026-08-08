@@ -20,6 +20,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/Manager/GameManager.prefab";
         private const string SoundManagerPrefabPath =
             "Assets/03. Prefabs/Manager/SoundManager.prefab";
+        private const string HammerPrefabPath =
+            "Assets/03. Prefabs/Weapon/Hammer_Anim.prefab";
+        private const string KnifePrefabPath =
+            "Assets/03. Prefabs/Weapon/Knife_Anim.prefab";
 
         [Test]
         public void GSV19_U01_PlayerActionsMapToExactTargets()
@@ -325,6 +329,21 @@ namespace DiaBlackJack.CoreLoop.Tests
                 managerObject.FindProperty("actionSkullPrefab")
                     .objectReferenceValue,
                 Is.EqualTo(skull));
+            Assert.That(
+                managerObject.FindProperty("knifeBaseStateName").stringValue,
+                Is.EqualTo("Base Layer.Empty"));
+            Assert.That(
+                managerObject.FindProperty("playerKnifeReadyStateName").stringValue,
+                Is.EqualTo("Base Layer.Knife_Start"));
+            Assert.That(
+                managerObject.FindProperty("enemyKnifeReadyStateName").stringValue,
+                Is.EqualTo("Base Layer.Knife_Start_Enemy"));
+            Assert.That(
+                managerObject.FindProperty("playerKnifeSuccessStateName").stringValue,
+                Is.EqualTo("Base Layer.Knife_Attack"));
+            Assert.That(
+                managerObject.FindProperty("enemyKnifeSuccessStateName").stringValue,
+                Is.EqualTo("Base Layer.Knife_Attack_Enemy"));
 
             GameObject soundPrefab =
                 AssetDatabase.LoadAssetAtPath<GameObject>(SoundManagerPrefabPath);
@@ -344,6 +363,191 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(ids, Does.Contain("skullLay03"));
             Assert.That(ids, Does.Contain("skullLay04"));
             Assert.That(ids, Does.Contain("dissolve"));
+        }
+
+        [Test]
+        public void GSV19_U09_OnlyAcceptedPlayerPoisonStandTargetsStand()
+        {
+            var pending = new PendingAutomaticCardInteraction(
+                9,
+                42,
+                CardEffectKind.Poison,
+                CombatantSide.Player,
+                CombatantSide.Player,
+                AutomaticCardChoiceKind.PoisonDecision,
+                CombatPromptId.AutomaticPoisonDecision,
+                new[]
+                {
+                    new AutomaticCardChoiceOption(
+                        PoisonEffectHandler.StandNowOptionId,
+                        "stand"),
+                    new AutomaticCardChoiceOption(
+                        PoisonEffectHandler.PaySoulOptionId,
+                        "pay")
+                });
+
+            Assert.That(
+                CombatActionSkullPresenter.TryCreatePlayerAutomaticChoiceRequest(
+                    pending,
+                    pending.InteractionId,
+                    PoisonEffectHandler.StandNowOptionId,
+                    out CombatActionSkullRequest request),
+                Is.True);
+            Assert.That(request.Side, Is.EqualTo(CombatantSide.Player));
+            Assert.That(request.TargetKind,
+                Is.EqualTo(CombatActionSkullTargetKind.Stand));
+            Assert.That(
+                CombatActionSkullPresenter.TryCreatePlayerAutomaticChoiceRequest(
+                    pending,
+                    pending.InteractionId,
+                    PoisonEffectHandler.PaySoulOptionId,
+                    out _),
+                Is.False);
+            Assert.That(
+                CombatActionSkullPresenter.TryCreatePlayerAutomaticChoiceRequest(
+                    pending,
+                    pending.InteractionId + 1,
+                    PoisonEffectHandler.StandNowOptionId,
+                    out _),
+                Is.False);
+        }
+
+        [Test]
+        public void GSV19_U10_WeaponAnimatorsRequireValidStartupState()
+        {
+            GameObject hammerPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(HammerPrefabPath);
+            GameObject hammerInstance = UnityEngine.Object.Instantiate(
+                hammerPrefab);
+            try
+            {
+                HammerAnimationController hammer =
+                    hammerInstance.GetComponent<HammerAnimationController>();
+                Assert.That(hammer, Is.Not.Null);
+                Animator hammerAnimator = hammerInstance.GetComponent<Animator>();
+                Assert.That(hammerAnimator, Is.Not.Null);
+                Assert.That(
+                    hammerAnimator.HasState(
+                        0,
+                        Animator.StringToHash(
+                            "Base Layer.Hammer_ReadyAttack")),
+                    Is.True);
+                Assert.That(
+                    hammerAnimator.HasState(
+                        0,
+                        Animator.StringToHash("Base Layer.Hammer_Smash")),
+                    Is.True);
+                Assert.That(
+                    hammerAnimator.HasState(
+                        0,
+                        Animator.StringToHash(
+                            "Base Layer.Hammer_EnemySmash")),
+                    Is.True);
+                var cue = new GameSceneHammerAnimationCue(
+                    1,
+                    7,
+                    CombatantSide.Player,
+                    GameSceneHammerAnimationPhase.Smash,
+                    1,
+                    targetCardId: 11);
+
+                Assert.That(hammer.TryPlay(cue, null, null), Is.False);
+                Assert.That(hammer.IsSmashAnimationPlaying, Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(hammerInstance);
+            }
+
+            GameObject knifePrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(KnifePrefabPath);
+            GameObject knifeInstance = UnityEngine.Object.Instantiate(
+                knifePrefab);
+            try
+            {
+                Animator knifeAnimator = knifeInstance.GetComponent<Animator>();
+                Assert.That(knifeAnimator, Is.Not.Null);
+                knifeAnimator.Rebind();
+                knifeAnimator.Update(0f);
+                Assert.That(
+                    knifeAnimator.GetCurrentAnimatorStateInfo(0).IsName(
+                        "Base Layer.Empty"),
+                    Is.True);
+                string[] requiredStates =
+                {
+                    "Base Layer.Knife_Start",
+                    "Base Layer.Knife_Start_Enemy",
+                    "Base Layer.Knife_Attack",
+                    "Base Layer.Knife_Attack_Enemy",
+                    "Base Layer.Knife_Disappear",
+                    "Base Layer.Knife_Disappear_Enemy",
+                };
+                foreach (string stateName in requiredStates)
+                {
+                    Assert.That(
+                        knifeAnimator.HasState(
+                            0,
+                            Animator.StringToHash(stateName)),
+                        Is.True,
+                        stateName);
+                }
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(knifeInstance);
+            }
+        }
+
+        [Test]
+        public void GSV19_U11_HammerRootAlignmentSurvivesAnimatorTargetReset()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(HammerPrefabPath);
+            GameObject instance = UnityEngine.Object.Instantiate(prefab);
+            try
+            {
+                Animator animator = instance.GetComponent<Animator>();
+                Transform animatedTarget =
+                    instance.transform.Find("Hammer_Rigging/Target");
+                Assert.That(animator, Is.Not.Null);
+                Assert.That(animatedTarget, Is.Not.Null);
+
+                animator.Rebind();
+                animator.Update(0f);
+                Vector3 desiredPosition = new Vector3(100f, 80f, 60f);
+                animator.Play("Base Layer.Hammer_ReadyAttack", 0, 0f);
+                animator.Update(0f);
+
+                Assert.That(
+                    HammerAnimationController.TryAlignRootToTarget(
+                        instance.transform,
+                        animatedTarget,
+                        desiredPosition),
+                    Is.True);
+                Assert.That(
+                    Vector3.Distance(animatedTarget.position, desiredPosition),
+                    Is.LessThan(0.001f));
+                animator.Update(0.25f);
+                Assert.That(
+                    Vector3.Distance(animatedTarget.position, desiredPosition),
+                    Is.LessThan(0.001f));
+
+                animator.Play("Base Layer.Hammer_Smash", 0, 0f);
+                animator.Update(0f);
+                Assert.That(
+                    HammerAnimationController.TryAlignRootToTarget(
+                        instance.transform,
+                        animatedTarget,
+                        desiredPosition),
+                    Is.True);
+                Assert.That(
+                    Vector3.Distance(animatedTarget.position, desiredPosition),
+                    Is.LessThan(0.001f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
         }
 
         private static void AssertRequest(

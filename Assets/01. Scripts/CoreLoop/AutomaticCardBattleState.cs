@@ -72,7 +72,9 @@ namespace DiaBlackJack.CoreLoop
             RoundResolution resolution,
             int roundNumber,
             BattleParticipant player,
-            BattleParticipant enemy)
+            BattleParticipant enemy,
+            bool allowDepletedPlayer,
+            bool allowDepletedEnemy)
         {
             if (player == null)
             {
@@ -96,7 +98,11 @@ namespace DiaBlackJack.CoreLoop
                     CombatantSide.Player
                         ? player
                         : enemy;
-                if (!owner.Soul.IsDepleted)
+                bool canRestoreDepletedOwner = reward.OwnerSide ==
+                    CombatantSide.Player
+                        ? allowDepletedPlayer
+                        : allowDepletedEnemy;
+                if (!owner.Soul.IsDepleted || canRestoreDepletedOwner)
                 {
                     owner.Soul.Restore(reward.HealAmount);
                 }
