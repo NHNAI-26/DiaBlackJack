@@ -219,6 +219,14 @@ namespace DiaBlackJack.GameScene
             Step step = _steps[_stepIndex];
             if (step.Kind == StepKind.Dialogue)
             {
+                int? upcomingRestrictedOptionId =
+                    GetUpcomingRestrictedOptionId();
+                if (upcomingRestrictedOptionId.HasValue)
+                {
+                    _gameManager.SetTutorialContractOptionRestriction(
+                        upcomingRestrictedOptionId.Value);
+                }
+
                 _dialogueLineIndex = 0;
                 _narrator.ShowLine(step.Lines[0]);
                 return;
@@ -228,6 +236,20 @@ namespace DiaBlackJack.GameScene
             _gateEntrySnapshot = new BattleSnapshot(_gameManager.Battle);
             _gateActive = true;
             step.OnEnter?.Invoke(_gameManager);
+        }
+
+        private int? GetUpcomingRestrictedOptionId()
+        {
+            int nextStepIndex = _stepIndex + 1;
+            if (nextStepIndex >= _steps.Count)
+            {
+                return null;
+            }
+
+            Step nextStep = _steps[nextStepIndex];
+            return nextStep.Kind == StepKind.Gate
+                ? nextStep.RestrictedOptionId
+                : null;
         }
 
         /// <summary>
@@ -361,6 +383,7 @@ namespace DiaBlackJack.GameScene
             return new Step
             {
                 Kind = StepKind.Gate,
+                RestrictedOptionId = optionId,
                 OnEnter = gm => gm.SetTutorialContractOptionRestriction(optionId),
                 OnExit = gm => gm.SetTutorialContractOptionRestriction(null)
             };
@@ -378,6 +401,7 @@ namespace DiaBlackJack.GameScene
             public string[] Lines;
             public bool IsIntro;
             public bool DefersRoundTwoReveal;
+            public int? RestrictedOptionId;
             public Action<GameManager> OnEnter;
             public Action<GameManager> OnExit;
         }

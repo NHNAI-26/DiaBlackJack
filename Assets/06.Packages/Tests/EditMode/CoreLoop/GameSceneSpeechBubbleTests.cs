@@ -30,6 +30,59 @@ namespace DiaBlackJack.CoreLoop.Tests
         private const string MerchantSpeechPath =
             "Assets/02. ScriptableObjects/Speech/merchant_speech.asset";
 
+        [Test]
+        public void GFH01_U04_InactiveTutorialNarratorShowsOnFirstRequest()
+        {
+            var root = new GameObject("InactiveTutorialNarrator");
+            root.SetActive(false);
+
+            try
+            {
+                TutorialNarratorView narrator =
+                    root.AddComponent<TutorialNarratorView>();
+
+                narrator.Show();
+
+                Assert.That(root.activeSelf, Is.True);
+                Assert.That(narrator.IsActive, Is.True);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void GFH01_U05_InactiveTutorialTextShowsOnFirstPlay()
+        {
+            var root = new GameObject("InactiveTutorialText");
+            root.SetActive(false);
+
+            try
+            {
+                var textObject = new GameObject("Message");
+                textObject.transform.SetParent(root.transform, false);
+                Type messageType = Type.GetType(
+                    "TMPro.TextMeshProUGUI, Unity.TextMeshPro");
+                Assert.That(messageType, Is.Not.Null);
+                Component message = textObject.AddComponent(messageType);
+                TutorialTypewriterTextView view =
+                    root.AddComponent<TutorialTypewriterTextView>();
+
+                view.Play("First line", 40f);
+
+                Assert.That(root.activeSelf, Is.True);
+                Assert.That(view.IsVisible, Is.True);
+                Assert.That(
+                    messageType.GetProperty("text")?.GetValue(message),
+                    Is.EqualTo("First line"));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
         [TestCase(PublicCombatActionType.Hit, SpeechCueKeys.ActionHit, null)]
         [TestCase(PublicCombatActionType.Stand, SpeechCueKeys.ActionStand, null)]
         [TestCase(PublicCombatActionType.Change, SpeechCueKeys.ActionChange, null)]

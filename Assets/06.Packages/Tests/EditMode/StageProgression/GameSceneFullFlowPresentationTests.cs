@@ -23,6 +23,26 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
+        public void GFH01_U03_TutorialCombatWaitsEvenBeforeCharacterReferencesResolve()
+        {
+            Assert.That(
+                GameFlowController.ShouldDelayCombatForTutorialIntro(
+                    isEnteringCombat: true,
+                    isTutorialRun: true),
+                Is.True);
+            Assert.That(
+                GameFlowController.ShouldDelayCombatForTutorialIntro(
+                    isEnteringCombat: true,
+                    isTutorialRun: false),
+                Is.False);
+            Assert.That(
+                GameFlowController.ShouldDelayCombatForTutorialIntro(
+                    isEnteringCombat: false,
+                    isTutorialRun: true),
+                Is.False);
+        }
+
+        [Test]
         public void GF01_U01_NewRunPresentsTwoGrantedDemonsWithoutSelection()
         {
             FormalRunSession run = CreateRun();

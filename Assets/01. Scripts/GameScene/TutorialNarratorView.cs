@@ -30,6 +30,7 @@ namespace DiaBlackJack.GameScene
 
         private DemonCardView _card;
         private bool _cardBound;
+        private bool _showRequested;
 
         public event Action LineAdvanceRequested;
 
@@ -47,11 +48,15 @@ namespace DiaBlackJack.GameScene
             // Awake runs for every GameScene load, tutorial or not — only Show() (the
             // tutorial actually starting) should make this object, and the card on it,
             // visible for the first time.
-            gameObject.SetActive(false);
+            if (!_showRequested)
+            {
+                gameObject.SetActive(false);
+            }
         }
 
         public void Show()
         {
+            _showRequested = true;
             EnsureCard();
             if (!_cardBound && _card != null)
             {

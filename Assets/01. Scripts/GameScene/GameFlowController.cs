@@ -166,6 +166,24 @@ namespace DiaBlackJack.GameScene
             {
                 RefreshFlow();
             }
+
+            EnsureTutorialIntroStarted();
+        }
+
+        private void EnsureTutorialIntroStarted()
+        {
+            if (CurrentScreen != GameFlowScreen.Combat ||
+                gameManager == null ||
+                !gameManager.HasPendingTutorialIntro)
+            {
+                return;
+            }
+
+            gameManager.TutorialIntroCompleted -=
+                HandleTutorialIntroCompleted;
+            gameManager.TutorialIntroCompleted +=
+                HandleTutorialIntroCompleted;
+            gameManager.BeginTutorialIntroIfNeeded();
         }
 
         private void OnDisable()
@@ -582,9 +600,12 @@ namespace DiaBlackJack.GameScene
                 bool waitForCharacterEntrance = isEnteringCombat &&
                     charactersRoot != null &&
                     enemyCharacter != null;
+                bool waitForTutorialIntro = ShouldDelayCombatForTutorialIntro(
+                    isEnteringCombat,
+                    _session.CombatSession.IsTutorialRun);
 
                 gameManager.UnbindFormalShop();
-                if (waitForCharacterEntrance)
+                if (waitForCharacterEntrance || waitForTutorialIntro)
                 {
                     // Sequenced as: enemy appearance is set immediately (so the
                     // entrance shows the actual opponent, not whatever the
@@ -600,7 +621,14 @@ namespace DiaBlackJack.GameScene
                     gameManager.PrepareEnemyAppearance(_session.CombatSession);
                     gameManager.enabled = true;
                     gameManager.SuppressHandRenderUntilRoundOneStart();
-                    gameManager.BindBattle(_session.CombatSession, unlockInput: false);
+                    if (!gameManager.BindBattle(
+                            _session.CombatSession,
+                            unlockInput: false))
+                    {
+                        throw new InvalidOperationException(
+                            "The active formal battle could not be bound.");
+                    }
+
                     if (gameManager.HasPendingTutorialIntro)
                     {
                         // The tutorial's sections 0-1 (background + blackjack-rules
@@ -609,6 +637,8 @@ namespace DiaBlackJack.GameScene
                         // HasPendingTutorialIntro and holds charactersRoot inactive while
                         // this is true, so the entrance/round-1 reveal below is simply
                         // deferred until the dialogue finishes.
+                        gameManager.TutorialIntroCompleted -=
+                            HandleTutorialIntroCompleted;
                         gameManager.TutorialIntroCompleted +=
                             HandleTutorialIntroCompleted;
                         gameManager.BeginTutorialIntroIfNeeded();
@@ -1081,6 +1111,8 @@ namespace DiaBlackJack.GameScene
         {
             gameManager.TutorialIntroCompleted -= HandleTutorialIntroCompleted;
             _waitingForRoundOneReveal = true;
+            _hasPresentedCharacters = false;
+            ResolveSceneReferences();
             BeginCharacterEntranceUnlockSafety();
             // combatCharactersReady in RenderFlowScreen only re-reads HasPendingTutorialIntro
             // on its next call — force one now so the entrance actually starts this frame
@@ -1110,18 +1142,35 @@ namespace DiaBlackJack.GameScene
         {
             yield return new WaitForSeconds(CharacterEntranceUnlockSafetySeconds);
             _characterEntranceUnlockSafetyRoutine = null;
-            // The battle itself already bound the instant the screen entered
-            // Combat (see RefreshFlow) — this fallback only needs to make sure
-            // the card-deal reveal and input unlock still happen if
-            // CompleteCharacterEntrance's own chain never fired.
-            if (_waitingForRoundOneReveal)
+            if (!_waitingForRoundOneReveal)
+            {
+                _unlockInputAfterCharacterEntrance = false;
+                gameManager?.SetPresentationInputLocked(false);
+                yield break;
+            }
+
+            if (_session?.CombatSession == null ||
+                !_session.CombatSession.IsTutorialRun)
             {
                 _waitingForRoundOneReveal = false;
                 gameManager.RevealRoundOneHands();
+                _unlockInputAfterCharacterEntrance = false;
+                gameManager.SetPresentationInputLocked(false);
+                yield break;
             }
 
-            _unlockInputAfterCharacterEntrance = false;
-            gameManager?.SetPresentationInputLocked(false);
+            // Never skip the tutorial entrance by revealing the first hand from
+            // this safety path. Re-resolve late scene references and issue a fresh
+            // entrance request instead. CompleteCharacterEntrance remains the only
+            // path that can reveal round one and unlock input.
+            ResolveSceneReferences();
+            if (charactersRoot != null && enemyCharacter != null)
+            {
+                _hasPresentedCharacters = false;
+                RenderFlowScreen();
+            }
+
+            BeginCharacterEntranceUnlockSafety();
         }
 
         private void CompleteCharacterExitBeforeEntrance()
@@ -1326,6 +1375,13 @@ namespace DiaBlackJack.GameScene
             return screen == GameFlowScreen.StartingDemonReveal ||
                 screen == GameFlowScreen.Combat ||
                 screen == GameFlowScreen.Shop;
+        }
+
+        internal static bool ShouldDelayCombatForTutorialIntro(
+            bool isEnteringCombat,
+            bool isTutorialRun)
+        {
+            return isEnteringCombat && isTutorialRun;
         }
 
         private bool IsTerminalScreen()

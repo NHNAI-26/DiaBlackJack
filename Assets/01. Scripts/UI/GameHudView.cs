@@ -1249,14 +1249,47 @@ namespace DiaBlackJack.GameScene
 
         private static string BuildRoundText(CoreLoopViewModel core)
         {
-            switch (core.Outcome)
+            return BuildRoundText(
+                core.State,
+                core.Outcome,
+                core.RoundNumber,
+                core.TurnNumber);
+        }
+
+        internal static string BuildRoundText(
+            CoreLoopState state,
+            BattleOutcome outcome,
+            int roundNumber,
+            int turnNumber)
+        {
+            switch (outcome)
             {
                 case BattleOutcome.PlayerVictory:
                     return "VICTORY";
                 case BattleOutcome.PlayerDefeat:
                     return "DEFEAT";
+            }
+
+            string turnOwner = ResolveTurnOwner(state);
+            return string.IsNullOrEmpty(turnOwner)
+                ? $"ROUND {roundNumber}\nTURN {turnNumber}"
+                : $"ROUND {roundNumber}\nTURN {turnNumber} · {turnOwner}";
+        }
+
+        private static string ResolveTurnOwner(CoreLoopState state)
+        {
+            switch (state)
+            {
+                case CoreLoopState.PlayerTurn:
+                case CoreLoopState.PlayerChoosingChangeCard:
+                case CoreLoopState.PlayerResolvingCardEffect:
+                case CoreLoopState.ResolvingAutomaticCardEffect:
+                case CoreLoopState.PlayerResolvingDemonContract:
+                    return "PLAYER TURN";
+                case CoreLoopState.EnemyTurn:
+                    return "ENEMY TURN";
                 default:
-                    return $"ROUND {core.RoundNumber}\nTURN {core.TurnNumber}";
+                    return string.Empty;
             }
         }
     }
