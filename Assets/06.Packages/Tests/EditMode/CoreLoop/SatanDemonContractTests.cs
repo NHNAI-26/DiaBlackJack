@@ -337,6 +337,73 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void DCR02_U16_PlayerRevolverResultPrecedesEnemyBeelzebubReplacement()
+        {
+            DemonContractCatalog catalog = DemonContractCatalog.Default;
+            var enemyDemonDeck = new DemonContractDeck(
+                new[]
+                {
+                    new DemonContractCard(
+                        200,
+                        catalog.GetByKey(DemonContractCatalog.BeelzebubKey)),
+                    new DemonContractCard(
+                        201,
+                        catalog.GetByKey(DemonContractCatalog.AsmodeusKey))
+                },
+                seed: 84);
+            var fixedPhases = new[]
+            {
+                new FixedDemonContractPhaseDefinition(
+                    activationSoulThreshold: null,
+                    DemonContractCatalog.BeelzebubKey,
+                    DemonContractCatalog.AsmodeusKey)
+            };
+            CoreLoopBattle battle = CreateStartedBattle(
+                CreatePlainDeck(new[] { 7, 5, 2, 2, 2, 2, 2, 2 }),
+                CreatePlainDeck(new[] { 5, 7, 2, 2, 2, 2 }, startId: 100),
+                new StandPolicy(),
+                new DemonContractDeck(
+                    Array.Empty<DemonContractCard>(),
+                    seed: 0),
+                playerCurrentSoul: 12,
+                enemyMaximumSoul: 5,
+                enemyDemonDeck,
+                fixedEnemyDemonContractPhases: fixedPhases);
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(
+                battle.ActiveEnemyDemonContracts.Single().Kind,
+                Is.EqualTo(DemonContractKind.Beelzebub));
+            BlackjackCard revolver = battle.Player.Hand.Cards.Single(card =>
+                card.Definition.Effect == CardEffectKind.AutoPistol);
+            int enemySoulBefore = battle.Enemy.Soul.Current;
+
+            Assert.That(battle.TryBeginPlayerCardUse(revolver.Id), Is.True);
+            Assert.That(battle.TryResolvePlayerCardChoice(7), Is.True);
+
+            Assert.That(battle.HasPendingPostEffectBustReplacement, Is.True);
+            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(enemySoulBefore));
+            Assert.That(battle.PendingEnemyDemonContractInteraction, Is.Null);
+            GameSceneRevolverAnimationCue resultCue =
+                GameScenePresenter.Create(battle).RevolverAnimationCue;
+            Assert.That(resultCue, Is.Not.Null);
+            Assert.That(resultCue.ActorSide, Is.EqualTo(CombatantSide.Player));
+            Assert.That(
+                resultCue.Phase,
+                Is.EqualTo(GameSceneRevolverAnimationPhase.Resolved));
+            Assert.That(resultCue.Succeeded, Is.True);
+
+            Assert.That(
+                battle.TryContinuePostEffectBustReplacement(),
+                Is.True);
+
+            Assert.That(battle.HasPendingPostEffectBustReplacement, Is.False);
+            Assert.That(
+                battle.Enemy.Soul.Current,
+                Is.EqualTo(enemySoulBefore - 1));
+        }
+
+        [Test]
         public void DCR02_U14_InvalidAtomicNumbersPreservePendingInteraction()
         {
             CoreLoopBattle battle = CreateSatanBattle(
