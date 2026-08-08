@@ -99,7 +99,7 @@ MonoBehaviour:
     reservedOutcomeLabel: "이번 라운드에서 승리하면 영혼 5를 회복합니다."
     resolvedOutcomeLabel: "영혼 회복 효과는 적용되지 않았습니다."
   - id: 2
-    template: "{ownerPossessive} [{source}] 효과가 발동했습니다.\n나는 {playerDecision}.\n{enemy} 측은 {enemyDecision}."
+    template: "{ownerPossessive} [{source}] 효과가 발동했습니다.\n나는 {playerDecision}. {enemy} 측은 {enemyDecision}."
     comparisonTemplate: ""
     sourceLabel: "부활초"
     emptyTargetTemplate: ""
@@ -127,7 +127,7 @@ MonoBehaviour:
     reservedOutcomeLabel: "승리하면 영혼을 회복합니다."
     resolvedOutcomeLabel: "영혼 회복 없이 효과가 끝났습니다."
   - id: 4
-    template: "{ownerPossessive} [{source}] 효과가 발동했습니다.\n나는 {playerDecision}.\n{enemy} 측은 {enemyDecision}."
+    template: "{ownerPossessive} [{source}] 효과가 발동했습니다.\n나는 {playerDecision}. {enemy} 측은 {enemyDecision}."
     comparisonTemplate: ""
     sourceLabel: "화염 방사기"
     emptyTargetTemplate: ""

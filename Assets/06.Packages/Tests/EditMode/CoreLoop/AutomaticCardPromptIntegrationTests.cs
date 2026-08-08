@@ -53,7 +53,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 "광신도",
                 "내 [독극물]",
                 "이번 라운드에서 승리하면 영혼 5를 회복합니다");
-            AssertResolved(
+            string resurrectionText = AssertResolved(
                 catalog,
                 new AutomaticCardResultPromptRequest(
                     AutomaticCardResultPromptId.ResurrectionHerb,
@@ -66,6 +66,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 "광신도의 [부활초]",
                 "나는 영혼 1을 지불해 패를 다시 받았습니다",
                 "광신도 측은 효과를 사용하지 않았습니다");
+            Assert.That(resurrectionText.Split('\n'), Has.Length.EqualTo(2));
             AssertResolved(
                 catalog,
                 new AutomaticCardResultPromptRequest(
@@ -79,7 +80,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 "광신도",
                 "내 [거짓말 탐지기]",
                 "광신도의 비공개 카드는 7 이상입니다");
-            AssertResolved(
+            string flamethrowerText = AssertResolved(
                 catalog,
                 new AutomaticCardResultPromptRequest(
                     AutomaticCardResultPromptId.Flamethrower,
@@ -91,6 +92,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 "광신도",
                 "나는 공개 카드 1장을 버렸습니다",
                 "광신도 측은 공개 카드를 버리지 않았습니다");
+            Assert.That(flamethrowerText.Split('\n'), Has.Length.EqualTo(2));
             AssertResolved(
                 catalog,
                 new AutomaticCardResultPromptRequest(
@@ -515,7 +517,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 "The next accepted player action must dismiss the result prompt.");
         }
 
-        private static void AssertResolved(
+        private static string AssertResolved(
             CombatPromptCatalogSO catalog,
             AutomaticCardResultPromptRequest request,
             string enemyDisplayName,
@@ -543,6 +545,12 @@ namespace DiaBlackJack.CoreLoop.Tests
             {
                 Assert.That(text, Does.Contain(fragment));
             }
+
+            Assert.That(
+                text.Split('\n').Length,
+                Is.LessThanOrEqualTo(3),
+                "Automatic-card result prompts must use at most three explicit lines.");
+            return text;
         }
 
         private static GameSceneCombatHudViewModel CreateHudModel(
