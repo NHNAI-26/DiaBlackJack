@@ -3,9 +3,11 @@ using System.Collections;
 using Border.SaveLoad;
 using Border.SaveLoad.UI;
 using DiaBlackJack.Content;
+using DiaBlackJack.CoreLoop;
 using DiaBlackJack.StageProgression;
 using DiaBlackJack.StageProgression.UI;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace DiaBlackJack.GameScene
 {
@@ -34,6 +36,9 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private SpeechProfileSO merchantSpeechProfile;
         [SerializeField] private int merchantSpeechSeed = 20260804;
 
+        [Header("Run result dialogue")]
+        [SerializeField] private RunResultDialogueSO runResultDialogue;
+
         private StageProgressionRuntime _runtime;
         private FormalRunSession _session;
         private SpeechLineResolver _speechResolver;
@@ -50,11 +55,17 @@ namespace DiaBlackJack.GameScene
         private int _characterEntranceRequestId;
         private bool _playCharacterExitBeforeEntrance;
         private bool _characterExitWaitingForEntrance;
-        private bool _shopTransitionWaitingForEnemyExit;
+        private bool _merchantTransitionWaitingForEnemyExit;
         private bool _unlockInputAfterCharacterEntrance;
         private Coroutine _characterEntranceUnlockSafetyRoutine;
         private Coroutine _roundOneStartRoutine;
         private string _currentMoodId;
+        private RunResultDialogueSequence _resultDialogueSequence;
+        private float _resultDialogueCharactersPerSecond;
+        private bool _resultDialoguePending;
+#if UNITY_EDITOR
+        private bool _isResultDialoguePreview;
+#endif
 
         // The entrance-animation completion callback that unlocks input
         // (CompleteCharacterEntrance) depends on a chain of several animation
@@ -164,6 +175,7 @@ namespace DiaBlackJack.GameScene
                 RefreshFlow();
             }
 
+            HandleResultDialogueInput();
         }
 
         private void OnDisable()
@@ -209,9 +221,10 @@ namespace DiaBlackJack.GameScene
             CancelEnemyAppearanceDelay();
             StopCharacterEntranceUnlockSafety();
             StopRoundOneStartRoutine();
-            _shopTransitionWaitingForEnemyExit = false;
+            _merchantTransitionWaitingForEnemyExit = false;
             _unlockInputAfterCharacterEntrance = false;
             _waitingForRoundOneReveal = false;
+            ResetResultDialogue();
         }
 
         public bool RequestCompleteStartingDemonReveal()
@@ -446,9 +459,9 @@ namespace DiaBlackJack.GameScene
 
         private void HandleBattleCompleted()
         {
-            if (ShouldWaitForEnemyExitBeforeShop())
+            if (ShouldWaitForEnemyExitBeforeMerchantScreen())
             {
-                BeginEnemyExitBeforeShop();
+                BeginEnemyExitBeforeMerchantScreen();
                 return;
             }
 
@@ -569,6 +582,12 @@ namespace DiaBlackJack.GameScene
                 _session,
                 _focusedOpponentProfileKey);
             CurrentScreen = nextScreen;
+            if (IsTerminalScreen(previousScreen) && !IsTerminalScreen(nextScreen))
+            {
+                ResetResultDialogue();
+                enemyCharacter?.HideSpeech();
+            }
+
             ApplyMood(nextScreen, ResolveCombatProfileKey());
             bool isEnteringStartingDemonReveal =
                 nextScreen == GameFlowScreen.StartingDemonReveal &&
@@ -733,16 +752,24 @@ namespace DiaBlackJack.GameScene
                 finalBossReveal?.Hide();
             }
 
-            if (isResult)
+            RunSaveViewModel save = RunSavePresenter.Create(_runtime.SaveFlow);
+            bool showSaveFallback = ShouldShowResultPanel(
+                isResult,
+                save.BlocksProgressionInput);
+            if (showSaveFallback)
             {
                 resultView?.Render(RunResultPresenter.Create(
                     CurrentScreen,
                     CurrentViewModel,
-                    RunSavePresenter.Create(_runtime.SaveFlow)));
+                    save));
             }
             else
             {
                 resultView?.Hide();
+                if (isResult)
+                {
+                    PrepareResultDialogue();
+                }
             }
 
             if (hudRoot != null)
@@ -752,13 +779,18 @@ namespace DiaBlackJack.GameScene
 
             UpdateCharactersVisibility(
                 isCombat || isStartingReveal ||
-                CurrentScreen == GameFlowScreen.Shop);
+                CurrentScreen == GameFlowScreen.Shop || isResult);
 
             if (!_characterExitWaitingForEntrance &&
                 (moodController == null ||
                     !moodController.IsEntranceDoorAnimationPlaying))
             {
                 ApplyCharacterModeForCurrentScreen();
+            }
+
+            if (isResult && !showSaveFallback)
+            {
+                TryBeginResultDialogue();
             }
         }
 
@@ -795,12 +827,18 @@ namespace DiaBlackJack.GameScene
                     activeStage.Id);
         }
 
-        private bool ShouldWaitForEnemyExitBeforeShop()
+        private bool ShouldWaitForEnemyExitBeforeMerchantScreen()
         {
-            if (_shopTransitionWaitingForEnemyExit ||
+            if (_merchantTransitionWaitingForEnemyExit ||
                 _session == null ||
-                CurrentScreen != GameFlowScreen.Combat ||
-                GameFlowScreenResolver.Resolve(_session) != GameFlowScreen.Shop)
+                CurrentScreen != GameFlowScreen.Combat)
+            {
+                return false;
+            }
+
+            GameFlowScreen nextScreen = GameFlowScreenResolver.Resolve(_session);
+            if (nextScreen != GameFlowScreen.Shop &&
+                !IsTerminalScreen(nextScreen))
             {
                 return false;
             }
@@ -811,25 +849,26 @@ namespace DiaBlackJack.GameScene
                 enemyCharacter != null;
         }
 
-        private void BeginEnemyExitBeforeShop()
+        private void BeginEnemyExitBeforeMerchantScreen()
         {
-            if (_shopTransitionWaitingForEnemyExit)
+            if (_merchantTransitionWaitingForEnemyExit)
             {
                 return;
             }
 
-            _shopTransitionWaitingForEnemyExit = true;
-            enemyCharacter.PlayExitAnimation(CompleteEnemyExitBeforeShop);
+            _merchantTransitionWaitingForEnemyExit = true;
+            enemyCharacter.PlayExitAnimation(
+                CompleteEnemyExitBeforeMerchantScreen);
         }
 
-        private void CompleteEnemyExitBeforeShop()
+        private void CompleteEnemyExitBeforeMerchantScreen()
         {
-            if (!_shopTransitionWaitingForEnemyExit)
+            if (!_merchantTransitionWaitingForEnemyExit)
             {
                 return;
             }
 
-            _shopTransitionWaitingForEnemyExit = false;
+            _merchantTransitionWaitingForEnemyExit = false;
             if (charactersRoot != null)
             {
                 charactersRoot.SetActive(false);
@@ -1038,6 +1077,12 @@ namespace DiaBlackJack.GameScene
 
             _characterEntranceInProgress = false;
             StopCharacterEntranceUnlockSafety();
+            if (IsTerminalScreen())
+            {
+                TryBeginResultDialogue();
+                return;
+            }
+
             if (_waitingForRoundOneReveal)
             {
                 if (gameManager != null && gameManager.HasPendingTutorialIntro)
@@ -1169,7 +1214,8 @@ namespace DiaBlackJack.GameScene
             }
 
             if (CurrentScreen == GameFlowScreen.StartingDemonReveal ||
-                CurrentScreen == GameFlowScreen.Shop)
+                CurrentScreen == GameFlowScreen.Shop ||
+                IsTerminalScreen())
             {
                 enemyCharacter.EnterMerchant();
             }
@@ -1191,12 +1237,242 @@ namespace DiaBlackJack.GameScene
                 _speechResolver.Resolve(merchantSpeechProfile, cueKey));
         }
 
+#if UNITY_EDITOR
+        internal bool DebugStartResultDialoguePreview(
+            GameFlowScreen screen,
+            bool hasMadeDemonContract,
+            string opponentProfileKey)
+        {
+            if (!Application.isPlaying ||
+                !IsTerminalScreen(screen) ||
+                runResultDialogue == null ||
+                string.IsNullOrWhiteSpace(opponentProfileKey))
+            {
+                return false;
+            }
+
+            EnemyProfilePreview opponent = null;
+            foreach (EnemyProfilePreview preview in
+                EnemyCombatProfileCatalog.Default.Previews)
+            {
+                if (string.Equals(
+                    preview.ProfileKey,
+                    opponentProfileKey,
+                    StringComparison.Ordinal))
+                {
+                    opponent = preview;
+                    break;
+                }
+            }
+
+            if (opponent == null)
+            {
+                return false;
+            }
+
+            RunResultDialogueViewModel model =
+                RunResultDialoguePresenter.CreateForPreview(
+                    screen,
+                    hasMadeDemonContract,
+                    opponent.ProfileKey,
+                    opponent.DisplayName,
+                    runResultDialogue);
+
+            ResolveSceneReferences();
+            if (enemyCharacter == null || charactersRoot == null)
+            {
+                return false;
+            }
+
+            CancelEnemyAppearanceDelay();
+            StopCharacterEntranceUnlockSafety();
+            StopRoundOneStartRoutine();
+            ResetResultDialogue();
+            _isResultDialoguePreview = true;
+            _waitingForRoundOneReveal = false;
+            _unlockInputAfterCharacterEntrance = false;
+            _charactersEntranceWaiting = false;
+            _characterExitWaitingForEntrance = false;
+            _characterEntranceInProgress = false;
+            _characterEntranceRequestId++;
+            _playCharacterExitBeforeEntrance = false;
+            _merchantTransitionWaitingForEnemyExit = true;
+
+            CurrentScreen = screen;
+            CurrentViewModel = null;
+            _resultDialogueSequence =
+                new RunResultDialogueSequence(model.Lines);
+            _resultDialogueCharactersPerSecond = model.CharactersPerSecond;
+            _resultDialoguePending = true;
+
+            startingDemonReveal?.Hide();
+            opponentSelection?.Hide();
+            finalBossReveal?.Hide();
+            resultView?.Hide();
+            codex?.SetAvailable(false);
+            hud?.SetEnemyStatusVisible(false);
+            hud?.SetCoreStatsVisible(false);
+            if (hudRoot != null)
+            {
+                hudRoot.SetActive(false);
+            }
+
+            if (gameManager != null)
+            {
+                gameManager.UnbindFormalShop();
+                gameManager.UnbindBattle();
+                gameManager.SetBattleCardObjectsVisible(false);
+                gameManager.SetEnemyDeckVisible(false);
+                gameManager.enabled = false;
+            }
+
+            enemyCharacter.HideSpeech();
+            enemyCharacter.ExitMerchant();
+            enemyCharacter.TrySetEnemyProfile(opponent.ProfileKey);
+
+            if (charactersRoot.activeInHierarchy &&
+                enemyCharacter.gameObject.activeInHierarchy)
+            {
+                enemyCharacter.PlayExitAnimation(
+                    CompleteDebugResultDialoguePreviewEnemyExit);
+            }
+            else
+            {
+                CompleteDebugResultDialoguePreviewEnemyExit();
+            }
+
+            return true;
+        }
+
+        private void CompleteDebugResultDialoguePreviewEnemyExit()
+        {
+            if (!_isResultDialoguePreview ||
+                !_merchantTransitionWaitingForEnemyExit)
+            {
+                return;
+            }
+
+            _merchantTransitionWaitingForEnemyExit = false;
+            charactersRoot.SetActive(false);
+            ApplyMood(CurrentScreen, enemyProfileKey: null);
+            UpdateCharactersVisibility(shouldShow: true);
+            if (!_characterEntranceInProgress && !_charactersEntranceWaiting)
+            {
+                TryBeginResultDialogue();
+            }
+        }
+#endif
+
+        private void PrepareResultDialogue()
+        {
+            if (_resultDialogueSequence != null ||
+                runResultDialogue == null ||
+                _session?.CombatSession?.Progress?.Player == null)
+            {
+                return;
+            }
+
+            StageDefinition activeStage = _session.CombatSession.ActiveStage;
+            if (activeStage == null)
+            {
+                Debug.LogError(
+                    "Run result dialogue requires the completed active stage.",
+                    this);
+                return;
+            }
+
+            RunResultDialogueViewModel model = RunResultDialoguePresenter.Create(
+                CurrentScreen,
+                _session.CombatSession.Progress.Player,
+                activeStage,
+                runResultDialogue);
+            _resultDialogueSequence =
+                new RunResultDialogueSequence(model.Lines);
+            _resultDialogueCharactersPerSecond = model.CharactersPerSecond;
+            _resultDialoguePending = true;
+        }
+
+        private void TryBeginResultDialogue()
+        {
+            if (!_resultDialoguePending ||
+                _resultDialogueSequence == null ||
+                enemyCharacter == null ||
+                !enemyCharacter.gameObject.activeInHierarchy ||
+                _characterEntranceInProgress ||
+                _charactersEntranceWaiting)
+            {
+                return;
+            }
+
+            _resultDialoguePending = false;
+            enemyCharacter.PlaySpeech(
+                _resultDialogueSequence.CurrentLine,
+                _resultDialogueCharactersPerSecond);
+        }
+
+        private void HandleResultDialogueInput()
+        {
+            if (!IsTerminalScreen() ||
+                _resultDialoguePending ||
+                _resultDialogueSequence == null ||
+                enemyCharacter == null)
+            {
+                return;
+            }
+
+            Mouse mouse = Mouse.current;
+            if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
+            {
+                return;
+            }
+
+            RunResultDialogueClickResult clickResult =
+                _resultDialogueSequence.HandleClick(
+                    enemyCharacter.IsSpeechComplete);
+            if (clickResult ==
+                RunResultDialogueClickResult.CompleteCurrentLine)
+            {
+                enemyCharacter.CompleteSpeechImmediately();
+                return;
+            }
+
+            if (clickResult == RunResultDialogueClickResult.ShowNextLine)
+            {
+                enemyCharacter.PlaySpeech(
+                    _resultDialogueSequence.CurrentLine,
+                    _resultDialogueCharactersPerSecond);
+                return;
+            }
+
+#if UNITY_EDITOR
+            if (_isResultDialoguePreview)
+            {
+                _isResultDialoguePreview = false;
+                StageProgressionRuntime.ReturnToMainMenuAndDestroyInstance();
+                return;
+            }
+#endif
+
+            RequestReturnToMainMenu();
+        }
+
+        private void ResetResultDialogue()
+        {
+            _resultDialogueSequence = null;
+            _resultDialogueCharactersPerSecond = 0f;
+            _resultDialoguePending = false;
+#if UNITY_EDITOR
+            _isResultDialoguePreview = false;
+#endif
+        }
+
         private static bool IsCharacterModeTransition(
             GameFlowScreen previousScreen,
             GameFlowScreen nextScreen)
         {
             return (previousScreen == GameFlowScreen.Combat &&
-                    nextScreen == GameFlowScreen.Shop) ||
+                    (nextScreen == GameFlowScreen.Shop ||
+                     IsTerminalScreen(nextScreen))) ||
                 (previousScreen == GameFlowScreen.Shop &&
                     nextScreen == GameFlowScreen.Combat);
         }
@@ -1205,7 +1481,8 @@ namespace DiaBlackJack.GameScene
         {
             return CurrentScreen == GameFlowScreen.StartingDemonReveal ||
                 CurrentScreen == GameFlowScreen.Combat ||
-                CurrentScreen == GameFlowScreen.Shop;
+                CurrentScreen == GameFlowScreen.Shop ||
+                IsTerminalScreen();
         }
 
         private void StopEnemyAppearanceDelayRoutine()
@@ -1423,8 +1700,20 @@ namespace DiaBlackJack.GameScene
 
         private bool IsTerminalScreen()
         {
-            return CurrentScreen == GameFlowScreen.RunVictory ||
-                CurrentScreen == GameFlowScreen.RunDefeat;
+            return IsTerminalScreen(CurrentScreen);
+        }
+
+        internal static bool ShouldShowResultPanel(
+            bool isResult,
+            bool saveBlocksProgression)
+        {
+            return isResult && saveBlocksProgression;
+        }
+
+        private static bool IsTerminalScreen(GameFlowScreen screen)
+        {
+            return screen == GameFlowScreen.RunVictory ||
+                screen == GameFlowScreen.RunDefeat;
         }
 
         private void SynchronizeFocusedOpponent()

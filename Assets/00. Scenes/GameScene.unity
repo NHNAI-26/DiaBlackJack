@@ -6764,6 +6764,7 @@ MonoBehaviour:
   roundOneStartDelayAfterEntrance: 3
   merchantSpeechProfile: {fileID: 11400000, guid: 0fb23cb8f2399b54cb64d57d5dec38bf, type: 2}
   merchantSpeechSeed: 20260804
+  runResultDialogue: {fileID: 11400000, guid: 0688f88cd17e3c34a9e11346a39deea9, type: 2}
 --- !u!114 &6163863410494494795
 MonoBehaviour:
   m_ObjectHideFlags: 0

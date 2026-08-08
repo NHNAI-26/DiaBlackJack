@@ -16,8 +16,53 @@ namespace DiaBlackJack.Editor
             : base(
                 MainMenuQuickPlayButton.Id,
                 GameSceneQuickPlayButton.Id,
-                EnemyBattleQuickPlayDropdown.Id)
+                EnemyBattleQuickPlayDropdown.Id,
+                RunResultQuickPlayDropdown.Id)
         {
+        }
+    }
+
+    [EditorToolbarElement(Id, typeof(SceneView))]
+    internal sealed class RunResultQuickPlayDropdown : EditorToolbarDropdown
+    {
+        public const string Id =
+            "DiaBlackJack/QuickPlay/RunResult";
+
+        public RunResultQuickPlayDropdown()
+        {
+            text = "Run Result";
+            tooltip = "Preview victory or opponent-specific defeat dialogue.";
+            clicked += ShowResultMenu;
+        }
+
+        private static void ShowResultMenu()
+        {
+            var menu = new GenericMenu();
+            menu.AddItem(
+                new GUIContent("Victory/No Contract"),
+                false,
+                () => SceneQuickPlayLauncher.PlayRunVictory(
+                    hasMadeDemonContract: false));
+            menu.AddItem(
+                new GUIContent("Victory/Contracted"),
+                false,
+                () => SceneQuickPlayLauncher.PlayRunVictory(
+                    hasMadeDemonContract: true));
+            menu.AddSeparator(string.Empty);
+
+            foreach (EnemyProfilePreview preview in
+                EnemyCombatProfileCatalog.Default.Previews)
+            {
+                EnemyProfilePreview captured = preview;
+                menu.AddItem(
+                    new GUIContent(
+                        $"Defeat/{captured.Grade}/{captured.DisplayName}"),
+                    false,
+                    () => SceneQuickPlayLauncher.PlayRunDefeat(
+                        captured.ProfileKey));
+            }
+
+            menu.ShowAsContext();
         }
     }
 
@@ -107,12 +152,22 @@ namespace DiaBlackJack.Editor
 
         private const string MenuRoot =
             "Tools/DiaBlackJack/Quick Play/";
+        private const string RunResultMenuRoot =
+            MenuRoot + "Run Result/";
         private const string RestorePendingKey =
             "DiaBlackJack.SceneQuickPlay.RestorePending";
         private const string PreviousStartScenePathKey =
             "DiaBlackJack.SceneQuickPlay.PreviousStartScenePath";
         private const string PendingEnemyProfileKey =
             "DiaBlackJack.SceneQuickPlay.PendingEnemyProfile";
+        private const string PendingRunResultKey =
+            "DiaBlackJack.SceneQuickPlay.PendingRunResult";
+        private const string PendingRunResultScreenKey =
+            "DiaBlackJack.SceneQuickPlay.PendingRunResultScreen";
+        private const string PendingRunResultContractKey =
+            "DiaBlackJack.SceneQuickPlay.PendingRunResultContract";
+        private const string PendingRunResultOpponentKey =
+            "DiaBlackJack.SceneQuickPlay.PendingRunResultOpponent";
 
         static SceneQuickPlayLauncher()
         {
@@ -125,7 +180,7 @@ namespace DiaBlackJack.Editor
         [MenuItem(MenuRoot + "Main Menu", false, 10)]
         internal static void PlayMainMenu()
         {
-            ClearPendingEnemyBattle();
+            ClearPendingPreview();
             PlayFromScene(MainMenuScenePath);
         }
 
@@ -138,7 +193,7 @@ namespace DiaBlackJack.Editor
         [MenuItem(MenuRoot + "Game Scene", false, 11)]
         internal static void PlayGameScene()
         {
-            ClearPendingEnemyBattle();
+            ClearPendingPreview();
             PlayFromScene(GameScenePath);
         }
 
@@ -160,8 +215,97 @@ namespace DiaBlackJack.Editor
                 return;
             }
 
+            ClearPendingRunResult();
             SessionState.SetString(PendingEnemyProfileKey, profileKey);
             PlayFromScene(GameScenePath);
+        }
+
+        internal static void PlayRunVictory(bool hasMadeDemonContract)
+        {
+            PlayRunResult(
+                GameFlowScreen.RunVictory,
+                hasMadeDemonContract,
+                EnemyCombatProfileCatalog.FinalBossKey);
+        }
+
+        internal static void PlayRunDefeat(string opponentProfileKey)
+        {
+            PlayRunResult(
+                GameFlowScreen.RunDefeat,
+                hasMadeDemonContract: false,
+                opponentProfileKey);
+        }
+
+        [MenuItem(
+            RunResultMenuRoot + "Victory/No Contract",
+            false,
+            20)]
+        private static void PlayRunVictoryWithoutContract()
+        {
+            PlayRunVictory(hasMadeDemonContract: false);
+        }
+
+        [MenuItem(
+            RunResultMenuRoot + "Victory/Contracted",
+            false,
+            21)]
+        private static void PlayRunVictoryWithContract()
+        {
+            PlayRunVictory(hasMadeDemonContract: true);
+        }
+
+        [MenuItem(
+            RunResultMenuRoot + "Defeat/Cowardly Gambler",
+            false,
+            30)]
+        private static void PlayCowardlyGamblerDefeat()
+        {
+            PlayRunDefeat(EnemyCombatProfileCatalog.CowardlyGamblerKey);
+        }
+
+        [MenuItem(
+            RunResultMenuRoot + "Defeat/Gunslinger",
+            false,
+            31)]
+        private static void PlayGunslingerDefeat()
+        {
+            PlayRunDefeat(EnemyCombatProfileCatalog.GunslingerKey);
+        }
+
+        [MenuItem(
+            RunResultMenuRoot + "Defeat/Cultist",
+            false,
+            32)]
+        private static void PlayCultistDefeat()
+        {
+            PlayRunDefeat(EnemyCombatProfileCatalog.CultistKey);
+        }
+
+        [MenuItem(
+            RunResultMenuRoot + "Defeat/Trickster",
+            false,
+            33)]
+        private static void PlayTricksterDefeat()
+        {
+            PlayRunDefeat(EnemyCombatProfileCatalog.TricksterKey);
+        }
+
+        [MenuItem(
+            RunResultMenuRoot + "Defeat/Enforcer",
+            false,
+            34)]
+        private static void PlayEnforcerDefeat()
+        {
+            PlayRunDefeat(EnemyCombatProfileCatalog.EnforcerKey);
+        }
+
+        [MenuItem(
+            RunResultMenuRoot + "Defeat/Final Boss",
+            false,
+            35)]
+        private static void PlayFinalBossDefeat()
+        {
+            PlayRunDefeat(EnemyCombatProfileCatalog.FinalBossKey);
         }
 
         [MenuItem(MenuRoot + "Game Scene", true)]
@@ -193,7 +337,7 @@ namespace DiaBlackJack.Editor
                     "Quick Play",
                     message,
                     "OK");
-                ClearPendingEnemyBattle();
+                ClearPendingPreview();
                 return;
             }
 
@@ -207,7 +351,7 @@ namespace DiaBlackJack.Editor
             catch (Exception exception)
             {
                 RestorePreviousStartScene();
-                ClearPendingEnemyBattle();
+                ClearPendingPreview();
                 Debug.LogException(exception);
             }
         }
@@ -232,7 +376,11 @@ namespace DiaBlackJack.Editor
             if (state == PlayModeStateChange.EnteredPlayMode)
             {
                 RestorePreviousStartScene();
-                if (!string.IsNullOrWhiteSpace(
+                if (SessionState.GetBool(PendingRunResultKey, false))
+                {
+                    EditorApplication.delayCall += StartPendingRunResult;
+                }
+                else if (!string.IsNullOrWhiteSpace(
                         SessionState.GetString(
                             PendingEnemyProfileKey,
                             string.Empty)))
@@ -243,7 +391,71 @@ namespace DiaBlackJack.Editor
             else if (state == PlayModeStateChange.EnteredEditMode)
             {
                 RestorePreviousStartScene();
-                ClearPendingEnemyBattle();
+                ClearPendingPreview();
+            }
+        }
+
+        private static void PlayRunResult(
+            GameFlowScreen screen,
+            bool hasMadeDemonContract,
+            string opponentProfileKey)
+        {
+            if (!CanEnterPlayMode() ||
+                (screen != GameFlowScreen.RunVictory &&
+                 screen != GameFlowScreen.RunDefeat) ||
+                string.IsNullOrWhiteSpace(opponentProfileKey))
+            {
+                return;
+            }
+
+            try
+            {
+                EnemyCombatProfileCatalog.Default.GetByKey(opponentProfileKey);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+                ClearPendingPreview();
+                return;
+            }
+
+            ClearPendingPreview();
+            SessionState.SetBool(PendingRunResultKey, true);
+            SessionState.SetInt(PendingRunResultScreenKey, (int)screen);
+            SessionState.SetBool(
+                PendingRunResultContractKey,
+                hasMadeDemonContract);
+            SessionState.SetString(
+                PendingRunResultOpponentKey,
+                opponentProfileKey);
+            PlayFromScene(GameScenePath);
+        }
+
+        private static void StartPendingRunResult()
+        {
+            GameFlowScreen screen = (GameFlowScreen)SessionState.GetInt(
+                PendingRunResultScreenKey,
+                (int)GameFlowScreen.Unavailable);
+            bool hasMadeDemonContract = SessionState.GetBool(
+                PendingRunResultContractKey,
+                false);
+            string opponentProfileKey = SessionState.GetString(
+                PendingRunResultOpponentKey,
+                string.Empty);
+            ClearPendingRunResult();
+
+            GameFlowController controller =
+                UnityEngine.Object.FindFirstObjectByType<GameFlowController>(
+                    FindObjectsInactive.Include);
+            if (controller == null ||
+                !controller.DebugStartResultDialoguePreview(
+                    screen,
+                    hasMadeDemonContract,
+                    opponentProfileKey))
+            {
+                Debug.LogError(
+                    "Run Result Quick Play could not start " +
+                    $"'{screen}' for '{opponentProfileKey}'.");
             }
         }
 
@@ -272,6 +484,20 @@ namespace DiaBlackJack.Editor
         private static void ClearPendingEnemyBattle()
         {
             SessionState.EraseString(PendingEnemyProfileKey);
+        }
+
+        private static void ClearPendingRunResult()
+        {
+            SessionState.EraseBool(PendingRunResultKey);
+            SessionState.EraseInt(PendingRunResultScreenKey);
+            SessionState.EraseBool(PendingRunResultContractKey);
+            SessionState.EraseString(PendingRunResultOpponentKey);
+        }
+
+        private static void ClearPendingPreview()
+        {
+            ClearPendingEnemyBattle();
+            ClearPendingRunResult();
         }
 
         private static void RestorePreviousStartScene()

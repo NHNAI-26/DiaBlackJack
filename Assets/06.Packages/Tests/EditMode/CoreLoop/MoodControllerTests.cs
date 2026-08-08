@@ -21,7 +21,8 @@ namespace DiaBlackJack.CoreLoop.Tests
         [TestCase(GameFlowScreen.Combat, "enforcer", "executor")]
         [TestCase(GameFlowScreen.Combat, "final-boss", "bossStage")]
         [TestCase(GameFlowScreen.FinalBossReveal, "final-boss", "bossStage")]
-        [TestCase(GameFlowScreen.RunVictory, "final-boss", null)]
+        [TestCase(GameFlowScreen.RunVictory, "final-boss", "readyStage")]
+        [TestCase(GameFlowScreen.RunDefeat, "gunslinger", "readyStage")]
         public void MOO02_U01_FlowScreenResolvesExpectedMood(
             GameFlowScreen screen,
             string profileKey,

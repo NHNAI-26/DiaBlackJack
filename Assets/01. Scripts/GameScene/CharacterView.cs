@@ -305,6 +305,21 @@ namespace DiaBlackJack.GameScene
             speechBubble?.Show(message);
         }
 
+        internal void PlaySpeech(string message, float charactersPerSecond)
+        {
+            EnsureInitialized();
+            speechBubble?.Play(message, charactersPerSecond);
+        }
+
+        internal bool IsSpeechComplete =>
+            speechBubble == null || speechBubble.IsComplete;
+
+        internal void CompleteSpeechImmediately()
+        {
+            EnsureInitialized();
+            speechBubble?.CompleteImmediately();
+        }
+
         public void HideSpeech()
         {
             EnsureInitialized();

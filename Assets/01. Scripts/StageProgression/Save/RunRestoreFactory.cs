@@ -220,7 +220,8 @@ namespace DiaBlackJack.StageProgression
                 demonCards,
                 snapshot.LastIssuedCardId,
                 snapshot.LastIssuedDemonCardId,
-                snapshot.StartingDemonGrantCompleted);
+                snapshot.StartingDemonGrantCompleted,
+                snapshot.HasMadeDemonContract);
         }
 
         private OpponentSelectionGenerator RestoreOpponentGenerator(

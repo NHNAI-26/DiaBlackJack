@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b38001e1fc763af4ea70a4690bc2d65d, type: 3}
+  m_Name: run_result_dialogue
+  m_EditorClassIdentifier: Border::DiaBlackJack.Content.RunResultDialogueSO
+  charactersPerSecond: 40
+  victoryLines:
+  - "\uC0DD\uC874\uD558\uC168\uC2B5\uB2C8\uB2E4. \uC544\uB9C8\uB3C4\uC694."
+  - "\uD0C8\uCD9C\uC744 \uCD95\uD558\uB4DC\uB9BD\uB2C8\uB2E4. \uACE0\uC9C0\uC11C\uB294
+    \uB098\uC911\uC5D0 \uB530\uB85C \uBCF4\uB0B4\uB4DC\uB9AC\uACA0\uC2B5\uB2C8\uB2E4."
+  contractedVictoryLines:
+  - "\uADF8\uB7F0\uB370.."
+  - "\uC545\uB9C8\uC640 \uACC4\uC57D\uC744 \uD558\uC168\uAD70\uC694?"
+  - "\uC5B4\uCA0B\uB4E0 \uB098\uAC00\uC2DC\uAC8C \uB41C \uAC83\uC744 \uCD95\uD558
+    \uB4DC\uB9BD\uB2C8\uB2E4. \uB300\uAC00\uB294 \uC5B4\uB5BB\uAC8C \uB420\uC9C0
+    \uBAA8\uB974\uACA0\uC9C0\uB9CC\uC694."
+  defeatOpeningLines:
+  - "\uB2F9\uC2E0\uC758 \uC601\uD63C\uC740 \uC88B\uC740 \uBA39\uC787\uAC10\uC774
+    \uB420 \uAC83\uC785\uB2C8\uB2E4."
+  opponentDefeatLines:
+  - profileKey: cowardly-gambler
+    lines:
+    - "\uAC81\uC7C1\uC774 \uB3C4\uBC15\uC0AC\uB294 \uC544\uBB34\uB798\uB3C4 \uC27D\uC9C0
+      \uC54A\uC740 \uC0C1\uB300\uC8E0."
+  - profileKey: gunslinger
+    lines:
+    - "\uCD1D\uC7A1\uC774\uB294 \uC544\uBB34\uB798\uB3C4 \uC27D\uC9C0 \uC54A\uC740
+      \uC0C1\uB300\uC8E0."
+  - profileKey: cultist
+    lines:
+    - "\uAD11\uC2E0\uB3C4\uB294 \uC544\uBB34\uB798\uB3C4 \uC27D\uC9C0 \uC54A\uC740
+      \uC0C1\uB300\uC8E0."
+  - profileKey: trickster
+    lines:
+    - "\uC0AC\uAE30\uAFBC\uC740 \uC544\uBB34\uB798\uB3C4 \uC27D\uC9C0 \uC54A\uC740
+      \uC0C1\uB300\uC8E0."
+  - profileKey: enforcer
+    lines:
+    - "\uC9D1\uD589\uC790\uB294 \uC544\uBB34\uB798\uB3C4 \uC27D\uC9C0 \uC54A\uC740
+      \uC0C1\uB300\uC8E0."
+  - profileKey: final-boss
+    lines:
+    - "\uCD5C\uC885 \uBCF4\uC2A4\uB294 \uC544\uBB34\uB798\uB3C4 \uC27D\uC9C0 \uC54A\uC740
+      \uC0C1\uB300\uC8E0."
+  defeatClosingLines:
+  - "\uAD1C\uCC2E\uC544\uC694. \uD754\uD558\uB514 \uD754\uD55C \uD328\uBC30\uC790
+    \uC911 \uD55C \uBA85\uC77C \uBFD0\uC785\uB2C8\uB2E4."
+  - "\uC774\uC81C \uB2F9\uC2E0\uC740 \uACE0\uD1B5\uBC1B\uC744 \uAC81\uB2C8\uB2E4.
+    \uC601\uC6D0\uD788\uC694."

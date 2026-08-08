@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,12 +21,16 @@ namespace DiaBlackJack.GameScene
         private Vector3 _authoredLocalScale;
         private Vector3 _authoredParentLossyScale;
         private bool _initialized;
+        private Coroutine _typingRoutine;
+        private int _totalCharacterCount;
 
         public string DisplayedText => messageText == null
             ? string.Empty
             : messageText.text;
 
         public bool IsVisible => gameObject.activeSelf;
+
+        public bool IsComplete { get; private set; } = true;
 
         private void Awake()
         {
@@ -38,6 +43,11 @@ namespace DiaBlackJack.GameScene
             UpdateFacingAndScale();
         }
 
+        private void OnDisable()
+        {
+            StopTyping();
+        }
+
         public void Show(string message)
         {
             EnsureInitialized();
@@ -48,18 +58,61 @@ namespace DiaBlackJack.GameScene
                     nameof(message));
             }
 
-            messageText.text = message;
             gameObject.SetActive(true);
+            StopTyping();
+            messageText.text = message;
+            messageText.ForceMeshUpdate();
+            _totalCharacterCount = messageText.textInfo.characterCount;
+            messageText.maxVisibleCharacters = int.MaxValue;
+            IsComplete = true;
             UpdateFacingAndScale();
+        }
+
+        public void Play(string message, float charactersPerSecond)
+        {
+            EnsureInitialized();
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                throw new System.ArgumentException(
+                    "Speech bubble message must contain visible text.",
+                    nameof(message));
+            }
+
+            gameObject.SetActive(true);
+            StopTyping();
+            messageText.text = message;
+            messageText.ForceMeshUpdate();
+            _totalCharacterCount = messageText.textInfo.characterCount;
+            messageText.maxVisibleCharacters = 0;
+            IsComplete = _totalCharacterCount == 0;
+            UpdateFacingAndScale();
+
+            if (!IsComplete && isActiveAndEnabled)
+            {
+                _typingRoutine = StartCoroutine(
+                    TypeRoutine(Mathf.Max(charactersPerSecond, 1f)));
+            }
+        }
+
+        public void CompleteImmediately()
+        {
+            EnsureInitialized();
+            StopTyping();
+            messageText.maxVisibleCharacters = _totalCharacterCount;
+            IsComplete = true;
         }
 
         public void Hide()
         {
+            StopTyping();
             if (messageText != null)
             {
                 messageText.text = string.Empty;
+                messageText.maxVisibleCharacters = 0;
             }
 
+            _totalCharacterCount = 0;
+            IsComplete = true;
             gameObject.SetActive(false);
         }
 
@@ -103,6 +156,43 @@ namespace DiaBlackJack.GameScene
         internal void SetCameraForTesting(Camera camera)
         {
             _camera = camera;
+        }
+
+        private IEnumerator TypeRoutine(float charactersPerSecond)
+        {
+            float secondsPerCharacter = 1f / charactersPerSecond;
+            float elapsed = 0f;
+            int visibleCount = 0;
+
+            while (visibleCount < _totalCharacterCount)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                int nextVisibleCount = Mathf.Min(
+                    _totalCharacterCount,
+                    Mathf.FloorToInt(elapsed / secondsPerCharacter));
+                if (nextVisibleCount != visibleCount)
+                {
+                    visibleCount = nextVisibleCount;
+                    messageText.maxVisibleCharacters = visibleCount;
+                }
+
+                yield return null;
+            }
+
+            messageText.maxVisibleCharacters = _totalCharacterCount;
+            IsComplete = true;
+            _typingRoutine = null;
+        }
+
+        private void StopTyping()
+        {
+            if (_typingRoutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(_typingRoutine);
+            _typingRoutine = null;
         }
 
         private void EnsureInitialized()

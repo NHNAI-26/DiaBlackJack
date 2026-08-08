@@ -179,7 +179,8 @@ namespace DiaBlackJack.StageProgression
                 player.LastIssuedDemonCardId,
                 player.StartingDemonGrantCompleted,
                 cards,
-                demonCards);
+                demonCards,
+                player.HasMadeDemonContract);
         }
 
         private static bool TryGetStableStatus(

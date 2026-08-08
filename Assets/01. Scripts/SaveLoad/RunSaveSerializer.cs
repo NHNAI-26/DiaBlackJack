@@ -166,6 +166,7 @@ namespace Border.SaveLoad
                 lastIssuedDemonCardId = player.LastIssuedDemonCardId,
                 startingDemonGrantCompleted =
                     player.StartingDemonGrantCompleted,
+                hasMadeDemonContract = player.HasMadeDemonContract,
                 cards = ToCardEnvelopes(player.Cards),
                 demonCards = ToDemonEnvelopes(player.DemonCards)
             };
@@ -274,7 +275,8 @@ namespace Border.SaveLoad
                 envelope.lastIssuedDemonCardId,
                 envelope.startingDemonGrantCompleted,
                 cards,
-                demonCards);
+                demonCards,
+                envelope.hasMadeDemonContract);
             return true;
         }
 

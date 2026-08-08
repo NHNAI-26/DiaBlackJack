@@ -43,7 +43,8 @@ namespace DiaBlackJack.StageProgression
             int lastIssuedDemonCardId,
             bool startingDemonGrantCompleted,
             IEnumerable<RunSaveCardSnapshot> cards,
-            IEnumerable<RunSaveDemonSnapshot> demonCards)
+            IEnumerable<RunSaveDemonSnapshot> demonCards,
+            bool hasMadeDemonContract = false)
         {
             MaximumSoul = maximumSoul;
             CurrentSoul = currentSoul;
@@ -51,6 +52,7 @@ namespace DiaBlackJack.StageProgression
             LastIssuedCardId = lastIssuedCardId;
             LastIssuedDemonCardId = lastIssuedDemonCardId;
             StartingDemonGrantCompleted = startingDemonGrantCompleted;
+            HasMadeDemonContract = hasMadeDemonContract;
             Cards = Copy(cards);
             DemonCards = Copy(demonCards);
         }
@@ -66,6 +68,8 @@ namespace DiaBlackJack.StageProgression
         public int LastIssuedDemonCardId { get; }
 
         public bool StartingDemonGrantCompleted { get; }
+
+        public bool HasMadeDemonContract { get; }
 
         public IReadOnlyList<RunSaveCardSnapshot> Cards { get; }
 

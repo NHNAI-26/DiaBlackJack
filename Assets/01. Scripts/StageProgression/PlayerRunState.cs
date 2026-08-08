@@ -34,7 +34,8 @@ namespace DiaBlackJack.StageProgression
                 0,
                 null,
                 null,
-                demonDeck == null)
+                demonDeck == null,
+                false)
         {
         }
 
@@ -53,7 +54,8 @@ namespace DiaBlackJack.StageProgression
                 initialGold,
                 null,
                 null,
-                demonDeck == null)
+                demonDeck == null,
+                false)
         {
         }
 
@@ -66,7 +68,8 @@ namespace DiaBlackJack.StageProgression
             int currentGold,
             int? lastIssuedCardId,
             int? lastIssuedDemonCardId,
-            bool startingDemonGrantCompleted)
+            bool startingDemonGrantCompleted,
+            bool hasMadeDemonContract)
         {
             if (maximumSoul <= 0)
             {
@@ -150,6 +153,7 @@ namespace DiaBlackJack.StageProgression
                 maximumDemonCardId,
                 nameof(lastIssuedDemonCardId));
             _lastIssuedDemonCardId = _initialLastDemonCardId;
+            HasMadeDemonContract = hasMadeDemonContract;
         }
 
         public int CurrentSoul { get; private set; }
@@ -165,6 +169,8 @@ namespace DiaBlackJack.StageProgression
         public IReadOnlyList<RunDemonDefinition> DemonDeck => _demonDeck;
 
         public bool StartingDemonGrantCompleted { get; private set; }
+
+        public bool HasMadeDemonContract { get; private set; }
 
         internal bool CanReceiveStartingDemonGrant =>
             !StartingDemonGrantCompleted && _currentDemonDeck.Count == 0;
@@ -185,7 +191,8 @@ namespace DiaBlackJack.StageProgression
             IEnumerable<RunDemonDefinition> demonDeck,
             int lastIssuedCardId,
             int lastIssuedDemonCardId,
-            bool startingDemonGrantCompleted = false)
+            bool startingDemonGrantCompleted = false,
+            bool hasMadeDemonContract = false)
         {
             return new PlayerRunState(
                 maximumSoul,
@@ -196,7 +203,8 @@ namespace DiaBlackJack.StageProgression
                 currentGold,
                 lastIssuedCardId,
                 lastIssuedDemonCardId,
-                startingDemonGrantCompleted);
+                startingDemonGrantCompleted,
+                hasMadeDemonContract);
         }
 
         public void SetCurrentSoul(int currentSoul)
@@ -342,6 +350,7 @@ namespace DiaBlackJack.StageProgression
         {
             CurrentSoul = MaximumSoul;
             CurrentGold = _initialGold;
+            HasMadeDemonContract = false;
             _currentDeck.Clear();
             foreach (RunCardDefinition card in _initialDeck)
             {
@@ -357,6 +366,11 @@ namespace DiaBlackJack.StageProgression
             }
 
             _lastIssuedDemonCardId = _initialLastDemonCardId;
+        }
+
+        internal void MarkDemonContractMade()
+        {
+            HasMadeDemonContract = true;
         }
 
         private static int FindMaximumCardId(IReadOnlyList<RunCardDefinition> cards)

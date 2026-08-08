@@ -541,6 +541,11 @@ namespace DiaBlackJack.StageProgression
             }
 
             Progress.Player.SetCurrentSoul(battle.Player.Soul.Current);
+            if (battle.UsedPlayerBaseDemonContractCount > 0 ||
+                battle.ActivePlayerDemonContracts.Count > 0)
+            {
+                Progress.Player.MarkDemonContractMade();
+            }
 
             bool resultApplied;
             switch (battle.Outcome)

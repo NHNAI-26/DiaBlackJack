@@ -142,7 +142,8 @@ MainMenuScene
 - `StartingDemonRevealView`: 자동 지급된 시작 악마 2장의 뒷면 배치·동시 공개 연출
 - `OpponentSelectionView`: 현상수배 포스터 2장
 - `FormalShopView`: 정식 `ShopVisit` 렌더링
-- `RunResultView`: 승리/패배/재시작
+- `RunResultView`: 종료 체크포인트 저장 실패 시 `RETRY SAVE`만 제공하는 예외 패널
+- `RunResultDialogueSO`/`SpeechBubbleView`: 승패별 상인 대사와 한 글자 출력·클릭 진행
 - `CodexOverlayView`: 도감 표시와 원래 화면 복귀
 - `ContractInfoView`: 중앙 우측 종이 형태의 계약 설명·상태 표시
 - `GameManager`: 전투만 담당
@@ -436,16 +437,23 @@ Presenter는 기존 `StageProgressionPresentation`을 재사용하거나 GameSce
 - 보스 승리 후 상점 생성 없음
 - 결과 화면에서 메인 화면 복귀 가능
 
-구현 상태(2026-07-31, GF-05):
+구현 상태(2026-07-31, GF-05; 2026-08-09 GFR01로 결과 표시 교체):
 
-- 순수 `RunResultPresenter`와 GameScene `RunResultView`를 추가해 RunVictory/RunDefeat를 중앙 결과 패널로 표시한다.
-- 결과 패널은 최종 영혼·골드·직전 골드 정산·저장 상태를 표시하고 `NEW RUN`, `MAIN MENU` 입력을 제공한다.
-- 보류 체크포인트가 있으면 이탈 입력을 잠그고 `RETRY SAVE`만 허용한다. 재시도 성공 뒤 결과 행동을 다시 활성화한다.
-- 새 런은 기존 `RunSaveFlow`의 덮어쓰기 확인·예약·생성 경계를 재사용하고 같은 GameScene에서 시작 악마 공개 단계로 재진입한다.
-- 메인 복귀는 `StageProgressionRuntime.LoadMainMenuScene()`으로 제품 시작 씬을 연다. 별도 결과 저장 구조나 씬 직렬화 참조는 추가하지 않았다.
+- 정상 저장 흐름의 중앙 `RunResultView`는 숨기고, 전투 상대 퇴장 → `readyStage` → 시작 악마 지급 상인 등장 → 말풍선 결과 대화 순서로 표시한다.
+- 저장 실패 때만 기존 패널을 표시하고 `RETRY SAVE`를 허용한다. 재시도 성공 뒤 결과 대화를 시작한다.
+- `RunResultDialogueSO`가 승리·계약 승리·패배 공통·상대 6종 전용 문구와 초당 글자 수를 소유한다. 누락 상대는 표시 이름 기반 기본 문구와 경고로 대체한다.
+- 타이핑 중 클릭은 문장을 즉시 완성하고, 다음 클릭은 다음 문장으로 이동한다. 마지막 문장 뒤 클릭은 `StageProgressionRuntime.LoadMainMenuScene()`을 호출하며 실패하면 마지막 문장을 유지한다.
+- `PlayerRunState.HasMadeDemonContract`는 실제 계약 성사 뒤 런 전체와 schema v2 저장·복원에서 유지되고 새 런에서 초기화된다. 시작 악마 지급은 계약으로 세지 않는다.
 - 영혼 0 즉시 패배, 패배 후 상점 없음, 보스 승리 후 상점 없음, 런 종료 체크포인트는 기존 정식 세션·SV-06 계약을 그대로 사용한다.
 - GF-05 전용 3/3과 전체 EditMode 811/811이 통과했고 컴파일·게임 코드 오류는 0이다.
 - 1280×720 결과 화면의 정보 계층·입력 영역을 확인했으며 시각 판정 93/100을 기록했다. 신규 외부 에셋·오픈소스·패키지는 없다.
+
+GFR01 결과 대화 빠른 미리보기:
+
+- Scene 뷰의 `Quick Play > Run Result` 드롭다운이나 `Tools > DiaBlackJack > Quick Play > Run Result` 메뉴를 연다.
+- `Victory/No Contract`, `Victory/Contracted`, 또는 `Defeat` 아래 상대 6종 중 하나를 선택하면 `GameScene` Play Mode로 바로 진입한다.
+- 미리보기는 실제 런·저장을 만들거나 변경하지 않으며, 적 퇴장 → `readyStage` → 상인 등장 → 결과 대화를 재생한다.
+- 타이핑 중 클릭은 현재 문장을 완성하고, 다음 클릭은 다음 문장으로 이동한다. 마지막 문장 뒤 클릭은 `MainMenuScene`으로 이동한다.
 
 ### 단계 6 — 시각·입력·회귀 검증
 
@@ -650,7 +658,7 @@ GF-00~GF-06의 현재 계획 범위는 완료다. 이후 작업은 실제 빌드
   - `trickster`: `fraud`
   - `enforcer`: `executor`
   - `final-boss`: `bossStage`
-- 승리·패배 화면처럼 별도 프로필이 없는 화면은 직전 무드를 유지한다.
+- 승리·패배 화면은 상인 결과 대화를 위해 `readyStage` 무드를 사용한다.
 - 동일한 화면이 다시 렌더링돼도 같은 BGM을 재추첨하거나 재시작하지 않는다.
 - `GameFlowController`가 화면 상태와 현재 전투 프로필을 무드 ID로 변환하고, 씬의 `MoodController`가 창문·조명·BGM을 1초 동안 전환한다.
 

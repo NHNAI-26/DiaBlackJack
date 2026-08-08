@@ -15,6 +15,8 @@ namespace DiaBlackJack.GameScene
             {
                 case GameFlowScreen.StartingDemonReveal:
                 case GameFlowScreen.OpponentSelection:
+                case GameFlowScreen.RunVictory:
+                case GameFlowScreen.RunDefeat:
                     return ReadyStage;
                 case GameFlowScreen.Shop:
                     return ShopStage;
