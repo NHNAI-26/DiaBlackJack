@@ -873,3 +873,11 @@ MCP가 Unity 창의 포커스를 가져가지 않은 상태에서는 게임 프�
 - 턴 번호는 라운드 시작 `1`로 초기화하고 양쪽 행동이 한 번씩 끝난 뒤 증가한다. 한쪽이 스탠드하면 남은 쪽의 완료 행동마다 증가한다.
 - 관련 fixture 221/221, 전체 EditMode 1,251/1,268 통과다. 기존 비관련 실패 17건은 동일하다.
 >>>>>>> origin/main
+
+### 2026-08-09 GSV16 사탄 사용 여부 대기 강조 해제
+
+- `GameScenePresenter`는 `SatanTurnStartChoice`를 실제 능력 해결이 아닌 사용 여부 대기로 구분해 transient 원본으로 투영한다. 숫자 선언·강제 공개 드로우 등 사용 확정 뒤 상호작용은 기존 persistent 강조를 유지하며 도메인 규칙과 공개 API는 변경하지 않았다.
+- 신규 `GSV16_U07`은 사용 여부 대기와 건너뛰기·효과 완료 뒤 `DemonCardView`가 기본 크기를 쓰고, 사용 확정 뒤 숫자 선언 중에만 원본 강조를 유지하는 회귀를 고정했다.
+- 신규 단일 회귀 1/1(job `8ae9e724a80c4d90b35b01e617324b3e`), `[Category("GSV16")]` 7/7(job `22ffa29ae9c84225b0d1553bfb28c1b7`), `SatanDemonContractTests` 19/19(job `2e85fa25abd74e988dad3d739da1a26e`)가 통과했다. 스크립트 재컴파일 직후 Console Error 0건을 확인했다.
+- GameScene Play Mode에서 실제 Game View를 1280×720과 1920×1080으로 각각 전환했다. 두 해상도 모두 사용 여부 대기는 목표 스케일 `(1, 1, 1)`, `능력 사용하기` 뒤 숫자 선택은 `(1.15, 1.15, 1.15)`, 다음 사용 여부 대기 복귀는 `(1, 1, 1)`임을 확인했다. 기존 포인터 호버 회귀도 GSV16 묶음에 포함해 통과했다.
+- Play Mode 종료 뒤 Console에는 작업 전부터 삭제 상태였던 Settings 스크립트 참조와 함께 `The referenced script (Unknown) on this Behaviour is missing!` 11건이 남았다. 이번 변경 범위 밖이라 복구하지 않았으며, 코드·테스트·문서만 수정하고 씬·프리팹은 수정하지 않았다.

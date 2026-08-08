@@ -523,6 +523,96 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.True);
         }
 
+        [Test]
+        public void GSV16_U07_SatanHighlightsOnlyWhileAbilityIsResolving()
+        {
+            CoreLoopBattle battle = CreatePlayerSatanContractBattle();
+            Assert.That(battle.TryBeginPlayerDemonContract(), Is.True);
+            PendingDemonContractInteraction offer =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(battle.TryResolvePlayerDemonContract(
+                offer.InteractionId,
+                offer.Options.Single().OptionId), Is.True);
+
+            ActiveDemonContract contract =
+                battle.ActivePlayerDemonContracts.Single();
+            PendingDemonContractInteraction turnStart =
+                battle.PendingPlayerDemonContractInteraction;
+            Assert.That(turnStart.Kind, Is.EqualTo(
+                DemonContractInteractionKind.SatanTurnStartChoice));
+
+            GameSceneDemonCardViewModel waiting = GameScenePresenter
+                .Create(battle)
+                .PlayerDemonCards
+                .Single(card => card.CardId == contract.SourceCardId);
+            Assert.That(waiting.IsEffectSource, Is.True);
+            Assert.That(waiting.IsEffectSourcePersistent, Is.False);
+
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                DemonCardPrefabPath);
+            GameObject instance = UnityEngine.Object.Instantiate(prefab);
+            try
+            {
+                DemonCardView view = instance.GetComponent<DemonCardView>();
+                view.EnableHandHoverVisualOnly();
+                view.Bind(waiting, showTransientEffectSource: false);
+                Assert.That(GetPrivateField<bool>(view, "_isEffectSource"),
+                    Is.False);
+
+                Assert.That(battle.TryResolvePlayerDemonContract(
+                    turnStart.InteractionId,
+                    SatanDemonContractHandler.SkipAbilityOptionId), Is.True);
+                GameSceneDemonCardViewModel skipped = GameScenePresenter
+                    .Create(battle)
+                    .PlayerDemonCards
+                    .Single(card => card.CardId == contract.SourceCardId);
+                Assert.That(skipped.IsEffectSourcePersistent, Is.False);
+                view.Bind(skipped, showTransientEffectSource: false);
+                Assert.That(GetPrivateField<bool>(view, "_isEffectSource"),
+                    Is.False);
+
+                Assert.That(battle.TryPlayerHit(), Is.True);
+                turnStart = battle.PendingPlayerDemonContractInteraction;
+                Assert.That(turnStart.Kind, Is.EqualTo(
+                    DemonContractInteractionKind.SatanTurnStartChoice));
+                Assert.That(battle.TryResolvePlayerDemonContract(
+                    turnStart.InteractionId,
+                    SatanDemonContractHandler.UseAbilityOptionId), Is.True);
+
+                GameSceneDemonCardViewModel resolving = GameScenePresenter
+                    .Create(battle)
+                    .PlayerDemonCards
+                    .Single(card => card.CardId == contract.SourceCardId);
+                Assert.That(resolving.IsEffectSourcePersistent, Is.True);
+                view.Bind(resolving, showTransientEffectSource: false);
+                Assert.That(GetPrivateField<bool>(view, "_isEffectSource"),
+                    Is.True);
+
+                PendingDemonContractInteraction firstNumber =
+                    battle.PendingPlayerDemonContractInteraction;
+                Assert.That(ResolveDemonNumber(battle, firstNumber, 3), Is.True);
+                PendingDemonContractInteraction secondNumber =
+                    battle.PendingPlayerDemonContractInteraction;
+                Assert.That(ResolveDemonNumber(battle, secondNumber, 4), Is.True);
+                Assert.That(battle.PendingPlayerDemonContractInteraction.Kind,
+                    Is.EqualTo(
+                        DemonContractInteractionKind.SatanTurnStartChoice));
+
+                GameSceneDemonCardViewModel completed = GameScenePresenter
+                    .Create(battle)
+                    .PlayerDemonCards
+                    .Single(card => card.CardId == contract.SourceCardId);
+                Assert.That(completed.IsEffectSourcePersistent, Is.False);
+                view.Bind(completed, showTransientEffectSource: false);
+                Assert.That(GetPrivateField<bool>(view, "_isEffectSource"),
+                    Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
         private static CoreLoopBattle CreatePlayerHammerBattle()
         {
             CoreLoopBattle battle = CreateUnstartedPlayerHammerBattle();
@@ -571,6 +661,37 @@ namespace DiaBlackJack.CoreLoop.Tests
                     seed: 73));
             Assert.That(battle.Start(), Is.True);
             return battle;
+        }
+
+        private static CoreLoopBattle CreatePlayerSatanContractBattle()
+        {
+            DemonContractDefinition definition = DemonContractCatalog.Default
+                .GetByKey(DemonContractCatalog.SatanKey);
+            var battle = new CoreLoopBattle(
+                BlackjackDeck.CreateInDrawOrder(CreateCards(
+                    0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2)),
+                BlackjackDeck.CreateInDrawOrder(CreateCards(
+                    100, 10, 7, 2, 2, 2, 2)),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 4,
+                enemyPolicy: new StandPolicy(),
+                playerDemonDeck: new DemonContractDeck(
+                    new[] { new DemonContractCard(700, definition) },
+                    seed: 73));
+            Assert.That(battle.Start(), Is.True);
+            return battle;
+        }
+
+        private static bool ResolveDemonNumber(
+            CoreLoopBattle battle,
+            PendingDemonContractInteraction interaction,
+            int number)
+        {
+            DemonContractOption option = interaction.Options.Single(
+                candidate => candidate.NumericValue == number);
+            return battle.TryResolvePlayerDemonContract(
+                interaction.InteractionId,
+                option.OptionId);
         }
 
         private static void ActivatePlayerBelphegor(CoreLoopBattle battle)

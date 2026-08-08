@@ -2627,7 +2627,8 @@ namespace DiaBlackJack.GameScene
                         sourceCardId.Value,
                         ownerSide,
                         EffectSourceCardKind.Demon,
-                        isPersistent: true);
+                        isPersistent: demon.Kind !=
+                            DemonContractInteractionKind.SatanTurnStartChoice);
                 }
             }
 
