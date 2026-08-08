@@ -20,7 +20,7 @@ MonoBehaviour:
   skullBaseColor: {r: 1, g: 0.65847645, b: 0.63679248, a: 1}
   grade: 0
   maximumSoul: 6
-  defeatGold: 5
+  defeatGold: 200
   behaviorPolicyKey: cultist-aggressive-risk
   startingDeck:
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120001, type: 2}

@@ -36,8 +36,8 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(
                 offer.CardOptions.All(option => option.Price == 3),
                 Is.True);
-            Assert.That(offer.LighterPrice, Is.EqualTo(2));
-            Assert.That(offer.WhiskeyPrice, Is.EqualTo(2));
+            Assert.That(offer.LighterPrice, Is.EqualTo(50));
+            Assert.That(offer.WhiskeyPrice, Is.EqualTo(50));
             Assert.That(offer.WhiskeyRecovery, Is.EqualTo(2));
         }
 
@@ -71,14 +71,14 @@ namespace DiaBlackJack.StageProgression.Tests
         [Test]
         public void RF02_U05_LighterRemovesOneCardOnceAndDoesNotReuseItsId()
         {
-            PlayerRunState player = CreatePlayer(20);
+            PlayerRunState player = CreatePlayer(100);
             ShopOffer offer = new ShopOfferGenerator(12003).Generate(0, 0, false);
             var visit = new ShopVisit(offer);
             int removedCardId = player.Deck[3].Id;
 
             Assert.That(visit.TryRemoveCard(offer.OfferId, removedCardId, player), Is.True);
             Assert.That(player.Deck.Any(card => card.Id == removedCardId), Is.False);
-            Assert.That(player.CurrentGold, Is.EqualTo(18));
+            Assert.That(player.CurrentGold, Is.EqualTo(50));
             Assert.That(visit.HasRemovedCard, Is.True);
             Assert.That(visit.TryRemoveCard(offer.OfferId, player.Deck[0].Id, player), Is.False);
 
@@ -94,7 +94,7 @@ namespace DiaBlackJack.StageProgression.Tests
         [Test]
         public void RF02_U05B_LighterCannotRemoveTheLastRunCard()
         {
-            PlayerRunState player = CreatePlayer(20);
+            PlayerRunState player = CreatePlayer(200);
             for (int removal = 0; removal < 3; removal++)
             {
                 ShopOffer offer = new ShopOfferGenerator(12100 + removal)
@@ -124,16 +124,16 @@ namespace DiaBlackJack.StageProgression.Tests
         [Test]
         public void RF02_U06_WhiskeyRecoversToMaximumAndCannotRepeat()
         {
-            PlayerRunState player = CreatePlayer(20, currentSoul: 11);
+            PlayerRunState player = CreatePlayer(100, currentSoul: 11);
             ShopOffer offer = new ShopOfferGenerator(12004).Generate(0, 0, false);
             var visit = new ShopVisit(offer);
 
             Assert.That(visit.TryRest(offer.OfferId, player), Is.True);
             Assert.That(player.CurrentSoul, Is.EqualTo(12));
-            Assert.That(player.CurrentGold, Is.EqualTo(18));
+            Assert.That(player.CurrentGold, Is.EqualTo(50));
             Assert.That(visit.LastTransaction.SoulRecovered, Is.EqualTo(1));
             Assert.That(visit.TryRest(offer.OfferId, player), Is.False);
-            Assert.That(player.CurrentGold, Is.EqualTo(18));
+            Assert.That(player.CurrentGold, Is.EqualTo(50));
         }
 
         [Test]
@@ -162,7 +162,7 @@ namespace DiaBlackJack.StageProgression.Tests
         [Test]
         public void RF02_U08_LighterAndWhiskeyAreIndependentOncePerVisit()
         {
-            PlayerRunState player = CreatePlayer(20, currentSoul: 8);
+            PlayerRunState player = CreatePlayer(200, currentSoul: 8);
             ShopOffer offer = new ShopOfferGenerator(12006).Generate(0, 0, false);
             var visit = new ShopVisit(offer);
 
@@ -171,11 +171,11 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(visit.HasRemovedCard, Is.True);
             Assert.That(visit.HasRested, Is.True);
             Assert.That(visit.HasUsedAnyUtility, Is.True);
-            Assert.That(player.CurrentGold, Is.EqualTo(16));
+            Assert.That(player.CurrentGold, Is.EqualTo(100));
 
             Assert.That(visit.TryRemoveCard(offer.OfferId, player.Deck[0].Id, player), Is.False);
             Assert.That(visit.TryRest(offer.OfferId, player), Is.False);
-            Assert.That(player.CurrentGold, Is.EqualTo(16));
+            Assert.That(player.CurrentGold, Is.EqualTo(100));
         }
 
         [Test]
@@ -335,22 +335,22 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
-        public void RF02_U10_UsedVisitRaisesBothNextPricesByOneLevelOnly()
+        public void RF02_U10_LighterUseRaisesOnlyItsNextPriceByOneLevel()
         {
             var generator = new ShopOfferGenerator(12008);
-            PlayerRunState player = CreatePlayer(20, currentSoul: 8);
+            PlayerRunState player = CreatePlayer(200, currentSoul: 8);
             ShopOffer first = generator.Generate(0, 0, false);
             var visit = new ShopVisit(first);
 
             Assert.That(visit.TryRemoveCard(first.OfferId, player.Deck[0].Id, player), Is.True);
             Assert.That(visit.TryRest(first.OfferId, player), Is.True);
             Assert.That(visit.TryClose(first.OfferId), Is.True);
-            int nextLevel = visit.HasUsedAnyUtility ? first.UtilityPriceLevel + 1 : first.UtilityPriceLevel;
+            int nextLevel = visit.HasRemovedCard ? first.UtilityPriceLevel + 1 : first.UtilityPriceLevel;
             ShopOffer second = generator.Generate(1, nextLevel, false);
 
             Assert.That(second.UtilityPriceLevel, Is.EqualTo(1));
-            Assert.That(second.LighterPrice, Is.EqualTo(3));
-            Assert.That(second.WhiskeyPrice, Is.EqualTo(3));
+            Assert.That(second.LighterPrice, Is.EqualTo(70));
+            Assert.That(second.WhiskeyPrice, Is.EqualTo(50));
 
             ShopOffer unused = new ShopOfferGenerator(12009).Generate(0, 0, false);
             var unusedVisit = new ShopVisit(unused);
@@ -363,7 +363,7 @@ namespace DiaBlackJack.StageProgression.Tests
         {
             const int seed = 12010;
             PlayerRunState player = CreatePlayer(0);
-            player.AddGold(20);
+            player.AddGold(100);
             ShopOffer first = new ShopOfferGenerator(seed).Generate(0, 0, false);
             var visit = new ShopVisit(first);
             ShopCardOption option = first.CardOptions.First(

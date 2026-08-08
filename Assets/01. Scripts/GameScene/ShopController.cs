@@ -54,10 +54,10 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float demonCardSpacing = 1.1f;
         [SerializeField] private int normalCardOfferCount = 3;
         [SerializeField] private float normalCardSpacing = 0.95f;
-        [SerializeField] private int lighterPrice = 2;
-        [SerializeField] private int whiskeyPrice = 2;
+        [SerializeField] private int lighterPrice = 50;
+        [SerializeField] private int whiskeyPrice = 50;
         [Tooltip("Added to the lighter price for every earlier shop where the lighter was used. Whiskey's price never rises.")]
-        [SerializeField] private int lighterPriceIncreasePerUsedVisit = 1;
+        [SerializeField] private int lighterPriceIncreasePerUsedVisit = 20;
         [SerializeField] private int whiskeySoulRestore = 2;
         [SerializeField] private int shopRandomSeed = 20260726;
 

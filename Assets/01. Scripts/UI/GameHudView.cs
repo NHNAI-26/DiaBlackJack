@@ -1327,8 +1327,8 @@ namespace DiaBlackJack.GameScene
 
             string turnOwner = ResolveTurnOwner(state);
             return string.IsNullOrEmpty(turnOwner)
-                ? $"ROUND {roundNumber}\nTURN {turnNumber}"
-                : $"ROUND {roundNumber}\nTURN {turnNumber} · {turnOwner}";
+                ? $"{roundNumber} 라운드\n{turnNumber}턴"
+                : $"{roundNumber} 라운드\n{turnNumber}턴 · {turnOwner}";
         }
 
         private static string ResolveTurnOwner(CoreLoopState state)
@@ -1340,9 +1340,9 @@ namespace DiaBlackJack.GameScene
                 case CoreLoopState.PlayerResolvingCardEffect:
                 case CoreLoopState.ResolvingAutomaticCardEffect:
                 case CoreLoopState.PlayerResolvingDemonContract:
-                    return "PLAYER TURN";
+                    return "내 턴";
                 case CoreLoopState.EnemyTurn:
-                    return "ENEMY TURN";
+                    return "상대 턴";
                 default:
                     return string.Empty;
             }

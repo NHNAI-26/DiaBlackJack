@@ -30,7 +30,7 @@ namespace DiaBlackJack.StageProgression.Tests
                 WinCurrentBattle(run.CombatSession, StageProgressionState.RunVictory);
 
                 Assert.That(run.Phase, Is.EqualTo(FormalRunPhase.RunVictory), $"Victory {iteration}");
-                Assert.That(run.CombatSession.Progress.Player.CurrentGold, Is.EqualTo(28));
+                Assert.That(run.CombatSession.Progress.Player.CurrentGold, Is.EqualTo(420));
                 Assert.That(run.ActiveShop, Is.Null);
                 Assert.That(run.TryRestartRun(), Is.True, $"Restart {iteration}");
                 Assert.That(run.CombatSession.Progress.Player.CurrentGold, Is.Zero);

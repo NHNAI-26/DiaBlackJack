@@ -1532,9 +1532,16 @@ namespace DiaBlackJack.GameScene
             if (battle.HasPendingLeviathanAutoPistolRetry &&
                 battle.LastCardEffectResult.HasValue &&
                 battle.LastCardEffectActorSide.HasValue &&
-                battle.LastCardEffectResultActionOrdinal == actionOrdinal)
+                battle.LastCardEffectResultActionOrdinal == actionOrdinal &&
+                battle.LastPublicActionSourceCardId.HasValue)
             {
                 CardEffectResult retryResult = battle.LastCardEffectResult.Value;
+                if (retryResult.SourceCardId !=
+                    battle.LastPublicActionSourceCardId.Value)
+                {
+                    return null;
+                }
+
                 return new GameSceneRevolverAnimationCue(
                     battle.RoundNumber,
                     retryResult.SourceCardId,
@@ -1542,6 +1549,30 @@ namespace DiaBlackJack.GameScene
                     GameSceneRevolverAnimationPhase.ResolvedWithRetry,
                     retryResult.Succeeded,
                     actionOrdinal);
+            }
+
+            // A lethal result intercepted by Beelzebub deliberately keeps the active
+            // card-effect context until the weapon presentation finishes. Read the matching
+            // completed result before treating either actor's pending effect as unresolved;
+            // otherwise the result cue appears only after Beelzebub resolves.
+            if (battle.LastCardEffectResult.HasValue &&
+                battle.LastCardEffectActorSide.HasValue)
+            {
+                CardEffectResult result = battle.LastCardEffectResult.Value;
+                if (result.EffectKind == CardEffectKind.AutoPistol &&
+                    IsLastUseCardEffect(battle, result.EffectKind) &&
+                    battle.LastCardEffectResultActionOrdinal == actionOrdinal &&
+                    battle.LastPublicActionSourceCardId.HasValue &&
+                    result.SourceCardId ==
+                        battle.LastPublicActionSourceCardId.Value)
+                {
+                    return new GameSceneRevolverAnimationCue(
+                        battle.RoundNumber,
+                        result.SourceCardId,
+                        battle.LastCardEffectActorSide.Value,
+                        result.Succeeded,
+                        actionOrdinal);
+                }
             }
 
             PendingCardEffect pendingPlayerEffect = battle.PendingPlayerCardEffect;
@@ -1554,27 +1585,6 @@ namespace DiaBlackJack.GameScene
                     CombatantSide.Player,
                     GameSceneRevolverAnimationPhase.Ready,
                     actionOrdinal: actionOrdinal);
-            }
-
-            // A lethal result intercepted by Beelzebub deliberately keeps the active
-            // card-effect context until the weapon presentation finishes. Read the matching
-            // completed result before treating PendingEnemyCardEffect as an unresolved Ready
-            // state; otherwise the revolver result cue appears only after Beelzebub resolves.
-            if (battle.LastCardEffectResult.HasValue &&
-                battle.LastCardEffectActorSide.HasValue)
-            {
-                CardEffectResult result = battle.LastCardEffectResult.Value;
-                if (result.EffectKind == CardEffectKind.AutoPistol &&
-                    IsLastUseCardEffect(battle, result.EffectKind) &&
-                    battle.LastCardEffectResultActionOrdinal == actionOrdinal)
-                {
-                    return new GameSceneRevolverAnimationCue(
-                        battle.RoundNumber,
-                        result.SourceCardId,
-                        battle.LastCardEffectActorSide.Value,
-                        result.Succeeded,
-                        actionOrdinal);
-                }
             }
 
             return null;

@@ -157,7 +157,7 @@ namespace DiaBlackJack.StageProgression
                     "A validated shop visit could not be closed.");
             }
 
-            if (shop.HasUsedAnyUtility)
+            if (shop.HasRemovedCard)
             {
                 UtilityPriceLevel++;
             }

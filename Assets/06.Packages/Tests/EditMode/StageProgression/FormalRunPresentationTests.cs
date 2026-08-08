@@ -50,8 +50,8 @@ namespace DiaBlackJack.StageProgression.Tests
 
             Assert.That(model.IsShop, Is.True);
             Assert.That(model.Message, Is.EqualTo("SHOP"));
-            Assert.That(model.PlayerGold, Is.EqualTo("4 GOLD"));
-            Assert.That(model.GoldResult, Is.EqualTo("VICTORY +4 GOLD"));
+            Assert.That(model.PlayerGold, Is.EqualTo("120 GOLD"));
+            Assert.That(model.GoldResult, Is.EqualTo("VICTORY +120 GOLD"));
             Assert.That(model.ShopCardOptions.Count, Is.EqualTo(5));
             Assert.That(model.ShopOwnedCards.Count, Is.EqualTo(4));
             Assert.That(model.CanSelectReward, Is.False);
@@ -80,7 +80,7 @@ namespace DiaBlackJack.StageProgression.Tests
                 option.OptionId), Is.True);
             StageProgressionViewModel after = StageProgressionPresenter.Create(run);
 
-            Assert.That(after.PlayerGold, Is.EqualTo("1 GOLD"));
+            Assert.That(after.PlayerGold, Is.EqualTo("117 GOLD"));
             Assert.That(after.ShopCardOptions[0].IsSold, Is.True);
             Assert.That(after.ShopCardOptions[0].CanBuy, Is.False);
             Assert.That(after.ShopTransactionResult, Does.StartWith("PURCHASED"));
@@ -120,7 +120,7 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
-        public void RF04_P05_UsedFirstShopRaisesBothSecondShopPriceLabels()
+        public void RF04_P05_UsedFirstShopRaisesOnlySecondLighterPriceLabel()
         {
             FormalRunSession run = OpenFirstShop();
             PlayerRunState player = run.CombatSession.Progress.Player;
@@ -134,8 +134,8 @@ namespace DiaBlackJack.StageProgression.Tests
 
             StageProgressionViewModel model = StageProgressionPresenter.Create(run);
 
-            Assert.That(model.LighterLabel, Is.EqualTo("LIGHTER  3 GOLD"));
-            Assert.That(model.WhiskeyLabel, Is.EqualTo("WHISKEY  3 GOLD"));
+            Assert.That(model.LighterLabel, Is.EqualTo("LIGHTER  70 GOLD"));
+            Assert.That(model.WhiskeyLabel, Is.EqualTo("WHISKEY  50 GOLD"));
         }
 
         [Test]
@@ -155,7 +155,7 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(model.CanRestartRun, Is.True);
             Assert.That(model.CanSelectReward, Is.False);
             Assert.That(model.RewardOptions, Is.Empty);
-            Assert.That(model.GoldResult, Is.EqualTo("VICTORY +15 GOLD"));
+            Assert.That(model.GoldResult, Is.Empty);
             Assert.That(model.Message, Is.EqualTo("RUN VICTORY"));
         }
 

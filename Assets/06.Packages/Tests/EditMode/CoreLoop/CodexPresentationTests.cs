@@ -26,7 +26,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 EnemyCombatProfileCatalog.Default.GetByKey(
                     EnemyCombatProfileCatalog.GunslingerKey);
             Assert.That(gunslinger.MaximumSoul, Is.EqualTo(profile.MaximumSoul));
-            Assert.That(gunslinger.DefeatGold, Is.EqualTo(4));
+            Assert.That(gunslinger.DefeatGold, Is.EqualTo(120));
             Assert.That(gunslinger.Description, Is.EqualTo(profile.Summary));
             Assert.That(gunslinger.ContractableDemons, Is.Empty);
             Assert.That(

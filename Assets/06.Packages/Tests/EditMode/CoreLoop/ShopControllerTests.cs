@@ -110,6 +110,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             SetPrivateField("whiskeyItem", whiskey);
 
             _shop.Open(EnemyCombatProfileCatalog.FinalBossKey);
+            _shop.GrantGoldForTesting(100);
             _shop.RefreshUtilityItems(2, 5, 12);
             Assert.That(lighterObject.activeSelf, Is.True);
             Assert.That(whiskeyObject.activeSelf, Is.True);
@@ -243,6 +244,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             SetPrivateField("normalCardOfferCount", 3);
 
             _shop.Open(EnemyCombatProfileCatalog.FinalBossKey);
+            _shop.GrantGoldForTesting(1000);
             CardView[] offers = holderObject.GetComponentsInChildren<CardView>(true);
 
             Assert.That(offers, Has.Length.EqualTo(3));
@@ -257,11 +259,12 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(definitionKey, Is.Not.Empty);
             }
 
-            Assert.That(_shop.Gold, Is.EqualTo(6));
+            Assert.That(_shop.Gold, Is.LessThan(1000));
+            int goldAfterPurchases = _shop.Gold;
             Assert.That(
                 _shop.TryPurchaseNormalCard(offers[0].CardId, out _, out _),
                 Is.False);
-            Assert.That(_shop.Gold, Is.EqualTo(6));
+            Assert.That(_shop.Gold, Is.EqualTo(goldAfterPurchases));
         }
 
         [Test]
@@ -430,6 +433,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             SetPrivateField("demonCardOfferCount", 2);
 
             _shop.Open(EnemyCombatProfileCatalog.FinalBossKey);
+            _shop.GrantGoldForTesting(1000);
             CardView[] normalCards =
                 normalHolder.GetComponentsInChildren<CardView>(true);
             DemonCardView[] demonCards =

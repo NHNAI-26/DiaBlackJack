@@ -1510,7 +1510,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             var battle = new CoreLoopBattle(
                 CreateDefinitionDeck(
                     "auto-pistol-7",
-                    "auto-pistol-7",
+                    "auto-pistol-8",
                     "standard-plain-2",
                     "standard-plain-3"),
                 CreateRankDeck(5, 1, 2, 3, 4, 5),
@@ -1543,6 +1543,22 @@ namespace DiaBlackJack.CoreLoop.Tests
                 cues.All(cue =>
                     cue.Phase == GameSceneRevolverAnimationPhase.Ready),
                 Is.True);
+            Assert.That(
+                cues.All(cue => cue.SourceCardId == secondRevolver.Id),
+                Is.True,
+                "A later revolver use must never display the previous revolver card.");
+            Assert.That(
+                secondTimeline
+                    .Where(model => model.RevolverAnimationCue != null)
+                    .All(model => model.PlayerCards.Single(card =>
+                        card.CardId == secondRevolver.Id).IsEffectSource),
+                Is.True);
+            Assert.That(
+                secondTimeline
+                    .Where(model => model.RevolverAnimationCue != null)
+                    .All(model => !model.PlayerCards.Single(card =>
+                        card.CardId == firstRevolver.Id).IsEffectSource),
+                Is.True);
 
             GameSceneRevolverAnimationCue readyCue =
                 GameScenePresenter.Create(battle).RevolverAnimationCue;
@@ -1551,8 +1567,75 @@ namespace DiaBlackJack.CoreLoop.Tests
                 readyCue.Phase,
                 Is.EqualTo(GameSceneRevolverAnimationPhase.Ready));
             Assert.That(
+                readyCue.SourceCardId,
+                Is.EqualTo(secondRevolver.Id));
+            Assert.That(
                 readyCue.ActionOrdinal,
                 Is.GreaterThan(0));
+        }
+
+        [Test]
+        public void CUM18_U03_CardRevealBeatWaitsForCompleteFlip()
+        {
+            Assert.That(
+                GameManager.ResolveCardRevealTimelineWaitSeconds(
+                    currentWaitSeconds: 0.2f,
+                    fullRevealDurationSeconds: 0.7f),
+                Is.EqualTo(0.7f));
+            Assert.That(
+                GameManager.ResolveCardRevealTimelineWaitSeconds(
+                    currentWaitSeconds: 0.8f,
+                    fullRevealDurationSeconds: 0.7f),
+                Is.EqualTo(0.8f));
+        }
+
+        [Test]
+        public void CUM19_U01_KnifeResultRequiresMatchingConfirmedReadySequence()
+        {
+            Assert.That(
+                GameManager.CanPlayKnifeResolvedCue(
+                    activeSequenceMatches: false,
+                    readyConfirmed: true,
+                    playbackIsReady: true),
+                Is.False);
+            Assert.That(
+                GameManager.CanPlayKnifeResolvedCue(
+                    activeSequenceMatches: true,
+                    readyConfirmed: false,
+                    playbackIsReady: true),
+                Is.False);
+            Assert.That(
+                GameManager.CanPlayKnifeResolvedCue(
+                    activeSequenceMatches: true,
+                    readyConfirmed: true,
+                    playbackIsReady: false),
+                Is.False);
+            Assert.That(
+                GameManager.CanPlayKnifeResolvedCue(
+                    activeSequenceMatches: true,
+                    readyConfirmed: true,
+                    playbackIsReady: true),
+                Is.True);
+            Assert.That(
+                GameManager.ShouldRestoreKnifeReadyForResolvedCue(
+                    resultCueAlreadyConsumed: true,
+                    recoveryAlreadyAttempted: false,
+                    resultCanPlayNow: false),
+                Is.False,
+                "A duplicate resolved snapshot must not start another knife entrance.");
+            Assert.That(
+                GameManager.ShouldRestoreKnifeReadyForResolvedCue(
+                    resultCueAlreadyConsumed: false,
+                    recoveryAlreadyAttempted: true,
+                    resultCanPlayNow: false),
+                Is.False,
+                "One failed recovery must not be repeated by later snapshots.");
+            Assert.That(
+                GameManager.ShouldRestoreKnifeReadyForResolvedCue(
+                    resultCueAlreadyConsumed: false,
+                    recoveryAlreadyAttempted: false,
+                    resultCanPlayNow: false),
+                Is.True);
         }
 
         [Test]

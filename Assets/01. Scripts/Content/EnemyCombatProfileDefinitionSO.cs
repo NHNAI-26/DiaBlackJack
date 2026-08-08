@@ -172,7 +172,7 @@ namespace DiaBlackJack.Content
                 speechProfile == null ||
                 !Enum.IsDefined(typeof(EnemyGrade), grade) ||
                 maximumSoul <= 0 ||
-                defeatGold <= 0 ||
+                defeatGold < 0 ||
                 string.IsNullOrWhiteSpace(behaviorPolicyKey) ||
                 startingDeck == null ||
                 startingDeck.Count == 0 ||

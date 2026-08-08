@@ -1187,3 +1187,8 @@ DC-R05의 기능·저장 재진입·두 전투 화면 시각 폐쇄는 완료됐
 - `DCUI10` EditMode 2/2(job `4fdb3f4bb5c9473aadcc2dda9503b573`)를 통과했다. 인접 `ShaderStencilOutlineTests`는 18/19(job `c88a4ce1cdce4a15bd3785463ab5a34d`)이며, 잔여 `GSV06_U03_LighterAnimationHidesBurnCardBeforeCoverCloses`는 단독 재실행(job `cfaf9e0b5ce44cef95f99b4291dae971`)에서도 동일하게 실패한 기존 범위 밖 회귀다.
 - GameScene validation은 누락 스크립트·깨진 프리팹 포함 문제 0건이다. Play Mode에서 Registry 수가 `호버 1 → 이탈 0 → 굴림 중 호버 1 → 굴림 중 이탈 0`으로 전환되고 실제 주사위 외곽선이 표시되는 것을 확인했다. 컴파일 오류는 0건이며, Play Mode Console에는 기존 머티리얼 Drawer 오류 2종이 재현됐다.
 - 머티리얼 복제, 셰이더·프리팹·씬 직렬화 변경은 없다.
+## 2026-08-09 적 바알제붑 리볼버 결과 장벽 대칭 보완
+
+- 플레이어 리볼버가 적 바알제붑을 발동시키는 경로에서 `PendingPlayerCardEffect`가 완료 결과보다 먼저 선택되어 `Ready`가 남는 문제를 재현했다.
+- 현재 행동 ordinal과 원본 카드 ID가 일치하는 완료 결과를 양쪽 행위자 모두에서 pending 상태보다 우선한다. 공격 결과 cue가 실제 완료되지 않았으면 GameManager가 제한된 재생 복구를 수행한 뒤 계약 continuation을 한 번만 재개한다.
+- 플레이어 리볼버 결과가 `Resolved`로 게시되고 적 영혼 비용·자동 폐기가 아직 없는 상태를 전용 회귀로 고정했다. 관련 fixture 200/200, 전체 EditMode 1,250/1,267 통과다.

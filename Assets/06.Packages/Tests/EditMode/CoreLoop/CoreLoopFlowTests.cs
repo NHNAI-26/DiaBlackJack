@@ -37,6 +37,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(started, Is.True);
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
             Assert.That(battle.RoundNumber, Is.EqualTo(1));
+            Assert.That(battle.TurnNumber, Is.EqualTo(1));
             Assert.That(battle.Player.Hand.Count, Is.EqualTo(2));
             Assert.That(battle.Enemy.Hand.Count, Is.EqualTo(2));
             Assert.That(battle.Player.Hand.Cards[0].IsFaceUp, Is.True);
@@ -125,12 +126,61 @@ namespace DiaBlackJack.CoreLoop.Tests
                 enemyRanks: new[] { 8, 8, 1 });
             battle.Start();
 
+            var actorTurns = new List<(CombatantSide Actor, int Turn)>();
+            int observedActionCount = 0;
+            battle.Stepped += () =>
+            {
+                if (battle.PublicActionHistory.Count <= observedActionCount)
+                {
+                    return;
+                }
+
+                observedActionCount = battle.PublicActionHistory.Count;
+                PublicCombatAction action = battle.LastPublicAction;
+                actorTurns.Add((action.ActorSide, battle.TurnNumber));
+            };
+
             battle.TryPlayerHit();
 
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
             Assert.That(battle.Player.HandValue.Total, Is.EqualTo(12));
             Assert.That(battle.Enemy.HandValue.Total, Is.EqualTo(17));
             Assert.That(battle.Enemy.IsStanding, Is.False);
+            Assert.That(actorTurns[0], Is.EqualTo((CombatantSide.Player, 1)));
+            Assert.That(actorTurns[1], Is.EqualTo((CombatantSide.Enemy, 1)));
+            Assert.That(battle.TurnNumber, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void TURN01_U01_StandingPlayerLetsEachConsecutiveEnemyActionAdvanceTurn()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                playerRanks: new[] { 10, 9 },
+                enemyRanks: new[] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 });
+            battle.Start();
+            var enemyActionTurns = new List<int>();
+            int observedActionCount = 0;
+            battle.Stepped += () =>
+            {
+                if (battle.RoundNumber != 1 ||
+                    battle.PublicActionHistory.Count <= observedActionCount)
+                {
+                    return;
+                }
+
+                observedActionCount = battle.PublicActionHistory.Count;
+                if (battle.LastPublicAction.ActorSide == CombatantSide.Enemy)
+                {
+                    enemyActionTurns.Add(battle.TurnNumber);
+                }
+            };
+
+            Assert.That(battle.TryPlayerStand(), Is.True);
+
+            Assert.That(enemyActionTurns.Count, Is.GreaterThan(2));
+            Assert.That(enemyActionTurns[0], Is.EqualTo(1));
+            Assert.That(enemyActionTurns[1], Is.EqualTo(2));
+            Assert.That(enemyActionTurns[2], Is.EqualTo(3));
         }
 
         [Test]

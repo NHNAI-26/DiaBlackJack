@@ -3210,7 +3210,7 @@ namespace DiaBlackJack.CoreLoop
                 if (continuation.ActorSide == CombatantSide.Enemy)
                 {
                     NotifyNormalTurnEnded(CombatantSide.Enemy);
-                    BeginPlayerTurn();
+                    BeginPlayerTurn(advancesTurn: true);
                 }
                 else
                 {
@@ -5708,7 +5708,7 @@ namespace DiaBlackJack.CoreLoop
             EndEnemyTurnExecution();
             State = CoreLoopState.StartingRound;
             RoundNumber++;
-            TurnNumber = 0;
+            TurnNumber = 1;
             _activeCardEffectContext = null;
             _activeCardEffectActorSide = null;
             _pendingCardEffect = null;
@@ -5843,8 +5843,13 @@ namespace DiaBlackJack.CoreLoop
             RunEnemyTurn();
         }
 
-        private void BeginPlayerTurn()
+        private void BeginPlayerTurn(bool advancesTurn = false)
         {
+            if (advancesTurn)
+            {
+                TurnNumber = checked(TurnNumber + 1);
+            }
+
             EndEnemyTurnExecution();
             _resolvedPlayerTurnStartContractIds.Clear();
             State = CoreLoopState.PlayerTurn;
@@ -5942,7 +5947,7 @@ namespace DiaBlackJack.CoreLoop
                         }
                         else
                         {
-                            BeginPlayerTurn();
+                            BeginPlayerTurn(advancesTurn: true);
                         }
 
                         return;
@@ -5953,7 +5958,7 @@ namespace DiaBlackJack.CoreLoop
                         PendingEnemyCardEffect == null &&
                         _pendingEnemyDemonContractInteraction == null)
                     {
-                        BeginPlayerTurn();
+                        BeginPlayerTurn(advancesTurn: true);
                         return;
                     }
 
@@ -6268,7 +6273,7 @@ namespace DiaBlackJack.CoreLoop
                 }
                 else
                 {
-                    BeginPlayerTurn();
+                    BeginPlayerTurn(advancesTurn: true);
                 }
 
                 return;
@@ -6276,7 +6281,11 @@ namespace DiaBlackJack.CoreLoop
 
             if (!Player.IsStanding)
             {
-                BeginPlayerTurn();
+                BeginPlayerTurn(advancesTurn: true);
+            }
+            else
+            {
+                TurnNumber = checked(TurnNumber + 1);
             }
         }
 
@@ -6790,8 +6799,6 @@ namespace DiaBlackJack.CoreLoop
 
         private void NotifyNormalTurnEnded(CombatantSide actorSide)
         {
-            TurnNumber++;
-
             IReadOnlyList<ActiveDemonContract> activeContracts =
                 actorSide == CombatantSide.Player
                     ? _activePlayerDemonContracts

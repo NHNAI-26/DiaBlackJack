@@ -861,13 +861,13 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(stage.OptionActions, Is.Empty);
         }
 
-        [TestCase(CoreLoopState.PlayerTurn, "ROUND 2\nTURN 3 · PLAYER TURN")]
-        [TestCase(CoreLoopState.PlayerChoosingChangeCard, "ROUND 2\nTURN 3 · PLAYER TURN")]
-        [TestCase(CoreLoopState.PlayerResolvingCardEffect, "ROUND 2\nTURN 3 · PLAYER TURN")]
-        [TestCase(CoreLoopState.ResolvingAutomaticCardEffect, "ROUND 2\nTURN 3 · PLAYER TURN")]
-        [TestCase(CoreLoopState.PlayerResolvingDemonContract, "ROUND 2\nTURN 3 · PLAYER TURN")]
-        [TestCase(CoreLoopState.EnemyTurn, "ROUND 2\nTURN 3 · ENEMY TURN")]
-        [TestCase(CoreLoopState.ResolvingRound, "ROUND 2\nTURN 3")]
+        [TestCase(CoreLoopState.PlayerTurn, "2 라운드\n3턴 · 내 턴")]
+        [TestCase(CoreLoopState.PlayerChoosingChangeCard, "2 라운드\n3턴 · 내 턴")]
+        [TestCase(CoreLoopState.PlayerResolvingCardEffect, "2 라운드\n3턴 · 내 턴")]
+        [TestCase(CoreLoopState.ResolvingAutomaticCardEffect, "2 라운드\n3턴 · 내 턴")]
+        [TestCase(CoreLoopState.PlayerResolvingDemonContract, "2 라운드\n3턴 · 내 턴")]
+        [TestCase(CoreLoopState.EnemyTurn, "2 라운드\n3턴 · 상대 턴")]
+        [TestCase(CoreLoopState.ResolvingRound, "2 라운드\n3턴")]
         public void GFH01_U01_RoundTextIdentifiesCurrentTurnOwner(
             CoreLoopState state,
             string expected)

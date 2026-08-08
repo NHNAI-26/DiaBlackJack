@@ -20,7 +20,7 @@ MonoBehaviour:
   skullBaseColor: {r: 1, g: 0.53301885, b: 0.53301885, a: 1}
   grade: 2
   maximumSoul: 9
-  defeatGold: 15
+  defeatGold: 0
   behaviorPolicyKey: final-boss-three-phase
   startingDeck:
   - {fileID: 11400000, guid: d658a77d998e43f1b3fa1f8d0a120001, type: 2}
