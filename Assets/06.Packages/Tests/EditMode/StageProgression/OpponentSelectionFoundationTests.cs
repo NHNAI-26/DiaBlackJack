@@ -55,16 +55,15 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
-        public void EUI01_U03_ZeroPercentProducesTwoNormalCandidates()
+        public void EUI01_U03_FirstOfferAlwaysProducesTwoNormalCandidates()
         {
-            var generator = new OpponentSelectionGenerator(
-                EnemyCombatProfileCatalog.Default,
-                301,
-                0);
-
-            for (int index = 0; index < 20; index++)
+            for (int seed = 0; seed < 100; seed++)
             {
-                OpponentSelectionOffer offer = generator.Generate(index);
+                var generator = new OpponentSelectionGenerator(
+                    EnemyCombatProfileCatalog.Default,
+                    seed,
+                    100);
+                OpponentSelectionOffer offer = generator.Generate(0);
 
                 Assert.That(CountGrade(offer, EnemyGrade.Normal), Is.EqualTo(2));
                 Assert.That(CountGrade(offer, EnemyGrade.Elite), Is.Zero);
@@ -72,19 +71,30 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
-        public void EUI01_U04_OneHundredPercentProducesOneNormalAndOneElite()
+        public void EUI01_U04_SecondOfferExcludesEveryFirstOfferCandidate()
         {
-            var generator = new OpponentSelectionGenerator(
-                EnemyCombatProfileCatalog.Default,
-                401,
-                100);
-
-            for (int index = 0; index < 20; index++)
+            for (int seed = 0; seed < 100; seed++)
             {
-                OpponentSelectionOffer offer = generator.Generate(index);
+                var generator = new OpponentSelectionGenerator(
+                    EnemyCombatProfileCatalog.Default,
+                    seed,
+                    0);
+                OpponentSelectionOffer first = generator.Generate(0);
+                OpponentSelectionOffer second = generator.Generate(1);
+                var firstKeys = new HashSet<string>
+                {
+                    first.Candidates[0].ProfileKey,
+                    first.Candidates[1].ProfileKey
+                };
 
-                Assert.That(CountGrade(offer, EnemyGrade.Normal), Is.EqualTo(1));
-                Assert.That(CountGrade(offer, EnemyGrade.Elite), Is.EqualTo(1));
+                Assert.That(second.Candidates.Count, Is.EqualTo(2));
+                Assert.That(
+                    second.Candidates,
+                    Has.All.Matches<OpponentSelectionCandidate>(
+                        candidate => !firstKeys.Contains(candidate.ProfileKey)));
+                Assert.That(
+                    CountGrade(second, EnemyGrade.Elite),
+                    Is.LessThanOrEqualTo(1));
             }
         }
 

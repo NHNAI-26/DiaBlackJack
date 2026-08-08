@@ -191,6 +191,14 @@ namespace DiaBlackJack.GameScene
                 .OnComplete(() => CompleteEntranceAnimation(onComplete));
         }
 
+        public void PrepareEntranceAnimation()
+        {
+            EnsureInitialized();
+            KillAppearanceAnimation();
+            appearanceTarget.localRotation = Quaternion.Euler(
+                _baseLocalEulerAngles + appearanceRotationOffset);
+        }
+
         public void PlayExitAnimation(Action onComplete)
         {
             EnsureInitialized();

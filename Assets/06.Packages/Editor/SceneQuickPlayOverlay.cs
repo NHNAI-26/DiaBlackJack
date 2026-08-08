@@ -1,4 +1,6 @@
 using System;
+using DiaBlackJack.CoreLoop;
+using DiaBlackJack.GameScene;
 using UnityEditor;
 using UnityEditor.Overlays;
 using UnityEditor.SceneManagement;
@@ -13,8 +15,42 @@ namespace DiaBlackJack.Editor
         public SceneQuickPlayOverlay()
             : base(
                 MainMenuQuickPlayButton.Id,
-                GameSceneQuickPlayButton.Id)
+                GameSceneQuickPlayButton.Id,
+                EnemyBattleQuickPlayDropdown.Id)
         {
+        }
+    }
+
+    [EditorToolbarElement(Id, typeof(SceneView))]
+    internal sealed class EnemyBattleQuickPlayDropdown : EditorToolbarDropdown
+    {
+        public const string Id =
+            "DiaBlackJack/QuickPlay/EnemyBattle";
+
+        public EnemyBattleQuickPlayDropdown()
+        {
+            text = "Enemy Battle";
+            tooltip = "Choose an enemy profile and enter GameScene Play Mode.";
+            clicked += ShowEnemyMenu;
+        }
+
+        private static void ShowEnemyMenu()
+        {
+            var menu = new GenericMenu();
+            foreach (EnemyProfilePreview preview in
+                EnemyCombatProfileCatalog.Default.Previews)
+            {
+                EnemyProfilePreview captured = preview;
+                string label =
+                    $"{captured.Grade}/{captured.DisplayName}";
+                menu.AddItem(
+                    new GUIContent(label),
+                    false,
+                    () => SceneQuickPlayLauncher.PlayEnemyBattle(
+                        captured.ProfileKey));
+            }
+
+            menu.ShowAsContext();
         }
     }
 
@@ -75,6 +111,8 @@ namespace DiaBlackJack.Editor
             "DiaBlackJack.SceneQuickPlay.RestorePending";
         private const string PreviousStartScenePathKey =
             "DiaBlackJack.SceneQuickPlay.PreviousStartScenePath";
+        private const string PendingEnemyProfileKey =
+            "DiaBlackJack.SceneQuickPlay.PendingEnemyProfile";
 
         static SceneQuickPlayLauncher()
         {
@@ -87,6 +125,7 @@ namespace DiaBlackJack.Editor
         [MenuItem(MenuRoot + "Main Menu", false, 10)]
         internal static void PlayMainMenu()
         {
+            ClearPendingEnemyBattle();
             PlayFromScene(MainMenuScenePath);
         }
 
@@ -99,6 +138,29 @@ namespace DiaBlackJack.Editor
         [MenuItem(MenuRoot + "Game Scene", false, 11)]
         internal static void PlayGameScene()
         {
+            ClearPendingEnemyBattle();
+            PlayFromScene(GameScenePath);
+        }
+
+        internal static void PlayEnemyBattle(string profileKey)
+        {
+            if (!CanEnterPlayMode() || string.IsNullOrWhiteSpace(profileKey))
+            {
+                return;
+            }
+
+            try
+            {
+                EnemyCombatProfileCatalog.Default.GetByKey(profileKey);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+                ClearPendingEnemyBattle();
+                return;
+            }
+
+            SessionState.SetString(PendingEnemyProfileKey, profileKey);
             PlayFromScene(GameScenePath);
         }
 
@@ -131,6 +193,7 @@ namespace DiaBlackJack.Editor
                     "Quick Play",
                     message,
                     "OK");
+                ClearPendingEnemyBattle();
                 return;
             }
 
@@ -144,6 +207,7 @@ namespace DiaBlackJack.Editor
             catch (Exception exception)
             {
                 RestorePreviousStartScene();
+                ClearPendingEnemyBattle();
                 Debug.LogException(exception);
             }
         }
@@ -165,11 +229,49 @@ namespace DiaBlackJack.Editor
         private static void HandlePlayModeStateChanged(
             PlayModeStateChange state)
         {
-            if (state == PlayModeStateChange.EnteredPlayMode ||
-                state == PlayModeStateChange.EnteredEditMode)
+            if (state == PlayModeStateChange.EnteredPlayMode)
             {
                 RestorePreviousStartScene();
+                if (!string.IsNullOrWhiteSpace(
+                        SessionState.GetString(
+                            PendingEnemyProfileKey,
+                            string.Empty)))
+                {
+                    EditorApplication.delayCall += StartPendingEnemyBattle;
+                }
             }
+            else if (state == PlayModeStateChange.EnteredEditMode)
+            {
+                RestorePreviousStartScene();
+                ClearPendingEnemyBattle();
+            }
+        }
+
+        private static void StartPendingEnemyBattle()
+        {
+            string profileKey = SessionState.GetString(
+                PendingEnemyProfileKey,
+                string.Empty);
+            ClearPendingEnemyBattle();
+            if (string.IsNullOrWhiteSpace(profileKey))
+            {
+                return;
+            }
+
+            GameManager manager =
+                UnityEngine.Object.FindFirstObjectByType<GameManager>(
+                    FindObjectsInactive.Include);
+            if (manager == null ||
+                !manager.DebugStartStandaloneEnemyBattle(profileKey))
+            {
+                Debug.LogError(
+                    $"Enemy Battle Quick Play could not start '{profileKey}'.");
+            }
+        }
+
+        private static void ClearPendingEnemyBattle()
+        {
+            SessionState.EraseString(PendingEnemyProfileKey);
         }
 
         private static void RestorePreviousStartScene()

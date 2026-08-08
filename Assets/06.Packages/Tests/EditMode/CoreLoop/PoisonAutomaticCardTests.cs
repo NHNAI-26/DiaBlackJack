@@ -75,14 +75,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                 option.Label.Contains("영혼")), Is.True);
         }
 
-        [TestCase(6, 3, false)]
-        [TestCase(3, 0, true)]
-        [TestCase(2, 0, true)]
-        [TestCase(1, 0, true)]
+        [TestCase(6, 3)]
+        [TestCase(3, 0)]
+        [TestCase(2, 0)]
+        [TestCase(1, 0)]
         public void AC02_U03_PaySoulLosesThreeOrAllRemainingSoul(
             int initialSoul,
-            int expectedSoul,
-            bool expectedBattleEnd)
+            int expectedSoul)
         {
             CoreLoopBattle battle = CreateBattle(
                 PlayerCards(2, 3, Poison),
@@ -97,13 +96,11 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(ResolvePlayerChoice(battle, pending, "영혼"), Is.True);
 
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(expectedSoul));
-            Assert.That(
-                battle.State == CoreLoopState.BattleEnded,
-                Is.EqualTo(expectedBattleEnd));
+            Assert.That(battle.State, Is.Not.EqualTo(CoreLoopState.BattleEnded));
         }
 
         [Test]
-        public void AC02_U04_SoulDeathCancelsEnemyTurnAndParentCardEffect()
+        public void AC02_U04_ZeroSoulPaymentFinishesParentCardEffect()
         {
             var enemyPolicy = new CountingStandPolicy();
             CoreLoopBattle battle = CreateBattle(
@@ -128,9 +125,9 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             Assert.That(ResolvePlayerChoice(battle, pending, "영혼"), Is.True);
 
-            Assert.That(battle.State, Is.EqualTo(CoreLoopState.BattleEnded));
-            Assert.That(battle.Outcome, Is.EqualTo(BattleOutcome.PlayerDefeat));
-            Assert.That(enemyPolicy.DecideCount, Is.Zero);
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+            Assert.That(battle.Outcome, Is.EqualTo(BattleOutcome.InProgress));
+            Assert.That(enemyPolicy.DecideCount, Is.EqualTo(1));
             Assert.That(battle.PendingPlayerCardEffect, Is.Null);
             Assert.That(crystalOrb.UseState, Is.EqualTo(CardUseState.Used));
         }
@@ -256,6 +253,124 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EqualTo(RoundOutcome.EnemyWin));
             Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(6));
             Assert.That(battle.PendingPoisonWinRewardCount, Is.Zero);
+        }
+
+        [Test]
+        public void AC02_U09_ForcedStandResumesEnemyTurnAndFinishesRound()
+        {
+            var enemyPolicy = new CountingStandPolicy();
+            CoreLoopBattle battle = CreateBattle(
+                PlayerCards(2, 3, Poison, 4, 5, 6, 7),
+                EnemyCards(4, 3, 5, 6, 7, 8),
+                playerCurrentSoul: 12,
+                enemyPolicy: enemyPolicy);
+            Assert.That(battle.Start(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            PendingAutomaticCardInteraction pending =
+                battle.PendingPlayerAutomaticInteraction;
+
+            Assert.That(
+                battle.TryResolvePlayerAutomaticCardChoice(
+                    pending.InteractionId,
+                    PoisonEffectHandler.StandNowOptionId),
+                Is.True);
+
+            Assert.That(enemyPolicy.DecideCount, Is.EqualTo(1));
+            Assert.That(battle.PendingPlayerAutomaticInteraction, Is.Null);
+            Assert.That(battle.LastResolution.HasValue, Is.True);
+            Assert.That(battle.RoundNumber, Is.EqualTo(2));
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+        }
+
+        [Test]
+        public void AC02_U10_ZeroSoulPoisonWinnerRecoversBeforeDeathCheck()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                PlayerCards(9, 9, Poison),
+                EnemyCards(7, 3),
+                playerCurrentSoul: 2,
+                enemyPolicy: new StandPolicy());
+            Assert.That(battle.Start(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+
+            Assert.That(
+                battle.TryResolvePlayerAutomaticCardChoice(
+                    battle.PendingPlayerAutomaticInteraction.InteractionId,
+                    PoisonEffectHandler.PaySoulOptionId),
+                Is.True);
+
+            Assert.That(battle.Player.Soul.Current, Is.Zero);
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+            Assert.That(battle.TryPlayerStand(), Is.True);
+            Assert.That(
+                battle.LastResolution.Value.Outcome,
+                Is.EqualTo(RoundOutcome.PlayerWin));
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(5));
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+            Assert.That(battle.RoundNumber, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void AC02_U11_ZeroSoulPoisonLoserDiesAtRoundEnd()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                PlayerCards(2, 3, Poison),
+                EnemyCards(4, 3),
+                playerCurrentSoul: 1,
+                enemyPolicy: new StandPolicy());
+            Assert.That(battle.Start(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+
+            Assert.That(
+                battle.TryResolvePlayerAutomaticCardChoice(
+                    battle.PendingPlayerAutomaticInteraction.InteractionId,
+                    PoisonEffectHandler.PaySoulOptionId),
+                Is.True);
+
+            Assert.That(battle.Player.Soul.Current, Is.Zero);
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+            Assert.That(battle.TryPlayerStand(), Is.True);
+            Assert.That(
+                battle.LastResolution.Value.Outcome,
+                Is.EqualTo(RoundOutcome.EnemyWin));
+            Assert.That(battle.Player.Soul.Current, Is.Zero);
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.BattleEnded));
+            Assert.That(battle.Outcome, Is.EqualTo(BattleOutcome.PlayerDefeat));
+        }
+
+        [Test]
+        public void AC02_U12_ZeroSoulEnemyPoisonWinnerAlsoRecovers()
+        {
+            CoreLoopBattle battle = CreateBattle(
+                PlayerCards(2, 2, Plain(2)),
+                EnemyCards(4, 3, Poison),
+                playerCurrentSoul: 12,
+                enemyMaximumSoul: 2,
+                enemyPolicy: new SequencePolicy(
+                    EnemyActionType.Hit,
+                    EnemyActionType.Stand));
+            Assert.That(battle.Start(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            PendingAutomaticCardInteraction pending =
+                battle.PendingAutomaticInteraction;
+            Assert.That(pending.OwnerSide, Is.EqualTo(CombatantSide.Enemy));
+
+            Assert.That(
+                battle.TryResolveAutomaticCardChoice(
+                    CombatantSide.Enemy,
+                    pending.InteractionId,
+                    PoisonEffectHandler.PaySoulOptionId),
+                Is.True);
+
+            Assert.That(battle.Enemy.Soul.Current, Is.Zero);
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+            Assert.That(battle.TryPlayerStand(), Is.True);
+            Assert.That(
+                battle.LastResolution.Value.Outcome,
+                Is.EqualTo(RoundOutcome.EnemyWin));
+            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(2));
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
+            Assert.That(battle.RoundNumber, Is.EqualTo(2));
         }
 
         private static bool ResolvePlayerChoice(

@@ -188,22 +188,23 @@ namespace DiaBlackJack.GameScene
             CombatPromptRequest? selectionPrompt = core.SelectionPrompt;
             if (core.State == CoreLoopState.BattleEnded)
             {
+                if (isStageBattle)
+                {
+                    return CreateHidden();
+                }
+
                 return new GameSceneCombatHudViewModel(
-                    isStageBattle
-                        ? GameSceneCombatHudMode.ReturningToRun
-                        : GameSceneCombatHudMode.Restart,
+                    GameSceneCombatHudMode.Restart,
                     selectionPrompt: null,
-                    isStageBattle ? "RETURNING TO RUN" : "BATTLE ENDED",
+                    "BATTLE ENDED",
                     Array.Empty<GameSceneCombatHudActionViewModel>(),
-                    isStageBattle
-                        ? Array.Empty<GameSceneCombatHudActionViewModel>()
-                        : new[]
-                        {
-                            CreateAction(
-                                GameSceneCombatHudCommandKind.Restart,
-                                "RESTART",
-                                core.CanRestart && !inputLocked)
-                        },
+                    new[]
+                    {
+                        CreateAction(
+                            GameSceneCombatHudCommandKind.Restart,
+                            "RESTART",
+                            core.CanRestart && !inputLocked)
+                    },
                     Array.Empty<GameSceneCombatHudContractCandidateViewModel>(),
                     automaticCardResult);
             }

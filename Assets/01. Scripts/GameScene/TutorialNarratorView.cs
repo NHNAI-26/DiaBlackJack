@@ -1,5 +1,6 @@
 using System;
 using DiaBlackJack.CoreLoop;
+using TMPro;
 using UnityEngine;
 
 namespace DiaBlackJack.GameScene
@@ -27,9 +28,13 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float charactersPerSecond = 40f;
         [SerializeField] private string narratorDefinitionKey =
             DemonContractCatalog.AsmodeusKey;
+        [SerializeField] private Vector2 speechScreenOffset = new Vector2(0f, 72f);
+        [SerializeField, Min(0f)] private float speechScreenMargin = 24f;
 
         private DemonCardView _card;
+        private DemonCardView _externalSpeaker;
         private bool _cardBound;
+        private bool _showRequested;
 
         public event Action LineAdvanceRequested;
 
@@ -39,6 +44,11 @@ namespace DiaBlackJack.GameScene
 
         public bool IsLineComplete => speechText == null || speechText.IsComplete;
 
+        private void LateUpdate()
+        {
+            UpdateSpeechPosition();
+        }
+
         private void Awake()
         {
             EnsureCard();
@@ -47,11 +57,15 @@ namespace DiaBlackJack.GameScene
             // Awake runs for every GameScene load, tutorial or not — only Show() (the
             // tutorial actually starting) should make this object, and the card on it,
             // visible for the first time.
-            gameObject.SetActive(false);
+            if (!_showRequested)
+            {
+                gameObject.SetActive(false);
+            }
         }
 
         public void Show()
         {
+            _showRequested = true;
             EnsureCard();
             if (!_cardBound && _card != null)
             {
@@ -75,6 +89,28 @@ namespace DiaBlackJack.GameScene
         {
             Show();
             speechText?.Play(text, charactersPerSecond);
+            UpdateSpeechPosition();
+        }
+
+        internal void UseNarratorCard()
+        {
+            _externalSpeaker = null;
+            EnsureCard();
+            if (_card != null)
+            {
+                _card.gameObject.SetActive(true);
+            }
+        }
+
+        internal void UseExternalSpeaker(DemonCardView speaker)
+        {
+            _externalSpeaker = speaker;
+            if (_card != null)
+            {
+                _card.gameObject.SetActive(false);
+            }
+
+            UpdateSpeechPosition();
         }
 
         public void HandleClick()
@@ -104,10 +140,74 @@ namespace DiaBlackJack.GameScene
             _card.name = "NarratorCard";
             _card.EnableHoverVisualOnly();
             _card.SetUnlitPresentation();
-            // Matches DemonContractSelectionView.EnsureSlots — without this, this card's
-            // TMP text elements (english name, etc.) don't render through the same overlay
-            // camera/layer every other world-space card text uses.
-            TextUIOverlayLayerUtility.ApplyRecursively(_card.gameObject);
+            TMP_Text[] labels = _card.GetComponentsInChildren<TMP_Text>(true);
+            for (int i = 0; i < labels.Length; i++)
+            {
+                TextUIOverlayLayerUtility.ApplyRecursively(
+                    labels[i].gameObject);
+            }
+        }
+
+        private void UpdateSpeechPosition()
+        {
+            if (speechText == null || !speechText.IsVisible)
+            {
+                return;
+            }
+
+            DemonCardView speaker = _externalSpeaker != null
+                ? _externalSpeaker
+                : _card;
+            if (speaker == null || !speaker.gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
+            Camera camera = Camera.main;
+            if (camera == null ||
+                !TryGetSpeakerTopCenter(speaker, out Vector3 worldTop))
+            {
+                return;
+            }
+
+            Vector3 screen = camera.WorldToScreenPoint(worldTop);
+            if (screen.z <= 0f)
+            {
+                return;
+            }
+
+            Rect safe = Screen.safeArea;
+            screen.x = Mathf.Clamp(
+                screen.x + speechScreenOffset.x,
+                safe.xMin + speechScreenMargin,
+                safe.xMax - speechScreenMargin);
+            screen.y = Mathf.Clamp(
+                screen.y + speechScreenOffset.y,
+                safe.yMin + speechScreenMargin,
+                safe.yMax - speechScreenMargin);
+            speechText.transform.position = camera.ScreenToWorldPoint(screen);
+        }
+
+        private static bool TryGetSpeakerTopCenter(
+            DemonCardView speaker,
+            out Vector3 worldTop)
+        {
+            SpriteRenderer[] renderers =
+                speaker.GetComponentsInChildren<SpriteRenderer>(true);
+            if (renderers.Length == 0)
+            {
+                worldTop = speaker.transform.position;
+                return true;
+            }
+
+            Bounds bounds = renderers[0].bounds;
+            for (int i = 1; i < renderers.Length; i++)
+            {
+                bounds.Encapsulate(renderers[i].bounds);
+            }
+
+            worldTop = new Vector3(bounds.center.x, bounds.max.y, bounds.center.z);
+            return true;
         }
 
         private void BindNarratorCard()

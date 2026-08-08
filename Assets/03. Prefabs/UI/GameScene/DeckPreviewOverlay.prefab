@@ -396,6 +396,7 @@ GameObject:
   - component: {fileID: 5256673362257285199}
   - component: {fileID: 9006331791247155761}
   - component: {fileID: 4151346974126861184}
+  - component: {fileID: 5490073785712153107}
   m_Layer: 5
   m_Name: CloseButton
   m_TagString: Untagged
@@ -504,6 +505,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &5490073785712153107
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4359197001257551350}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &4428528012369675778
 GameObject:
   m_ObjectHideFlags: 0
@@ -829,6 +842,7 @@ GameObject:
   - component: {fileID: 7378837022824587068}
   - component: {fileID: 5189801851992876130}
   - component: {fileID: 8769740513013357431}
+  - component: {fileID: 7215905698027714917}
   m_Layer: 5
   m_Name: SelectionFooter
   m_TagString: Untagged
@@ -950,6 +964,18 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &7215905698027714917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6871532850504560092}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &7871059126423558101
 GameObject:
   m_ObjectHideFlags: 0
@@ -962,6 +988,7 @@ GameObject:
   - component: {fileID: 3337527816027455997}
   - component: {fileID: 5830220014842029994}
   - component: {fileID: 1676449264860203013}
+  - component: {fileID: 1254572973951245959}
   m_Layer: 5
   m_Name: Background
   m_TagString: Untagged
@@ -1070,6 +1097,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1254572973951245959
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7871059126423558101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &8335585203565092834
 GameObject:
   m_ObjectHideFlags: 0

@@ -88,6 +88,7 @@ GameObject:
   - component: {fileID: 8686111110832661425}
   - component: {fileID: 6298484357157575853}
   - component: {fileID: 464494213437747405}
+  - component: {fileID: 4158182020569523804}
   m_Layer: 5
   m_Name: GenericButton
   m_TagString: Untagged
@@ -199,6 +200,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UISelectionFrameHook
   selectionFrame: {fileID: 1119661354915152287}
+--- !u!114 &4158182020569523804
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7949290427892056634}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1001 &369180937064068132
 PrefabInstance:
   m_ObjectHideFlags: 0

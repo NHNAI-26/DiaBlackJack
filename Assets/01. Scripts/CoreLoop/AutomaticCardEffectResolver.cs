@@ -88,6 +88,11 @@ namespace DiaBlackJack.CoreLoop
                 healAmount);
         }
 
+        public void DeferPoisonSoulDeathUntilRoundEnd()
+        {
+            Battle.DeferPoisonSoulDeathUntilRoundEnd(OwnerSide);
+        }
+
         public bool CanPayResurrectionHerbSoul(CombatantSide side)
         {
             return Battle.GetParticipant(side).Soul.Current > 0;
@@ -702,6 +707,18 @@ namespace DiaBlackJack.CoreLoop
         public int? EnteredCardId { get; }
 
         public int? SourceContractCardId { get; }
+
+        public long EnemyTurnExecutionId { get; private set; }
+
+        public void BindEnemyTurnExecution(long executionId)
+        {
+            if (executionId <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(executionId));
+            }
+
+            EnemyTurnExecutionId = executionId;
+        }
 
         public static AutomaticCardContinuation ForPlayerHit()
         {

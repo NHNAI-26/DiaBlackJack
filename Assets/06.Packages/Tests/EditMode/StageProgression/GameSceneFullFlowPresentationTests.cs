@@ -1,9 +1,11 @@
+using System.Reflection;
 using System.Collections.Generic;
 using Border.SaveLoad.UI;
 using DiaBlackJack.CoreLoop;
 using DiaBlackJack.GameScene;
 using DiaBlackJack.StageProgression.UI;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace DiaBlackJack.StageProgression.Tests
 {
@@ -20,6 +22,92 @@ namespace DiaBlackJack.StageProgression.Tests
                 GameFlowController.ShouldShowHudRoot(
                     GameFlowScreen.OpponentSelection),
                 Is.False);
+        }
+
+        [Test]
+        public void GFH01_U03_TutorialCombatWaitsEvenBeforeCharacterReferencesResolve()
+        {
+            Assert.That(
+                GameFlowController.ShouldDelayCombatForTutorialIntro(
+                    isEnteringCombat: true,
+                    isTutorialRun: true),
+                Is.True);
+            Assert.That(
+                GameFlowController.ShouldDelayCombatForTutorialIntro(
+                    isEnteringCombat: true,
+                    isTutorialRun: false),
+                Is.False);
+            Assert.That(
+                GameFlowController.ShouldDelayCombatForTutorialIntro(
+                    isEnteringCombat: false,
+                    isTutorialRun: true),
+                Is.False);
+        }
+
+        [Test]
+        public void GFH02_U01_TutorialDialogueAndOpeningClickBlockCombatInput()
+        {
+            Assert.That(
+                TutorialDirector.ShouldBlockCombatInput(
+                    begun: true,
+                    finished: false,
+                    gateActive: false,
+                    gateActivatedFrame: -1,
+                    currentFrame: 10),
+                Is.True);
+            Assert.That(
+                TutorialDirector.ShouldBlockCombatInput(
+                    begun: true,
+                    finished: false,
+                    gateActive: true,
+                    gateActivatedFrame: 10,
+                    currentFrame: 10),
+                Is.True);
+            Assert.That(
+                TutorialDirector.ShouldBlockCombatInput(
+                    begun: true,
+                    finished: false,
+                    gateActive: true,
+                    gateActivatedFrame: 10,
+                    currentFrame: 11),
+                Is.False);
+        }
+
+        [Test]
+        public void GFH02_U02_InactiveCharactersHierarchyStillResolvesEnemy()
+        {
+            GameObject controllerObject = new GameObject("FlowControllerTest");
+            GameObject characters = new GameObject("Characters");
+            GameObject enemy = new GameObject("EnemyCharacter");
+            enemy.transform.SetParent(characters.transform);
+            characters.SetActive(false);
+            CharacterView expected = enemy.AddComponent<CharacterView>();
+            controllerObject.SetActive(false);
+            GameFlowController controller =
+                controllerObject.AddComponent<GameFlowController>();
+
+            try
+            {
+                MethodInfo resolve = typeof(GameFlowController).GetMethod(
+                    "ResolveSceneReferences",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(resolve, Is.Not.Null);
+                resolve.Invoke(controller, null);
+
+                FieldInfo rootField = typeof(GameFlowController).GetField(
+                    "charactersRoot",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                FieldInfo enemyField = typeof(GameFlowController).GetField(
+                    "enemyCharacter",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(rootField?.GetValue(controller), Is.EqualTo(characters));
+                Assert.That(enemyField?.GetValue(controller), Is.EqualTo(expected));
+            }
+            finally
+            {
+                Object.DestroyImmediate(controllerObject);
+                Object.DestroyImmediate(characters);
+            }
         }
 
         [Test]

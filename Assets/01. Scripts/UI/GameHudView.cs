@@ -132,6 +132,29 @@ namespace DiaBlackJack.GameScene
         public bool IsRevolverNumberSelectionOpen =>
             revolverNumberSelector != null && revolverNumberSelector.IsOpen;
 
+        internal bool IsPointerOverActiveCombatChoice(Vector2 screenPoint)
+        {
+            if (optionPanel == null || !optionPanel.activeInHierarchy ||
+                optionSlots == null)
+            {
+                return false;
+            }
+
+            Camera eventCamera = _canvas != null &&
+                _canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                    ? _canvas.worldCamera
+                    : null;
+            foreach (GameHudChoiceButton slot in optionSlots)
+            {
+                if (slot != null && slot.ContainsScreenPoint(screenPoint, eventCamera))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public bool IsShopLeaveVisible =>
             shopLeaveRoot != null && shopLeaveRoot.activeSelf;
 
@@ -1106,9 +1129,11 @@ namespace DiaBlackJack.GameScene
             rect.SetParent(optionPanel.transform, false);
             rect.anchorMin = new Vector2(1f, 0f);
             rect.anchorMax = new Vector2(1f, 0f);
-            rect.pivot = new Vector2(1f, 0f);
-            rect.anchoredPosition = new Vector2(-48f, 48f + index * 76f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(-238f, 80f + index * 76f);
             rect.sizeDelta = new Vector2(380f, 64f);
+            slot.GetComponent<Border.UI.UIButtonScaleFeedback>()?
+                .SynchronizeRestingGeometry();
         }
 
         private void PositionCenter(GameHudChoiceButton slot)
@@ -1125,6 +1150,8 @@ namespace DiaBlackJack.GameScene
             rect.pivot = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = Vector2.zero;
             rect.sizeDelta = new Vector2(380f, 64f);
+            slot.GetComponent<Border.UI.UIButtonScaleFeedback>()?
+                .SynchronizeRestingGeometry();
         }
 
         private static bool HasBottomRightAction(
@@ -1214,6 +1241,11 @@ namespace DiaBlackJack.GameScene
             optionScrollRect.verticalNormalizedPosition = 1f;
         }
 
+        internal void HideCombatControlsImmediately()
+        {
+            HideCombatControls();
+        }
+
         private void HideCombatControls()
         {
             HideCombatActionTooltip();
@@ -1244,14 +1276,47 @@ namespace DiaBlackJack.GameScene
 
         private static string BuildRoundText(CoreLoopViewModel core)
         {
-            switch (core.Outcome)
+            return BuildRoundText(
+                core.State,
+                core.Outcome,
+                core.RoundNumber,
+                core.TurnNumber);
+        }
+
+        internal static string BuildRoundText(
+            CoreLoopState state,
+            BattleOutcome outcome,
+            int roundNumber,
+            int turnNumber)
+        {
+            switch (outcome)
             {
                 case BattleOutcome.PlayerVictory:
                     return "VICTORY";
                 case BattleOutcome.PlayerDefeat:
                     return "DEFEAT";
+            }
+
+            string turnOwner = ResolveTurnOwner(state);
+            return string.IsNullOrEmpty(turnOwner)
+                ? $"ROUND {roundNumber}\nTURN {turnNumber}"
+                : $"ROUND {roundNumber}\nTURN {turnNumber} · {turnOwner}";
+        }
+
+        private static string ResolveTurnOwner(CoreLoopState state)
+        {
+            switch (state)
+            {
+                case CoreLoopState.PlayerTurn:
+                case CoreLoopState.PlayerChoosingChangeCard:
+                case CoreLoopState.PlayerResolvingCardEffect:
+                case CoreLoopState.ResolvingAutomaticCardEffect:
+                case CoreLoopState.PlayerResolvingDemonContract:
+                    return "PLAYER TURN";
+                case CoreLoopState.EnemyTurn:
+                    return "ENEMY TURN";
                 default:
-                    return $"ROUND {core.RoundNumber}\nTURN {core.TurnNumber}";
+                    return string.Empty;
             }
         }
     }

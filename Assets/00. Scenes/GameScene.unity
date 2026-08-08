@@ -1207,6 +1207,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.PoisonInjectionAnnounceView
   cardImage: {fileID: 1097737198}
+  fadeInSeconds: 0.25
   holdSeconds: 0.6
   dropSeconds: 0.6
   dropDistancePixels: 700
@@ -2163,14 +2164,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1635418746}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.16375637, y: -0.00000004312132, z: 0.000000007158018, w: -0.98650086}
-  m_LocalPosition: {x: -0.9, y: 0.031223536, z: -0.14999962}
+  m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: -1.55, y: 0.031223536, z: -0.14999962}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2060621170}
   m_Father: {fileID: 64027347}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 270, y: 0, z: 0}
 --- !u!114 &1635418748
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2187,6 +2188,8 @@ MonoBehaviour:
   speechText: {fileID: 2060621172}
   charactersPerSecond: 40
   narratorDefinitionKey: asmodeus
+  speechScreenOffset: {x: 0, y: 72}
+  speechScreenMargin: 24
 --- !u!134 &1653652575
 PhysicsMaterial:
   m_ObjectHideFlags: 0
@@ -2820,11 +2823,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5742458960792561318, guid: 655f191923921d043921a8d1ccb890ea, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 25
       objectReference: {fileID: 0}
     - target: {fileID: 5742458960792561318, guid: 655f191923921d043921a8d1ccb890ea, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: 105
       objectReference: {fileID: 0}
     - target: {fileID: 5742458960792561318, guid: 655f191923921d043921a8d1ccb890ea, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -6981,6 +6984,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 180139001}
     m_Modifications:
+    - target: {fileID: 343565633622594982, guid: 2dc4c65b347e4d24e86a18dbf1a42fdc, type: 3}
+      propertyPath: shop
+      value:
+      objectReference: {fileID: 39196510}
+    - target: {fileID: 343565633622594982, guid: 2dc4c65b347e4d24e86a18dbf1a42fdc, type: 3}
+      propertyPath: gameManager
+      value:
+      objectReference: {fileID: 1198942663}
     - target: {fileID: 2720131932502202630, guid: 2dc4c65b347e4d24e86a18dbf1a42fdc, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

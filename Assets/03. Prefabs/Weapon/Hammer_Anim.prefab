@@ -276,13 +276,13 @@ MonoBehaviour:
   root: {fileID: 9072519937897334420}
   target: {fileID: 4415040172321544940}
   animationSeconds: 1.8
-  baseStateName: Hammer_Basic
+  baseStateName: Base Layer.Hammer_Basic
   readyTrigger: PlayerTurnStart
   playerSmashTrigger: PlayerChoose
   enemySmashTrigger: EnemyAttack
-  readyAttackStateName: Hammer_ReadyAttack
-  playerSmashStateName: Hammer_Smash
-  enemySmashStateName: Hammer_EnemySmash
+  readyAttackStateName: Base Layer.Hammer_ReadyAttack
+  playerSmashStateName: Base Layer.Hammer_Smash
+  enemySmashStateName: Base Layer.Hammer_EnemySmash
   smashStateWaitTimeoutSeconds: 8
   vfxBindings:
   - id: Smash

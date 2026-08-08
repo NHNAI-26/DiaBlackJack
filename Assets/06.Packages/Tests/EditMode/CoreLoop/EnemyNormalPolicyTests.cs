@@ -189,6 +189,49 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void EP03_U07_GunslingerUsesOneNormalActionBeforePlayerReturns()
+        {
+            var battle = new CoreLoopBattle(
+                CreateRankDeck(2, 7, 7),
+                CreateDefinitionDeck(
+                    "auto-pistol-7",
+                    "standard-plain-2",
+                    "auto-pistol-8",
+                    "standard-plain-3"),
+                playerMaximumSoul: 12,
+                enemyMaximumSoul: 3,
+                enemyPolicy: new GunslingerEnemyPolicy());
+            Assert.That(battle.Start(), Is.True);
+            var observedEnemyUses = new HashSet<string>();
+            bool playerDrawPileWasEmptyAtEnemyUse = false;
+            battle.Stepped += () =>
+            {
+                IReadOnlyList<PublicCombatAction> actions =
+                    battle.PublicActionHistory;
+                if (actions.Count == 0)
+                {
+                    return;
+                }
+
+                PublicCombatAction action = actions[actions.Count - 1];
+                if (action.ActorSide == CombatantSide.Enemy &&
+                    action.ActionType == PublicCombatActionType.UseCard)
+                {
+                    playerDrawPileWasEmptyAtEnemyUse |=
+                        battle.Player.Deck.DrawCount == 0;
+                    observedEnemyUses.Add(
+                        $"{battle.RoundNumber}:{actions.Count}:{action.SourceCardDefinitionKey}");
+                }
+            };
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+
+            Assert.That(playerDrawPileWasEmptyAtEnemyUse, Is.True);
+            Assert.That(battle.LastCardEffectResult.Value.Succeeded, Is.True);
+            Assert.That(observedEnemyUses, Has.Count.EqualTo(1));
+        }
+
+        [Test]
         public void EP03_U02_GunslingerFiresPistolBeforeStandAtLowConfidence()
         {
             EnemyActionCandidate pistol = CreateCardCandidate(1, "auto-pistol-7");
@@ -461,5 +504,6 @@ namespace DiaBlackJack.CoreLoop.Tests
                 return EnemyDecision.FromCandidate(stand, "capture-stand");
             }
         }
+
     }
 }

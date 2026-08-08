@@ -149,20 +149,20 @@ namespace DiaBlackJack.GameScene
                     keyboard.aKey.wasPressedThisFrame ||
                     keyboard.downArrowKey.wasPressedThisFrame)
                 {
-                    Move(-1);
+                    Move(-1, playSound: true);
                 }
                 else if (keyboard.rightArrowKey.wasPressedThisFrame ||
                     keyboard.dKey.wasPressedThisFrame ||
                     keyboard.upArrowKey.wasPressedThisFrame)
                 {
-                    Move(1);
+                    Move(1, playSound: true);
                 }
 
                 if (keyboard.enterKey.wasPressedThisFrame ||
                     keyboard.numpadEnterKey.wasPressedThisFrame ||
                     keyboard.spaceKey.wasPressedThisFrame)
                 {
-                    Confirm();
+                    Confirm(playSound: true);
                 }
             }
 
@@ -175,27 +175,27 @@ namespace DiaBlackJack.GameScene
             float scroll = mouse.scroll.ReadValue().y;
             if (scroll > 0.01f)
             {
-                Move(1);
+                Move(1, playSound: true);
             }
             else if (scroll < -0.01f)
             {
-                Move(-1);
+                Move(-1, playSound: true);
             }
         }
 
         private void SelectPrevious()
         {
-            Move(-1);
+            Move(-1, playSound: false);
             ClearSelectedButton();
         }
 
         private void SelectNext()
         {
-            Move(1);
+            Move(1, playSound: false);
             ClearSelectedButton();
         }
 
-        private void Move(int direction)
+        private void Move(int direction, bool playSound)
         {
             if (_options.Count == 0)
             {
@@ -205,7 +205,7 @@ namespace DiaBlackJack.GameScene
             int previousIndex = _selectedIndex;
             _selectedIndex = (_selectedIndex + direction + _options.Count) %
                 _options.Count;
-            if (_selectedIndex != previousIndex)
+            if (playSound && _selectedIndex != previousIndex)
             {
                 SoundManager.Current?.PlaySfx(ButtonPressSfxId);
             }
@@ -214,6 +214,11 @@ namespace DiaBlackJack.GameScene
         }
 
         private void Confirm()
+        {
+            Confirm(playSound: false);
+        }
+
+        private void Confirm(bool playSound)
         {
             ClearSelectedButton();
             if (_options.Count == 0 ||
@@ -224,7 +229,11 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            SoundManager.Current?.PlaySfx(ButtonPressSfxId);
+            if (playSound)
+            {
+                SoundManager.Current?.PlaySfx(ButtonPressSfxId);
+            }
+
             CommandRequested?.Invoke(_options[_selectedIndex].Command);
         }
 

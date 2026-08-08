@@ -856,8 +856,68 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(standalone.Mode, Is.EqualTo(GameSceneCombatHudMode.Restart));
             Assert.That(standalone.OptionActions.Single().Command.Kind,
                 Is.EqualTo(GameSceneCombatHudCommandKind.Restart));
-            Assert.That(stage.Mode, Is.EqualTo(GameSceneCombatHudMode.ReturningToRun));
+            Assert.That(stage.Mode, Is.EqualTo(GameSceneCombatHudMode.Hidden));
+            Assert.That(stage.HeaderText, Is.Empty);
             Assert.That(stage.OptionActions, Is.Empty);
+        }
+
+        [TestCase(CoreLoopState.PlayerTurn, "ROUND 2\nTURN 3 · PLAYER TURN")]
+        [TestCase(CoreLoopState.PlayerChoosingChangeCard, "ROUND 2\nTURN 3 · PLAYER TURN")]
+        [TestCase(CoreLoopState.PlayerResolvingCardEffect, "ROUND 2\nTURN 3 · PLAYER TURN")]
+        [TestCase(CoreLoopState.ResolvingAutomaticCardEffect, "ROUND 2\nTURN 3 · PLAYER TURN")]
+        [TestCase(CoreLoopState.PlayerResolvingDemonContract, "ROUND 2\nTURN 3 · PLAYER TURN")]
+        [TestCase(CoreLoopState.EnemyTurn, "ROUND 2\nTURN 3 · ENEMY TURN")]
+        [TestCase(CoreLoopState.ResolvingRound, "ROUND 2\nTURN 3")]
+        public void GFH01_U01_RoundTextIdentifiesCurrentTurnOwner(
+            CoreLoopState state,
+            string expected)
+        {
+            Assert.That(
+                GameHudView.BuildRoundText(
+                    state,
+                    BattleOutcome.InProgress,
+                    roundNumber: 2,
+                    turnNumber: 3),
+                Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void GFH01_U02_TutorialAsmodeusChoiceDisablesSkipOption()
+        {
+            CoreLoopBattle battle = CreateStartedAsmodeusContractBattle();
+            Assert.That(battle.TryBeginPlayerDemonContract(), Is.True);
+            PendingDemonContractInteraction offer =
+                battle.PendingPlayerDemonContractInteraction;
+            DemonContractOption asmodeus = offer.Options.Single(option =>
+                option.ContractDefinitionKey == DemonContractCatalog.AsmodeusKey);
+            Assert.That(
+                battle.TryResolvePlayerDemonContract(
+                    offer.InteractionId,
+                    asmodeus.OptionId),
+                Is.True);
+
+            GameSceneViewModel scene = GameScenePresenter.Create(battle);
+            GameSceneCombatHudViewModel hud = GameSceneCombatHudPresenter.Create(
+                scene.Core,
+                isStageBattle: true,
+                isShopOpen: false,
+                inputLocked: false,
+                scene.UsesDiegeticCardEffectSelection,
+                restrictedOptionId:
+                    AsmodeusDemonContractHandler.ForceHitOptionId);
+
+            Assert.That(
+                hud.OptionActions.Single(action =>
+                    action.Command.OptionId ==
+                        AsmodeusDemonContractHandler.SkipForcedHitOptionId)
+                    .IsInteractable,
+                Is.False);
+            Assert.That(
+                hud.OptionActions.Single(action =>
+                    action.Command.OptionId ==
+                        AsmodeusDemonContractHandler.ForceHitOptionId)
+                    .IsInteractable,
+                Is.True);
         }
 
         [Test]
@@ -1056,6 +1116,17 @@ namespace DiaBlackJack.CoreLoop.Tests
                 battle.PendingPlayerDemonContractInteraction;
             Assert.That(turnStart.Kind,
                 Is.EqualTo(DemonContractInteractionKind.SatanTurnStartChoice));
+
+            GameSceneCombatHudCommand useSatan =
+                new GameSceneCombatHudCommand(
+                    GameSceneCombatHudCommandKind.ResolveDemonContractChoice,
+                    SatanDemonContractHandler.UseAbilityOptionId,
+                    turnStart.InteractionId);
+            Assert.That(
+                GameManager.ShouldHideSatanTurnStartChoiceImmediately(
+                    turnStart,
+                    useSatan),
+                Is.True);
 
             GameSceneViewModel activeScene = GameScenePresenter.Create(battle);
             GameSceneDemonCardViewModel activeSatan =
@@ -1333,7 +1404,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(slot.parent, Is.EqualTo(optionPanel));
                 Assert.That(slot.anchorMin, Is.EqualTo(new Vector2(1f, 0f)));
                 Assert.That(slot.anchorMax, Is.EqualTo(new Vector2(1f, 0f)));
-                Assert.That(slot.anchoredPosition, Is.EqualTo(new Vector2(-48f, 48f)));
+                Assert.That(slot.pivot, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+                Assert.That(slot.anchoredPosition, Is.EqualTo(new Vector2(-238f, 80f)));
                 Assert.That(slot.sizeDelta, Is.EqualTo(new Vector2(380f, 64f)));
             }
             finally

@@ -37,7 +37,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             CoreLoopViewModel resultModel =
                 CoreLoopPresenter.Create(session.Battle);
             Assert.That(resultModel.AutomaticCardInteraction, Is.Null);
-            Assert.That(resultModel.AutomaticCardResult, Is.Null);
+            Assert.That(resultModel.AutomaticCardResult.HasValue, Is.True);
+            Assert.That(
+                resultModel.AutomaticCardResult.Value.Id,
+                Is.EqualTo(AutomaticCardResultPromptId.Poison));
             Assert.That(
                 session.Battle.LastAutomaticCardResult.Value.EffectKind,
                 Is.EqualTo(CardEffectKind.Poison));
@@ -271,6 +274,13 @@ namespace DiaBlackJack.CoreLoop.Tests
                     out int resolvedIndex),
                 Is.True);
             Assert.That(resolvedIndex, Is.GreaterThan(revealIndex + 1));
+            Assert.That(
+                timeline[revealIndex].KnifeAnimationCue.ActionOrdinal,
+                Is.GreaterThan(0));
+            Assert.That(
+                timeline[resolvedIndex].KnifeAnimationCue.ActionOrdinal,
+                Is.EqualTo(
+                    timeline[revealIndex].KnifeAnimationCue.ActionOrdinal));
         }
 
         [Test]

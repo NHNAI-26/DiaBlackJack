@@ -148,7 +148,7 @@ namespace DiaBlackJack.CoreLoop
                 new EnemyCombatProfile(
                     TricksterKey,
                     "사기꾼",
-                    EnemyGrade.Normal,
+                    EnemyGrade.Elite,
                     5,
                     EnemyBehaviorPolicyCatalog.Trickster,
                     new[]

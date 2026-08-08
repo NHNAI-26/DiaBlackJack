@@ -84,9 +84,10 @@ namespace DiaBlackJack.CoreLoop
 
     internal interface IDemonContractBustReplacementHandler
     {
-        bool TryReplaceOwnerBust(
-            DemonContractContext context,
-            out DemonContractEffectResult result);
+        bool CanReplaceOwnerBust(DemonContractContext context);
+
+        DemonContractEffectResult ReplaceOwnerBust(
+            DemonContractContext context);
     }
 
     internal interface IDemonContractBattleEndHandler
@@ -530,11 +531,10 @@ namespace DiaBlackJack.CoreLoop
                 (handler, context) => handler.PreventsOwnerBust(context));
         }
 
-        public bool TryReplaceOwnerBust(
+        public bool TryGetOwnerBustReplacement(
             CoreLoopBattle battle,
             IReadOnlyList<ActiveDemonContract> activeContracts,
             CombatantSide ownerSide,
-            out DemonContractEffectResult result,
             out ActiveDemonContract replacementContract)
         {
             if (battle == null)
@@ -559,18 +559,41 @@ namespace DiaBlackJack.CoreLoop
                     continue;
                 }
 
-                if (replacementHandler.TryReplaceOwnerBust(
-                    new DemonContractContext(battle, activeContract),
-                    out result))
+                if (replacementHandler.CanReplaceOwnerBust(
+                    new DemonContractContext(battle, activeContract)))
                 {
                     replacementContract = activeContract;
                     return true;
                 }
             }
 
-            result = null;
             replacementContract = null;
             return false;
+        }
+
+        public DemonContractEffectResult ReplaceOwnerBust(
+            CoreLoopBattle battle,
+            ActiveDemonContract replacementContract)
+        {
+            if (battle == null)
+            {
+                throw new ArgumentNullException(nameof(battle));
+            }
+
+            IDemonContractBustReplacementHandler handler =
+                GetSpecializedHandler<IDemonContractBustReplacementHandler>(
+                    replacementContract);
+            if (!handler.CanReplaceOwnerBust(
+                    new DemonContractContext(battle, replacementContract)))
+            {
+                throw new InvalidOperationException(
+                    "Validated bust replacement is no longer available.");
+            }
+
+            return handler.ReplaceOwnerBust(
+                new DemonContractContext(battle, replacementContract)) ??
+                throw new InvalidOperationException(
+                    "Bust replacement returned no effect result.");
         }
 
         public bool TryCompleteOwnerBustReplacement(

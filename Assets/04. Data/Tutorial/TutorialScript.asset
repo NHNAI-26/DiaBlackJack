@@ -35,6 +35,7 @@ MonoBehaviour:
       \uAC00\uC838\uAC04\uB2E4. \uAC04\uB2E8\uD558\uC9C0?"
     - "\uD55C \uBC88 \uD574\uBCF4\uC790\uACE0."
     isIntro: 1
+    roundOneStartLineIndex: 7
     defersRoundTwoReveal: 0
     gateKind: 0
     contractDefinitionKey: 
@@ -259,6 +260,8 @@ MonoBehaviour:
     - "\uC800 \uBA4D\uCCAD\uC774\uD55C\uD14C \uCE74\uB4DC \uD558\uB098 \uC120\uBB3C\uD574\uC8FC\uC790\uACE0."
     isIntro: 0
     defersRoundTwoReveal: 0
+    speaker: 1
+    waitForBattleEndPresentation: 0
     gateKind: 0
     contractDefinitionKey: 
     contractOptionId: 0
@@ -281,6 +284,8 @@ MonoBehaviour:
     - "\uADF8\uB7FC \uBB34\uC6B4\uC744 \uBE4C\uAC8C. \uB610 \uB9CC\uB098\uC790\uACE0."
     isIntro: 0
     defersRoundTwoReveal: 0
+    speaker: 1
+    waitForBattleEndPresentation: 1
     gateKind: 0
     contractDefinitionKey: 
     contractOptionId: 0

@@ -143,14 +143,13 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
-        public void RF05_V05_FourNormalOpponentProfilesAwardTheirConfiguredGold()
+        public void RF05_V05_NormalOpponentProfilesAwardTheirConfiguredGold()
         {
             string[] profileKeys =
             {
                 EnemyCombatProfileCatalog.CowardlyGamblerKey,
                 EnemyCombatProfileCatalog.GunslingerKey,
-                EnemyCombatProfileCatalog.CultistKey,
-                EnemyCombatProfileCatalog.TricksterKey
+                EnemyCombatProfileCatalog.CultistKey
             };
             GoldRewardCatalog rewards = GoldRewardCatalog.CreatePrototype();
             EnemyCombatProfileCatalog catalog = CreateNormalProfileCatalog(profileKeys);

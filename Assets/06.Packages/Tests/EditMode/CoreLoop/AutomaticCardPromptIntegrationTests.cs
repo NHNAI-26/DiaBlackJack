@@ -479,6 +479,42 @@ namespace DiaBlackJack.CoreLoop.Tests
                     "광신도의 [거짓말 탐지기] 효과로 숫자 7을 선언했습니다."));
         }
 
+        [Test]
+        public void CP04_U12_ResultSurvivesRejectedInputAndClearsOnNextPlayerAction()
+        {
+            CoreLoopBattle battle = AutomaticCardDebugPanel.CreateBattle(
+                CombatantSide.Player,
+                CardEffectKind.LieDetector);
+            Assert.That(battle.Start(), Is.True);
+            Assert.That(battle.TryPlayerHit(), Is.True);
+
+            PendingAutomaticCardInteraction pending =
+                battle.PendingPlayerAutomaticInteraction;
+            Assert.That(pending, Is.Not.Null);
+            Assert.That(
+                battle.TryResolvePlayerAutomaticCardChoice(
+                    pending.InteractionId,
+                    pending.Options[0].OptionId),
+                Is.True);
+            Assert.That(
+                battle.AutomaticCardResultPrompt.HasValue,
+                Is.True);
+
+            Assert.That(
+                battle.TryResolvePlayerAutomaticCardChoice(-1, -1),
+                Is.False);
+            Assert.That(
+                battle.AutomaticCardResultPrompt.HasValue,
+                Is.True,
+                "Rejected input must not dismiss the result prompt.");
+
+            Assert.That(battle.TryPlayerHit(), Is.True);
+            Assert.That(
+                battle.AutomaticCardResultPrompt.HasValue,
+                Is.False,
+                "The next accepted player action must dismiss the result prompt.");
+        }
+
         private static void AssertResolved(
             CombatPromptCatalogSO catalog,
             AutomaticCardResultPromptRequest request,

@@ -3,7 +3,15 @@
 > 프로젝트: DiaBlackJack  
 > 문서 책임자: 이천서  
 > 버전: v0.1  
-> 최종 갱신: 2026-08-07
+> 최종 갱신: 2026-08-08
+
+## 2026-08-08 튜토리얼·나이프·총잡이·버튼 호버 재보완
+
+- AI로 튜토리얼 화자 전환, 화면 안전 영역 말풍선 추적, 적 입장·패배·퇴장 완료 순서, 메인 메뉴 전환 수명 문제를 추적했다.
+- 나이프는 고정 시간 대기 대신 Animator의 준비 루프와 결과 상태 완료를 확인한다. 공개 비트를 준비 완료 직후 렌더하고, 자동 카드 결과 뒤에 판정·퇴장을 한 번만 재생한다. 나이프 직접 버스트는 합계 비교를 생략한다.
+- 총잡이는 플레이어 행동마다 상대 턴 실행 ID와 일반 행동 소비 상태를 만든다. 플레이어가 스탠드하지 않은 실행에서는 카드 선택 continuation을 포함해 일반 행동 한 번만 허용한다. 리볼버 cue에는 행동 ordinal을 포함했다.
+- 우측 하단 버튼의 런타임 pivot 덮어쓰기를 제거하고 중앙 pivot 좌표로 환산했다. 동적 재배치 뒤 `UIButtonScaleFeedback`의 resting geometry를 다시 동기화한다.
+- 신규 회귀 6건과 총잡이 라운드 경계 회귀는 통과했다. 관련 묶음은 198/199 통과했으며, 남은 1건은 작업 전부터 재현되는 덱 프리뷰 HDR 호버 색상 불일치로 이번 카드·덱 호버 제외 범위에는 포함하지 않았다. 전체 EditMode는 1,228/1,246 통과했고, 잔여 18건은 기존 에셋·프리팹 기대값 불일치다. Console 컴파일 오류는 0건이다.
 
 ## 1. 문서 목적
 
@@ -1844,6 +1852,31 @@ HUD 선택 슬롯은 `DefaultButton.prefab`의 중첩 인스턴스로 생성하�
 - 검증: 최초 작성 시점에는 Unity MCP 브릿지가 연결되지 않아 AI가 자동 회귀를 실행하지 못했다. 이후 같은 세션에서 브릿지가 연결되어 AI가 컴파일·전체 EditMode를 확인했다: 컴파일 오류 0, 전체 EditMode 1081/1083 통과. 잔여 2건(`GSV13_U01` 카드 도감 호버 색상 정밀도, `GSB01_U11` 말풍선 카메라 스택 알파)은 이번 변경과 무관한 기존 회귀다.
 - 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
 
+## 2026-08-08 자동 발동 결과 안내 수명·거짓말 탐지기 정보 확인
+
+- 이천서는 자동 발동 안내가 너무 빨리 사라지는 현상과 플레이어 거짓말 탐지기의 실제 `이상/미만` 결과 위치를 확인하도록 요청했다.
+- 개발 보조 AI는 `AutomaticCardResultPromptRequest` 생성, `NotifyNormalTurnEnded`, 라운드 초기화, 플레이어 공개 행동 기록과 `CombatPromptView` 우선순위를 추적했다. 결과 데이터와 거짓말 탐지기 문구는 정상 생성되지만 턴 종료에서 즉시 삭제되는 원인을 확인했다.
+- AI는 일반 턴 종료와 결과 수명을 분리하고, 라운드가 계속될 때는 다음 수락된 플레이어 공개 행동에서 삭제하며 라운드 결과가 확정되면 카드 비교 연출 게시 전에 삭제하도록 코드·회귀 테스트·문서 갱신을 보조했다. 선택 안내는 임시로 덮은 뒤 기존 결과가 다시 나타나며 새 자동 결과는 교체한다.
+- 거짓말 탐지기는 기존 공용 안내 영역에 선언 숫자, 상대 이름, 비공개 카드의 `이상/미만` 비교를 표시한다. 실제 숨은 숫자와 적 소유 비교 결과는 계속 차단한다.
+- 집중 EditMode 13/13, 전체 1,213/1,231 통과, 컴파일 오류 0이다. 잔여 18건은 기존 에셋·HUD·상점 계열 실패다. 새 외부 에셋·오픈소스·패키지는 추가하지 않았고 최종 승인 책임은 이천서에게 있다.
+
+## 2026-08-08 전투 UI 피드백·사탄 연출 보완
+
+- 이천서는 스테이지 등장 연출 중 합계 숨김, 사탄 능력 선택 UI와 상대 표정·카드 표식, 버튼 호버 확대 중심, 일반 버튼 클릭음을 점검·보완하도록 요청했다. 개발 보조 AI는 기존 라운드 1 렌더 억제 경로를 검토해 등장 중 세 합계가 숨겨지고 라운드 시작 뒤 표시되는 동작은 유지했다.
+- 플레이어 사탄의 정방향·역방향 능력 시작 시 상대를 `AttackThreatened`로 표시하고 실제 피해 시 `Attacked`로 전환했다. 역방향 능력 선택이 수락되면 사용/미사용 UI를 즉시 숨기며, 표식은 카드의 현재 공개 상태를 보존해 앞면 카드는 앞면에 생성되도록 정리했다.
+- `UIButtonScaleFeedback`은 매 프레임 위치를 보정하는 방식을 제거하고, 활성화 시 시각 위치를 보존한 채 pivot만 중앙으로 옮긴 뒤 scale tween만 실행하도록 정리했다. 따라서 우측 하단 선택 버튼도 호버 중 위치가 이동하지 않고 자기 중심에서 확대된다.
+- 일반 `UnityEngine.UI.Button` 클릭은 `UISelectableSoundHook`이 성공한 `onClick`마다 `SoundManager`의 `buttonPress`를 1회 요청한다. `SoundManager.prefab`의 `buttonPress` 항목은 기존 `button_press.mp3`를 사용하며, 리볼버처럼 이미 직접 음향을 처리하는 입력은 중복 재생 대상에서 분리했다.
+- 관련 회귀는 이후 무기·독극물 수정까지 포함한 누적 EditMode 검증에서 76/76 통과했고 컴파일 오류는 0이었다. 외부 에셋·오픈소스·신규 패키지는 추가하지 않았다. UI 체감과 최종 승인 책임은 이천서에게 있다.
+
+## 2026-08-08 무기 연출·상대 턴·독극물 후속 안정화
+
+- 이천서는 실제 플레이에서 망치가 타격 순간 보이지 않는 현상, 나이프 등장·공개·퇴장 순서가 뒤섞이는 현상, 총잡이의 한 턴 다중 행동, 집행자 독극물 이후 진행 정지와 강제 스탠드 표시 누락을 제보했다. 또한 독극물 대가로 영혼이 0이 된 경우에는 즉시 사망시키지 않고 라운드 종료 시점까지 회복 기회를 보장한다는 규칙을 확정했다.
+- 개발 보조 AI는 무기 애니메이터의 활성화·초기 상태·트리거 소비 순서, `GameManager` 전투 타임라인의 카드 공개 시점, 상대 행동 continuation, 독극물 선택 완료와 행동 해골 표시 경로를 추적했다. 망치는 애니메이션이 제어하는 타깃 자식을 직접 이동하지 않고 루트 기준으로 현재 카드 위치를 다시 맞추도록 보조했다. 나이프는 `Ready` 등장 상태를 먼저 보장한 뒤 `비공개 카드 공개 완료 → 결과 상태 1회 시작 → 결과 View 적용` 순서를 고정해 퇴장 연출의 선행·중복 실행을 차단했다.
+- 상대 일반 행동은 수락된 플레이어 행동의 실행 식별자별 1회로 제한하고, 플레이어가 이미 스탠드한 경우의 정상 연속 행동과 레비아탄 재사격은 별도 경계로 유지했다. 독극물 `StandNow`는 일반 스탠드와 같은 턴 진행을 사용하며, 수락된 플레이어 선택에서만 행동 해골을 Stand 버튼으로 이동하도록 정리했다.
+- 독극물 대가로 영혼이 0이 된 상태는 라운드 진행 중 즉시 패배로 처리하지 않는다. 해당 독극물의 승리 회복까지 적용한 뒤 라운드 종료 시에도 0이면 패배하도록 상태와 회귀 테스트를 보완했다.
+- 검증은 관련 EditMode 76/76 통과, 전체 EditMode 1,229건 중 1,211건 통과다. 전체 실패 18건은 기존 카드 콘텐츠·상점·프롬프트·프리팹·말풍선 계열의 범위 밖 실패로 분리했고, 컴파일 오류 0과 `git diff --check` 통과를 확인했다. 프리팹 표본에서는 나이프 등장 프레임과 망치 타격 프레임의 Renderer 활성·카메라 프러스텀 진입을 확인했으나, 실제 전투를 장시간 반복한 시각 검증과 최종 체감 승인은 이천서가 담당한다.
+- 기존 프로젝트 애니메이션·음향·프리팹만 사용했다. 외부 에셋·오픈소스·신규 패키지·새 의존성은 추가하지 않았다. 최종 규칙 결정·구현 승인 책임은 이천서에게 있다.
+
 ## 2026-08-08 MMUI-01 메인메뉴 월드 UI 개편
 
 - 기존 `MainMenuView` IMGUI 버튼을 제거하고 GameScene에서 사용하던 Telegraph를 새 게임·튜토리얼·설정 입력으로 연결했다. 새 게임은 기존 저장이 있으면 확인 상태를 즉시 확정해 한 번의 선택으로 새 예약을 만든다.
@@ -2562,3 +2595,90 @@ HUD 선택 슬롯은 `DefaultButton.prefab`의 중첩 인스턴스로 생성하�
 - 검증: 컴파일 0 오류를 반복 확인(중간에 MCP 연결이 끊겨 이천서가 재연결). `TutorialScript.asset` 생성 직후 `execute_code`로 19개 항목 전부(대사 줄 수, isIntro/defers 플래그, 게이트 종류, contractKey/optionId)를 원본과 대조해 데이터 무결성을 확인했다. `tutorialScript` 필드가 프리팹에서 실제로 에셋을 로드해오는지도 `execute_code`로 직접 조회해 확인했다. 관련 테스트 137개(튜토리얼 배틀·세션, 리볼버/HUD 프레젠테이션, 겁쟁이 도박사 프로필/스테이지/오퍼넌트 선택)를 targeted로 돌려 137/137 통과. `git status`로 의도한 파일만 변경됐음을 확인(art 폰트 아틀라스는 새로 늘어난 대사 텍스트 때문에 글리프가 추가로 구워진 정상적인 변화로 판단해 이번엔 되돌리지 않음).
 - Play 모드 확인 불가로, 이번 7건 전부(특히 (4)의 "첫 대사 자동 출력"과 (5)의 "적 등장 연출") 실제 화면에서 의도대로 동작하는지는 이천서의 에디터 내 최종 확인이 반드시 필요하다 — 코드상 재현 가능한 원인을 못 찾은 두 항목은 다시 확인해서 여전히 문제라면 더 구체적인 상황(스크린샷, 콘솔 로그 등)을 알려달라고 요청할 예정.
 - 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+
+## 2026-08-08(2) 튜토리얼 시스템 — "대사가 전혀 안 나옴" / "적 등장 연출도 안 나옴" 근본 원인 발견 및 수정
+
+- 이천서: "지금 튜토리얼 시작해도 아무 대사도 안 함. 수정 좀" → (plan 모드 진입, 조사 계획 승인 후) "애초에 상대 등장 연출이 안 나옴. 그래서 다음 프로세스로 안 넘어가는 듯?"라는 결정적 단서 추가 제보.
+- **먼저 git 히스토리부터 확인**: 지난 7건 커밋(`06acd69 "fix : 튜토리얼 구현 중"`)이 실제로 이천서 본인 손으로 `main`에 들어가 있었고, 그 뒤로 팀원들의 커밋·머지가 여러 건 쌓여 있었다(`64237e0 "fix : 게임씬 오버라이드 제거"` 포함, 다른 팀원이 `GameScene.unity`를 열었다 저장하면서 대량 리시리얼라이즈 발생 — 오늘 아침 직접 겪었던 것과 같은 현상이 팀원 쪽에서도 재현됨). `GameManager.cs`는 상점/카메라/영혼감소 연출 등 무관한 대규모 변경과 함께 계속 공유 편집되고 있었다.
+- **`git diff 06acd69 HEAD`로 튜토리얼 관련 파일을 전부 직접 대조**: `TutorialDirector.cs`/`TutorialScriptSO.cs`/`TutorialNarratorView.cs`/`StageProgressionRuntime.cs`/`MainMenuController.cs`/`TutorialBattleFactory.cs`/`TutorialScript.asset`/`GameFlowController.cs`는 내 커밋 이후 단 한 줄도 안 바뀌었고, `GameManager.cs`에 병합된 대규모 변경도 튜토리얼 관련 코드 블록(BindBattle 분기, 나레이터-클릭 처리 등)은 원문 그대로였다. **딱 하나 확정된 회귀**: `TutorialNarratorAnchor`의 회전이 `64237e0`에서 원래의 거의 세워진 각도로 되돌아가 있었다(`git show 64237e0 -- GameScene.unity`로 직접 확인) — 다시 손패 카드와 같은 각도(270,0,0)로 텍스트 직접 편집으로 복구했지만, 이건 시각적 문제일 뿐 "대사가 안 나옴"의 원인은 아니었다.
+- **정적 분석의 한계에 부딪혀 Play 모드로 직접 재현**: 이번엔 Unity MCP로 실제 Play 모드에 진입해 `MainMenuController.RequestTutorial()`을 `execute_code`로 직접 호출(OnGUI 버튼 클릭과 동일한 코드 경로)한 뒤, 리플렉션으로 `GameFlowController`/`GameManager`의 내부 상태를 실시간으로 조회했다. `GameFlowController.CurrentScreen`이 계속 `Unavailable`에 멈춰있고 `_session`(private `FormalRunSession` 필드)이 계속 `NULL`인 것을 확인 — `GameManager._tutorialDirector`도 당연히 NULL. 반면 `StageProgressionRuntime.Instance.FormalSession`은 이미 정상적으로 채워져 있었다(직접 조회해 확인).
+- **근본 원인 특정**: `GameFlowController.Start()`가 `if (!TryAdoptFormalRun()) { ...; return; }` 형태로 **딱 한 번만** 시도하고, 실패하면 그걸로 끝 — 이후 어디서도 재시도하지 않는다(`RefreshFlow()`는 이후 오직 플레이어 입력 처리 메서드들에서만 불리는데, 튜토리얼은 아직 시작도 안 됐으니 입력이 있을 리 없다). `_runtime.SaveFlow.IsMenuVisible`이 `Start()` 실행 시점엔 아직 `true`였다가(코드로 생성한 `StageProgressionRuntime` 인스턴스가 `DontDestroyOnLoad`+`SaveFlow` 활성화 처리를 마치는 타이밍이, 씬이 로드되고 `GameFlowController.Start()`가 도는 시점과 미묘하게 경합하는 것으로 추정) 그 직후에야 `false`로 바뀌는 듯한 타이밍 경합이 있는 것으로 보인다 — **직접 실험으로 확정**: 멈춰있는 상태에서 `RefreshFlow()`를 리플렉션으로 강제 호출하니 즉시 `CurrentScreen=Combat`, `_session=SET`, `tutorialDirector=SET`으로 정상화됐다. 이게 정확히 "적 등장 연출도 안 나오고 대사도 안 나옴"과 일치하는 증상이었다 — 등장 연출과 튜토리얼 인트로 둘 다 `Combat` 화면 진입 로직(같은 `if (waitForCharacterEntrance)` 블록) 안에서만 트리거되는데, 그 진입 로직 자체가 아예 실행이 안 되고 있었던 것.
+- **수정**: `GameFlowController`에 `Update()`를 신규 추가 — `_session == null`인 동안 매 프레임 `TryAdoptFormalRun()`을 재시도하고, 성공하면 `RefreshFlow()`를 호출한다. `_session`이 이미 채워진 정상 케이스에서는 매 프레임 null 체크 한 번만 하고 아무 일도 안 하므로 기존 동작에 영향 없음. 일반(비튜토리얼) 런은 `StageProgressionRuntime`이 씬에 원래부터 있던 오브젝트라 이 경합이 거의 발생하지 않았을 것으로 추정되지만, 코드로 새로 스폰하는 튜토리얼 인스턴스는 타이밍이 미묘하게 달라 걸린 것으로 보인다.
+- **수정 후 다시 Play 모드로 end-to-end 검증**: 새로 Play 모드 진입 → `RequestTutorial()` 호출 → 씬 전환 확인 → (자동 프레임 진행이 배경에서 멈춰있어 `Update()`를 리플렉션으로 1회 수동 호출해 시뮬레이션) `_session=SET`, `CurrentScreen=StartingDemonReveal`로 정상 전환 확인 → `RequestCompleteStartingDemonReveal()`을 호출해 `CurrentScreen=Combat`까지 진행 → `GameManager._tutorialDirector`가 `_begun=True, _stepIndex=0`으로 정상 생성됨을 확인 → `TutorialNarratorView.IsActive=True`, `charactersRoot.active=False`(의도대로 적은 아직 안 보임)까지 확인 → 마지막으로 실제 렌더링되는 `TMP_Text.text` 값을 리플렉션으로 직접 읽어 **`"드디어 정신을 차렸군."`**(대본 첫 줄과 정확히 일치)이 실제로 표시되고 있음을 최종 확인했다. 참고로 이 세션에서 Play 모드는 백그라운드에서 프레임이 거의 안 도는 상태(`Time.frameCount=1`, `Application.runInBackground=false`)라 실제 애니메이션/타이머 흐름까지는 자동 검증할 수 없었고, 상태 전이 로직만 리플렉션으로 단계별 확인했다 — 실제 시각적 재생(엔트런스 애니메이션 타이밍, 텍스트 타이핑 속도 등)은 여전히 이천서의 직접 플레이 확인이 필요하다.
+- 변경 파일: `GameScene/GameFlowController.cs`(`Update()` 신규 추가), `00. Scenes/GameScene.unity`(나레이터 앵커 회전 재복구 — 팀원 커밋으로 되돌아갔던 것).
+- 검증: 컴파일 0 오류. `TutorialBattleScriptTests`+`TutorialSessionTests` 8/8 통과. `git status`로 의도한 파일 2건만 변경됐음을 확인. **이번엔 Unity MCP로 실제 Play 모드 진입 + 코드 직접 호출 + 리플렉션 상태 조회까지 수행해, 이전 라운드들과 달리 "코드상 원인 불명"이 아니라 실제 재현·수정·재검증까지 전부 완료했다.**
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+
+## 2026-08-08(3) 튜토리얼 시스템 — "상대 패배 연출이 나온 뒤 등장 연출·대사가 멈춤" 2차 회귀 근본 원인 발견 및 수정
+
+- 1차 수정(`Update()` 재시도 로직)을 반영한 뒤 이천서가 재테스트하며 새 증상을 제보: "처음에 상대 패배 연출이 나오고 난 뒤, 상대 등장 연출 및 튜토리얼 대사가 재생이 안 되네요." 1차 버그 때문에 `RefreshFlow()`가 튜토리얼에서 한 번도 끝까지 실행된 적이 없어, 이 두 번째 잠복 버그는 1차 수정 전까지 실행될 기회 자체가 없었다 — 즉 1차 수정이 새 버그를 만든 게 아니라, 처음으로 그 코드 경로에 도달하게 해서 드러난 것.
+- **근본 원인**: `GameFlowController.RenderFlowScreen()`이 `UpdateCharactersVisibility(shouldShow)`를 호출하는데, 튜토리얼은 `StageProgressionSession.PrepareCurrentStage()`의 튜토리얼 전용 분기(`OpponentSelection`을 건너뛰고 곧장 `InBattle`)로 인해 `StartingDemonReveal → Combat`이 **단 한 번의 `RefreshFlow()` 호출 안에서** 전환된다. 이 순간 `GameManager.BindBattle`이 이미 불려 `HasPendingTutorialIntro=true`가 되어 `shouldShow=false`가 계산되는데, `charactersRoot`는 방금 전 `StartingDemonReveal`(상인 폼 표시)에서 이미 active 상태였다 — 그 결과 `UpdateCharactersVisibility(false)`의 "이미 떠 있으면 퇴장 애니메이션 재생" 분기가 그대로 타서 `enemyCharacter.PlayExitAnimation(...)`(180도 회전 + "enemyOut" SFX)이 발동한다. 이것이 사용자가 본 "상대 패배 연출"의 정체다. 일반(비튜토리얼) 런은 `StartingDemonReveal → OpponentSelection → Combat` 2홉을 거치고 `HasPendingTutorialIntro`가 항상 false라 이 조건을 절대 만나지 않는다.
+- 그 다음 멈추는 이유: `CharacterView.KillAppearanceAnimation()`이 트윈을 `complete:true` 없이 `Kill()`해서, 퇴장 트윈이 재생 중인 상태로 인트로 대사가 끝나 `ShowCharactersWithEntrance()`가 다시 불리면 `wasVisible = charactersRoot.activeSelf`가 여전히 `true`로 읽혀 진짜 등장(`PlayEntranceAnimation`) 호출 자체가 스킵된다 — `CompleteCharacterEntrance`가 안 불리니 라운드1 카드 공개, `TutorialDirector.NotifyRoundOneRevealReady()`까지 전부 연쇄적으로 멈춘다.
+- **수정**: `UpdateCharactersVisibility(bool shouldShow, bool skipExitAnimation = false)`로 시그니처 확장. `shouldShow=false`이고 `charactersRoot`가 이미 active일 때, `skipExitAnimation`이 true면 `PlayExitAnimation` 대신 `charactersRoot.SetActive(false)`로 트윈 없이 즉시 비활성화한다. `RenderFlowScreen()`에서 `bool isTutorialIntroPending = isCombat && !combatCharactersReady;`를 계산해 그 값을 `skipExitAnimation`으로 전달 — 튜토리얼의 단일 홉 전환 케이스에만 적용되고 일반 런에는 전혀 영향 없다.
+- **Play 모드 실측 검증** (Unity MCP `execute_code` + 리플렉션, `DG.Tweening.DOTween.CompleteAll(true)`로 트윈을 즉시 완료시켜 각 단계를 결정적으로 재현): `RequestTutorial()` → `charactersRoot.activeSelf=True`(상인 폼 표시, `StartingDemonReveal`) 확인 → `RequestCompleteStartingDemonReveal()` 호출 직후 **같은 동기 호출 안에서** `charactersRoot.activeSelf`가 `True→False`로 즉시 전환되고 `enemyCharacter`의 `_appearanceTween` 필드가 `null`(퇴장 트윈이 아예 생성되지 않음)임을 확인 — 수정 전이라면 여기서 `PlayExitAnimation`이 걸려 트윈 객체가 생겼을 것. `TutorialDirector.HandleLineAdvanceRequested()`를 반복 호출해 인트로 대사를 끝까지 진행 → `IntroCompleted` 발화 → `HasPendingTutorialIntro=False`로 전환되며 `charactersRoot.activeSelf=True`(정상 등장) 확인 → `DOTween.CompleteAll(true)` + `Update()` 재호출로 엔트런스 트윈 콜백을 완료시키자 `TutorialDirector._awaitingRoundOneReveal`이 `True→False`, `_stepIndex`가 `0→5`로 정상 전진 — `NotifyRoundOneRevealReady()`까지 이어지는 전체 체인이 막힘 없이 완주함을 확인했다.
+- 검증 중 콘솔에서 `MissingReferenceException: TutorialTypewriterTextView...`(파일 `TutorialTypewriterTextView.cs:96`) 1건을 발견했으나, 발생 시점을 대조한 결과 검증 과정에서 직접 `manage_editor stop`으로 이전 Play 세션을 강제 종료했다가 곧바로 재진입한 절차에서 남은 잔여 콜백으로 판단된다(실제 유저 플로우에서는 이런 급작스러운 세션 종료가 없음) — 이번 수정 범위와 무관한 테스트 아티팩트로 보고 별도 조치는 하지 않았다.
+- 컴파일 0 오류. `TutorialBattleScriptTests`+`TutorialSessionTests` 11/11 통과(1차 대비 테스트 개수 증가는 기존 스위트 변경 없음, 최신 브랜치 반영분).
+- 변경 파일: `GameScene/GameFlowController.cs`(`UpdateCharactersVisibility` 시그니처 확장 + `RenderFlowScreen()`의 호출부 수정). `git status`로 의도한 범위(이 파일 + 기존 미커밋 상태였던 씬/문서)만 변경됐음을 확인.
+- 남은 과제: Play 모드 자동화는 창 포커스가 없어 실제 프레임이 거의 안 돌기 때문에(`DOTween.CompleteAll`로 트윈을 강제 완료시켜 우회함), 실제 애니메이션의 시각적 타이밍(퇴장 생략이 부자연스럽게 보이지 않는지 등)은 이천서의 직접 플레이 확인이 필요하다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+
+## 2026-08-08(4) 튜토리얼 3차 회귀 — "라운드1 종료 대사가 스탠드 즉시 나옴" 근본 원인 발견 및 수정
+
+- 2차 수정(등장/퇴장 연출 경합) 이후 이천서가 재테스트하며 새 증상 제보: "'패자는 대가를 치뤄야겠지'가 라운드 종료 시 나와야 하는데, 지금은 그냥 둘 다 스탠드하면 나온다. 라운드 종료 후 그 대사 → 이후 대사 → 2라운드 세팅 → '한참 모자라는군. [히트]해보라고.' 순서가 되어야 한다."
+- Explore 에이전트로 `TutorialDirector.cs`/`GameManager.cs`/`CoreLoopBattle.cs`를 전수 조사한 뒤 직접 코드를 대조해 원인을 확정했다: `TutorialDirector`의 스텝 구성 자체(스텝 6 Stand 게이트 → 스텝 7 "패자는 대가를 치뤄야겠지" 이하 소울 손실 대사, `defersRoundTwoReveal`로 라운드2 카드 공개는 이미 대사 이후로 미뤄지도록 설계돼 있음)는 문제가 없었다. 문제는 **스텝 6→7 전환(게이트가 닫히는 시점) 자체가 너무 이르다는 것**이었다.
+  - `TutorialDirector.Observe()`(`TutorialDirector.cs:99-126`)는 `_gameManager.Battle`의 **라이브(이미 완료된) 상태**를 스냅샷(`TurnNumber`/`RoundNumber`/`LastResolution.Id`)해서 게이트 진입 시점과 다르면 즉시 게이트를 닫는다. 그런데 `CoreLoopBattle.TryPlayerStand()`는 라운드 해소(데미지 적용, `LastResolution` 세팅)와 다음 라운드 시작(카드 딜)까지 **전부 동기적으로 한 호출 안에서** 끝내버린다.
+  - `GameManager.PlayTimeline(GameSceneViewModel)`(`GameManager.cs:3365`)은 이 동기 처리 중 캡처된 여러 "비트"(연출 스냅샷)를 순회하며 하나씩 애니메이션으로 재생하는 코루틴인데, `_tutorialDirector?.Observe();` 호출이 각 비트 루프 안 — `PlaySoulLossRecords`/`PlayRoundComparison`(라운드1의 실제 데미지/비교 연출)보다도 **먼저** 있었다(`GameManager.cs:3523`, `git blame` 결과 이번 세션 튜토리얼 작업 중 추가된 줄). 라이브 배틀 상태는 이미 최종값이라, 첫 비트에서 곧바로 게이트가 닫혀 "패자는 대가를 치뤄야겠지"가 즉시 튀어나왔던 것.
+  - `PlayTimeline`의 while 루프가 모든 비트를 다 돈 뒤에는 이미 `RefreshView()`가 한 번 더 호출되고(`GameManager.cs:3592-3595`), `RefreshView()` 자신도 마지막에 `_tutorialDirector?.Observe();`를 호출한다(`GameManager.cs:4139`) — 즉 비트 루프 안의 조기 호출만 없애면, 게이트는 여전히(그러나 이번엔 올바른 시점에) 닫힌다.
+  - 라운드 2 카드가 그 사이 미리 보일 걱정은 없음을 코드로 확인: Stand 게이트 `OnEnter`가 이미 `SuppressHandRenderUntilRoundOneStart()`를 걸어둬서 `RenderHands`가 통째로 no-op이고(`GameManager.cs:4408-4411`), `RevealRoundOneHands()`가 `RoundOneRecapCompleted` 이후에만 불린다 — 이 메커니즘은 원래부터 올바르게 설계돼 있었다.
+- **수정**: `GameManager.cs:3523-3524`의 `_tutorialDirector?.Observe();` 호출(과 뒤 빈 줄)을 제거. `PlayTimeline`의 비트 루프 안에서 매 비트마다 게이트를 조기에 닫던 호출을 없애고, 루프가 완전히 끝난 뒤 `RefreshView()`가 자연스럽게 한 번 더 호출하는 `Observe()`에만 의존하게 했다. 다른 게이트(Hit×3, BeginChange, Revolver, ContractCandidate, ContractOption)는 라운드 해소 같은 다중 비트 부작용이 없어 이 변경으로 체감 타이밍이 "같은 액션의 연출이 끝나는 순간"으로 아주 약간 늦춰질 뿐, 기존 동작을 깨지 않는다. `TutorialDirector.cs`/`TutorialScript.asset`/라운드2 억제·공개 메커니즘은 전혀 건드리지 않았다(이미 올바르게 설계돼 있었으므로).
+- **Play 모드 실측 검증** (Unity MCP `execute_code` + 리플렉션): 인트로 → 히트 게이트 2회(스텝2, 스텝4, 사이사이 대사 클릭으로 정확히 스크립트와 동일하게 진행) → 스텝6(Stand 게이트) 도달까지 재현한 뒤, **`GameManager.PlayTimeline`을 `StartCoroutine`이 아니라 직접 얻은 `IEnumerator`를 한 단계씩 `MoveNext()`로 수동 구동**하며 매 스텝마다 `TutorialDirector._stepIndex`/`_gateActive`를 리플렉션으로 조회:
+  - `MoveNext()` #1~#5(라운드1 데미지/비교 연출 비트들) 동안 `step=6, gateActive=True`로 **게이트가 계속 열려있음**을 확인 — 수정 전이라면 이미 #1에서 `step=7`로 넘어가 있었을 지점.
+  - 마지막 `MoveNext()`(루프가 끝나고 `RefreshView()`까지 실행되어 `more=False` 반환)에서야 `step=7, gateActive=False`로 정상 전환됨을 확인.
+  - 이어서 `HandleLineAdvanceRequested()`로 스텝7의 6줄("패자는 대가를 치뤄야겠지." 포함)을 전부 클릭해 정확히 스크립트 순서대로 표시됨을 실제 렌더링된 TMP 텍스트로 하나하나 확인.
+  - `RevealRoundTwoAfterRecapRoutine()`을 마저 구동해 스텝8 "한참 모자라는군. [히트]해보라고."로 정상 전환되는 것까지 최종 확인 — 요청받은 순서(라운드1 종료 연출 → "패자는 대가를..." 이하 대사 → 라운드2 세팅 → "한참 모자라는군...") 전체가 끝까지 재현됨.
+- 검증 중간에 사용자가 실시간으로 에디터 화면을 보고 "등장 연출이 또 안 나온다"고 문의한 순간이 있었는데, 이는 자동 검증이 리플렉션으로 내부 메서드를 강제 호출하고 `DOTween.CompleteAll()`로 애니메이션을 즉시 스킵시키는 과정이라 실제 플레이와 달리 화면이 이상하게 보인 것으로 확인 — 실제 버그가 아니라 자동화 테스트 특유의 화면 상태였음을 안내함.
+- 컴파일 0 오류. `TutorialBattleScriptTests`+`TutorialSessionTests` 11/11 통과. `read_console`로 에러/경고 없음 확인. `git status`로 의도한 파일(`GameManager.cs`)만 추가 변경됐음을 확인.
+- 남은 과제: 이번에도 리플렉션으로 코루틴을 수동 구동해 로직 정확성은 확실히 검증했지만, 실제 연출 타이밍(대사와 대사 사이의 자연스러운 호흡 등)은 이천서의 직접 플레이 확인이 필요하다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+
+## 2026-08-08(5) 튜토리얼 4차 회귀 — "실제 플레이에서도 첫 등장 연출이 안 나옴" 근본 원인 발견 및 수정
+
+- 3차 수정 보고 직후 이천서가 "실제 플레이에서도 등장 연출이 안 나온다"고 재차 제보. 자동화 검증 특유의 화면일 뿐이라고 판단했던 것과 달리 실제로 재현되는 버그였다. `AskUserQuestion`으로 정확한 시점을 확인한 결과 **"튜토리얼 시작 직후(첫 등장)"** — `StartingDemonReveal`에서 상인/적 캐릭터가 맨 처음 나타나야 하는 순간이었다.
+- 처음엔 Round 2/3에서 이미 검증한 코드 경로라고 생각했지만, 이전 검증들은 전부 `moodController.IsEntranceDoorAnimationPlaying`(문 열리는 연출)를 매번 `DOTween.CompleteAll(true)`로 먼저 강제 완료시킨 뒤에야 다음 단계를 진행했다는 것을 재확인했다 — 즉 "문 연출이 아직 재생 중인 상태에서 플레이어가 빠르게 확인 클릭을 하는" 경우를 단 한 번도 테스트하지 못했다.
+- **Play 모드에서 `DOTween.CompleteAll`을 쓰지 않고 실제 타이밍대로 재현**해 근본 원인을 확정했다: `StartingDemonReveal`에서 문 열리는 연출이 재생되는 도중 `RequestCompleteStartingDemonReveal()`(빠른 확인 클릭 시뮬레이션)을 호출하자 → 화면이 `Combat`으로 전환되고 튜토리얼 인트로 대기 때문에 `UpdateCharactersVisibility(false, skipExitAnimation: true)`가 호출되는데, 이 안의 `CancelEnemyAppearanceDelay()`가 **아직 진행 중인 문 연출을 기다리고 있던 `_charactersEntranceWaiting` 플래그를 무조건 `false`로 초기화**해버렸다(`GameFlowController.cs`). 그 뒤 문 연출이 실제로 끝나 `EntranceDoorAnimationCompleted` 이벤트가 발생해도, `HandleEntranceDoorAnimationCompleted()`는 `_charactersEntranceWaiting`이 이미 꺼져 있으니 그냥 조용히 리턴 — 캐릭터의 첫 등장 연출(`PlayEntranceAnimation`)이 영원히 스킵됐다. 이건 문 연출이 단 한 번만 완료 이벤트를 쏘는 구조라, 한 번 놓치면 다시 트리거될 방법이 없다.
+- `execute_code`로 실측: 빠른 확인 클릭 직후 `entranceWaiting=True`(수정 전엔 여기서 곧바로 `False`로 꺼짐) → 문 연출이 실제로 끝나도 `charactersRoot.activeSelf`가 계속 `False`로 남아있음을 직접 확인해 재현에 성공했다.
+- **수정**: `GameFlowController`에 `_pendingHideAfterDoorAnimation` 필드를 추가. `UpdateCharactersVisibility(false, ...)`가 호출됐을 때 `_charactersEntranceWaiting`이 켜져 있고 문 연출이 **아직 진행 중**이면, 곧바로 취소하지 않고 `_pendingHideAfterDoorAnimation = true`만 기록한 뒤 리턴 — 문 연출은 자연스럽게 끝까지 재생되도록 둔다. `HandleEntranceDoorAnimationCompleted()`는 이 플래그가 서 있으면 등장 연출을 재생하지 않고 조용히 숨김 상태로 정리(`_charactersEntranceWaiting=false`)한다 — 이후 튜토리얼 인트로가 끝나면 별도 경로(`BeginRoundOneAfterEntranceHold`)가 정상적으로 다시 등장 연출을 트리거하므로 문제없다. `BeginWaitingForDoorAnimation()`에는 이 플래그를 리셋하는 한 줄을 추가해, 숨김 요청 뒤 다시 표시 요청이 들어오는 경우에도 낡은 상태가 남지 않게 했다.
+- **Play 모드 재검증** (여전히 `DOTween.CompleteAll` 없이 레이스 상황을 그대로 재현): 문 연출 재생 도중 확인 클릭 → `entranceWaiting=True` 유지, `pendingHide=True` 기록 확인 → 문 연출이 실제로 끝난 뒤 `charactersRoot.activeSelf=False`(정상적으로 숨김 유지, 낭비되는 깜빡임 없음), `entranceWaiting=False`/`pendingHide=False`(둘 다 깔끔하게 정리, 막힌 상태 없음) 확인 → 이어서 인트로 대사를 끝까지 클릭해 진행하자 `charactersRoot.activeSelf=True`로 정상적으로 재등장, `step=1`까지 정상 진행됨을 확인 — 회귀 없음. `manage_camera` 스크린샷으로 캐릭터가 실제로 테이블 뒤에 렌더링되는 것까지 시각적으로 확인했다(수정 전 스크린샷은 캐릭터 영역이 완전히 비어 있었음).
+- 컴파일 0 오류. `TutorialBattleScriptTests`+`TutorialSessionTests` 11/11 통과. `git status`로 의도한 파일(`GameFlowController.cs`)만 추가 변경됐음을 확인.
+- 이번 건은 이전 세 차례와 달리 자동화 스크립트의 `DOTween.CompleteAll` 남용이 실제 회귀를 오랫동안 가려온 사례였다 — 앞으로 문/등장 연출이 얽힌 타이밍을 검증할 때는 강제 완료 없이(또는 완료 시점을 의도적으로 늦춰가며) 최소 한 번은 재현해야 함을 교훈으로 남긴다.
+- 외부 에셋·오픈소스·신규 패키지 추가 없음. 최종 구현·검증·승인 책임은 이천서에게 있다.
+## 2026-08-08(6) 전투 종료 HUD·턴 소유자·튜토리얼 도입 순서 보완
+
+- 이천서는 스테이지 전투 종료 시 `RETURNING TO RUN` 패널을 숨기고, 턴 표시에 `PLAYER TURN`/`ENEMY TURN`을 추가하며, 튜토리얼을 `첫 대사 전체 → 상대 등장 → 카드 공개 → 히트 설명` 순서로 고정하도록 요청했다. 아스모데우스 카드와 말풍선은 계약서 옆으로 이동하고 능력 설명부터 실제 선택 수락까지 `능력 사용하지 않기`를 차단하도록 결정했다.
+- AI는 스테이지 전투 종료 HUD를 즉시 숨김으로 분기하고 독립 전투 재시작 UI는 유지했다. 턴 문구는 두 줄 `ROUND n` / `TURN n · PLAYER TURN|ENEMY TURN` 형식으로 투영했다. 튜토리얼 전투는 캐릭터 참조가 늦어도 잠금 바인딩하며, 첫 대사 완료 뒤에만 등장 요청을 만들고 등장 완료 뒤 첫 손패와 히트 설명을 잇도록 정리했다. 계약 옵션 제한은 설명 대사 진입 시 미리 적용한다.
+- 실제 재생 조사에서 비활성 `TutorialNarratorView`와 `TutorialTypewriterTextView`가 최초 `Show`/`Play`로 활성화되는 순간 `Awake()`가 다시 비활성화하는 공통 원인을 발견했다. 최초 표시 요청 플래그를 추가해 초기 씬 로드 때만 숨기고, 요청에 의한 활성화는 유지하도록 수정했다. 카드와 말풍선 앵커는 정본 프리팹과 GameScene에 동일하게 반영했다.
+- 검증: 신규 최초 활성화 회귀 2건 통과. HUD·튜토리얼 관련 149건 중 이번 변경 관련 테스트는 모두 통과했고, 기존 자산 기대값 불일치 `GSB01_U09`, `GSB01_U11` 2건만 실패했다. 전체 EditMode 1,241건을 실행했으며 기존 에셋·프로필 기대값 불일치가 다수 남아 전체 성공은 아니었다. 스크립트 검증과 컴파일 오류는 0건이다. 실제 튜토리얼 진입에서 첫 대사 내레이터·말풍선 활성 및 상대 숨김 상태를 확인했고, 1280×720 캡처로 턴 문구와 계약서 옆 카드 배치를 확인했다.
+## 2026-08-08 나이프 상태 누수 및 튜토리얼 진행 순서 보완
+
+- AI는 나이프 공개 대기 상태가 `PlayTimeline` 지역 변수로만 존재하고 자동 카드 beat 뒤 삭제되는 원인, 비활성 `Characters`를 `GameObject.Find`로 찾지 못하는 원인, 대사 중 다음 계약 옵션을 미리 여는 원인을 추적했다.
+- 나이프 시퀀스 지속화, cue action ordinal, Animator 공통 cleanup, 튜토리얼 명령 차단, 비활성 참조 복구, 비교 완료 신호 기반 라운드 전환을 구현했다.
+- Unity MCP 게이트를 통과한 뒤 관련 fixture 85/85, 전체 EditMode 1,230/1,248을 실행했다. 전체 실패 18건은 기존 범위 밖 실패와 동일하며 컴파일 오류는 없다.
+
+## 2026-08-08 나이프 두 번째 사용 및 튜토리얼 시작 순서 재검증
+
+- AI는 두 번째 나이프의 판정 전 성공 연출을 `LastCardEffectResult`와 새 action ordinal의 잘못된 결합으로 특정했다. 결과 ordinal 대조 회귀 테스트를 먼저 추가해 수정했다.
+- `NumericBust` 원인값, 첫 라운드 독극물 cue 소비 시점, 튜토리얼 입장/대사/손패 공개 순서를 추적했다. 계약 아스모데우스 카드 보존 경계도 손패 동기화에 추가했다.
+- Unity MCP 관련 fixture 73/73, 전체 EditMode 1,234/1,252, 컴파일 및 Console 코드 오류 0건을 확인했다. 전체 실패 18건은 기존 범위 밖 기준과 동일하다. Play Mode 시각 검증은 수행하지 않았다.
+## 2026-08-08 리볼버·UI 입력·튜토리얼·독극물 보완 기록
+
+- 사용자 재현 조건을 기준으로 이전 카드 결과와 새 행동 ordinal의 결합, UGUI와 Physics 입력의 동시 처리, 튜토리얼 전역 입력 잠금 누락, 첫 손패 억제 중 독극물 cue 유실 경로를 추적했다.
+- Codex가 cue 식별자 보강, HUD 포인터 우선권, 첫 라운드 연출 직렬화, 회귀 테스트와 Unity MCP 검증을 수행했다.
+- Unity 컴파일에서 게임 코드 오류 0건을 확인했다. 전체 EditMode는 1,236/1,254 통과했고 기존 범위 밖 실패 18건은 이전 기준과 동일했다.
+
+## 2026-08-09 상대 지정·후보 제외·바알제붑 순서 보완
+
+- 이천서는 상대 지정 디버그 전투, 첫 제안 일반 적 제한, 이전 제안 제외, 사기꾼 엘리트 통일, 무기 연출 후 바알제붑 발동 기준을 확정했다.
+- Codex는 상대 후보 생성기와 저장 복원 경로, 적 콘텐츠 asset·런타임 카탈로그·현상수배서 투영, 무기 타임라인과 버스트 대체 변경 시점을 대조했다.
+- Scene View Quick Play 적 선택, 비변경성 버스트 대체 탐색, 관련 회귀 테스트를 구현했다. 외부 자료·신규 패키지·외부 에셋은 사용하지 않았다.
+- Unity MCP에서 컴파일 오류 0건, 관련 테스트 통과, StageProgression 287/289, 전체 EditMode 1,235/1,254를 확인했다. 잔여 19건은 기존 자산·상점 기준 불일치다.
+- Play Mode에서 일반·엘리트·보스 6종 지정 시작과 일회성 요청 제거를 확인했다.

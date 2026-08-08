@@ -15,14 +15,19 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameObject root;
         [SerializeField] private Transform target;
         [SerializeField] private float animationSeconds = 1.8f;
-        [SerializeField] private string baseStateName = "Hammer_Basic";
+        [SerializeField] private string baseStateName =
+            "Base Layer.Hammer_Basic";
         [SerializeField] private string readyTrigger = "PlayerTurnStart";
         [SerializeField] private string playerSmashTrigger = "PlayerChoose";
         [SerializeField] private string enemySmashTrigger = "EnemyAttack";
-        [SerializeField] private string readyAttackStateName = "Hammer_ReadyAttack";
-        [SerializeField] private string playerSmashStateName = "Hammer_Smash";
-        [SerializeField] private string enemySmashStateName = "Hammer_EnemySmash";
+        [SerializeField] private string readyAttackStateName =
+            "Base Layer.Hammer_ReadyAttack";
+        [SerializeField] private string playerSmashStateName =
+            "Base Layer.Hammer_Smash";
+        [SerializeField] private string enemySmashStateName =
+            "Base Layer.Hammer_EnemySmash";
         [SerializeField] private float smashStateWaitTimeoutSeconds = 8f;
+        [SerializeField] private float targetResolveTimeoutSeconds = 0.5f;
 
         private bool _hasLastCue;
         private int _lastRoundNumber;
@@ -32,16 +37,19 @@ namespace DiaBlackJack.GameScene
         private int _lastActionOrdinal;
         private int? _lastTargetCardId;
         private Coroutine _hideRoutine;
-        private bool _isSmashAnimationPlaying;
+        private HammerPlaybackState _playbackState;
         private GameSceneHammerAnimationCue _queuedCue;
         private CardHand _queuedPlayerHand;
         private CardHand _queuedEnemyHand;
         private bool _hasQueuedTargetPosition;
         private Vector3 _queuedTargetPosition;
+        private bool _hasRootBaseWorldPosition;
+        private Vector3 _rootBaseWorldPosition;
 
         public float AnimationSeconds => Mathf.Max(0f, animationSeconds);
 
-        public bool IsSmashAnimationPlaying => _isSmashAnimationPlaying;
+        public bool IsSmashAnimationPlaying =>
+            _playbackState != HammerPlaybackState.Idle;
 
         public event Action SmashAnimationFinished;
 
@@ -68,12 +76,19 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
+            if (_playbackState != HammerPlaybackState.Idle)
+            {
+                return false;
+            }
+
             _queuedCue = cue;
             _queuedPlayerHand = playerHand;
             _queuedEnemyHand = enemyHand;
             _hasQueuedTargetPosition = false;
 
             GameObject resolvedRoot = ResolveRoot();
+            CaptureRootBasePosition(resolvedRoot);
+            RestoreRootBasePosition();
             if (resolvedRoot != null && !resolvedRoot.activeSelf)
             {
                 resolvedRoot.SetActive(true);
@@ -97,39 +112,34 @@ namespace DiaBlackJack.GameScene
                 return true;
             }
 
-            // Best-effort only: the target card's CardView can still be missing
-            // from its hand at this exact point in the frame (hand rendering
-            // happens later in GameManager's view-apply pass), which used to
-            // abort the whole animation here and made the hammer silently not
-            // appear at all. ApplyQueuedTargetPosition re-resolves fresh at
-            // every later point it is called (including inside the coroutine,
-            // well after hand rendering has caught up), so a miss here just
-            // means the target snaps in once it resolves instead of blocking
-            // the swing from starting.
-            CaptureQueuedTargetPosition();
-
             if (cue.ActorSide == CombatantSide.Enemy)
             {
                 ResetAnimatorToBase();
-                ApplyQueuedTargetPosition();
             }
 
-            resolvedAnimator.SetTrigger(
-                cue.ActorSide == CombatantSide.Player
-                    ? playerSmashTrigger
-                    : enemySmashTrigger);
-            resolvedAnimator.Update(0f);
-            RememberCue(cue);
+            if (TryBeginQueuedSmash(resolvedAnimator, cue))
+            {
+                if (Application.isPlaying)
+                {
+                    _hideRoutine = StartCoroutine(HideWhenSmashStateEnds(
+                        resolvedAnimator,
+                        cue.ActorSide));
+                }
+
+                return true;
+            }
 
             if (Application.isPlaying)
             {
-                _isSmashAnimationPlaying = true;
-                _hideRoutine = StartCoroutine(HideWhenSmashStateEnds(
+                _playbackState = HammerPlaybackState.Preparing;
+                _hideRoutine = StartCoroutine(PrepareAndPlaySmash(
                     resolvedAnimator,
-                    cue.ActorSide));
+                    cue));
+                return true;
             }
 
-            return true;
+            ClearQueuedPlayback();
+            return false;
         }
 
         public bool MoveTargetToQueuedCard()
@@ -200,23 +210,57 @@ namespace DiaBlackJack.GameScene
                 // first started — _queuedTargetPosition is still its zeroed-out
                 // default. Applying that would snap the target (and the hammer
                 // with it) to the world origin right as it's about to strike,
-                // which is exactly what made the hammer appear to vanish at the
-                // last moment. Leave the target wherever it already is instead.
-                Log.W("[HammerAnimationController] No hammer target position has ever resolved; leaving target unmoved.", this);
-                return true;
+                // which is exactly what made the hammer disappear at impact.
+                Log.W(
+                    "[HammerAnimationController] No hammer target position has resolved.",
+                    this);
+                return false;
             }
 
-            resolvedTarget.position = _queuedTargetPosition;
+            GameObject resolvedRoot = ResolveRoot();
+            if (resolvedRoot == null)
+            {
+                Log.W(
+                    "[HammerAnimationController] Cannot align hammer because no root is assigned.",
+                    this);
+                return false;
+            }
+
+            // Target is authored by every hammer Animator state. Writing its
+            // position directly is lost on the next Animator update. Move the
+            // non-animated root by the required delta instead, leaving the rig
+            // free to animate while its target remains over the selected card.
+            return TryAlignRootToTarget(
+                resolvedRoot.transform,
+                resolvedTarget,
+                _queuedTargetPosition);
+        }
+
+        internal static bool TryAlignRootToTarget(
+            Transform rootTransform,
+            Transform animatedTarget,
+            Vector3 desiredTargetPosition)
+        {
+            if (rootTransform == null || animatedTarget == null ||
+                rootTransform == animatedTarget)
+            {
+                return false;
+            }
+
+            rootTransform.position +=
+                desiredTargetPosition - animatedTarget.position;
             return true;
         }
 
         public void Hide()
         {
-            bool wasSmashAnimationPlaying = _isSmashAnimationPlaying;
+            bool wasSmashAnimationPlaying =
+                _playbackState != HammerPlaybackState.Idle;
             StopHideRoutine();
-            _isSmashAnimationPlaying = false;
-            _hasQueuedTargetPosition = false;
+            _playbackState = HammerPlaybackState.Idle;
             ResetAnimatorToBase();
+            RestoreRootBasePosition();
+            ClearQueuedPlayback();
 
             GameObject resolvedRoot = ResolveRoot();
             if (resolvedRoot != null)
@@ -240,6 +284,72 @@ namespace DiaBlackJack.GameScene
             _lastPhase = GameSceneHammerAnimationPhase.Ready;
             _lastActionOrdinal = 0;
             _lastTargetCardId = null;
+            _queuedCue = null;
+            _queuedPlayerHand = null;
+            _queuedEnemyHand = null;
+        }
+
+        private bool TryBeginQueuedSmash(
+            Animator resolvedAnimator,
+            GameSceneHammerAnimationCue cue)
+        {
+            if (resolvedAnimator == null || cue == null ||
+                !TryResolveTargetPosition(cue, out Vector3 position))
+            {
+                return false;
+            }
+
+            string initialStateName = cue.ActorSide == CombatantSide.Player
+                ? readyAttackStateName
+                : enemySmashStateName;
+            if (!TryPlayState(resolvedAnimator, initialStateName))
+            {
+                return false;
+            }
+
+            _queuedTargetPosition = position;
+            _hasQueuedTargetPosition = true;
+            if (!ApplyQueuedTargetPosition())
+            {
+                return false;
+            }
+
+            RememberCue(cue);
+            _playbackState = Application.isPlaying
+                ? HammerPlaybackState.Playing
+                : HammerPlaybackState.Idle;
+            return true;
+        }
+
+        private IEnumerator PrepareAndPlaySmash(
+            Animator resolvedAnimator,
+            GameSceneHammerAnimationCue cue)
+        {
+            float waitedSeconds = 0f;
+            float timeoutSeconds = Mathf.Max(0f, targetResolveTimeoutSeconds);
+            while (resolvedAnimator != null &&
+                resolvedAnimator.gameObject.activeInHierarchy &&
+                waitedSeconds < timeoutSeconds)
+            {
+                yield return null;
+                waitedSeconds += Time.deltaTime;
+                if (TryBeginQueuedSmash(resolvedAnimator, cue))
+                {
+                    yield return HideWhenSmashStateEnds(
+                        resolvedAnimator,
+                        cue.ActorSide);
+                    yield break;
+                }
+            }
+
+            Log.E("[HammerAnimationController] Hammer smash did not start because its target card never became available.", this);
+            _hideRoutine = null;
+            Hide();
+        }
+
+        private void ClearQueuedPlayback()
+        {
+            _hasQueuedTargetPosition = false;
             _queuedCue = null;
             _queuedPlayerHand = null;
             _queuedEnemyHand = null;
@@ -279,11 +389,18 @@ namespace DiaBlackJack.GameScene
                 yield break;
             }
 
-            yield return null;
-
             if (actorSide == CombatantSide.Player)
             {
-                yield return WaitForStateToEnd(resolvedAnimator, readyAttackStateName);
+                yield return WaitForStateToComplete(
+                    resolvedAnimator,
+                    readyAttackStateName);
+                if (!TryPlayState(resolvedAnimator, smashStateName))
+                {
+                    _hideRoutine = null;
+                    Hide();
+                    yield break;
+                }
+
                 if (!ApplyQueuedTargetPosition())
                 {
                     _hideRoutine = null;
@@ -291,57 +408,22 @@ namespace DiaBlackJack.GameScene
                     yield break;
                 }
             }
-
-            float waitedSeconds = 0f;
-            bool enteredSmashState = IsCurrentState(resolvedAnimator, smashStateName);
-            while (!enteredSmashState &&
-                waitedSeconds < Mathf.Max(0f, smashStateWaitTimeoutSeconds))
-            {
-                waitedSeconds += Time.deltaTime;
-                enteredSmashState = IsCurrentState(resolvedAnimator, smashStateName);
-                yield return null;
-            }
-
-            if (!enteredSmashState)
-            {
-                yield return new WaitForSeconds(AnimationSeconds);
-                _hideRoutine = null;
-                Hide();
-                yield break;
-            }
-
-            if (actorSide == CombatantSide.Enemy && !ApplyQueuedTargetPosition())
+            else if (!ApplyQueuedTargetPosition())
             {
                 _hideRoutine = null;
                 Hide();
                 yield break;
             }
 
-            while (resolvedAnimator != null &&
-                resolvedAnimator.gameObject.activeInHierarchy)
-            {
-                AnimatorStateInfo state = resolvedAnimator.GetCurrentAnimatorStateInfo(0);
-                if (!resolvedAnimator.IsInTransition(0) &&
-                    state.IsName(smashStateName) &&
-                    state.normalizedTime >= 1f)
-                {
-                    break;
-                }
-
-                if (!resolvedAnimator.IsInTransition(0) &&
-                    !state.IsName(smashStateName))
-                {
-                    break;
-                }
-
-                yield return null;
-            }
+            yield return WaitForStateToComplete(
+                resolvedAnimator,
+                smashStateName);
 
             _hideRoutine = null;
             Hide();
         }
 
-        private IEnumerator WaitForStateToEnd(
+        private IEnumerator WaitForStateToComplete(
             Animator resolvedAnimator,
             string stateName)
         {
@@ -366,17 +448,43 @@ namespace DiaBlackJack.GameScene
             }
 
             while (resolvedAnimator != null &&
-                resolvedAnimator.gameObject.activeInHierarchy)
+                resolvedAnimator.gameObject.activeInHierarchy &&
+                waitedSeconds < Mathf.Max(0f, smashStateWaitTimeoutSeconds))
             {
                 AnimatorStateInfo state = resolvedAnimator.GetCurrentAnimatorStateInfo(0);
-                if (!resolvedAnimator.IsInTransition(0) &&
-                    !state.IsName(stateName))
+                if (state.IsName(stateName) && state.normalizedTime >= 1f)
                 {
                     break;
                 }
 
+                waitedSeconds += Time.deltaTime;
                 yield return null;
             }
+        }
+
+        private static bool TryPlayState(
+            Animator resolvedAnimator,
+            string stateName)
+        {
+            if (resolvedAnimator == null ||
+                !resolvedAnimator.gameObject.activeInHierarchy ||
+                string.IsNullOrWhiteSpace(stateName))
+            {
+                return false;
+            }
+
+            int stateHash = Animator.StringToHash(stateName);
+            if (!resolvedAnimator.HasState(0, stateHash))
+            {
+                Log.E(
+                    $"[HammerAnimationController] Animator state '{stateName}' does not exist.",
+                    resolvedAnimator);
+                return false;
+            }
+
+            resolvedAnimator.Play(stateHash, 0, 0f);
+            resolvedAnimator.Update(0f);
+            return IsCurrentState(resolvedAnimator, stateName);
         }
 
         private string ResolveSmashStateName(CombatantSide actorSide)
@@ -485,6 +593,35 @@ namespace DiaBlackJack.GameScene
             }
 
             return target;
+        }
+
+        private void CaptureRootBasePosition(GameObject resolvedRoot)
+        {
+            if (_hasRootBaseWorldPosition || resolvedRoot == null)
+            {
+                return;
+            }
+
+            _rootBaseWorldPosition = resolvedRoot.transform.position;
+            _hasRootBaseWorldPosition = true;
+        }
+
+        private void RestoreRootBasePosition()
+        {
+            GameObject resolvedRoot = ResolveRoot();
+            if (!_hasRootBaseWorldPosition || resolvedRoot == null)
+            {
+                return;
+            }
+
+            resolvedRoot.transform.position = _rootBaseWorldPosition;
+        }
+
+        private enum HammerPlaybackState
+        {
+            Idle,
+            Preparing,
+            Playing,
         }
 
     }

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 266638159764570708}
   - component: {fileID: 324071927011027372}
   - component: {fileID: 900000000000000001}
+  - component: {fileID: 1934545952907461794}
   m_Layer: 0
   m_Name: DefaultButton
   m_TagString: Untagged
@@ -137,6 +138,18 @@ MonoBehaviour:
   hoverScale: 1.08
   pressedScale: 0.92
   animationDuration: 0.12
+--- !u!114 &1934545952907461794
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 466274584330083585}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &4777870115225099249
 GameObject:
   m_ObjectHideFlags: 0

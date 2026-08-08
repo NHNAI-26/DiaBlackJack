@@ -25,6 +25,7 @@ namespace DiaBlackJack.GameScene
         private const float FadeStartRatio = 0.55f;
 
         [SerializeField] private Image cardImage;
+        [SerializeField] private float fadeInSeconds = 0.25f;
         [SerializeField] private float holdSeconds = 0.6f;
         [SerializeField] private float dropSeconds = 0.6f;
         [SerializeField] private float dropDistancePixels = 700f;
@@ -38,7 +39,9 @@ namespace DiaBlackJack.GameScene
         public bool IsPlaying => _sequence != null;
 
         public float TotalDurationSeconds =>
-            Mathf.Max(0f, holdSeconds) + Mathf.Max(0.01f, dropSeconds);
+            Mathf.Max(0f, fadeInSeconds) +
+            Mathf.Max(0f, holdSeconds) +
+            Mathf.Max(0.01f, dropSeconds);
 
         private void Awake()
         {
@@ -66,11 +69,12 @@ namespace DiaBlackJack.GameScene
 
             cardImage.sprite = frontSprite;
             Color color = cardImage.color;
-            color.a = 1f;
+            color.a = 0f;
             cardImage.color = color;
             _rectTransform.anchoredPosition = _baseAnchoredPosition;
             gameObject.SetActive(true);
 
+            float clampedFadeInSeconds = Mathf.Max(0f, fadeInSeconds);
             float clampedHoldSeconds = Mathf.Max(0f, holdSeconds);
             float clampedDropSeconds = Mathf.Max(0.01f, dropSeconds);
             float fadeStartTime = clampedDropSeconds * FadeStartRatio;
@@ -78,6 +82,19 @@ namespace DiaBlackJack.GameScene
 
             float targetY = _baseAnchoredPosition.y - dropDistancePixels;
             Sequence sequence = DOTween.Sequence();
+            if (clampedFadeInSeconds > 0f)
+            {
+                sequence.Append(DOTween.To(
+                        () => cardImage.color.a,
+                        alpha => SetImageAlpha(cardImage, alpha),
+                        1f,
+                        clampedFadeInSeconds)
+                    .SetEase(Ease.OutQuad));
+            }
+            else
+            {
+                SetImageAlpha(cardImage, 1f);
+            }
             sequence.AppendInterval(clampedHoldSeconds);
             sequence.Append(DOTween.To(
                     () => _rectTransform.anchoredPosition,
@@ -86,7 +103,7 @@ namespace DiaBlackJack.GameScene
                     clampedDropSeconds)
                 .SetEase(dropEase));
             sequence.Insert(
-                clampedHoldSeconds + fadeStartTime,
+                clampedFadeInSeconds + clampedHoldSeconds + fadeStartTime,
                 DOTween.To(
                         () => cardImage.color.a,
                         alpha => SetImageAlpha(cardImage, alpha),

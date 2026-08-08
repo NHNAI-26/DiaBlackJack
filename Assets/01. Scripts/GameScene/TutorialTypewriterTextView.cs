@@ -24,6 +24,7 @@ namespace DiaBlackJack.GameScene
         private Vector3 _authoredLocalScale;
         private Vector3 _authoredParentLossyScale;
         private bool _initialized;
+        private bool _playRequested;
         private Coroutine _typingRoutine;
         private int _totalCharacterCount;
 
@@ -34,7 +35,10 @@ namespace DiaBlackJack.GameScene
         private void Awake()
         {
             EnsureInitialized();
-            Hide();
+            if (!_playRequested)
+            {
+                Hide();
+            }
         }
 
         private void OnDisable()
@@ -57,6 +61,7 @@ namespace DiaBlackJack.GameScene
                     nameof(text));
             }
 
+            _playRequested = true;
             gameObject.SetActive(true);
             StopTyping();
 

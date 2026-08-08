@@ -597,7 +597,7 @@ namespace DiaBlackJack.GameScene
 
             ResetSatanNumberGuessPresentation();
             SetHovered(false);
-            SetFaceObjects(showFront: false);
+            SetFaceObjects(_showingFrontFace);
 
             ConfigureSatanGuessBrand(succeeded ? brandSprite : null);
             Sequence sequence = DOTween.Sequence()
@@ -1256,23 +1256,45 @@ namespace DiaBlackJack.GameScene
             }
             _satanGuessBrandRenderer.transform.localScale =
                 Vector3.one * satanGuessBrandScale;
+            Transform faceTransform = _showingFrontFace
+                ? front?.transform
+                : back?.transform;
+            if (faceTransform != null)
+            {
+                Transform brandTransform = _satanGuessBrandRenderer.transform;
+                brandTransform.SetParent(faceTransform, false);
+                brandTransform.localPosition = new Vector3(0f, 0f, -0.003f);
+                brandTransform.localRotation = Quaternion.identity;
+            }
+
+            SpriteRenderer faceRenderer = _showingFrontFace
+                ? FrontSpriteRenderer()
+                : BackSpriteRenderer();
             _satanGuessBrandRenderer.sortingOrder =
-                BackSpriteRenderer() != null
-                    ? BackSpriteRenderer().sortingOrder + 1
+                faceRenderer != null
+                    ? faceRenderer.sortingOrder + 1
                     : 1;
             _satanGuessBrandRenderer.gameObject.SetActive(brandSprite != null);
         }
 
         private void EnsureSatanGuessBrandRenderer()
         {
-            if (_satanGuessBrandRenderer != null || back == null)
+            if (_satanGuessBrandRenderer != null)
+            {
+                return;
+            }
+
+            Transform faceTransform = _showingFrontFace
+                ? front?.transform
+                : back?.transform;
+            if (faceTransform == null)
             {
                 return;
             }
 
             GameObject brandObject = new GameObject("SatanGuessBrand");
             Transform brandTransform = brandObject.transform;
-            brandTransform.SetParent(back.transform, false);
+            brandTransform.SetParent(faceTransform, false);
             brandTransform.localPosition = new Vector3(0f, 0f, -0.003f);
             brandTransform.localRotation = Quaternion.identity;
             brandTransform.localScale = Vector3.one * satanGuessBrandScale;

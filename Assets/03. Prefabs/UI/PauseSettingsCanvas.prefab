@@ -162,6 +162,7 @@ GameObject:
   - component: {fileID: 6564145547630567760}
   - component: {fileID: 904849486412141350}
   - component: {fileID: 5436190413301986239}
+  - component: {fileID: 1638130761971655176}
   m_Layer: 0
   m_Name: SettingsButton
   m_TagString: Untagged
@@ -271,6 +272,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1638130761971655176
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 424514400986128794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &592563763717291097
 GameObject:
   m_ObjectHideFlags: 0
@@ -283,6 +296,7 @@ GameObject:
   - component: {fileID: 8162406206906665655}
   - component: {fileID: 7820749604584319141}
   - component: {fileID: 1012623709388862626}
+  - component: {fileID: 514871973996492315}
   m_Layer: 0
   m_Name: LeftButton
   m_TagString: Untagged
@@ -391,6 +405,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &514871973996492315
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 592563763717291097}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &705846986517433904
 GameObject:
   m_ObjectHideFlags: 0
@@ -403,6 +429,7 @@ GameObject:
   - component: {fileID: 59490292222608255}
   - component: {fileID: 6015920792928192212}
   - component: {fileID: 8774853923132651482}
+  - component: {fileID: 6335224026502631194}
   m_Layer: 0
   m_Name: RightButton
   m_TagString: Untagged
@@ -511,6 +538,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &6335224026502631194
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 705846986517433904}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &1379799793339156583
 GameObject:
   m_ObjectHideFlags: 0
@@ -696,6 +735,7 @@ GameObject:
   - component: {fileID: 4135321416309283302}
   - component: {fileID: 3715532842587578333}
   - component: {fileID: 7213526100655821705}
+  - component: {fileID: 9095856938965496284}
   m_Layer: 0
   m_Name: ConfirmQuitButton
   m_TagString: Untagged
@@ -805,6 +845,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &9095856938965496284
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1936918621683566020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &2014868288264742684
 GameObject:
   m_ObjectHideFlags: 0
@@ -1211,6 +1263,7 @@ GameObject:
   - component: {fileID: 5732821147481676856}
   - component: {fileID: 1098593571247897597}
   - component: {fileID: 8784716281732323379}
+  - component: {fileID: 2827576404291412124}
   m_Layer: 0
   m_Name: ContinueButton
   m_TagString: Untagged
@@ -1320,6 +1373,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &2827576404291412124
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2457752225725540797}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &2820056228293300167
 GameObject:
   m_ObjectHideFlags: 0
@@ -1681,6 +1746,7 @@ GameObject:
   - component: {fileID: 4315841689952462099}
   - component: {fileID: 813637178214423204}
   - component: {fileID: 8891293899044803187}
+  - component: {fileID: 5850637254314732534}
   m_Layer: 0
   m_Name: CancelQuitButton
   m_TagString: Untagged
@@ -1790,6 +1856,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &5850637254314732534
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3614512640021946931}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &3785329559053842744
 GameObject:
   m_ObjectHideFlags: 0
@@ -4095,6 +4173,7 @@ GameObject:
   - component: {fileID: 733128375634632612}
   - component: {fileID: 4711311078850633353}
   - component: {fileID: 2252238098923403757}
+  - component: {fileID: 8090547173301809816}
   m_Layer: 0
   m_Name: BackButton
   m_TagString: Untagged
@@ -4204,6 +4283,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &8090547173301809816
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6565540216916390508}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &6568402656372460242
 GameObject:
   m_ObjectHideFlags: 0
@@ -4291,6 +4382,7 @@ GameObject:
   - component: {fileID: 5539930667120450753}
   - component: {fileID: 1264686430670347526}
   - component: {fileID: 7940713019504077496}
+  - component: {fileID: 1298542939384416281}
   m_Layer: 0
   m_Name: LeftButton
   m_TagString: Untagged
@@ -4399,6 +4491,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1298542939384416281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6654484597949941484}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &6818856036936360416
 GameObject:
   m_ObjectHideFlags: 0
@@ -5739,6 +5843,7 @@ GameObject:
   - component: {fileID: 7513661449009793564}
   - component: {fileID: 3979002085896880914}
   - component: {fileID: 393114731374211867}
+  - component: {fileID: 8722845848120053160}
   m_Layer: 0
   m_Name: QuitButton
   m_TagString: Untagged
@@ -5848,6 +5953,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &8722845848120053160
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8724448268894454146}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &9087291263271290390
 GameObject:
   m_ObjectHideFlags: 0
@@ -5860,6 +5977,7 @@ GameObject:
   - component: {fileID: 4158522311826636884}
   - component: {fileID: 8527000681076746021}
   - component: {fileID: 754383035586764388}
+  - component: {fileID: 970286282729355440}
   m_Layer: 0
   m_Name: RightButton
   m_TagString: Untagged
@@ -5968,3 +6086,15 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &970286282729355440
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9087291263271290390}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook

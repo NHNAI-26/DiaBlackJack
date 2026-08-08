@@ -834,6 +834,7 @@ GameObject:
   - component: {fileID: 7080767733927070057}
   - component: {fileID: 6023610562306834015}
   - component: {fileID: 3039131537619853349}
+  - component: {fileID: 4658929078257059834}
   m_Layer: 5
   m_Name: DemonTab
   m_TagString: Untagged
@@ -943,6 +944,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &4658929078257059834
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1151535257020751040}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &1155555480024548972
 GameObject:
   m_ObjectHideFlags: 0
@@ -3128,6 +3141,7 @@ GameObject:
   - component: {fileID: 4141895971265485059}
   - component: {fileID: 2224418017386943840}
   - component: {fileID: 5801766214471628336}
+  - component: {fileID: 5437693353383053510}
   m_Layer: 5
   m_Name: CloseButton
   m_TagString: Untagged
@@ -3236,6 +3250,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &5437693353383053510
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3976812032559004896}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &4017801711573981889
 GameObject:
   m_ObjectHideFlags: 0
@@ -4421,6 +4447,7 @@ GameObject:
   - component: {fileID: 1338480864067700894}
   - component: {fileID: 38603052672254163}
   - component: {fileID: 1311919266627242111}
+  - component: {fileID: 1720730649803158822}
   m_Layer: 5
   m_Name: EnemyTab
   m_TagString: Untagged
@@ -4530,6 +4557,18 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1720730649803158822
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6305694474270236299}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &6432016518871201256
 GameObject:
   m_ObjectHideFlags: 0

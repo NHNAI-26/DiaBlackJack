@@ -27,6 +27,15 @@ namespace DiaBlackJack.GameScene
     [DisallowMultipleComponent]
     public sealed class GameManager : MonoBehaviour
     {
+        private enum KnifePlaybackState
+        {
+            Hidden,
+            Appearing,
+            Ready,
+            Resolving,
+            Disappearing
+        }
+
         [SerializeField] private int seed = 20260719;
         [SerializeField] private GameHudView hud;
         [SerializeField] private CardHand playerHand;
@@ -49,6 +58,12 @@ namespace DiaBlackJack.GameScene
         private bool _tutorialCardUseBlocked;
         private TutorialDirector _tutorialDirector;
         private bool _tutorialIntroCompleted;
+        private TutorialSpeakerKind _tutorialSpeaker =
+            TutorialSpeakerKind.NarratorAsmodeus;
+        private bool _tutorialBattleEndPresentationComplete;
+        private bool _tutorialRoundComparisonPresentationComplete;
+        private Coroutine _tutorialRoundTransitionRoutine;
+        private Coroutine _tutorialRoundOneRevealRoutine;
         private CrystalOrbSelectionView crystalOrbSelection;
         private SatanNumberSelectionView satanNumberSelection;
         [SerializeField] private Sprite satanBrandSprite;
@@ -98,7 +113,23 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float knifeReadySeconds = 0.7f;
         [SerializeField] private float knifeSuspenseSeconds = 2.5f;
         [SerializeField] private float knifeResultSeconds = 3.1f;
-        [SerializeField] private string knifeBaseStateName = "Knife_Empty";
+        [SerializeField] private string knifeBaseStateName = "Base Layer.Empty";
+        [SerializeField] private string playerKnifeReadyStateName =
+            "Base Layer.Knife_Start";
+        [SerializeField] private string enemyKnifeReadyStateName =
+            "Base Layer.Knife_Start_Enemy";
+        [SerializeField] private string playerKnifeLoopStateName =
+            "Base Layer.Knife_Loop";
+        [SerializeField] private string enemyKnifeLoopStateName =
+            "Base Layer.Knife_Loop_Enemy";
+        [SerializeField] private string playerKnifeSuccessStateName =
+            "Base Layer.Knife_Attack";
+        [SerializeField] private string enemyKnifeSuccessStateName =
+            "Base Layer.Knife_Attack_Enemy";
+        [SerializeField] private string playerKnifeFailStateName =
+            "Base Layer.Knife_Disappear";
+        [SerializeField] private string enemyKnifeFailStateName =
+            "Base Layer.Knife_Disappear_Enemy";
         [SerializeField] private string playerKnifeStartTrigger = "PlayerStart";
         [SerializeField] private string enemyKnifeStartTrigger = "EnemyStart";
         [SerializeField] private string knifeSuccessTrigger = "Success";
@@ -153,6 +184,7 @@ namespace DiaBlackJack.GameScene
         private const string CardSelectionHeartFastSfxId =
             "heartSoundFast";
         private const string ComparisonCardSfxId = "click";
+        private const float KnifeOrphanCleanupSeconds = 12f;
 
         [Header("Cinematic camera")]
         [SerializeField] private GameSceneCameraViewController cameraViewController;
@@ -186,10 +218,12 @@ namespace DiaBlackJack.GameScene
         private CombatantSide _lastRevolverAnimationActorSide;
         private GameSceneRevolverAnimationPhase _lastRevolverAnimationPhase;
         private bool _lastRevolverAnimationSucceeded;
+        private int _lastRevolverAnimationActionOrdinal;
         private bool _revolverReadyActive;
         private int _revolverReadyRoundNumber;
         private int _revolverReadySourceCardId;
         private CombatantSide _revolverReadyActorSide;
+        private int _revolverReadyActionOrdinal;
         private Coroutine _revolverHideRoutine;
         private Coroutine _revolverReadyCameraRoutine;
         private Coroutine _revolverShotRoutine;
@@ -204,12 +238,25 @@ namespace DiaBlackJack.GameScene
         private CombatantSide _lastKnifeAnimationActorSide;
         private GameSceneKnifeAnimationPhase _lastKnifeAnimationPhase;
         private bool _lastKnifeAnimationSucceeded;
+        private int _lastKnifeAnimationActionOrdinal;
         private Coroutine _knifeHideRoutine;
+        private Coroutine _knifeSequenceCleanupRoutine;
+        private KnifePlaybackState _knifePlaybackState = KnifePlaybackState.Hidden;
+        private bool _hasActiveKnifeSequence;
+        private int _activeKnifeRoundNumber;
+        private int _activeKnifeActionOrdinal;
+        private int _activeKnifeSourceCardId;
+        private CombatantSide _activeKnifeActorSide;
+        private bool _activeKnifeReadyConfirmed;
+        private GameSceneViewModel _activeKnifeRevealViewModel;
+        private int _knifeReadyRetryBlockedFrame = -1;
         private KnifeAnimationEventReceiver _knifeEventReceiver;
         private bool _knifeImpactPending;
         private CombatantSide _knifeImpactTargetSide;
         private bool _hasLastPoisonInjectionAnimationCue;
         private int _lastPoisonInjectionAnimationRoundNumber;
+        private GameScenePoisonInjectionAnimationCue
+            _pendingPoisonInjectionAnimationCue;
         private bool _hammerSwitchInputLocked;
         private bool _enemyCardSelectionSwitchInputLocked;
         private Coroutine _cardSelectionHeartRoutine;
@@ -321,6 +368,9 @@ namespace DiaBlackJack.GameScene
 
             _tutorialDirector = null;
             _tutorialIntroCompleted = false;
+            _tutorialSpeaker = TutorialSpeakerKind.NarratorAsmodeus;
+            _tutorialBattleEndPresentationComplete = false;
+            _tutorialRoundComparisonPresentationComplete = false;
             _tutorialContractPaperBlocked = false;
             _tutorialCardUseBlocked = false;
             if (session.IsTutorialRun &&
@@ -330,6 +380,8 @@ namespace DiaBlackJack.GameScene
             {
                 _tutorialDirector = new TutorialDirector(this, tutorialNarrator, tutorialScript);
                 _tutorialDirector.IntroCompleted += HandleTutorialDirectorIntroCompleted;
+                _tutorialDirector.RoundOneStartRequested +=
+                    HandleTutorialRoundOneStartRequested;
                 _tutorialDirector.RoundOneRecapCompleted +=
                     HandleTutorialRoundOneRecapCompleted;
                 _tutorialDirector.Completed += HandleTutorialDirectorCompleted;
@@ -363,6 +415,31 @@ namespace DiaBlackJack.GameScene
         internal bool HasPendingTutorialIntro =>
             _tutorialDirector != null && !_tutorialIntroCompleted;
 
+        internal bool IsTutorialBattleEndPresentationComplete =>
+            _tutorialBattleEndPresentationComplete;
+
+        internal bool IsTutorialRoundComparisonPresentationComplete =>
+            _tutorialRoundComparisonPresentationComplete;
+
+        private bool IsTutorialCombatInputBlocked =>
+            _tutorialDirector != null &&
+            _tutorialDirector.BlocksCombatInput;
+
+        private bool IsTutorialHudInputLocked =>
+            _tutorialDirector != null &&
+            !_tutorialDirector.IsGateActive;
+
+        internal void SetTutorialNarratorSpeaker(TutorialSpeakerKind speaker)
+        {
+            _tutorialSpeaker = speaker;
+            RefreshTutorialNarratorSpeaker();
+        }
+
+        internal void RefreshTutorialInputState()
+        {
+            RefreshView();
+        }
+
         internal void BeginTutorialIntroIfNeeded()
         {
             if (_tutorialDirector == null || _tutorialIntroCompleted)
@@ -379,22 +456,73 @@ namespace DiaBlackJack.GameScene
             TutorialIntroCompleted?.Invoke();
         }
 
+        private void HandleTutorialRoundOneStartRequested()
+        {
+            if (_tutorialRoundOneRevealRoutine != null)
+            {
+                return;
+            }
+
+            _tutorialRoundOneRevealRoutine = StartCoroutine(
+                CompleteTutorialRoundOneReveal());
+        }
+
+        private IEnumerator CompleteTutorialRoundOneReveal()
+        {
+            yield return PresentRoundOneHands();
+
+            _tutorialRoundOneRevealRoutine = null;
+            SetPresentationInputLocked(false);
+            _tutorialDirector?.NotifyRoundOneRevealReady();
+        }
+
         // Mirrors GameFlowController's RoundOneCardRevealAnimationSeconds — round 2's deal
         // (held back since the Stand gate) needs the same brief wait after reveal before the
         // tutorial's next dialogue line is allowed to appear.
-        private const float TutorialRoundTwoRevealAnimationSeconds = 0.3f;
-
         private void HandleTutorialRoundOneRecapCompleted()
         {
-            StartCoroutine(RevealRoundTwoAfterRecapRoutine());
+            if (_tutorialRoundTransitionRoutine != null)
+            {
+                StopCoroutine(_tutorialRoundTransitionRoutine);
+            }
+
+            _tutorialRoundTransitionRoutine = StartCoroutine(
+                RevealRoundTwoAfterRecapRoutine());
         }
 
         private IEnumerator RevealRoundTwoAfterRecapRoutine()
         {
             // Reuses the round-1 reveal machinery — it's just "stop suppressing hand
             // render and refresh," which is exactly what round 2's held-back deal needs too.
+            IReadOnlyList<GameSceneCardViewModel> noCards =
+                Array.Empty<GameSceneCardViewModel>();
+            IReadOnlyList<GameSceneDemonCardViewModel> noDemonCards =
+                Array.Empty<GameSceneDemonCardViewModel>();
+            playerHand?.Render(noCards, noDemonCards);
+            enemyHand?.Render(noCards, noDemonCards);
+            totals?.Render(string.Empty, string.Empty);
+
+            float discardSeconds = Mathf.Max(
+                playerHand?.DiscardAnimationSeconds ?? 0f,
+                enemyHand?.DiscardAnimationSeconds ?? 0f);
+            if (discardSeconds > 0f)
+            {
+                yield return new WaitForSeconds(discardSeconds);
+            }
+
             RevealRoundOneHands();
-            yield return new WaitForSeconds(TutorialRoundTwoRevealAnimationSeconds);
+            float entrySeconds = Mathf.Max(
+                playerHand?.EntryAnimationSeconds ?? 0f,
+                enemyHand?.EntryAnimationSeconds ?? 0f);
+            entrySeconds = Mathf.Max(
+                entrySeconds,
+                ResolveCardRevealFaceSwapSeconds());
+            if (entrySeconds > 0f)
+            {
+                yield return new WaitForSeconds(entrySeconds);
+            }
+
+            _tutorialRoundTransitionRoutine = null;
             _tutorialDirector?.NotifyRoundTwoRevealReady();
         }
 
@@ -406,9 +534,7 @@ namespace DiaBlackJack.GameScene
         /// </summary>
         private void HandleTutorialDirectorCompleted()
         {
-            StageProgressionRuntime runtime = _stageRuntime;
-            StageProgressionRuntime.DestroyInstanceForSceneTransition();
-            runtime?.LoadMainMenuScene();
+            StageProgressionRuntime.ReturnToMainMenuAndDestroyInstance();
         }
 
         /// <summary>
@@ -549,6 +675,42 @@ namespace DiaBlackJack.GameScene
         {
             _suppressHandRenderUntilRoundOneStart = false;
             RefreshView();
+        }
+
+        internal IEnumerator PresentRoundOneHands()
+        {
+            GameScenePoisonInjectionAnimationCue poisonCue =
+                _pendingPoisonInjectionAnimationCue;
+            if (poisonCue == null && Battle != null)
+            {
+                poisonCue = GameScenePresenter.Create(
+                    Battle,
+                    _activeEnemyProfileKey).PoisonInjectionAnimationCue;
+            }
+
+            bool playedPoison = TryPlayPoisonInjectionAnimation(
+                poisonCue,
+                allowWhileHandsSuppressed: true);
+            _pendingPoisonInjectionAnimationCue = null;
+            if (playedPoison && poisonInjectionAnnounce != null)
+            {
+                while (poisonInjectionAnnounce.IsPlaying)
+                {
+                    yield return null;
+                }
+            }
+
+            RevealRoundOneHands();
+            float entrySeconds = Mathf.Max(
+                playerHand?.EntryAnimationSeconds ?? 0f,
+                enemyHand?.EntryAnimationSeconds ?? 0f);
+            entrySeconds = Mathf.Max(
+                entrySeconds,
+                ResolveCardRevealFaceSwapSeconds());
+            if (entrySeconds > 0f)
+            {
+                yield return new WaitForSeconds(entrySeconds);
+            }
         }
 
         public void UnbindBattle()
@@ -898,7 +1060,8 @@ namespace DiaBlackJack.GameScene
             UnbindRevolverImpactEvent();
             ClearPendingRevolverImpact();
             UnbindKnifeImpactEvent();
-            ClearPendingKnifeImpact();
+            ResetKnifeAnimationState();
+            _tutorialRoundTransitionRoutine = null;
             CloseDeckPreview();
             CloseCodex();
             EndEnemyCardSelectionCamera();
@@ -954,6 +1117,8 @@ namespace DiaBlackJack.GameScene
         private void ResetBattlePresentation()
         {
             StopAllCoroutines();
+            _tutorialRoundTransitionRoutine = null;
+            _tutorialRoundOneRevealRoutine = null;
             CancelRoundComparison(resetResolutionHistory: true);
             EndSatanNumberGuessCameraSequence();
             PresentationManager.Current?.ForceRestoreTransientCameraEffects();
@@ -1038,6 +1203,26 @@ namespace DiaBlackJack.GameScene
                 (codex == null || !codex.IsOpen))
             {
                 EndCodexSwitchInputLock();
+            }
+
+            // The narrator owns every click while active regardless of presentation
+            // input-lock state — it paces scripted tutorial dialogue that plays *before*
+            // any character entrance (e.g. the very first intro lines, while input is
+            // still locked waiting for that entrance). Checking this before the
+            // IsModalInputBlocked/_inputLocked early-returns below is required, not
+            // cosmetic: those returns used to make the narrator permanently unclickable
+            // whenever a presentation was holding input locked, deadlocking the tutorial
+            // (nothing else was ever going to unlock input, since unlocking depends on the
+            // entrance that only starts once this dialogue is dismissed).
+            if (tutorialNarrator != null && tutorialNarrator.IsActive)
+            {
+                Mouse tutorialMouse = Mouse.current;
+                if (tutorialMouse != null && tutorialMouse.leftButton.wasPressedThisFrame)
+                {
+                    tutorialNarrator.HandleClick();
+                }
+
+                return;
             }
 
             if (IsModalInputBlocked)
@@ -1139,6 +1324,24 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            Mouse mouse = Mouse.current;
+            if (mouse != null && hud != null &&
+                hud.IsPointerOverActiveCombatChoice(
+                    mouse.position.ReadValue()))
+            {
+                UpdateHover(null);
+                UpdateDemonCardHover(null);
+                UpdateDeckStackHover(null);
+                UpdateCodexHover(null);
+                UpdateContractPaperHover(null);
+                UpdateShopUtilityItemHover(null);
+                UpdateCombatCommandHover(null);
+                UpdateHoverDescriptionTarget(null);
+                hud.HideCardHoverBadge();
+                hud.HideDemonContractDetail();
+                return;
+            }
+
             CardView pointedCard = hasHit
                 ? hit.collider.GetComponentInParent<CardView>()
                 : null;
@@ -1209,27 +1412,11 @@ namespace DiaBlackJack.GameScene
             UpdateCombatCommandHover(effectiveCombatCommandHover);
             UpdateHoverDescriptionTarget(pointedHoverDescriptionTarget);
 
-            // The narrator still owns every click while active (advancing dialogue), but
-            // hover updates above already ran normally — other objects (deck, codex,
-            // contract paper, hover-description targets) still preview on hover during
-            // dialogue, they just can't be clicked into their own actions.
-            if (tutorialNarrator != null && tutorialNarrator.IsActive)
-            {
-                Mouse tutorialMouse = Mouse.current;
-                if (tutorialMouse != null && tutorialMouse.leftButton.wasPressedThisFrame)
-                {
-                    tutorialNarrator.HandleClick();
-                }
-
-                return;
-            }
-
             if (_inputLocked || _choosingLighterRemoval)
             {
                 return;
             }
 
-            Mouse mouse = Mouse.current;
             if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
             {
                 return;
@@ -3394,7 +3581,7 @@ namespace DiaBlackJack.GameScene
 
         private void HandleCombatCommand(GameSceneCombatHudCommand command)
         {
-            if (IsModalInputBlocked)
+            if (IsModalInputBlocked || IsTutorialCombatInputBlocked)
             {
                 return;
             }
@@ -3449,9 +3636,21 @@ namespace DiaBlackJack.GameScene
                     ProcessInput(() => TryResolvePlayerCardChoice(command.OptionId));
                     break;
                 case GameSceneCombatHudCommandKind.ResolveAutomaticCardChoice:
+                    CombatActionSkullRequest? automaticChoiceSkull = null;
+                    if (CombatActionSkullPresenter
+                        .TryCreatePlayerAutomaticChoiceRequest(
+                            Battle?.PendingPlayerAutomaticInteraction,
+                            command.InteractionId,
+                            command.OptionId,
+                            out CombatActionSkullRequest poisonStandSkull))
+                    {
+                        automaticChoiceSkull = poisonStandSkull;
+                    }
+
                     ProcessInput(() => TryResolvePlayerAutomaticCardChoice(
                         command.InteractionId,
-                        command.OptionId));
+                        command.OptionId),
+                        playerActionSkull: automaticChoiceSkull);
                     break;
                 case GameSceneCombatHudCommandKind.ResolveDemonContractChoice:
                     if (_tutorialRestrictedOptionId.HasValue &&
@@ -3462,10 +3661,18 @@ namespace DiaBlackJack.GameScene
 
                     bool animateBelphegorReinsert =
                         ShouldAnimateBelphegorReinsert(command);
+                    bool hideSatanTurnStartChoice =
+                        ShouldHideSatanTurnStartChoiceImmediately(
+                            Battle?.PendingPlayerDemonContractInteraction,
+                            command);
                     Action onAccepted = null;
                     if (animateBelphegorReinsert && remainingDeck != null)
                     {
                         onAccepted = remainingDeck.PlayReinsertAnimation;
+                    }
+                    if (hideSatanTurnStartChoice)
+                    {
+                        onAccepted += HideAcceptedCombatChoice;
                     }
 
                     CombatActionSkullRequest? contractActionSkull = null;
@@ -3478,7 +3685,6 @@ namespace DiaBlackJack.GameScene
                     {
                         contractActionSkull = initialContractRequest;
                     }
-
                     ProcessInput(() => TryResolvePlayerDemonContract(
                         command.InteractionId,
                         command.OptionId),
@@ -3698,6 +3904,24 @@ namespace DiaBlackJack.GameScene
                     BelphegorDemonContractHandler.MoveTopCardToBottomOptionId;
         }
 
+        internal static bool ShouldHideSatanTurnStartChoiceImmediately(
+            PendingDemonContractInteraction pending,
+            GameSceneCombatHudCommand command)
+        {
+            return pending != null &&
+                pending.InteractionId == command.InteractionId &&
+                pending.Kind == DemonContractInteractionKind.SatanTurnStartChoice &&
+                command.Kind ==
+                    GameSceneCombatHudCommandKind.ResolveDemonContractChoice;
+        }
+
+        private void HideAcceptedCombatChoice()
+        {
+            hud?.HideCombatControlsImmediately();
+            tableCombatCommands?.ResetView();
+            UpdateCombatCommandHover(null);
+        }
+
         private bool TryBeginPlayerActiveDemonContractAction(
             int sourceContractCardId)
         {
@@ -3763,7 +3987,6 @@ namespace DiaBlackJack.GameScene
             List<GameSceneViewModel> timeline =
                 new List<GameSceneViewModel>(_timeline);
             _timeline.Clear();
-            GameSceneViewModel pendingKnifeReveal = null;
             CombatActionSkullRequest? deferredPlayerActionSkull =
                 waitForPlayerActionSkull ? null : playerActionSkull;
             bool consumeDirectPlayerStandCue =
@@ -3783,6 +4006,13 @@ namespace DiaBlackJack.GameScene
                 GameSceneViewModel previous = index == 0
                     ? timelineBaseline
                     : timeline[index - 1];
+                if (vm.KnifeAnimationCue?.Phase ==
+                        GameSceneKnifeAnimationPhase.Ready &&
+                    TryPlayKnifeAnimation(vm.KnifeAnimationCue))
+                {
+                    yield return WaitForKnifeReady(vm.KnifeAnimationCue);
+                }
+
                 RoundComparisonPlan comparisonPlan = vm.RoundComparisonPlan;
                 if (_pendingPlayerMammonComparison != null &&
                     comparisonPlan == null)
@@ -3822,13 +4052,11 @@ namespace DiaBlackJack.GameScene
                 // turn through this same loop, and the knife's reveal+throw combo still
                 // finds and pairs with its resolved beat once it's reached.
                 if (IsKnifeRevealBeat(previous, vm) &&
-                    TryFindMatchingKnifeResolvedBeatIndex(
-                        timeline,
-                        index + 1,
-                        vm,
-                        out _))
+                    TryCaptureActiveKnifeReveal(vm))
                 {
-                    pendingKnifeReveal = vm;
+                    yield return RenderHandsThenTotalsAfterRevealFlip(
+                        vm,
+                        showTransientEffectSources: true);
                     continue;
                 }
 
@@ -3947,8 +4175,13 @@ namespace DiaBlackJack.GameScene
                 }
 
                 bool revealKnifeCardWithThrow =
-                    pendingKnifeReveal != null &&
-                    IsMatchingKnifeResolvedBeat(pendingKnifeReveal, vm);
+                    _activeKnifeRevealViewModel != null &&
+                    IsActiveKnifeSequence(vm.KnifeAnimationCue) &&
+                    IsMatchingKnifeResolvedBeat(
+                        _activeKnifeRevealViewModel,
+                        vm);
+                bool playedDeferredKnifeResult = false;
+
                 DemonCardView satanAttackSource;
                 bool playedSatanAttack = TryPlaySatanAttackAnimation(
                     vm.SatanAttackAnimationCue,
@@ -3956,6 +4189,14 @@ namespace DiaBlackJack.GameScene
                 if (playedSatanAttack)
                 {
                     yield return WaitForSatanAttackAnimation(satanAttackSource);
+                }
+
+                if (revealKnifeCardWithThrow)
+                {
+                    playedDeferredKnifeResult =
+                        TryPlayKnifeAnimation(
+                            vm.KnifeAnimationCue,
+                            scheduleHide: false);
                 }
 
                 AppliedAnimationResult playedAnimation = ApplyView(
@@ -3984,11 +4225,10 @@ namespace DiaBlackJack.GameScene
                     }
                 }
 
-                if (revealKnifeCardWithThrow)
+                if (playedDeferredKnifeResult)
                 {
-                    yield return RenderHandsThenTotalsAfterRevealFlip(
-                        pendingKnifeReveal,
-                        showTransientEffectSources: true);
+                    yield return WaitForKnifeResultAndHide(
+                        vm.KnifeAnimationCue);
                 }
 
                 CardView satanNumberGuessTarget;
@@ -4038,8 +4278,6 @@ namespace DiaBlackJack.GameScene
                     playedAnimation,
                     waitSeconds);
 
-				_tutorialDirector?.Observe();
-
 				if (immediateSoulLossRecords.Count > 0)
 				{
 					yield return PlaySoulLossRecords(immediateSoulLossRecords);
@@ -4048,7 +4286,6 @@ namespace DiaBlackJack.GameScene
                 if (comparisonBeat)
                 {
                     yield return PlayRoundComparison(vm, comparisonPlan);
-                    pendingKnifeReveal = null;
                     continue;
                 }
 
@@ -4080,8 +4317,6 @@ namespace DiaBlackJack.GameScene
                     yield return CompleteDirectRoundResolutionPresentation(
                         comparisonPlan);
                 }
-
-                pendingKnifeReveal = null;
 
                 GameSceneRevolverAnimationCue revolverCue =
                     vm.RevolverAnimationCue;
@@ -4128,8 +4363,7 @@ namespace DiaBlackJack.GameScene
         {
             return plan != null &&
                 plan.ResolutionId != lastResolutionId &&
-                plan.PlaybackMode ==
-                    RoundComparisonPlaybackMode.SkipForDecisiveHiddenGuess;
+                plan.PlaybackMode != RoundComparisonPlaybackMode.CountTotals;
         }
 
         internal static bool ShouldHideCombatHudForPresentation(
@@ -4261,6 +4495,13 @@ namespace DiaBlackJack.GameScene
             _lastRoundComparisonResolutionId = plan.ResolutionId;
             _pendingPlayerMammonComparison = null;
             _roundComparisonActive = false;
+            if (_tutorialDirector != null &&
+                !_tutorialRoundComparisonPresentationComplete)
+            {
+                _tutorialRoundComparisonPresentationComplete = true;
+                _tutorialDirector
+                    .NotifyRoundOneComparisonPresentationReady();
+            }
         }
 
         private IEnumerator CompleteDirectRoundResolutionPresentation(
@@ -4701,12 +4942,14 @@ namespace DiaBlackJack.GameScene
                     _roundComparisonActive || _soulLossPresentationActive,
                     deferRoundResultPresentation,
                     hasBlockingAnimationCue);
+            bool combatInputLocked =
+                _inputLocked || IsTutorialHudInputLocked;
             GameSceneCombatHudViewModel combat =
                 GameSceneCombatHudPresenter.Create(
                     vm.Core,
                     IsStageBattle,
                     isShopOpen,
-                    _inputLocked,
+                    combatInputLocked,
                     vm.UsesDiegeticCardEffectSelection,
                     hideForPresentation: hideCombatHudForPresentation,
                     satanSelectedNumberCount:
@@ -4761,7 +5004,6 @@ namespace DiaBlackJack.GameScene
                  playedHammerAnimation &&
                  IsHammerSmashCue(vm.HammerAnimationCue)) ||
                 (deferKnifeResultCardRender &&
-                 playedKnifeAnimation &&
                  vm.KnifeAnimationCue?.Phase ==
                     GameSceneKnifeAnimationPhase.Resolved) ||
                 (deferRevolverResultCardRender &&
@@ -4788,6 +5030,7 @@ namespace DiaBlackJack.GameScene
             {
                 playedCardReveal =
                     RenderHandsAndTotals(vm, showTransientEffectSources);
+                RefreshTutorialNarratorSpeaker();
             }
 
             RenderCrystalOrbSelection(vm, combat);
@@ -4824,6 +5067,42 @@ namespace DiaBlackJack.GameScene
                 deferredCardRender ? vm : null,
                 playedMammonRoll,
                 playedCardReveal);
+        }
+
+        private void RefreshTutorialNarratorSpeaker()
+        {
+            if (tutorialNarrator == null)
+            {
+                return;
+            }
+
+            if (_tutorialSpeaker == TutorialSpeakerKind.NarratorAsmodeus)
+            {
+                tutorialNarrator.UseNarratorCard();
+                return;
+            }
+
+            CoreLoopBattle battle = Battle;
+            if (battle == null || playerHand == null)
+            {
+                return;
+            }
+
+            IReadOnlyList<ActiveDemonContract> contracts =
+                battle.ActivePlayerDemonContracts;
+            for (int i = 0; i < contracts.Count; i++)
+            {
+                ActiveDemonContract contract = contracts[i];
+                if (contract.Definition.Key == DemonContractCatalog.AsmodeusKey &&
+                    playerHand.TryGetDemonCard(
+                        contract.SourceCardId,
+                        out DemonCardView card))
+                {
+                    playerHand.PreserveDemonCard(contract.SourceCardId);
+                    tutorialNarrator.UseExternalSpeaker(card);
+                    return;
+                }
+            }
         }
 
         private bool PresentEnemySpeech(
@@ -4984,6 +5263,27 @@ namespace DiaBlackJack.GameScene
             }
 
             _completedTerminalActionSkullBattle = battle;
+            if (IsStageBattle &&
+                _stageSession.IsTutorialRun &&
+                outcome == BattleOutcome.PlayerVictory)
+            {
+                bool exitComplete = enemyCharacter == null;
+                enemyCharacter?.PlayExitAnimation(() => exitComplete = true);
+                while (!exitComplete && ReferenceEquals(Battle, battle))
+                {
+                    yield return null;
+                }
+
+                if (!ReferenceEquals(Battle, battle))
+                {
+                    yield break;
+                }
+
+                _tutorialBattleEndPresentationComplete = true;
+                _tutorialDirector?.NotifyBattleEndPresentationReady();
+                yield break;
+            }
+
             if (IsStageBattle)
             {
                 ReturnToProgressionIfStageBattleEnded();
@@ -5046,7 +5346,8 @@ namespace DiaBlackJack.GameScene
                     playerCards,
                     vm.PlayerDemonCards,
                     showTransientEffectSources,
-                    showDirectSelectionCommands: !_inputLocked);
+                    showDirectSelectionCommands:
+                        !_inputLocked && !IsTutorialHudInputLocked);
             }
 
             if (enemyHand != null)
@@ -5132,6 +5433,12 @@ namespace DiaBlackJack.GameScene
         {
             if (totals == null || vm == null)
             {
+                return;
+            }
+
+            if (_suppressHandRenderUntilRoundOneStart)
+            {
+                totals.Render(string.Empty, string.Empty);
                 return;
             }
 
@@ -5379,12 +5686,14 @@ namespace DiaBlackJack.GameScene
             }
 
             bool isShopOpen = shop != null && shop.IsOpen;
+            bool combatInputLocked =
+                _inputLocked || IsTutorialHudInputLocked;
             GameSceneCombatHudViewModel combat =
                 GameSceneCombatHudPresenter.Create(
                     _core,
                     IsStageBattle,
                     isShopOpen,
-                    _inputLocked,
+                    combatInputLocked,
                     satanSelectedNumberCount:
                         satanNumberSelection?.SelectedCount ?? 0,
                     restrictedPrimaryAction: _tutorialRestrictedPrimaryAction,
@@ -5440,7 +5749,17 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
-            RememberRevolverAnimationCue(cue);
+            if (cue.Phase == GameSceneRevolverAnimationPhase.Ready &&
+                ((_revolverReadyActive &&
+                    !IsMatchingActiveRevolverReady(cue)) ||
+                 (_hasLastRevolverAnimationCue &&
+                    (_lastRevolverAnimationRoundNumber != cue.RoundNumber ||
+                     _lastRevolverAnimationSourceCardId != cue.SourceCardId ||
+                     _lastRevolverAnimationActorSide != cue.ActorSide ||
+                     _lastRevolverAnimationActionOrdinal != cue.ActionOrdinal))))
+            {
+                HideRevolverAnimation();
+            }
 
             GameObject root = ResolveRevolverRoot();
             if (root != null && !root.activeSelf)
@@ -5453,6 +5772,7 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
+            RememberRevolverAnimationCue(cue);
             StopRevolverHideRoutine();
             StopRevolverShotRoutine();
             ResetRevolverTriggers();
@@ -5532,7 +5852,9 @@ namespace DiaBlackJack.GameScene
             return true;
         }
 
-        private bool TryPlayKnifeAnimation(GameSceneKnifeAnimationCue cue)
+        private bool TryPlayKnifeAnimation(
+            GameSceneKnifeAnimationCue cue,
+            bool scheduleHide = true)
         {
             Animator animator = ResolveKnifeAnimator();
             if (cue == null || animator == null || IsLastKnifeAnimationCue(cue))
@@ -5540,7 +5862,18 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
-            RememberKnifeAnimationCue(cue);
+            if (cue.Phase == GameSceneKnifeAnimationPhase.Ready &&
+                _knifeReadyRetryBlockedFrame == Time.frameCount)
+            {
+                return false;
+            }
+
+            if (!IsActiveKnifeSequence(cue))
+            {
+                CompleteActiveKnifeSequence();
+                BeginActiveKnifeSequence(cue);
+            }
+
             GameObject root = ResolveKnifeRoot();
             if (root != null && !root.activeSelf)
             {
@@ -5559,10 +5892,16 @@ namespace DiaBlackJack.GameScene
             {
                 ClearPendingKnifeImpact();
                 ResetKnifeAnimatorToBase();
-                animator.SetTrigger(
-                    cue.ActorSide == CombatantSide.Player
-                        ? playerKnifeStartTrigger
-                        : enemyKnifeStartTrigger);
+                if (!TryPlayKnifeState(
+                        animator,
+                        cue.ActorSide == CombatantSide.Player
+                            ? playerKnifeReadyStateName
+                            : enemyKnifeReadyStateName))
+                {
+                    return false;
+                }
+
+                _knifePlaybackState = KnifePlaybackState.Appearing;
                 ApplyCinematicCamera(
                     ResolveKnifeCameraView(cue.ActorSide),
                     knifeReadySeconds);
@@ -5580,15 +5919,31 @@ namespace DiaBlackJack.GameScene
                 ClearPendingKnifeImpact();
             }
 
-            animator.SetTrigger(
-                cue.Succeeded ? knifeSuccessTrigger : knifeFailTrigger);
+            string resultStateName = cue.ActorSide == CombatantSide.Player
+                ? cue.Succeeded
+                    ? playerKnifeSuccessStateName
+                    : playerKnifeFailStateName
+                : cue.Succeeded
+                    ? enemyKnifeSuccessStateName
+                    : enemyKnifeFailStateName;
+            if (!TryPlayKnifeState(animator, resultStateName))
+            {
+                ClearPendingKnifeImpact();
+                return false;
+            }
+
+            RememberKnifeAnimationCue(cue);
+            _knifePlaybackState = cue.Succeeded
+                ? KnifePlaybackState.Resolving
+                : KnifePlaybackState.Disappearing;
             ApplyCinematicCamera(
                 ResolveKnifeCameraView(cue.ActorSide),
                 knifeResultSeconds);
 
-            if (Application.isPlaying && knifeResultSeconds > 0f)
+            if (scheduleHide && Application.isPlaying)
             {
-                _knifeHideRoutine = StartCoroutine(HideKnifeAnimationAfterDelay());
+                _knifeHideRoutine = StartCoroutine(
+                    WaitForKnifeResultAndHide(cue));
             }
 
             return true;
@@ -5690,7 +6045,8 @@ namespace DiaBlackJack.GameScene
                 _lastKnifeAnimationSourceCardId == cue.SourceCardId &&
                 _lastKnifeAnimationActorSide == cue.ActorSide &&
                 _lastKnifeAnimationPhase == cue.Phase &&
-                _lastKnifeAnimationSucceeded == cue.Succeeded;
+                _lastKnifeAnimationSucceeded == cue.Succeeded &&
+                _lastKnifeAnimationActionOrdinal == cue.ActionOrdinal;
         }
 
         private void RememberKnifeAnimationCue(GameSceneKnifeAnimationCue cue)
@@ -5701,20 +6057,79 @@ namespace DiaBlackJack.GameScene
             _lastKnifeAnimationActorSide = cue.ActorSide;
             _lastKnifeAnimationPhase = cue.Phase;
             _lastKnifeAnimationSucceeded = cue.Succeeded;
+            _lastKnifeAnimationActionOrdinal = cue.ActionOrdinal;
+        }
+
+        private void BeginActiveKnifeSequence(GameSceneKnifeAnimationCue cue)
+        {
+            _hasActiveKnifeSequence = true;
+            _activeKnifeRoundNumber = cue.RoundNumber;
+            _activeKnifeActionOrdinal = cue.ActionOrdinal;
+            _activeKnifeSourceCardId = cue.SourceCardId;
+            _activeKnifeActorSide = cue.ActorSide;
+            _activeKnifeReadyConfirmed = false;
+            _activeKnifeRevealViewModel = null;
+            _knifeReadyRetryBlockedFrame = -1;
+        }
+
+        private bool IsActiveKnifeSequence(GameSceneKnifeAnimationCue cue)
+        {
+            return cue != null &&
+                _hasActiveKnifeSequence &&
+                _activeKnifeRoundNumber == cue.RoundNumber &&
+                _activeKnifeActionOrdinal == cue.ActionOrdinal &&
+                _activeKnifeSourceCardId == cue.SourceCardId &&
+                _activeKnifeActorSide == cue.ActorSide;
+        }
+
+        private static bool IsSameKnifeSequence(
+            GameSceneKnifeAnimationCue first,
+            GameSceneKnifeAnimationCue second)
+        {
+            return first != null &&
+                second != null &&
+                first.RoundNumber == second.RoundNumber &&
+                first.ActionOrdinal == second.ActionOrdinal &&
+                first.SourceCardId == second.SourceCardId &&
+                first.ActorSide == second.ActorSide;
+        }
+
+        private bool TryCaptureActiveKnifeReveal(GameSceneViewModel viewModel)
+        {
+            if (viewModel == null ||
+                !_activeKnifeReadyConfirmed ||
+                !IsActiveKnifeSequence(viewModel.KnifeAnimationCue))
+            {
+                return false;
+            }
+
+            _activeKnifeRevealViewModel = viewModel;
+            return true;
         }
 
         private bool TryPlayPoisonInjectionAnimation(
-            GameScenePoisonInjectionAnimationCue cue)
+            GameScenePoisonInjectionAnimationCue cue,
+            bool allowWhileHandsSuppressed = false)
         {
             if (cue == null ||
-                poisonInjectionAnnounce == null ||
                 poisonInjectionCardCatalog == null ||
                 IsLastPoisonInjectionAnimationCue(cue))
             {
                 return false;
             }
 
-            RememberPoisonInjectionAnimationCue(cue);
+            if (_suppressHandRenderUntilRoundOneStart &&
+                !allowWhileHandsSuppressed)
+            {
+                _pendingPoisonInjectionAnimationCue = cue;
+                return false;
+            }
+
+            if (poisonInjectionAnnounce == null)
+            {
+                return false;
+            }
+
             Sprite poisonSprite = poisonInjectionCardCatalog.GetNormalFaceSprite(
                 CardDefinitionCatalog.PoisonKey,
                 CardSuit.Spade);
@@ -5724,6 +6139,12 @@ namespace DiaBlackJack.GameScene
             }
 
             poisonInjectionAnnounce.Play(poisonSprite, onComplete: null);
+            RememberPoisonInjectionAnimationCue(cue);
+            if (_pendingPoisonInjectionAnimationCue?.RoundNumber ==
+                cue.RoundNumber)
+            {
+                _pendingPoisonInjectionAnimationCue = null;
+            }
             return true;
         }
 
@@ -5745,6 +6166,7 @@ namespace DiaBlackJack.GameScene
         {
             _hasLastPoisonInjectionAnimationCue = false;
             _lastPoisonInjectionAnimationRoundNumber = 0;
+            _pendingPoisonInjectionAnimationCue = null;
         }
 
         private void ResetKnifeAnimationState()
@@ -5755,23 +6177,71 @@ namespace DiaBlackJack.GameScene
             _lastKnifeAnimationActorSide = CombatantSide.Player;
             _lastKnifeAnimationPhase = GameSceneKnifeAnimationPhase.Ready;
             _lastKnifeAnimationSucceeded = false;
-            ClearPendingKnifeImpact();
-            HideKnifeAnimation();
+            _lastKnifeAnimationActionOrdinal = 0;
+            _knifePlaybackState = KnifePlaybackState.Hidden;
+            CompleteActiveKnifeSequence();
         }
 
-        private IEnumerator HideKnifeAnimationAfterDelay()
+        private void CompleteActiveKnifeSequence()
         {
-            yield return new WaitForSeconds(knifeResultSeconds);
-            _knifeHideRoutine = null;
-            ResetKnifeAnimatorToBase();
-            PresentationManager.Current?.ForceRestoreTransientCameraEffects();
-            GameObject root = ResolveKnifeRoot();
-            if (root != null)
+            StopKnifeSequenceCleanupRoutine();
+            HideKnifeAnimation();
+            _hasActiveKnifeSequence = false;
+            _activeKnifeRoundNumber = 0;
+            _activeKnifeActionOrdinal = 0;
+            _activeKnifeSourceCardId = 0;
+            _activeKnifeActorSide = CombatantSide.Player;
+            _activeKnifeReadyConfirmed = false;
+            _activeKnifeRevealViewModel = null;
+        }
+
+        private void StopKnifeSequenceCleanupRoutine()
+        {
+            if (_knifeSequenceCleanupRoutine == null)
             {
-                root.SetActive(false);
+                return;
             }
 
-            ClearPendingKnifeImpact();
+            StopCoroutine(_knifeSequenceCleanupRoutine);
+            _knifeSequenceCleanupRoutine = null;
+        }
+
+        private void BeginKnifeSequenceCleanupWatchdog()
+        {
+            StopKnifeSequenceCleanupRoutine();
+            if (Application.isPlaying)
+            {
+                _knifeSequenceCleanupRoutine = StartCoroutine(
+                    KnifeSequenceCleanupWatchdog());
+            }
+        }
+
+        private IEnumerator KnifeSequenceCleanupWatchdog()
+        {
+            float orphanSeconds = 0f;
+            while (_hasActiveKnifeSequence)
+            {
+                CoreLoopBattle battle = Battle;
+                bool continuationPending = battle != null &&
+                    (battle.ActiveCardEffectKind ==
+                        CardEffectKind.MilitaryKnife ||
+                     battle.PendingPlayerAutomaticInteraction != null);
+                orphanSeconds = continuationPending
+                    ? 0f
+                    : orphanSeconds + Time.unscaledDeltaTime;
+                if (orphanSeconds >= KnifeOrphanCleanupSeconds)
+                {
+                    break;
+                }
+
+                yield return null;
+            }
+
+            _knifeSequenceCleanupRoutine = null;
+            if (_hasActiveKnifeSequence)
+            {
+                CompleteActiveKnifeSequence();
+            }
         }
 
         private void StopKnifeHideRoutine()
@@ -5797,6 +6267,8 @@ namespace DiaBlackJack.GameScene
             {
                 root.SetActive(false);
             }
+
+            _knifePlaybackState = KnifePlaybackState.Hidden;
         }
 
         private bool TryPlayHammerAnimation(GameSceneHammerAnimationCue cue)
@@ -5857,8 +6329,150 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
+            if (ShouldThreatenEnemyDuringPlayerSatanAbility(cue.ActorSide))
+            {
+                enemyCharacter?.RenderVisual(
+                    CharacterVisualState.AttackThreatened);
+            }
+
             RememberSatanAttackAnimationCue(cue);
             return true;
+        }
+
+        private IEnumerator WaitForKnifeReady(
+            GameSceneKnifeAnimationCue cue,
+            int remainingRetries = 1)
+        {
+            Animator animator = ResolveKnifeAnimator();
+            string loopStateName = cue.ActorSide == CombatantSide.Player
+                ? playerKnifeLoopStateName
+                : enemyKnifeLoopStateName;
+            float timeout = Mathf.Max(knifeReadySeconds + 1f, 1.5f);
+            float elapsed = 0f;
+            while (animator != null && animator.gameObject.activeInHierarchy &&
+                elapsed < timeout)
+            {
+                if (animator.GetCurrentAnimatorStateInfo(0).IsName(loopStateName))
+                {
+                    if (!IsActiveKnifeSequence(cue))
+                    {
+                        yield break;
+                    }
+
+                    RememberKnifeAnimationCue(cue);
+                    _activeKnifeReadyConfirmed = true;
+                    _knifePlaybackState = KnifePlaybackState.Ready;
+                    BeginKnifeSequenceCleanupWatchdog();
+                    yield break;
+                }
+
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            if (IsActiveKnifeSequence(cue))
+            {
+                _knifeReadyRetryBlockedFrame = Time.frameCount;
+                CompleteActiveKnifeSequence();
+            }
+
+            if (remainingRetries <= 0)
+            {
+                yield break;
+            }
+
+            yield return null;
+            CoreLoopBattle battle = Battle;
+            GameSceneKnifeAnimationCue currentCue = battle == null
+                ? null
+                : GameScenePresenter.Create(
+                    battle,
+                    _activeEnemyProfileKey).KnifeAnimationCue;
+            if (currentCue?.Phase == GameSceneKnifeAnimationPhase.Ready &&
+                IsSameKnifeSequence(cue, currentCue) &&
+                TryPlayKnifeAnimation(currentCue))
+            {
+                yield return WaitForKnifeReady(
+                    currentCue,
+                    remainingRetries - 1);
+            }
+        }
+
+        private IEnumerator WaitForKnifeResultAndHide(
+            GameSceneKnifeAnimationCue cue)
+        {
+            Animator animator = ResolveKnifeAnimator();
+            string stateName = cue.ActorSide == CombatantSide.Player
+                ? cue.Succeeded
+                    ? playerKnifeSuccessStateName
+                    : playerKnifeFailStateName
+                : cue.Succeeded
+                    ? enemyKnifeSuccessStateName
+                    : enemyKnifeFailStateName;
+            float timeout = Mathf.Max(knifeResultSeconds + 3f, 4f);
+            float elapsed = 0f;
+            bool enteredResultState = false;
+            while (animator != null && animator.gameObject.activeInHierarchy &&
+                elapsed < timeout)
+            {
+                AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
+                if (state.IsName(stateName))
+                {
+                    enteredResultState = true;
+                    if (!animator.IsInTransition(0) && state.normalizedTime >= 1f)
+                    {
+                        break;
+                    }
+                }
+                else if (enteredResultState)
+                {
+                    break;
+                }
+
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+
+            _knifeHideRoutine = null;
+            if (IsActiveKnifeSequence(cue))
+            {
+                CompleteActiveKnifeSequence();
+            }
+            else
+            {
+                HideKnifeAnimation();
+            }
+        }
+
+        private static bool TryPlayKnifeState(
+            Animator animator,
+            string stateName)
+        {
+            if (animator == null ||
+                !animator.gameObject.activeInHierarchy ||
+                string.IsNullOrWhiteSpace(stateName))
+            {
+                return false;
+            }
+
+            int stateHash = Animator.StringToHash(stateName);
+            if (!animator.HasState(0, stateHash))
+            {
+                Debug.LogError(
+                    $"[GameManager] Knife Animator state '{stateName}' does not exist.",
+                    animator);
+                return false;
+            }
+
+            animator.Play(stateHash, 0, 0f);
+            animator.Update(0f);
+            return animator.GetCurrentAnimatorStateInfo(0).IsName(stateName);
+        }
+
+        internal static bool ShouldThreatenEnemyDuringPlayerSatanAbility(
+            CombatantSide actorSide)
+        {
+            return actorSide == CombatantSide.Player;
         }
 
         private IEnumerator WaitForSatanAttackAnimation(
@@ -5924,6 +6538,12 @@ namespace DiaBlackJack.GameScene
             {
                 targetCard = null;
                 return false;
+            }
+
+            if (ShouldThreatenEnemyDuringPlayerSatanAbility(cue.ActorSide))
+            {
+                enemyCharacter?.RenderVisual(
+                    CharacterVisualState.AttackThreatened);
             }
 
             RememberSatanNumberGuessAnimationCue(cue);
@@ -6524,7 +7144,8 @@ namespace DiaBlackJack.GameScene
                 _lastRevolverAnimationSourceCardId == cue.SourceCardId &&
                 _lastRevolverAnimationActorSide == cue.ActorSide &&
                 _lastRevolverAnimationPhase == cue.Phase &&
-                _lastRevolverAnimationSucceeded == cue.Succeeded;
+                _lastRevolverAnimationSucceeded == cue.Succeeded &&
+                _lastRevolverAnimationActionOrdinal == cue.ActionOrdinal;
         }
 
         private void RememberRevolverAnimationCue(
@@ -6536,6 +7157,7 @@ namespace DiaBlackJack.GameScene
             _lastRevolverAnimationActorSide = cue.ActorSide;
             _lastRevolverAnimationPhase = cue.Phase;
             _lastRevolverAnimationSucceeded = cue.Succeeded;
+            _lastRevolverAnimationActionOrdinal = cue.ActionOrdinal;
         }
 
         private void RememberActiveRevolverReady(
@@ -6545,6 +7167,7 @@ namespace DiaBlackJack.GameScene
             _revolverReadyRoundNumber = cue.RoundNumber;
             _revolverReadySourceCardId = cue.SourceCardId;
             _revolverReadyActorSide = cue.ActorSide;
+            _revolverReadyActionOrdinal = cue.ActionOrdinal;
         }
 
         internal static bool ShouldHoldInputForRevolverReady(
@@ -6573,7 +7196,8 @@ namespace DiaBlackJack.GameScene
             return _revolverReadyActive &&
                 _revolverReadyRoundNumber == cue.RoundNumber &&
                 _revolverReadySourceCardId == cue.SourceCardId &&
-                _revolverReadyActorSide == cue.ActorSide;
+                _revolverReadyActorSide == cue.ActorSide &&
+                _revolverReadyActionOrdinal == cue.ActionOrdinal;
         }
 
         private string ResolveRevolverTrigger(GameSceneRevolverAnimationCue cue)
@@ -6594,6 +7218,7 @@ namespace DiaBlackJack.GameScene
             _lastRevolverAnimationActorSide = CombatantSide.Player;
             _lastRevolverAnimationPhase = GameSceneRevolverAnimationPhase.Ready;
             _lastRevolverAnimationSucceeded = false;
+            _lastRevolverAnimationActionOrdinal = 0;
             ClearPendingRevolverImpact();
             ClearActiveRevolverReady();
             HideRevolverAnimation();
@@ -7123,6 +7748,7 @@ namespace DiaBlackJack.GameScene
             _revolverReadyRoundNumber = 0;
             _revolverReadySourceCardId = 0;
             _revolverReadyActorSide = CombatantSide.Player;
+            _revolverReadyActionOrdinal = 0;
         }
 
         private readonly struct AppliedAnimationResult
@@ -7227,6 +7853,44 @@ namespace DiaBlackJack.GameScene
         {
             RefreshView();
         }
+
+#if UNITY_EDITOR
+        internal bool DebugStartStandaloneEnemyBattle(string profileKey)
+        {
+            if (!Application.isPlaying || string.IsNullOrWhiteSpace(profileKey))
+            {
+                return false;
+            }
+
+            try
+            {
+                EnemyCombatProfileCatalog.Default.GetByKey(profileKey);
+            }
+            catch (Exception exception)
+                when (exception is ArgumentException ||
+                      exception is KeyNotFoundException)
+            {
+                return false;
+            }
+
+            ResetBattlePresentation();
+            _stageSession = null;
+            _completedStageSession = null;
+            _activeEnemyProfileKey = profileKey;
+            _session = new CoreLoopSession(CreateBattle);
+            _activeEnemySpeechProfile = ResolveActiveEnemySpeechProfile();
+            _suppressHandRenderUntilRoundOneStart = false;
+            _tutorialDirector = null;
+            enemyCharacter?.ExitMerchant();
+            enemyCharacter?.TrySetEnemyProfile(_activeEnemyProfileKey);
+            ApplyEnemyDeckTopTint();
+            SetBattleCardObjectsVisible(true);
+            _inputLocked = false;
+            SynchronizeSoulLossCursor();
+            RefreshView();
+            return true;
+        }
+#endif
 
         private void OpenStandaloneShop()
         {

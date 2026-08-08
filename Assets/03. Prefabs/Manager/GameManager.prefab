@@ -91,7 +91,15 @@ MonoBehaviour:
   knifeReadySeconds: 0.7
   knifeSuspenseSeconds: 2.5
   knifeResultSeconds: 3.1
-  knifeBaseStateName: Knife_Empty
+  knifeBaseStateName: Base Layer.Empty
+  playerKnifeReadyStateName: Base Layer.Knife_Start
+  enemyKnifeReadyStateName: Base Layer.Knife_Start_Enemy
+  playerKnifeLoopStateName: Base Layer.Knife_Loop
+  enemyKnifeLoopStateName: Base Layer.Knife_Loop_Enemy
+  playerKnifeSuccessStateName: Base Layer.Knife_Attack
+  enemyKnifeSuccessStateName: Base Layer.Knife_Attack_Enemy
+  playerKnifeFailStateName: Base Layer.Knife_Disappear
+  enemyKnifeFailStateName: Base Layer.Knife_Disappear_Enemy
   playerKnifeStartTrigger: PlayerStart
   enemyKnifeStartTrigger: EnemyStart
   knifeSuccessTrigger: Success
