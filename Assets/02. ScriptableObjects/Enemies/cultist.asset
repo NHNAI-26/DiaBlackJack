@@ -17,7 +17,7 @@ MonoBehaviour:
   portrait: {fileID: -6423348728433730566, guid: 22aa22444d6050045815396b307d8760, type: 3}
   speechProfile: {fileID: 11400000, guid: b62ef220cb85f1b49b91dd22f8a01c70, type: 2}
   deckTopTint: {r: 2.488063, g: 1.6383309, b: 1.5843798, a: 1}
-  skullTint: {r: 2.488063, g: 1.6383309, b: 1.5843798, a: 1}
+  skullBaseColor: {r: 1, g: 0.65847645, b: 0.63679248, a: 1}
   grade: 0
   maximumSoul: 6
   defeatGold: 5

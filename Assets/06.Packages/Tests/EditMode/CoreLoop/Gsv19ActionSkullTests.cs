@@ -361,7 +361,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void GSV19_U07_AllEnemySkullTintsMatchDeckTints()
+        public void GSV19_U07_AllEnemySkullBaseColorsNormalizeDeckTints()
         {
             EnemyContentCatalogSO catalog =
                 AssetDatabase.LoadAssetAtPath<EnemyContentCatalogSO>(
@@ -370,9 +370,39 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(catalog.Enemies, Is.Not.Empty);
             foreach (EnemyCombatProfileDefinitionSO enemy in catalog.Enemies)
             {
+                Color deckTint = enemy.DeckTopTint;
+                float maximumChannel = Mathf.Max(
+                    deckTint.r,
+                    Mathf.Max(deckTint.g, deckTint.b));
+                Color expected = new Color(
+                    deckTint.r / maximumChannel,
+                    deckTint.g / maximumChannel,
+                    deckTint.b / maximumChannel,
+                    deckTint.a);
+                Color actual = enemy.SkullBaseColor;
+
                 Assert.That(
-                    enemy.SkullTint,
-                    Is.EqualTo(enemy.DeckTopTint),
+                    actual.r,
+                    Is.InRange(0f, 1f),
+                    enemy.Key);
+                Assert.That(actual.g, Is.InRange(0f, 1f), enemy.Key);
+                Assert.That(actual.b, Is.InRange(0f, 1f), enemy.Key);
+                Assert.That(actual.a, Is.InRange(0f, 1f), enemy.Key);
+                Assert.That(
+                    actual.r,
+                    Is.EqualTo(expected.r).Within(0.000001f),
+                    enemy.Key);
+                Assert.That(
+                    actual.g,
+                    Is.EqualTo(expected.g).Within(0.000001f),
+                    enemy.Key);
+                Assert.That(
+                    actual.b,
+                    Is.EqualTo(expected.b).Within(0.000001f),
+                    enemy.Key);
+                Assert.That(
+                    actual.a,
+                    Is.EqualTo(expected.a).Within(0.000001f),
                     enemy.Key);
             }
         }
@@ -745,6 +775,64 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(
                     Vector3.Distance(animatedTarget.position, desiredPosition),
                     Is.LessThan(0.001f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSV19_U15_ViewAppliesOnlyInstanceBaseColor()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                SkullPrefabPath);
+            Renderer prefabRenderer = prefab.GetComponentInChildren<Renderer>(
+                true);
+            Material sharedMaterial = prefabRenderer.sharedMaterial;
+            Color sharedBaseColor = sharedMaterial.GetColor("_BaseColor");
+            GameObject instance = UnityEngine.Object.Instantiate(prefab);
+            try
+            {
+                CombatActionSkullView view =
+                    instance.GetComponent<CombatActionSkullView>();
+                Renderer instanceRenderer =
+                    instance.GetComponentInChildren<Renderer>(true);
+                Color expected = new Color(0.25f, 0.5f, 0.75f, 1f);
+
+                view.Initialize(expected, Vector3.zero);
+
+                Assert.That(
+                    instanceRenderer.sharedMaterial,
+                    Is.Not.SameAs(sharedMaterial));
+                Color actual =
+                    instanceRenderer.sharedMaterial.GetColor("_BaseColor");
+                Assert.That(
+                    actual.r,
+                    Is.EqualTo(expected.r).Within(0.000001f));
+                Assert.That(
+                    actual.g,
+                    Is.EqualTo(expected.g).Within(0.000001f));
+                Assert.That(
+                    actual.b,
+                    Is.EqualTo(expected.b).Within(0.000001f));
+                Assert.That(
+                    actual.a,
+                    Is.EqualTo(expected.a).Within(0.000001f));
+                Color currentSharedBaseColor =
+                    sharedMaterial.GetColor("_BaseColor");
+                Assert.That(
+                    currentSharedBaseColor.r,
+                    Is.EqualTo(sharedBaseColor.r).Within(0.000001f));
+                Assert.That(
+                    currentSharedBaseColor.g,
+                    Is.EqualTo(sharedBaseColor.g).Within(0.000001f));
+                Assert.That(
+                    currentSharedBaseColor.b,
+                    Is.EqualTo(sharedBaseColor.b).Within(0.000001f));
+                Assert.That(
+                    currentSharedBaseColor.a,
+                    Is.EqualTo(sharedBaseColor.a).Within(0.000001f));
             }
             finally
             {

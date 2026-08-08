@@ -846,3 +846,10 @@ MCP가 Unity 창의 포커스를 가져가지 않은 상태에서는 게임 프�
 #### 권장 커밋 제목
 
 `feat : 전투 행동 해골 표시 연출을 추가하다`
+
+### 2026-08-09 GSV19 행동 해골 LDR Base Color 전환
+
+- `EnemyCombatProfileDefinitionSO`의 HDR `skullTint`를 LDR `skullBaseColor`로 이관했다. `[FormerlySerializedAs("skullTint")]`로 기존 직렬화 호환을 유지하고, 적 SO 6종은 기존 `deckTopTint`의 RGB를 최대 채널 1 기준으로 정규화해 색상 비율을 보존했다.
+- `CombatActionSkullView`는 런타임 복제 재질의 Surface Inputs `_BaseColor`만 변경한다. 존재하지 않는 `_Color` fallback을 제거했으며 플레이어 흰색, 공유 `MAT_Skull`, 셰이더, 씬, 프리팹은 변경하지 않았다.
+- 변경 테스트 2/2(job `adbb7a734b75477d97c0fc96eff6a902`)과 `[Category("GSV19")]` 전체 16/16(job `50b8df9f538d443f920b83f01a7eaf6c`)이 통과했다. Unity 컴파일과 Console 오류는 0건이었다.
+- Play Mode에서 플레이어 `_BaseColor` `(1, 1, 1, 1)`과 총잡이 `(1, 0.546, 0.392, 1)`를 확인했다. 1280×720 Game View에서 흰색과 주황 계열 구분을 확인했으며, 전체 적·1920×1080 수동 검증과 전체 EditMode suite는 실행하지 않았다.

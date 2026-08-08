@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DiaBlackJack.CoreLoop;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace DiaBlackJack.Content
 {
@@ -44,9 +45,9 @@ namespace DiaBlackJack.Content
         [ColorUsage(true, true)]
         [SerializeField] private Color deckTopTint =
             new Color(1.35f, 1.35f, 1.35f, 1f);
-        [ColorUsage(true, true)]
-        [SerializeField] private Color skullTint =
-            new Color(1.35f, 1.35f, 1.35f, 1f);
+        [ColorUsage(true, false)]
+        [FormerlySerializedAs("skullTint")]
+        [SerializeField] private Color skullBaseColor = Color.white;
         [SerializeField] private EnemyGrade grade;
         [Min(1)]
         [SerializeField] private int maximumSoul = 1;
@@ -73,7 +74,7 @@ namespace DiaBlackJack.Content
 
         public Color DeckTopTint => deckTopTint;
 
-        public Color SkullTint => skullTint;
+        public Color SkullBaseColor => skullBaseColor;
 
         public string Key => key;
 

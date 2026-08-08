@@ -19,7 +19,6 @@ namespace DiaBlackJack.GameScene
 
         private const string DissolveSfxId = "dissolve";
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
-        private static readonly int ColorId = Shader.PropertyToID("_Color");
         private static readonly int DissolveAmountId =
             Shader.PropertyToID("_DissolveAmount");
         private static readonly int DissolveEnabledId =
@@ -42,15 +41,15 @@ namespace DiaBlackJack.GameScene
 
         public bool IsVisible => gameObject.activeSelf;
 
-        public void Initialize(Color tint, Vector3 homePosition)
+        public void Initialize(Color baseColor, Vector3 homePosition)
         {
             CacheMaterialInstances();
             _initialized = true;
-            SetTint(tint);
+            SetBaseColor(baseColor);
             ResetView(homePosition);
         }
 
-        public void SetTint(Color tint)
+        public void SetBaseColor(Color baseColor)
         {
             CacheMaterialInstances();
             for (int index = 0; index < _materials.Count; index++)
@@ -58,12 +57,7 @@ namespace DiaBlackJack.GameScene
                 Material material = _materials[index];
                 if (material.HasProperty(BaseColorId))
                 {
-                    material.SetColor(BaseColorId, tint);
-                }
-
-                if (material.HasProperty(ColorId))
-                {
-                    material.SetColor(ColorId, tint);
+                    material.SetColor(BaseColorId, baseColor);
                 }
             }
         }
