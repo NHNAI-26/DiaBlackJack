@@ -1179,3 +1179,11 @@ DC-R05의 기능·저장 재진입·두 전투 화면 시각 폐쇄는 완료됐
 - 재개 전에는 영혼 비용과 카드 버리기 선택을 생성하지 않는다. 재개 뒤 별도 타임라인에서 영혼 `-1`과 카드 버리기를 처리한다. 적 턴 루프도 보류 상태에서는 추가 행동을 시작하지 않는다.
 - 리볼버·나이프·사탄 치명 결과의 보류 및 재개 회귀를 추가했다. 관련 29/29 통과, 전체 EditMode 1,256건 중 1,237건 통과다. 잔여 19건은 작업 전 기준과 동일한 자산·상점·UI 기대값 불일치이며 신규 실패는 없다. 컴파일 오류는 0건이다.
 - 실플레이 재검증에서 적 리볼버만 결과 cue 생성기가 `PendingEnemyCardEffect`를 결과보다 먼저 검사해 장벽 앞 `Resolved` cue를 누락하는 추가 원인을 확인했다. 결과 action ordinal이 현재 행동과 일치하면 pending 상태보다 결과를 우선해 cue를 생성하도록 나이프와 같은 순서로 통일했다. 보류 중 `CompleteEnemyAction`의 턴 전환도 차단했다. 관련 87/87, 전체 1,237/1,256 통과다.
+
+## 2026-08-09 DC-UI10 마몬 주사위 호버 아웃라인
+
+- `MammonDieView`가 자식 Renderer를 자동 탐색하고 호버 중 `PostProcessOutlineRegistry`에 등록한다. 폭은 덱·도감과 같은 4px이며, 머티리얼의 `_StencilOutlineColor`를 우선하고 속성이 없으면 기존 주황색을 사용한다.
+- `GameManager.UpdateHoverDescriptionTarget`의 툴팁 대상 전환과 함께 이전 주사위 등록을 해제하고 새 주사위를 등록한다. 클릭 가능 여부와 호버 표시는 분리했으며, 포인터 이탈·입력 차단·비활성화·파괴·화면 전환 시 등록을 제거한다.
+- `DCUI10` EditMode 2/2(job `4fdb3f4bb5c9473aadcc2dda9503b573`)를 통과했다. 인접 `ShaderStencilOutlineTests`는 18/19(job `c88a4ce1cdce4a15bd3785463ab5a34d`)이며, 잔여 `GSV06_U03_LighterAnimationHidesBurnCardBeforeCoverCloses`는 단독 재실행(job `cfaf9e0b5ce44cef95f99b4291dae971`)에서도 동일하게 실패한 기존 범위 밖 회귀다.
+- GameScene validation은 누락 스크립트·깨진 프리팹 포함 문제 0건이다. Play Mode에서 Registry 수가 `호버 1 → 이탈 0 → 굴림 중 호버 1 → 굴림 중 이탈 0`으로 전환되고 실제 주사위 외곽선이 표시되는 것을 확인했다. 컴파일 오류는 0건이며, Play Mode Console에는 기존 머티리얼 Drawer 오류 2종이 재현됐다.
+- 머티리얼 복제, 셰이더·프리팹·씬 직렬화 변경은 없다.

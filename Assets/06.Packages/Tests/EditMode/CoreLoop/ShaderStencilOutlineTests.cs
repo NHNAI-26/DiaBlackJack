@@ -31,6 +31,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             "Assets/03. Prefabs/Card/DiscardDeck.prefab";
         private const string CodexBookPrefabPath =
             "Assets/03. Prefabs/Props/CodexBook.prefab";
+        private const string MammonDiePrefabPath =
+            "Assets/Resources/Prefabs/MammonDie_Prototype.prefab";
         private const string ShopItemLighterPrefabPath =
             "Assets/03. Prefabs/Shop/ShopItem_Lighter.prefab";
         private const string ShopItemWhiskeyPrefabPath =
@@ -397,6 +399,133 @@ namespace DiaBlackJack.CoreLoop.Tests
                     Is.EqualTo(renderer.sharedMaterial.GetColor(
                         StencilOutlineColorId)));
                 AssertVectorApproximately(root.transform.localScale, baseScale);
+
+                update.Invoke(manager, new object[] { null });
+                PostProcessOutlineRegistry.FillTargets(targets);
+                Assert.That(targets.Count, Is.Zero);
+            }
+            finally
+            {
+                Object.DestroyImmediate(managerObject);
+                Object.DestroyImmediate(root);
+                PostProcessOutlineRegistry.Clear();
+            }
+        }
+
+        [Test]
+        [Category("DCUI10")]
+        public void DCUI10_U01_MammonDieHoverMatchesDeckPostProcessOutline()
+        {
+            PostProcessOutlineRegistry.Clear();
+
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(MammonDiePrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+
+            GameObject root = Object.Instantiate(prefab);
+            Material customMaterial = null;
+            try
+            {
+                MammonDieView view = root.GetComponent<MammonDieView>();
+                Renderer[] renderers =
+                    root.GetComponentsInChildren<Renderer>(true);
+                Assert.That(view, Is.Not.Null);
+                Assert.That(renderers, Is.Not.Empty);
+
+                view.SetHovered(true);
+
+                var targets = new List<PostProcessOutlineRegistry.Target>();
+                PostProcessOutlineRegistry.FillTargets(targets);
+                Assert.That(targets.Count, Is.EqualTo(renderers.Length));
+                for (int i = 0; i < targets.Count; i++)
+                {
+                    Assert.That(
+                        ContainsRenderer(renderers, targets[i].Renderer),
+                        Is.True);
+                    Assert.That(targets[i].WidthPixels, Is.EqualTo(4f));
+                    Assert.That(
+                        targets[i].Color,
+                        Is.EqualTo(new Color(1f, 0.72f, 0.08f, 1f)));
+                }
+
+                view.SetHovered(false);
+                Shader shader = Shader.Find("DiaBlackJack/CardDeckStack");
+                Assert.That(shader, Is.Not.Null);
+                customMaterial = new Material(shader);
+                Color materialColor = new Color(0.2f, 0.8f, 1f, 1f);
+                customMaterial.SetColor(StencilOutlineColorId, materialColor);
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    renderers[i].sharedMaterial = customMaterial;
+                }
+
+                view.SetHovered(true);
+                PostProcessOutlineRegistry.FillTargets(targets);
+                Assert.That(targets.Count, Is.EqualTo(renderers.Length));
+                for (int i = 0; i < targets.Count; i++)
+                {
+                    Assert.That(targets[i].Color, Is.EqualTo(materialColor));
+                }
+
+                root.SetActive(false);
+                PostProcessOutlineRegistry.FillTargets(targets);
+                Assert.That(targets.Count, Is.Zero);
+
+                root.SetActive(true);
+                view.SetHovered(true);
+                Object.DestroyImmediate(root);
+                PostProcessOutlineRegistry.FillTargets(targets);
+                Assert.That(targets.Count, Is.Zero);
+            }
+            finally
+            {
+                if (root != null)
+                {
+                    Object.DestroyImmediate(root);
+                }
+
+                Object.DestroyImmediate(customMaterial);
+                PostProcessOutlineRegistry.Clear();
+            }
+        }
+
+        [Test]
+        [Category("DCUI10")]
+        public void DCUI10_U02_GameManagerTooltipHoverControlsMammonDieOutline()
+        {
+            PostProcessOutlineRegistry.Clear();
+
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(MammonDiePrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+
+            GameObject root = Object.Instantiate(prefab);
+            GameObject managerObject = new GameObject("Mammon Die Hover Manager Test");
+            try
+            {
+                HoverDescriptionTarget target =
+                    root.GetComponent<HoverDescriptionTarget>();
+                Renderer[] renderers =
+                    root.GetComponentsInChildren<Renderer>(true);
+                GameManager manager = managerObject.AddComponent<GameManager>();
+                MethodInfo update = typeof(GameManager).GetMethod(
+                    "UpdateHoverDescriptionTarget",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(target, Is.Not.Null);
+                Assert.That(renderers, Is.Not.Empty);
+                Assert.That(update, Is.Not.Null);
+
+                update.Invoke(manager, new object[] { target });
+
+                var targets = new List<PostProcessOutlineRegistry.Target>();
+                PostProcessOutlineRegistry.FillTargets(targets);
+                Assert.That(targets.Count, Is.EqualTo(renderers.Length));
+                for (int i = 0; i < targets.Count; i++)
+                {
+                    Assert.That(
+                        ContainsRenderer(renderers, targets[i].Renderer),
+                        Is.True);
+                }
 
                 update.Invoke(manager, new object[] { null });
                 PostProcessOutlineRegistry.FillTargets(targets);

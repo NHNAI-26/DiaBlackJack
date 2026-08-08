@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using Border.Audio;
+using DiaBlackJack.Rendering;
 using UnityEngine;
 
 namespace DiaBlackJack.GameScene
@@ -38,6 +39,15 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private float rollWallThickness = 0.08f;
         [Tooltip("Kept clear of the invisible roll walls so the die can never touch or settle against one.")]
         [SerializeField] private float wallSafetyMargin = 0.18f;
+        [Header("Hover outline")]
+        [SerializeField] private Renderer[] outlineRenderers;
+        [SerializeField] private bool useMaterialHoverOutlineSettings = true;
+        [SerializeField] private Color hoverOutlineColor =
+            new Color(1f, 0.72f, 0.08f, 1f);
+        [SerializeField] private float hoverOutlineWidthPixels = 4f;
+
+        private static readonly int StencilOutlineColorId =
+            Shader.PropertyToID("_StencilOutlineColor");
 
         private Vector3 _restLocalPosition;
         private Quaternion _restLocalRotation;
@@ -52,6 +62,7 @@ namespace DiaBlackJack.GameScene
         private bool _hasRollAnchor;
         private bool _hasPhysicalRestPose;
         private bool _hasPlayedDiceRollSound;
+        private bool _isHovered;
 
         public bool IsInteractable { get; private set; }
 
@@ -85,6 +96,7 @@ namespace DiaBlackJack.GameScene
             rollWallHeight = Mathf.Max(0.2f, rollWallHeight);
             rollWallThickness = Mathf.Max(0.02f, rollWallThickness);
             wallSafetyMargin = Mathf.Max(0f, wallSafetyMargin);
+            hoverOutlineWidthPixels = Mathf.Max(0f, hoverOutlineWidthPixels);
             AutoBind();
         }
 
@@ -107,10 +119,14 @@ namespace DiaBlackJack.GameScene
             }
 
             IsInteractable = false;
+            _isHovered = false;
+            ApplyHoverOutline(visible: false);
         }
 
         private void OnDestroy()
         {
+            _isHovered = false;
+            ApplyHoverOutline(visible: false);
             if (_rollSurface == null)
             {
                 return;
@@ -124,6 +140,64 @@ namespace DiaBlackJack.GameScene
             {
                 DestroyImmediate(_rollSurface);
             }
+        }
+
+        internal void SetHovered(bool hovered)
+        {
+            if (_isHovered == hovered)
+            {
+                return;
+            }
+
+            _isHovered = hovered;
+            ApplyHoverOutline(hovered);
+        }
+
+        private void ApplyHoverOutline(bool visible)
+        {
+            AutoBind();
+            if (outlineRenderers == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < outlineRenderers.Length; i++)
+            {
+                Renderer renderer = outlineRenderers[i];
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                if (!visible)
+                {
+                    PostProcessOutlineRegistry.Unregister(renderer);
+                    continue;
+                }
+
+                PostProcessOutlineRegistry.Register(
+                    renderer,
+                    ResolveOutlineColor(renderer.sharedMaterial),
+                    hoverOutlineWidthPixels);
+            }
+        }
+
+        private Color ResolveOutlineColor(Material material)
+        {
+            if (useMaterialHoverOutlineSettings &&
+                material != null &&
+                material.HasProperty(StencilOutlineColorId))
+            {
+                Color color = material.GetColor(StencilOutlineColorId);
+                if (color.a <= 0f)
+                {
+                    color.a = 1f;
+                }
+
+                return color;
+            }
+
+            return hoverOutlineColor;
         }
 
         public void Render(int? value, bool isInteractable)
@@ -600,6 +674,14 @@ namespace DiaBlackJack.GameScene
             if (dieVisual == null && transform.childCount > 0)
             {
                 dieVisual = transform.GetChild(0);
+            }
+
+            if (outlineRenderers == null || outlineRenderers.Length == 0)
+            {
+                outlineRenderers = dieVisual != null
+                    ? dieVisual.GetComponentsInChildren<Renderer>(
+                        includeInactive: true)
+                    : GetComponentsInChildren<Renderer>(includeInactive: true);
             }
 
             inputCollider ??= GetComponentInChildren<Collider>(true);

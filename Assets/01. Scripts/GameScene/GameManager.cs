@@ -1099,6 +1099,7 @@ namespace DiaBlackJack.GameScene
             UpdateCodexHover(null);
             UpdateContractPaperHover(null);
             UpdateCombatCommandHover(null);
+            UpdateHoverDescriptionTarget(null);
             ResetShopUtilityAnimations();
         }
 
@@ -1809,7 +1810,13 @@ namespace DiaBlackJack.GameScene
 
         private void UpdateHoverDescriptionTarget(HoverDescriptionTarget pointed)
         {
-            _hoveredDescriptionTarget = pointed;
+            if (_hoveredDescriptionTarget != pointed)
+            {
+                ResolveMammonDie(_hoveredDescriptionTarget)?.SetHovered(false);
+                _hoveredDescriptionTarget = pointed;
+                ResolveMammonDie(_hoveredDescriptionTarget)?.SetHovered(true);
+            }
+
             if (_hoveredDescriptionTarget == null)
             {
                 // Only responsible for clearing our own badge. Card, demon-card, and
@@ -1844,6 +1851,14 @@ namespace DiaBlackJack.GameScene
                 request.ScreenPosition,
                 _camera,
                 request.TooltipPivot);
+        }
+
+        private static MammonDieView ResolveMammonDie(
+            HoverDescriptionTarget target)
+        {
+            return target == null
+                ? null
+                : target.GetComponentInParent<MammonDieView>();
         }
 
         private void UpdateShopPriceBadges()
@@ -2336,8 +2351,8 @@ namespace DiaBlackJack.GameScene
                 Color tint = catalog.GetByKey(_activeEnemyProfileKey).DeckTopTint;
                 enemyRemainingDeck?.SetTopTint(tint);
                 enemyDiscardDeck?.SetTopTint(tint);
-                _enemyActionSkull?.SetTint(
-                    catalog.GetByKey(_activeEnemyProfileKey).SkullTint);
+                _enemyActionSkull?.SetBaseColor(
+                    catalog.GetByKey(_activeEnemyProfileKey).SkullBaseColor);
             }
             catch (Exception exception)
                 when (exception is ArgumentException ||
@@ -2368,12 +2383,12 @@ namespace DiaBlackJack.GameScene
                 _enemyActionSkull = Instantiate(actionSkullPrefab, transform);
                 _enemyActionSkull.name = "EnemyActionSkull";
                 _enemyActionSkull.Initialize(
-                    ResolveEnemyActionSkullTint(),
+                    ResolveEnemyActionSkullBaseColor(),
                     ResolveActionSkullHome(CombatantSide.Enemy));
             }
         }
 
-        private Color ResolveEnemyActionSkullTint()
+        private Color ResolveEnemyActionSkullBaseColor()
         {
             EnemyContentCatalogSO catalog =
                 CardContentBootstrap.Instance?.EnemyCatalog;
@@ -2385,7 +2400,7 @@ namespace DiaBlackJack.GameScene
 
             try
             {
-                return catalog.GetByKey(_activeEnemyProfileKey).SkullTint;
+                return catalog.GetByKey(_activeEnemyProfileKey).SkullBaseColor;
             }
             catch (Exception exception)
                 when (exception is ArgumentException ||
