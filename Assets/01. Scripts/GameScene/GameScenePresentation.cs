@@ -849,11 +849,17 @@ namespace DiaBlackJack.GameScene
 
         internal EnemyDecision EnemyActionSkullDecision { get; set; }
 
+        internal int EnemyActionSkullDecisionOrdinal { get; set; }
+
         internal PublicCombatAction LastPublicAction { get; set; }
 
         internal int? LastPublicActionSourceCardId { get; set; }
 
         internal int PublicActionOrdinal { get; set; }
+
+        internal bool PlayerIsStanding { get; set; }
+
+        internal bool EnemyIsStanding { get; set; }
 
         internal IReadOnlyList<SoulLossRecord> SoulLossHistory { get; set; } =
             Array.AsReadOnly(Array.Empty<SoulLossRecord>());
@@ -993,10 +999,13 @@ namespace DiaBlackJack.GameScene
             model.SoulLossHistory = new List<SoulLossRecord>(
                 battle.SoulLossHistory).AsReadOnly();
             model.EnemyActionSkullDecision = battle.LastEnemyDecision;
+            model.EnemyActionSkullDecisionOrdinal = battle.EnemyDecisionOrdinal;
             model.LastPublicAction = battle.LastPublicAction;
             model.LastPublicActionSourceCardId =
                 battle.LastPublicActionSourceCardId;
             model.PublicActionOrdinal = battle.PublicActionHistory.Count;
+            model.PlayerIsStanding = battle.Player.IsStanding;
+            model.EnemyIsStanding = battle.Enemy.IsStanding;
             return model;
         }
 

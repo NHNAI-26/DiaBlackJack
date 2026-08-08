@@ -122,6 +122,12 @@ namespace DiaBlackJack.CoreLoop
 
         public int? DemonContractSourceCardId { get; }
 
+        internal DemonContractInteractionKind? DemonContractInteractionKind
+        {
+            get;
+            private set;
+        }
+
         public IReadOnlyList<EnemyActionScore> CandidateScores { get; }
 
         public string ReasonCode { get; }
@@ -136,7 +142,7 @@ namespace DiaBlackJack.CoreLoop
                 throw new ArgumentNullException(nameof(candidate));
             }
 
-            return new EnemyDecision(
+            EnemyDecision decision = new EnemyDecision(
                 candidate.ActionType,
                 candidate.CardId,
                 candidate.CardEffectOptionId,
@@ -144,6 +150,9 @@ namespace DiaBlackJack.CoreLoop
                 scores ?? Array.Empty<EnemyActionScore>(),
                 candidate.DemonContractOptionId,
                 candidate.DemonContractSourceCardId);
+            decision.DemonContractInteractionKind =
+                candidate.DemonContractInteractionKind;
+            return decision;
         }
     }
 }

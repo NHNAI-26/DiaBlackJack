@@ -94,6 +94,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 CombatActionSkullPresenter.TryCreateEnemyRequest(
                     1,
                     2,
+                    1,
+                    0,
                     CoreLoopState.EnemyTurn,
                     enemyHit,
                     null,
@@ -106,8 +108,24 @@ namespace DiaBlackJack.CoreLoop.Tests
                 CombatActionSkullPresenter.TryCreateEnemyRequest(
                     1,
                     3,
+                    2,
+                    1,
                     CoreLoopState.ResolvingAutomaticCardEffect,
                     null,
+                    null,
+                    decision,
+                    null,
+                    out _,
+                    out _),
+                Is.False);
+            Assert.That(
+                CombatActionSkullPresenter.TryCreateEnemyRequest(
+                    1,
+                    3,
+                    2,
+                    2,
+                    CoreLoopState.EnemyTurn,
+                    enemyHit,
                     null,
                     decision,
                     null,
@@ -129,6 +147,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 CombatActionSkullPresenter.TryCreateEnemyRequest(
                     2,
                     1,
+                    7,
+                    6,
                     CoreLoopState.EnemyTurn,
                     action,
                     null,
@@ -143,6 +163,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 CombatActionSkullPresenter.TryCreateEnemyRequest(
                     2,
                     2,
+                    8,
+                    7,
                     CoreLoopState.EnemyTurn,
                     action,
                     null,
@@ -173,6 +195,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 CombatActionSkullPresenter.TryCreateEnemyRequest(
                     3,
                     4,
+                    1,
+                    0,
                     CoreLoopState.EnemyTurn,
                     useCard,
                     31,
@@ -198,6 +222,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 CombatActionSkullPresenter.TryCreateEnemyRequest(
                     3,
                     5,
+                    1,
+                    0,
                     CoreLoopState.EnemyTurn,
                     demon,
                     53,
@@ -207,6 +233,56 @@ namespace DiaBlackJack.CoreLoop.Tests
                     out _),
                 Is.True);
             Assert.That(contract.CardId, Is.EqualTo(53));
+
+            var initialContractCandidate = new EnemyActionCandidate(
+                EnemyActionType.DemonContract,
+                demonContractOptionId: 0,
+                demonContractInteractionKind:
+                    DemonContractInteractionKind.ChooseContract,
+                demonContractKind: DemonContractKind.Belphegor,
+                demonContractDefinitionKey: DemonContractCatalog.BelphegorKey);
+            EnemyDecision initialContractDecision = EnemyDecision.FromCandidate(
+                initialContractCandidate,
+                "initial-contract");
+            Assert.That(
+                CombatActionSkullPresenter.TryCreateEnemyRequest(
+                    3,
+                    5,
+                    2,
+                    1,
+                    CoreLoopState.EnemyTurn,
+                    demon,
+                    53,
+                    initialContractDecision,
+                    null,
+                    out CombatActionSkullRequest initialContract,
+                    out _),
+                Is.True);
+            Assert.That(initialContract.CardId, Is.EqualTo(53));
+
+            var followupCandidate = new EnemyActionCandidate(
+                EnemyActionType.DemonContract,
+                demonContractOptionId: 0,
+                demonContractInteractionKind:
+                    DemonContractInteractionKind.BelphegorTopCard,
+                demonContractKind: DemonContractKind.Belphegor);
+            EnemyDecision followup = EnemyDecision.FromCandidate(
+                followupCandidate,
+                "followup");
+            Assert.That(
+                CombatActionSkullPresenter.TryCreateEnemyRequest(
+                    3,
+                    6,
+                    3,
+                    2,
+                    CoreLoopState.EnemyTurn,
+                    demon,
+                    53,
+                    followup,
+                    null,
+                    out _,
+                    out _),
+                Is.False);
         }
 
         [Test]
@@ -346,6 +422,132 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(ids, Does.Contain("dissolve"));
         }
 
+        [TestCase(CombatantSide.Player)]
+        [TestCase(CombatantSide.Enemy)]
+        public void GSV19_U09_ActualStandTransitionCreatesOneStandCue(
+            CombatantSide side)
+        {
+            PublicCombatAction stand = new PublicCombatAction(
+                side,
+                PublicCombatActionType.Stand);
+            Assert.That(
+                CombatActionSkullPresenter.TryCreateImplicitStandRequest(
+                    side,
+                    4,
+                    9,
+                    wasStanding: false,
+                    isStanding: true,
+                    stand,
+                    null,
+                    out CombatActionSkullRequest request,
+                    out CombatActionSkullCueKey cue),
+                Is.True);
+            Assert.That(request.Side, Is.EqualTo(side));
+            Assert.That(request.TargetKind, Is.EqualTo(
+                CombatActionSkullTargetKind.Stand));
+            Assert.That(
+                CombatActionSkullPresenter.TryCreateImplicitStandRequest(
+                    side,
+                    4,
+                    9,
+                    wasStanding: false,
+                    isStanding: true,
+                    stand,
+                    cue,
+                    out _,
+                    out _),
+                Is.False);
+            Assert.That(
+                CombatActionSkullPresenter.TryCreateImplicitStandRequest(
+                    side,
+                    4,
+                    10,
+                    wasStanding: true,
+                    isStanding: true,
+                    stand,
+                    null,
+                    out _,
+                    out _),
+                Is.False);
+        }
+
+        [Test]
+        public void GSV19_U10_InitialContractUsesExactCardAndFollowupIsIgnored()
+        {
+            var initial = new PendingDemonContractInteraction(
+                12,
+                DemonContractInteractionKind.ChooseContract,
+                null,
+                new[]
+                {
+                    new DemonContractOption(3, 81, null, "contract"),
+                },
+                CombatPromptId.DemonChooseContract);
+            Assert.That(
+                CombatActionSkullPresenter.TryCreatePlayerInitialContractRequest(
+                    initial,
+                    12,
+                    3,
+                    out CombatActionSkullRequest request),
+                Is.True);
+            Assert.That(request.TargetKind, Is.EqualTo(
+                CombatActionSkullTargetKind.DemonCard));
+            Assert.That(request.CardId, Is.EqualTo(81));
+
+            var followup = new PendingDemonContractInteraction(
+                13,
+                DemonContractInteractionKind.BelphegorTopCard,
+                DemonContractKind.Belphegor,
+                new[]
+                {
+                    new DemonContractOption(0, null, null, "keep"),
+                    new DemonContractOption(1, null, null, "move"),
+                },
+                CombatPromptId.DemonBelphegorTopCard,
+                sourceContractCardId: 81);
+            Assert.That(
+                CombatActionSkullPresenter.TryCreatePlayerInitialContractRequest(
+                    followup,
+                    13,
+                    0,
+                    out _),
+                Is.False);
+        }
+
+        [Test]
+        public void GSV19_U11_EnemyDecisionOrdinalIsVisibleOnEveryDecisionBeat()
+        {
+            var battle = new CoreLoopBattle(
+                CreateRankDeck(10, 7, 2, 3),
+                CreateRankDeck(2, 3, 4, 5, 10));
+            Assert.That(battle.Start(), Is.True);
+            var decisionOrdinals = new List<int>();
+            int lastPublicActionOrdinal = battle.PublicActionHistory.Count;
+            battle.Stepped += () =>
+            {
+                int publicActionOrdinal = battle.PublicActionHistory.Count;
+                PublicCombatAction action = battle.LastPublicAction;
+                if (publicActionOrdinal == lastPublicActionOrdinal ||
+                    action == null ||
+                    action.ActorSide != CombatantSide.Enemy)
+                {
+                    return;
+                }
+
+                lastPublicActionOrdinal = publicActionOrdinal;
+                decisionOrdinals.Add(battle.EnemyDecisionOrdinal);
+            };
+
+            Assert.That(battle.TryPlayerStand(), Is.True);
+            Assert.That(decisionOrdinals.Count, Is.GreaterThanOrEqualTo(2));
+            for (int index = 1; index < decisionOrdinals.Count; index++)
+            {
+                Assert.That(
+                    decisionOrdinals[index],
+                    Is.GreaterThan(decisionOrdinals[index - 1]));
+            }
+        }
+
         private static void AssertRequest(
             PublicCombatAction action,
             int? sourceCardId,
@@ -361,6 +563,17 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.True);
             Assert.That(request.TargetKind, Is.EqualTo(expectedKind));
             Assert.That(request.CardId, Is.EqualTo(expectedCardId));
+        }
+
+        private static BlackjackDeck CreateRankDeck(params int[] ranks)
+        {
+            var cards = new List<BlackjackCard>(ranks.Length);
+            for (int index = 0; index < ranks.Length; index++)
+            {
+                cards.Add(new BlackjackCard(index, ranks[index]));
+            }
+
+            return BlackjackDeck.CreateInDrawOrder(cards);
         }
     }
 }

@@ -160,6 +160,8 @@ namespace DiaBlackJack.GameScene
         public static bool TryCreateEnemyRequest(
             int roundNumber,
             int actionOrdinal,
+            int decisionOrdinal,
+            int lastConsumedDecisionOrdinal,
             CoreLoopState state,
             PublicCombatAction action,
             int? sourceCardId,
@@ -173,6 +175,7 @@ namespace DiaBlackJack.GameScene
             if (state == CoreLoopState.Initializing ||
                 state == CoreLoopState.StartingRound ||
                 decision == null ||
+                decisionOrdinal <= lastConsumedDecisionOrdinal ||
                 roundNumber < 1 ||
                 actionOrdinal < 1 ||
                 action == null ||
@@ -204,6 +207,13 @@ namespace DiaBlackJack.GameScene
             }
             else if (decision.ActionType == EnemyActionType.DemonContract)
             {
+                if (decision.DemonContractInteractionKind.HasValue &&
+                    decision.DemonContractInteractionKind.Value !=
+                        DemonContractInteractionKind.ChooseContract)
+                {
+                    return false;
+                }
+
                 selectedCardId = decision.DemonContractSourceCardId ?? sourceCardId;
             }
 
@@ -212,6 +222,68 @@ namespace DiaBlackJack.GameScene
                 action,
                 selectedCardId,
                 out request);
+        }
+
+        public static bool TryCreateImplicitStandRequest(
+            CombatantSide side,
+            int roundNumber,
+            int actionOrdinal,
+            bool wasStanding,
+            bool isStanding,
+            PublicCombatAction action,
+            CombatActionSkullCueKey? lastCue,
+            out CombatActionSkullRequest request,
+            out CombatActionSkullCueKey cue)
+        {
+            request = default;
+            cue = default;
+            if (wasStanding || !isStanding || roundNumber < 1 ||
+                actionOrdinal < 1 || action == null ||
+                action.ActorSide != side ||
+                action.ActionType != PublicCombatActionType.Stand)
+            {
+                return false;
+            }
+
+            cue = new CombatActionSkullCueKey(roundNumber, actionOrdinal);
+            if (lastCue.HasValue && lastCue.Value.Equals(cue))
+            {
+                return false;
+            }
+
+            request = new CombatActionSkullRequest(
+                side,
+                CombatActionSkullTargetKind.Stand);
+            return true;
+        }
+
+        public static bool TryCreatePlayerInitialContractRequest(
+            PendingDemonContractInteraction interaction,
+            int interactionId,
+            int optionId,
+            out CombatActionSkullRequest request)
+        {
+            request = default;
+            if (interaction == null ||
+                interaction.InteractionId != interactionId ||
+                interaction.Kind != DemonContractInteractionKind.ChooseContract)
+            {
+                return false;
+            }
+
+            foreach (DemonContractOption option in interaction.Options)
+            {
+                if (option.OptionId == optionId && option.ContractCardId.HasValue)
+                {
+                    request = new CombatActionSkullRequest(
+                        CombatantSide.Player,
+                        CombatActionSkullTargetKind.DemonCard,
+                        option.ContractCardId.Value);
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public static UnityEngine.Vector3 ResolveSharedButtonOffset(

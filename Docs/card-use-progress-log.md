@@ -818,6 +818,14 @@ MCP가 Unity 창의 포커스를 가져가지 않은 상태에서는 게임 프�
 - 후속 위치 조정으로 버튼 대상 오프셋을 화면 하단 방향으로 옮겼다. GameScene 카메라 투영에서 Hit·Stand·Change 모두 버튼 중심보다 21.6px 아래임을 확인했고, GSV19 8/8(job `d90a0be98fdc4415be4d07a8760352bf`)이 다시 통과했다.
 - 전체 1,000여 개 EditMode suite는 실행하지 않았다. GameScene Play Mode 스모크를 시도했으나 전환 상태가 안정적으로 끝나지 않아 이 세션이 시작한 Play Mode를 종료했다. 따라서 1280×720·1920×1080 수동 화면·음향 검증은 완료 근거로 기록하지 않는다.
 
+### 2026-08-08 GSV19 간접 행동 cue 보정
+
+- 적 결정 순번을 결정 실행 뒤가 아니라 정상·fallback·계약 후속 결정 확정 시점에 증가시키고 GameScene 내부 모델에만 전달했다. 화면은 새 결정 순번과 공개 행동이 일치할 때만 cue를 만들며, 실제 이동 성공 뒤 소비한다. 신규 계약 카드 재탐색 실패는 한 번 경고한 뒤 해당 결정을 소비한다.
+- 양측의 이전 Standing 상태와 공개 행동 cue를 비교해 독극물·벨페고르의 실제 `false → true` Stand를 기존 행동 연출 다음에 Stand 명령으로 이동시킨다. 직접 Stand는 같은 cue를 소비해 중복 이동·착지음을 막고, 아스모데우스·사탄 강제 드로우는 추가 Hit cue를 만들지 않는다.
+- 플레이어 최초 `ChooseContract`의 정확한 `ContractCardId`를 승인 전에 보존한다. 새 활성 계약 카드가 아직 없으면 해당 `CardHand`만 먼저 바인딩하고 내부 `EntryDuration` 0.22초 뒤 한 번 재탐색해 이동한다. 벨페고르 등 후속 선택은 이 경로에 들어오지 않는다.
+- 계약 후속 interaction 구분 보정 직전 `[Category("GSV19")]` 12/12(job `e7261de455b14c079fffee0931a48ec8`)이 통과했다. `PoisonAutomaticCardTests`, `BelphegorDemonContractTests`, `AsmodeusAndAzazelDemonContractTests`, `SatanDemonContractTests`, `EnemyDemonContractTests`, `DemonContractPresentationTests`, `GameSceneCombatHudPresentationTests`는 161/161(job `99fc062eb86e483c9aabfa51a1257157`) 통과했고 당시 스크립트 컴파일과 Console C# 오류는 0건이었다.
+- 마지막 후속 interaction kind 보존 코드와 해당 단위 assertion 추가 뒤 Unity MCP Editor WebSocket이 닫혀 `editor/state`가 반복해서 ping timeout을 반환했다. 공유 HTTP 서버 8080과 Unity 프로세스는 살아 있어 종료·재시작하지 않았다. 따라서 최종 재컴파일·재테스트, 전체 EditMode suite, 1280×720·1920×1080 Play Mode 화면·착지음 수동 검증은 완료하지 않았다.
+
 #### 권장 커밋 제목
 
 `feat : 전투 행동 해골 표시 연출을 추가하다`

@@ -44,6 +44,8 @@ namespace DiaBlackJack.GameScene
 
         internal DemonCardView DemonCardPrefab => demonCardPrefab;
 
+        internal float EntryDuration => enterDuration;
+
         private void OnValidate()
         {
             spacing = Mathf.Max(0f, spacing);

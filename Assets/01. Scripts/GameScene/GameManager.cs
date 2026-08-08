@@ -240,7 +240,9 @@ namespace DiaBlackJack.GameScene
         private CombatActionSkullView _playerActionSkull;
         private CombatActionSkullView _enemyActionSkull;
         private int _actionSkullRoundNumber = -1;
+        private CombatActionSkullCueKey? _lastPlayerActionSkullCue;
         private CombatActionSkullCueKey? _lastEnemyActionSkullCue;
+        private int _lastEnemyActionSkullDecisionOrdinal;
         private Coroutine _terminalActionSkullRoutine;
         private CoreLoopBattle _terminalActionSkullBattle;
         private CoreLoopBattle _completedTerminalActionSkullBattle;
@@ -2229,7 +2231,9 @@ namespace DiaBlackJack.GameScene
             _terminalActionSkullBattle = null;
             _completedTerminalActionSkullBattle = null;
             _actionSkullRoundNumber = -1;
+            _lastPlayerActionSkullCue = null;
             _lastEnemyActionSkullCue = null;
+            _lastEnemyActionSkullDecisionOrdinal = 0;
             _playerActionSkull?.ResetView(
                 ResolveActionSkullHome(CombatantSide.Player));
             _enemyActionSkull?.ResetView(
@@ -2245,6 +2249,7 @@ namespace DiaBlackJack.GameScene
             }
 
             _actionSkullRoundNumber = roundNumber;
+            _lastPlayerActionSkullCue = null;
             _lastEnemyActionSkullCue = null;
             _playerActionSkull?.ResetView(
                 ResolveActionSkullHome(CombatantSide.Player));
@@ -2252,26 +2257,142 @@ namespace DiaBlackJack.GameScene
                 ResolveActionSkullHome(CombatantSide.Enemy));
         }
 
-        private bool TryMoveEnemyActionSkull(GameSceneViewModel vm)
+        private bool TryCreateEnemyActionSkullRequest(
+            GameSceneViewModel vm,
+            out CombatActionSkullRequest request,
+            out CombatActionSkullCueKey cue)
         {
-            if (vm == null ||
-                !CombatActionSkullPresenter.TryCreateEnemyRequest(
+            request = default;
+            cue = default;
+            return vm != null &&
+                CombatActionSkullPresenter.TryCreateEnemyRequest(
                     vm.Core.RoundNumber,
                     vm.PublicActionOrdinal,
+                    vm.EnemyActionSkullDecisionOrdinal,
+                    _lastEnemyActionSkullDecisionOrdinal,
                     vm.Core.State,
                     vm.LastPublicAction,
                     vm.LastPublicActionSourceCardId,
                     vm.EnemyActionSkullDecision,
                     _lastEnemyActionSkullCue,
-                    out CombatActionSkullRequest request,
-                    out CombatActionSkullCueKey cue) ||
-                !TryMoveActionSkull(request, vm.Core.RoundNumber))
+                    out request,
+                    out cue);
+        }
+
+        private void ConsumeEnemyActionSkullRequest(
+            CombatActionSkullCueKey cue,
+            int decisionOrdinal,
+            bool moved)
+        {
+            if (moved)
+            {
+                _lastEnemyActionSkullCue = cue;
+            }
+
+            _lastEnemyActionSkullDecisionOrdinal = Math.Max(
+                _lastEnemyActionSkullDecisionOrdinal,
+                decisionOrdinal);
+        }
+
+        private bool TryMoveImplicitStandActionSkull(
+            GameSceneViewModel previous,
+            GameSceneViewModel current,
+            CombatantSide side)
+        {
+            if (previous == null || current == null)
             {
                 return false;
             }
 
-            _lastEnemyActionSkullCue = cue;
+            bool wasStanding = side == CombatantSide.Player
+                ? previous.PlayerIsStanding
+                : previous.EnemyIsStanding;
+            bool isStanding = side == CombatantSide.Player
+                ? current.PlayerIsStanding
+                : current.EnemyIsStanding;
+            CombatActionSkullCueKey? lastCue = side == CombatantSide.Player
+                ? _lastPlayerActionSkullCue
+                : _lastEnemyActionSkullCue;
+            if (!CombatActionSkullPresenter.TryCreateImplicitStandRequest(
+                    side,
+                    current.Core.RoundNumber,
+                    current.PublicActionOrdinal,
+                    wasStanding,
+                    isStanding,
+                    current.LastPublicAction,
+                    lastCue,
+                    out CombatActionSkullRequest request,
+                    out CombatActionSkullCueKey cue) ||
+                !TryMoveActionSkull(request, current.Core.RoundNumber))
+            {
+                return false;
+            }
+
+            if (side == CombatantSide.Player)
+            {
+                _lastPlayerActionSkullCue = cue;
+            }
+            else
+            {
+                _lastEnemyActionSkullCue = cue;
+            }
+
             return true;
+        }
+
+        private float BindDemonCardForActionSkull(
+            GameSceneViewModel vm,
+            CombatActionSkullRequest request)
+        {
+            CardHand hand = request.Side == CombatantSide.Player
+                ? playerHand
+                : enemyHand;
+            if (hand == null || request.TargetKind !=
+                CombatActionSkullTargetKind.DemonCard)
+            {
+                return -1f;
+            }
+
+            if (request.Side == CombatantSide.Player)
+            {
+                hand.Render(
+                    vm.PlayerCards,
+                    vm.PlayerDemonCards,
+                    showTransientEffectSources: true,
+                    showDirectSelectionCommands: false);
+            }
+            else
+            {
+                hand.Render(
+                    vm.EnemyCards,
+                    vm.EnemyDemonCards,
+                    showTransientEffectSources: true,
+                    showDirectSelectionCommands: false);
+            }
+
+            return hand.EntryDuration;
+        }
+
+        private static bool MatchesActionSkullRequest(
+            GameSceneViewModel vm,
+            CombatActionSkullRequest request)
+        {
+            return vm != null &&
+                CombatActionSkullPresenter.TryCreateRequest(
+                    request.Side,
+                    vm.LastPublicAction,
+                    vm.LastPublicActionSourceCardId,
+                    out CombatActionSkullRequest snapshotRequest) &&
+                snapshotRequest.TargetKind == request.TargetKind &&
+                snapshotRequest.CardId == request.CardId;
+        }
+
+        private static CombatActionSkullCueKey CreateActionSkullCue(
+            GameSceneViewModel vm)
+        {
+            return new CombatActionSkullCueKey(
+                vm.Core.RoundNumber,
+                vm.PublicActionOrdinal);
         }
 
         private bool TryMoveActionSkull(
@@ -3346,10 +3467,23 @@ namespace DiaBlackJack.GameScene
                     {
                         onAccepted = remainingDeck.PlayReinsertAnimation;
                     }
+
+                    CombatActionSkullRequest? contractActionSkull = null;
+                    if (CombatActionSkullPresenter
+                        .TryCreatePlayerInitialContractRequest(
+                            Battle?.PendingPlayerDemonContractInteraction,
+                            command.InteractionId,
+                            command.OptionId,
+                            out CombatActionSkullRequest initialContractRequest))
+                    {
+                        contractActionSkull = initialContractRequest;
+                    }
+
                     ProcessInput(() => TryResolvePlayerDemonContract(
                         command.InteractionId,
                         command.OptionId),
-                        onAccepted);
+                        onAccepted,
+                        contractActionSkull);
                     break;
                 case GameSceneCombatHudCommandKind.BeginActiveDemonContractAction:
                     ProcessInput(
@@ -3440,6 +3574,7 @@ namespace DiaBlackJack.GameScene
             {
                 StartCoroutine(PlayTimeline(
                     timelineBaseline,
+                    playerActionSkull,
                     movedPlayerActionSkull));
             }
             else
@@ -3622,12 +3757,19 @@ namespace DiaBlackJack.GameScene
 
         private IEnumerator PlayTimeline(
             GameSceneViewModel timelineBaseline,
+            CombatActionSkullRequest? playerActionSkull,
             bool waitForPlayerActionSkull)
         {
             List<GameSceneViewModel> timeline =
                 new List<GameSceneViewModel>(_timeline);
             _timeline.Clear();
             GameSceneViewModel pendingKnifeReveal = null;
+            CombatActionSkullRequest? deferredPlayerActionSkull =
+                waitForPlayerActionSkull ? null : playerActionSkull;
+            bool consumeDirectPlayerStandCue =
+                waitForPlayerActionSkull &&
+                playerActionSkull?.TargetKind ==
+                    CombatActionSkullTargetKind.Stand;
 
             if (waitForPlayerActionSkull && _playerActionSkull != null)
             {
@@ -3694,10 +3836,114 @@ namespace DiaBlackJack.GameScene
                     new List<SoulLossRecord>();
                 CollectNewSoulLossRecords(vm, immediateSoulLossRecords);
 
-                if (TryMoveEnemyActionSkull(vm))
+                if (consumeDirectPlayerStandCue &&
+                    playerActionSkull.HasValue &&
+                    MatchesActionSkullRequest(vm, playerActionSkull.Value))
                 {
+                    _lastPlayerActionSkullCue = CreateActionSkullCue(vm);
+                    consumeDirectPlayerStandCue = false;
+                }
+
+                bool movedPlayerSkull = false;
+                if (deferredPlayerActionSkull.HasValue &&
+                    MatchesActionSkullRequest(
+                        vm,
+                        deferredPlayerActionSkull.Value))
+                {
+                    CombatActionSkullRequest request =
+                        deferredPlayerActionSkull.Value;
+                    movedPlayerSkull = TryMoveActionSkull(
+                        request,
+                        vm.Core.RoundNumber);
+                    if (!movedPlayerSkull)
+                    {
+                        float entryDuration = BindDemonCardForActionSkull(
+                            vm,
+                            request);
+                        if (entryDuration >= 0f)
+                        {
+                            yield return new WaitForSecondsRealtime(
+                                entryDuration);
+                            movedPlayerSkull = TryMoveActionSkull(
+                                request,
+                                vm.Core.RoundNumber);
+                        }
+                    }
+
+                    if (!movedPlayerSkull)
+                    {
+                        Debug.LogWarning(
+                            $"Player action skull target was unavailable for " +
+                            $"card {request.CardId}.",
+                            this);
+                    }
+
+                    deferredPlayerActionSkull = null;
+                }
+
+                bool movedEnemySkull = false;
+                if (TryCreateEnemyActionSkullRequest(
+                        vm,
+                        out CombatActionSkullRequest enemyRequest,
+                        out CombatActionSkullCueKey enemyCue))
+                {
+                    movedEnemySkull = TryMoveActionSkull(
+                        enemyRequest,
+                        vm.Core.RoundNumber);
+                    bool failedDemonCardRetry = false;
+                    if (!movedEnemySkull)
+                    {
+                        float entryDuration = BindDemonCardForActionSkull(
+                            vm,
+                            enemyRequest);
+                        if (entryDuration >= 0f)
+                        {
+                            yield return new WaitForSecondsRealtime(
+                                entryDuration);
+                            movedEnemySkull = TryMoveActionSkull(
+                                enemyRequest,
+                                vm.Core.RoundNumber);
+                            failedDemonCardRetry = !movedEnemySkull;
+                        }
+                    }
+
+                    if (movedEnemySkull || failedDemonCardRetry)
+                    {
+                        ConsumeEnemyActionSkullRequest(
+                            enemyCue,
+                            vm.EnemyActionSkullDecisionOrdinal,
+                            movedEnemySkull);
+                    }
+
+                    if (failedDemonCardRetry)
+                    {
+                        Debug.LogWarning(
+                            $"Enemy action skull target was unavailable for " +
+                            $"card {enemyRequest.CardId}.",
+                            this);
+                    }
+                }
+
+                movedPlayerSkull |= TryMoveImplicitStandActionSkull(
+                    previous,
+                    vm,
+                    CombatantSide.Player);
+                movedEnemySkull |= TryMoveImplicitStandActionSkull(
+                    previous,
+                    vm,
+                    CombatantSide.Enemy);
+                if (movedPlayerSkull || movedEnemySkull)
+                {
+                    float playerDuration = movedPlayerSkull &&
+                        _playerActionSkull != null
+                            ? _playerActionSkull.MoveDuration
+                            : 0f;
+                    float enemyDuration = movedEnemySkull &&
+                        _enemyActionSkull != null
+                            ? _enemyActionSkull.MoveDuration
+                            : 0f;
                     yield return new WaitForSecondsRealtime(
-                        _enemyActionSkull.MoveDuration);
+                        Mathf.Max(playerDuration, enemyDuration));
                 }
 
                 bool revealKnifeCardWithThrow =

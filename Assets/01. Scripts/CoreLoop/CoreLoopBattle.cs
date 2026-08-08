@@ -412,6 +412,8 @@ namespace DiaBlackJack.CoreLoop
 
         public EnemyDecision LastEnemyDecision { get; private set; }
 
+        internal int EnemyDecisionOrdinal => _enemyDecisionOrdinal;
+
         public bool CanPlayerAct => State == CoreLoopState.PlayerTurn && !Player.IsStanding;
 
         public bool CanPlayerStand =>
@@ -5816,8 +5818,7 @@ namespace DiaBlackJack.CoreLoop
 
                 if (EnemyDecisionValidator.CanExecute(observation, decision))
                 {
-                    LastEnemyDecision = decision;
-                    return decision;
+                    return RememberEnemyDecision(decision);
                 }
             }
 
@@ -5840,10 +5841,9 @@ namespace DiaBlackJack.CoreLoop
                 throw new InvalidOperationException("Enemy turn has no executable fallback action.");
             }
 
-            LastEnemyDecision = EnemyDecision.FromCandidate(
+            return RememberEnemyDecision(EnemyDecision.FromCandidate(
                 fallback,
-                "fallback-after-invalid-policy-decision");
-            return LastEnemyDecision;
+                "fallback-after-invalid-policy-decision"));
         }
 
         private bool TryExecuteEnemyDecision(EnemyDecision decision, int decisionSeed)
@@ -5944,12 +5944,15 @@ namespace DiaBlackJack.CoreLoop
                     throw new ArgumentOutOfRangeException(nameof(decision));
             }
 
-            if (executed)
-            {
-                _enemyDecisionOrdinal++;
-            }
-
             return executed;
+        }
+
+        private EnemyDecision RememberEnemyDecision(EnemyDecision decision)
+        {
+            LastEnemyDecision = decision ??
+                throw new ArgumentNullException(nameof(decision));
+            _enemyDecisionOrdinal = checked(_enemyDecisionOrdinal + 1);
+            return decision;
         }
 
         private void CompleteEnemyHitAfterAutomaticCard()
@@ -6361,7 +6364,7 @@ namespace DiaBlackJack.CoreLoop
                                 .BeelzebubChooseOwnerCard
                             ? "beelzebub-discard-highest-own-card"
                             : "beelzebub-discard-lowest-opponent-card");
-                    LastEnemyDecision = decision;
+                    RememberEnemyDecision(decision);
                     if (!TryExecuteEnemyDecision(decision, decisionSeed))
                     {
                         throw new InvalidOperationException(
@@ -7018,7 +7021,7 @@ namespace DiaBlackJack.CoreLoop
                             : selected.DemonContractOptionNumericValue.HasValue
                                 ? "paimon-exile-highest-opponent-card"
                                 : "paimon-preserve-own-deck");
-                    LastEnemyDecision = decision;
+                    RememberEnemyDecision(decision);
                     if (!TryExecuteEnemyDecision(decision, decisionSeed))
                     {
                         throw new InvalidOperationException(
