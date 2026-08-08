@@ -98,3 +98,47 @@
   오버라이드를 검출한 기존 프리팹 위치 검사다.
 - `GameScene` validation 0 issues, missing script 0, broken prefab 0.
   최종 컴파일 오류 0, Console 오류 0을 확인했다.
+
+## CP-04 자동카드 결과 문구·수명 개선
+
+- 2026-08-08: 자동카드 5종의 한국어 이름을 `CombatPromptCatalogSO`의
+  `SourceLabel`로 고정했다. 런타임 영어 표시명, `사용 후 버려졌습니다`,
+  `공개 상태로 남았습니다`, `확인 결과`는 결과 Prompt에서 제거했다.
+- 2026-08-08: 회중시계 결과에 재활성화한 카드 표시명과 `{target}` 토큰을
+  추가하고, 대상이 없는 경우에는 별도 SO 템플릿을 사용하도록 구현했다.
+- 2026-08-08: 자동카드 결과를 턴 종료와 새 라운드에서 유지하고, 다음으로
+  성공한 플레이어 입력·새 선택·새 결과·전투 종료에서만 제거하도록 변경했다.
+  실패하거나 거절된 입력에서는 이전 결과를 복구한다.
+- 2026-08-08: `GameScene`의 `AutomaticCardDebugPanel`에 `GameManager`와
+  `ShopController` 참조를 연결했다. HUD 중첩 Prompt의 글자 크기 오버라이드도
+  제거해 위치와 디자인이 다시 `CombatPrompt.prefab`만 따르도록 정리했다.
+
+## CP-04 자동카드 결과 문구·수명 검증
+
+- Unity MCP job `571a922468b743c6aa9ea18720477118`: 디버거·HUD 배선
+  1/1 통과.
+- Unity MCP job `aa1b09a4c5aa4cfeadee8edf891bf209`: `CP04` 27/27 통과.
+  5종 한국어 문구, 회중시계 대상/무대상, 턴·라운드 유지, 성공/실패 입력
+  수명 분기를 포함한다.
+- Unity MCP job `166f5ec5317e4de0aabab6a4d6d5c2fb`: `CP01` 9/9 통과.
+- Unity MCP job `b4201148d61746eeaafedf28c0ed49b5`:
+  `CoreLoopPresentationTests` + `GameSceneCombatHudPresentationTests`
+  136/136 통과.
+- `GameScene` validation 0 issues, missing script 0, broken prefab 0.
+  최종 스크립트 컴파일 직후 Console 오류 0을 확인했다.
+- `GameScene` Play Mode smoke에서는 기존 Material Drawer 오류 2건이
+  재현됐다. `DemonCardView`의 Enum drawer 생성 오류와
+  `CombatActionSkullView`의 `_DissolveObjectAxis` drawer 중복 오류이며,
+  CP-04 변경 파일의 스택은 포함하지 않는다.
+
+## CP-01 자동카드 선택 Prompt 한국어 이름 적용
+
+- 2026-08-09: 선택 Prompt의 `{source}`가 런타임 영어 표시명을 사용하던
+  경로를 제거하고, `CombatPromptCatalogSO`의 한국어 `SourceLabel`을
+  사용하도록 변경했다. 거짓말 탐지기·독극물·화염 방사기·회중시계·
+  부활초 선택 안내가 SO의 한국어 이름으로 표시된다.
+- Unity MCP job `2548f39a67464cf78e804ca365ec0d16`: `CP01` 9/9 통과.
+  영어 `LIE DETECTOR`와 `POISON` 요청이 한국어 이름으로 해석되는 검증을
+  포함한다.
+- Unity MCP job `009a4d8db8d1485699e2420ba36e3647`: `CP04` 27/27 통과.
+- 카탈로그 에셋 재임포트 후 Console 오류 0을 확인했다.

@@ -689,22 +689,50 @@ namespace DiaBlackJack.CoreLoop
 
         public bool TryBeginPlayerCardUse(int cardId)
         {
-            return TryBeginCardUse(CombatantSide.Player, cardId);
+            return TryApplyPlayerInput(() =>
+                TryBeginCardUse(CombatantSide.Player, cardId));
         }
 
         public bool TryResolvePlayerCardChoice(int optionId)
         {
-            return TryResolveCardChoice(CombatantSide.Player, optionId);
+            return TryApplyPlayerInput(() =>
+                TryResolveCardChoice(CombatantSide.Player, optionId));
         }
 
         public bool TryResolvePlayerAutomaticCardChoice(
             int interactionId,
             int optionId)
         {
-            return TryResolveAutomaticCardChoice(
-                CombatantSide.Player,
-                interactionId,
-                optionId);
+            return TryApplyPlayerInput(() =>
+                TryResolveAutomaticCardChoice(
+                    CombatantSide.Player,
+                    interactionId,
+                    optionId));
+        }
+
+        private bool TryApplyPlayerInput(Func<bool> input)
+        {
+            AutomaticCardResultPromptRequest? previousResult =
+                _automaticCardResultPrompt;
+            _automaticCardResultPrompt = null;
+
+            bool accepted;
+            try
+            {
+                accepted = input();
+            }
+            catch
+            {
+                _automaticCardResultPrompt = previousResult;
+                throw;
+            }
+
+            if (!accepted)
+            {
+                _automaticCardResultPrompt = previousResult;
+            }
+
+            return accepted;
         }
 
         public bool TryBeginPlayerDemonContract()
@@ -714,6 +742,8 @@ namespace DiaBlackJack.CoreLoop
             {
                 return false;
             }
+
+            _automaticCardResultPrompt = null;
 
             ApplySoulDamage(
                 CombatantSide.Player,
@@ -754,6 +784,16 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
+            return TryApplyPlayerInput(() =>
+                TryResolveValidatedPlayerDemonContract(
+                    pending,
+                    selectedOption));
+        }
+
+        private bool TryResolveValidatedPlayerDemonContract(
+            PendingDemonContractInteraction pending,
+            DemonContractOption selectedOption)
+        {
             switch (pending.Kind)
             {
                 case DemonContractInteractionKind.ChooseContract:
@@ -836,13 +876,13 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
-            return ResolveSatanNumberPair(
-                CombatantSide.Player,
-                satanState,
-                hiddenCard,
-                firstNumber,
-                secondNumber,
-                out _);
+            return TryApplyPlayerInput(() => ResolveSatanNumberPair(
+                    CombatantSide.Player,
+                    satanState,
+                    hiddenCard,
+                    firstNumber,
+                    secondNumber,
+                    out _));
         }
 
         private bool TryBeginEnemyDemonContract()
@@ -1682,11 +1722,15 @@ namespace DiaBlackJack.CoreLoop
                 _activePlayerDemonContracts,
                 out ActiveDemonContract previewContract))
             {
-                return TryBeginBelphegorTopCardPreview(previewContract);
+                return TryApplyPlayerInput(() =>
+                    TryBeginBelphegorTopCardPreview(previewContract));
             }
 
-            CompletePlayerHit(expectedCardId: null);
-            return true;
+            return TryApplyPlayerInput(() =>
+            {
+                CompletePlayerHit(expectedCardId: null);
+                return true;
+            });
         }
 
         private void CompletePlayerHit(int? expectedCardId)
@@ -1890,6 +1934,7 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
+            _automaticCardResultPrompt = null;
             RecordPublicAction(CombatantSide.Player, PublicCombatActionType.Stand);
             Player.Stand();
             RaiseStepped();
@@ -1904,6 +1949,7 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
+            _automaticCardResultPrompt = null;
             ApplySoulDamage(
                 CombatantSide.Player,
                 NextPlayerChangeSoulCost,
@@ -1930,6 +1976,7 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
+            _automaticCardResultPrompt = null;
             PlayerChangeSelection completedSelection = _playerChangeSelection;
             Player.CompleteChange(completedSelection);
             _playerChangeSelection = null;
@@ -3123,10 +3170,10 @@ namespace DiaBlackJack.CoreLoop
 
         public bool TryBeginPlayerMammonReroll(int sourceContractCardId)
         {
-            return TryBeginMammonReroll(
-                CombatantSide.Player,
-                sourceContractCardId,
-                null);
+            return TryApplyPlayerInput(() => TryBeginMammonReroll(
+                    CombatantSide.Player,
+                    sourceContractCardId,
+                    null));
         }
 
         public bool TryBeginPlayerMammonReroll(
@@ -3138,10 +3185,10 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
-            return TryBeginMammonReroll(
-                CombatantSide.Player,
-                sourceContractCardId,
-                physicalDieValue);
+            return TryApplyPlayerInput(() => TryBeginMammonReroll(
+                    CombatantSide.Player,
+                    sourceContractCardId,
+                    physicalDieValue));
         }
 
         public bool CanBeginPlayerActiveDemonContractAction(
@@ -5593,7 +5640,6 @@ namespace DiaBlackJack.CoreLoop
             _publicActionHistory.Clear();
             _lastPublicActionSourceCardId = null;
             _lastAutomaticCardResultActionOrdinal = -1;
-            _automaticCardResultPrompt = null;
             _lastSatanForcedDrawActionOrdinal = -1;
             _lastSatanNumberGuessActionOrdinal = -1;
             _lastSatanNumberGuessTargetCardId = -1;
@@ -6528,7 +6574,6 @@ namespace DiaBlackJack.CoreLoop
         private void NotifyNormalTurnEnded(CombatantSide actorSide)
         {
             TurnNumber++;
-            _automaticCardResultPrompt = null;
 
             IReadOnlyList<ActiveDemonContract> activeContracts =
                 actorSide == CombatantSide.Player
@@ -6573,6 +6618,7 @@ namespace DiaBlackJack.CoreLoop
                 AutomaticCardHiddenComparison.None;
             AutomaticCardResultOutcome outcome =
                 AutomaticCardResultOutcome.None;
+            string reactivatedCardDisplayName = string.Empty;
 
             if (result.EffectKind == CardEffectKind.Poison)
             {
@@ -6599,6 +6645,21 @@ namespace DiaBlackJack.CoreLoop
                 }
             }
 
+            if (result.ReactivatedCardId.HasValue)
+            {
+                BattleParticipant owner = GetParticipant(result.OwnerSide);
+                if (!owner.Hand.TryGetCard(
+                        result.ReactivatedCardId.Value,
+                        out BlackjackCard reactivatedCard))
+                {
+                    throw new InvalidOperationException(
+                        "Reactivated automatic-card target is missing from its owner hand.");
+                }
+
+                reactivatedCardDisplayName =
+                    reactivatedCard.Definition.DisplayName;
+            }
+
             return new AutomaticCardResultPromptRequest(
                 AutomaticCardResultPromptIdMap.ForEffect(result.EffectKind),
                 sourceCard.Definition.DisplayName,
@@ -6608,7 +6669,8 @@ namespace DiaBlackJack.CoreLoop
                 result.EnemyDecision,
                 declaredNumber,
                 comparison,
-                outcome);
+                outcome,
+                reactivatedCardDisplayName);
         }
 
         internal bool PayResurrectionHerbSoulAndRedeal(
@@ -7227,6 +7289,7 @@ namespace DiaBlackJack.CoreLoop
 
             if (battleEnded)
             {
+                _automaticCardResultPrompt = null;
                 State = CoreLoopState.BattleEnded;
                 return;
             }

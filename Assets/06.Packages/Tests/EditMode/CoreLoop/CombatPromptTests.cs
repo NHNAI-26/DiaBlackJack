@@ -76,10 +76,23 @@ namespace DiaBlackJack.CoreLoop.Tests
 
             var automatic = new CombatPromptRequest(
                 CombatPromptId.AutomaticPoisonDecision,
-                sourceDisplayName: "독극물");
+                sourceDisplayName: "POISON");
             Assert.That(catalog.TryResolve(automatic, out string automaticText),
                 Is.True);
             Assert.That(automaticText, Does.Contain("독극물"));
+            Assert.That(automaticText, Does.Not.Contain("POISON"));
+
+            var lieDetector = new CombatPromptRequest(
+                CombatPromptId.AutomaticLieDetectorDeclareNumber,
+                sourceDisplayName: "LIE DETECTOR");
+            Assert.That(
+                catalog.TryResolve(lieDetector, out string lieDetectorText),
+                Is.True);
+            Assert.That(
+                lieDetectorText,
+                Is.EqualTo(
+                    "거짓말 탐지기: 상대 비공개 카드와 비교할 숫자를 선택하세요."));
+            Assert.That(lieDetectorText, Does.Not.Contain("LIE DETECTOR"));
 
             var counted = new CombatPromptRequest(
                 CombatPromptId.DemonSatanDeclareFirstNumber,
@@ -109,7 +122,10 @@ namespace DiaBlackJack.CoreLoop.Tests
                         string.Empty),
                     new CombatPromptCatalogSO.Entry(
                         CombatPromptId.ChangeCard,
-                        "{mystery}")
+                        "{mystery}"),
+                    new CombatPromptCatalogSO.Entry(
+                        CombatPromptId.AutomaticLieDetectorDeclareNumber,
+                        "{source}")
                 });
 
                 IReadOnlyList<string> errors = catalog.GetValidationErrors();
@@ -117,6 +133,8 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(errors.Any(error => error.Contains("empty")), Is.True);
                 Assert.That(errors.Any(error => error.Contains("Unknown token")), Is.True);
                 Assert.That(errors.Any(error => error.Contains("Missing")), Is.True);
+                Assert.That(errors.Any(error =>
+                    error.Contains("source label is empty")), Is.True);
             }
             finally
             {

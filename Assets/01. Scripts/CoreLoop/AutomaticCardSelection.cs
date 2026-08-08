@@ -179,7 +179,8 @@ namespace DiaBlackJack.CoreLoop
             AutomaticCardDecisionOutcome enemyDecision =
                 AutomaticCardDecisionOutcome.None,
             int? playerTargetCardId = null,
-            int? enemyTargetCardId = null)
+            int? enemyTargetCardId = null,
+            int? reactivatedCardId = null)
         {
             SourceCardId = sourceCardId;
             EffectKind = effectKind;
@@ -189,6 +190,7 @@ namespace DiaBlackJack.CoreLoop
             EnemyDecision = enemyDecision;
             PlayerTargetCardId = playerTargetCardId;
             EnemyTargetCardId = enemyTargetCardId;
+            ReactivatedCardId = reactivatedCardId;
         }
 
         public int SourceCardId { get; }
@@ -206,5 +208,7 @@ namespace DiaBlackJack.CoreLoop
         public int? PlayerTargetCardId { get; }
 
         public int? EnemyTargetCardId { get; }
+
+        public int? ReactivatedCardId { get; }
     }
 }

@@ -429,22 +429,28 @@ namespace DiaBlackJack.GameScene.Editor
                     "버릴 상대 공개 카드를 선택하세요."),
                 new CombatPromptCatalogSO.Entry(
                     CombatPromptId.AutomaticLieDetectorDeclareNumber,
-                    "{source}: 상대 비공개 카드와 비교할 숫자를 선택하세요."),
+                    "{source}: 상대 비공개 카드와 비교할 숫자를 선택하세요.",
+                    "거짓말 탐지기"),
                 new CombatPromptCatalogSO.Entry(
                     CombatPromptId.AutomaticPoisonDecision,
-                    "{source}: 독극물의 효과를 선택하세요."),
+                    "{source}: 독극물의 효과를 선택하세요.",
+                    "독극물"),
                 new CombatPromptCatalogSO.Entry(
                     CombatPromptId.AutomaticFlamethrowerChooseDiscard,
-                    "{source}: 버릴 공개 카드 한 장을 선택하거나 건너뛰세요."),
+                    "{source}: 버릴 공개 카드 한 장을 선택하거나 건너뛰세요.",
+                    "화염 방사기"),
                 new CombatPromptCatalogSO.Entry(
                     CombatPromptId.AutomaticPocketWatchChooseManualCard,
-                    "{source}: 다시 사용할 수동 카드 한 장을 선택하거나 건너뛰세요."),
+                    "{source}: 다시 사용할 수동 카드 한 장을 선택하거나 건너뛰세요.",
+                    "회중시계"),
                 new CombatPromptCatalogSO.Entry(
                     CombatPromptId.AutomaticPocketWatchChooseDisposition,
-                    "{source}: 회중시계를 유지할지 버릴지 선택하세요."),
+                    "{source}: 회중시계를 유지할지 버릴지 선택하세요.",
+                    "회중시계"),
                 new CombatPromptCatalogSO.Entry(
                     CombatPromptId.AutomaticResurrectionHerbDecision,
-                    "{source}: 영혼 1을 지불하고 패를 다시 받을지 선택하세요."),
+                    "{source}: 영혼 1을 지불하고 패를 다시 받을지 선택하세요.",
+                    "부활초"),
                 new CombatPromptCatalogSO.Entry(
                     CombatPromptId.DemonChooseContract,
                     "계약할 악마를 선택하세요."),

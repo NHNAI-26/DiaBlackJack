@@ -14,18 +14,25 @@ namespace DiaBlackJack.GameScene
         [Serializable]
         public sealed class Entry
         {
-            public Entry(CombatPromptId id, string template)
+            public Entry(
+                CombatPromptId id,
+                string template,
+                string sourceLabel = "")
             {
                 this.id = id;
                 this.template = template;
+                this.sourceLabel = sourceLabel;
             }
 
             [SerializeField] private CombatPromptId id;
             [SerializeField, TextArea(1, 3)] private string template;
+            [SerializeField] private string sourceLabel;
 
             public CombatPromptId Id => id;
 
             public string Template => template;
+
+            public string SourceLabel => sourceLabel;
         }
 
         [Serializable]
@@ -34,23 +41,25 @@ namespace DiaBlackJack.GameScene
             public AutomaticResultEntry(
                 AutomaticCardResultPromptId id,
                 string template,
-                string comparisonTemplate = "")
+                string comparisonTemplate = "",
+                string sourceLabel = "",
+                string emptyTargetTemplate = "")
             {
                 this.id = id;
                 this.template = template;
                 this.comparisonTemplate = comparisonTemplate;
+                this.sourceLabel = sourceLabel;
+                this.emptyTargetTemplate = emptyTargetTemplate;
             }
 
             [SerializeField] private AutomaticCardResultPromptId id;
             [SerializeField, TextArea(1, 4)] private string template;
             [SerializeField, TextArea(1, 2)] private string comparisonTemplate;
+            [SerializeField] private string sourceLabel;
+            [SerializeField, TextArea(1, 3)] private string emptyTargetTemplate;
             [SerializeField] private string playerOwnerLabel = "나";
             [SerializeField] private string playerPossessiveLabel = "내";
             [SerializeField] private string enemyOwnerLabel = "적";
-            [SerializeField] private string discardDispositionLabel =
-                "사용 후 버려졌습니다.";
-            [SerializeField] private string retainDispositionLabel =
-                "공개 상태로 남았습니다.";
             [SerializeField] private string acceptedDecisionLabel =
                 "효과를 사용했습니다";
             [SerializeField] private string declinedDecisionLabel =
@@ -67,11 +76,11 @@ namespace DiaBlackJack.GameScene
             public AutomaticCardResultPromptId Id => id;
             public string Template => template;
             public string ComparisonTemplate => comparisonTemplate;
+            public string SourceLabel => sourceLabel;
+            public string EmptyTargetTemplate => emptyTargetTemplate;
             public string PlayerOwnerLabel => playerOwnerLabel;
             public string PlayerPossessiveLabel => playerPossessiveLabel;
             public string EnemyOwnerLabel => enemyOwnerLabel;
-            public string DiscardDispositionLabel => discardDispositionLabel;
-            public string RetainDispositionLabel => retainDispositionLabel;
             public string AcceptedDecisionLabel => acceptedDecisionLabel;
             public string DeclinedDecisionLabel => declinedDecisionLabel;
             public string AtLeastComparisonLabel => atLeastComparisonLabel;
@@ -97,12 +106,12 @@ namespace DiaBlackJack.GameScene
                 "{owner}",
                 "{ownerPossessive}",
                 "{enemy}",
-                "{disposition}",
                 "{playerDecision}",
                 "{enemyDecision}",
                 "{declared}",
                 "{comparison}",
-                "{outcome}"
+                "{outcome}",
+                "{target}"
             };
 
         [SerializeField] private List<Entry> entries = new List<Entry>();
@@ -114,7 +123,7 @@ namespace DiaBlackJack.GameScene
         private readonly HashSet<AutomaticCardResultPromptId>
             _loggedAutomaticResultFailures =
                 new HashSet<AutomaticCardResultPromptId>();
-        private Dictionary<CombatPromptId, string> _selectionTemplates;
+        private Dictionary<CombatPromptId, Entry> _selectionLookup;
         private Dictionary<AutomaticCardResultPromptId, AutomaticResultEntry>
             _automaticResultLookup;
 
@@ -126,19 +135,22 @@ namespace DiaBlackJack.GameScene
         public bool TryResolve(CombatPromptRequest request, out string text)
         {
             EnsureLookup();
-            if (!_selectionTemplates.TryGetValue(
+            if (!_selectionLookup.TryGetValue(
                     request.Id,
-                    out string template) ||
-                string.IsNullOrWhiteSpace(template) ||
-                HasInvalidToken(template, SelectionTokens))
+                    out Entry entry) ||
+                entry == null ||
+                string.IsNullOrWhiteSpace(entry.Template) ||
+                (entry.Template.Contains("{source}") &&
+                    string.IsNullOrWhiteSpace(entry.SourceLabel)) ||
+                HasInvalidToken(entry.Template, SelectionTokens))
             {
                 LogFailureOnce(request.Id);
                 text = string.Empty;
                 return false;
             }
 
-            text = template
-                .Replace("{source}", request.SourceDisplayName)
+            text = entry.Template
+                .Replace("{source}", entry.SourceLabel)
                 .Replace("{context}", request.ContextText)
                 .Replace("{current}", request.CurrentCount.ToString())
                 .Replace("{required}", request.RequiredCount.ToString());
@@ -171,8 +183,9 @@ namespace DiaBlackJack.GameScene
             string resolvedEnemyName = ResolveEnemyDisplayName(
                 entry,
                 enemyDisplayName);
+            string primaryTemplate = ResolvePrimaryTemplate(entry, request);
             text = ReplaceAutomaticResultTokens(
-                entry.Template,
+                primaryTemplate,
                 entry,
                 request,
                 resolvedEnemyName);
@@ -257,6 +270,12 @@ namespace DiaBlackJack.GameScene
                     SelectionTokens,
                     errors,
                     required: true);
+                if (entry.Template != null &&
+                    entry.Template.Contains("{source}") &&
+                    string.IsNullOrWhiteSpace(entry.SourceLabel))
+                {
+                    errors.Add($"Prompt source label is empty: {entry.Id}.");
+                }
             }
 
             foreach (CombatPromptId id in Enum.GetValues(typeof(CombatPromptId)))
@@ -305,6 +324,26 @@ namespace DiaBlackJack.GameScene
                     AutomaticResultTokens,
                     errors,
                     required: false);
+                ValidateTemplate(
+                    entry.EmptyTargetTemplate,
+                    entry.Id + " empty target",
+                    AutomaticResultTokens,
+                    errors,
+                    required:
+                        entry.Id == AutomaticCardResultPromptId.PocketWatch);
+                if (string.IsNullOrWhiteSpace(entry.SourceLabel))
+                {
+                    errors.Add(
+                        $"Automatic result source label is empty: {entry.Id}.");
+                }
+
+                if (entry.Id == AutomaticCardResultPromptId.PocketWatch &&
+                    !entry.Template.Contains("{target}"))
+                {
+                    errors.Add(
+                        "PocketWatch result template requires {target}.");
+                }
+
                 ValidateRequiredLabels(entry, errors);
             }
 
@@ -354,7 +393,9 @@ namespace DiaBlackJack.GameScene
             AutomaticResultEntry entry,
             List<string> errors)
         {
-            string allTemplates = entry.Template + entry.ComparisonTemplate;
+            string allTemplates = entry.Template +
+                entry.ComparisonTemplate +
+                entry.EmptyTargetTemplate;
             RequireLabels(
                 allTemplates.Contains("{owner}") ||
                     allTemplates.Contains("{enemy}"),
@@ -368,12 +409,6 @@ namespace DiaBlackJack.GameScene
                 errors,
                 entry.PlayerPossessiveLabel,
                 entry.EnemyOwnerLabel);
-            RequireLabels(
-                allTemplates.Contains("{disposition}"),
-                entry.Id,
-                errors,
-                entry.DiscardDispositionLabel,
-                entry.RetainDispositionLabel);
             RequireLabels(
                 allTemplates.Contains("{playerDecision}") ||
                     allTemplates.Contains("{enemyDecision}"),
@@ -418,19 +453,19 @@ namespace DiaBlackJack.GameScene
 
         private void EnsureLookup()
         {
-            if (_selectionTemplates != null && _automaticResultLookup != null)
+            if (_selectionLookup != null && _automaticResultLookup != null)
             {
                 return;
             }
 
-            _selectionTemplates = new Dictionary<CombatPromptId, string>();
+            _selectionLookup = new Dictionary<CombatPromptId, Entry>();
             foreach (Entry entry in entries)
             {
                 if (entry != null &&
                     entry.Id != CombatPromptId.None &&
-                    !_selectionTemplates.ContainsKey(entry.Id))
+                    !_selectionLookup.ContainsKey(entry.Id))
                 {
-                    _selectionTemplates.Add(entry.Id, entry.Template);
+                    _selectionLookup.Add(entry.Id, entry);
                 }
             }
 
@@ -451,7 +486,7 @@ namespace DiaBlackJack.GameScene
 
         private void InvalidateLookup()
         {
-            _selectionTemplates = null;
+            _selectionLookup = null;
             _automaticResultLookup = null;
             _loggedSelectionFailures.Clear();
             _loggedAutomaticResultFailures.Clear();
@@ -462,17 +497,29 @@ namespace DiaBlackJack.GameScene
             AutomaticCardResultPromptRequest request)
         {
             string comparisonTemplate = entry?.ComparisonTemplate ?? string.Empty;
+            string emptyTargetTemplate =
+                entry?.EmptyTargetTemplate ?? string.Empty;
             if (entry == null ||
+                string.IsNullOrWhiteSpace(entry.SourceLabel) ||
                 string.IsNullOrWhiteSpace(entry.Template) ||
                 HasInvalidToken(entry.Template, AutomaticResultTokens) ||
                 HasInvalidToken(
                     comparisonTemplate,
+                    AutomaticResultTokens) ||
+                HasInvalidToken(
+                    emptyTargetTemplate,
                     AutomaticResultTokens))
             {
                 return false;
             }
 
-            string allTemplates = entry.Template + comparisonTemplate;
+            string primaryTemplate = ResolvePrimaryTemplate(entry, request);
+            if (string.IsNullOrWhiteSpace(primaryTemplate))
+            {
+                return false;
+            }
+
+            string allTemplates = primaryTemplate + comparisonTemplate;
             return HasRequiredLabels(entry, allTemplates) &&
                 (!allTemplates.Contains("{declared}") ||
                     request.DeclaredNumber.HasValue) &&
@@ -484,7 +531,10 @@ namespace DiaBlackJack.GameScene
                     request.Comparison == AutomaticCardHiddenComparison.None ||
                     !string.IsNullOrWhiteSpace(ResolveComparison(entry, request))) &&
                 (!allTemplates.Contains("{outcome}") ||
-                    request.Outcome != AutomaticCardResultOutcome.None);
+                    request.Outcome != AutomaticCardResultOutcome.None) &&
+                (!allTemplates.Contains("{target}") ||
+                    !string.IsNullOrWhiteSpace(
+                        request.ReactivatedCardDisplayName));
         }
 
         private static bool HasRequiredLabels(
@@ -500,10 +550,6 @@ namespace DiaBlackJack.GameScene
                     AllLabelsExist(
                         entry.PlayerPossessiveLabel,
                         entry.EnemyOwnerLabel)) &&
-                (!allTemplates.Contains("{disposition}") ||
-                    AllLabelsExist(
-                        entry.DiscardDispositionLabel,
-                        entry.RetainDispositionLabel)) &&
                 (!(allTemplates.Contains("{playerDecision}") ||
                    allTemplates.Contains("{enemyDecision}")) ||
                     AllLabelsExist(
@@ -539,7 +585,7 @@ namespace DiaBlackJack.GameScene
             string enemyDisplayName)
         {
             return template
-                .Replace("{source}", request.SourceDisplayName)
+                .Replace("{source}", entry.SourceLabel)
                 .Replace(
                     "{owner}",
                     request.OwnerSide == CombatantSide.Player
@@ -552,12 +598,6 @@ namespace DiaBlackJack.GameScene
                         : enemyDisplayName + "의")
                 .Replace("{enemy}", enemyDisplayName)
                 .Replace(
-                    "{disposition}",
-                    request.SourceDisposition ==
-                        AutomaticCardSourceDisposition.Discard
-                            ? entry.DiscardDispositionLabel
-                            : entry.RetainDispositionLabel)
-                .Replace(
                     "{playerDecision}",
                     ResolveDecision(entry, request.PlayerDecision))
                 .Replace(
@@ -567,7 +607,21 @@ namespace DiaBlackJack.GameScene
                     "{declared}",
                     request.DeclaredNumber?.ToString() ?? string.Empty)
                 .Replace("{comparison}", ResolveComparison(entry, request))
-                .Replace("{outcome}", ResolveOutcome(entry, request));
+                .Replace("{outcome}", ResolveOutcome(entry, request))
+                .Replace(
+                    "{target}",
+                    request.ReactivatedCardDisplayName);
+        }
+
+        private static string ResolvePrimaryTemplate(
+            AutomaticResultEntry entry,
+            AutomaticCardResultPromptRequest request)
+        {
+            return request.Id == AutomaticCardResultPromptId.PocketWatch &&
+                string.IsNullOrWhiteSpace(
+                    request.ReactivatedCardDisplayName)
+                    ? entry.EmptyTargetTemplate
+                    : entry.Template;
         }
 
         private static string ResolveEnemyDisplayName(

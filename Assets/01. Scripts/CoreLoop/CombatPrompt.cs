@@ -165,7 +165,8 @@ namespace DiaBlackJack.CoreLoop
             AutomaticCardHiddenComparison comparison =
                 AutomaticCardHiddenComparison.None,
             AutomaticCardResultOutcome outcome =
-                AutomaticCardResultOutcome.None)
+                AutomaticCardResultOutcome.None,
+            string reactivatedCardDisplayName = null)
         {
             if (!Enum.IsDefined(typeof(AutomaticCardResultPromptId), id) ||
                 id == AutomaticCardResultPromptId.None)
@@ -188,6 +189,8 @@ namespace DiaBlackJack.CoreLoop
             DeclaredNumber = declaredNumber;
             Comparison = comparison;
             Outcome = outcome;
+            ReactivatedCardDisplayName =
+                reactivatedCardDisplayName ?? string.Empty;
         }
 
         public AutomaticCardResultPromptId Id { get; }
@@ -208,6 +211,8 @@ namespace DiaBlackJack.CoreLoop
 
         public AutomaticCardResultOutcome Outcome { get; }
 
+        public string ReactivatedCardDisplayName { get; }
+
         public bool Equals(AutomaticCardResultPromptRequest other)
         {
             return Id == other.Id &&
@@ -218,7 +223,9 @@ namespace DiaBlackJack.CoreLoop
                 EnemyDecision == other.EnemyDecision &&
                 DeclaredNumber == other.DeclaredNumber &&
                 Comparison == other.Comparison &&
-                Outcome == other.Outcome;
+                Outcome == other.Outcome &&
+                ReactivatedCardDisplayName ==
+                    other.ReactivatedCardDisplayName;
         }
 
         public override bool Equals(object obj)
@@ -240,6 +247,8 @@ namespace DiaBlackJack.CoreLoop
                 hashCode = (hashCode * 397) ^ DeclaredNumber.GetHashCode();
                 hashCode = (hashCode * 397) ^ (int)Comparison;
                 hashCode = (hashCode * 397) ^ (int)Outcome;
+                hashCode = (hashCode * 397) ^
+                    ReactivatedCardDisplayName.GetHashCode();
                 return hashCode;
             }
         }

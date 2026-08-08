@@ -25,6 +25,7 @@ namespace DiaBlackJack.CoreLoop
         private bool _hasEnemyResurrectionHerbDecision;
         private bool _playerPaysResurrectionHerbSoul;
         private bool _enemyPaysResurrectionHerbSoul;
+        private int? _reactivatedManualCardId;
 
         public AutomaticCardEffectContext(
             CoreLoopBattle battle,
@@ -340,7 +341,8 @@ namespace DiaBlackJack.CoreLoop
                 playerDecision,
                 enemyDecision,
                 playerTargetCardId,
-                enemyTargetCardId);
+                enemyTargetCardId,
+                _reactivatedManualCardId);
         }
 
         private bool IsFlamethrowerCandidate(
@@ -395,7 +397,13 @@ namespace DiaBlackJack.CoreLoop
                 return false;
             }
 
-            return card.TryReactivate();
+            if (!card.TryReactivate())
+            {
+                return false;
+            }
+
+            _reactivatedManualCardId = card.Id;
+            return true;
         }
     }
 
