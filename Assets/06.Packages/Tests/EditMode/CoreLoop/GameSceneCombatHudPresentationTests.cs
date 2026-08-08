@@ -1057,6 +1057,17 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(turnStart.Kind,
                 Is.EqualTo(DemonContractInteractionKind.SatanTurnStartChoice));
 
+            GameSceneCombatHudCommand useSatan =
+                new GameSceneCombatHudCommand(
+                    GameSceneCombatHudCommandKind.ResolveDemonContractChoice,
+                    SatanDemonContractHandler.UseAbilityOptionId,
+                    turnStart.InteractionId);
+            Assert.That(
+                GameManager.ShouldHideSatanTurnStartChoiceImmediately(
+                    turnStart,
+                    useSatan),
+                Is.True);
+
             GameSceneViewModel activeScene = GameScenePresenter.Create(battle);
             GameSceneDemonCardViewModel activeSatan =
                 activeScene.PlayerDemonCards.Single();

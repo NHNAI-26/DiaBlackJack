@@ -31,10 +31,12 @@ namespace Border.UI
         {
             _selectable = GetComponent<Selectable>();
             _rectTransform = transform as RectTransform;
-            if (_rectTransform != null)
-            {
-                _baseScale = _rectTransform.localScale;
-            }
+            CaptureRestingGeometry();
+        }
+
+        private void OnEnable()
+        {
+            CaptureRestingGeometry();
         }
 
         private void OnDisable()
@@ -92,7 +94,36 @@ namespace Border.UI
             _scaleTween?.Kill();
             _scaleTween = _rectTransform
                 .DOScale(_baseScale * scale, animationDuration)
-                .SetEase(Ease.OutQuad);
+                .SetEase(Ease.OutQuad)
+                .SetTarget(this);
+        }
+
+        private void CaptureRestingGeometry()
+        {
+            if (_rectTransform == null)
+            {
+                return;
+            }
+
+            CenterPivotWithoutMovingVisuals(_rectTransform);
+            _baseScale = _rectTransform.localScale;
+        }
+
+        internal static void CenterPivotWithoutMovingVisuals(
+            RectTransform rectTransform)
+        {
+            Vector2 centeredPivot = new Vector2(0.5f, 0.5f);
+            if (rectTransform == null || rectTransform.pivot == centeredPivot)
+            {
+                return;
+            }
+
+            Vector3 worldCenter =
+                rectTransform.TransformPoint(rectTransform.rect.center);
+            rectTransform.pivot = centeredPivot;
+            Vector3 centeredWorldCenter =
+                rectTransform.TransformPoint(rectTransform.rect.center);
+            rectTransform.position += worldCenter - centeredWorldCenter;
         }
     }
 }

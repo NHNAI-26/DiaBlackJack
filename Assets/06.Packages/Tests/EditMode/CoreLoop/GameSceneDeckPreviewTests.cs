@@ -763,6 +763,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 prefab.GetComponent<UIButtonScaleFeedback>(),
                 Is.Not.Null);
+            Assert.That(
+                prefab.GetComponent<UISelectableSoundHook>(),
+                Is.Not.Null);
             Assert.That(label, Is.Not.Null);
             Assert.That(
                 serializedLabel.FindProperty("m_text").stringValue,
@@ -780,6 +783,68 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 serializedLabel.FindProperty("m_fontStyle").intValue,
                 Is.EqualTo(1));
+        }
+
+        [Test]
+        public void UIFX01_U01_ButtonScaleFeedbackCentersPivotWithoutVisualMovement()
+        {
+            GameObject buttonObject = new GameObject(
+                "Scale Feedback Position Test",
+                typeof(RectTransform));
+            try
+            {
+                RectTransform rect = buttonObject.GetComponent<RectTransform>();
+                rect.sizeDelta = new Vector2(420f, 60f);
+                rect.pivot = new Vector2(1f, 0f);
+                rect.anchoredPosition = new Vector2(321f, -123f);
+                Vector3[] originalCorners = new Vector3[4];
+                rect.GetWorldCorners(originalCorners);
+                UIButtonScaleFeedback.CenterPivotWithoutMovingVisuals(rect);
+
+                Assert.That(rect.pivot, Is.EqualTo(new Vector2(0.5f, 0.5f)));
+                Vector3[] centeredCorners = new Vector3[4];
+                rect.GetWorldCorners(centeredCorners);
+                for (int i = 0; i < originalCorners.Length; i++)
+                {
+                    Assert.That(
+                        Vector3.Distance(centeredCorners[i], originalCorners[i]),
+                        Is.LessThan(0.0001f));
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(buttonObject);
+            }
+        }
+
+        [Test]
+        public void UIFX01_U02_AllAuthoredButtonPrefabsUseSharedClickSound()
+        {
+            string[] prefabPaths =
+            {
+                DefaultButtonPrefabPath,
+                "Assets/03. Prefabs/UI/PauseSettingsCanvas.prefab",
+                "Assets/03. Prefabs/UI/GameScene/CodexOverlay.prefab",
+                "Assets/03. Prefabs/UI/GameScene/RevolverNumberSelector.prefab",
+                "Assets/03. Prefabs/UI/GameScene/DeckPreviewOverlay.prefab",
+                "Assets/06.Packages/Demo/UI/Prefabs/GenericButton.prefab",
+            };
+
+            foreach (string prefabPath in prefabPaths)
+            {
+                GameObject prefab =
+                    AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+                Assert.That(prefab, Is.Not.Null, prefabPath);
+                Button[] buttons = prefab.GetComponentsInChildren<Button>(true);
+                Assert.That(buttons, Is.Not.Empty, prefabPath);
+                foreach (Button button in buttons)
+                {
+                    Assert.That(
+                        button.GetComponent<UISelectableSoundHook>(),
+                        Is.Not.Null,
+                        prefabPath + ": " + button.name);
+                }
+            }
         }
 
         [Test]

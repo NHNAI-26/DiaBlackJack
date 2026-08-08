@@ -168,6 +168,19 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void UIFX01_U04_PlayerSatanAbilityThreatensEnemyOnly()
+        {
+            Assert.That(
+                GameManager.ShouldThreatenEnemyDuringPlayerSatanAbility(
+                    CombatantSide.Player),
+                Is.True);
+            Assert.That(
+                GameManager.ShouldThreatenEnemyDuringPlayerSatanAbility(
+                    CombatantSide.Enemy),
+                Is.False);
+        }
+
+        [Test]
         public void CUM09_U02_RevolverImpactReceiverRaisesOnlyExplicitImpactEvent()
         {
             RevolverAnimationEventReceiver receiver =

@@ -4,6 +4,7 @@ using DiaBlackJack.Content;
 using DiaBlackJack.Bootstrap;
 using NUnit.Framework;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -1890,6 +1891,64 @@ namespace DiaBlackJack.CoreLoop.Tests
             finally
             {
                 Object.DestroyImmediate(instance);
+            }
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void UIFX01_U03_SatanBrandUsesCurrentVisibleCardFace(
+            bool isFaceUp)
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            Assert.That(prefab, Is.Not.Null);
+            GameObject instance = Object.Instantiate(prefab);
+            var texture = new Texture2D(2, 2);
+            Sprite brand = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, 2f, 2f),
+                new Vector2(0.5f, 0.5f));
+            try
+            {
+                CardView view = instance.GetComponent<CardView>();
+                Assert.That(view, Is.Not.Null);
+                view.Bind(new GameSceneCardViewModel(
+                    cardId: 77,
+                    rank: 7,
+                    isFaceUp: isFaceUp,
+                    revealRank: isFaceUp,
+                    canUse: false,
+                    displayName: "Satan target",
+                    definitionKey:
+                        CardDefinitionCatalog.GetDefaultForRank(7).Key));
+
+                Assert.That(
+                    view.PlaySatanNumberGuessResult(
+                        succeeded: true,
+                        brand),
+                    Is.True);
+
+                SerializedObject serialized = new SerializedObject(view);
+                GameObject front = serialized.FindProperty("front")
+                    .objectReferenceValue as GameObject;
+                GameObject back = serialized.FindProperty("back")
+                    .objectReferenceValue as GameObject;
+                SpriteRenderer brandRenderer = view
+                    .GetComponentsInChildren<SpriteRenderer>(true)
+                    .Single(renderer =>
+                        renderer.gameObject.name == "SatanGuessBrand");
+
+                Assert.That(front.activeSelf, Is.EqualTo(isFaceUp));
+                Assert.That(back.activeSelf, Is.EqualTo(!isFaceUp));
+                Assert.That(
+                    brandRenderer.transform.parent,
+                    Is.SameAs(isFaceUp ? front.transform : back.transform));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+                Object.DestroyImmediate(brand);
+                Object.DestroyImmediate(texture);
             }
         }
 

@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7568992674839543894}
   - component: {fileID: 1780906643066125344}
   - component: {fileID: 4905487382930811116}
+  - component: {fileID: 2178764825021979322}
   m_Layer: 0
   m_Name: PreviousButton
   m_TagString: Untagged
@@ -136,6 +137,18 @@ MonoBehaviour:
   hoverScale: 1.08
   pressedScale: 0.92
   animationDuration: 0.12
+--- !u!114 &2178764825021979322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 349460837166191386}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &413442406026556743
 GameObject:
   m_ObjectHideFlags: 0
@@ -281,6 +294,7 @@ GameObject:
   - component: {fileID: 992649815834294104}
   - component: {fileID: 4469694967216266088}
   - component: {fileID: 2230607132173665263}
+  - component: {fileID: 828243577590521283}
   m_Layer: 0
   m_Name: NextButton
   m_TagString: Untagged
@@ -404,6 +418,18 @@ MonoBehaviour:
   hoverScale: 1.08
   pressedScale: 0.92
   animationDuration: 0.12
+--- !u!114 &828243577590521283
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7871898826888481853}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38649b98d712b794b9c25ea39f56cf7a, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::Border.UI.UISelectableSoundHook
 --- !u!1 &7914257756029327856
 GameObject:
   m_ObjectHideFlags: 0

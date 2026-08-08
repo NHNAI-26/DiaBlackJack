@@ -255,7 +255,8 @@ namespace DiaBlackJack.GameScene.Editor
                 typeof(CanvasRenderer),
                 typeof(Image),
                 typeof(Button),
-                typeof(UIButtonScaleFeedback));
+                typeof(UIButtonScaleFeedback),
+                typeof(UISelectableSoundHook));
             try
             {
                 RectTransform rect = root.GetComponent<RectTransform>();
@@ -610,6 +611,7 @@ namespace DiaBlackJack.GameScene.Editor
             button.transition = Selectable.Transition.None;
             button.navigation = new Navigation { mode = Navigation.Mode.None };
             root.gameObject.AddComponent<UIButtonScaleFeedback>();
+            root.gameObject.AddComponent<UISelectableSoundHook>();
             return button;
         }
 

@@ -3346,10 +3346,18 @@ namespace DiaBlackJack.GameScene
 
                     bool animateBelphegorReinsert =
                         ShouldAnimateBelphegorReinsert(command);
+                    bool hideSatanTurnStartChoice =
+                        ShouldHideSatanTurnStartChoiceImmediately(
+                            Battle?.PendingPlayerDemonContractInteraction,
+                            command);
                     Action onAccepted = null;
                     if (animateBelphegorReinsert && remainingDeck != null)
                     {
                         onAccepted = remainingDeck.PlayReinsertAnimation;
+                    }
+                    if (hideSatanTurnStartChoice)
+                    {
+                        onAccepted += HideAcceptedCombatChoice;
                     }
                     ProcessInput(() => TryResolvePlayerDemonContract(
                         command.InteractionId,
@@ -3566,6 +3574,24 @@ namespace DiaBlackJack.GameScene
                 pending.Kind == DemonContractInteractionKind.BelphegorTopCard &&
                 command.OptionId ==
                     BelphegorDemonContractHandler.MoveTopCardToBottomOptionId;
+        }
+
+        internal static bool ShouldHideSatanTurnStartChoiceImmediately(
+            PendingDemonContractInteraction pending,
+            GameSceneCombatHudCommand command)
+        {
+            return pending != null &&
+                pending.InteractionId == command.InteractionId &&
+                pending.Kind == DemonContractInteractionKind.SatanTurnStartChoice &&
+                command.Kind ==
+                    GameSceneCombatHudCommandKind.ResolveDemonContractChoice;
+        }
+
+        private void HideAcceptedCombatChoice()
+        {
+            hud?.HideCombatControlsImmediately();
+            tableCombatCommands?.ResetView();
+            UpdateCombatCommandHover(null);
         }
 
         private bool TryBeginPlayerActiveDemonContractAction(
@@ -4892,6 +4918,12 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            if (_suppressHandRenderUntilRoundOneStart)
+            {
+                totals.Render(string.Empty, string.Empty);
+                return;
+            }
+
             totals.Render(vm.PlayerTotalsText, vm.EnemyTotalsText);
         }
 
@@ -5614,8 +5646,20 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
+            if (ShouldThreatenEnemyDuringPlayerSatanAbility(cue.ActorSide))
+            {
+                enemyCharacter?.RenderVisual(
+                    CharacterVisualState.AttackThreatened);
+            }
+
             RememberSatanAttackAnimationCue(cue);
             return true;
+        }
+
+        internal static bool ShouldThreatenEnemyDuringPlayerSatanAbility(
+            CombatantSide actorSide)
+        {
+            return actorSide == CombatantSide.Player;
         }
 
         private IEnumerator WaitForSatanAttackAnimation(
@@ -5681,6 +5725,12 @@ namespace DiaBlackJack.GameScene
             {
                 targetCard = null;
                 return false;
+            }
+
+            if (ShouldThreatenEnemyDuringPlayerSatanAbility(cue.ActorSide))
+            {
+                enemyCharacter?.RenderVisual(
+                    CharacterVisualState.AttackThreatened);
             }
 
             RememberSatanNumberGuessAnimationCue(cue);

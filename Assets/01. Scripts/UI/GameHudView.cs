@@ -1214,6 +1214,11 @@ namespace DiaBlackJack.GameScene
             optionScrollRect.verticalNormalizedPosition = 1f;
         }
 
+        internal void HideCombatControlsImmediately()
+        {
+            HideCombatControls();
+        }
+
         private void HideCombatControls()
         {
             HideCombatActionTooltip();
