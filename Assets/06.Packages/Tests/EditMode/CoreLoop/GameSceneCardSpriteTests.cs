@@ -507,6 +507,25 @@ namespace DiaBlackJack.CoreLoop.Tests
                     mainMenuCanvas.worldCamera.name,
                     Is.EqualTo("UIOverlayCamera"));
                 Assert.That(mainMenuCanvas.sortingOrder, Is.EqualTo(100));
+                DiaBlackJack.MainMenu.UI.OptionalTextJitterMotion jitter =
+                    canvas.GetComponentInChildren<
+                        DiaBlackJack.MainMenu.UI.OptionalTextJitterMotion>(true);
+                Assert.That(jitter, Is.Not.Null);
+                SerializedObject serializedJitter =
+                    new SerializedObject(jitter);
+                Assert.That(
+                    serializedJitter.FindProperty("verticalDrift").floatValue,
+                    Is.EqualTo(3f));
+                Assert.That(
+                    serializedJitter.FindProperty("driftFrequency").floatValue,
+                    Is.EqualTo(1f / 12f).Within(0.000001f));
+                Assert.That(
+                    serializedJitter.FindProperty("jitterAmplitude")
+                        .vector2Value,
+                    Is.EqualTo(new Vector2(1.4f, 0.8f)));
+                Assert.That(
+                    serializedJitter.FindProperty("jitterFrequency").floatValue,
+                    Is.EqualTo(1f / 12f).Within(0.000001f));
                 Transform[] mainMenuUi =
                     canvas.GetComponentsInChildren<Transform>(true);
                 for (int index = 0; index < mainMenuUi.Length; index++)

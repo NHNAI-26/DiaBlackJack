@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Reflection;
 using DiaBlackJack.Content;
 using DiaBlackJack.CoreLoop;
 using DiaBlackJack.GameScene;
@@ -21,6 +22,8 @@ namespace DiaBlackJack.StageProgression.Tests
             "Assets/03. Prefabs/UI/GameScene/OpponentWantedPoster.prefab";
         private const string OverlayPrefabPath =
             "Assets/03. Prefabs/UI/GameScene/OpponentSelectionOverlay.prefab";
+        private const string WorldPrefabPath =
+            "Assets/03. Prefabs/UI/GameScene/OpponentSelectionWorld.prefab";
         private const string EnemyCatalogPath =
             "Assets/02. ScriptableObjects/Enemies/EnemyContentCatalog.asset";
         private const string WantedSpritePath =
@@ -354,6 +357,182 @@ namespace DiaBlackJack.StageProgression.Tests
             }
         }
 
+        [Test]
+        [Category("GSV20")]
+        public void GSV20_U01_WorldPrefabKeepsLegacyAssetAndSerializesEntrance()
+        {
+            GameObject legacy = AssetDatabase.LoadAssetAtPath<GameObject>(
+                OverlayPrefabPath);
+            GameObject world = AssetDatabase.LoadAssetAtPath<GameObject>(
+                WorldPrefabPath);
+
+            Assert.That(legacy, Is.Not.Null);
+            Assert.That(world, Is.Not.Null);
+            Assert.That(legacy.GetComponent<Canvas>().renderMode,
+                Is.EqualTo(RenderMode.ScreenSpaceOverlay));
+            Assert.That(world.GetComponent<Canvas>().renderMode,
+                Is.EqualTo(RenderMode.WorldSpace));
+            Assert.That(world.transform.localScale,
+                Is.EqualTo(Vector3.one * 0.003f));
+            Assert.That(Vector3.Angle(world.transform.forward, Vector3.down),
+                Is.LessThan(0.01f));
+
+            OpponentSelectionView selection =
+                world.GetComponent<OpponentSelectionView>();
+            SerializedObject serialized = new SerializedObject(selection);
+            Assert.That(serialized.FindProperty("playEntranceAnimation")
+                .boolValue, Is.True);
+            Assert.That(serialized.FindProperty("slideDuration").floatValue,
+                Is.EqualTo(0.9f).Within(0.0001f));
+            Assert.That(serialized.FindProperty("offTableAnchoredY").floatValue,
+                Is.EqualTo(1100f));
+            Assert.That(serialized.FindProperty("posterSlots").arraySize,
+                Is.EqualTo(2));
+
+            OpponentWantedPosterView[] posters =
+                world.GetComponentsInChildren<OpponentWantedPosterView>(true);
+            Assert.That(posters.Select(poster =>
+                    ((RectTransform)poster.transform).anchoredPosition.x),
+                Is.EquivalentTo(new[] { -400f, 400f }));
+            Assert.That(posters.All(poster =>
+                    Mathf.Approximately(
+                        ((RectTransform)poster.transform).anchoredPosition.y,
+                        0f)),
+                Is.True);
+            Assert.That(posters.All(poster =>
+                    Vector3.Distance(
+                        poster.transform.localScale,
+                        Vector3.one * 1.7f) < 0.0001f),
+                Is.True);
+            Assert.That(posters.All(poster =>
+                    Mathf.Abs(Mathf.DeltaAngle(
+                        poster.transform.localEulerAngles.z,
+                        0f)) < 0.01f),
+                Is.True);
+        }
+
+        [Test]
+        [Category("GSV20")]
+        public void GSV20_U02_EntranceStateBlocksPosterUntilCompleted()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                WorldPrefabPath);
+            GameObject instance = UnityEngine.Object.Instantiate(prefab);
+            GameObject cameraObject = new GameObject("CameraViewController");
+
+            try
+            {
+                OpponentSelectionView selection =
+                    instance.GetComponent<OpponentSelectionView>();
+                GameSceneCameraViewController cameraController =
+                    cameraObject.AddComponent<GameSceneCameraViewController>();
+                SerializedObject serializedSelection =
+                    new SerializedObject(selection);
+                serializedSelection.FindProperty("cameraViewController")
+                    .objectReferenceValue = cameraController;
+                serializedSelection.ApplyModifiedPropertiesWithoutUndo();
+                MethodInfo subscribeSlots = typeof(OpponentSelectionView)
+                    .GetMethod(
+                        "SetSlotSubscriptions",
+                        BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(subscribeSlots, Is.Not.Null);
+                subscribeSlots.Invoke(selection, new object[] { true });
+                selection.Render(CreateSelectionModel(11));
+                Assert.That(selection.IsReadyForSelection, Is.True);
+
+                int selectionCount = 0;
+                string selectedProfileKey = null;
+                selection.OpponentSelected += profileKey =>
+                {
+                    selectionCount++;
+                    selectedProfileKey = profileKey;
+                };
+                OpponentWantedPosterView poster =
+                    instance.GetComponentsInChildren<OpponentWantedPosterView>(true)[0];
+                PointerEventData click = new PointerEventData(null)
+                {
+                    button = PointerEventData.InputButton.Left
+                };
+
+                selection.BeginEntranceState();
+                poster.OnPointerClick(click);
+                Assert.That(selection.IsReadyForSelection, Is.False);
+                Assert.That(selectionCount, Is.Zero);
+
+                selection.CompleteEntranceState();
+                poster.OnPointerClick(click);
+                Assert.That(selectionCount, Is.EqualTo(1));
+                Assert.That(selection.IsReadyForSelection, Is.False);
+                Assert.That(selectedProfileKey, Is.Not.Null.And.Not.Empty);
+                Assert.That(selection.CanCommitSelection(
+                        11,
+                        selectedProfileKey),
+                    Is.True);
+                Assert.That(selection.CanCommitSelection(
+                        12,
+                        selectedProfileKey),
+                    Is.False);
+                Assert.That(cameraController.IsSwitchInputLocked, Is.True);
+                CanvasGroup[] posterGroups = instance
+                    .GetComponentsInChildren<CanvasGroup>(true)
+                    .Where(group => group.GetComponent<
+                        OpponentWantedPosterView>() != null)
+                    .ToArray();
+                Assert.That(posterGroups, Has.Length.EqualTo(2));
+                Assert.That(posterGroups.All(group =>
+                        Mathf.Approximately(group.alpha, 0f)),
+                    Is.True);
+
+                Assert.That(selection.RestoreSelectionAfterRejectedCommit(
+                        selectedProfileKey),
+                    Is.True);
+                Assert.That(selection.IsReadyForSelection, Is.True);
+                Assert.That(selection.CanCommitSelection(
+                        11,
+                        selectedProfileKey),
+                    Is.False);
+                Assert.That(cameraController.IsSwitchInputLocked, Is.True);
+                Assert.That(posterGroups.All(group =>
+                        Mathf.Approximately(group.alpha, 1f)),
+                    Is.True);
+
+                selection.Hide();
+                Assert.That(cameraController.IsSwitchInputLocked, Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
+                UnityEngine.Object.DestroyImmediate(cameraObject);
+            }
+        }
+
+        [Test]
+        [Category("GSV20")]
+        public void GSV20_U03_CameraSwitchInputUsesNestedLocks()
+        {
+            GameObject instance = new GameObject("CameraViewController");
+            try
+            {
+                GameSceneCameraViewController controller =
+                    instance.AddComponent<GameSceneCameraViewController>();
+                Assert.That(controller.IsSwitchInputLocked, Is.False);
+
+                controller.LockSwitchInput();
+                controller.LockSwitchInput();
+                Assert.That(controller.IsSwitchInputLocked, Is.True);
+                Assert.That(controller.StepView(1), Is.False);
+
+                controller.UnlockSwitchInput();
+                Assert.That(controller.IsSwitchInputLocked, Is.True);
+                controller.UnlockSwitchInput();
+                Assert.That(controller.IsSwitchInputLocked, Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
         private static GameObject CreatePosterInstance()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
@@ -383,6 +562,60 @@ namespace DiaBlackJack.StageProgression.Tests
                 "×3",
                 "×3",
                 false);
+        }
+
+        private static StageProgressionViewModel CreateSelectionModel(
+            int offerId)
+        {
+            return new StageProgressionViewModel(
+                "1/3",
+                "Opponent",
+                "Normal",
+                "12/12",
+                StageProgressionState.OpponentSelection,
+                string.Empty,
+                false,
+                false,
+                false,
+                string.Empty,
+                Array.Empty<BattleRewardOptionViewModel>(),
+                false,
+                false,
+                string.Empty,
+                string.Empty,
+                0,
+                offerId,
+                new[] { CreateCandidate(), new OpponentCandidateViewModel(
+                    "cultist",
+                    "Cultist",
+                    "NORMAL",
+                    "SOUL 4",
+                    "Summary",
+                    "VICTORY GOLD 4",
+                    "4",
+                    "4",
+                    false) },
+                null,
+                true,
+                false,
+                null,
+                Array.Empty<StartingDemonGrantCardViewModel>(),
+                false,
+                "0",
+                string.Empty,
+                false,
+                null,
+                Array.Empty<ShopCardOptionViewModel>(),
+                Array.Empty<ShopOwnedCardViewModel>(),
+                string.Empty,
+                0,
+                false,
+                string.Empty,
+                0,
+                false,
+                false,
+                false,
+                string.Empty);
         }
 
         private static Component FindText(GameObject root, string name)

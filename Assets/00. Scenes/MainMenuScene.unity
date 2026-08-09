@@ -948,9 +948,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.MainMenu.UI.OptionalTextJitterMotion
   effectEnabled: 1
   verticalDrift: 3
-  driftFrequency: 1.2
+  driftFrequency: 0.083333336
   jitterAmplitude: {x: 1.4, y: 0.8}
-  jitterFrequency: 18
+  jitterFrequency: 0.083333336
 --- !u!1 &1272446272
 GameObject:
   m_ObjectHideFlags: 0

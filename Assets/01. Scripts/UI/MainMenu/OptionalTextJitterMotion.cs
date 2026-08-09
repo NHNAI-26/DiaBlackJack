@@ -8,9 +8,9 @@ namespace DiaBlackJack.MainMenu.UI
     {
         [SerializeField] private bool effectEnabled = true;
         [SerializeField, Min(0f)] private float verticalDrift = 3f;
-        [SerializeField, Min(0f)] private float driftFrequency = 1.2f;
+        [SerializeField, Min(0f)] private float driftFrequency = 1f / 12f;
         [SerializeField] private Vector2 jitterAmplitude = new Vector2(1.4f, 0.8f);
-        [SerializeField, Min(0f)] private float jitterFrequency = 18f;
+        [SerializeField, Min(0f)] private float jitterFrequency = 1f / 12f;
 
         private RectTransform _rectTransform;
         private Vector2 _restingPosition;

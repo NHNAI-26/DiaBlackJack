@@ -55,6 +55,17 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        internal void ConfigureAvailableDemonNames(string availableDemonNames)
+        {
+            HoverDescriptionTarget descriptionTarget =
+                GetComponent<HoverDescriptionTarget>();
+            descriptionTarget?.Configure(
+                null,
+                new HoverDescriptionValue(
+                    "availableDemons",
+                    availableDemonNames));
+        }
+
         /// <summary>
         /// Same stencil-outline highlight used for the drawable deck
         /// (<see cref="DeckStackView"/>) and the codex (<see cref="CodexClickable"/>),

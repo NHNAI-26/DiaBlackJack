@@ -77,7 +77,6 @@ namespace DiaBlackJack.GameScene
         private void Awake()
         {
             Initialize();
-            gameObject.SetActive(false);
         }
 
         private void OnValidate()

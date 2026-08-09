@@ -47,7 +47,6 @@ namespace DiaBlackJack.GameScene
         {
             _rectTransform = transform as RectTransform;
             EnsureBaseAnchoredPosition();
-            gameObject.SetActive(false);
         }
 
         private void OnDisable()
@@ -56,12 +55,12 @@ namespace DiaBlackJack.GameScene
             _sequence = null;
         }
 
-        public void Play(Sprite frontSprite, Action onComplete)
+        public bool Play(Sprite frontSprite, Action onComplete)
         {
             if (cardImage == null || frontSprite == null)
             {
                 onComplete?.Invoke();
-                return;
+                return false;
             }
 
             EnsureBaseAnchoredPosition();
@@ -73,6 +72,12 @@ namespace DiaBlackJack.GameScene
             cardImage.color = color;
             _rectTransform.anchoredPosition = _baseAnchoredPosition;
             gameObject.SetActive(true);
+            if (!isActiveAndEnabled)
+            {
+                gameObject.SetActive(false);
+                onComplete?.Invoke();
+                return false;
+            }
 
             float clampedFadeInSeconds = Mathf.Max(0f, fadeInSeconds);
             float clampedHoldSeconds = Mathf.Max(0f, holdSeconds);
@@ -117,6 +122,7 @@ namespace DiaBlackJack.GameScene
                 onComplete?.Invoke();
             });
             _sequence = sequence;
+            return true;
         }
 
         private void EnsureBaseAnchoredPosition()
