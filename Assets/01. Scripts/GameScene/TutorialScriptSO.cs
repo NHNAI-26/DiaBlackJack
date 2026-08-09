@@ -18,7 +18,8 @@ namespace DiaBlackJack.GameScene
         ContractCandidate,
         ContractOption,
         DeckPreview,
-        RevolverResolve
+        RevolverResolve,
+        EnemyLieDetectorResolved
     }
 
     public enum TutorialSpeakerKind

@@ -13,6 +13,11 @@ namespace DiaBlackJack.Content
         [SerializeField] private string activeEffectDescription;
         [TextArea(1, 3)]
         [SerializeField] private string costDescription;
+        [Header("Codex text overrides")]
+        [TextArea(1, 5)]
+        [SerializeField] private string codexActiveEffectDescription;
+        [TextArea(1, 5)]
+        [SerializeField] private string codexCostDescription;
         [TextArea(2, 5)]
         [SerializeField] private string codexLoreDescription;
         [Min(0)]
@@ -25,6 +30,12 @@ namespace DiaBlackJack.Content
         [SerializeField] private Sprite faceSprite;
 
         public string Key => key;
+
+        internal string CodexActiveEffectDescription =>
+            ResolveCodexText(codexActiveEffectDescription, activeEffectDescription);
+
+        internal string CodexCostDescription =>
+            ResolveCodexText(codexCostDescription, costDescription);
 
         public string CodexLoreDescription => codexLoreDescription;
 
@@ -43,6 +54,13 @@ namespace DiaBlackJack.Content
         }
 
         internal Sprite FaceSprite => faceSprite;
+
+        private static string ResolveCodexText(string codexText, string fallback)
+        {
+            return string.IsNullOrWhiteSpace(codexText)
+                ? fallback
+                : codexText;
+        }
 
         internal void ValidateOrThrow()
         {

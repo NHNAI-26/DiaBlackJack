@@ -7,7 +7,7 @@ namespace DiaBlackJack.CoreLoop
         IAutomaticCardEffectHandler
     {
         internal const int DeclineOptionId = 0;
-        internal const int PaySoulAndRedealOptionId = 1;
+        internal const int RedealOptionId = 1;
 
         public CardEffectKind EffectKind => CardEffectKind.ResurrectionHerb;
 
@@ -18,7 +18,7 @@ namespace DiaBlackJack.CoreLoop
                 CombatantSide.Player,
                 GetChoiceKind(context, CombatantSide.Player),
                 CombatPromptId.AutomaticResurrectionHerbDecision,
-                CreateDecisionOptions(context, CombatantSide.Player));
+                CreateDecisionOptions());
         }
 
         public AutomaticCardEffectStep ResolveChoice(
@@ -43,16 +43,13 @@ namespace DiaBlackJack.CoreLoop
                     CombatantSide.Enemy,
                     GetChoiceKind(context, CombatantSide.Enemy),
                     CombatPromptId.AutomaticResurrectionHerbDecision,
-                    CreateDecisionOptions(context, CombatantSide.Enemy));
+                    CreateDecisionOptions());
             }
 
-            bool battleEndedBySoulLoss =
-                context.ApplyCommittedResurrectionHerbDecisions();
+            context.ApplyCommittedResurrectionHerbDecisions();
             return AutomaticCardEffectStep.Complete(
                 GetSourceDisposition(context),
-                battleEndedBySoulLoss
-                    ? AutomaticCardCompletionFlow.EndBattle
-                    : context.DidResurrectionHerbRedeal
+                context.DidResurrectionHerbRedeal
                     ? AutomaticCardCompletionFlow.CancelContinuation
                     : AutomaticCardCompletionFlow.ResumeContinuation);
         }
@@ -67,24 +64,17 @@ namespace DiaBlackJack.CoreLoop
         }
 
         private static IReadOnlyList<AutomaticCardChoiceOption>
-            CreateDecisionOptions(
-                AutomaticCardEffectContext context,
-                CombatantSide decisionSide)
+            CreateDecisionOptions()
         {
-            var options = new List<AutomaticCardChoiceOption>(2)
+            return new List<AutomaticCardChoiceOption>(2)
             {
                 new AutomaticCardChoiceOption(
                     DeclineOptionId,
-                    "부활하지 않기")
-            };
-            if (context.CanPayResurrectionHerbSoul(decisionSide))
-            {
-                options.Add(new AutomaticCardChoiceOption(
-                    PaySoulAndRedealOptionId,
-                    "부활하기"));
-            }
-
-            return options.AsReadOnly();
+                    "부활하지 않기"),
+                new AutomaticCardChoiceOption(
+                    RedealOptionId,
+                    "부활하기")
+            }.AsReadOnly();
         }
 
         private static void CommitDecision(
@@ -96,20 +86,19 @@ namespace DiaBlackJack.CoreLoop
             {
                 context.CommitResurrectionHerbDecision(
                     decisionSide,
-                    paysSoul: false);
+                    redeals: false);
                 return;
             }
 
-            if (selectedOption.OptionId != PaySoulAndRedealOptionId ||
-                !context.CanPayResurrectionHerbSoul(decisionSide))
+            if (selectedOption.OptionId != RedealOptionId)
             {
                 throw new InvalidOperationException(
-                    "Resurrection herb received an invalid payment option.");
+                    "Resurrection herb received an invalid redeal option.");
             }
 
             context.CommitResurrectionHerbDecision(
                 decisionSide,
-                paysSoul: true);
+                redeals: true);
         }
 
         private static AutomaticCardSourceDisposition GetSourceDisposition(

@@ -30,7 +30,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         private const string MerchantSpeechPath =
             "Assets/02. ScriptableObjects/Speech/merchant_speech.asset";
         private const string TutorialScriptPath =
-            "Assets/04. Data/Tutorial/TutorialScript.asset";
+            "Assets/02. ScriptableObjects/Tutorial/TutorialScript.asset";
         private const string TableControllerPrefabPath =
             "Assets/03. Prefabs/TableObjects/Table Controller.prefab";
 
@@ -127,6 +127,67 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void TUT01_U15_TutorialMarkupSupportsSkyBlueAutomaticCardLabel()
+        {
+            TutorialMarkupResult result = TutorialMarkupFormatter.Format(
+                "오, **(하늘색)자동 발동** 카드군.");
+
+            Assert.That(
+                result.Text,
+                Is.EqualTo(
+                    "오, <b><color=#64D8FF>자동 발동</color></b> 카드군."));
+        }
+
+        [TestCase(true, false, false, false)]
+        [TestCase(false, true, false, false)]
+        [TestCase(false, false, true, false)]
+        [TestCase(false, false, false, true)]
+        [TestCase(true, true, true, true)]
+        public void TUT01_U16_DialogueAdvanceAcceptsMouseSpaceAndBothEnterKeys(
+            bool leftMousePressed,
+            bool spacePressed,
+            bool enterPressed,
+            bool numpadEnterPressed)
+        {
+            Assert.That(
+                DialogueAdvanceInput.IsRequested(
+                    leftMousePressed,
+                    spacePressed,
+                    enterPressed,
+                    numpadEnterPressed),
+                Is.True);
+        }
+
+        [Test]
+        public void TUT01_U17_DialogueAdvanceRejectsFrameWithoutInput()
+        {
+            Assert.That(
+                DialogueAdvanceInput.IsRequested(
+                    leftMousePressed: false,
+                    spacePressed: false,
+                    enterPressed: false,
+                    numpadEnterPressed: false),
+                Is.False);
+        }
+
+        [TestCase(false, false, true)]
+        [TestCase(true, false, false)]
+        [TestCase(false, true, false)]
+        [TestCase(true, true, false)]
+        public void TUT01_U19_TutorialDialogueStopsBehindDeckAndCodex(
+            bool deckPreviewOpen,
+            bool codexOpen,
+            bool expected)
+        {
+            Assert.That(
+                GameManager.CanAdvanceTutorialDialogue(
+                    advanceRequested: true,
+                    deckPreviewOpen,
+                    codexOpen),
+                Is.EqualTo(expected));
+        }
+
+        [Test]
         public void TUT01_U04_TutorialScriptStartsRulesTwoSecondsAfterDeal()
         {
             TutorialScriptSO script =
@@ -139,7 +200,9 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(script.Steps[1].delayBeforeSeconds, Is.EqualTo(2f));
             Assert.That(
                 script.Steps[1].lines[0],
-                Is.EqualTo("블랙잭은 자신의 카드 합을 21에 가깝게 만드는 게임이야."));
+                Is.EqualTo(
+                    "블랙잭은 자신의 카드 숫자 합을\n" +
+                    "21에 가깝게 만드는 게임이야."));
         }
 
         [Test]
@@ -152,8 +215,8 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 script.Steps.SelectMany(step => step.lines ?? Array.Empty<string>()),
                 Does.Contain(
-                    "만약 상대 카드가 잘 보이지 않는다면, **W**, **D** 키로 " +
-                    "카메라 시점을 바꿀 수 있으니 적극 활용해봐.").And.Contain(
+                    "상대 카드가 잘 보이지 않는다면, **W**·**D** 키로\n" +
+                    "카메라 시점을 바꿀 수 있으니 활용해봐.").And.Contain(
                     "21까진 한참 모자라는군. " +
                     "**(파랑)히트**(색 빼기)해보라고. " +
                     "(히트 버튼 하이라이트)"));
@@ -201,6 +264,39 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 steps[revolverResolveGate + 2].lines[0],
                 Does.StartWith("19라."));
+        }
+
+        [Test]
+        public void TUT01_U18_TutorialScriptExplainsAutomaticCardsAfterChange()
+        {
+            TutorialScriptSO script =
+                AssetDatabase.LoadAssetAtPath<TutorialScriptSO>(TutorialScriptPath);
+            TutorialStepEntry[] steps = script.Steps.ToArray();
+
+            int changeGate = Array.FindIndex(
+                steps,
+                step => step.kind == TutorialStepKind.Gate &&
+                    step.gateKind == TutorialGateKind.BeginChange);
+            Assert.That(changeGate, Is.GreaterThan(0));
+            Assert.That(
+                steps[changeGate + 1].gateKind,
+                Is.EqualTo(TutorialGateKind.EnemyLieDetectorResolved));
+            Assert.That(
+                steps[changeGate + 2].kind,
+                Is.EqualTo(TutorialStepKind.Dialogue));
+            Assert.That(steps[changeGate + 2].lines, Has.Length.EqualTo(5));
+            Assert.That(
+                steps[changeGate + 2].lines[0],
+                Is.EqualTo("오, **(하늘색)자동 발동** 카드군."));
+            Assert.That(
+                steps[changeGate + 2].lines[3],
+                Does.Contain(TutorialDirector.LieDetectorComparisonToken));
+            Assert.That(
+                steps[changeGate + 3].lines[0],
+                Is.EqualTo("그나저나 … **(빨강)게임이 정말 따분하군.**"));
+            Assert.That(
+                steps[changeGate + 3].delayBeforeSeconds,
+                Is.EqualTo(3f));
         }
 
         [Test]

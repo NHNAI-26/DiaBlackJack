@@ -1350,7 +1350,7 @@ namespace DiaBlackJack.GameScene
                 EndCodexSwitchInputLock();
             }
 
-            // The narrator owns every click while active regardless of presentation
+            // The narrator owns every dialogue-advance input while active regardless of presentation
             // input-lock state — it paces scripted tutorial dialogue that plays *before*
             // any character entrance (e.g. the very first intro lines, while input is
             // still locked waiting for that entrance). Checking this before the
@@ -1362,8 +1362,10 @@ namespace DiaBlackJack.GameScene
             if (tutorialNarrator != null && tutorialNarrator.IsActive)
             {
                 UpdateTutorialNarratorHover();
-                Mouse tutorialMouse = Mouse.current;
-                if (tutorialMouse != null && tutorialMouse.leftButton.wasPressedThisFrame)
+                if (CanAdvanceTutorialDialogue(
+                        DialogueAdvanceInput.WasPressedThisFrame(),
+                        deckPreview != null && deckPreview.IsOpen,
+                        codex != null && codex.IsOpen))
                 {
                     tutorialNarrator.HandleClick();
                 }
@@ -1700,6 +1702,14 @@ namespace DiaBlackJack.GameScene
             {
                 UseShopUtilityItem(pointedShopUtilityItem);
             }
+        }
+
+        internal static bool CanAdvanceTutorialDialogue(
+            bool advanceRequested,
+            bool deckPreviewOpen,
+            bool codexOpen)
+        {
+            return advanceRequested && !deckPreviewOpen && !codexOpen;
         }
 
         private bool RaycastPointer(out RaycastHit hit)

@@ -63,6 +63,31 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
+        public void SV03_I01B_RestoreNormalizesAutomaticCardSuitToSpade()
+        {
+            RunSaveSnapshot snapshot = CreateSnapshot(
+                cards: new[]
+                {
+                    new RunSaveCardSnapshot(
+                        7,
+                        CardDefinitionCatalog.ResurrectionHerbKey,
+                        CardSuit.Clover)
+                },
+                lastIssuedCardId: 7);
+
+            Assert.That(
+                CreateFactory().TryRestore(
+                    snapshot,
+                    out RunRestoreResult result,
+                    out RunSaveValidationResult validation),
+                Is.True);
+
+            Assert.That(validation.IsValid, Is.True);
+            Assert.That(result.Session.Progress.Player.Deck[0].Suit,
+                Is.EqualTo(CardSuit.Spade));
+        }
+
+        [Test]
         public void SV03_I02_RestoreDoesNotReuseRemovedHighestCardIds()
         {
             RunSaveSnapshot snapshot = CreateSnapshot(

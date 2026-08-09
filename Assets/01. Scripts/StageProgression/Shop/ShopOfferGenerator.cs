@@ -127,12 +127,14 @@ namespace DiaBlackJack.StageProgression
             ICollection<ShopCardOption> options,
             bool followsEliteVictory)
         {
+            var remainingKeys = new List<string>(_normalDefinitionKeys);
             for (int optionId = 0; optionId < 3; optionId++)
             {
                 int selectedIndex = SelectNormalIndex(
-                    _normalDefinitionKeys,
+                    remainingKeys,
                     followsEliteVictory);
-                string selectedKey = _normalDefinitionKeys[selectedIndex];
+                string selectedKey = remainingKeys[selectedIndex];
+                remainingKeys.RemoveAt(selectedIndex);
                 options.Add(new ShopCardOption(
                     optionId,
                     ShopCardDeckKind.Normal,

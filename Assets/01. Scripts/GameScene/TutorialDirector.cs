@@ -39,6 +39,9 @@ namespace DiaBlackJack.GameScene
             GameSceneCombatHudCommandKind.BeginContract;
 
         private const int RevolverTargetNumber = 5;
+        private const int LieDetectorDeclaredNumber = 6;
+        internal const string LieDetectorComparisonToken =
+            "{{lieDetectorComparison}}";
 
         private readonly GameManager _gameManager;
         private readonly TutorialNarratorView _narrator;
@@ -411,7 +414,8 @@ namespace DiaBlackJack.GameScene
 
         private void ShowDialogueLine(string source)
         {
-            TutorialMarkupResult result = TutorialMarkupFormatter.Format(source);
+            TutorialMarkupResult result = TutorialMarkupFormatter.Format(
+                ResolveDialogueVariables(source, _gameManager.Battle));
             if (result.Highlight != TutorialHighlightTarget.None)
             {
                 _pendingHighlight = result.Highlight;
@@ -490,6 +494,8 @@ namespace DiaBlackJack.GameScene
                     return DeckPreviewGate();
                 case TutorialGateKind.RevolverResolve:
                     return RevolverResolveGate();
+                case TutorialGateKind.EnemyLieDetectorResolved:
+                    return EnemyLieDetectorResolvedGate();
                 default:
                     throw new ArgumentOutOfRangeException(
                         nameof(entry),
@@ -581,6 +587,72 @@ namespace DiaBlackJack.GameScene
                 },
                 IsComplete = gm => gm.IsTutorialDeckPreviewGateComplete
             };
+        }
+
+        private static Step EnemyLieDetectorResolvedGate()
+        {
+            return new Step
+            {
+                Kind = StepKind.Gate,
+                OnEnter = gm =>
+                {
+                    gm.SetTutorialActionRestriction(BlockAllPrimaryActions);
+                    gm.SetTutorialCardUseBlocked(true);
+                },
+                OnExit = gm => gm.SetTutorialActionRestriction(null),
+                IsComplete = gm => HasCompletedEnemyLieDetectorResolution(
+                    gm.Battle)
+            };
+        }
+
+        internal static bool HasCompletedEnemyLieDetectorResolution(
+            CoreLoopBattle battle)
+        {
+            if (battle == null ||
+                !battle.LastAutomaticCardResult.HasValue ||
+                !battle.LastLieDetectorPublicResult.HasValue ||
+                !battle.EnemyHiddenCardComparisonKnowledge.HasValue)
+            {
+                return false;
+            }
+
+            AutomaticCardResult automaticResult =
+                battle.LastAutomaticCardResult.Value;
+            LieDetectorPublicResult publicResult =
+                battle.LastLieDetectorPublicResult.Value;
+            HiddenCardComparisonKnowledge knowledge =
+                battle.EnemyHiddenCardComparisonKnowledge.Value;
+            return automaticResult.EffectKind == CardEffectKind.LieDetector &&
+                automaticResult.OwnerSide == CombatantSide.Enemy &&
+                publicResult.OwnerSide == CombatantSide.Enemy &&
+                publicResult.DeclaredNumber == LieDetectorDeclaredNumber &&
+                publicResult.WasComparable &&
+                knowledge.ObserverSide == CombatantSide.Enemy &&
+                knowledge.SubjectSide == CombatantSide.Player &&
+                knowledge.DeclaredNumber == LieDetectorDeclaredNumber;
+        }
+
+        internal static string ResolveDialogueVariables(
+            string source,
+            CoreLoopBattle battle)
+        {
+            string content = source ?? string.Empty;
+            if (!content.Contains(LieDetectorComparisonToken))
+            {
+                return content;
+            }
+
+            if (!HasCompletedEnemyLieDetectorResolution(battle))
+            {
+                throw new InvalidOperationException(
+                    "Tutorial lie-detector dialogue requires a completed enemy result.");
+            }
+
+            HiddenCardComparisonKnowledge knowledge =
+                battle.EnemyHiddenCardComparisonKnowledge.Value;
+            string comparison = knowledge.DeclaredNumber +
+                (knowledge.IsAtLeastDeclaredNumber ? " 이상" : " 미만");
+            return content.Replace(LieDetectorComparisonToken, comparison);
         }
 
         private static Step ContractCandidateGate(string definitionKey)

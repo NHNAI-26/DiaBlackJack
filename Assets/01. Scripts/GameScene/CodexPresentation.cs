@@ -380,6 +380,19 @@ namespace DiaBlackJack.GameScene
             CardContentCatalog cardCatalog,
             IReadOnlyDictionary<string, string> loreByDefinitionKey)
         {
+            return CreateDemonPages(
+                cardCatalog,
+                loreByDefinitionKey,
+                activeSkillByDefinitionKey: null,
+                costByDefinitionKey: null);
+        }
+
+        public static IReadOnlyList<DemonCodexPageViewModel> CreateDemonPages(
+            CardContentCatalog cardCatalog,
+            IReadOnlyDictionary<string, string> loreByDefinitionKey,
+            IReadOnlyDictionary<string, string> activeSkillByDefinitionKey,
+            IReadOnlyDictionary<string, string> costByDefinitionKey)
+        {
             if (cardCatalog == null)
             {
                 throw new ArgumentNullException(nameof(cardCatalog));
@@ -408,17 +421,51 @@ namespace DiaBlackJack.GameScene
                         $"Codex lore for demon '{definition.Key}' does not exist.");
                 }
 
+                string activeSkill = ResolveDemonCodexText(
+                    activeSkillByDefinitionKey,
+                    definition.Key,
+                    definition.Summary,
+                    "active skill");
+                string cost = ResolveDemonCodexText(
+                    costByDefinitionKey,
+                    definition.Key,
+                    definition.CostSummary,
+                    "cost");
+
                 pages.Add(new DemonCodexPageViewModel(
                     definition.Key,
                     definition.DisplayName,
                     definition.BasePurchasePrice,
                     definition.BaseSoulCost,
                     lore.Trim(),
-                    definition.Summary,
-                    definition.CostSummary));
+                    activeSkill,
+                    cost));
             }
 
             return new ReadOnlyCollection<DemonCodexPageViewModel>(pages);
+        }
+
+        private static string ResolveDemonCodexText(
+            IReadOnlyDictionary<string, string> textByDefinitionKey,
+            string definitionKey,
+            string fallback,
+            string fieldName)
+        {
+            if (textByDefinitionKey == null)
+            {
+                return fallback;
+            }
+
+            if (!textByDefinitionKey.TryGetValue(
+                    definitionKey,
+                    out string text) ||
+                string.IsNullOrWhiteSpace(text))
+            {
+                throw new KeyNotFoundException(
+                    $"Codex {fieldName} for demon '{definitionKey}' does not exist.");
+            }
+
+            return text.Trim();
         }
 
         public static CodexBookViewModel CreateBook(
@@ -486,9 +533,11 @@ namespace DiaBlackJack.GameScene
             {
                 CardDefinition definition =
                     cardCatalog.GetNormalByKey(definitionKey);
-                CardSuit suit = rankOccurrences[definition.Rank] % 2 == 0
-                    ? CardSuit.Spade
-                    : CardSuit.Clover;
+                CardSuit suit = definition.Activation ==
+                    CardActivationKind.Automatic ||
+                    rankOccurrences[definition.Rank] % 2 == 0
+                        ? CardSuit.Spade
+                        : CardSuit.Clover;
                 rankOccurrences[definition.Rank]++;
                 (string DefinitionKey, CardSuit Suit) groupKey =
                     (definition.Key, suit);

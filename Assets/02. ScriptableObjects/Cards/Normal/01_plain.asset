@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.NormalCardDefinitionSO
   key: standard-ace-1
   displayName: "\uC5D0\uC774\uC2A4"
-  description: "\uB77C\uC6B4\uB4DC \uC885\uB8CC \uC2DC \uD569\uACC4\uAC00 21\uC5D0
-    \uAC00\uC7A5 \uAC00\uAE4C\uC6CC\uC9C0\uB3C4\uB85D 1 \uB610\uB294 11\uB85C \uACC4\uC0B0\uB429\uB2C8\uB2E4."
+  description: "\uB77C\uC6B4\uB4DC \uC885\uB8CC \uC2DC \uC22B\uC790 \uCD1D\uD569\uC774
+    21\uC5D0\n\uAC00\uAE4C\uC6CC\uC9C0\uB3C4\uB85D 1 \uB610\uB294 11\uB85C \uACC4\uC0B0\uB429\uB2C8\uB2E4."
   basePurchasePrice: 60
   shopWeight: 3
   rank: 1

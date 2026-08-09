@@ -23,8 +23,8 @@ namespace DiaBlackJack.CoreLoop
         private int? _enemyFlamethrowerCardId;
         private bool _hasPlayerResurrectionHerbDecision;
         private bool _hasEnemyResurrectionHerbDecision;
-        private bool _playerPaysResurrectionHerbSoul;
-        private bool _enemyPaysResurrectionHerbSoul;
+        private bool _playerRedealsResurrectionHerbHand;
+        private bool _enemyRedealsResurrectionHerbHand;
         private int? _reactivatedManualCardId;
 
         public AutomaticCardEffectContext(
@@ -93,20 +93,13 @@ namespace DiaBlackJack.CoreLoop
             Battle.DeferPoisonSoulDeathUntilRoundEnd(OwnerSide);
         }
 
-        public bool CanPayResurrectionHerbSoul(CombatantSide side)
+        public void RedealResurrectionHerbHand(CombatantSide side)
         {
-            return Battle.GetParticipant(side).Soul.Current > 0;
-        }
-
-        public bool PayResurrectionHerbSoulAndRedeal(CombatantSide side)
-        {
-            bool redealt = Battle.PayResurrectionHerbSoulAndRedeal(
+            Battle.RedealResurrectionHerbHand(
                 side,
                 SourceCard);
-            DidResurrectionHerbRedeal |= redealt;
-            DidOwnerResurrectionHerbRedeal |=
-                redealt && side == OwnerSide;
-            return redealt;
+            DidResurrectionHerbRedeal = true;
+            DidOwnerResurrectionHerbRedeal |= side == OwnerSide;
         }
 
         public bool TryCompareSingleOpponentHiddenCard(
@@ -253,13 +246,12 @@ namespace DiaBlackJack.CoreLoop
 
         internal void CommitResurrectionHerbDecision(
             CombatantSide side,
-            bool paysSoul)
+            bool redeals)
         {
             bool alreadyCommitted = side == CombatantSide.Player
                 ? _hasPlayerResurrectionHerbDecision
                 : _hasEnemyResurrectionHerbDecision;
-            if (alreadyCommitted ||
-                (paysSoul && !CanPayResurrectionHerbSoul(side)))
+            if (alreadyCommitted)
             {
                 throw new InvalidOperationException(
                     "Resurrection herb decision is duplicated or no longer valid.");
@@ -268,15 +260,15 @@ namespace DiaBlackJack.CoreLoop
             if (side == CombatantSide.Player)
             {
                 _hasPlayerResurrectionHerbDecision = true;
-                _playerPaysResurrectionHerbSoul = paysSoul;
+                _playerRedealsResurrectionHerbHand = redeals;
                 return;
             }
 
             _hasEnemyResurrectionHerbDecision = true;
-            _enemyPaysResurrectionHerbSoul = paysSoul;
+            _enemyRedealsResurrectionHerbHand = redeals;
         }
 
-        internal bool ApplyCommittedResurrectionHerbDecisions()
+        internal void ApplyCommittedResurrectionHerbDecisions()
         {
             if (!_hasPlayerResurrectionHerbDecision ||
                 !_hasEnemyResurrectionHerbDecision)
@@ -285,11 +277,15 @@ namespace DiaBlackJack.CoreLoop
                     "Both resurrection herb decisions must be committed first.");
             }
 
-            bool playerSurvived = !_playerPaysResurrectionHerbSoul ||
-                PayResurrectionHerbSoulAndRedeal(CombatantSide.Player);
-            bool enemySurvived = !_enemyPaysResurrectionHerbSoul ||
-                PayResurrectionHerbSoulAndRedeal(CombatantSide.Enemy);
-            return !playerSurvived || !enemySurvived;
+            if (_playerRedealsResurrectionHerbHand)
+            {
+                RedealResurrectionHerbHand(CombatantSide.Player);
+            }
+
+            if (_enemyRedealsResurrectionHerbHand)
+            {
+                RedealResurrectionHerbHand(CombatantSide.Enemy);
+            }
         }
 
         internal AutomaticCardResult CreateResult(
@@ -329,10 +325,10 @@ namespace DiaBlackJack.CoreLoop
                             "Resurrection herb result requires both committed decisions.");
                     }
 
-                    playerDecision = _playerPaysResurrectionHerbSoul
+                    playerDecision = _playerRedealsResurrectionHerbHand
                         ? AutomaticCardDecisionOutcome.Accepted
                         : AutomaticCardDecisionOutcome.Declined;
-                    enemyDecision = _enemyPaysResurrectionHerbSoul
+                    enemyDecision = _enemyRedealsResurrectionHerbHand
                         ? AutomaticCardDecisionOutcome.Accepted
                         : AutomaticCardDecisionOutcome.Declined;
                     break;

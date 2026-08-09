@@ -264,13 +264,18 @@ namespace DiaBlackJack.StageProgression.Tests
         {
             var rankedCard = new RunCardDefinition(5, 5, CardSuit.Clover);
             var keyedCard = new RunCardDefinition(6, "auto-pistol-8", CardSuit.Clover);
+            var automaticCard = new RunCardDefinition(
+                7,
+                CardDefinitionCatalog.ResurrectionHerbKey,
+                CardSuit.Clover);
 
             Assert.That(rankedCard.DefinitionKey, Is.EqualTo("crystal-orb-5"));
             Assert.That(rankedCard.Suit, Is.EqualTo(CardSuit.Clover));
             Assert.That(keyedCard.DefinitionKey, Is.EqualTo("auto-pistol-8"));
             Assert.That(keyedCard.Suit, Is.EqualTo(CardSuit.Clover));
+            Assert.That(automaticCard.Suit, Is.EqualTo(CardSuit.Spade));
             Assert.Throws<ArgumentOutOfRangeException>(() =>
-                new RunCardDefinition(7, 5, (CardSuit)99));
+                new RunCardDefinition(8, 5, (CardSuit)99));
         }
 
         [Test]

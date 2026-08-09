@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using DiaBlackJack.CoreLoop;
+using DiaBlackJack.GameScene;
 using NUnit.Framework;
 
 namespace DiaBlackJack.StageProgression.Tests
@@ -82,8 +83,12 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(resolution.EnemyDamage, Is.EqualTo(2));
         }
 
-        [Test]
-        public void TU_U11_Round3ChangeThenAsmodeusForcedHitBustsTheEnemy()
+        [TestCase(0, 1, false)]
+        [TestCase(1, 10, true)]
+        public void TU_U11_Round3ChangeTriggersLieDetectorThenAsmodeusBust(
+            int candidateIndex,
+            int expectedHiddenRank,
+            bool expectedAtLeastSix)
         {
             CoreLoopBattle battle = CreateBattle();
             battle.Start();
@@ -96,11 +101,36 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(HiddenRank(battle.Enemy), Is.EqualTo(3));
 
             Assert.That(battle.TryBeginPlayerChange(), Is.True);
-            Assert.That(battle.TrySelectChangedCard(0), Is.True);
-            Assert.That(HiddenRank(battle.Player), Is.EqualTo(1));
-            // Enemy's synchronous turn: a scripted Hit (matches "상대 히트, 공개 카드 5 들어옴").
-            Assert.That(battle.Enemy.Hand.GetFaceUpCards().Select(c => c.Rank), Is.EqualTo(new[] { 10, 5 }));
+            Assert.That(
+                battle.PlayerChangeCandidates.Select(c => c.Rank),
+                Is.EqualTo(new[] { 1, 10 }));
+            Assert.That(battle.TrySelectChangedCard(candidateIndex), Is.True);
+            Assert.That(HiddenRank(battle.Player), Is.EqualTo(expectedHiddenRank));
+
+            BlackjackCard lieDetector = battle.Enemy.Hand.GetFaceUpCards()
+                .Single(c => c.DefinitionKey == CardDefinitionCatalog.LieDetectorKey);
+            Assert.That(lieDetector.Rank, Is.EqualTo(3));
+            Assert.That(lieDetector.Suit, Is.EqualTo(CardSuit.Spade));
+            Assert.That(
+                battle.Enemy.Hand.GetFaceUpCards().Select(c => c.Rank),
+                Is.EqualTo(new[] { 10, 3 }));
             Assert.That(battle.Enemy.IsStanding, Is.False);
+            Assert.That(
+                battle.LastLieDetectorPublicResult?.DeclaredNumber,
+                Is.EqualTo(6));
+            Assert.That(
+                battle.EnemyHiddenCardComparisonKnowledge?
+                    .IsAtLeastDeclaredNumber,
+                Is.EqualTo(expectedAtLeastSix));
+            Assert.That(
+                TutorialDirector.HasCompletedEnemyLieDetectorResolution(battle),
+                Is.True);
+            Assert.That(
+                TutorialDirector.ResolveDialogueVariables(
+                    "네 카드가 {{lieDetectorComparison}}인 걸 알아냈군.",
+                    battle),
+                Is.EqualTo(
+                    $"네 카드가 6 {(expectedAtLeastSix ? "이상" : "미만")}인 걸 알아냈군."));
 
             Assert.That(battle.TryBeginPlayerDemonContract(), Is.True);
             PendingDemonContractInteraction pending = battle.PendingPlayerDemonContractInteraction;
@@ -113,7 +143,7 @@ namespace DiaBlackJack.StageProgression.Tests
             // forced-hit choice below only offers itself while the opponent is still playable.
             Assert.That(
                 battle.Enemy.Hand.GetFaceUpCards().Select(c => c.Rank),
-                Is.EqualTo(new[] { 10, 5, 2 }));
+                Is.EqualTo(new[] { 10, 3, 2 }));
             Assert.That(battle.Enemy.IsStanding, Is.False);
 
             PendingDemonContractInteraction forcedHitChoice =

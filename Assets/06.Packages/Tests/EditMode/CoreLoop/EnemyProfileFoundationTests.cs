@@ -116,6 +116,42 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void EPR04_U02B_AutomaticEnemyCardsAlwaysUseSpades()
+        {
+            EnemyCombatProfile profile = CreateProfile(
+                deckDefinitionKeys: new[]
+                {
+                    CardDefinitionCatalog.PoisonKey,
+                    CardDefinitionCatalog.PoisonKey,
+                    "standard-ace-1",
+                    "standard-ace-1"
+                });
+            var configuration = new EnemyBattleConfiguration(
+                profile,
+                enemyDeckSeed: 17,
+                enemyDeckDefinitions: profile.DeckDefinitionKeys.Select(
+                    CardDefinitionCatalog.GetByKey),
+                behaviorPolicy: new AlwaysStandPolicy());
+            BlackjackDeck deck = configuration.CreateEnemyDeck();
+            var drawnCards = new List<BlackjackCard>();
+            for (int index = 0; index < profile.DeckDefinitionKeys.Count; index++)
+            {
+                drawnCards.Add(deck.Draw());
+            }
+
+            Assert.That(
+                drawnCards
+                    .Where(card => card.Definition.Activation == CardActivationKind.Automatic)
+                    .All(card => card.Suit == CardSuit.Spade),
+                Is.True);
+            Assert.That(
+                drawnCards.Any(card =>
+                    card.Definition.Activation != CardActivationKind.Automatic &&
+                    card.Suit == CardSuit.Clover),
+                Is.True);
+        }
+
+        [Test]
         public void EP01_U02_ProfileRejectsEmptyIdentityAndInvalidEnums()
         {
             Assert.Throws<ArgumentException>(() => CreateProfile(key: " "));

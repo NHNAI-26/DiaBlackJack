@@ -1,5 +1,12 @@
 # 테이블 도감 개발 명세
 
+## DX-M13: 악마 도감 문구·자동 카드 무늬 분리
+
+- `DemonCardDefinitionSO`는 계약 카드 호버용 효과·대가와 별도로 악마 도감용 효과·대가 override를 소유한다. override가 비어 있으면 기존 계약 문구를 사용해 기존 에셋 표시를 보존한다.
+- `CardContentCatalogSO`는 도감 전용 효과·대가 사전을 만들고, 런타임 도감과 Inspector 프리뷰는 이 사전을 `CodexPresenter`에 전달한다. 계약 후보·활성 계약·상점·시작 공개의 `DemonCardView`는 기존 효과·대가만 사용한다.
+- 적 시작 덱 도감은 자동 발동 카드를 occurrence와 관계없이 스페이드로 확정한 뒤 `(DefinitionKey, Suit)`로 묶는다. 일반·수동·패시브 카드의 기존 스페이드·클로버 교대는 유지한다.
+- 내 덱 또는 도감 오버레이가 열린 동안 튜토리얼 대사 진행 입력을 소비하지 않는다. 오버레이가 닫힌 다음 입력부터 기존 클릭·Space·Enter 진행을 재개한다.
+
 ## DX-M12: 현재 상대 적 페이지 열기 계약
 
 - `CodexNavigationState.TryShowEnemyPage(int pageIndex)`는 유효한 적 페이지 인덱스면 적 카테고리와 대상 인덱스를 함께 변경한다. 음수·범위 밖·현재 적 페이지와 같은 인덱스는 거부하고 상태를 바꾸지 않는다.
@@ -89,7 +96,7 @@
 - `CodexOverlayView`: 전체 화면 Canvas, 차단막, 펼친 책, 닫기 버튼, 페이지 번호, 책갈피 두 개, 적/악마 페이지를 렌더링한다.
 - 적 시작 덱은 `ScrollRect + GridLayoutGroup`, 계약 악마는 6열 미니 카드 그리드를 사용한다.
 - 적 시작 덱 `ScrollRect`는 `Elastic` 경계를 사용하며 elasticity 0.1, 관성 활성, 감속률 0.135를 유지한다.
-- 적 시작 덱은 원래 프로필 순서에서 suit를 확정한 뒤 `(DefinitionKey, Suit)`가 같은 카드만 묶는다. 개별 카드 ID는 표시 모델에 넣지 않으며 같은 숫자라도 정의가 다르거나 같은 정의라도 스페이드·클로버가 다르면 별도 항목이다.
+- 적 시작 덱은 원래 프로필 순서에서 suit를 확정하되 자동 발동 카드는 항상 스페이드로 고정한 뒤 `(DefinitionKey, Suit)`가 같은 카드만 묶는다. 개별 카드 ID는 표시 모델에 넣지 않으며 같은 숫자라도 정의가 다르거나 같은 정의라도 스페이드·클로버가 다르면 별도 항목이다.
 - 시작 덱 모든 항목 아래 `xN` 수량을 항상 표시한다. 계약 악마 템플릿과 악마 상세 페이지에는 수량을 추가하지 않는다.
 - 시작 덱 카드 호버는 `"{Rank}. {DisplayName}"` 제목과 카드 효과 설명을 `CardHoverBadgeRequest`로 전달해 GameHUD 공용 카드 호버 뱃지를 사용한다. 뱃지는 카드 우측 중앙에 왼쪽 중앙 피벗으로 붙고, 공용 `DeckPreviewCardView`의 `Deck Card Hover Badge Offset`을 카드 로컬 UI 좌표로 더한다.
 - `CodexController`: 열림 상태, 카테고리별 마지막 페이지, `Q/E`, 책갈피, 닫기를 소유한다.

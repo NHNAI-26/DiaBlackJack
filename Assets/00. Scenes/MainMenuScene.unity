@@ -807,6 +807,7 @@ GameObject:
   - component: {fileID: 1072904057}
   - component: {fileID: 1072904059}
   - component: {fileID: 1072904058}
+  - component: {fileID: 1072904060}
   m_Layer: 5
   m_Name: Status
   m_TagString: Untagged
@@ -933,6 +934,23 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1072904056}
   m_CullTransparentMesh: 1
+--- !u!114 &1072904060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1072904056}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce377b55b8146a640aa97b6de1057050, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Border::DiaBlackJack.MainMenu.UI.OptionalTextJitterMotion
+  effectEnabled: 1
+  verticalDrift: 3
+  driftFrequency: 1.2
+  jitterAmplitude: {x: 1.4, y: 0.8}
+  jitterFrequency: 18
 --- !u!1 &1272446272
 GameObject:
   m_ObjectHideFlags: 0
@@ -1348,6 +1366,18 @@ PrefabInstance:
     - target: {fileID: 8327557386308115615, guid: a52b8a2a2142cae419d567716b9a22f8, type: 3}
       propertyPath: m_Name
       value: Telegraph
+      objectReference: {fileID: 0}
+    - target: {fileID: 8708481731501688357, guid: a52b8a2a2142cae419d567716b9a22f8, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.42
+      objectReference: {fileID: 0}
+    - target: {fileID: 8708481731501688357, guid: a52b8a2a2142cae419d567716b9a22f8, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.42
+      objectReference: {fileID: 0}
+    - target: {fileID: 8708481731501688357, guid: a52b8a2a2142cae419d567716b9a22f8, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.42
       objectReference: {fileID: 0}
     - target: {fileID: 8708481731501688357, guid: a52b8a2a2142cae419d567716b9a22f8, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2188,14 +2218,14 @@ RectTransform:
   m_GameObject: {fileID: 1605045389}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1958779654}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: 90}
+  m_AnchoredPosition: {x: 0, y: 110}
   m_SizeDelta: {x: 450, y: 450}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!225 &1605045391

@@ -92,9 +92,11 @@ namespace DiaBlackJack.CoreLoop
             for (int i = 0; i < EnemyDeckDefinitions.Count; i++)
             {
                 CardDefinition definition = EnemyDeckDefinitions[i];
-                CardSuit suit = rankOccurrences[definition.Rank] % 2 == 0
-                    ? CardSuit.Spade
-                    : CardSuit.Clover;
+                CardSuit suit = definition.Activation ==
+                    CardActivationKind.Automatic ||
+                    rankOccurrences[definition.Rank] % 2 == 0
+                        ? CardSuit.Spade
+                        : CardSuit.Clover;
                 rankOccurrences[definition.Rank]++;
                 cards.Add(new BlackjackCard(i, definition, suit: suit));
             }

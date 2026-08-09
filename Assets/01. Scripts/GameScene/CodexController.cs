@@ -249,7 +249,9 @@ namespace DiaBlackJack.GameScene
                 runtimeCards);
             _demonPages = CodexPresenter.CreateDemonPages(
                 runtimeCards,
-                lore);
+                lore,
+                cardContentCatalog.BuildDemonCodexActiveSkillCatalog(),
+                cardContentCatalog.BuildDemonCodexCostCatalog());
             _navigation = new CodexNavigationState(
                 _enemyPages.Count,
                 _demonPages.Count);

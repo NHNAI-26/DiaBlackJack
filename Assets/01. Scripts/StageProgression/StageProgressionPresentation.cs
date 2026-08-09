@@ -818,7 +818,7 @@ namespace DiaBlackJack.StageProgression.UI
                 case CardEffectKind.Poison:
                     return "PAY SOUL OR STAND; WIN RESTORES SOUL";
                 case CardEffectKind.ResurrectionHerb:
-                    return "RESTART A LOSING ROUND";
+                    return "OPTIONAL FREE HAND REDEAL";
                 case CardEffectKind.LieDetector:
                     return "COMPARE AN ENEMY HIDDEN CARD";
                 case CardEffectKind.Flamethrower:

@@ -150,6 +150,12 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.Start(), Is.True);
             Assert.That(battle.InjectedPoisonCardCount, Is.EqualTo(1));
             Assert.That(battle.Player.Deck.TotalCardCount, Is.EqualTo(21));
+            Assert.That(
+                battle.Player.Deck.TryGetKnownCard(
+                    1000000000,
+                    out BlackjackCard injectedPoison),
+                Is.True);
+            Assert.That(injectedPoison.Suit, Is.EqualTo(CardSuit.Spade));
             Assert.That(battle.TryPlayerHit(), Is.True);
 
             Assert.That(battle.UsedEnemyBaseDemonContractCount, Is.Zero);

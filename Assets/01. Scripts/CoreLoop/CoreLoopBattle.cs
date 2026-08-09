@@ -6912,30 +6912,15 @@ namespace DiaBlackJack.CoreLoop
                 reactivatedCardDisplayName);
         }
 
-        internal bool PayResurrectionHerbSoulAndRedeal(
+        internal void RedealResurrectionHerbHand(
             CombatantSide side,
             BlackjackCard sourceCard)
         {
             BattleParticipant participant = GetParticipant(side);
-            if (participant.Soul.Current <= 0)
-            {
-                throw new InvalidOperationException(
-                    "A depleted participant cannot pay resurrection herb soul.");
-            }
-
             int? previousHiddenCardId = participant.Hand
                 .TryGetSingleHiddenCard(out BlackjackCard hiddenCard)
                     ? hiddenCard.Id
                     : (int?)null;
-            ApplySoulDamage(
-                side,
-                1,
-                SoulLossCause.AutomaticCardCost);
-            if (participant.Soul.IsDepleted)
-            {
-                return false;
-            }
-
             if (previousHiddenCardId.HasValue)
             {
                 InvalidateHiddenCardKnowledge(side, previousHiddenCardId.Value);
@@ -6946,7 +6931,6 @@ namespace DiaBlackJack.CoreLoop
                     ? sourceCard.Id
                     : (int?)null;
             participant.RedealRoundHand(preservedSourceCardId);
-            return true;
         }
 
         private bool TryResolveMammonTurnStartChoice(
@@ -7078,7 +7062,8 @@ namespace DiaBlackJack.CoreLoop
 
             BlackjackCard poison = new BlackjackCard(
                 _nextInjectedPoisonCardId--,
-                CardDefinitionCatalog.GetByKey(CardDefinitionCatalog.PoisonKey));
+                CardDefinitionCatalog.GetByKey(CardDefinitionCatalog.PoisonKey),
+                suit: CardSuit.Spade);
             if (!Player.Deck.TryAddTemporaryAvailableCard(poison))
             {
                 throw new InvalidOperationException(

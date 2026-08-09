@@ -450,7 +450,7 @@ namespace DiaBlackJack.GameScene.Editor
                     "회중시계"),
                 new CombatPromptCatalogSO.Entry(
                     CombatPromptId.AutomaticResurrectionHerbDecision,
-                    "{source}: 영혼 1을 지불하고 패를 다시 받을지 선택하세요.",
+                    "{source}: 패를 다시 받을지 선택하세요.",
                     "부활초"),
                 new CombatPromptCatalogSO.Entry(
                     CombatPromptId.DemonChooseContract,

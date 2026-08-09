@@ -64,7 +64,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                     AutomaticCardDecisionOutcome.Declined),
                 "광신도",
                 "광신도의 [부활초]",
-                "나는 영혼 1을 지불해 패를 다시 받았습니다",
+                "나는 패를 다시 받았습니다",
                 "광신도 측은 효과를 사용하지 않았습니다");
             Assert.That(resurrectionText.Split('\n'), Has.Length.EqualTo(2));
             AssertResolved(

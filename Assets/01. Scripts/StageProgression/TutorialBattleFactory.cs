@@ -47,7 +47,8 @@ namespace DiaBlackJack.StageProgression
             // than listed separately (confirmed by direct simulation, not just reading code).
             // Round 3 (sections 5-6): face-up 9 / hidden 10 dealt, Change draws 1 and 10
             // (either pick is fine per the script). Enemy: face-up 10 dealt via the returned
-            // peek card above, hidden 3 dealt, Hit -> 5, then a second silent Hit -> 2 (see
+            // peek card above, hidden 3 dealt, Hit -> rank-3 Lie Detector and declare 6,
+            // then a second silent Hit -> 2 (see
             // TutorialEnemyPolicy for why this replaces the script's own "enemy Change" stage
             // direction, and why it must not Stand here). Asmodeus's forced hit then draws a
             // plain 9 straight off the enemy's deck, busting it (matches "상대 공개 카드에 9 추가,
@@ -77,7 +78,11 @@ namespace DiaBlackJack.StageProgression
                 new BlackjackCard(9107, 4),
                 new BlackjackCard(9108, 10),
                 new BlackjackCard(9109, 3),
-                new BlackjackCard(9110, 5),
+                new BlackjackCard(
+                    9110,
+                    CardDefinitionCatalog.GetByKey(
+                        CardDefinitionCatalog.LieDetectorKey),
+                    suit: CardSuit.Spade),
                 new BlackjackCard(9111, 2),
                 new BlackjackCard(9112, 9),
             });
@@ -94,23 +99,27 @@ namespace DiaBlackJack.StageProgression
                 .GetByKey(EnemyCombatProfileCatalog.CowardlyGamblerKey)
                 .MaximumSoul;
 
+            int demonContractSeed = StageBattleFactory.DeriveDemonContractSeed(
+                stage.PlayerDeckSeed,
+                stage.EnemyDeckSeed);
             return new CoreLoopBattle(
                 playerDeck,
                 enemyDeck,
                 player.MaximumSoul,
                 player.CurrentSoul,
                 enemyMaximumSoul,
-                enemyPolicy: new TutorialEnemyPolicy(),
-                playerDemonDeck: playerDemonDeck,
-                demonContractSeed: StageBattleFactory.DeriveDemonContractSeed(
-                    stage.PlayerDeckSeed,
-                    stage.EnemyDeckSeed));
+                new TutorialEnemyPolicy(),
+                CardEffectResolver.CreateDefault(),
+                playerDemonDeck,
+                DemonContractResolver.CreateDefault(demonContractSeed),
+                enemyAutomaticCardDecisionPolicy:
+                    TutorialAutomaticCardDecisionPolicy.Instance);
         }
 
         internal static IReadOnlyList<int> PlayerDeckRanksForTest =>
             new[] { 4, 3, 3, 1, 3, 2, 7, 9, 10, 1, 10 };
 
         internal static IReadOnlyList<int> EnemyDeckRanksForTest =>
-            new[] { 3, 2, 4, 2, 1, 5, 4, 10, 3, 5, 2, 9 };
+            new[] { 3, 2, 4, 2, 1, 5, 4, 10, 3, 3, 2, 9 };
     }
 }

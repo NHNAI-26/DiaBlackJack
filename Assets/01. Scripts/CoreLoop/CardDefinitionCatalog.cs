@@ -113,7 +113,7 @@ namespace DiaBlackJack.CoreLoop
                     2,
                     CardActivationKind.Automatic,
                     CardEffectKind.ResurrectionHerb,
-                    "양측 영혼 1 지불 후 승패 없이 라운드 재시작"),
+                    "양측은 각자 선택하여 패를 모두 버리고 비공개 카드 1장과 공개 카드 1장을 다시 받을 수 있습니다."),
                 new CardDefinition(
                     LieDetectorKey,
                     "거짓말 탐지기",

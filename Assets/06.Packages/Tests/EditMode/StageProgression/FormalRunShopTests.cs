@@ -9,7 +9,7 @@ namespace DiaBlackJack.StageProgression.Tests
     public sealed class FormalRunShopTests
     {
         [Test]
-        public void RF02_U01_OfferHasFixedSlotsDistinctDemonsAndConfiguredPrices()
+        public void RF02_U01_OfferHasFixedSlotsDistinctCardsAndConfiguredPrices()
         {
             var generator = new ShopOfferGenerator(12001);
             ShopOffer offer = generator.Generate(0, 0, false);
@@ -33,6 +33,9 @@ namespace DiaBlackJack.StageProgression.Tests
                     .Distinct()
                     .Count(),
                 Is.EqualTo(2));
+            Assert.That(
+                offer.CardOptions.Select(option => option.DefinitionKey).Distinct().Count(),
+                Is.EqualTo(5));
             Assert.That(
                 offer.CardOptions.All(option => option.Price == 3),
                 Is.True);
@@ -318,20 +321,20 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
-        public void GSV07_U02_NormalShopCardsMayRepeat()
+        public void GSV07_U02_NormalShopCardsNeverRepeat()
         {
-            bool foundRepeatedNormalCard = false;
-            for (int seed = 1; seed <= 100 && !foundRepeatedNormalCard; seed++)
+            for (int seed = 1; seed <= 500; seed++)
             {
                 ShopOffer offer = new ShopOfferGenerator(seed).Generate(0, 0, false);
                 string[] normalKeys = offer.CardOptions
                     .Where(option => option.DeckKind == ShopCardDeckKind.Normal)
                     .Select(option => option.DefinitionKey)
                     .ToArray();
-                foundRepeatedNormalCard = normalKeys.Distinct().Count() < normalKeys.Length;
+                Assert.That(
+                    normalKeys.Distinct().Count(),
+                    Is.EqualTo(normalKeys.Length),
+                    $"seed:{seed}");
             }
-
-            Assert.That(foundRepeatedNormalCard, Is.True);
         }
 
         [Test]

@@ -67,7 +67,8 @@ namespace DiaBlackJack.GameScene
                 { "파랑", "#2196F3" },
                 { "주황", "#FF9800" },
                 { "보라", "#9C27B0" },
-                { "초록", "#4CAF50" }
+                { "초록", "#4CAF50" },
+                { "하늘색", "#64D8FF" }
             };
 
         public static TutorialMarkupResult Format(string source)
@@ -153,10 +154,12 @@ namespace DiaBlackJack.GameScene
                     : pending.WholeLine
                     ? plainText.Length
                     : FindWordEnd(plainText, pending.Start);
-                end = ClampToContainingBoldRange(
+                end = AdjustToContainingBoldRange(
                     pending.Start,
                     end,
-                    boldRanges);
+                    boldRanges,
+                    fillContainingBoldRange:
+                        pending.End < 0 && !pending.WholeLine);
                 if (end > pending.Start)
                 {
                     ranges.Add(new StyleRange(
@@ -168,10 +171,11 @@ namespace DiaBlackJack.GameScene
                 ApplyRanges(plainText, ranges), highlight);
         }
 
-        private static int ClampToContainingBoldRange(
+        private static int AdjustToContainingBoldRange(
             int start,
             int end,
-            IReadOnlyList<StyleRange> boldRanges)
+            IReadOnlyList<StyleRange> boldRanges,
+            bool fillContainingBoldRange)
         {
             for (int index = 0; index < boldRanges.Count; index++)
             {
@@ -181,7 +185,9 @@ namespace DiaBlackJack.GameScene
                     continue;
                 }
 
-                return Math.Min(end, range.End);
+                return fillContainingBoldRange
+                    ? range.End
+                    : Math.Min(end, range.End);
             }
 
             return end;

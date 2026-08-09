@@ -57,6 +57,30 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void DX02_U04_AutomaticEnemyCardsStayInOneSpadeGroup()
+        {
+            IReadOnlyList<EnemyCodexPageViewModel> pages =
+                CodexPresenter.CreateEnemyPages(
+                    EnemyCombatProfileCatalog.Default,
+                    GoldRewardCatalog.CreatePrototype(),
+                    CreateCardCatalog());
+            EnemyCodexPageViewModel enforcer = pages.Single(
+                page => page.ProfileKey == EnemyCombatProfileCatalog.EnforcerKey);
+            CodexDeckCardViewModel[] automaticCards = enforcer.StartingDeck
+                .Where(card => CardDefinitionCatalog.GetByKey(
+                    card.DefinitionKey).Activation == CardActivationKind.Automatic)
+                .ToArray();
+
+            Assert.That(automaticCards, Is.Not.Empty);
+            Assert.That(
+                automaticCards.All(card => card.Suit == CardSuit.Spade),
+                Is.True);
+            Assert.That(
+                automaticCards.Select(card => card.DefinitionKey).Distinct().Count(),
+                Is.EqualTo(automaticCards.Length));
+        }
+
+        [Test]
         public void DX01_U03_DemonPagesExposePricesSkillCostAndLore()
         {
             CardContentCatalog cards = CreateCardCatalog();
@@ -78,6 +102,36 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(satan.ActiveSkill, Is.EqualTo(definition.Summary));
             Assert.That(satan.Cost, Is.EqualTo(definition.CostSummary));
             Assert.That(satan.LoreDescription, Is.EqualTo("LORE:satan"));
+        }
+
+        [Test]
+        public void DXM13_U01_DemonCodexUsesIndependentSkillAndCostText()
+        {
+            CardContentCatalog cards = CreateCardCatalog();
+            Dictionary<string, string> lore = CreateLore(cards);
+            var activeSkills = new Dictionary<string, string>();
+            var costs = new Dictionary<string, string>();
+            foreach (string key in DemonContractCatalog.PrototypeEnabledDemonKeys)
+            {
+                activeSkills.Add(key, "CODEX ACTIVE\n" + key);
+                costs.Add(key, "CODEX COST\n" + key);
+            }
+
+            IReadOnlyList<DemonCodexPageViewModel> pages =
+                CodexPresenter.CreateDemonPages(
+                    cards,
+                    lore,
+                    activeSkills,
+                    costs);
+            DemonCodexPageViewModel satan = pages.Single(
+                page => page.DefinitionKey == DemonContractCatalog.SatanKey);
+
+            Assert.That(satan.ActiveSkill, Is.EqualTo("CODEX ACTIVE\nsatan"));
+            Assert.That(satan.Cost, Is.EqualTo("CODEX COST\nsatan"));
+            Assert.That(
+                satan.ActiveSkill,
+                Is.Not.EqualTo(cards.GetDemonByKey(
+                    DemonContractCatalog.SatanKey).Summary));
         }
 
         [Test]

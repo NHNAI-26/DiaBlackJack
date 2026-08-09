@@ -29,6 +29,37 @@ namespace DiaBlackJack.Content
             return new ReadOnlyDictionary<string, string>(lore);
         }
 
+        internal IReadOnlyDictionary<string, string>
+            BuildDemonCodexActiveSkillCatalog()
+        {
+            BuildRuntimeCatalog();
+            var descriptions = new Dictionary<string, string>(
+                StringComparer.Ordinal);
+            foreach (DemonCardDefinitionSO card in demonCards)
+            {
+                descriptions.Add(
+                    card.Key,
+                    card.CodexActiveEffectDescription.Trim());
+            }
+
+            return new ReadOnlyDictionary<string, string>(descriptions);
+        }
+
+        internal IReadOnlyDictionary<string, string> BuildDemonCodexCostCatalog()
+        {
+            BuildRuntimeCatalog();
+            var descriptions = new Dictionary<string, string>(
+                StringComparer.Ordinal);
+            foreach (DemonCardDefinitionSO card in demonCards)
+            {
+                descriptions.Add(
+                    card.Key,
+                    card.CodexCostDescription.Trim());
+            }
+
+            return new ReadOnlyDictionary<string, string>(descriptions);
+        }
+
         public CardContentCatalog BuildRuntimeCatalog()
         {
             var normalDefinitions = new List<CardDefinition>(normalCards.Count);

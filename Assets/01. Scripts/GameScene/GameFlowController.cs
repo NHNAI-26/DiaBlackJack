@@ -7,7 +7,6 @@ using DiaBlackJack.CoreLoop;
 using DiaBlackJack.StageProgression;
 using DiaBlackJack.StageProgression.UI;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace DiaBlackJack.GameScene
 {
@@ -1421,8 +1420,7 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            Mouse mouse = Mouse.current;
-            if (mouse == null || !mouse.leftButton.wasPressedThisFrame)
+            if (!DialogueAdvanceInput.WasPressedThisFrame())
             {
                 return;
             }

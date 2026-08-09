@@ -135,4 +135,44 @@ namespace DiaBlackJack.CoreLoop
             return null;
         }
     }
+
+    internal sealed class TutorialAutomaticCardDecisionPolicy :
+        IAutomaticCardDecisionPolicy
+    {
+        private const int LieDetectorDeclaredNumber = 6;
+
+        public static readonly TutorialAutomaticCardDecisionPolicy Instance =
+            new TutorialAutomaticCardDecisionPolicy();
+
+        private TutorialAutomaticCardDecisionPolicy()
+        {
+        }
+
+        public AutomaticCardDecision Decide(
+            AutomaticCardDecisionObservation observation)
+        {
+            if (observation == null)
+            {
+                throw new ArgumentNullException(nameof(observation));
+            }
+
+            if (observation.ChoiceKind ==
+                AutomaticCardChoiceKind.LieDetectorNumber)
+            {
+                foreach (AutomaticCardOptionObservation option in
+                    observation.Options)
+                {
+                    if (option.NumericValue == LieDetectorDeclaredNumber)
+                    {
+                        return new AutomaticCardDecision(
+                            option.OptionId,
+                            "tutorial-lie-detector-six");
+                    }
+                }
+            }
+
+            return DefaultAutomaticCardDecisionPolicy.Instance.Decide(
+                observation);
+        }
+    }
 }

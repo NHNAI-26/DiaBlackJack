@@ -48,6 +48,18 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void ACRV04_U01_ResurrectionHerbDescriptionMatchesFreeRedealRule()
+        {
+            CardDefinition definition = CardDefinitionCatalog.GetByKey(
+                CardDefinitionCatalog.ResurrectionHerbKey);
+
+            Assert.That(
+                definition.Description,
+                Is.EqualTo(
+                    "양측은 각자 선택하여 패를 모두 버리고 비공개 카드 1장과 공개 카드 1장을 다시 받을 수 있습니다."));
+        }
+
+        [Test]
         public void CU_U11_CardConstructorAcceptsExplicitSuit()
         {
             var card = new BlackjackCard(18, 7, suit: CardSuit.Clover);

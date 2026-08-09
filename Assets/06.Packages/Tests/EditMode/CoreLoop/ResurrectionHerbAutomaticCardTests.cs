@@ -21,7 +21,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.EquivalentTo(new[]
                 {
                     ResurrectionHerbEffectHandler.DeclineOptionId,
-                    ResurrectionHerbEffectHandler.PaySoulAndRedealOptionId
+                    ResurrectionHerbEffectHandler.RedealOptionId
                 }));
             Assert.That(ResolvePlayer(battle, ownerChoice,
                 ResurrectionHerbEffectHandler.DeclineOptionId), Is.True);
@@ -34,7 +34,33 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void ACRV03_U02_OnlyPlayerPaymentChangesPlayerSoulAndHand()
+        public void ACRV03_U01B_RedealOptionDoesNotRequireSoul()
+        {
+            var battle = new CoreLoopBattle(
+                BlackjackDeck.CreateInDrawOrder(CreateCards(0, 2, 3, 4, 5)),
+                BlackjackDeck.CreateInDrawOrder(CreateCards(100, 6, 7, 8, 9)),
+                playerMaximumSoul: 5,
+                playerCurrentSoul: 0,
+                enemyMaximumSoul: 6);
+            var sourceCard = new BlackjackCard(999, ResurrectionHerb);
+            var context = new AutomaticCardEffectContext(
+                battle,
+                CombatantSide.Player,
+                sourceCard);
+
+            AutomaticCardEffectStep step =
+                new ResurrectionHerbEffectHandler().Begin(context);
+
+            Assert.That(step.ChoiceRequest.Options.Select(option => option.OptionId),
+                Is.EquivalentTo(new[]
+                {
+                    ResurrectionHerbEffectHandler.DeclineOptionId,
+                    ResurrectionHerbEffectHandler.RedealOptionId
+                }));
+        }
+
+        [Test]
+        public void ACRV03_U02_OnlyPlayerAcceptanceRedealsWithoutSoulCost()
         {
             CoreLoopBattle battle = CreateBattle(playerSoul: 5, enemySoul: 6);
             IReadOnlyList<int> enemyIds = battle.Enemy.Hand.Cards
@@ -42,14 +68,14 @@ namespace DiaBlackJack.CoreLoop.Tests
             PendingAutomaticCardInteraction ownerChoice = BeginHerb(battle);
 
             Assert.That(ResolvePlayer(battle, ownerChoice,
-                ResurrectionHerbEffectHandler.PaySoulAndRedealOptionId), Is.True);
+                ResurrectionHerbEffectHandler.RedealOptionId), Is.True);
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(5));
             Assert.That(battle.Player.Hand.Count, Is.EqualTo(3));
             Assert.That(battle.LastAutomaticCardResult, Is.Null);
             Assert.That(ResolveEnemy(battle,
                 ResurrectionHerbEffectHandler.DeclineOptionId), Is.True);
 
-            Assert.That(battle.Player.Soul.Current, Is.EqualTo(4));
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(5));
             Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(6));
             Assert.That(battle.Player.Hand.Count, Is.EqualTo(2));
             Assert.That(battle.Enemy.Hand.Cards.Select(card => card.Id),
@@ -64,7 +90,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void ACRV03_U03_OnlyEnemyPaymentChangesEnemySoulAndHand()
+        public void ACRV03_U03_OnlyEnemyAcceptanceRedealsWithoutSoulCost()
         {
             CoreLoopBattle battle = CreateBattle(playerSoul: 5, enemySoul: 6);
             IReadOnlyList<int> playerInitialIds = battle.Player.Hand.Cards
@@ -74,10 +100,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(ResolvePlayer(battle, ownerChoice,
                 ResurrectionHerbEffectHandler.DeclineOptionId), Is.True);
             Assert.That(ResolveEnemy(battle,
-                ResurrectionHerbEffectHandler.PaySoulAndRedealOptionId), Is.True);
+                ResurrectionHerbEffectHandler.RedealOptionId), Is.True);
 
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(5));
-            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(5));
+            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(6));
             Assert.That(battle.Player.Hand.Cards.Select(card => card.Id),
                 Is.EqualTo(playerInitialIds.Append(ownerChoice.SourceCardId)));
             Assert.That(battle.Enemy.Hand.Count, Is.EqualTo(2));
@@ -85,18 +111,18 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void ACRV03_U04_BothPaymentsRedealEachParticipantOnce()
+        public void ACRV03_U04_BothAcceptancesRedealWithoutSoulCost()
         {
             CoreLoopBattle battle = CreateBattle(playerSoul: 5, enemySoul: 6);
             PendingAutomaticCardInteraction ownerChoice = BeginHerb(battle);
 
             Assert.That(ResolvePlayer(battle, ownerChoice,
-                ResurrectionHerbEffectHandler.PaySoulAndRedealOptionId), Is.True);
+                ResurrectionHerbEffectHandler.RedealOptionId), Is.True);
             Assert.That(ResolveEnemy(battle,
-                ResurrectionHerbEffectHandler.PaySoulAndRedealOptionId), Is.True);
+                ResurrectionHerbEffectHandler.RedealOptionId), Is.True);
 
-            Assert.That(battle.Player.Soul.Current, Is.EqualTo(4));
-            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(5));
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(5));
+            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(6));
             Assert.That(battle.Player.Hand.Count, Is.EqualTo(2));
             Assert.That(battle.Enemy.Hand.Count, Is.EqualTo(2));
             AssertCardConservation(battle.Player);
@@ -133,13 +159,13 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void ACRV03_U06_PaymentAtOneSoulKillsWithoutRedeal()
+        public void ACRV03_U06_AcceptanceAtOneSoulRedealsWithoutDeath()
         {
             CoreLoopBattle battle = CreateBattle(playerSoul: 1, enemySoul: 6);
             PendingAutomaticCardInteraction ownerChoice = BeginHerb(battle);
 
             Assert.That(ResolvePlayer(battle, ownerChoice,
-                ResurrectionHerbEffectHandler.PaySoulAndRedealOptionId), Is.True);
+                ResurrectionHerbEffectHandler.RedealOptionId), Is.True);
 
             Assert.That(battle.Player.Soul.Current, Is.EqualTo(1));
             Assert.That(battle.State,
@@ -147,10 +173,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(ResolveEnemy(battle,
                 ResurrectionHerbEffectHandler.DeclineOptionId), Is.True);
 
-            Assert.That(battle.Player.Soul.Current, Is.EqualTo(0));
-            Assert.That(battle.State, Is.EqualTo(CoreLoopState.BattleEnded));
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(1));
+            Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
             Assert.That(battle.PendingAutomaticInteraction, Is.Null);
-            Assert.That(battle.Player.Hand.Count, Is.EqualTo(3));
+            Assert.That(battle.Player.Hand.Count, Is.EqualTo(2));
         }
 
         [Test]
@@ -160,7 +186,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             PendingAutomaticCardInteraction ownerChoice = BeginHerb(battle);
 
             Assert.That(ResolvePlayer(battle, ownerChoice,
-                ResurrectionHerbEffectHandler.PaySoulAndRedealOptionId), Is.True);
+                ResurrectionHerbEffectHandler.RedealOptionId), Is.True);
             Assert.That(ResolveEnemy(battle,
                 ResurrectionHerbEffectHandler.DeclineOptionId), Is.True);
 
@@ -177,7 +203,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             PendingAutomaticCardInteraction ownerChoice = BeginHerb(battle);
 
             Assert.That(ResolvePlayer(battle, ownerChoice,
-                ResurrectionHerbEffectHandler.PaySoulAndRedealOptionId), Is.True);
+                ResurrectionHerbEffectHandler.RedealOptionId), Is.True);
             Assert.That(ResolveEnemy(battle,
                 ResurrectionHerbEffectHandler.DeclineOptionId), Is.True);
 
@@ -195,11 +221,11 @@ namespace DiaBlackJack.CoreLoop.Tests
             PendingAutomaticCardInteraction ownerChoice = BeginHerb(battle);
 
             Assert.That(ResolvePlayer(battle, ownerChoice,
-                ResurrectionHerbEffectHandler.PaySoulAndRedealOptionId), Is.True);
+                ResurrectionHerbEffectHandler.RedealOptionId), Is.True);
             Assert.That(ResolveEnemy(battle,
                 ResurrectionHerbEffectHandler.DeclineOptionId), Is.True);
 
-            Assert.That(battle.Player.Soul.Current, Is.EqualTo(4));
+            Assert.That(battle.Player.Soul.Current, Is.EqualTo(5));
             Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(6));
             Assert.That(battle.PendingPoisonWinRewardCount, Is.EqualTo(1));
             Assert.That(battle.LastResolution.HasValue, Is.False);
@@ -240,11 +266,11 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(battle.TryResolveAutomaticCardChoice(
                 CombatantSide.Enemy,
                 enemyChoice.InteractionId,
-                ResurrectionHerbEffectHandler.PaySoulAndRedealOptionId), Is.True);
+                ResurrectionHerbEffectHandler.RedealOptionId), Is.True);
 
             Assert.That(battle.State, Is.EqualTo(CoreLoopState.PlayerTurn));
             Assert.That(battle.PendingAutomaticInteraction, Is.Null);
-            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(5));
+            Assert.That(battle.Enemy.Soul.Current, Is.EqualTo(6));
             Assert.That(battle.Enemy.Hand.Count, Is.EqualTo(2));
         }
 

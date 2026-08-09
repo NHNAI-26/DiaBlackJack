@@ -334,13 +334,9 @@ namespace DiaBlackJack.CoreLoop
             int otherTotal = observation.DecisionSide == CombatantSide.Player
                 ? observation.EnemyPublicTotal
                 : observation.PlayerPublicTotal;
-            int decisionSoul = observation.DecisionSide == CombatantSide.Player
-                ? observation.PlayerSoul
-                : observation.EnemySoul;
-            bool isBehind = decisionSoul > 1 &&
-                (decisionTotal > 21 || decisionTotal + 2 < otherTotal);
+            bool isBehind = decisionTotal > 21 || decisionTotal + 2 < otherTotal;
             int desiredOptionId = isBehind
-                ? ResurrectionHerbEffectHandler.PaySoulAndRedealOptionId
+                ? ResurrectionHerbEffectHandler.RedealOptionId
                 : ResurrectionHerbEffectHandler.DeclineOptionId;
             if (TryFindOption(
                     observation,

@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.DemonCardDefinitionSO
   key: mammon
   displayName: "\uB9C8\uBAAC"
-  activeEffectDescription: "\uACC4\uC57D \uC9C1\uD6C4 <color=#3B82F6>\uC8FC\uC0AC\uC704</color>\uB97C
+  activeEffectDescription: "\uACC4\uC57D \uC9C1\uD6C4 1~5, <size=150%><sprite=\"MammonSkullIcon\"
+    index=0></size>\uC774 \uC788\uB294 <color=#3B82F6>\uC8FC\uC0AC\uC704</color>\uB97C
     \uAD74\uB9BD\uB2C8\uB2E4.\n\uC790\uC2E0\uC758 \uCC28\uB840\uC5D0 \uC77C\uBC18
     \uD589\uB3D9 \uB300\uC2E0, <color=#3B82F6>\uC8FC\uC0AC\uC704</color>\uB97C \uB2E4\uC2DC
     \uAD74\uB9AC\uACE0 \uCC28\uB840\uB97C \uB05D\uB0BC \uC218 \uC788\uC2B5\uB2C8\uB2E4.\n\uC2B9\uBD80

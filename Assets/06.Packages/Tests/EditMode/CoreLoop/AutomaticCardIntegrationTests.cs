@@ -308,7 +308,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                     battle.TryResolvePlayerAutomaticCardChoice(
                         pending.InteractionId,
                         ResurrectionHerbEffectHandler
-                            .PaySoulAndRedealOptionId),
+                            .RedealOptionId),
                     Is.True);
 
                 Assert.That(battle.RoundNumber, Is.EqualTo(1));
