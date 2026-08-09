@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Border.Audio;
+using Border.Settings;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -137,7 +138,7 @@ namespace DiaBlackJack.GameScene
 
         private void Update()
         {
-            if (!IsOpen)
+            if (!IsOpen || PauseSettingsController.IsGameplayInputBlocked)
             {
                 return;
             }

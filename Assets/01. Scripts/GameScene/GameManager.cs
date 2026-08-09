@@ -1365,7 +1365,8 @@ namespace DiaBlackJack.GameScene
                 if (CanAdvanceTutorialDialogue(
                         DialogueAdvanceInput.WasPressedThisFrame(),
                         deckPreview != null && deckPreview.IsOpen,
-                        codex != null && codex.IsOpen))
+                        codex != null && codex.IsOpen,
+                        _pauseInputBlocked))
                 {
                     tutorialNarrator.HandleClick();
                 }
@@ -1707,9 +1708,13 @@ namespace DiaBlackJack.GameScene
         internal static bool CanAdvanceTutorialDialogue(
             bool advanceRequested,
             bool deckPreviewOpen,
-            bool codexOpen)
+            bool codexOpen,
+            bool pauseInputBlocked = false)
         {
-            return advanceRequested && !deckPreviewOpen && !codexOpen;
+            return advanceRequested &&
+                !deckPreviewOpen &&
+                !codexOpen &&
+                !pauseInputBlocked;
         }
 
         private bool RaycastPointer(out RaycastHit hit)

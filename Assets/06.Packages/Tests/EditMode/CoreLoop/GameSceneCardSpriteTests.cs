@@ -390,6 +390,49 @@ namespace DiaBlackJack.CoreLoop.Tests
 
         [Test]
         [Category("MMUI01")]
+        public void MMUI01_U08_SettingsTelegraphUsesSharedHoverPath()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/03. Prefabs/Item/Telegraph.prefab");
+            GameObject instance = null;
+            try
+            {
+                Assert.That(prefab, Is.Not.Null);
+                instance = Object.Instantiate(prefab);
+                Telegraph telegraph = instance.GetComponent<Telegraph>();
+                TelegraphButton setting = instance
+                    .GetComponentsInChildren<TelegraphButton>(true)
+                    .Single(button =>
+                        button.ButtonKind == TelegraphButtonKind.Setting);
+                typeof(TelegraphButton)
+                    .GetMethod(
+                        "OnEnable",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(setting, null);
+
+                Assert.That(setting.GetComponent<Collider>(), Is.Not.Null);
+                Assert.That(setting.Telegraph, Is.SameAs(telegraph));
+                Assert.That(setting.TargetAngle, Is.EqualTo(-135f));
+
+                telegraph.SetHoveredButton(setting);
+
+                Assert.That(
+                    telegraph.HoveredButtonKind,
+                    Is.EqualTo(TelegraphButtonKind.Setting));
+                telegraph.SetInputEnabled(false);
+                Assert.That(telegraph.HoveredButtonKind, Is.Null);
+            }
+            finally
+            {
+                if (instance != null)
+                {
+                    Object.DestroyImmediate(instance);
+                }
+            }
+        }
+
+        [Test]
+        [Category("MMUI01")]
         public void MMUI01_U04_MainMenuSceneWiresWorldMenuAssets()
         {
             const string scenePath =

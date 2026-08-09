@@ -1,3 +1,4 @@
+using Border.Settings;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
@@ -151,6 +152,13 @@ namespace DiaBlackJack.GameScene
         {
             ResolveBindings();
             UpdateAnimatorGate();
+
+            if (PauseSettingsController.IsGameplayInputBlocked)
+            {
+                _dragTarget = DragTarget.None;
+                ResetHoverHighlights();
+                return;
+            }
 
             if (_state != InteractionState.ReadyForCover &&
                 _state != InteractionState.ReadyForFire)

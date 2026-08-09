@@ -20,6 +20,8 @@ namespace DiaBlackJack.GameScene
     [DisallowMultipleComponent]
     public sealed class GameHudView : MonoBehaviour
     {
+        private const string PlayerSoulOwnerLabel = "나";
+        private const string FallbackEnemySoulOwnerLabel = "상대";
         private const string DefaultCenterActionLayoutPath =
             "SatanConfirmLayout";
 
@@ -107,6 +109,7 @@ namespace DiaBlackJack.GameScene
         private bool _enemySoulOverrideActive;
         private int _enemySoulOverrideCurrent;
         private int _enemySoulOverrideMaximum;
+        private string _enemySoulOwnerLabel = FallbackEnemySoulOwnerLabel;
 
         public event Action<GameSceneCombatHudCommand> CombatCommandRequested;
 
@@ -246,18 +249,22 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
+            _enemySoulOwnerLabel = ResolveEnemySoulOwnerLabel(
+                core.EnemyDisplayName);
             if (playerSoulText != null && !_playerSoulOverrideActive)
             {
-                CurrencyIconText.Set(
+                WriteSoulText(
                     playerSoulText,
-                    $"{CurrencyIconMarkup.SoulTag} {core.PlayerSoul}");
+                    PlayerSoulOwnerLabel,
+                    core.PlayerSoul);
             }
 
             if (enemySoulText != null && !_enemySoulOverrideActive)
             {
-                CurrencyIconText.Set(
+                WriteSoulText(
                     enemySoulText,
-                    $"{CurrencyIconMarkup.SoulTag} {core.EnemySoul}");
+                    _enemySoulOwnerLabel,
+                    core.EnemySoul);
             }
 
             if (roundText != null)
@@ -278,9 +285,10 @@ namespace DiaBlackJack.GameScene
         {
             if (playerSoulText != null)
             {
-                CurrencyIconText.Set(
+                WriteSoulText(
                     playerSoulText,
-                    $"{CurrencyIconMarkup.SoulTag} {soulText}");
+                    PlayerSoulOwnerLabel,
+                    soulText);
             }
         }
 
@@ -350,7 +358,7 @@ namespace DiaBlackJack.GameScene
                 }
 
                 _playerSoulOverrideActive = true;
-                WriteSoulValue(
+                WritePlayerSoulValue(
                     playerSoulText,
                     _playerSoulOverrideCurrent,
                     _playerSoulOverrideMaximum);
@@ -364,7 +372,7 @@ namespace DiaBlackJack.GameScene
             }
 
             _enemySoulOverrideActive = true;
-            WriteSoulValue(
+            WriteEnemySoulValue(
                 enemySoulText,
                 _enemySoulOverrideCurrent,
                 _enemySoulOverrideMaximum);
@@ -379,7 +387,7 @@ namespace DiaBlackJack.GameScene
                 _playerSoulOverrideCurrent = Mathf.Max(
                     record.SoulAfter,
                     _playerSoulOverrideCurrent - 1);
-                WriteSoulValue(
+                WritePlayerSoulValue(
                     playerSoulText,
                     _playerSoulOverrideCurrent,
                     _playerSoulOverrideMaximum);
@@ -392,7 +400,7 @@ namespace DiaBlackJack.GameScene
             _enemySoulOverrideCurrent = Mathf.Max(
                 record.SoulAfter,
                 _enemySoulOverrideCurrent - 1);
-            WriteSoulValue(
+            WriteEnemySoulValue(
                 enemySoulText,
                 _enemySoulOverrideCurrent,
                 _enemySoulOverrideMaximum);
@@ -409,14 +417,14 @@ namespace DiaBlackJack.GameScene
                 _playerSoulOverrideActive = false;
                 _playerSoulOverrideCurrent = current;
                 _playerSoulOverrideMaximum = maximum;
-                WriteSoulValue(playerSoulText, current, maximum);
+                WritePlayerSoulValue(playerSoulText, current, maximum);
                 return;
             }
 
             _enemySoulOverrideActive = false;
             _enemySoulOverrideCurrent = current;
             _enemySoulOverrideMaximum = maximum;
-            WriteSoulValue(enemySoulText, current, maximum);
+            WriteEnemySoulValue(enemySoulText, current, maximum);
         }
 
         internal Sequence PlaySoulLossTokens(
@@ -579,14 +587,54 @@ namespace DiaBlackJack.GameScene
             }
         }
 
-        private static void WriteSoulValue(
+        private void WritePlayerSoulValue(
             TMP_Text target,
             int current,
             int maximum)
         {
+            WriteSoulText(
+                target,
+                PlayerSoulOwnerLabel,
+                $"{current} / {maximum}");
+        }
+
+        private void WriteEnemySoulValue(
+            TMP_Text target,
+            int current,
+            int maximum)
+        {
+            WriteSoulText(
+                target,
+                _enemySoulOwnerLabel,
+                $"{current} / {maximum}");
+        }
+
+        internal static string FormatSoulText(
+            string ownerLabel,
+            string soulText)
+        {
+            string resolvedOwner = string.IsNullOrWhiteSpace(ownerLabel)
+                ? FallbackEnemySoulOwnerLabel
+                : ownerLabel.Trim();
+            return $"{resolvedOwner}\n{CurrencyIconMarkup.SoulTag} {soulText}";
+        }
+
+        private static void WriteSoulText(
+            TMP_Text target,
+            string ownerLabel,
+            string soulText)
+        {
             CurrencyIconText.Set(
                 target,
-                $"{CurrencyIconMarkup.SoulTag} {current} / {maximum}");
+                FormatSoulText(ownerLabel, soulText));
+        }
+
+        private static string ResolveEnemySoulOwnerLabel(
+            string enemyDisplayName)
+        {
+            return string.IsNullOrWhiteSpace(enemyDisplayName)
+                ? FallbackEnemySoulOwnerLabel
+                : enemyDisplayName.Trim();
         }
 
         /// <summary>

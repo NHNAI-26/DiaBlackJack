@@ -95,6 +95,7 @@ namespace Border.UI
             _scaleTween = _rectTransform
                 .DOScale(_baseScale * scale, animationDuration)
                 .SetEase(Ease.OutQuad)
+                .SetUpdate(isIndependentUpdate: true)
                 .SetTarget(this);
         }
 

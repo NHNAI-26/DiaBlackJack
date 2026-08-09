@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Border.Settings;
 using DiaBlackJack.StageProgression.UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -100,6 +101,11 @@ namespace DiaBlackJack.GameScene
 
         private void HandleConfirmClicked()
         {
+            if (PauseSettingsController.IsGameplayInputBlocked)
+            {
+                return;
+            }
+
             SetConfirmVisible(false);
             ConfirmationRequested?.Invoke();
         }
@@ -116,6 +122,13 @@ namespace DiaBlackJack.GameScene
         {
             if (!IsVisible)
             {
+                return;
+            }
+
+            if (PauseSettingsController.IsGameplayInputBlocked)
+            {
+                UpdateHover(null);
+                ResolveHud()?.HideDemonContractDetail();
                 return;
             }
 

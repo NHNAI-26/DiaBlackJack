@@ -1,10 +1,12 @@
 using System;
 using System.Reflection;
 using Border.Settings;
+using Border.UI;
 using DiaBlackJack.GameScene;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace DiaBlackJack.Settings.Tests
@@ -559,6 +561,7 @@ namespace DiaBlackJack.Settings.Tests
             string[] buttonPaths =
             {
                 "PausePanel/ContinueButton",
+                "PausePanel/TitleButton",
                 "PausePanel/SettingsButton",
                 "PausePanel/QuitButton",
                 "SettingsPanel/BackButton",
@@ -575,6 +578,275 @@ namespace DiaBlackJack.Settings.Tests
                     AssetDatabase.GetAssetPath(source),
                     Is.EqualTo("Assets/03. Prefabs/UI/DefaultButton.prefab"),
                     buttonPaths[index]);
+            }
+        }
+
+        [Test]
+        [Category("SET11")]
+        public void SET11_U01_SoulHudFormatsOwnerAboveSoulValue()
+        {
+            Assert.That(
+                GameHudView.FormatSoulText("나", "12 / 12"),
+                Is.EqualTo($"나\n{CurrencyIconMarkup.SoulTag} 12 / 12"));
+            Assert.That(
+                GameHudView.FormatSoulText("  집행자  ", "4 / 4"),
+                Is.EqualTo($"집행자\n{CurrencyIconMarkup.SoulTag} 4 / 4"));
+            Assert.That(
+                GameHudView.FormatSoulText(" ", "3 / 3"),
+                Is.EqualTo($"상대\n{CurrencyIconMarkup.SoulTag} 3 / 3"));
+        }
+
+        [Test]
+        [Category("SET11")]
+        public void SET11_U02_PauseMenuUsesFourDefaultButtonsAndAlignedSliderTracks()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/03. Prefabs/UI/PauseSettingsCanvas.prefab");
+            Assert.That(prefab, Is.Not.Null);
+
+            string[] pauseButtonPaths =
+            {
+                "PausePanel/ContinueButton",
+                "PausePanel/TitleButton",
+                "PausePanel/SettingsButton",
+                "PausePanel/QuitButton"
+            };
+            float[] expectedY = { 62f, -38f, -138f, -238f };
+            for (int index = 0; index < pauseButtonPaths.Length; index++)
+            {
+                Transform button = prefab.transform.Find(
+                    pauseButtonPaths[index]);
+                Assert.That(button, Is.Not.Null, pauseButtonPaths[index]);
+                Assert.That(
+                    ((RectTransform)button).anchoredPosition.y,
+                    Is.EqualTo(expectedY[index]).Within(0.01f),
+                    pauseButtonPaths[index]);
+                Assert.That(
+                    button.GetComponent("UIButtonScaleFeedback"),
+                    Is.Not.Null,
+                    pauseButtonPaths[index]);
+                Assert.That(
+                    button.GetComponent("UISelectableSoundHook"),
+                    Is.Not.Null,
+                    pauseButtonPaths[index]);
+            }
+
+            string[] sliderPaths =
+            {
+                "SettingsPanel/MasterVolume/Slider",
+                "SettingsPanel/BgmVolume/Slider",
+                "SettingsPanel/SfxVolume/Slider"
+            };
+            for (int index = 0; index < sliderPaths.Length; index++)
+            {
+                Transform slider = prefab.transform.Find(sliderPaths[index]);
+                RectTransform background = slider.Find("Background")
+                    as RectTransform;
+                RectTransform fillArea = slider.Find("Fill Area")
+                    as RectTransform;
+                Assert.That(background, Is.Not.Null, sliderPaths[index]);
+                Assert.That(fillArea, Is.Not.Null, sliderPaths[index]);
+                Assert.That(background.sizeDelta.x, Is.EqualTo(380f));
+                Assert.That(
+                    background.sizeDelta.x,
+                    Is.EqualTo(fillArea.sizeDelta.x));
+            }
+
+            PauseSettingsController controller =
+                prefab.GetComponent<PauseSettingsController>();
+            SerializedObject serializedController =
+                new SerializedObject(controller);
+            Assert.That(
+                serializedController.FindProperty("titleButton")
+                    .objectReferenceValue,
+                Is.Not.Null);
+        }
+
+        [Test]
+        [Category("SET12")]
+        public void SET12_U01_PauseButtonHoverUsesUnscaledTime()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/03. Prefabs/UI/PauseSettingsCanvas.prefab");
+            GameObject instance = null;
+            try
+            {
+                instance = UnityEngine.Object.Instantiate(prefab);
+                UIButtonScaleFeedback feedback = instance.transform
+                    .Find("PausePanel/SettingsButton")
+                    .GetComponent<UIButtonScaleFeedback>();
+                typeof(UIButtonScaleFeedback)
+                    .GetMethod(
+                        "Awake",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(feedback, null);
+                feedback.OnPointerEnter(new PointerEventData(null));
+
+                object tween = typeof(UIButtonScaleFeedback)
+                    .GetField(
+                        "_scaleTween",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    .GetValue(feedback);
+                Assert.That(tween, Is.Not.Null);
+                FieldInfo independentUpdate = null;
+                Type tweenType = tween.GetType();
+                while (tweenType != null && independentUpdate == null)
+                {
+                    independentUpdate = tweenType.GetField(
+                        "isIndependentUpdate",
+                        BindingFlags.Instance |
+                        BindingFlags.Public |
+                        BindingFlags.NonPublic);
+                    tweenType = tweenType.BaseType;
+                }
+
+                Assert.That(independentUpdate, Is.Not.Null);
+                Assert.That(
+                    (bool)independentUpdate.GetValue(tween),
+                    Is.True);
+            }
+            finally
+            {
+                if (instance != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(instance);
+                }
+            }
+        }
+
+        [Test]
+        [Category("SET12")]
+        public void SET12_U02_PauseBackdropBlocksGameplayUntilResume()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/03. Prefabs/UI/PauseSettingsCanvas.prefab");
+            GameObject instance = null;
+            GameObject externalCanvas = null;
+            float originalTimeScale = Time.timeScale;
+            try
+            {
+                externalCanvas = new GameObject(
+                    "External Gameplay Canvas",
+                    typeof(RectTransform),
+                    typeof(Canvas),
+                    typeof(GraphicRaycaster));
+                GraphicRaycaster externalRaycaster =
+                    externalCanvas.GetComponent<GraphicRaycaster>();
+                instance = UnityEngine.Object.Instantiate(prefab);
+                PauseSettingsController controller =
+                    instance.GetComponent<PauseSettingsController>();
+                typeof(PauseSettingsController)
+                    .GetMethod(
+                        "OpenPauseMenu",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(controller, null);
+
+                Transform backdrop = instance.transform.Find("Backdrop");
+                Image blocker = backdrop.GetComponent<Image>();
+                RectTransform blockerRect = (RectTransform)backdrop;
+                Assert.That(
+                    PauseSettingsController.IsGameplayInputBlocked,
+                    Is.True);
+                Assert.That(backdrop.gameObject.activeInHierarchy, Is.True);
+                Assert.That(blocker.raycastTarget, Is.True);
+                Assert.That(blockerRect.anchorMin, Is.EqualTo(Vector2.zero));
+                Assert.That(blockerRect.anchorMax, Is.EqualTo(Vector2.one));
+                Assert.That(blockerRect.sizeDelta, Is.EqualTo(Vector2.zero));
+                Assert.That(externalRaycaster.enabled, Is.False);
+                Assert.That(
+                    instance.GetComponent<GraphicRaycaster>().enabled,
+                    Is.True);
+
+                typeof(PauseSettingsController)
+                    .GetMethod(
+                        "ResumeGame",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(controller, null);
+                Assert.That(
+                    PauseSettingsController.IsGameplayInputBlocked,
+                    Is.False);
+                Assert.That(externalRaycaster.enabled, Is.True);
+            }
+            finally
+            {
+                Time.timeScale = originalTimeScale;
+                if (instance != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(instance);
+                }
+
+                if (externalCanvas != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(externalCanvas);
+                }
+            }
+        }
+
+        [Test]
+        [Category("SET12")]
+        public void SET12_U03_PauseBlocksTutorialDialogueAdvance()
+        {
+            Assert.That(
+                GameManager.CanAdvanceTutorialDialogue(
+                    advanceRequested: true,
+                    deckPreviewOpen: false,
+                    codexOpen: false,
+                    pauseInputBlocked: true),
+                Is.False);
+        }
+
+        [Test]
+        [Category("SET12")]
+        public void SET12_U04_PauseRejectsStartingDemonConfirmCallback()
+        {
+            GameObject pausePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/03. Prefabs/UI/PauseSettingsCanvas.prefab");
+            GameObject pauseInstance = null;
+            GameObject revealObject = null;
+            float originalTimeScale = Time.timeScale;
+            try
+            {
+                pauseInstance = UnityEngine.Object.Instantiate(pausePrefab);
+                PauseSettingsController controller =
+                    pauseInstance.GetComponent<PauseSettingsController>();
+                typeof(PauseSettingsController)
+                    .GetMethod(
+                        "OpenPauseMenu",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(controller, null);
+
+                revealObject = new GameObject("Starting Demon Reveal");
+                StartingDemonRevealView reveal =
+                    revealObject.AddComponent<StartingDemonRevealView>();
+                bool confirmed = false;
+                reveal.ConfirmationRequested += () => confirmed = true;
+                MethodInfo handleConfirm = typeof(StartingDemonRevealView)
+                    .GetMethod(
+                        "HandleConfirmClicked",
+                        BindingFlags.Instance | BindingFlags.NonPublic);
+                handleConfirm.Invoke(reveal, null);
+                Assert.That(confirmed, Is.False);
+
+                typeof(PauseSettingsController)
+                    .GetMethod(
+                        "ResumeGame",
+                        BindingFlags.Instance | BindingFlags.NonPublic)
+                    .Invoke(controller, null);
+                handleConfirm.Invoke(reveal, null);
+                Assert.That(confirmed, Is.True);
+            }
+            finally
+            {
+                Time.timeScale = originalTimeScale;
+                if (revealObject != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(revealObject);
+                }
+
+                if (pauseInstance != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(pauseInstance);
+                }
             }
         }
     }

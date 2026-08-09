@@ -109,3 +109,19 @@
 - 신규 SET10 2/2, MainMenuScene·GameScene validation 각 0 issues, 컴파일·Console Error 0을 확인했다. Play Mode 1920×1080·1280×720에서 메인 메뉴와 설정 패널의 배치·카메라 연결·`UI_Brush_Grey_Deck` 표시를 확인했다.
 - `UIR01_U07` 단독 1/1(job `074ce40322864817876f22622e6130ce`)과 기존 설정 회귀를 포함한 Settings EditMode 16/16(job `7059400cbedc4d31ba7b8149b00efeba`)이 통과했다. 런타임에서 설정 패널 활성, 뒤로 버튼 입력 후 패널 비활성, `timeScale` 1 유지와 한국어 버튼 라벨·전용 화살표 보존을 확인했다.
 - 두 씬의 설정 프리팹 인스턴스는 각각 1개이며 missing script 0, broken prefab 0이다. 컴파일·씬 검증 직후 Console Error는 0건이었고, Play QA에서는 설정과 무관한 기존 머티리얼 drawer 오류 2건이 재현됐다.
+
+## 6. 2026-08-09 전투 HUD·일시정지 메뉴 개선
+
+- 전투 영혼 표기를 `나` 또는 실제 적 이름과 현재/최대 영혼 수치의 2줄 구성으로 통일했다. 피해 연출 중 임시 수치에도 같은 포맷을 사용하며 빈 적 이름만 `상대`로 대체한다.
+- Master/BGM/SFX 슬라이더 배경 트랙을 Fill Area와 같은 380px로 맞춰 채움 시작점의 회색 여백을 제거했다.
+- 일시정지 메뉴에 `타이틀로` 버튼을 추가하고 `계속하기 → 타이틀로 → 설정 → 게임 종료` 순서로 100px 간격 배치했다. 일반 런은 런타임을 유지하고 튜토리얼만 임시 런타임을 정리한 뒤 메인 메뉴로 이동한다.
+- 일시정지 설정 버튼은 공용 `DefaultButton`의 확대·눌림·사운드 피드백을 그대로 사용한다. 메인 메뉴 SETTINGS 영역도 기존 `SettingCollider → Telegraph.SetHoveredButton` 공용 경로를 회귀 테스트로 고정했다.
+- 집중 EditMode는 SET11/MMUI01 7/7 통과(job `2d16a0273ed34f70b7b074c76b725ecf`). 전체 EditMode는 1328/1348 통과(job `94116adc253e47ca9840ebdbbdd1c656`)했고 이번 변경 관련 신규 실패는 없다. 기존 에셋·기대값 불일치 20건은 별도 잔여 항목이다.
+- `MainMenuScene`, `GameScene` validation은 각각 0 issues이며 최종 Console Error는 0건이다. MCP Game View 캡처는 활성 Screen Space UI를 누락해 배경만 기록되므로 1080p/720p 육안 판정은 남아 있다.
+
+## 7. 2026-08-09 일시정지 호버·배경 입력 차단 보강
+
+- 공용 `UIButtonScaleFeedback` Tween을 unscaled update로 전환해 `Time.timeScale = 0`인 일시정지 중에도 1.08배 호버와 눌림 애니메이션이 진행되게 했다.
+- 일시정지 메뉴가 보이는 동안 전체 화면 Backdrop raycast와 공용 gameplay blocker를 함께 활성화한다. 튜토리얼 대사 진행, 라이터 드래그, 리볼버 숫자 선택, 시작 악마 카드 호버를 차단하고 재개 시 즉시 해제한다.
+- 일시정지 메뉴를 제외한 모든 `BaseRaycaster`를 메뉴가 열린 동안 비활성화하고 닫을 때 원래 활성 상태로 복구한다. 시작 악마 획득 `확인` 콜백에도 차단 검사를 추가해 직접 호출 경로까지 방어한다.
+- SET12 집중 EditMode 4/4 통과(job `53b570d1fe2f4a4db79abea769488021`). 전체 EditMode는 1332/1352 통과(job `648aa98a373447bdb714e6dae4241e21`)했고 기존과 같은 에셋·기대값 불일치 20건만 남았다.

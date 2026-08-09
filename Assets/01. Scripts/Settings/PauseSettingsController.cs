@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using DiaBlackJack.StageProgression.UI;
 using DiaBlackJack.GameScene;
 using TMPro;
 using UnityEngine;
@@ -13,6 +15,9 @@ namespace Border.Settings
     [DisallowMultipleComponent]
     public sealed class PauseSettingsController : MonoBehaviour
     {
+        private static readonly HashSet<PauseSettingsController>
+            GameplayInputBlockers = new HashSet<PauseSettingsController>();
+
         private static readonly string[] HoverTooltipSizeNames =
         {
             "작게",
@@ -29,6 +34,7 @@ namespace Border.Settings
 
         [Header("Pause menu")]
         [SerializeField] private Button continueButton;
+        [SerializeField] private Button titleButton;
         [SerializeField] private Button settingsButton;
         [SerializeField] private Button quitButton;
 
@@ -49,6 +55,8 @@ namespace Border.Settings
 
         private InputAction _pauseAction;
         private GameManager _gameManager;
+        private readonly List<BaseRaycaster> _suppressedRaycasters =
+            new List<BaseRaycaster>();
         private PauseMenuState _state;
         private float _previousTimeScale = 1f;
         private bool _listenersRegistered;
@@ -56,6 +64,9 @@ namespace Border.Settings
         internal PauseMenuState State => _state;
 
         internal bool SettingsOnlyMode => settingsOnlyMode;
+
+        internal static bool IsGameplayInputBlocked =>
+            GameplayInputBlockers.Count > 0;
 
         public event Action SettingsPanelClosed;
 
@@ -114,6 +125,8 @@ namespace Border.Settings
 
         private void OnDestroy()
         {
+            RestoreSuppressedRaycasters();
+            GameplayInputBlockers.Remove(this);
             UnregisterListeners();
             _pauseAction?.Dispose();
         }
@@ -127,6 +140,7 @@ namespace Border.Settings
 
             _pauseAction.performed += HandlePauseAction;
             continueButton?.onClick.AddListener(ResumeGame);
+            titleButton?.onClick.AddListener(ReturnToTitle);
             settingsButton?.onClick.AddListener(OpenSettings);
             quitButton?.onClick.AddListener(OpenQuitConfirmation);
             settingsBackButton?.onClick.AddListener(CloseSettings);
@@ -156,6 +170,7 @@ namespace Border.Settings
 
             _pauseAction.performed -= HandlePauseAction;
             continueButton?.onClick.RemoveListener(ResumeGame);
+            titleButton?.onClick.RemoveListener(ReturnToTitle);
             settingsButton?.onClick.RemoveListener(OpenSettings);
             quitButton?.onClick.RemoveListener(OpenQuitConfirmation);
             settingsBackButton?.onClick.RemoveListener(CloseSettings);
@@ -238,6 +253,33 @@ namespace Border.Settings
             {
                 EventSystem.current.SetSelectedGameObject(null);
             }
+        }
+
+        private void ReturnToTitle()
+        {
+            SettingsSystem.Current?.Save();
+            Time.timeScale = _previousTimeScale;
+            _gameManager?.SetPauseInputBlocked(false);
+            ShowState(PauseMenuState.Hidden);
+            if (EventSystem.current != null)
+            {
+                EventSystem.current.SetSelectedGameObject(null);
+            }
+
+            StageProgressionRuntime runtime = StageProgressionRuntime.Instance;
+            if (runtime?.Session?.IsTutorialRun == true)
+            {
+                StageProgressionRuntime.ReturnToMainMenuAndDestroyInstance();
+                return;
+            }
+
+            if (runtime != null)
+            {
+                runtime.LoadMainMenuScene();
+                return;
+            }
+
+            SceneManager.LoadScene("MainMenuScene");
         }
 
         private void OpenSettings()
@@ -392,6 +434,17 @@ namespace Border.Settings
         {
             _state = state;
             bool visible = state != PauseMenuState.Hidden;
+            if (!settingsOnlyMode && visible)
+            {
+                GameplayInputBlockers.Add(this);
+                SuppressOtherRaycasters();
+            }
+            else
+            {
+                GameplayInputBlockers.Remove(this);
+                RestoreSuppressedRaycasters();
+            }
+
             if (backdrop != null)
             {
                 backdrop.SetActive(visible);
@@ -401,6 +454,42 @@ namespace Border.Settings
             settingsPanel?.SetActive(state == PauseMenuState.Settings);
             quitConfirmationPanel?.SetActive(
                 state == PauseMenuState.QuitConfirmation);
+        }
+
+        private void SuppressOtherRaycasters()
+        {
+            Transform pauseRoot = GetComponentInParent<Canvas>(
+                includeInactive: true)?.transform ?? transform;
+            BaseRaycaster[] raycasters =
+                UnityEngine.Object.FindObjectsByType<BaseRaycaster>(
+                    FindObjectsInactive.Include,
+                    FindObjectsSortMode.None);
+            foreach (BaseRaycaster raycaster in raycasters)
+            {
+                if (raycaster == null ||
+                    !raycaster.isActiveAndEnabled ||
+                    raycaster.transform == pauseRoot ||
+                    raycaster.transform.IsChildOf(pauseRoot))
+                {
+                    continue;
+                }
+
+                raycaster.enabled = false;
+                _suppressedRaycasters.Add(raycaster);
+            }
+        }
+
+        private void RestoreSuppressedRaycasters()
+        {
+            foreach (BaseRaycaster raycaster in _suppressedRaycasters)
+            {
+                if (raycaster != null)
+                {
+                    raycaster.enabled = true;
+                }
+            }
+
+            _suppressedRaycasters.Clear();
         }
 
         private static void SetPercent(TMP_Text label, float value)

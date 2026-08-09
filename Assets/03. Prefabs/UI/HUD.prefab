@@ -673,9 +673,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'YOU
-
-    12'
+  m_text: "\uB098\n12 / 12"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
   m_sharedMaterial: {fileID: -5411658563534415177, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
@@ -814,9 +812,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'ENEMY
-
-    3'
+  m_text: "\uC0C1\uB300\n3 / 3"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}
   m_sharedMaterial: {fileID: -5411658563534415177, guid: 994b96e3fa9fa3546b01e4b7f4bfd8c1, type: 2}

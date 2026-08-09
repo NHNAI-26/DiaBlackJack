@@ -104,6 +104,8 @@ namespace DiaBlackJack.GameScene
         public float CurrentHandleAngle => _handleAngle;
         public bool IsInputEnabled => _inputEnabled;
         public bool IsAppearancePlaying => _isAppearancePlaying;
+        internal TelegraphButtonKind? HoveredButtonKind =>
+            _hoveredButton?.ButtonKind;
 
         private void Awake()
         {
