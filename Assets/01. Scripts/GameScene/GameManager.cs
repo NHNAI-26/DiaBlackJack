@@ -824,7 +824,6 @@ namespace DiaBlackJack.GameScene
             bool playedPoison = TryPlayPoisonInjectionAnimation(
                 poisonCue,
                 allowWhileHandsSuppressed: true);
-            _pendingPoisonInjectionAnimationCue = null;
             if (playedPoison && poisonInjectionAnnounce != null)
             {
                 while (poisonInjectionAnnounce.IsPlaying)
@@ -1756,6 +1755,7 @@ namespace DiaBlackJack.GameScene
             mammonDie.transform.position = discardDeck.transform.position +
                 new Vector3(0.85f, 0.2f, 0.08f);
             mammonDie.transform.rotation = Quaternion.identity;
+            mammonDie.gameObject.SetActive(false);
         }
 
         private void HandleDemonContractSelectionInput(
@@ -3036,6 +3036,83 @@ namespace DiaBlackJack.GameScene
             }
 
             return hand.EntryDuration;
+        }
+
+        internal static bool BeginsPlayerMammonContract(
+            GameSceneViewModel previous,
+            GameSceneViewModel current)
+        {
+            if (previous == null || current == null)
+            {
+                return false;
+            }
+
+            for (int currentIndex = 0;
+                 currentIndex < current.PlayerDemonCards.Count;
+                 currentIndex++)
+            {
+                GameSceneDemonCardViewModel currentCard =
+                    current.PlayerDemonCards[currentIndex];
+                if (!string.Equals(
+                        currentCard.DefinitionKey,
+                        DemonContractCatalog.MammonKey,
+                        StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                bool existedPreviously = false;
+                for (int previousIndex = 0;
+                     previousIndex < previous.PlayerDemonCards.Count;
+                     previousIndex++)
+                {
+                    if (previous.PlayerDemonCards[previousIndex].CardId ==
+                        currentCard.CardId)
+                    {
+                        existedPreviously = true;
+                        break;
+                    }
+                }
+
+                if (!existedPreviously)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal static bool ShouldPlayPlayerMammonRoll(
+            int currentValue,
+            int? nextValue,
+            bool forceInitialRoll,
+            bool isShopOpen,
+            bool hasDieView)
+        {
+            return !isShopOpen &&
+                hasDieView &&
+                nextValue.HasValue &&
+                (forceInitialRoll || currentValue != nextValue.Value);
+        }
+
+        private IEnumerator PresentPlayerDemonContractEntry(
+            GameSceneViewModel viewModel)
+        {
+            if (playerHand == null || viewModel == null)
+            {
+                yield break;
+            }
+
+            playerHand.Render(
+                viewModel.PlayerCards,
+                viewModel.PlayerDemonCards,
+                showTransientEffectSources: true,
+                showDirectSelectionCommands: false);
+            if (playerHand.EntryDuration > 0f)
+            {
+                yield return new WaitForSeconds(playerHand.EntryDuration);
+            }
         }
 
         private static bool MatchesActionSkullRequest(
@@ -4532,6 +4609,13 @@ namespace DiaBlackJack.GameScene
                 GameSceneViewModel previous = index == 0
                     ? timelineBaseline
                     : timeline[index - 1];
+                bool beginsPlayerMammonContract =
+                    BeginsPlayerMammonContract(previous, vm);
+                if (beginsPlayerMammonContract)
+                {
+                    yield return PresentPlayerDemonContractEntry(vm);
+                }
+
                 if (vm.KnifeAnimationCue?.Phase ==
                         GameSceneKnifeAnimationPhase.Ready &&
                     TryPlayKnifeAnimation(vm.KnifeAnimationCue))
@@ -4772,7 +4856,8 @@ namespace DiaBlackJack.GameScene
                     showTransientEffectSources: true,
                     preserveRoundComparisonCardsAndTotals:
                         beginsPlayerMammonComparison,
-                    deferRoundResultPresentation: comparisonBeat);
+                    deferRoundResultPresentation: comparisonBeat,
+                    forcePlayerMammonRoll: beginsPlayerMammonContract);
 
                 // The Satan source card can be instantiated by ApplyView when the timeline
                 // starts from a stale/empty hand. Retry after rendering so the attack cannot be
@@ -4872,9 +4957,18 @@ namespace DiaBlackJack.GameScene
 
                 if (playedAnimation.DeferredCardRender)
                 {
-                    yield return RenderHandsThenTotalsAfterRevealFlip(
-                        playedAnimation.DeferredViewModel,
-                        showTransientEffectSources: true);
+                    if (playedAnimation.PlayedPoisonInjection)
+                    {
+                        yield return RenderHandsThenTotalsAfterEntry(
+                            playedAnimation.DeferredViewModel,
+                            showTransientEffectSources: true);
+                    }
+                    else
+                    {
+                        yield return RenderHandsThenTotalsAfterRevealFlip(
+                            playedAnimation.DeferredViewModel,
+                            showTransientEffectSources: true);
+                    }
                 }
 
                 if (directResolutionBeat)
@@ -5661,7 +5755,8 @@ namespace DiaBlackJack.GameScene
             bool deferRevolverResultCardRender = false,
             bool showTransientEffectSources = false,
             bool preserveRoundComparisonCardsAndTotals = false,
-            bool deferRoundResultPresentation = false)
+            bool deferRoundResultPresentation = false,
+            bool forcePlayerMammonRoll = false)
         {
             EnsureActionSkullRound(vm.Core.RoundNumber);
             _core = vm.Core;
@@ -5670,10 +5765,12 @@ namespace DiaBlackJack.GameScene
             // Covers both first appearance (CurrentValue defaults to 0) and any later change the
             // die view hasn't shown yet (e.g. a silent round-start reroll) — not just null→value.
             bool playedMammonRoll =
-                !isShopOpen &&
-                vm.PlayerMammonDieValue.HasValue &&
-                mammonDie != null &&
-                mammonDie.CurrentValue != vm.PlayerMammonDieValue.Value;
+                ShouldPlayPlayerMammonRoll(
+                    mammonDie != null ? mammonDie.CurrentValue : 0,
+                    vm.PlayerMammonDieValue,
+                    forcePlayerMammonRoll,
+                    isShopOpen,
+                    mammonDie != null);
             mammonDie?.Render(
                 isShopOpen ? null : vm.PlayerMammonDieValue,
                 !isShopOpen && !_inputLocked &&
@@ -5752,6 +5849,7 @@ namespace DiaBlackJack.GameScene
             UpdateEnemyCardSelectionCamera(
                 vm.FocusesEnemyCardsForSelection);
             bool deferredCardRender =
+                playedPoisonInjectionAnimation ||
                 (deferHammerSmashCardRender &&
                  playedHammerAnimation &&
                  IsHammerSmashCue(vm.HammerAnimationCue)) ||
@@ -6240,6 +6338,26 @@ namespace DiaBlackJack.GameScene
             if (RenderHands(vm, showTransientEffectSources))
             {
                 yield return new WaitForSeconds(ResolveCardRevealFaceSwapSeconds());
+            }
+
+            RenderTotals(vm);
+        }
+
+        private IEnumerator RenderHandsThenTotalsAfterEntry(
+            GameSceneViewModel vm,
+            bool showTransientEffectSources)
+        {
+            bool revealAnimated = RenderHands(vm, showTransientEffectSources);
+            float entrySeconds = Mathf.Max(
+                playerHand != null ? playerHand.EntryDuration : 0f,
+                enemyHand != null ? enemyHand.EntryDuration : 0f);
+            float revealSeconds = revealAnimated
+                ? ResolveCardRevealDurationSeconds()
+                : 0f;
+            float waitSeconds = Mathf.Max(entrySeconds, revealSeconds);
+            if (waitSeconds > 0f)
+            {
+                yield return new WaitForSeconds(waitSeconds);
             }
 
             RenderTotals(vm);
@@ -6939,7 +7057,11 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
-            poisonInjectionAnnounce.Play(poisonSprite, onComplete: null);
+            if (!poisonInjectionAnnounce.Play(poisonSprite, onComplete: null))
+            {
+                return false;
+            }
+
             RememberPoisonInjectionAnimationCue(cue);
             if (_pendingPoisonInjectionAnimationCue?.RoundNumber ==
                 cue.RoundNumber)

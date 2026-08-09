@@ -107,6 +107,15 @@ namespace DiaBlackJack.CoreLoop
                 FindAvailableCard(_discardPile, definitionKey) != null;
         }
 
+        internal IReadOnlyList<DemonContractCard> GetAvailableCardsSnapshot()
+        {
+            List<DemonContractCard> cards =
+                new List<DemonContractCard>(AvailableCardCount);
+            cards.AddRange(_drawPile);
+            cards.AddRange(_discardPile);
+            return cards.AsReadOnly();
+        }
+
         internal bool TryTakeFixedPhaseCards(
             string activeDefinitionKey,
             string discardedDefinitionKey,

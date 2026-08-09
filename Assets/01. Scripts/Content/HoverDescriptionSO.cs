@@ -25,7 +25,8 @@ namespace DiaBlackJack.Content
             {
                 "price",
                 "amount",
-                "gold"
+                "gold",
+                "availableDemons"
             };
 
         private static readonly Regex TokenPattern = new Regex(

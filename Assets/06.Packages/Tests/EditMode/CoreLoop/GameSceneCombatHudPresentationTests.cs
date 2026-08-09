@@ -262,6 +262,74 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void DCUI01_U06_ContractPaperListsOnlyAvailableDemonCards()
+        {
+            CoreLoopBattle battle = CreateStartedContractBattle(
+                DemonContractKind.Belphegor,
+                DemonContractKind.Mammon);
+            string expectedInitial = string.Join(", ",
+                DemonContractCatalog.Default.Definitions
+                    .Where(definition =>
+                        definition.Kind == DemonContractKind.Belphegor ||
+                        definition.Kind == DemonContractKind.Mammon)
+                    .Select(definition => definition.DisplayName));
+
+            ContractPaperViewModel initial = ContractPaperPresenter.Create(battle);
+            Assert.That(initial.AvailableDemonNames, Is.EqualTo(expectedInitial));
+
+            Assert.That(battle.TryBeginPlayerDemonContract(), Is.True);
+            ContractPaperViewModel choosing = ContractPaperPresenter.Create(battle);
+            Assert.That(choosing.AvailableDemonNames, Is.EqualTo("없음"));
+
+            PendingDemonContractInteraction pending =
+                battle.PendingPlayerDemonContractInteraction;
+            DemonContractOption selected = pending.Options[0];
+            DemonContractOption discarded = pending.Options[1];
+            Assert.That(
+                battle.TryResolvePlayerDemonContract(
+                    pending.InteractionId,
+                    selected.OptionId),
+                Is.True);
+
+            ContractPaperViewModel committed = ContractPaperPresenter.Create(battle);
+            string discardedName = DemonContractCatalog.Default
+                .GetByKey(discarded.ContractDefinitionKey)
+                .DisplayName;
+            Assert.That(committed.AvailableDemonNames, Is.EqualTo(discardedName));
+        }
+
+        [Test]
+        public void DCUI01_U07_ContractPaperTooltipAppendsAvailableDemonNames()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(TablePrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                ContractPaperView view =
+                    instance.GetComponentInChildren<ContractPaperView>(true);
+                view.Render(new ContractPaperViewModel(
+                    visibleCount: 2,
+                    canPlayerBegin: true,
+                    availableDemonNames: "마몬, 아스모데우스"));
+
+                ContractPaperClickable activePaper = instance
+                    .GetComponentsInChildren<ContractPaperClickable>(true)
+                    .Single(paper => paper.IsInteractable);
+                string description = activePaper
+                    .GetComponent<HoverDescriptionTarget>()
+                    .ResolvedDescription;
+                Assert.That(
+                    description,
+                    Does.EndWith("현재 계약 가능한 악마: 마몬, 아스모데우스"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
         public void DCUI04_U01_ActiveContractsProjectFaceUpDemonCardsForBothSides()
         {
             CoreLoopBattle playerBattle = CreateStartedContractBattle(
@@ -1507,6 +1575,74 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 prefab.GetComponentInChildren<PoisonInjectionAnnounceView>(true),
                 Is.Not.Null);
+        }
+
+        [Test]
+        public void GSV24_U02_FirstPoisonAnnouncementActivationStartsPlayback()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(HudPrefabPath);
+            Sprite sprite =
+                AssetDatabase.LoadAssetAtPath<Sprite>(ContractPaperSpritePath);
+            GameObject instance = Object.Instantiate(prefab);
+            try
+            {
+                PoisonInjectionAnnounceView announce = instance
+                    .GetComponentInChildren<PoisonInjectionAnnounceView>(true);
+                Assert.That(announce.gameObject.activeSelf, Is.False);
+
+                Assert.That(announce.Play(sprite, onComplete: null), Is.True);
+                Assert.That(announce.gameObject.activeSelf, Is.True);
+                Assert.That(announce.IsPlaying, Is.True);
+            }
+            finally
+            {
+                PoisonInjectionAnnounceView announce = instance
+                    .GetComponentInChildren<PoisonInjectionAnnounceView>(true);
+                announce.gameObject.SetActive(false);
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSV24_U03_NewMammonContractForcesInitialRoll()
+        {
+            CoreLoopBattle battle = CreateStartedContractBattle(
+                DemonContractKind.Mammon);
+            Assert.That(battle.TryBeginPlayerDemonContract(), Is.True);
+            GameSceneViewModel previous = GameScenePresenter.Create(battle);
+            PendingDemonContractInteraction pending =
+                battle.PendingPlayerDemonContractInteraction;
+
+            Assert.That(
+                battle.TryResolvePlayerDemonContract(
+                    pending.InteractionId,
+                    pending.Options[0].OptionId),
+                Is.True);
+            GameSceneViewModel current = GameScenePresenter.Create(battle);
+
+            Assert.That(
+                GameManager.BeginsPlayerMammonContract(previous, current),
+                Is.True);
+            Assert.That(
+                GameManager.BeginsPlayerMammonContract(current, current),
+                Is.False);
+            Assert.That(
+                GameManager.ShouldPlayPlayerMammonRoll(
+                    current.PlayerMammonDieValue.Value,
+                    current.PlayerMammonDieValue,
+                    forceInitialRoll: true,
+                    isShopOpen: false,
+                    hasDieView: true),
+                Is.True);
+            Assert.That(
+                GameManager.ShouldPlayPlayerMammonRoll(
+                    current.PlayerMammonDieValue.Value,
+                    current.PlayerMammonDieValue,
+                    forceInitialRoll: false,
+                    isShopOpen: false,
+                    hasDieView: true),
+                Is.False);
         }
 
         [TestCase(

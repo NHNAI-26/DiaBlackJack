@@ -253,6 +253,23 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(first.PlayerDemonDeck, Is.Not.SameAs(second.PlayerDemonDeck));
         }
 
+        [Test]
+        public void DC_U12_AvailableSnapshotDoesNotConsumeOrReorderDeck()
+        {
+            DemonContractDeck inspected = CreatePrototypeDeck(seed: 991);
+            DemonContractDeck control = CreatePrototypeDeck(seed: 991);
+
+            IReadOnlyList<DemonContractCard> snapshot =
+                inspected.GetAvailableCardsSnapshot();
+            Assert.That(snapshot.Count, Is.EqualTo(inspected.AvailableCardCount));
+            Assert.That(inspected.DrawCount, Is.EqualTo(control.DrawCount));
+            Assert.That(inspected.DiscardCount, Is.EqualTo(control.DiscardCount));
+
+            Assert.That(
+                inspected.TakeCandidates().Select(card => card.Id),
+                Is.EqualTo(control.TakeCandidates().Select(card => card.Id)));
+        }
+
         private static CoreLoopBattle CreateIndependentBattle()
         {
             return new CoreLoopBattle(

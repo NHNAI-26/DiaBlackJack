@@ -36,6 +36,7 @@ namespace DiaBlackJack.GameScene
                 ? 0
                 : Mathf.Clamp(model.VisibleCount, 0, papers.Length);
             bool canPlayerBegin = model != null && model.CanPlayerBegin;
+            string availableDemonNames = model?.AvailableDemonNames ?? "없음";
 
             // Papers are sorted top (index 0) to bottom (last index) by actual draw
             // order (SortingOrder), not name — the two don't necessarily agree, and
@@ -69,6 +70,7 @@ namespace DiaBlackJack.GameScene
                     i >= previousTopVisibleIndex;
                 bool visible = i >= topVisibleIndex;
                 bool isTopOfStack = i == topVisibleIndex;
+                paper.ConfigureAvailableDemonNames(availableDemonNames);
                 paper.SetInteractable(visible && isTopOfStack && canPlayerBegin);
 
                 if (animateDecrease && wasVisible && !visible)
