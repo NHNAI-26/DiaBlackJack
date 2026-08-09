@@ -13,6 +13,9 @@ namespace DiaBlackJack.GameScene
     [DisallowMultipleComponent]
     public sealed class DeckPreviewView : MonoBehaviour
     {
+        private const int DeckColumnCount = 5;
+        private const int RightTooltipColumnCount = 3;
+
         [SerializeField] private Canvas previewCanvas;
         [SerializeField] private GraphicRaycaster previewRaycaster;
         [SerializeField] private Button backgroundCloseButton;
@@ -341,7 +344,8 @@ namespace DiaBlackJack.GameScene
             {
                 _hoveredSlot = slot;
                 CardHoverBadgeRequest request =
-                    slot.CreateHoverBadgeRequest();
+                    slot.CreateHoverBadgeRequest(
+                        ShouldShowHoverBadgeOnLeft(slot));
                 if (request != null)
                 {
                     HoverBadgeRequested?.Invoke(request);
@@ -355,6 +359,16 @@ namespace DiaBlackJack.GameScene
                 _hoveredSlot = null;
                 HoverBadgeCleared?.Invoke();
             }
+        }
+
+        private bool ShouldShowHoverBadgeOnLeft(
+            DeckPreviewCardView slot)
+        {
+            int slotIndex = cardSlots == null
+                ? -1
+                : Array.IndexOf(cardSlots, slot);
+            return slotIndex >= 0 &&
+                slotIndex % DeckColumnCount >= RightTooltipColumnCount;
         }
 
         private void HandleSlotClicked(DeckPreviewCardView slot)

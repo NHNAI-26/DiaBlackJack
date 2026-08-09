@@ -59,7 +59,7 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Color usedHoverOutlineColor = Color.black;
 
         [Header("Deck card hover badge")]
-        [Tooltip("Local UI offset from the deck card's right-center edge.")]
+        [Tooltip("Local outward offset from the deck card's side-center edge.")]
         [SerializeField] private Vector2 deckCardHoverBadgeOffset =
             new Vector2(16f, 0f);
 
@@ -210,7 +210,8 @@ namespace DiaBlackJack.GameScene
             RefreshVisualEmphasis();
         }
 
-        public CardHoverBadgeRequest CreateHoverBadgeRequest()
+        public CardHoverBadgeRequest CreateHoverBadgeRequest(
+            bool showOnLeft = false)
         {
             return !_hoverEnabled
                 ? null
@@ -218,7 +219,8 @@ namespace DiaBlackJack.GameScene
                     transform as RectTransform,
                     _hoverTitle,
                     _hoverDescription,
-                    deckCardHoverBadgeOffset);
+                    deckCardHoverBadgeOffset,
+                    showOnLeft);
         }
 
         public void OnPointerEnter(PointerEventData eventData)

@@ -124,6 +124,8 @@ namespace DiaBlackJack.GameScene
     [DisallowMultipleComponent]
     public sealed class CodexOverlayView : MonoBehaviour
     {
+        private const int DeckColumnCount = 4;
+        private const int RightTooltipColumnCount = 2;
         private const int RequiredPageTurnFrameCount = 5;
         private const string OpeningBookSfxId = "openingBook";
         private const string BookPageSfxId = "bookPage";
@@ -667,8 +669,10 @@ namespace DiaBlackJack.GameScene
             if (hovered)
             {
                 _hoveredDeckItem = item;
+                int itemIndex = _deckItems.IndexOf(item);
                 CardHoverBadgeRequest request =
-                    item.CreateHoverBadgeRequest();
+                    item.CreateHoverBadgeRequest(
+                        ShouldShowDeckHoverBadgeOnLeft(itemIndex));
                 if (request != null)
                 {
                     HoverBadgeRequested?.Invoke(request);
@@ -682,6 +686,13 @@ namespace DiaBlackJack.GameScene
                 _hoveredDeckItem = null;
                 HoverBadgeCleared?.Invoke();
             }
+        }
+
+        internal static bool ShouldShowDeckHoverBadgeOnLeft(
+            int itemIndex)
+        {
+            return itemIndex >= 0 &&
+                itemIndex % DeckColumnCount >= RightTooltipColumnCount;
         }
 
         private void ClearHoveredDeckItem()

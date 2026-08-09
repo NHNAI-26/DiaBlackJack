@@ -174,6 +174,83 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("GSV03")]
+        public void GSV03_U08_DeckHoverBadgeUsesLeftEdgeAndMirroredOffset()
+        {
+            GameObject cardObject = new GameObject(
+                "Left Hover Badge Position Test",
+                typeof(RectTransform));
+            RectTransform rect = cardObject.GetComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(100f, 200f);
+
+            try
+            {
+                rect.position = new Vector3(200f, 300f, 0f);
+                Vector2 deckOffset = new Vector2(17f, -9f);
+                CardHoverBadgeRequest request =
+                    CardHoverBadgeRequest.CreateForDeckRect(
+                        rect,
+                        "Title",
+                        "Body",
+                        deckOffset,
+                        showOnLeft: true);
+
+                Assert.That(request.ShowBelow, Is.False);
+                Assert.That(
+                    request.ScreenPosition.x,
+                    Is.EqualTo(133f).Within(0.001f));
+                Assert.That(
+                    request.ScreenPosition.y,
+                    Is.EqualTo(291f).Within(0.001f));
+                Assert.That(
+                    request.TooltipPivot,
+                    Is.EqualTo(new Vector2(1f, 0.5f)));
+            }
+            finally
+            {
+                Object.DestroyImmediate(cardObject);
+            }
+        }
+
+        [Test]
+        [Category("GSV03")]
+        public void GSV03_U09_DeckColumnsThreeAndFourChooseOppositeTooltipSides()
+        {
+            GameObject instance = InstantiatePreviewPrefab();
+            DeckPreviewView preview = instance.GetComponent<DeckPreviewView>();
+            GameObject combatCardPrefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(CombatCardPrefabPath);
+            preview.Configure(combatCardPrefab.GetComponent<CardView>());
+            CardHoverBadgeRequest latestRequest = null;
+            preview.HoverBadgeRequested += request => latestRequest = request;
+
+            try
+            {
+                preview.Open(CreateHoverBoundaryCards());
+                DeckPreviewCardView third = FindSlot(instance, "CardSlot_03");
+                DeckPreviewCardView fourth = FindSlot(instance, "CardSlot_04");
+
+                third.OnPointerEnter(null);
+                Assert.That(latestRequest, Is.Not.Null);
+                Assert.That(
+                    latestRequest.TooltipPivot,
+                    Is.EqualTo(new Vector2(0f, 0.5f)));
+                third.OnPointerExit(null);
+
+                fourth.OnPointerEnter(null);
+                Assert.That(latestRequest, Is.Not.Null);
+                Assert.That(
+                    latestRequest.TooltipPivot,
+                    Is.EqualTo(new Vector2(1f, 0.5f)));
+                fourth.OnPointerExit(null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
         [Category("GSV08")]
         public void GSV08_U01_SingleSelectionWaitsForConfirmAndSwitchesHighlight()
         {
@@ -1173,6 +1250,21 @@ namespace DiaBlackJack.CoreLoop.Tests
             return new GameSceneDeckViewModel(
                 DeckKind.Draw,
                 "제거할 카드 선택",
+                groups.AsReadOnly());
+        }
+
+        private static GameSceneDeckViewModel CreateHoverBoundaryCards()
+        {
+            var groups = new List<GameSceneDeckCardGroupViewModel>
+            {
+                CreateSelectionCard(101, 1, true),
+                CreateSelectionCard(202, 2, true),
+                CreateSelectionCard(303, 3, true),
+                CreateSelectionCard(404, 4, true)
+            };
+            return new GameSceneDeckViewModel(
+                DeckKind.Draw,
+                "Hover boundary cards",
                 groups.AsReadOnly());
         }
 

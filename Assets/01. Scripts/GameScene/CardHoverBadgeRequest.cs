@@ -80,7 +80,8 @@ namespace DiaBlackJack.GameScene
             RectTransform rect,
             string title,
             string description,
-            Vector2 deckCardOffset)
+            Vector2 deckCardOffset,
+            bool showOnLeft = false)
         {
             if (rect == null)
             {
@@ -94,17 +95,24 @@ namespace DiaBlackJack.GameScene
                     : null;
             var corners = new Vector3[4];
             rect.GetWorldCorners(corners);
-            Vector3 rightWorld = (corners[2] + corners[3]) * 0.5f;
-            rightWorld += rect.TransformVector(deckCardOffset);
-            Vector2 rightScreen = RectTransformUtility.WorldToScreenPoint(
+            Vector3 edgeWorld = showOnLeft
+                ? (corners[0] + corners[1]) * 0.5f
+                : (corners[2] + corners[3]) * 0.5f;
+            Vector2 outwardOffset = new Vector2(
+                showOnLeft ? -deckCardOffset.x : deckCardOffset.x,
+                deckCardOffset.y);
+            edgeWorld += rect.TransformVector(outwardOffset);
+            Vector2 edgeScreen = RectTransformUtility.WorldToScreenPoint(
                 uiCamera,
-                rightWorld);
+                edgeWorld);
             return new CardHoverBadgeRequest(
                 title,
                 description,
-                rightScreen,
+                edgeScreen,
                 showBelow: false,
-                tooltipPivot: new Vector2(0f, 0.5f));
+                tooltipPivot: new Vector2(
+                    showOnLeft ? 1f : 0f,
+                    0.5f));
         }
     }
 }

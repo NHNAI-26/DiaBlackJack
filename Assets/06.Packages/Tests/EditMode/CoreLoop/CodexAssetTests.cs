@@ -1043,6 +1043,22 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
         }
 
+        [TestCase(0, false)]
+        [TestCase(1, false)]
+        [TestCase(2, true)]
+        [TestCase(3, true)]
+        [TestCase(4, false)]
+        [TestCase(6, true)]
+        [Category("DXM07")]
+        public void DXM07_U06_CodexDeckTooltipUsesLeftSideForColumnsThreeAndFour(
+            int itemIndex,
+            bool expectedShowOnLeft)
+        {
+            Assert.That(
+                CodexOverlayView.ShouldShowDeckHoverBadgeOnLeft(itemIndex),
+                Is.EqualTo(expectedShowOnLeft));
+        }
+
         [Test]
         public void DXM06_U03_CodexCardRenderingKeepsDeckCountAndHidesContractChrome()
         {
