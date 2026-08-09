@@ -499,6 +499,36 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.False);
         }
 
+        [Test]
+        [Category("TUT02")]
+        public void TUT02_U09_RoundTwoReopensTutorialComparisonGate()
+        {
+            var root = new GameObject("TutorialComparisonGateTest");
+            try
+            {
+                GameManager manager = root.AddComponent<GameManager>();
+                FieldInfo completionField = typeof(GameManager).GetField(
+                    "_tutorialRoundComparisonPresentationComplete",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(completionField, Is.Not.Null);
+
+                completionField.SetValue(manager, true);
+                Assert.That(
+                    manager.IsTutorialRoundComparisonPresentationComplete,
+                    Is.True);
+
+                manager.PrepareTutorialRoundTwoComparisonPresentation();
+
+                Assert.That(
+                    manager.IsTutorialRoundComparisonPresentationComplete,
+                    Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
         [TestCase(CombatantSide.Player)]
         [TestCase(CombatantSide.Enemy)]
         [Category("GSV17")]

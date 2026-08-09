@@ -587,6 +587,8 @@ namespace DiaBlackJack.GameScene
         // tutorial's next dialogue line is allowed to appear.
         private void HandleTutorialRoundOneRecapCompleted()
         {
+            PrepareTutorialRoundTwoComparisonPresentation();
+
             if (_tutorialRoundTransitionRoutine != null)
             {
                 StopCoroutine(_tutorialRoundTransitionRoutine);
@@ -594,6 +596,15 @@ namespace DiaBlackJack.GameScene
 
             _tutorialRoundTransitionRoutine = StartCoroutine(
                 RevealRoundTwoAfterRecapRoutine());
+        }
+
+        internal void PrepareTutorialRoundTwoComparisonPresentation()
+        {
+            // Round 1 already completed one comparison presentation. Round 2 has its own
+            // deferred recap after the revolver resolves, so reopen the gate before its
+            // cards are dealt; otherwise that dialogue can reuse round 1's stale completion
+            // flag and skip both hidden-card flips.
+            _tutorialRoundComparisonPresentationComplete = false;
         }
 
         private IEnumerator RevealRoundTwoAfterRecapRoutine()

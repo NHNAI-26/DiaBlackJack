@@ -23,6 +23,8 @@ namespace DiaBlackJack.GameScene
             new Vector2(-115f, 0f);
         [SerializeField] private Vector2 contractedBubbleAnchoredPosition =
             new Vector2(126.6f, 30.743f);
+        [SerializeField, Range(0.5f, 1f)] private float contractedBubbleScale =
+            0.8f;
 
         private Camera _camera;
         private Vector3 _authoredLocalScale;
@@ -249,12 +251,15 @@ namespace DiaBlackJack.GameScene
             }
 
             float direction = _bubbleMirrored ? -1f : 1f;
+            float visualScale = _bubbleMirrored
+                ? contractedBubbleScale
+                : 1f;
             _bubbleVisualRoot.anchoredPosition = _bubbleMirrored
                 ? contractedBubbleAnchoredPosition
                 : narratorBubbleAnchoredPosition;
             _bubbleVisualRoot.localScale = new Vector3(
-                Mathf.Abs(_authoredBubbleVisualScale.x) * direction,
-                _authoredBubbleVisualScale.y,
+                Mathf.Abs(_authoredBubbleVisualScale.x) * direction * visualScale,
+                _authoredBubbleVisualScale.y * visualScale,
                 _authoredBubbleVisualScale.z);
             _textVisualRoot.localScale = new Vector3(
                 Mathf.Abs(_authoredTextVisualScale.x) * direction,

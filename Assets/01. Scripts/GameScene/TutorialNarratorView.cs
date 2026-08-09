@@ -39,6 +39,7 @@ namespace DiaBlackJack.GameScene
         private DemonCardView _card;
         private DemonCardView _externalSpeaker;
         private bool _cardBound;
+        private bool _narratorCardRetired;
         private bool _showRequested;
         private Tween _cardDisappearTween;
         private SpriteRenderer[] _fadingCardRenderers =
@@ -96,7 +97,10 @@ namespace DiaBlackJack.GameScene
                 BindNarratorCard();
             }
 
-            RestoreCardVisualState();
+            if (!_narratorCardRetired)
+            {
+                RestoreCardVisualState();
+            }
 
             gameObject.SetActive(true);
             IsActive = false;
@@ -115,6 +119,7 @@ namespace DiaBlackJack.GameScene
         internal void ResetView()
         {
             RestoreCardVisualState();
+            _narratorCardRetired = false;
             _externalSpeaker = null;
             if (speechText != null)
             {
@@ -140,6 +145,7 @@ namespace DiaBlackJack.GameScene
             }
 
             RestoreCardVisualState();
+            _narratorCardRetired = true;
             CacheCardVisualState();
 
             if (cardDisappearDuration <= 0f || !Application.isPlaying)
@@ -174,7 +180,7 @@ namespace DiaBlackJack.GameScene
             _externalSpeaker = null;
             speechText?.SetBubbleMirrored(false);
             EnsureCard();
-            if (_card != null)
+            if (_card != null && !_narratorCardRetired)
             {
                 RestoreCardVisualState();
                 _card.gameObject.SetActive(true);
@@ -187,7 +193,11 @@ namespace DiaBlackJack.GameScene
             speechText?.SetBubbleMirrored(true);
             if (_card != null)
             {
-                RestoreCardVisualState();
+                if (!_narratorCardRetired)
+                {
+                    RestoreCardVisualState();
+                }
+
                 _card.gameObject.SetActive(false);
             }
 
@@ -232,6 +242,7 @@ namespace DiaBlackJack.GameScene
         private void OnDisable()
         {
             RestoreCardVisualState();
+            _narratorCardRetired = false;
         }
 
         private void OnDestroy()

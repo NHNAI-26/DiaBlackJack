@@ -2308,6 +2308,7 @@ MonoBehaviour:
   preserveWorldScale: 1
   narratorBubbleAnchoredPosition: {x: -115, y: 0}
   contractedBubbleAnchoredPosition: {x: 126.6, y: 30.743}
+  contractedBubbleScale: 0.8
 --- !u!224 &7846795944097611362 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5742458960792561318, guid: 655f191923921d043921a8d1ccb890ea, type: 3}

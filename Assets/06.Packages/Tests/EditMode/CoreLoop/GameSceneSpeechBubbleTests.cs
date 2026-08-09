@@ -391,6 +391,12 @@ namespace DiaBlackJack.CoreLoop.Tests
                     ((RectTransform)bubbleVisual).anchoredPosition,
                     Is.EqualTo(new Vector2(126.6f, 30.743f)));
                 Assert.That(bubbleVisual.localScale.x, Is.LessThan(0f));
+                Assert.That(
+                    Mathf.Abs(bubbleVisual.localScale.x),
+                    Is.EqualTo(0.8f).Within(0.001f));
+                Assert.That(
+                    bubbleVisual.localScale.y,
+                    Is.EqualTo(0.8f).Within(0.001f));
                 Assert.That(textVisual.localScale.x, Is.LessThan(0f));
                 Assert.That(
                     bubbleVisual.localScale.x * textVisual.localScale.x,
@@ -443,6 +449,51 @@ namespace DiaBlackJack.CoreLoop.Tests
                 speechSerialized.FindProperty("contractedBubbleAnchoredPosition")
                     .vector2Value,
                 Is.EqualTo(new Vector2(126.6f, 30.743f)));
+            Assert.That(
+                speechSerialized.FindProperty("contractedBubbleScale")
+                    .floatValue,
+                Is.EqualTo(0.8f));
+        }
+
+        [Test]
+        public void TUT02_U10_NarratorCardFadeSurvivesTutorialViewRefresh()
+        {
+            GameObject tablePrefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                TableControllerPrefabPath);
+            TutorialNarratorView prefabNarrator =
+                tablePrefab.GetComponentInChildren<TutorialNarratorView>(true);
+            var prefabSerialized = new SerializedObject(prefabNarrator);
+            DemonCardView cardPrefab = prefabSerialized.FindProperty("cardPrefab")
+                .objectReferenceValue as DemonCardView;
+            Assert.That(cardPrefab, Is.Not.Null);
+
+            var root = new GameObject("NarratorCardFadeRefreshTest");
+            root.SetActive(false);
+            try
+            {
+                TutorialNarratorView narrator =
+                    root.AddComponent<TutorialNarratorView>();
+                var serialized = new SerializedObject(narrator);
+                serialized.FindProperty("cardPrefab").objectReferenceValue =
+                    cardPrefab;
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+
+                narrator.ShowCardOnly();
+                narrator.PlayCardDisappearAnimation();
+                narrator.UseNarratorCard();
+
+                SpriteRenderer[] renderers = narrator.NarratorCard
+                    .GetComponentsInChildren<SpriteRenderer>(true);
+                Assert.That(renderers, Is.Not.Empty);
+                Assert.That(
+                    renderers.All(renderer =>
+                        Mathf.Approximately(renderer.color.a, 0f)),
+                    Is.True);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
         }
 
         [Test]
