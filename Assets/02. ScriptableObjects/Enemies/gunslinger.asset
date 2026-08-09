@@ -18,6 +18,7 @@ MonoBehaviour:
   speechProfile: {fileID: 11400000, guid: 1508931c76af757409f2c02dc5e0aa02, type: 2}
   deckTopTint: {r: 1.7346646, g: 0.94797355, b: 0.67913747, a: 1}
   skullBaseColor: {r: 1, g: 0.54648809, b: 0.39150938, a: 1}
+  skullFresnelColor: {r: 1, g: 0.7052173, b: 0.6044811, a: 1}
   grade: 0
   maximumSoul: 4
   defeatGold: 120

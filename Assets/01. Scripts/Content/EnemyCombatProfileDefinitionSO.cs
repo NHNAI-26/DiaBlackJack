@@ -48,6 +48,8 @@ namespace DiaBlackJack.Content
         [ColorUsage(true, false)]
         [FormerlySerializedAs("skullTint")]
         [SerializeField] private Color skullBaseColor = Color.white;
+        [ColorUsage(true, true)]
+        [SerializeField] private Color skullFresnelColor = Color.white;
         [SerializeField] private EnemyGrade grade;
         [Min(1)]
         [SerializeField] private int maximumSoul = 1;
@@ -75,6 +77,8 @@ namespace DiaBlackJack.Content
         public Color DeckTopTint => deckTopTint;
 
         public Color SkullBaseColor => skullBaseColor;
+
+        public Color SkullFresnelColor => skullFresnelColor;
 
         public string Key => key;
 

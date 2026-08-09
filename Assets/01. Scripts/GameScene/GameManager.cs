@@ -2795,11 +2795,13 @@ namespace DiaBlackJack.GameScene
 
             try
             {
-                Color tint = catalog.GetByKey(_activeEnemyProfileKey).DeckTopTint;
+                EnemyCombatProfileDefinitionSO enemy =
+                    catalog.GetByKey(_activeEnemyProfileKey);
+                Color tint = enemy.DeckTopTint;
                 enemyRemainingDeck?.SetTopTint(tint);
                 enemyDiscardDeck?.SetTopTint(tint);
-                _enemyActionSkull?.SetBaseColor(
-                    catalog.GetByKey(_activeEnemyProfileKey).SkullBaseColor);
+                _enemyActionSkull?.SetBaseColor(enemy.SkullBaseColor);
+                _enemyActionSkull?.SetFresnelColor(enemy.SkullFresnelColor);
             }
             catch (Exception exception)
                 when (exception is ArgumentException ||
@@ -2832,6 +2834,8 @@ namespace DiaBlackJack.GameScene
                 _enemyActionSkull.Initialize(
                     ResolveEnemyActionSkullBaseColor(),
                     ResolveActionSkullHome(CombatantSide.Enemy));
+                _enemyActionSkull.SetFresnelColor(
+                    ResolveEnemyActionSkullFresnelColor());
             }
         }
 
@@ -2848,6 +2852,29 @@ namespace DiaBlackJack.GameScene
             try
             {
                 return catalog.GetByKey(_activeEnemyProfileKey).SkullBaseColor;
+            }
+            catch (Exception exception)
+                when (exception is ArgumentException ||
+                      exception is KeyNotFoundException)
+            {
+                Debug.LogWarning(exception.Message, this);
+                return Color.white;
+            }
+        }
+
+        private Color ResolveEnemyActionSkullFresnelColor()
+        {
+            EnemyContentCatalogSO catalog =
+                CardContentBootstrap.Instance?.EnemyCatalog;
+            if (catalog == null ||
+                string.IsNullOrWhiteSpace(_activeEnemyProfileKey))
+            {
+                return Color.white;
+            }
+
+            try
+            {
+                return catalog.GetByKey(_activeEnemyProfileKey).SkullFresnelColor;
             }
             catch (Exception exception)
                 when (exception is ArgumentException ||

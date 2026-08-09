@@ -19,6 +19,7 @@ namespace DiaBlackJack.GameScene
 
         private const string DissolveSfxId = "dissolve";
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int FresnelColorId = Shader.PropertyToID("_RimColor");
         private static readonly int DissolveAmountId =
             Shader.PropertyToID("_DissolveAmount");
         private static readonly int DissolveEnabledId =
@@ -58,6 +59,19 @@ namespace DiaBlackJack.GameScene
                 if (material.HasProperty(BaseColorId))
                 {
                     material.SetColor(BaseColorId, baseColor);
+                }
+            }
+        }
+
+        public void SetFresnelColor(Color fresnelColor)
+        {
+            CacheMaterialInstances();
+            for (int index = 0; index < _materials.Count; index++)
+            {
+                Material material = _materials[index];
+                if (material.HasProperty(FresnelColorId))
+                {
+                    material.SetColor(FresnelColorId, fresnelColor);
                 }
             }
         }

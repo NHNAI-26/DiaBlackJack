@@ -837,7 +837,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void GSV19_U15_ViewAppliesOnlyInstanceBaseColor()
+        public void GSV19_U15_ViewAppliesOnlyInstanceBaseAndFresnelColors()
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 SkullPrefabPath);
@@ -845,6 +845,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 true);
             Material sharedMaterial = prefabRenderer.sharedMaterial;
             Color sharedBaseColor = sharedMaterial.GetColor("_BaseColor");
+            Color sharedFresnelColor = sharedMaterial.GetColor("_RimColor");
             GameObject instance = UnityEngine.Object.Instantiate(prefab);
             try
             {
@@ -853,8 +854,10 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Renderer instanceRenderer =
                     instance.GetComponentInChildren<Renderer>(true);
                 Color expected = new Color(0.25f, 0.5f, 0.75f, 1f);
+                Color expectedFresnel = new Color(0.9f, 0.55f, 0.3f, 1f);
 
                 view.Initialize(expected, Vector3.zero);
+                view.SetFresnelColor(expectedFresnel);
 
                 Assert.That(
                     instanceRenderer.sharedMaterial,
@@ -873,6 +876,20 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(
                     actual.a,
                     Is.EqualTo(expected.a).Within(0.000001f));
+                Color actualFresnel =
+                    instanceRenderer.sharedMaterial.GetColor("_RimColor");
+                Assert.That(
+                    actualFresnel.r,
+                    Is.EqualTo(expectedFresnel.r).Within(0.000001f));
+                Assert.That(
+                    actualFresnel.g,
+                    Is.EqualTo(expectedFresnel.g).Within(0.000001f));
+                Assert.That(
+                    actualFresnel.b,
+                    Is.EqualTo(expectedFresnel.b).Within(0.000001f));
+                Assert.That(
+                    actualFresnel.a,
+                    Is.EqualTo(expectedFresnel.a).Within(0.000001f));
                 Color currentSharedBaseColor =
                     sharedMaterial.GetColor("_BaseColor");
                 Assert.That(
@@ -887,6 +904,20 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(
                     currentSharedBaseColor.a,
                     Is.EqualTo(sharedBaseColor.a).Within(0.000001f));
+                Color currentSharedFresnelColor =
+                    sharedMaterial.GetColor("_RimColor");
+                Assert.That(
+                    currentSharedFresnelColor.r,
+                    Is.EqualTo(sharedFresnelColor.r).Within(0.000001f));
+                Assert.That(
+                    currentSharedFresnelColor.g,
+                    Is.EqualTo(sharedFresnelColor.g).Within(0.000001f));
+                Assert.That(
+                    currentSharedFresnelColor.b,
+                    Is.EqualTo(sharedFresnelColor.b).Within(0.000001f));
+                Assert.That(
+                    currentSharedFresnelColor.a,
+                    Is.EqualTo(sharedFresnelColor.a).Within(0.000001f));
             }
             finally
             {
