@@ -157,6 +157,34 @@ namespace DiaBlackJack.GameScene
             return count;
         }
 
+        internal static IReadOnlyList<float> CreateTokenStartDelays(
+            IReadOnlyList<SoulLossRecord> records,
+            float staggerSeconds)
+        {
+            var delays = new List<float>();
+            if (records == null)
+            {
+                return delays.AsReadOnly();
+            }
+
+            float clampedStagger = Mathf.Max(0f, staggerSeconds);
+            int playerTokenOrdinal = 0;
+            int enemyTokenOrdinal = 0;
+            for (int recordIndex = 0; recordIndex < records.Count; recordIndex++)
+            {
+                SoulLossRecord record = records[recordIndex];
+                for (int unitIndex = 0; unitIndex < record.LossAmount; unitIndex++)
+                {
+                    int sideOrdinal = record.TargetSide == CombatantSide.Player
+                        ? playerTokenOrdinal++
+                        : enemyTokenOrdinal++;
+                    delays.Add(sideOrdinal * clampedStagger);
+                }
+            }
+
+            return delays.AsReadOnly();
+        }
+
         public Sequence Play(
             IReadOnlyList<SoulLossRecord> records,
             Vector3 enemyWorldAnchor,
@@ -171,18 +199,16 @@ namespace DiaBlackJack.GameScene
 
             Sequence sequence = DOTween.Sequence();
             int tokenOrdinal = 0;
-            int playerTokenOrdinal = 0;
-            int enemyTokenOrdinal = 0;
+            IReadOnlyList<float> startDelays = CreateTokenStartDelays(
+                records,
+                _settings.StaggerSeconds);
             for (int recordIndex = 0; recordIndex < records.Count; recordIndex++)
             {
                 SoulLossRecord record = records[recordIndex];
                 for (int unitIndex = 0; unitIndex < record.LossAmount; unitIndex++)
                 {
-                    TMP_Text token = AcquireToken(tokenOrdinal++);
-                    int sideOrdinal = record.TargetSide == CombatantSide.Player
-                        ? playerTokenOrdinal++
-                        : enemyTokenOrdinal++;
-                    float startDelay = sideOrdinal * _settings.StaggerSeconds;
+                    TMP_Text token = AcquireToken(tokenOrdinal);
+                    float startDelay = startDelays[tokenOrdinal++];
                     Vector2 anchor = ResolveAnchor(
                         record.TargetSide,
                         enemyWorldAnchor,

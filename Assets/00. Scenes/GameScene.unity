@@ -6906,6 +6906,14 @@ PrefabInstance:
       propertyPath: gameManager
       value: 
       objectReference: {fileID: 1198942663}
+    - target: {fileID: 8668721821898090643, guid: 2dc4c65b347e4d24e86a18dbf1a42fdc, type: 3}
+      propertyPath: shop
+      value:
+      objectReference: {fileID: 39196510}
+    - target: {fileID: 8668721821898090643, guid: 2dc4c65b347e4d24e86a18dbf1a42fdc, type: 3}
+      propertyPath: gameManager
+      value:
+      objectReference: {fileID: 1198942663}
     - target: {fileID: 9110618720236289802, guid: 2dc4c65b347e4d24e86a18dbf1a42fdc, type: 3}
       propertyPath: m_Name
       value: DebugManager

@@ -168,9 +168,10 @@ MainMenuScene
 - `GameSceneViewModel`은 누적 기록 스냅샷을 전달하고 `GameManager`는 마지막 큐 ID와 라운드 보류 큐로 재렌더 중복을 막는다. `Stepped`가 없는 유료 체인지도 현재 스냅샷을 타임라인에 추가한다.
 - 라운드 피해는 HUD를 감소 전 값으로 고정한 채 GSV17 결과 2.5초 유지 뒤 재생한다. 리볼버·사탄 즉시 승리도 동일 완료 경로를 사용한다. 라운드 외 비용은 기존 카드·계약 애니메이션 뒤 바로 재생하고 완료 전에는 전투 입력 UI를 숨긴다.
 - `SoulLossPresentation`은 HUD Canvas 아래에 TMP 토큰을 런타임 생성·풀링하고 기존 영혼 아이콘, 글꼴과 머티리얼을 재사용한다. 실제 감소 1당 토큰 하나를 0.12초 간격으로 약 0.72초 낙하시킨다. 플레이어는 화면 하단 중앙, 적은 현재 캐릭터 스프라이트 상단을 앵커로 쓰며 양측 공동 피해는 동시에 시작한다.
-- 토큰 도착마다 `GameHudView`가 해당 영혼을 1 낮추고 빨간색·1.25배에서 0.3초 내 원래 상태로 복원한다. 플레이어 토큰마다 `PresentationManager`의 기존 `_ColorScreen`·`_BlendStrength`를 사용해 붉은 점멸을 한 번 재생하고 마지막에 원래 색·강도를 복원한다.
+- 토큰 도착마다 `GameHudView`가 해당 영혼을 1 낮추고 빨간색·1.25배에서 0.3초 내 원래 상태로 복원한다. 플레이어 토큰은 유효한 Vignette가 있으면 기존 피격 Vignette를 사용하고, 없으면 기존 `_ColorScreen`·`_BlendStrength` 머티리얼을 붉은색 `(0.85, 0.04, 0.04)`·강도 `0.65`로 점멸한 뒤 0.18초 안에 원래 색·강도로 복원한다.
 - 재시작·전투 해제·비활성화에서는 토큰 tween, HUD 임시값, 보류 기록과 화면 점멸을 함께 취소·복원한다. 영혼 회복과 별도 감소 SFX는 범위 밖이다.
 - 구현 집중 테스트는 5/5(job `35520f94e62d429093888e0511fc7a91`), GSV17 회귀는 13/13(job `767dbda790b14238bca8107d6e9b4d4c`), 직접 영향 6개 클래스는 100/100(job `ce9be87a4379410b8c0e1e66fc80fd1b`) 통과했다. CoreLoop 전체 879건은 857건 통과·기존 비관련 22건 실패(job `212ac469256943188df91fc0911f9edb`)였으며 새 영혼 테스트 실패는 없다. 1280×720·1920×1080 수동 확인은 완료로 기록하지 않는다.
+- 상호 패배 보정 뒤 신규 4/4(job `79042ebf94654f82a9efd10cc7b34240`)과 `SoulLossPresentationTests` 전체 10/10(job `e08be653dbba4add9cd46288b1fc751d`)이 통과했다. GameScene 직렬화 검증은 0 issues, 최종 C# 컴파일·Console Error는 0건이다. Play Mode의 `SoulLossDebugPanel`을 1280×720과 1920×1080에서 각각 실행해 실제 `ProcessInput` 경로가 `MutualLoss`와 양측 영혼 3→2를 만드는 것을 확인했다. 양측 첫 토큰 시작·충돌 동시성과 Vignette 부재 시 머티리얼 fallback·원상 복구는 EditMode 테스트로 검증했다.
 
 Presenter는 기존 `StageProgressionPresentation`을 재사용하거나 GameScene 전용 어댑터를 얇게 추가한다. 포맷·버튼 활성 조건을 MonoBehaviour에 다시 작성하지 않는다.
 
