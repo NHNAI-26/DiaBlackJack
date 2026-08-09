@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Border::DiaBlackJack.Content.HoverDescriptionSO
   title: "\uCCB4\uC778\uC9C0"
   descriptionTemplate: "\uB0B4 \uB371\uC5D0\uC11C \uCE74\uB4DC 2\uC7A5\uC744 \uBF51\uC544
-    \uADF8 \uC911 1\uC7A5\uC744 \uBE44\uACF5\uAC1C \uCE74\uB4DC\uB85C \uBC14\uAFC9\uB2C8\uB2E4."
+    \\n\uADF8 \uC911 1\uC7A5\uC744 \uBE44\uACF5\uAC1C \uCE74\uB4DC\uB85C \uBC14\uAFC9\uB2C8\uB2E4."
   stateDescriptions: []
