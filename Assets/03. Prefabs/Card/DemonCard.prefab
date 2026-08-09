@@ -459,9 +459,36 @@ MonoBehaviour:
   satanAttackReturnDelay: 0.5
   topPosition: {fileID: 5217502089744215780}
   hoverVisualRoot: {fileID: 6402748276528183579}
-  hoverScale: 1.15
-  scaleLerp: 12
+  hoverScale: 1.02
+  hoverScaleDuration: 0.08
+  hoverScaleCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 7.064832
+      outSlope: 7.064832
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.026453484
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
   hoverSfxId: cardHover
+  hoverOutlineColor: {r: 3.9999995, g: 3.3765495, b: 0, a: 0.5}
+  hoverOutlineWidth: 1
+  hoverOutlineAlphaThreshold: 0.5
   revealFlipDuration: 0.7
   revealFaceSwapNormalizedTime: 0.35
   revealFlipXOnFaceSwap: 1

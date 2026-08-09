@@ -29,6 +29,75 @@ namespace DiaBlackJack.Settings.Tests
         }
 
         [Test]
+        [Category("SET10")]
+        public void SET10_U01_OverlayCanvasBindsSceneCameraAndUiLayer()
+        {
+            UnityEngine.SceneManagement.Scene scene =
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            GameObject cameraObject = new GameObject("UIOverlayCamera");
+            GameObject canvasObject = new GameObject("SettingsCanvas");
+            GameObject childObject = new GameObject("Child");
+            try
+            {
+                UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(
+                    cameraObject,
+                    scene);
+                UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(
+                    canvasObject,
+                    scene);
+                childObject.transform.SetParent(canvasObject.transform);
+                Camera overlayCamera = cameraObject.AddComponent<Camera>();
+                Canvas canvas = canvasObject.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvas.sortingOrder = 200;
+
+                Assert.That(
+                    UIOverlayCanvasCameraUtility.TryConfigure(canvas),
+                    Is.True);
+                Assert.That(
+                    canvas.renderMode,
+                    Is.EqualTo(RenderMode.ScreenSpaceCamera));
+                Assert.That(canvas.worldCamera, Is.SameAs(overlayCamera));
+                Assert.That(canvas.sortingOrder, Is.EqualTo(200));
+                Assert.That(canvasObject.layer, Is.EqualTo(5));
+                Assert.That(childObject.layer, Is.EqualTo(5));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(childObject);
+                UnityEngine.Object.DestroyImmediate(canvasObject);
+                UnityEngine.Object.DestroyImmediate(cameraObject);
+            }
+        }
+
+        [Test]
+        [Category("SET10")]
+        public void SET10_U02_SettingsCanvasKeepsPostProcessedBrushMaterial()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                "Assets/03. Prefabs/UI/PauseSettingsCanvas.prefab");
+            Assert.That(prefab, Is.Not.Null);
+            Canvas canvas = prefab.GetComponent<Canvas>();
+            Assert.That(canvas, Is.Not.Null);
+            Assert.That(canvas.sortingOrder, Is.EqualTo(200));
+
+            string[] panelPaths =
+            {
+                "PausePanel", "SettingsPanel", "QuitConfirmationPanel"
+            };
+            for (int index = 0; index < panelPaths.Length; index++)
+            {
+                Image image = prefab.transform.Find(panelPaths[index])
+                    .GetComponent<Image>();
+                Assert.That(image.material, Is.Not.Null, panelPaths[index]);
+                Assert.That(
+                    image.material.name,
+                    Is.EqualTo("UI_Brush_Grey_Deck"),
+                    panelPaths[index]);
+            }
+        }
+
+        [Test]
         [Category("SET06")]
         public void SET06_U01_DefaultsUseNormalTooltipAndExpectedVolumes()
         {
@@ -471,6 +540,10 @@ namespace DiaBlackJack.Settings.Tests
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 "Assets/03. Prefabs/UI/PauseSettingsCanvas.prefab");
             Assert.That(prefab, Is.Not.Null);
+            Canvas canvas = prefab.GetComponent<Canvas>();
+            Assert.That(canvas, Is.Not.Null);
+            Assert.That(canvas.sortingOrder, Is.EqualTo(200));
+            Assert.That(prefab.layer, Is.EqualTo(LayerMask.NameToLayer("UI")));
             string[] panelPaths =
             {
                 "PausePanel", "SettingsPanel", "QuitConfirmationPanel"

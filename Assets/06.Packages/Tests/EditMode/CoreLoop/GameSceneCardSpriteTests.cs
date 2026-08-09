@@ -450,6 +450,29 @@ namespace DiaBlackJack.CoreLoop.Tests
                     Is.Not.Null);
 
                 Assert.That(canvas, Is.Not.Null);
+                Canvas mainMenuCanvas = canvas.GetComponent<Canvas>();
+                Assert.That(mainMenuCanvas, Is.Not.Null);
+                Assert.That(
+                    Border.Settings.UIOverlayCanvasCameraUtility.TryConfigure(
+                        mainMenuCanvas),
+                    Is.True);
+                Assert.That(
+                    mainMenuCanvas.renderMode,
+                    Is.EqualTo(RenderMode.ScreenSpaceCamera));
+                Assert.That(mainMenuCanvas.worldCamera, Is.Not.Null);
+                Assert.That(
+                    mainMenuCanvas.worldCamera.name,
+                    Is.EqualTo("UIOverlayCamera"));
+                Assert.That(mainMenuCanvas.sortingOrder, Is.EqualTo(100));
+                Transform[] mainMenuUi =
+                    canvas.GetComponentsInChildren<Transform>(true);
+                for (int index = 0; index < mainMenuUi.Length; index++)
+                {
+                    Assert.That(
+                        mainMenuUi[index].gameObject.layer,
+                        Is.EqualTo(LayerMask.NameToLayer("UI")),
+                        mainMenuUi[index].name);
+                }
                 UnityEngine.UI.Image logo =
                     canvas.transform.Find("Logo")
                         .GetComponent<UnityEngine.UI.Image>();
@@ -1890,15 +1913,36 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(InvokePrivate<Transform>(card, "HoverScaleTarget"),
                     Is.SameAs(visualRoot));
                 Assert.That(card.transform.localScale, Is.EqualTo(rootScale));
-                Assert.That(GetPrivateField<Vector3>(card, "_targetScale"),
+                Assert.That(GetTweenEndScale(card),
                     Is.EqualTo(
                         visualScale * GetPrivateField<float>(card, "hoverScale")));
+                Assert.That(GetPrivateField<float>(card, "hoverScale"),
+                    Is.EqualTo(1.02f));
+                Assert.That(GetPrivateField<float>(card, "hoverScaleDuration"),
+                    Is.EqualTo(0.08f));
+                AnimationCurve demonCurve = GetPrivateField<AnimationCurve>(
+                    card,
+                    "hoverScaleCurve");
+                AnimationCurve normalCurve = GetPrivateField<AnimationCurve>(
+                    cardPrefab.GetComponent<CardView>(),
+                    "hoverScaleCurve");
+                Assert.That(demonCurve.keys.Length, Is.EqualTo(normalCurve.keys.Length));
+                for (int i = 0; i < normalCurve.keys.Length; i++)
+                {
+                    Assert.That(demonCurve.keys[i].time,
+                        Is.EqualTo(normalCurve.keys[i].time));
+                    Assert.That(demonCurve.keys[i].value,
+                        Is.EqualTo(normalCurve.keys[i].value));
+                    Assert.That(demonCurve.keys[i].inTangent,
+                        Is.EqualTo(normalCurve.keys[i].inTangent));
+                    Assert.That(demonCurve.keys[i].outTangent,
+                        Is.EqualTo(normalCurve.keys[i].outTangent));
+                }
                 Assert.That(collider.bounds.center, Is.EqualTo(colliderBounds.center));
                 Assert.That(collider.bounds.size, Is.EqualTo(colliderBounds.size));
 
                 card.SetHovered(false);
-                Assert.That(GetPrivateField<Vector3>(card, "_targetScale"),
-                    Is.EqualTo(visualScale));
+                Assert.That(GetTweenEndScale(card), Is.EqualTo(visualScale));
             }
             finally
             {
@@ -1907,7 +1951,7 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
-        public void GSV12_U04_DirectCardsKeepExistingRootHoverTarget()
+        public void GSV12_U04_DirectDemonCardsUseVisualRootHoverTarget()
         {
             GameObject cardPrefab =
                 AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
@@ -1924,7 +1968,7 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Assert.That(InvokePrivate<Transform>(card, "HoverScaleTarget"),
                     Is.SameAs(card.transform));
                 Assert.That(InvokePrivate<Transform>(demon, "HoverScaleTarget"),
-                    Is.SameAs(demon.transform));
+                    Is.SameAs(GetPrivateField<Transform>(demon, "hoverVisualRoot")));
                 Assert.That(GetPrivateField<bool>(card, "_useHandHoverVisual"),
                     Is.False);
                 Assert.That(GetPrivateField<bool>(demon, "_useHandHoverVisual"),
@@ -1934,6 +1978,141 @@ namespace DiaBlackJack.CoreLoop.Tests
             {
                 Object.DestroyImmediate(cardObject);
                 Object.DestroyImmediate(demonObject);
+            }
+        }
+
+        [Test]
+        public void GSV12_U05_DemonHoverUsesMaterialGoldOutlineOnVisibleFace()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(DemonCardPrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                DemonCardView view = instance.GetComponent<DemonCardView>();
+                SpriteRenderer frontRenderer = GetDemonFrontRenderer(view);
+                SpriteRenderer backRenderer = GetDemonBackRenderer(view);
+                Color expectedColor = frontRenderer.sharedMaterial.GetColor(
+                    PixelOutlineColorId);
+                float expectedWidth = frontRenderer.sharedMaterial.GetFloat(
+                    PixelOutlineWidthId);
+                float expectedThreshold = frontRenderer.sharedMaterial.GetFloat(
+                    PixelOutlineAlphaThresholdId);
+                var properties = new MaterialPropertyBlock();
+                DemonContractDefinition definition = DemonContractCatalog.Default
+                    .GetByKey(DemonContractCatalog.AsmodeusKey);
+
+                view.Bind(new GameSceneDemonCardViewModel(
+                    cardId: 201,
+                    definitionKey: definition.Key,
+                    isFaceUp: true,
+                    canUse: true,
+                    displayName: definition.DisplayName));
+                view.SetHovered(true);
+
+                frontRenderer.GetPropertyBlock(properties);
+                AssertColor(properties.GetColor(PixelOutlineColorId), expectedColor);
+                Assert.That(properties.GetFloat(PixelOutlineWidthId),
+                    Is.EqualTo(expectedWidth));
+                Assert.That(properties.GetFloat(PixelOutlineAlphaThresholdId),
+                    Is.EqualTo(expectedThreshold));
+                Assert.That(properties.GetFloat(PixelOutlineVisibilityId),
+                    Is.EqualTo(1f));
+                Assert.That(frontRenderer.sharedMaterial.IsKeywordEnabled(
+                    "_PIXEL_OUTLINE_ON"), Is.True);
+                backRenderer.GetPropertyBlock(properties);
+                Assert.That(properties.GetFloat(PixelOutlineVisibilityId), Is.Zero);
+
+                view.SetHovered(false);
+                frontRenderer.GetPropertyBlock(properties);
+                Assert.That(properties.GetFloat(PixelOutlineVisibilityId), Is.Zero);
+
+                view.Bind(new GameSceneDemonCardViewModel(
+                    cardId: 202,
+                    definitionKey: definition.Key,
+                    isFaceUp: false,
+                    canUse: true,
+                    displayName: definition.DisplayName));
+                view.SetHovered(true);
+                backRenderer.GetPropertyBlock(properties);
+                Assert.That(properties.GetFloat(PixelOutlineVisibilityId),
+                    Is.EqualTo(1f));
+                Assert.That(backRenderer.sharedMaterial.IsKeywordEnabled(
+                    "_PIXEL_OUTLINE_ON"), Is.True);
+                frontRenderer.GetPropertyBlock(properties);
+                Assert.That(properties.GetFloat(PixelOutlineVisibilityId), Is.Zero);
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSV12_U06_DemonSoldOutAndReuseClearHoverFeedback()
+        {
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>(DemonCardPrefabPath);
+            GameObject instance = Object.Instantiate(prefab);
+
+            try
+            {
+                DemonCardView view = instance.GetComponent<DemonCardView>();
+                Transform visualRoot = GetPrivateField<Transform>(
+                    view,
+                    "hoverVisualRoot");
+                Vector3 restingScale = visualRoot.localScale;
+                SpriteRenderer renderer = GetDemonFrontRenderer(view);
+                var properties = new MaterialPropertyBlock();
+                DemonContractDefinition definition = DemonContractCatalog.Default
+                    .GetByKey(DemonContractCatalog.AsmodeusKey);
+                var model = new GameSceneDemonCardViewModel(
+                    cardId: 203,
+                    definitionKey: definition.Key,
+                    isFaceUp: true,
+                    canUse: true,
+                    displayName: definition.DisplayName);
+
+                view.SetShopPresentation();
+                view.Bind(model);
+                view.SetHovered(true);
+                view.SetShopSoldOut(true);
+
+                renderer.GetPropertyBlock(properties);
+                Assert.That(
+                    properties.GetFloat(PixelOutlineVisibilityId),
+                    Is.Zero,
+                    "sold-out cleanup");
+                Assert.That(visualRoot.localScale, Is.EqualTo(restingScale));
+                Assert.That(GetPrivateField<object>(view, "_scaleTween"), Is.Null);
+
+                view.SetShopSoldOut(false);
+                view.Bind(model);
+                renderer.GetPropertyBlock(properties);
+                Assert.That(
+                    properties.GetFloat(PixelOutlineVisibilityId),
+                    Is.Zero,
+                    "reuse cleanup");
+                Assert.That(visualRoot.localScale, Is.EqualTo(restingScale));
+
+                view.SetHovered(true);
+                MethodInfo onDisable = typeof(DemonCardView).GetMethod(
+                    "OnDisable",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(onDisable, Is.Not.Null);
+                onDisable.Invoke(view, null);
+                instance.SetActive(false);
+                renderer.GetPropertyBlock(properties);
+                Assert.That(
+                    properties.GetFloat(PixelOutlineVisibilityId),
+                    Is.Zero,
+                    "disable cleanup");
+                Assert.That(visualRoot.localScale, Is.EqualTo(restingScale));
+            }
+            finally
+            {
+                Object.DestroyImmediate(instance);
             }
         }
 
@@ -2242,6 +2421,17 @@ namespace DiaBlackJack.CoreLoop.Tests
             return renderer;
         }
 
+        private static SpriteRenderer GetDemonBackRenderer(DemonCardView view)
+        {
+            SerializedObject serialized = new SerializedObject(view);
+            GameObject face = serialized.FindProperty("back")
+                .objectReferenceValue as GameObject;
+            Assert.That(face, Is.Not.Null);
+            SpriteRenderer renderer = face.GetComponent<SpriteRenderer>();
+            Assert.That(renderer, Is.Not.Null);
+            return renderer;
+        }
+
         private static SpriteRenderer GetUsedMarkStroke(
             CardView view,
             string propertyName)
@@ -2372,7 +2562,7 @@ namespace DiaBlackJack.CoreLoop.Tests
             return (T)method.Invoke(target, null);
         }
 
-        private static Vector3 GetTweenEndScale(CardView view)
+        private static Vector3 GetTweenEndScale(object view)
         {
             object tween = GetPrivateField<object>(view, "_scaleTween");
             Assert.That(tween, Is.Not.Null);

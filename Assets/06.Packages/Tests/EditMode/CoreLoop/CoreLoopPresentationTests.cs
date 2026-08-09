@@ -435,6 +435,70 @@ namespace DiaBlackJack.CoreLoop.Tests
                 Is.False);
         }
 
+        [Test]
+        [Category("TUT02")]
+        public void TUT02_U08_FirstTutorialDecisiveGuessForcesComparison()
+        {
+            RoundResolution resolution = CreateHiddenGuessResolution(
+                CombatantSide.Player,
+                RoundEndCause.CardEffectBust);
+            var cue = new GameSceneRevolverAnimationCue(
+                1,
+                10,
+                CombatantSide.Player,
+                GameSceneRevolverAnimationPhase.Resolved,
+                succeeded: true);
+            RoundComparisonPlaybackMode mode =
+                RoundComparisonPresenter.ResolvePlaybackMode(
+                    resolution,
+                    cue,
+                    satanNumberGuessCue: null);
+            RoundComparisonPlan plan = CreateComparisonPlan(resolution, mode);
+
+            Assert.That(
+                GameManager.ShouldForceTutorialRoundComparison(
+                    tutorialActive: true,
+                    tutorialComparisonComplete: false,
+                    lastResolutionId: -1,
+                    plan: plan),
+                Is.True);
+            Assert.That(
+                GameManager.ShouldForceTutorialRoundComparison(
+                    tutorialActive: true,
+                    tutorialComparisonComplete: true,
+                    lastResolutionId: -1,
+                    plan: plan),
+                Is.False);
+            Assert.That(
+                GameManager.ShouldForceTutorialRoundComparison(
+                    tutorialActive: false,
+                    tutorialComparisonComplete: false,
+                    lastResolutionId: -1,
+                    plan: plan),
+                Is.False);
+            Assert.That(
+                GameManager.ShouldForceTutorialRoundComparison(
+                    tutorialActive: true,
+                    tutorialComparisonComplete: false,
+                    lastResolutionId: resolution.Id,
+                    plan: plan),
+                Is.False);
+
+            RoundResolution contractResolution = CreateHiddenGuessResolution(
+                CombatantSide.Player,
+                RoundEndCause.ContractEffectBust);
+            RoundComparisonPlan contractPlan = CreateComparisonPlan(
+                contractResolution,
+                RoundComparisonPlaybackMode.SkipForDecisiveHiddenGuess);
+            Assert.That(
+                GameManager.ShouldForceTutorialRoundComparison(
+                    tutorialActive: true,
+                    tutorialComparisonComplete: false,
+                    lastResolutionId: -1,
+                    plan: contractPlan),
+                Is.False);
+        }
+
         [TestCase(CombatantSide.Player)]
         [TestCase(CombatantSide.Enemy)]
         [Category("GSV17")]

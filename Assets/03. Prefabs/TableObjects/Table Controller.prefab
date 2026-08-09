@@ -1652,6 +1652,7 @@ MonoBehaviour:
   narratorSpeechScreenOffset: {x: -56, y: 72}
   contractedSpeechScreenOffset: {x: 56, y: 72}
   speechScreenMargin: 24
+  cardDisappearDuration: 0.35
 --- !u!1 &7622204401950776379
 GameObject:
   m_ObjectHideFlags: 0

@@ -881,3 +881,10 @@ MCP가 Unity 창의 포커스를 가져가지 않은 상태에서는 게임 프�
 - 신규 단일 회귀 1/1(job `8ae9e724a80c4d90b35b01e617324b3e`), `[Category("GSV16")]` 7/7(job `22ffa29ae9c84225b0d1553bfb28c1b7`), `SatanDemonContractTests` 19/19(job `2e85fa25abd74e988dad3d739da1a26e`)가 통과했다. 스크립트 재컴파일 직후 Console Error 0건을 확인했다.
 - GameScene Play Mode에서 실제 Game View를 1280×720과 1920×1080으로 각각 전환했다. 두 해상도 모두 사용 여부 대기는 목표 스케일 `(1, 1, 1)`, `능력 사용하기` 뒤 숫자 선택은 `(1.15, 1.15, 1.15)`, 다음 사용 여부 대기 복귀는 `(1, 1, 1)`임을 확인했다. 기존 포인터 호버 회귀도 GSV16 묶음에 포함해 통과했다.
 - Play Mode 종료 뒤 Console에는 작업 전부터 삭제 상태였던 Settings 스크립트 참조와 함께 `The referenced script (Unknown) on this Behaviour is missing!` 11건이 남았다. 이번 변경 범위 밖이라 복구하지 않았으며, 코드·테스트·문서만 수정하고 씬·프리팹은 수정하지 않았다.
+
+### 2026-08-09 GSV12 악마 카드 호버 통일
+
+- 모든 `DemonCardView` 사용처의 확대를 일반 카드와 같은 1.02배·0.08초 EaseInOut 곡선으로 바꾸고 `HoverVisualRoot`만 확대했다.
+- 앞·뒷면에 일반 카드와 같은 픽셀 아웃라인 키워드·`MaterialPropertyBlock` 경로를 적용했다. 색·폭·알파 임계값은 현재 악마 카드 머터리얼에서 읽어 금색 표현을 유지했으며 머터리얼 자산은 수정하지 않았다.
+- 호버 종료, 재바인딩, 공개 플립, 판매 완료, 비활성화와 재사용에서 트윈·스케일·윤곽을 정리한다.
+- 관련 집중 12/12와 컴파일·Console Error 0을 확인했다. 전체 EditMode는 1,304/1,324이며 잔여 20건은 기존 자산·UI 기대값 불일치다. 악마 카드 해상도별 Play Mode 육안 검증은 수행하지 않았다.

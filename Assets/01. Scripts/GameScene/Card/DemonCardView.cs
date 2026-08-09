@@ -36,9 +36,20 @@ namespace DiaBlackJack.GameScene
         [Header("Hover feel")]
         [Tooltip("Visual-only pivot used by hand and selection cards so hover feedback does not move or resize the collider.")]
         [SerializeField] private Transform hoverVisualRoot;
-        [SerializeField] private float hoverScale = 1.15f;
-        [SerializeField] private float scaleLerp = 12f;
+        [SerializeField] private float hoverScale = 1.02f;
+        [Min(0.01f)]
+        [SerializeField] private float hoverScaleDuration = 0.08f;
+        [SerializeField] private AnimationCurve hoverScaleCurve =
+            AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
         [SerializeField] private string hoverSfxId = "cardHover";
+
+        [Header("Hover outline")]
+        [ColorUsage(true, true)]
+        [SerializeField] private Color hoverOutlineColor =
+            new Color(3.9999995f, 3.3765495f, 0f, 0.5f);
+        [SerializeField] private float hoverOutlineWidth = 1f;
+        [Range(0f, 1f)]
+        [SerializeField] private float hoverOutlineAlphaThreshold = 0.5f;
 
         [Header("Round result reveal")]
         [Min(0.01f)]
@@ -86,6 +97,12 @@ namespace DiaBlackJack.GameScene
             Shader.PropertyToID("_Brightness");
         private static readonly int PixelOutlineVisibilityId =
             Shader.PropertyToID("_PixelOutlineVisibility");
+        private static readonly int PixelOutlineColorId =
+            Shader.PropertyToID("_PixelOutlineColor");
+        private static readonly int PixelOutlineWidthId =
+            Shader.PropertyToID("_PixelOutlineWidth");
+        private static readonly int PixelOutlineAlphaThresholdId =
+            Shader.PropertyToID("_PixelOutlineAlphaThreshold");
         private static readonly int SpriteFlipXId =
             Shader.PropertyToID("_SpriteFlipX");
         private static readonly int BaseSpriteUvRectId =
@@ -125,6 +142,8 @@ namespace DiaBlackJack.GameScene
         private MaterialPropertyBlock _backPropertyBlock;
         private Material _presentationFrontMaterial;
         private Material _presentationBackMaterial;
+        private Material _hoverFrontMaterial;
+        private Material _hoverBackMaterial;
         private Material _shopMaterial;
         private Material _satanDoomMaterial;
         private Vector3 _baseScale = Vector3.one;
@@ -146,6 +165,7 @@ namespace DiaBlackJack.GameScene
         private Color _shopFrontColor = Color.white;
         private Sequence _revealSequence;
         private Sequence _satanAttackSequence;
+        private Tween _scaleTween;
         private Tween _orientationTween;
         private bool _orientationInitialized;
         private bool _isUpsideDown;
@@ -253,6 +273,7 @@ namespace DiaBlackJack.GameScene
         private void OnValidate()
         {
             revealFlipDuration = Mathf.Max(revealFlipDuration, 0.01f);
+            hoverScaleDuration = Mathf.Max(hoverScaleDuration, 0.01f);
             revealFaceSwapNormalizedTime =
                 Mathf.Clamp01(revealFaceSwapNormalizedTime);
             upsideDownTurnDuration = Mathf.Max(upsideDownTurnDuration, 0f);
@@ -269,16 +290,6 @@ namespace DiaBlackJack.GameScene
         private void Update()
         {
             RefreshSpriteUvRects();
-
-            Transform scaleTarget = HoverScaleTarget();
-            Vector3 current = scaleTarget.localScale;
-            if ((current - _targetScale).sqrMagnitude > 0.0000001f)
-            {
-                scaleTarget.localScale = Vector3.Lerp(
-                    current,
-                    _targetScale,
-                    Time.deltaTime * scaleLerp);
-            }
         }
 
         private void LateUpdate()
@@ -294,6 +305,7 @@ namespace DiaBlackJack.GameScene
             _orientationTween = null;
             _hovered = false;
             _isEffectSource = false;
+            ApplyHoverOutline(false);
             ResetHoverScales();
             _targetScale = HoverRestingScale();
         }
@@ -302,9 +314,12 @@ namespace DiaBlackJack.GameScene
         {
             StopSatanAttackAnimation();
             _revealSequence?.Kill();
+            _scaleTween?.Kill();
             _orientationTween?.Kill();
             DestroyOwnedMaterial(_presentationFrontMaterial);
             DestroyOwnedMaterial(_presentationBackMaterial);
+            DestroyOwnedMaterial(_hoverFrontMaterial);
+            DestroyOwnedMaterial(_hoverBackMaterial);
             DestroyOwnedMaterial(_shopMaterial);
             DestroyOwnedMaterial(_satanDoomMaterial);
         }
@@ -550,6 +565,7 @@ namespace DiaBlackJack.GameScene
                 : FormatBadgeDescription(card);
 
             _hovered = false;
+            ApplyHoverOutline(false);
             ResetHoverScales();
             if (preserveCurrentScale)
             {
@@ -560,6 +576,7 @@ namespace DiaBlackJack.GameScene
             _targetScale = _isEffectSource
                 ? restingScale * hoverScale
                 : restingScale;
+            PlayHoverScaleTween(_targetScale);
             ApplyOrientation(card.IsUpsideDown, animateOrientation);
             AlignSatanDoomCount();
 
@@ -623,6 +640,7 @@ namespace DiaBlackJack.GameScene
             StopRevealSequence();
             ResetHoverScales();
             _hovered = false;
+            ApplyHoverOutline(false);
             PlayRevealFlip();
         }
 #endif
@@ -663,6 +681,8 @@ namespace DiaBlackJack.GameScene
             SoundManager.Current?.PlaySfx(FlipSfxId);
             _orientationTween?.Kill();
             _orientationTween = null;
+            _hovered = false;
+            ApplyHoverOutline(false);
             ResetHoverScales();
             SetFaceObjects(showFront: false);
             HideFaceDetails();
@@ -920,6 +940,8 @@ namespace DiaBlackJack.GameScene
             _targetScale = hovered || _isEffectSource
                 ? restingScale * hoverScale
                 : restingScale;
+            PlayHoverScaleTween(_targetScale);
+            ApplyHoverOutline(hovered);
         }
 
         internal Transform HoverVisualTransform =>
@@ -930,6 +952,7 @@ namespace DiaBlackJack.GameScene
             ResetHoverScales();
             _useHandHoverVisual = hoverVisualRoot != null;
             _hovered = false;
+            ApplyHoverOutline(false);
             _targetScale = HoverRestingScale();
         }
 
@@ -947,6 +970,7 @@ namespace DiaBlackJack.GameScene
             _baseScale = baseScale;
             StopRevealSequence();
             _hovered = false;
+            ApplyHoverOutline(false);
             ResetHoverScales();
             _targetScale = HoverRestingScale();
         }
@@ -965,25 +989,136 @@ namespace DiaBlackJack.GameScene
 
         private Transform HoverScaleTarget()
         {
-            return _useHandHoverVisual && hoverVisualRoot != null
+            return hoverVisualRoot != null
                 ? hoverVisualRoot
                 : transform;
         }
 
         private Vector3 HoverRestingScale()
         {
-            return _useHandHoverVisual && hoverVisualRoot != null
+            return hoverVisualRoot != null
                 ? _hoverVisualBaseScale
                 : _baseScale;
         }
 
         private void ResetHoverScales()
         {
+            StopScaleTween();
             transform.localScale = _baseScale;
             if (hoverVisualRoot != null)
             {
                 hoverVisualRoot.localScale = _hoverVisualBaseScale;
             }
+        }
+
+        private void PlayHoverScaleTween(Vector3 targetScale)
+        {
+            StopScaleTween();
+            _scaleTween = HoverScaleTarget()
+                .DOScale(targetScale, Mathf.Max(hoverScaleDuration, 0.01f))
+                .SetEase(hoverScaleCurve)
+                .SetTarget(this)
+                .SetLink(gameObject, LinkBehaviour.KillOnDisable)
+                .OnKill(() => _scaleTween = null);
+        }
+
+        private void StopScaleTween()
+        {
+            Tween tween = _scaleTween;
+            _scaleTween = null;
+            tween?.Kill();
+        }
+
+        private void ApplyHoverOutline(bool visible)
+        {
+            ApplyHoverOutline(FrontSpriteRenderer(), visible && _showingFrontFace);
+            ApplyHoverOutline(BackSpriteRenderer(), visible && !_showingFrontFace);
+        }
+
+        private void ApplyHoverOutline(SpriteRenderer renderer, bool visible)
+        {
+            if (renderer == null)
+            {
+                return;
+            }
+
+            EnsureHoverMaterialInstance(renderer);
+            Material material = renderer.sharedMaterial;
+            if (material != null)
+            {
+                material.EnableKeyword(PixelOutlineKeyword);
+            }
+
+            MaterialPropertyBlock properties = PropertyBlockFor(renderer);
+            renderer.GetPropertyBlock(properties);
+            properties.SetColor(
+                PixelOutlineColorId,
+                GetMaterialColor(material, PixelOutlineColorId, hoverOutlineColor));
+            properties.SetFloat(
+                PixelOutlineWidthId,
+                GetMaterialFloat(material, PixelOutlineWidthId, hoverOutlineWidth));
+            properties.SetFloat(
+                PixelOutlineAlphaThresholdId,
+                GetMaterialFloat(
+                    material,
+                    PixelOutlineAlphaThresholdId,
+                    hoverOutlineAlphaThreshold));
+            properties.SetFloat(PixelOutlineVisibilityId, visible ? 1f : 0f);
+            renderer.SetPropertyBlock(properties);
+        }
+
+        private void EnsureHoverMaterialInstance(SpriteRenderer renderer)
+        {
+            if (renderer == null || renderer.sharedMaterial == null ||
+                IsOwnedMaterial(renderer.sharedMaterial))
+            {
+                return;
+            }
+
+            if (renderer == FrontSpriteRenderer())
+            {
+                _hoverFrontMaterial = new Material(renderer.sharedMaterial)
+                {
+                    name = renderer.sharedMaterial.name + " (Demon Hover Front Instance)"
+                };
+                renderer.sharedMaterial = _hoverFrontMaterial;
+                return;
+            }
+
+            _hoverBackMaterial = new Material(renderer.sharedMaterial)
+            {
+                name = renderer.sharedMaterial.name + " (Demon Hover Back Instance)"
+            };
+            renderer.sharedMaterial = _hoverBackMaterial;
+        }
+
+        private bool IsOwnedMaterial(Material material)
+        {
+            return material == _presentationFrontMaterial ||
+                material == _presentationBackMaterial ||
+                material == _hoverFrontMaterial ||
+                material == _hoverBackMaterial ||
+                material == _shopMaterial;
+        }
+
+        private static Color GetMaterialColor(
+            Material material,
+            int propertyId,
+            Color fallback)
+        {
+            return material != null && material.HasProperty(propertyId)
+                ? material.GetColor(propertyId)
+                : fallback;
+        }
+
+        private static float GetMaterialFloat(
+            Material material,
+            int propertyId,
+            float fallback)
+        {
+            return material != null && material.HasProperty(propertyId)
+                ? material.GetFloat(propertyId)
+                : fallback;
         }
 
         internal void SetShopPresentation()
@@ -1018,13 +1153,8 @@ namespace DiaBlackJack.GameScene
             _shopMaterial.SetFloat(LightingModeId, 1f);
             _shopMaterial.SetFloat(BrightnessId, 1f);
             _shopMaterial.EnableKeyword(UnlitKeyword);
-            _shopMaterial.DisableKeyword(PixelOutlineKeyword);
             renderer.color = _shopFrontColor;
-
-            var properties = new MaterialPropertyBlock();
-            renderer.GetPropertyBlock(properties);
-            properties.SetFloat(PixelOutlineVisibilityId, 0f);
-            renderer.SetPropertyBlock(properties);
+            ApplyHoverOutline(false);
         }
 
         internal void SetShopSoldOut(bool isSoldOut)
@@ -1035,6 +1165,11 @@ namespace DiaBlackJack.GameScene
                 CanUse = false;
                 _showBadgeOnHover = false;
                 SetHovered(false);
+                _hovered = false;
+                _isEffectSource = false;
+                ApplyHoverOutline(false);
+                ResetHoverScales();
+                _targetScale = HoverRestingScale();
             }
 
             SpriteRenderer renderer = FrontSpriteRenderer();

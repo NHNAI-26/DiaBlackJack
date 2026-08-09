@@ -65,6 +65,8 @@ bool Save()
 - `GameHudView`는 초기 스냅샷과 `Changed` 이벤트로 `CardHoverTooltipRoot` 배율을 갱신한다.
 - `SettingsSystem`이 없으면 `Normal` 배율을 사용한다.
 - `PauseSettingsCanvas.prefab`은 `GameScene`과 `MainMenuScene`이 공유한다.
+- 공유 설정 Canvas와 `MainMenuCanvas`는 현재 씬의 `UIOverlayCamera`를 이름과 씬 소속으로 찾아 `Screen Space Camera`에 연결한다. 연결 시 전체 자식 계층을 `UI` 레이어로 맞추며 기존 정렬 순서 200/100, Canvas Scaler와 입력 배선은 유지한다.
+- 설정 패널의 `UI_Brush_Grey_Deck` 머터리얼은 교체하지 않고 UI 오버레이 카메라의 후처리 경로에서 렌더링한다.
 - 레거시 데모 설정 UI에는 그래픽 설정 컴포넌트를 남기지 않는다.
 
 ## 5. 테스트 경계

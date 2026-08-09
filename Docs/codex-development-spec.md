@@ -88,6 +88,7 @@
 
 - `CodexOverlayView`: 전체 화면 Canvas, 차단막, 펼친 책, 닫기 버튼, 페이지 번호, 책갈피 두 개, 적/악마 페이지를 렌더링한다.
 - 적 시작 덱은 `ScrollRect + GridLayoutGroup`, 계약 악마는 6열 미니 카드 그리드를 사용한다.
+- 적 시작 덱 `ScrollRect`는 `Elastic` 경계를 사용하며 elasticity 0.1, 관성 활성, 감속률 0.135를 유지한다.
 - 적 시작 덱은 원래 프로필 순서에서 suit를 확정한 뒤 `(DefinitionKey, Suit)`가 같은 카드만 묶는다. 개별 카드 ID는 표시 모델에 넣지 않으며 같은 숫자라도 정의가 다르거나 같은 정의라도 스페이드·클로버가 다르면 별도 항목이다.
 - 시작 덱 모든 항목 아래 `xN` 수량을 항상 표시한다. 계약 악마 템플릿과 악마 상세 페이지에는 수량을 추가하지 않는다.
 - 시작 덱 카드 호버는 `"{Rank}. {DisplayName}"` 제목과 카드 효과 설명을 `CardHoverBadgeRequest`로 전달해 GameHUD 공용 카드 호버 뱃지를 사용한다. 뱃지는 카드 우측 중앙에 왼쪽 중앙 피벗으로 붙고, 공용 `DeckPreviewCardView`의 `Deck Card Hover Badge Offset`을 카드 로컬 UI 좌표로 더한다.

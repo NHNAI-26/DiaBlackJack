@@ -1492,6 +1492,18 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(
                 prefab.transform.Find("ConfirmDemonsRoot/ConfirmDemonsButton"),
                 Is.Not.Null);
+            Component confirmDemonsLabel = prefab.transform
+                .Find("ConfirmDemonsRoot/ConfirmDemonsButton")
+                .GetComponentsInChildren<Component>(true)
+                .Single(component =>
+                    component.GetType().Name == "TextMeshProUGUI");
+            Assert.That(confirmDemonsLabel, Is.Not.Null);
+            PropertyInfo textProperty = confirmDemonsLabel.GetType()
+                .GetProperty("text");
+            Assert.That(textProperty, Is.Not.Null);
+            Assert.That(
+                textProperty.GetValue(confirmDemonsLabel),
+                Is.EqualTo("확인"));
             Assert.That(
                 prefab.GetComponentInChildren<PoisonInjectionAnnounceView>(true),
                 Is.Not.Null);

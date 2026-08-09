@@ -34,6 +34,54 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void MOO02_U02_VisibleCharacterConsumesPendingBgmWithoutEntranceAnimation()
+        {
+            MoodProfileSO profile = CreateProfile("boss");
+            GameObject controllerObject = new GameObject("FlowControllerTest");
+            GameObject characters = new GameObject("Characters");
+            GameObject enemy = new GameObject("EnemyCharacter");
+            controllerObject.SetActive(false);
+            CharacterView characterView = enemy.AddComponent<CharacterView>();
+            MoodController moodController =
+                controllerObject.AddComponent<MoodController>();
+            GameFlowController flowController =
+                controllerObject.AddComponent<GameFlowController>();
+            try
+            {
+                moodController.SetMoodImmediate(profile);
+                SetPrivateField(flowController, "charactersRoot", characters);
+                SetPrivateField(flowController, "enemyCharacter", characterView);
+                SetPrivateField(flowController, "moodController", moodController);
+                SetPrivateField(flowController, "_hasPresentedCharacters", true);
+
+                FieldInfo pendingField = typeof(MoodController).GetField(
+                    "_pendingBgmProfile",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                MethodInfo showCharacters = typeof(GameFlowController).GetMethod(
+                    "ShowCharactersWithEntrance",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(pendingField, Is.Not.Null);
+                Assert.That(showCharacters, Is.Not.Null);
+                Assert.That(
+                    pendingField.GetValue(moodController),
+                    Is.SameAs(profile));
+
+                showCharacters.Invoke(flowController, null);
+
+                Assert.That(pendingField.GetValue(moodController), Is.Null);
+                showCharacters.Invoke(flowController, null);
+                Assert.That(pendingField.GetValue(moodController), Is.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(controllerObject);
+                Object.DestroyImmediate(characters);
+                Object.DestroyImmediate(enemy);
+                Object.DestroyImmediate(profile);
+            }
+        }
+
+        [Test]
         public void MOO01_U01_MoodProfileRejectsEmptyId()
         {
             MoodProfileSO profile = ScriptableObject.CreateInstance<MoodProfileSO>();

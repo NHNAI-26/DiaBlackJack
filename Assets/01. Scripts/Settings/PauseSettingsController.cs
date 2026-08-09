@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
@@ -60,6 +61,8 @@ namespace Border.Settings
 
         private void Awake()
         {
+            UIOverlayCanvasCameraUtility.TryConfigure(
+                GetComponentInParent<Canvas>(includeInactive: true));
             _gameManager = FindFirstObjectByType<GameManager>();
             _pauseAction = new InputAction("Pause");
             _pauseAction.AddBinding("<Keyboard>/escape");
@@ -413,6 +416,82 @@ namespace Border.Settings
             if (EventSystem.current != null && button != null)
             {
                 EventSystem.current.SetSelectedGameObject(button.gameObject);
+            }
+        }
+    }
+
+    internal static class UIOverlayCanvasCameraUtility
+    {
+        private const string OverlayCameraName = "UIOverlayCamera";
+
+        internal static bool TryConfigure(Canvas canvas)
+        {
+            if (canvas == null)
+            {
+                return false;
+            }
+
+            int uiLayer = LayerMask.NameToLayer("UI");
+            if (uiLayer >= 0)
+            {
+                SetLayerRecursively(canvas.transform, uiLayer);
+            }
+
+            Camera overlayCamera = FindOverlayCamera(canvas.gameObject.scene);
+            if (overlayCamera == null)
+            {
+                return false;
+            }
+
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.worldCamera = overlayCamera;
+            return true;
+        }
+
+        internal static Canvas FindCanvasInScene(
+            Scene scene,
+            string canvasName)
+        {
+            Canvas[] canvases = UnityEngine.Object.FindObjectsByType<Canvas>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+            foreach (Canvas candidate in canvases)
+            {
+                if (candidate != null &&
+                    candidate.gameObject.scene == scene &&
+                    candidate.name == canvasName)
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        private static Camera FindOverlayCamera(Scene scene)
+        {
+            Camera[] cameras = UnityEngine.Object.FindObjectsByType<Camera>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+            foreach (Camera candidate in cameras)
+            {
+                if (candidate != null &&
+                    candidate.gameObject.scene == scene &&
+                    candidate.name == OverlayCameraName)
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
+        }
+
+        private static void SetLayerRecursively(Transform root, int layer)
+        {
+            root.gameObject.layer = layer;
+            for (int index = 0; index < root.childCount; index++)
+            {
+                SetLayerRecursively(root.GetChild(index), layer);
             }
         }
     }

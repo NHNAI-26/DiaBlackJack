@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using DiaBlackJack.CoreLoop;
 using TMPro;
 using UnityEngine;
@@ -33,11 +34,18 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private Vector2 contractedSpeechScreenOffset =
             new Vector2(56f, 72f);
         [SerializeField, Min(0f)] private float speechScreenMargin = 24f;
+        [SerializeField, Min(0f)] private float cardDisappearDuration = 0.35f;
 
         private DemonCardView _card;
         private DemonCardView _externalSpeaker;
         private bool _cardBound;
         private bool _showRequested;
+        private Tween _cardDisappearTween;
+        private SpriteRenderer[] _fadingCardRenderers =
+            Array.Empty<SpriteRenderer>();
+        private Color[] _fadingCardRendererColors = Array.Empty<Color>();
+        private TMP_Text[] _fadingCardLabels = Array.Empty<TMP_Text>();
+        private Color[] _fadingCardLabelColors = Array.Empty<Color>();
 
         public event Action LineAdvanceRequested;
 
@@ -48,6 +56,8 @@ namespace DiaBlackJack.GameScene
         public bool IsLineComplete => speechText == null || speechText.IsComplete;
 
         internal DemonCardView NarratorCard => _card;
+
+        internal float CardDisappearDuration => cardDisappearDuration;
 
         internal bool OwnsNarratorCard(DemonCardView card) =>
             card != null && card == _card;
@@ -86,6 +96,8 @@ namespace DiaBlackJack.GameScene
                 BindNarratorCard();
             }
 
+            RestoreCardVisualState();
+
             gameObject.SetActive(true);
             IsActive = false;
             speechText?.Hide();
@@ -102,6 +114,7 @@ namespace DiaBlackJack.GameScene
 
         internal void ResetView()
         {
+            RestoreCardVisualState();
             _externalSpeaker = null;
             if (speechText != null)
             {
@@ -118,6 +131,37 @@ namespace DiaBlackJack.GameScene
             gameObject.SetActive(false);
         }
 
+        internal void PlayCardDisappearAnimation()
+        {
+            EnsureCard();
+            if (_card == null)
+            {
+                return;
+            }
+
+            RestoreCardVisualState();
+            CacheCardVisualState();
+
+            if (cardDisappearDuration <= 0f || !Application.isPlaying)
+            {
+                ApplyCardFade(0f);
+                return;
+            }
+
+            float alpha = 1f;
+            _cardDisappearTween = DOTween.To(
+                    () => alpha,
+                    value =>
+                    {
+                        alpha = value;
+                        ApplyCardFade(value);
+                    },
+                    0f,
+                    cardDisappearDuration)
+                .SetEase(Ease.InOutSine)
+                .OnComplete(() => _cardDisappearTween = null);
+        }
+
         public void ShowLine(string text)
         {
             Show();
@@ -132,6 +176,7 @@ namespace DiaBlackJack.GameScene
             EnsureCard();
             if (_card != null)
             {
+                RestoreCardVisualState();
                 _card.gameObject.SetActive(true);
             }
         }
@@ -142,6 +187,7 @@ namespace DiaBlackJack.GameScene
             speechText?.SetBubbleMirrored(true);
             if (_card != null)
             {
+                RestoreCardVisualState();
                 _card.gameObject.SetActive(false);
             }
 
@@ -181,6 +227,93 @@ namespace DiaBlackJack.GameScene
                 TextUIOverlayLayerUtility.ApplyRecursively(
                     labels[i].gameObject);
             }
+        }
+
+        private void OnDisable()
+        {
+            RestoreCardVisualState();
+        }
+
+        private void OnDestroy()
+        {
+            _cardDisappearTween?.Kill();
+            _cardDisappearTween = null;
+        }
+
+        private void CacheCardVisualState()
+        {
+            _fadingCardRenderers =
+                _card.GetComponentsInChildren<SpriteRenderer>(true);
+            _fadingCardRendererColors =
+                new Color[_fadingCardRenderers.Length];
+            for (int i = 0; i < _fadingCardRenderers.Length; i++)
+            {
+                _fadingCardRendererColors[i] = _fadingCardRenderers[i].color;
+            }
+
+            _fadingCardLabels = _card.GetComponentsInChildren<TMP_Text>(true);
+            _fadingCardLabelColors = new Color[_fadingCardLabels.Length];
+            for (int i = 0; i < _fadingCardLabels.Length; i++)
+            {
+                _fadingCardLabelColors[i] = _fadingCardLabels[i].color;
+            }
+        }
+
+        private void ApplyCardFade(float alpha)
+        {
+            for (int i = 0; i < _fadingCardRenderers.Length; i++)
+            {
+                SpriteRenderer renderer = _fadingCardRenderers[i];
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                Color color = _fadingCardRendererColors[i];
+                color.a *= alpha;
+                renderer.color = color;
+            }
+
+            for (int i = 0; i < _fadingCardLabels.Length; i++)
+            {
+                TMP_Text label = _fadingCardLabels[i];
+                if (label == null)
+                {
+                    continue;
+                }
+
+                Color color = _fadingCardLabelColors[i];
+                color.a *= alpha;
+                label.color = color;
+            }
+        }
+
+        private void RestoreCardVisualState()
+        {
+            _cardDisappearTween?.Kill();
+            _cardDisappearTween = null;
+
+            for (int i = 0; i < _fadingCardRenderers.Length; i++)
+            {
+                if (_fadingCardRenderers[i] != null)
+                {
+                    _fadingCardRenderers[i].color =
+                        _fadingCardRendererColors[i];
+                }
+            }
+
+            for (int i = 0; i < _fadingCardLabels.Length; i++)
+            {
+                if (_fadingCardLabels[i] != null)
+                {
+                    _fadingCardLabels[i].color = _fadingCardLabelColors[i];
+                }
+            }
+
+            _fadingCardRenderers = Array.Empty<SpriteRenderer>();
+            _fadingCardRendererColors = Array.Empty<Color>();
+            _fadingCardLabels = Array.Empty<TMP_Text>();
+            _fadingCardLabelColors = Array.Empty<Color>();
         }
 
         private void UpdateSpeechPosition()

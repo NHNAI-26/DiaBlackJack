@@ -427,6 +427,9 @@ namespace DiaBlackJack.CoreLoop.Tests
                 serialized.FindProperty("contractedSpeechScreenOffset")
                     .vector2Value,
                 Is.EqualTo(new Vector2(56f, 72f)));
+            Assert.That(
+                serialized.FindProperty("cardDisappearDuration").floatValue,
+                Is.EqualTo(0.35f));
 
             TutorialTypewriterTextView speech =
                 prefab.GetComponentInChildren<TutorialTypewriterTextView>(true);

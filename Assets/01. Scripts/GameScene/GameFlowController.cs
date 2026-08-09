@@ -1058,10 +1058,11 @@ namespace DiaBlackJack.GameScene
                 {
                     CompleteCharacterEntrance(requestId);
                 }
-                if (enemyCharacter != null)
-                {
-                    moodController?.PlayPendingBgm();
-                }
+            }
+
+            if (enemyCharacter != null)
+            {
+                moodController?.PlayPendingBgm();
             }
 
             _hasPresentedCharacters = true;

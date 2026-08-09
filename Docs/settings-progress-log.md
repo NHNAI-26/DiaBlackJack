@@ -101,5 +101,11 @@
 - `PauseSettingsCanvas.prefab`의 일시정지·설정·종료 확인 패널 3개에 `Brush_UI_8` sliced 배경을 적용했다.
 - 계속하기·설정·게임 종료·뒤로·예·아니오 6개 일반 버튼을 `DefaultButton.prefab` 중첩 인스턴스로 교체했다. 해상도·창 모드 화살표는 기존 `TriangleArrow`, 슬라이더와 선택기 구조는 유지했다.
 - 기존 직렬화 필드, 배치, `settingsOnlyMode`, 뒤로가기와 `timeScale` 계약을 유지했다. 같은 설정 프리팹을 참조하는 `GameScene`과 `MainMenuScene`에 별도 씬 중복 수정 없이 반영된다.
+
+## 5. 2026-08-09 UI 후처리 카메라 연결
+
+- `MainMenuCanvas`와 공유 `PauseSettingsCanvas`를 `Screen Space Camera`로 저작하고, 런타임에는 현재 씬의 `UIOverlayCamera`만 찾아 다시 연결한다.
+- 연결 시 전체 Canvas 계층을 `UI` 레이어로 정규화한다. 정렬 순서 100/200, 해상도 스케일러, 입력과 `UI_Brush_Grey_Deck` 머터리얼은 유지했다.
+- 신규 SET10 2/2, MainMenuScene·GameScene validation 각 0 issues, 컴파일·Console Error 0을 확인했다. Play Mode 1920×1080·1280×720에서 메인 메뉴와 설정 패널의 배치·카메라 연결·`UI_Brush_Grey_Deck` 표시를 확인했다.
 - `UIR01_U07` 단독 1/1(job `074ce40322864817876f22622e6130ce`)과 기존 설정 회귀를 포함한 Settings EditMode 16/16(job `7059400cbedc4d31ba7b8149b00efeba`)이 통과했다. 런타임에서 설정 패널 활성, 뒤로 버튼 입력 후 패널 비활성, `timeScale` 1 유지와 한국어 버튼 라벨·전용 화살표 보존을 확인했다.
 - 두 씬의 설정 프리팹 인스턴스는 각각 1개이며 missing script 0, broken prefab 0이다. 컴파일·씬 검증 직후 Console Error는 0건이었고, Play QA에서는 설정과 무관한 기존 머티리얼 drawer 오류 2건이 재현됐다.

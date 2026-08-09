@@ -1593,7 +1593,22 @@ namespace DiaBlackJack.GameScene
                 pointedContractPaper.IsInteractable)
             {
                 CloseDeckPreview();
-                ProcessInput(TryBeginPlayerDemonContract);
+                ContractPaperClickable acceptedPaper = pointedContractPaper;
+                ProcessInput(
+                    TryBeginPlayerDemonContract,
+                    onAccepted: () =>
+                    {
+                        if (_tutorialDirector == null)
+                        {
+                            return;
+                        }
+
+                        HideTutorialHighlightIfTarget(
+                            TutorialHighlightTarget.ContractPaper);
+                        UpdateContractPaperHover(null);
+                        acceptedPaper.PlayDisappearAnimation(null);
+                        tutorialNarrator?.PlayCardDisappearAnimation();
+                    });
                 return;
             }
 
@@ -4512,7 +4527,15 @@ namespace DiaBlackJack.GameScene
                 bool comparisonBeat = ShouldPlayRoundComparison(
                     _lastRoundComparisonResolutionId,
                     comparisonPlan);
+                bool forceTutorialComparison =
+                    ShouldForceTutorialRoundComparison(
+                        _tutorialDirector != null,
+                        _tutorialRoundComparisonPresentationComplete,
+                        _lastRoundComparisonResolutionId,
+                        comparisonPlan);
+                comparisonBeat |= forceTutorialComparison;
                 bool directResolutionBeat =
+                    !forceTutorialComparison &&
                     ShouldSkipRoundComparisonForDecisiveHiddenGuess(
                         _lastRoundComparisonResolutionId,
                         comparisonPlan);
@@ -5052,6 +5075,21 @@ namespace DiaBlackJack.GameScene
             return plan != null &&
                 plan.ResolutionId != lastResolutionId &&
                 plan.PlaybackMode != RoundComparisonPlaybackMode.CountTotals;
+        }
+
+        internal static bool ShouldForceTutorialRoundComparison(
+            bool tutorialActive,
+            bool tutorialComparisonComplete,
+            long lastResolutionId,
+            RoundComparisonPlan plan)
+        {
+            return tutorialActive &&
+                !tutorialComparisonComplete &&
+                plan != null &&
+                plan.ResolutionId != lastResolutionId &&
+                plan.Cause == RoundEndCause.CardEffectBust &&
+                plan.PlaybackMode ==
+                    RoundComparisonPlaybackMode.SkipForDecisiveHiddenGuess;
         }
 
         internal static bool ShouldHideCombatHudForPresentation(

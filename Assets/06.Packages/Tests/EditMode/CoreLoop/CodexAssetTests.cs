@@ -268,7 +268,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(scrollRect.vertical, Is.True);
             Assert.That(
                 scrollRect.movementType,
-                Is.EqualTo(ScrollRect.MovementType.Clamped));
+                Is.EqualTo(ScrollRect.MovementType.Elastic));
+            Assert.That(scrollRect.elasticity, Is.EqualTo(0.1f));
+            Assert.That(scrollRect.inertia, Is.True);
+            Assert.That(scrollRect.decelerationRate, Is.EqualTo(0.135f));
             Assert.That(scrollRect.horizontalScrollbar, Is.Null);
             Assert.That(scrollRect.verticalScrollbar, Is.Null);
             Assert.That(

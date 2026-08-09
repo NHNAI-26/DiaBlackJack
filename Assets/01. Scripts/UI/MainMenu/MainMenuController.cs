@@ -5,6 +5,7 @@ using Border.Settings;
 using DiaBlackJack.GameScene;
 using DiaBlackJack.StageProgression.UI;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DiaBlackJack.MainMenu.UI
 {
@@ -13,6 +14,7 @@ namespace DiaBlackJack.MainMenu.UI
     public sealed class MainMenuController : MonoBehaviour
     {
         private const string MainMenuMoodId = "mainMenu";
+        private const string MainMenuCanvasName = "MainMenuCanvas";
 
         [SerializeField] private MoodController moodController;
         [SerializeField] private PauseSettingsController settingsController;
@@ -23,6 +25,12 @@ namespace DiaBlackJack.MainMenu.UI
 
         private void Awake()
         {
+            Canvas mainMenuCanvas =
+                UIOverlayCanvasCameraUtility.FindCanvasInScene(
+                    gameObject.scene,
+                    MainMenuCanvasName);
+            UIOverlayCanvasCameraUtility.TryConfigure(mainMenuCanvas);
+
             if (!TryGetComponent(out _view))
             {
                 throw new MissingComponentException(

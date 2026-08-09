@@ -85,6 +85,11 @@
 - GameScene validate: issue 0, missing script 0, broken prefab 0. Codex 필터 Console Error 0.
 - 1920×1080과 1280×720에서 최종 보스 25장 덱의 상단·하단, 6개 계약 카드, 책 바깥 노출 없음과 스크롤 위치를 확인했다.
 
+## 2026-08-09 도감 스크롤 경계 보완
+
+- 시작 덱 스크롤 경계를 `Clamped`에서 `Elastic`으로 바꿨다. 기존 elasticity 0.1, 관성, 감속률 0.135와 세로 전용 입력은 유지했다.
+- 관련 에셋 테스트에서 새 경계와 기존 관성 값을 확인했다. 전체 EditMode는 1,304/1,324이며 잔여 20건은 기존 자산·UI 기대값 불일치다.
+
 | 작업 | 상태 | 결과 |
 | --- | --- | --- |
 | DX-00 | 완료 | 적 6종을 개별 `EnemyCombatProfileDefinitionSO`로 이전하고 악마 서사를 각 `DemonCardDefinitionSO`에 통합했다. 별도 `CodexContentCatalogSO`는 제거했다. 펼친 책 1536×1024, 닫힌 책·책갈피 1024×1024 투명 PNG를 사용한다. |
