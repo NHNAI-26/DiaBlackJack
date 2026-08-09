@@ -442,7 +442,7 @@ Presenter는 기존 `StageProgressionPresentation`을 재사용하거나 GameSce
 - 정상 저장 흐름의 중앙 `RunResultView`는 숨기고, 전투 상대 퇴장 → `readyStage` → 시작 악마 지급 상인 등장 → 말풍선 결과 대화 순서로 표시한다.
 - 저장 실패 때만 기존 패널을 표시하고 `RETRY SAVE`를 허용한다. 재시도 성공 뒤 결과 대화를 시작한다.
 - `RunResultDialogueSO`가 승리·계약 승리·패배 공통·상대 6종 전용 문구와 초당 글자 수를 소유한다. 누락 상대는 표시 이름 기반 기본 문구와 경고로 대체한다.
-- 타이핑 중 클릭은 문장을 즉시 완성하고, 다음 클릭은 다음 문장으로 이동한다. 마지막 문장 뒤 클릭은 `StageProgressionRuntime.LoadMainMenuScene()`을 호출하며 실패하면 마지막 문장을 유지한다.
+- 타이핑 중 클릭은 문장을 즉시 완성하고, 다음 클릭은 다음 문장으로 이동한다. 마지막 문장 뒤 클릭은 패배의 영혼 감소 연타·검정 페이드 또는 승리의 1.5초 URP 흐림을 재생한다. 승리는 전환 직전의 선명한 화면을 런타임 캡처하고 완전히 흐린 화면 위에서 캡처 알파를 1에서 0으로 낮춰 페이드처럼 연속해서 흐려진다. 흐림이 0.65초 선행한 뒤 그라데이션 눈꺼풀 닫힘·30% 재개방·최종 닫힘 순서로 이어진다. 완료 후 `StageProgressionRuntime.LoadMainMenuScene()`을 호출한다. 전환 중 입력은 잠그고 이동 실패 시 오버레이를 복구해 마지막 문장에서 재시도한다.
 - `PlayerRunState.HasMadeDemonContract`는 실제 계약 성사 뒤 런 전체와 schema v2 저장·복원에서 유지되고 새 런에서 초기화된다. 시작 악마 지급은 계약으로 세지 않는다.
 - 영혼 0 즉시 패배, 패배 후 상점 없음, 보스 승리 후 상점 없음, 런 종료 체크포인트는 기존 정식 세션·SV-06 계약을 그대로 사용한다.
 - GF-05 전용 3/3과 전체 EditMode 811/811이 통과했고 컴파일·게임 코드 오류는 0이다.
@@ -453,7 +453,8 @@ GFR01 결과 대화 빠른 미리보기:
 - Scene 뷰의 `Quick Play > Run Result` 드롭다운이나 `Tools > DiaBlackJack > Quick Play > Run Result` 메뉴를 연다.
 - `Victory/No Contract`, `Victory/Contracted`, 또는 `Defeat` 아래 상대 6종 중 하나를 선택하면 `GameScene` Play Mode로 바로 진입한다.
 - 미리보기는 실제 런·저장을 만들거나 변경하지 않으며, 적 퇴장 → `readyStage` → 상인 등장 → 결과 대화를 재생한다.
-- 타이핑 중 클릭은 현재 문장을 완성하고, 다음 클릭은 다음 문장으로 이동한다. 마지막 문장 뒤 클릭은 `MainMenuScene`으로 이동한다.
+- 타이핑 중 클릭은 현재 문장을 완성하고, 다음 클릭은 다음 문장으로 이동한다. 마지막 문장 뒤 클릭은 선택한 승패 종료 연출을 그대로 재생한 뒤 `MainMenuScene`으로 이동한다.
+- 승리 보정은 선명 프레임 캡처·눈꺼풀 런타임 텍스처와 Base·UI·TextUI 카메라의 Volume Layer별 런타임 DOF만 사용하므로 Scene·Prefab·이미지 에셋을 변경하지 않는다. GFR02 10/10과 결과 대화·영혼 감소·GameScene 흐름 회귀 31/31이 통과했다.
 
 ### 단계 6 — 시각·입력·회귀 검증
 

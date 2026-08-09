@@ -442,6 +442,36 @@ namespace DiaBlackJack.GameScene
                 onImpact);
         }
 
+        internal SoulLossPresentation
+            CreateTerminalDefeatSoulLossPresentation(Canvas canvas)
+        {
+            TMP_Text template = playerSoulText != null
+                ? playerSoulText
+                : enemySoulText;
+            if (canvas == null || template == null)
+            {
+                return null;
+            }
+
+            SoulLossTokenSettings settings = new SoulLossTokenSettings(
+                soulLossTokenColor,
+                soulLossTokenFontScale,
+                soulLossTokenMinimumFontSize,
+                soulLossTokenSize,
+                RunResultTransitionView.DefeatTokenFallSeconds,
+                RunResultTransitionView.DefeatTokenStaggerSeconds,
+                RunResultTransitionView.DefeatTokenImpactSeconds,
+                soulLossTokenFadeSeconds,
+                180f,
+                new Vector2(-30f, 90f),
+                90f,
+                new Vector2(180f, 270f),
+                32f,
+                new Vector2(0.5f, 0.58f),
+                soulLossEnemyFallbackAnchor);
+            return new SoulLossPresentation(canvas, template, settings);
+        }
+
         internal void CancelSoulLossPresentation()
         {
             _soulLossPresentation?.Cancel();

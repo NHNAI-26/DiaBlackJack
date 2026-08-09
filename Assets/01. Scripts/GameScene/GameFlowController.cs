@@ -62,6 +62,7 @@ namespace DiaBlackJack.GameScene
         private RunResultDialogueSequence _resultDialogueSequence;
         private float _resultDialogueCharactersPerSecond;
         private bool _resultDialoguePending;
+        private RunResultTransitionView _resultTransition;
 #if UNITY_EDITOR
         private bool _isResultDialoguePreview;
 #endif
@@ -94,6 +95,9 @@ namespace DiaBlackJack.GameScene
             resultView ??= gameObject.AddComponent<RunResultView>();
             codex ??= GetComponent<CodexController>();
             moodController ??= GetComponent<MoodController>();
+            _resultTransition ??= GetComponent<RunResultTransitionView>();
+            _resultTransition ??=
+                gameObject.AddComponent<RunResultTransitionView>();
             ResolveSceneReferences();
             SubscribeToMoodController();
 
@@ -1415,7 +1419,8 @@ namespace DiaBlackJack.GameScene
             if (!IsTerminalScreen() ||
                 _resultDialoguePending ||
                 _resultDialogueSequence == null ||
-                enemyCharacter == null)
+                enemyCharacter == null ||
+                (_resultTransition != null && _resultTransition.IsPlaying))
             {
                 return;
             }
@@ -1443,20 +1448,60 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-#if UNITY_EDITOR
-            if (_isResultDialoguePreview)
+            BeginResultExitTransition();
+        }
+
+        private void BeginResultExitTransition()
+        {
+            _resultTransition ??= GetComponent<RunResultTransitionView>();
+            _resultTransition ??=
+                gameObject.AddComponent<RunResultTransitionView>();
+            if (_resultTransition.IsPlaying)
             {
-                _isResultDialoguePreview = false;
-                StageProgressionRuntime.ReturnToMainMenuAndDestroyInstance();
                 return;
             }
+#if UNITY_EDITOR
+            bool isPreview = _isResultDialoguePreview;
+#else
+            const bool isPreview = false;
 #endif
+            if (!_resultTransition.TryPlay(
+                    CurrentScreen,
+                    hud,
+                    () => CompleteResultExitTransition(isPreview)))
+            {
+                CompleteResultExitTransition(isPreview);
+            }
+        }
 
-            RequestReturnToMainMenu();
+        private void CompleteResultExitTransition(bool isPreview)
+        {
+            try
+            {
+#if UNITY_EDITOR
+                if (isPreview)
+                {
+                    StageProgressionRuntime
+                        .ReturnToMainMenuAndDestroyInstance();
+                    return;
+                }
+#endif
+                if (RequestReturnToMainMenu())
+                {
+                    return;
+                }
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
+
+            _resultTransition?.CancelAndRestore();
         }
 
         private void ResetResultDialogue()
         {
+            _resultTransition?.CancelAndRestore();
             _resultDialogueSequence = null;
             _resultDialogueCharactersPerSecond = 0f;
             _resultDialoguePending = false;
