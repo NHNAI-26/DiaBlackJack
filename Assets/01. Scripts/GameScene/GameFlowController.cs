@@ -235,7 +235,8 @@ namespace DiaBlackJack.GameScene
         public bool RequestFocusOpponent(string profileKey)
         {
             if (IsInputBlocked() ||
-                CurrentScreen != GameFlowScreen.OpponentSelection)
+                CurrentScreen != GameFlowScreen.OpponentSelection ||
+                !IsOpponentSelectionReady())
             {
                 return false;
             }
@@ -258,7 +259,10 @@ namespace DiaBlackJack.GameScene
 
         public bool RequestConfirmOpponent()
         {
-            if (CurrentViewModel == null ||
+            if (IsInputBlocked() ||
+                CurrentScreen != GameFlowScreen.OpponentSelection ||
+                !IsOpponentSelectionReady() ||
+                CurrentViewModel == null ||
                 !CurrentViewModel.CanConfirmOpponent ||
                 !CurrentViewModel.OpponentOfferId.HasValue)
             {
@@ -273,9 +277,19 @@ namespace DiaBlackJack.GameScene
 
         public bool RequestSelectOpponent(string profileKey)
         {
+            return TrySelectOpponent(
+                profileKey,
+                requireReadyView: true);
+        }
+
+        private bool TrySelectOpponent(
+            string profileKey,
+            bool requireReadyView)
+        {
             if (string.IsNullOrWhiteSpace(profileKey) ||
                 IsInputBlocked() ||
                 CurrentScreen != GameFlowScreen.OpponentSelection ||
+                (requireReadyView && !IsOpponentSelectionReady()) ||
                 CurrentViewModel == null ||
                 !CurrentViewModel.OpponentOfferId.HasValue)
             {
@@ -303,6 +317,12 @@ namespace DiaBlackJack.GameScene
             int offerId = CurrentViewModel.OpponentOfferId.Value;
             return ProcessInput(() =>
                 _session.TrySelectOpponent(offerId, profileKey));
+        }
+
+        private bool IsOpponentSelectionReady()
+        {
+            return opponentSelection == null ||
+                opponentSelection.IsReadyForSelection;
         }
 
         public bool RequestAcknowledgeFinalBossReveal()
@@ -474,7 +494,29 @@ namespace DiaBlackJack.GameScene
 
         private void HandleOpponentSelected(string profileKey)
         {
-            RequestSelectOpponent(profileKey);
+            if (opponentSelection == null ||
+                CurrentViewModel == null ||
+                !CurrentViewModel.OpponentOfferId.HasValue)
+            {
+                return;
+            }
+
+            int offerId = CurrentViewModel.OpponentOfferId.Value;
+            if (!opponentSelection.CanCommitSelection(
+                    offerId,
+                    profileKey))
+            {
+                return;
+            }
+
+            bool accepted = TrySelectOpponent(
+                profileKey,
+                requireReadyView: false);
+            if (!accepted)
+            {
+                opponentSelection.RestoreSelectionAfterRejectedCommit(
+                    profileKey);
+            }
         }
 
         private void HandleFinalBossRevealSelected(string profileKey)

@@ -50,6 +50,8 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        internal bool IsSwitchInputLocked => _switchInputLockCount > 0;
+
         private void Reset()
         {
             EnsureBrainReference();
@@ -118,7 +120,7 @@ namespace DiaBlackJack.GameScene
 
         public bool StepView(int delta)
         {
-            if (delta == 0)
+            if (!CanUseSwitchInput || delta == 0)
                 return false;
 
             int nextIndex = Mathf.Clamp(
