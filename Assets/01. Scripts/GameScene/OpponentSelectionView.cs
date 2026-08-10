@@ -471,6 +471,11 @@ namespace DiaBlackJack.GameScene
             bool useRestingPosition,
             Ease ease)
         {
+            if (useRestingPosition)
+            {
+                Border.Audio.SoundManager.Current?.PlaySfx("paperSlide");
+            }
+
             _slideTween = DOTween.Sequence()
                 .SetLink(gameObject, LinkBehaviour.KillOnDisable);
             for (int index = 0; index < posterSlots.Length; index++)

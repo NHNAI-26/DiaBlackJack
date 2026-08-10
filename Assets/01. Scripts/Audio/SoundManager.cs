@@ -54,6 +54,12 @@ namespace Border.Audio
         [SerializeField, Min(1)] private int maxSfxVoices = 16;
         [Header("Volume")]
         [SerializeField, Range(0f, 1f)] private float masterVolume = 1f, musicVolume = 1f, sfxVolume = 1f;
+        [Header("Typing SFX")]
+        [SerializeField, Min(0f)]
+        [Tooltip("Minimum interval between typing key sounds, in seconds. Set to 0 to play on every revealed character.")]
+        private float typingSoundDelay = 0.03f;
+        private float _nextTypingSfxTime = float.NegativeInfinity;
+
         [Header("Listening on")]
         [SerializeField] private FloatEventChannelSO changeMasterVolumeEvent, changeMusicVolumeEvent, changeSfxVolumeEvent;
         private readonly Dictionary<string, SoundEntry> bgmCatalog = new(StringComparer.Ordinal);
@@ -80,11 +86,14 @@ namespace Border.Audio
         {
             if (Current != null && Current != this)
             {
-                Log.W("[SoundManager] Another scene-local manager is active; this component was disabled.", this);
+                Log.W("[SoundManager] Another SoundManager is already active; this component was disabled.", this);
                 enabled = false;
                 return;
             }
+
             Current = this;
+            transform.SetParent(null, true);
+            DontDestroyOnLoad(gameObject);
             if (changeMasterVolumeEvent != null) changeMasterVolumeEvent.OnEventRaised += SetMasterVolume;
             if (changeMusicVolumeEvent != null) changeMusicVolumeEvent.OnEventRaised += SetMusicVolume;
             if (changeSfxVolumeEvent != null) changeSfxVolumeEvent.OnEventRaised += SetSfxVolume;
@@ -153,6 +162,20 @@ namespace Border.Audio
             voice.Source.Play();
             return new SoundHandle(this, index, voice.Generation);
         }
+
+        public SoundHandle PlayRandomTypingSfx()
+        {
+            float delay = Mathf.Max(0f, typingSoundDelay);
+            if (Time.unscaledTime < _nextTypingSfxTime)
+            {
+                return default;
+            }
+
+            _nextTypingSfxTime = Time.unscaledTime + delay;
+            int variant = UnityEngine.Random.Range(1, 5);
+            return PlaySfx($"keyboard0{variant}");
+        }
+
         public bool StopSfx(SoundHandle handle)
         {
             if (handle.owner != this || handle.index < 0 || handle.index >= sfxVoices.Length)

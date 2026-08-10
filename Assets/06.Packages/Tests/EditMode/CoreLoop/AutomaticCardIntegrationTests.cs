@@ -284,6 +284,37 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void AC06_U09_KnifeCleanupPolicyPreservesOnlyActivePresentationWork()
+        {
+            Assert.That(
+                GameManager.ShouldKeepKnifeSequenceAlive(
+                    true,
+                    null,
+                    false),
+                Is.True,
+                "A locked presentation timeline must keep the knife sequence alive.");
+            Assert.That(
+                GameManager.ShouldKeepKnifeSequenceAlive(
+                    false,
+                    CardEffectKind.MilitaryKnife,
+                    false),
+                Is.True);
+            Assert.That(
+                GameManager.ShouldKeepKnifeSequenceAlive(
+                    false,
+                    null,
+                    true),
+                Is.True);
+            Assert.That(
+                GameManager.ShouldKeepKnifeSequenceAlive(
+                    false,
+                    null,
+                    false),
+                Is.False,
+                "A finished timeline with no pending work must allow orphan cleanup.");
+        }
+
+        [Test]
         public void ACRV03_I01_TenRedealtBattlesKeepCardsAndStateIsolated()
         {
             for (int iteration = 0; iteration < 10; iteration++)

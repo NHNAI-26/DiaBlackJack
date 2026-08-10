@@ -174,6 +174,7 @@ namespace DiaBlackJack.GameScene
                 {
                     visibleCount = nextVisibleCount;
                     messageText.maxVisibleCharacters = visibleCount;
+                    Border.Audio.SoundManager.Current?.PlayRandomTypingSfx();
                 }
 
                 yield return null;

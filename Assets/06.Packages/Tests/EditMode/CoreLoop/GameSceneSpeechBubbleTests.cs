@@ -482,6 +482,31 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void TUT03_U01_SpotlightBoundsIgnoreInactiveRenderers()
+        {
+            var root = new GameObject("TutorialSpotlightBoundsRoot");
+            GameObject activeChild = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            GameObject inactiveChild = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            try
+            {
+                activeChild.transform.SetParent(root.transform, false);
+                inactiveChild.transform.SetParent(root.transform, false);
+                inactiveChild.transform.localPosition = new Vector3(100f, 0f, 0f);
+                inactiveChild.SetActive(false);
+
+                Assert.That(
+                    GameManager.TryGetRendererBounds(root.transform, out Bounds bounds),
+                    Is.True);
+                Assert.That(bounds.center.x, Is.EqualTo(0f).Within(0.001f));
+                Assert.That(bounds.size.x, Is.EqualTo(1f).Within(0.001f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void TUT02_U03_NarratorAndContractedSpeakersUseOppositeOffsets()
         {
             Vector2 narratorOffset = new Vector2(-56f, 72f);
