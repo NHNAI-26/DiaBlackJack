@@ -45,6 +45,98 @@ namespace DiaBlackJack.StageProgression.Tests
         }
 
         [Test]
+        public void GFH03_U01_FinalBossRevealToCombatForcesFreshEntrance()
+        {
+            Assert.That(
+                GameFlowController.IsFinalBossCombatEntrance(
+                    GameFlowScreen.FinalBossReveal,
+                    GameFlowScreen.Combat),
+                Is.True);
+            Assert.That(
+                GameFlowController.IsFinalBossCombatEntrance(
+                    GameFlowScreen.Shop,
+                    GameFlowScreen.Combat),
+                Is.False);
+            Assert.That(
+                GameFlowController.IsFinalBossCombatEntrance(
+                    GameFlowScreen.FinalBossReveal,
+                    GameFlowScreen.FinalBossReveal),
+                Is.False);
+        }
+
+        [Test]
+        public void GFH03_U02_FinalBossEntranceClearsVisibleCharacterState()
+        {
+            GameObject controllerObject = new GameObject("FlowControllerTest");
+            GameObject characters = new GameObject("Characters");
+            GameObject enemy = new GameObject("EnemyCharacter");
+            enemy.transform.SetParent(characters.transform);
+            CharacterView character = enemy.AddComponent<CharacterView>();
+            controllerObject.SetActive(false);
+            MoodController mood = controllerObject.AddComponent<MoodController>();
+            GameFlowController controller =
+                controllerObject.AddComponent<GameFlowController>();
+            MoodProfileSO profile =
+                ScriptableObject.CreateInstance<MoodProfileSO>();
+            try
+            {
+                SetPrivateField(profile, "id", "bossStage");
+                SetPrivateField(
+                    profile,
+                    "bgmIds",
+                    new List<string> { "bossStage" });
+                SetPrivateField(
+                    mood,
+                    "moodProfiles",
+                    new List<MoodProfileSO> { profile });
+                SetPrivateField(controller, "charactersRoot", characters);
+                SetPrivateField(controller, "enemyCharacter", character);
+                SetPrivateField(controller, "moodController", mood);
+                SetPrivateField(controller, "_hasPresentedCharacters", true);
+                SetPrivateField(controller, "_characterEntranceInProgress", true);
+
+                MethodInfo prepare = typeof(GameFlowController).GetMethod(
+                    "PrepareFinalBossCharacterEntrance",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(prepare, Is.Not.Null);
+                prepare.Invoke(controller, null);
+
+                Assert.That(characters.activeSelf, Is.False);
+                Assert.That(
+                    GetPrivateField<bool>(
+                        controller,
+                        "_hasPresentedCharacters"),
+                    Is.False);
+                Assert.That(
+                    GetPrivateField<bool>(
+                        controller,
+                        "_characterEntranceInProgress"),
+                    Is.False);
+
+                Assert.That(mood.TryQueuePendingBgm("bossStage"), Is.True);
+                MethodInfo show = typeof(GameFlowController).GetMethod(
+                    "ShowCharactersWithEntrance",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(show, Is.Not.Null);
+                show.Invoke(controller, null);
+
+                Assert.That(characters.activeSelf, Is.True);
+                Assert.That(
+                    GetPrivateField<object>(character, "_appearanceTween"),
+                    Is.Not.Null);
+                Assert.That(
+                    GetPrivateField<object>(mood, "_pendingBgmProfile"),
+                    Is.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(controllerObject);
+                Object.DestroyImmediate(characters);
+                Object.DestroyImmediate(profile);
+            }
+        }
+
+        [Test]
         public void GFH02_U01_TutorialDialogueAndOpeningClickBlockCombatInput()
         {
             Assert.That(
@@ -631,6 +723,27 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(
                 session.Progress.State,
                 Is.EqualTo(expectedState));
+        }
+
+        private static void SetPrivateField<T>(
+            object target,
+            string name,
+            T value)
+        {
+            FieldInfo field = target.GetType().GetField(
+                name,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, name);
+            field.SetValue(target, value);
+        }
+
+        private static T GetPrivateField<T>(object target, string name)
+        {
+            FieldInfo field = target.GetType().GetField(
+                name,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, name);
+            return (T)field.GetValue(target);
         }
     }
 }

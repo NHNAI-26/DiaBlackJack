@@ -110,7 +110,29 @@ namespace DiaBlackJack.GameScene
             return true;
         }
 
+        internal bool TryBlendToMoodWithoutEntrance(
+            string id,
+            float duration = -1f)
+        {
+            MoodProfileSO profile = FindProfile(id);
+            if (profile == null)
+            {
+                return false;
+            }
+
+            BlendToMood(profile, duration, playEntranceAnimation: false);
+            return true;
+        }
+
         public void BlendToMood(MoodProfileSO profile, float duration = -1f)
+        {
+            BlendToMood(profile, duration, playEntranceAnimation: true);
+        }
+
+        private void BlendToMood(
+            MoodProfileSO profile,
+            float duration,
+            bool playEntranceAnimation)
         {
             if (!CanApply(profile))
             {
@@ -120,7 +142,7 @@ namespace DiaBlackJack.GameScene
             float resolvedDuration = ResolveDuration(duration);
             if (resolvedDuration <= 0f)
             {
-                SetMoodImmediate(profile);
+                SetMoodImmediate(profile, playEntranceAnimation);
                 return;
             }
 
@@ -131,17 +153,27 @@ namespace DiaBlackJack.GameScene
             switch (transitionMode)
             {
                 case MoodTransitionMode.Fade:
-                    PlayEntranceDoorAnimation();
+                    if (playEntranceAnimation)
+                    {
+                        PlayEntranceDoorAnimation();
+                    }
                     BeginAudioReactiveLightningBlendOut(resolvedDuration);
                     FadeToMood(profile, resolvedDuration);
                     break;
                 default:
-                    SetMoodImmediate(profile);
+                    SetMoodImmediate(profile, playEntranceAnimation);
                     break;
             }
         }
 
         public void SetMoodImmediate(MoodProfileSO profile)
+        {
+            SetMoodImmediate(profile, playEntranceAnimation: true);
+        }
+
+        private void SetMoodImmediate(
+            MoodProfileSO profile,
+            bool playEntranceAnimation)
         {
             if (!CanApply(profile))
             {
@@ -151,7 +183,10 @@ namespace DiaBlackJack.GameScene
             KillMoodSequence();
             StopCurrentBgm();
             _pendingBgmProfile = profile;
-            PlayEntranceDoorAnimation();
+            if (playEntranceAnimation)
+            {
+                PlayEntranceDoorAnimation();
+            }
             DisableAudioReactiveLightning();
             ApplyColors(
                 profile.WindowGlassGlowColor,
@@ -171,6 +206,18 @@ namespace DiaBlackJack.GameScene
         public void CancelPendingBgm()
         {
             _pendingBgmProfile = null;
+        }
+
+        internal bool TryQueuePendingBgm(string id)
+        {
+            MoodProfileSO profile = FindProfile(id);
+            if (profile == null)
+            {
+                return false;
+            }
+
+            _pendingBgmProfile = profile;
+            return true;
         }
 
         public bool TryPlayEntranceDoorAnimation()

@@ -82,6 +82,96 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void MOO02_U03_QueuePendingBgmRestoresCancelledProfileWithoutPlaying()
+        {
+            MoodProfileSO profile = CreateProfile(
+                "bossStage",
+                bgmIds: new[] { "bossStage" });
+            GameObject root = new GameObject("MoodControllerTest");
+            MoodController controller = root.AddComponent<MoodController>();
+            try
+            {
+                SetPrivateField(
+                    controller,
+                    "moodProfiles",
+                    new List<MoodProfileSO> { profile });
+                controller.SetMoodImmediate(profile);
+                controller.CancelPendingBgm();
+
+                FieldInfo pendingField = typeof(MoodController).GetField(
+                    "_pendingBgmProfile",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(pendingField, Is.Not.Null);
+                Assert.That(pendingField.GetValue(controller), Is.Null);
+
+                Assert.That(
+                    controller.TryQueuePendingBgm("bossStage"),
+                    Is.True);
+                Assert.That(
+                    pendingField.GetValue(controller),
+                    Is.SameAs(profile));
+                Assert.That(
+                    controller.TryQueuePendingBgm("missing"),
+                    Is.False);
+                Assert.That(
+                    pendingField.GetValue(controller),
+                    Is.SameAs(profile));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(profile);
+            }
+        }
+
+        [Test]
+        public void MOO02_U04_FinalBossRevealDefersDoorUntilCombatEntrance()
+        {
+            MoodProfileSO profile = CreateProfile("bossStage");
+            GameObject root = new GameObject("MoodControllerTest");
+            GameObject leftDoor = new GameObject("LeftDoorBone");
+            GameObject rightDoor = new GameObject("RightDoorBone");
+            MoodController controller = root.AddComponent<MoodController>();
+            try
+            {
+                SetPrivateField(
+                    controller,
+                    "moodProfiles",
+                    new List<MoodProfileSO> { profile });
+                SetPrivateField(controller, "leftDoorBone", leftDoor.transform);
+                SetPrivateField(controller, "rightDoorBone", rightDoor.transform);
+                SetPrivateField(controller, "doorRotationDuration", 2.5f);
+
+                Assert.That(
+                    controller.TryBlendToMoodWithoutEntrance(
+                        "bossStage",
+                        1f),
+                    Is.True);
+                Assert.That(
+                    GetPrivateField<object>(
+                        controller,
+                        "_doorAnimationSequence"),
+                    Is.Null);
+
+                Assert.That(
+                    controller.TryPlayEntranceDoorAnimation(),
+                    Is.True);
+                Assert.That(
+                    GetPrivateField<object>(
+                        controller,
+                        "_doorAnimationSequence"),
+                    Is.Not.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(leftDoor);
+                Object.DestroyImmediate(rightDoor);
+                Object.DestroyImmediate(profile);
+            }
+        }
+
+        [Test]
         public void MOO01_U01_MoodProfileRejectsEmptyId()
         {
             MoodProfileSO profile = ScriptableObject.CreateInstance<MoodProfileSO>();
@@ -499,6 +589,15 @@ namespace DiaBlackJack.CoreLoop.Tests
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, name);
             field.SetValue(target, value);
+        }
+
+        private static T GetPrivateField<T>(object target, string name)
+        {
+            FieldInfo field = target.GetType().GetField(
+                name,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, name);
+            return (T)field.GetValue(target);
         }
     }
 }

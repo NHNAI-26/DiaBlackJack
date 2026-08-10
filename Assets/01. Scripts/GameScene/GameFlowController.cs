@@ -623,6 +623,9 @@ namespace DiaBlackJack.GameScene
                 nextScreen = GameFlowScreen.FinalBossReveal;
             }
 
+            bool isEnteringFinalBossCombat =
+                IsFinalBossCombatEntrance(previousScreen, nextScreen);
+
             _playCharacterExitBeforeEntrance =
                 IsCharacterModeTransition(previousScreen, nextScreen) &&
                 !enemyExitAlreadyCompleted;
@@ -642,7 +645,24 @@ namespace DiaBlackJack.GameScene
                 enemyCharacter?.HideSpeech();
             }
 
-            ApplyMood(nextScreen, ResolveCombatProfileKey());
+            string combatProfileKey = ResolveCombatProfileKey();
+            ApplyMood(nextScreen, combatProfileKey);
+            if (isEnteringFinalBossCombat)
+            {
+                PrepareFinalBossCharacterEntrance();
+                string moodId = GameSceneMoodResolver.Resolve(
+                    nextScreen,
+                    combatProfileKey);
+                if (moodController != null &&
+                    !moodController.TryQueuePendingBgm(moodId))
+                {
+                    Debug.LogWarning(
+                        $"Final-boss BGM mood '{moodId}' is not registered.",
+                        moodController);
+                }
+
+                moodController?.TryPlayEntranceDoorAnimation();
+            }
             bool isEnteringStartingDemonReveal =
                 nextScreen == GameFlowScreen.StartingDemonReveal &&
                 previousScreen != GameFlowScreen.StartingDemonReveal;
@@ -1560,6 +1580,30 @@ namespace DiaBlackJack.GameScene
                     nextScreen == GameFlowScreen.Combat);
         }
 
+        internal static bool IsFinalBossCombatEntrance(
+            GameFlowScreen previousScreen,
+            GameFlowScreen nextScreen)
+        {
+            return previousScreen == GameFlowScreen.FinalBossReveal &&
+                nextScreen == GameFlowScreen.Combat;
+        }
+
+        private void PrepareFinalBossCharacterEntrance()
+        {
+            StopEnemyAppearanceDelayRoutine();
+            StopCharacterEntranceUnlockSafety();
+            _charactersEntranceWaiting = false;
+            _pendingHideAfterDoorAnimation = false;
+            _characterExitWaitingForEntrance = false;
+            _characterEntranceInProgress = false;
+            _characterEntranceRequestId++;
+            _hasPresentedCharacters = false;
+            if (charactersRoot != null)
+            {
+                charactersRoot.SetActive(false);
+            }
+        }
+
         private bool ShouldShowCharacters()
         {
             return CurrentScreen == GameFlowScreen.StartingDemonReveal ||
@@ -1746,9 +1790,13 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            if (!moodController.TryBlendToMood(
+            float duration = Mathf.Max(0f, moodTransitionDuration);
+            bool applied = screen == GameFlowScreen.FinalBossReveal
+                ? moodController.TryBlendToMoodWithoutEntrance(
                     moodId,
-                    Mathf.Max(0f, moodTransitionDuration)))
+                    duration)
+                : moodController.TryBlendToMood(moodId, duration);
+            if (!applied)
             {
                 Debug.LogWarning(
                     $"Mood profile '{moodId}' is not registered.",
