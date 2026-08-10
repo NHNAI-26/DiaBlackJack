@@ -426,11 +426,32 @@ MonoBehaviour:
     volume: 1
     pitch: 1
     loop: 0
+  - id: keyboard01
+    clip: {fileID: 8300000, guid: 1ba821b4f49a846418f2465ae3c320ed, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: keyboard02
+    clip: {fileID: 8300000, guid: fb48a2debadfd0a4fb6f61491f5bd94e, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: keyboard03
+    clip: {fileID: 8300000, guid: 797266e0f9142b94cb71954e6ae497ce, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: keyboard04
+    clip: {fileID: 8300000, guid: da8de001d1c64584a845445bf61cee58, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1
   musicVolume: 1
   sfxVolume: 1
+  typingSoundDelay: 0.03
   changeMasterVolumeEvent: {fileID: 11400000, guid: aca400c6086a8bd448c8dc0a987fdd56, type: 2}
   changeMusicVolumeEvent: {fileID: 11400000, guid: 3f4c913e679e4df4fb3a030f4d69e50f, type: 2}
   changeSfxVolumeEvent: {fileID: 11400000, guid: 8aedceb493701d44d9fe99b1261a43cf, type: 2}
