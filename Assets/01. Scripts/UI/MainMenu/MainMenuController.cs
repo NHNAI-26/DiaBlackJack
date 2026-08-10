@@ -58,6 +58,8 @@ namespace DiaBlackJack.MainMenu.UI
                 FindFirstObjectByType<PauseSettingsController>(
                     FindObjectsInactive.Include);
 
+            PrepareMainMenuMood();
+
             _view.NewRunRequested += RequestNewRun;
             _view.SettingsRequested += RequestSettings;
             _view.TutorialRequested += RequestTutorial;
@@ -191,6 +193,13 @@ namespace DiaBlackJack.MainMenu.UI
             {
                 _view.SetInputEnabled(true);
             }
+        }
+
+        private void PrepareMainMenuMood()
+        {
+            moodController?.TryBlendToMoodWithoutEntrance(
+                MainMenuMoodId,
+                0f);
         }
 
         private void RefreshView(bool showRuntimeStatus = false)
