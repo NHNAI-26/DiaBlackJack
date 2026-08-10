@@ -93,27 +93,51 @@ ShaderVariantCollection:
       variants:
       - keywords: ""
         passType: 0
+      - keywords: _DITHER_ALPHA_ON
+        passType: 0
       - keywords: UNITY_UI_ALPHACLIP
+        passType: 0
+      - keywords: UNITY_UI_ALPHACLIP _DITHER_ALPHA_ON
         passType: 0
       - keywords: _PIXEL_OUTLINE_ON
         passType: 0
+      - keywords: _DITHER_ALPHA_ON _PIXEL_OUTLINE_ON
+        passType: 0
       - keywords: _UV_ALPHA_FADE_ON
+        passType: 0
+      - keywords: _DITHER_ALPHA_ON _UV_ALPHA_FADE_ON
         passType: 0
       - keywords: UNITY_UI_ALPHACLIP _PIXEL_OUTLINE_ON
         passType: 0
+      - keywords: UNITY_UI_ALPHACLIP _DITHER_ALPHA_ON _PIXEL_OUTLINE_ON
+        passType: 0
       - keywords: UNITY_UI_ALPHACLIP _UV_ALPHA_FADE_ON
+        passType: 0
+      - keywords: UNITY_UI_ALPHACLIP _DITHER_ALPHA_ON _UV_ALPHA_FADE_ON
         passType: 0
       - keywords: UNITY_UI_CLIP_RECT
         passType: 0
+      - keywords: UNITY_UI_CLIP_RECT _DITHER_ALPHA_ON
+        passType: 0
       - keywords: UNITY_UI_CLIP_RECT UNITY_UI_ALPHACLIP
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT UNITY_UI_ALPHACLIP _DITHER_ALPHA_ON
         passType: 0
       - keywords: UNITY_UI_CLIP_RECT UNITY_UI_ALPHACLIP _PIXEL_OUTLINE_ON
         passType: 0
+      - keywords: UNITY_UI_CLIP_RECT UNITY_UI_ALPHACLIP _DITHER_ALPHA_ON _PIXEL_OUTLINE_ON
+        passType: 0
       - keywords: UNITY_UI_CLIP_RECT UNITY_UI_ALPHACLIP _UV_ALPHA_FADE_ON
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT UNITY_UI_ALPHACLIP _DITHER_ALPHA_ON _UV_ALPHA_FADE_ON
         passType: 0
       - keywords: UNITY_UI_CLIP_RECT _PIXEL_OUTLINE_ON
         passType: 0
+      - keywords: UNITY_UI_CLIP_RECT _DITHER_ALPHA_ON _PIXEL_OUTLINE_ON
+        passType: 0
       - keywords: UNITY_UI_CLIP_RECT _UV_ALPHA_FADE_ON
+        passType: 0
+      - keywords: UNITY_UI_CLIP_RECT _DITHER_ALPHA_ON _UV_ALPHA_FADE_ON
         passType: 0
   - first: {fileID: 4800000, guid: 4c7801bf8d604856b445066abed3bfc3, type: 3}
     second:

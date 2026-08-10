@@ -6,14 +6,22 @@ using DG.Tweening;
 using DiaBlackJack.GameScene;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace DiaBlackJack.MainMenu.UI
 {
     [DisallowMultipleComponent]
     public sealed class MainMenuView : MonoBehaviour
     {
+        private static readonly int DitherAlphaEnabledId =
+            Shader.PropertyToID("_DitherAlphaEnabled");
+        private static readonly int DitherAlphaId =
+            Shader.PropertyToID("_DitherAlpha");
+        private const string DitherAlphaKeyword = "_DITHER_ALPHA_ON";
+
         [SerializeField] private Telegraph telegraph;
         [SerializeField] private CanvasGroup logoCanvasGroup;
+        [SerializeField] private Graphic logoGraphic;
         [SerializeField] private TMP_Text statusText;
         [SerializeField, Min(0f)] private float logoExitDuration = 0.5f;
 
@@ -48,6 +56,9 @@ namespace DiaBlackJack.MainMenu.UI
         private bool _statusTextCaptured;
         private bool _inputEnabled = true;
         private bool _exitInProgress;
+        private Material _logoSourceMaterial;
+        private Material _logoDitherMaterial;
+        private float _logoDitherAlpha = 1f;
 
         public event Action NewRunRequested;
 
@@ -58,6 +69,13 @@ namespace DiaBlackJack.MainMenu.UI
         private void Awake()
         {
             ResolveReferences();
+            PrepareLogoDitherMaterial();
+            if (telegraph != null)
+            {
+                telegraph.AppearanceDitherAlphaChanged +=
+                    HandleTelegraphAppearanceDitherAlphaChanged;
+            }
+
             CaptureAuthoredStatusText();
             SubscribeToButtons();
             if (logoCanvasGroup != null)
@@ -65,11 +83,19 @@ namespace DiaBlackJack.MainMenu.UI
                 logoCanvasGroup.alpha = 1f;
             }
 
+            SetLogoDitherAlpha(telegraph == null ? 1f : 0f);
+
             ApplyStartupNoticeTextStyle();
         }
 
         private void OnDestroy()
         {
+            if (telegraph != null)
+            {
+                telegraph.AppearanceDitherAlphaChanged -=
+                    HandleTelegraphAppearanceDitherAlphaChanged;
+            }
+
             UnsubscribeFromButtons();
             _logoTween?.Kill();
             _logoTween = null;
@@ -81,6 +107,7 @@ namespace DiaBlackJack.MainMenu.UI
 
             _startupNoticeSequence?.Kill();
             _startupNoticeSequence = null;
+            DestroyLogoDitherMaterial();
         }
 
         public void Render(
@@ -258,11 +285,15 @@ namespace DiaBlackJack.MainMenu.UI
                 remainingParts++;
             }
 
-            if (logoCanvasGroup != null && logoExitDuration > 0f)
+            bool fadeLogoCanvasGroup =
+                !_logoDitherMaterial &&
+                logoCanvasGroup != null &&
+                logoExitDuration > 0f;
+            if (fadeLogoCanvasGroup)
             {
                 remainingParts++;
             }
-            else if (logoCanvasGroup != null)
+            else if (!_logoDitherMaterial && logoCanvasGroup != null)
             {
                 logoCanvasGroup.alpha = 0f;
             }
@@ -287,7 +318,7 @@ namespace DiaBlackJack.MainMenu.UI
                 telegraph.PlayExitAnimation(completePart);
             }
 
-            if (logoCanvasGroup != null && logoExitDuration > 0f)
+            if (fadeLogoCanvasGroup)
             {
                 _logoTween = DOVirtual
                     .Float(
@@ -308,6 +339,77 @@ namespace DiaBlackJack.MainMenu.UI
         {
             telegraph ??= FindFirstObjectByType<Telegraph>(
                 FindObjectsInactive.Include);
+            logoGraphic ??= logoCanvasGroup == null
+                ? null
+                : logoCanvasGroup.GetComponent<Graphic>();
+        }
+
+        private void HandleTelegraphAppearanceDitherAlphaChanged(float alpha)
+        {
+            SetLogoDitherAlpha(alpha);
+        }
+
+        private void PrepareLogoDitherMaterial()
+        {
+            if (logoGraphic == null)
+            {
+                return;
+            }
+
+            Material sourceMaterial = logoGraphic.material;
+            if (sourceMaterial == null ||
+                !sourceMaterial.HasProperty(DitherAlphaId))
+            {
+                return;
+            }
+
+            _logoSourceMaterial = sourceMaterial;
+            _logoDitherMaterial = new Material(sourceMaterial)
+            {
+                name = sourceMaterial.name + " (Main Menu Logo Dither)",
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            _logoDitherMaterial.SetFloat(DitherAlphaEnabledId, 1f);
+            _logoDitherMaterial.EnableKeyword(DitherAlphaKeyword);
+            logoGraphic.material = _logoDitherMaterial;
+        }
+
+        private void SetLogoDitherAlpha(float alpha)
+        {
+            _logoDitherAlpha = Mathf.Clamp01(alpha);
+            if (_logoDitherMaterial == null)
+            {
+                return;
+            }
+
+            _logoDitherMaterial.SetFloat(DitherAlphaId, _logoDitherAlpha);
+            logoGraphic?.SetMaterialDirty();
+        }
+
+        private void DestroyLogoDitherMaterial()
+        {
+            if (logoGraphic != null &&
+                logoGraphic.material == _logoDitherMaterial)
+            {
+                logoGraphic.material = _logoSourceMaterial;
+            }
+
+            if (_logoDitherMaterial == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(_logoDitherMaterial);
+            }
+            else
+            {
+                DestroyImmediate(_logoDitherMaterial);
+            }
+
+            _logoDitherMaterial = null;
+            _logoSourceMaterial = null;
         }
 
         private bool IsStartupNoticeConfigured()

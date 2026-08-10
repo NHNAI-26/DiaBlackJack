@@ -5,6 +5,8 @@ Shader "Shader/UI Alpha"
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
         _AlphaMultiplier ("Alpha Multiplier", Range(0,1)) = 1
+        [Toggle(_DITHER_ALPHA_ON)] _DitherAlphaEnabled ("Dithered Alpha", Float) = 0
+        _DitherAlpha ("Dither Alpha", Range(0,1)) = 1
         [Toggle] _UseRgbOverride ("Use RGB Override", Float) = 0
         _RgbOverrideColor ("RGB Override Color", Color) = (1,1,1,1)
         [Toggle] _RespectVertexRgbTint ("Respect UI RGB Tint", Float) = 0
@@ -82,6 +84,7 @@ Shader "Shader/UI Alpha"
             #pragma multi_compile_local _ UNITY_UI_ALPHACLIP
             #pragma shader_feature_local _PIXEL_OUTLINE_ON
             #pragma shader_feature_local_fragment _UV_ALPHA_FADE_ON
+            #pragma shader_feature_local_fragment _DITHER_ALPHA_ON
 
             struct appdata_t
             {
@@ -111,6 +114,8 @@ Shader "Shader/UI Alpha"
             float _UIMaskSoftnessX;
             float _UIMaskSoftnessY;
             float _AlphaMultiplier;
+            float _DitherAlphaEnabled;
+            float _DitherAlpha;
             float _UseRgbOverride;
             fixed4 _RgbOverrideColor;
             float _RespectVertexRgbTint;
@@ -341,6 +346,11 @@ Shader "Shader/UI Alpha"
                 fade = lerp(fade, 1.0h - fade, step(0.5, _UVAlphaFadeInvert));
                 color.rgb = lerp(_UVAlphaFadeColor.rgb, color.rgb, fade);
                 clip(lerp(_UVAlphaFadeColor.a, 1.0h, fade) - Bayer4x4(input.vertex.xy));
+                #endif
+
+                #ifdef _DITHER_ALPHA_ON
+                color.a *= saturate(_DitherAlpha);
+                clip(color.a - Bayer4x4(input.vertex.xy));
                 #endif
 
                 #ifdef UNITY_UI_CLIP_RECT

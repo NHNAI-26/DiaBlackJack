@@ -104,6 +104,7 @@ namespace DiaBlackJack.GameScene
         public float CurrentHandleAngle => _handleAngle;
         public bool IsInputEnabled => _inputEnabled;
         public bool IsAppearancePlaying => _isAppearancePlaying;
+        internal event Action<float> AppearanceDitherAlphaChanged;
         internal TelegraphButtonKind? HoveredButtonKind =>
             _hoveredButton?.ButtonKind;
 
@@ -532,27 +533,27 @@ namespace DiaBlackJack.GameScene
         {
             _ditherAlpha = Mathf.Clamp01(alpha);
             EnsureDitherMaterials();
-            if (appearanceRenderers == null || appearanceRenderers.Length == 0)
+            if (appearanceRenderers != null && appearanceRenderers.Length > 0)
             {
-                return;
-            }
-
-            _ditherPropertyBlock ??= new MaterialPropertyBlock();
-            for (int i = 0; i < appearanceRenderers.Length; i++)
-            {
-                Renderer renderer = appearanceRenderers[i];
-                Material sharedMaterial = renderer == null
-                    ? null
-                    : renderer.sharedMaterial;
-                if (sharedMaterial == null || !sharedMaterial.HasProperty(DitherAlphaId))
+                _ditherPropertyBlock ??= new MaterialPropertyBlock();
+                for (int i = 0; i < appearanceRenderers.Length; i++)
                 {
-                    continue;
-                }
+                    Renderer renderer = appearanceRenderers[i];
+                    Material sharedMaterial = renderer == null
+                        ? null
+                        : renderer.sharedMaterial;
+                    if (sharedMaterial == null || !sharedMaterial.HasProperty(DitherAlphaId))
+                    {
+                        continue;
+                    }
 
-                renderer.GetPropertyBlock(_ditherPropertyBlock);
-                _ditherPropertyBlock.SetFloat(DitherAlphaId, _ditherAlpha);
-                renderer.SetPropertyBlock(_ditherPropertyBlock);
+                    renderer.GetPropertyBlock(_ditherPropertyBlock);
+                    _ditherPropertyBlock.SetFloat(DitherAlphaId, _ditherAlpha);
+                    renderer.SetPropertyBlock(_ditherPropertyBlock);
+                }
             }
+
+            AppearanceDitherAlphaChanged?.Invoke(_ditherAlpha);
         }
 
         private void CompleteEntranceAnimation(Action onComplete)
