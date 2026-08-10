@@ -2583,7 +2583,7 @@ namespace DiaBlackJack.GameScene
             return best;
         }
 
-        private static bool TryGetRendererBounds(
+        internal static bool TryGetRendererBounds(
             Component component,
             out Bounds bounds)
         {
@@ -2598,7 +2598,9 @@ namespace DiaBlackJack.GameScene
             for (int i = 0; i < renderers.Length; i++)
             {
                 Renderer renderer = renderers[i];
-                if (renderer == null || !renderer.enabled)
+                if (renderer == null ||
+                    !renderer.enabled ||
+                    !renderer.gameObject.activeInHierarchy)
                 {
                     continue;
                 }
