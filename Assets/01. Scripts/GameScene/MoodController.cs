@@ -120,19 +120,46 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
-            BlendToMood(profile, duration, playEntranceAnimation: false);
+            BlendToMood(
+                profile,
+                duration,
+                playEntranceAnimation: false,
+                playDoorOpenSfx: false);
+            return true;
+        }
+
+        internal bool TryBlendToMoodWithoutDoorOpenSfx(
+            string id,
+            float duration = -1f)
+        {
+            MoodProfileSO profile = FindProfile(id);
+            if (profile == null)
+            {
+                return false;
+            }
+
+            BlendToMood(
+                profile,
+                duration,
+                playEntranceAnimation: true,
+                playDoorOpenSfx: false);
             return true;
         }
 
         public void BlendToMood(MoodProfileSO profile, float duration = -1f)
         {
-            BlendToMood(profile, duration, playEntranceAnimation: true);
+            BlendToMood(
+                profile,
+                duration,
+                playEntranceAnimation: true,
+                playDoorOpenSfx: true);
         }
 
         private void BlendToMood(
             MoodProfileSO profile,
             float duration,
-            bool playEntranceAnimation)
+            bool playEntranceAnimation,
+            bool playDoorOpenSfx)
         {
             if (!CanApply(profile))
             {
@@ -142,7 +169,10 @@ namespace DiaBlackJack.GameScene
             float resolvedDuration = ResolveDuration(duration);
             if (resolvedDuration <= 0f)
             {
-                SetMoodImmediate(profile, playEntranceAnimation);
+                SetMoodImmediate(
+                    profile,
+                    playEntranceAnimation,
+                    playDoorOpenSfx);
                 return;
             }
 
@@ -155,25 +185,32 @@ namespace DiaBlackJack.GameScene
                 case MoodTransitionMode.Fade:
                     if (playEntranceAnimation)
                     {
-                        PlayEntranceDoorAnimation();
+                        PlayEntranceDoorAnimation(playDoorOpenSfx);
                     }
                     BeginAudioReactiveLightningBlendOut(resolvedDuration);
                     FadeToMood(profile, resolvedDuration);
                     break;
                 default:
-                    SetMoodImmediate(profile, playEntranceAnimation);
+                    SetMoodImmediate(
+                        profile,
+                        playEntranceAnimation,
+                        playDoorOpenSfx);
                     break;
             }
         }
 
         public void SetMoodImmediate(MoodProfileSO profile)
         {
-            SetMoodImmediate(profile, playEntranceAnimation: true);
+            SetMoodImmediate(
+                profile,
+                playEntranceAnimation: true,
+                playDoorOpenSfx: true);
         }
 
         private void SetMoodImmediate(
             MoodProfileSO profile,
-            bool playEntranceAnimation)
+            bool playEntranceAnimation,
+            bool playDoorOpenSfx)
         {
             if (!CanApply(profile))
             {
@@ -185,7 +222,7 @@ namespace DiaBlackJack.GameScene
             _pendingBgmProfile = profile;
             if (playEntranceAnimation)
             {
-                PlayEntranceDoorAnimation();
+                PlayEntranceDoorAnimation(playDoorOpenSfx);
             }
             DisableAudioReactiveLightning();
             ApplyColors(
@@ -222,7 +259,7 @@ namespace DiaBlackJack.GameScene
 
         public bool TryPlayEntranceDoorAnimation()
         {
-            return PlayEntranceDoorAnimation();
+            return PlayEntranceDoorAnimation(playDoorOpenSfx: true);
         }
 
         public MoodProfileSO FindProfile(string id)
@@ -712,7 +749,7 @@ namespace DiaBlackJack.GameScene
             return profile != null && profile.HasValidId;
         }
 
-        private bool PlayEntranceDoorAnimation()
+        private bool PlayEntranceDoorAnimation(bool playDoorOpenSfx)
         {
             if (doorRotationDuration <= 0f)
             {
@@ -730,11 +767,11 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
-            PlaySharedDoorRotation();
+            PlaySharedDoorRotation(playDoorOpenSfx);
             return _doorAnimationSequence != null;
         }
 
-        private void PlaySharedDoorRotation()
+        private void PlaySharedDoorRotation(bool playDoorOpenSfx)
         {
             if ((leftDoorBone == null && rightDoorBone == null) ||
                 IsEntranceDoorAnimationPlaying)
@@ -780,7 +817,10 @@ namespace DiaBlackJack.GameScene
                 .SetTarget(_doorAnimationDriver);
 
             BeginVolumetricShadowRefresh();
-            ScheduleDoorOpenSfx();
+            if (playDoorOpenSfx)
+            {
+                ScheduleDoorOpenSfx();
+            }
         }
 
         private void ApplyMirroredDoorRotation()

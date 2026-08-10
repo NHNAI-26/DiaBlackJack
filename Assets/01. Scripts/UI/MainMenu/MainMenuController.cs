@@ -178,7 +178,9 @@ namespace DiaBlackJack.MainMenu.UI
         private void StartMainMenuPresentation()
         {
             bool moodPrepared = moodController != null &&
-                moodController.TryBlendToMood(MainMenuMoodId, 0f);
+                moodController.TryBlendToMoodWithoutDoorOpenSfx(
+                    MainMenuMoodId,
+                    0f);
             if (moodPrepared)
             {
                 moodController.PlayPendingBgm();
