@@ -1227,7 +1227,7 @@ namespace DiaBlackJack.GameScene
             demonContractSelection?.Hide();
             crystalOrbSelection?.Hide();
             satanNumberSelection?.Hide();
-            tutorialNarrator?.ResetView();
+            ResetTutorialNarratorIfAlive();
             hud?.HideDemonContractDetail();
             hud?.SetShopLeaveState(visible: false, interactable: false);
             UpdateDeckStackHover(null);
@@ -1248,6 +1248,17 @@ namespace DiaBlackJack.GameScene
                 hud.CombatCommandRequested -= HandleCombatCommand;
                 hud.ShopLeaveRequested -= HandleShopLeaveRequested;
             }
+        }
+
+        private void ResetTutorialNarratorIfAlive()
+        {
+            if (tutorialNarrator == null)
+            {
+                tutorialNarrator = null;
+                return;
+            }
+
+            tutorialNarrator.ResetView();
         }
 
         private void ResetBattlePresentation()
@@ -1286,7 +1297,7 @@ namespace DiaBlackJack.GameScene
             demonContractSelection?.Hide();
             crystalOrbSelection?.Hide();
             satanNumberSelection?.Hide();
-            tutorialNarrator?.ResetView();
+            ResetTutorialNarratorIfAlive();
             contractPapers?.Render(null);
             hud?.HideCardHoverBadge();
             hud?.HideDemonContractDetail();

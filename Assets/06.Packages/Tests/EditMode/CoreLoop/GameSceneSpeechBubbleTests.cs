@@ -88,6 +88,45 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        public void GFH01_U06_DestroyedTutorialNarratorDoesNotBreakManagerDisable()
+        {
+            var narratorObject = new GameObject("DestroyedTutorialNarrator");
+            var managerObject = new GameObject("GameManagerDisableTest");
+
+            try
+            {
+                TutorialNarratorView narrator =
+                    narratorObject.AddComponent<TutorialNarratorView>();
+                GameManager manager = managerObject.AddComponent<GameManager>();
+                SetPrivateField(manager, "tutorialNarrator", narrator);
+
+                UnityEngine.Object.DestroyImmediate(narratorObject);
+
+                MethodInfo onDisable = typeof(GameManager).GetMethod(
+                    "OnDisable",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(onDisable, Is.Not.Null);
+                Assert.That(narrator == null, Is.True);
+                Assert.DoesNotThrow(() => onDisable.Invoke(manager, null));
+
+                FieldInfo narratorField = typeof(GameManager).GetField(
+                    "tutorialNarrator",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(narratorField, Is.Not.Null);
+                Assert.That(narratorField.GetValue(manager), Is.Null);
+            }
+            finally
+            {
+                if (narratorObject != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(narratorObject);
+                }
+
+                UnityEngine.Object.DestroyImmediate(managerObject);
+            }
+        }
+
+        [Test]
         public void TUT01_U01_TutorialMarkupSupportsNestedBoldAndWordColor()
         {
             TutorialMarkupResult result = TutorialMarkupFormatter.Format(
