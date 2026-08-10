@@ -146,10 +146,16 @@ namespace DiaBlackJack.GameScene
             // The selection root starts inactive, so Hide can run before Awake on
             // nested poster slots. Capture the prefab-authored scale before any reset.
             CaptureRestingScale();
+            bool wasHovered = _isHovered;
             _isHovered = hovered && _interactable;
             if (hoverOutline != null)
             {
                 hoverOutline.enabled = _isHovered;
+            }
+
+            if (_isHovered && !wasHovered)
+            {
+                Border.Audio.SoundManager.Current?.PlaySfx("paperGrab");
             }
 
             transform.localScale = _isHovered

@@ -86,11 +86,14 @@ namespace Border.Audio
         {
             if (Current != null && Current != this)
             {
-                Log.W("[SoundManager] Another scene-local manager is active; this component was disabled.", this);
+                Log.W("[SoundManager] Another SoundManager is already active; this component was disabled.", this);
                 enabled = false;
                 return;
             }
+
             Current = this;
+            transform.SetParent(null, true);
+            DontDestroyOnLoad(gameObject);
             if (changeMasterVolumeEvent != null) changeMasterVolumeEvent.OnEventRaised += SetMasterVolume;
             if (changeMusicVolumeEvent != null) changeMusicVolumeEvent.OnEventRaised += SetMusicVolume;
             if (changeSfxVolumeEvent != null) changeSfxVolumeEvent.OnEventRaised += SetSfxVolume;

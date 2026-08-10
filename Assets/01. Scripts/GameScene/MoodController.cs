@@ -147,7 +147,7 @@ namespace DiaBlackJack.GameScene
             }
 
             KillMoodSequence();
-            StopCurrentBgm();
+            StopBgmIfNoReplacement(profile);
             _pendingBgmProfile = profile;
 
             switch (transitionMode)
@@ -181,7 +181,7 @@ namespace DiaBlackJack.GameScene
             }
 
             KillMoodSequence();
-            StopCurrentBgm();
+            StopBgmIfNoReplacement(profile);
             _pendingBgmProfile = profile;
             if (playEntranceAnimation)
             {
@@ -668,9 +668,12 @@ namespace DiaBlackJack.GameScene
             }
         }
 
-        private static void StopCurrentBgm()
+        private static void StopBgmIfNoReplacement(MoodProfileSO profile)
         {
-            SoundManager.Current?.StopBgm();
+            if (profile == null || !profile.HasBgmIds)
+            {
+                SoundManager.Current?.StopBgm();
+            }
         }
 
         private void ScheduleDoorOpenSfx()

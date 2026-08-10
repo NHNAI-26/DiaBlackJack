@@ -446,6 +446,16 @@ MonoBehaviour:
     volume: 0.5
     pitch: 1
     loop: 0
+  - id: paperSlide
+    clip: {fileID: 8300000, guid: 2c09f1ed56f54ed459046f9fb020697f, type: 3}
+    volume: 0.5
+    pitch: 1
+    loop: 0
+  - id: paperGrab
+    clip: {fileID: 8300000, guid: fdbd8c4e307656c40858b5752564ce22, type: 3}
+    volume: 0.2
+    pitch: 1
+    loop: 0
   crossfadeDuration: 1
   maxSfxVoices: 16
   masterVolume: 1
