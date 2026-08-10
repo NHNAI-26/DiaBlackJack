@@ -7191,10 +7191,10 @@ namespace DiaBlackJack.GameScene
             while (_hasActiveKnifeSequence)
             {
                 CoreLoopBattle battle = Battle;
-                bool continuationPending = battle != null &&
-                    (battle.ActiveCardEffectKind ==
-                        CardEffectKind.MilitaryKnife ||
-                     battle.PendingPlayerAutomaticInteraction != null);
+                bool continuationPending = ShouldKeepKnifeSequenceAlive(
+                    _inputLocked,
+                    battle?.ActiveCardEffectKind,
+                    battle?.PendingPlayerAutomaticInteraction != null);
                 orphanSeconds = continuationPending
                     ? 0f
                     : orphanSeconds + Time.unscaledDeltaTime;
@@ -7213,6 +7213,16 @@ namespace DiaBlackJack.GameScene
             }
         }
 
+        internal static bool ShouldKeepKnifeSequenceAlive(
+            bool presentationInputLocked,
+            CardEffectKind? activeCardEffectKind,
+            bool hasPendingPlayerAutomaticInteraction)
+        {
+            return presentationInputLocked ||
+                activeCardEffectKind == CardEffectKind.MilitaryKnife ||
+                hasPendingPlayerAutomaticInteraction;
+        }
+
         private void StopKnifeHideRoutine()
         {
             if (_knifeHideRoutine == null)
@@ -7228,6 +7238,9 @@ namespace DiaBlackJack.GameScene
         {
             StopKnifeHideRoutine();
             ClearPendingKnifeImpact();
+            SoundManager soundManager = SoundManager.Current;
+            soundManager?.StopSfx(CardSelectionHeartSlowSfxId);
+            soundManager?.StopSfx(CardSelectionHeartFastSfxId);
             ResolveKnifeAnimator();
             ResetKnifeAnimatorToBase();
             PresentationManager.Current?.ForceRestoreTransientCameraEffects();
