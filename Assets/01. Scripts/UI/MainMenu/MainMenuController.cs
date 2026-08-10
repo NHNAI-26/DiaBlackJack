@@ -21,6 +21,7 @@ namespace DiaBlackJack.MainMenu.UI
 
         private MainMenuView _view;
         private StageProgressionRuntime _runtime;
+        private bool _startupNoticePrepared;
         private bool _transitioning;
 
         private void Awake()
@@ -35,6 +36,13 @@ namespace DiaBlackJack.MainMenu.UI
             {
                 throw new MissingComponentException(
                     $"{nameof(MainMenuView)} is required.");
+            }
+
+            _startupNoticePrepared = _view.PrepareStartupNotice(
+                !MainMenuStartupNoticeGate.HasShown);
+            if (_startupNoticePrepared)
+            {
+                _view.SetInputEnabled(false);
             }
 
             _runtime = StageProgressionRuntime.Instance;
@@ -64,11 +72,16 @@ namespace DiaBlackJack.MainMenu.UI
 
         private void Start()
         {
-            if (moodController != null &&
-                moodController.TryBlendToMood(MainMenuMoodId, 0f))
+            if (_startupNoticePrepared &&
+                MainMenuStartupNoticeGate.TryClaim() &&
+                _view.TryPlayStartupNotice(
+                    StartMainMenuPresentation))
             {
-                moodController.PlayPendingBgm();
+                return;
             }
+
+            _view.HideStartupNotice();
+            StartMainMenuPresentation();
         }
 
         private void OnDestroy()
@@ -162,11 +175,57 @@ namespace DiaBlackJack.MainMenu.UI
             }
         }
 
+        private void StartMainMenuPresentation()
+        {
+            bool moodPrepared = moodController != null &&
+                moodController.TryBlendToMood(MainMenuMoodId, 0f);
+            if (moodPrepared)
+            {
+                moodController.PlayPendingBgm();
+            }
+
+            _view.PlayEntranceAnimation();
+            if (!_transitioning)
+            {
+                _view.SetInputEnabled(true);
+            }
+        }
+
         private void RefreshView(bool showRuntimeStatus = false)
         {
             RunSaveViewModel model =
                 RunSavePresenter.Create(_runtime.SaveFlow);
             _view.Render(model, showRuntimeStatus);
+        }
+    }
+
+    internal static class MainMenuStartupNoticeGate
+    {
+        private static bool _shown;
+
+        internal static bool HasShown => _shown;
+
+        internal static bool TryClaim()
+        {
+            if (_shown)
+            {
+                return false;
+            }
+
+            _shown = true;
+            return true;
+        }
+
+        [RuntimeInitializeOnLoadMethod(
+            RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetOnSubsystemRegistration()
+        {
+            _shown = false;
+        }
+
+        internal static void ResetForTests()
+        {
+            _shown = false;
         }
     }
 }

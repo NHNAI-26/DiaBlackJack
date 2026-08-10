@@ -389,6 +389,181 @@ namespace DiaBlackJack.CoreLoop.Tests
         }
 
         [Test]
+        [Category("MMUI02")]
+        public void MMUI02_U01_StartupNoticeCanBeClaimedOncePerApplication()
+        {
+            DiaBlackJack.MainMenu.UI.MainMenuStartupNoticeGate.ResetForTests();
+            try
+            {
+                Assert.That(
+                    DiaBlackJack.MainMenu.UI.MainMenuStartupNoticeGate.HasShown,
+                    Is.False);
+                Assert.That(
+                    DiaBlackJack.MainMenu.UI.MainMenuStartupNoticeGate.TryClaim(),
+                    Is.True);
+                Assert.That(
+                    DiaBlackJack.MainMenu.UI.MainMenuStartupNoticeGate.HasShown,
+                    Is.True);
+                Assert.That(
+                    DiaBlackJack.MainMenu.UI.MainMenuStartupNoticeGate.TryClaim(),
+                    Is.False);
+            }
+            finally
+            {
+                DiaBlackJack.MainMenu.UI.MainMenuStartupNoticeGate
+                    .ResetForTests();
+            }
+        }
+
+        [Test]
+        [Category("MMUI02")]
+        public void MMUI02_U02_MainMenuSceneWiresStartupNoticeOverlay()
+        {
+            const string scenePath =
+                "Assets/00. Scenes/MainMenuScene.unity";
+            Scene scene = EditorSceneManager.OpenScene(
+                scenePath,
+                OpenSceneMode.Additive);
+            try
+            {
+                DiaBlackJack.MainMenu.UI.MainMenuView view = scene
+                    .GetRootGameObjects()
+                    .SelectMany(root =>
+                        root.GetComponentsInChildren<
+                            DiaBlackJack.MainMenu.UI.MainMenuView>(true))
+                    .Single();
+                SerializedObject serializedView = new SerializedObject(view);
+                GameObject startupNoticeRoot = serializedView
+                    .FindProperty("startupNoticeRoot")
+                    .objectReferenceValue as GameObject;
+                CanvasGroup overlayGroup = serializedView
+                    .FindProperty("startupOverlayCanvasGroup")
+                    .objectReferenceValue as CanvasGroup;
+                CanvasGroup messageGroup = serializedView
+                    .FindProperty("startupMessageCanvasGroup")
+                    .objectReferenceValue as CanvasGroup;
+                Object messageText = serializedView
+                    .FindProperty("startupMessageText")
+                    .objectReferenceValue;
+                Object statusText = serializedView
+                    .FindProperty("statusText")
+                    .objectReferenceValue;
+                DiaBlackJack.GameScene.Telegraph telegraph = scene
+                    .GetRootGameObjects()
+                    .SelectMany(root =>
+                        root.GetComponentsInChildren<
+                            DiaBlackJack.GameScene.Telegraph>(true))
+                    .Single();
+
+                Assert.That(startupNoticeRoot, Is.Not.Null);
+                Assert.That(startupNoticeRoot.name, Is.EqualTo("StartupNotice"));
+                Assert.That(
+                    startupNoticeRoot.transform.parent.name,
+                    Is.EqualTo("MainMenuCanvas"));
+                Assert.That(
+                    startupNoticeRoot.transform.GetSiblingIndex(),
+                    Is.EqualTo(
+                        startupNoticeRoot.transform.parent.childCount - 1));
+
+                RectTransform rootRect =
+                    startupNoticeRoot.GetComponent<RectTransform>();
+                Assert.That(rootRect.anchorMin, Is.EqualTo(Vector2.zero));
+                Assert.That(rootRect.anchorMax, Is.EqualTo(Vector2.one));
+                Assert.That(rootRect.offsetMin, Is.EqualTo(Vector2.zero));
+                Assert.That(rootRect.offsetMax, Is.EqualTo(Vector2.zero));
+
+                UnityEngine.UI.Image backdrop =
+                    startupNoticeRoot.GetComponent<UnityEngine.UI.Image>();
+                Assert.That(backdrop, Is.Not.Null);
+                Assert.That(backdrop.color, Is.EqualTo(Color.black));
+                Assert.That(backdrop.raycastTarget, Is.True);
+                Assert.That(overlayGroup, Is.SameAs(
+                    startupNoticeRoot.GetComponent<CanvasGroup>()));
+                Assert.That(overlayGroup.blocksRaycasts, Is.True);
+                Assert.That(overlayGroup.interactable, Is.True);
+
+                Assert.That(messageGroup, Is.Not.Null);
+                Assert.That(messageText, Is.Not.Null);
+                Assert.That(statusText, Is.Not.Null);
+                Assert.That(telegraph.gameObject.activeSelf, Is.False);
+                SerializedObject serializedMessageText =
+                    new SerializedObject(messageText);
+                SerializedObject serializedStatusText =
+                    new SerializedObject(statusText);
+                Assert.That(
+                    serializedMessageText.FindProperty("m_fontAsset")
+                        .objectReferenceValue,
+                    Is.SameAs(serializedStatusText.FindProperty("m_fontAsset")
+                        .objectReferenceValue));
+                Assert.That(
+                    serializedMessageText.FindProperty("m_sharedMaterial")
+                        .objectReferenceValue,
+                    Is.SameAs(serializedStatusText.FindProperty(
+                        "m_sharedMaterial").objectReferenceValue));
+                Assert.That(
+                    serializedMessageText.FindProperty("m_fontColor")
+                        .colorValue,
+                    Is.EqualTo(serializedStatusText.FindProperty("m_fontColor")
+                        .colorValue));
+                Assert.That(
+                    serializedMessageText.FindProperty("m_fontSize")
+                        .floatValue,
+                    Is.EqualTo(30f));
+                Assert.That(
+                    serializedView.FindProperty("graphicsAccelerationMessage")
+                        .stringValue,
+                    Is.EqualTo(
+                        "원활한 플레이를 위해\n" +
+                        "브라우저의 그래픽 가속을 켜 주세요"));
+                Assert.That(
+                    serializedView.FindProperty(
+                        "fullscreenRecommendationMessage").stringValue,
+                    Is.EqualTo("전체 화면 플레이를 권장합니다."));
+                Assert.That(
+                    serializedView.FindProperty("startupMessageFadeSeconds")
+                        .floatValue,
+                    Is.EqualTo(0.45f).Within(0.0001f));
+                Assert.That(
+                    serializedView.FindProperty("startupMessageHoldSeconds")
+                        .floatValue,
+                    Is.EqualTo(2.1f).Within(0.0001f));
+                Assert.That(
+                    serializedView.FindProperty("startupMessageLineSpacing")
+                        .floatValue,
+                    Is.EqualTo(50f).Within(0.0001f));
+                Assert.That(
+                    serializedView.FindProperty(
+                        "startupInitialBlackHoldSeconds").floatValue,
+                    Is.EqualTo(0.25f).Within(0.0001f));
+                float messageDuration =
+                    serializedView.FindProperty("startupMessageFadeSeconds")
+                        .floatValue * 2f +
+                    serializedView.FindProperty("startupMessageHoldSeconds")
+                        .floatValue;
+                Assert.That(
+                    messageDuration,
+                    Is.EqualTo(3f).Within(0.0001f));
+                float totalDuration =
+                    serializedView.FindProperty(
+                        "startupInitialBlackHoldSeconds").floatValue +
+                    messageDuration * 2f +
+                    serializedView.FindProperty("startupOverlayFadeSeconds")
+                        .floatValue;
+                Assert.That(
+                    totalDuration,
+                    Is.EqualTo(6.95f).Within(0.0001f));
+                Assert.That(
+                    serializedView.FindProperty("startupOverlayFadeSeconds")
+                        .floatValue,
+                    Is.EqualTo(0.7f).Within(0.0001f));
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(scene, true);
+            }
+        }
+
+        [Test]
         [Category("MMUI01")]
         public void MMUI01_U08_SettingsTelegraphUsesSharedHoverPath()
         {
