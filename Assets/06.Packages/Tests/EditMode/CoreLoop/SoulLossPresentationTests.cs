@@ -159,6 +159,24 @@ namespace DiaBlackJack.CoreLoop.Tests
             Assert.That(GameManager.HasUnqueuedSoulLoss(5, records), Is.False);
         }
 
+        [TestCase(1, 2, 1, true)]
+        [TestCase(1, 1, 1, false)]
+        [TestCase(2, 1, 1, false)]
+        [TestCase(1, 2, 0, false)]
+        public void GSV18_U11_NewRoundFlushesCarriedRoundSoulLossBeforePresentation(
+            int previousRoundNumber,
+            int currentRoundNumber,
+            int pendingRecordCount,
+            bool expected)
+        {
+            Assert.That(
+                GameManager.ShouldFlushPendingRoundSoulLossBeforeNewRound(
+                    previousRoundNumber,
+                    currentRoundNumber,
+                    pendingRecordCount),
+                Is.EqualTo(expected));
+        }
+
         [Test]
         public void GSV18_U06_TokenInspectorSettingsAreNormalizedSafely()
         {

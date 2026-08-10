@@ -4723,6 +4723,14 @@ namespace DiaBlackJack.GameScene
                 List<SoulLossRecord> immediateSoulLossRecords =
                     new List<SoulLossRecord>();
                 CollectNewSoulLossRecords(vm, immediateSoulLossRecords);
+                if (ShouldFlushPendingRoundSoulLossBeforeNewRound(
+                        previous?.Core.RoundNumber ?? vm.Core.RoundNumber,
+                        vm.Core.RoundNumber,
+                        _pendingRoundSoulLossRecords.Count))
+                {
+                    yield return PlaySoulLossRecords(
+                        TakePendingRoundSoulLossRecords());
+                }
 
                 if (consumeDirectPlayerStandCue &&
                     playerActionSkull.HasValue &&
@@ -5538,30 +5546,38 @@ namespace DiaBlackJack.GameScene
                 yield break;
             }
 
+            yield return PlaySoulLossRecords(
+                TakePendingRoundSoulLossRecords(plan.ResolutionId));
+        }
+
+        private List<SoulLossRecord> TakePendingRoundSoulLossRecords(
+            long? resolutionId = null)
+        {
             List<SoulLossRecord> records = new List<SoulLossRecord>();
             for (int index = _pendingRoundSoulLossRecords.Count - 1;
                  index >= 0;
                  index--)
             {
                 SoulLossRecord record = _pendingRoundSoulLossRecords[index];
-                if (record.ResolutionId != plan.ResolutionId)
+                if (resolutionId.HasValue &&
+                    record.ResolutionId != resolutionId.Value)
                 {
                     continue;
                 }
+
+                _pendingRoundSoulLossRecords.RemoveAt(index);
 
                 if (_revolverSoulLossPresentedAtImpact.Contains(record.Id) ||
                     _knifeSoulLossPresentedAtImpact.Contains(record.Id))
                 {
-                    _pendingRoundSoulLossRecords.RemoveAt(index);
                     continue;
                 }
 
                 records.Add(record);
-                _pendingRoundSoulLossRecords.RemoveAt(index);
             }
 
             records.Sort((left, right) => left.Id.CompareTo(right.Id));
-            yield return PlaySoulLossRecords(records);
+            return records;
         }
 
         private bool HasUnqueuedSoulLoss(GameSceneViewModel vm)
@@ -5579,6 +5595,15 @@ namespace DiaBlackJack.GameScene
             return records != null &&
                 records.Count > 0 &&
                 records[records.Count - 1].Id > lastQueuedRecordId;
+        }
+
+        internal static bool ShouldFlushPendingRoundSoulLossBeforeNewRound(
+            int previousRoundNumber,
+            int currentRoundNumber,
+            int pendingRecordCount)
+        {
+            return pendingRecordCount > 0 &&
+                currentRoundNumber > previousRoundNumber;
         }
 
         private void CollectNewSoulLossRecords(
