@@ -27,24 +27,58 @@ namespace DiaBlackJack.GameScene
 
         [SerializeField, Min(0.01f)] private float moveDuration = 0.3f;
         [SerializeField, Min(0f)] private float jumpHeight = 0.22f;
+        [Header("Arrival punch rotation")]
+        [SerializeField] private bool useArrivalPunchRotation = true;
+        [SerializeField] private Vector3 punchRotation =
+            new Vector3(3f, 4.2f, 2.86f);
+        [SerializeField, Min(0.01f)] private float punchDuration = 0.1f;
+        [SerializeField, Min(1)] private int punchVibrato = 10;
+        [SerializeField, Range(0f, 1f)] private float punchElasticity = 0.7f;
+        [Header("Arrival Y rotation variation")]
+        [SerializeField] private bool useRandomYRotation = true;
+        [SerializeField] private Vector2 randomYRotationRange =
+            new Vector2(-10f, 10f);
         [SerializeField, Min(0.01f)] private float dissolveDuration = 0.6f;
 
         private readonly List<Material> _materials = new List<Material>();
         private Tween _activeTween;
         private Transform _followTarget;
         private Vector3 _followOffset;
+        private Transform _modelTransform;
         private Vector3 _homePosition;
+        private Quaternion _homeRotation;
+        private Quaternion _homeModelLocalRotation;
+        private bool _homeRotationCaptured;
+        private bool _homeModelRotationCaptured;
         private bool _initialized;
 
-        public float MoveDuration => moveDuration;
+        public float MoveDuration => moveDuration + ArrivalPunchDuration;
 
         public float DissolveDuration => dissolveDuration;
 
         public bool IsVisible => gameObject.activeSelf;
 
+        private float ArrivalPunchDuration =>
+            useArrivalPunchRotation && punchRotation.sqrMagnitude > 0f
+                ? Mathf.Max(punchDuration, 0.01f)
+                : 0f;
+
         public void Initialize(Color baseColor, Vector3 homePosition)
         {
             CacheMaterialInstances();
+            if (!_homeRotationCaptured)
+            {
+                _homeRotation = transform.rotation;
+                _homeRotationCaptured = true;
+            }
+
+            Transform model = ResolveModelTransform();
+            if (!_homeModelRotationCaptured)
+            {
+                _homeModelLocalRotation = model.localRotation;
+                _homeModelRotationCaptured = true;
+            }
+
             _initialized = true;
             SetBaseColor(baseColor);
             ResetView(homePosition);
@@ -83,6 +117,12 @@ namespace DiaBlackJack.GameScene
             KillActiveTween();
             ResetDissolveMaterials();
             transform.position = homePosition;
+            if (_homeRotationCaptured)
+            {
+                transform.rotation = _homeRotation;
+            }
+            ResetModelRotation();
+
             gameObject.SetActive(false);
         }
 
@@ -102,12 +142,25 @@ namespace DiaBlackJack.GameScene
             }
 
             _followTarget = target;
+            float randomYRotation = useRandomYRotation
+                ? UnityEngine.Random.Range(
+                    Mathf.Min(randomYRotationRange.x, randomYRotationRange.y),
+                    Mathf.Max(randomYRotationRange.x, randomYRotationRange.y))
+                : 0f;
+            Transform model = ResolveModelTransform();
+            if (model != transform && _homeModelRotationCaptured)
+            {
+                model.localRotation = _homeModelLocalRotation *
+                    Quaternion.Euler(0f, randomYRotation, 0f);
+            }
             _followOffset = worldOffset;
-            Vector3 destination = target.position + worldOffset;
-            _activeTween = transform
-                .DOJump(destination, jumpHeight, 1, moveDuration)
+            Vector3 destination = target.position + _followOffset;
+            Sequence sequence = DOTween.Sequence()
                 .SetUpdate(true)
-                .OnComplete(() =>
+                .Append(transform
+                    .DOJump(destination, jumpHeight, 1, moveDuration)
+                    .SetEase(Ease.InOutQuint))
+                .AppendCallback(() =>
                 {
                     transform.position = _followTarget != null
                         ? _followTarget.position + _followOffset
@@ -116,8 +169,18 @@ namespace DiaBlackJack.GameScene
                         LandingSfxIds[UnityEngine.Random.Range(
                             0,
                             LandingSfxIds.Length)]);
-                    _activeTween = null;
                 });
+
+            if (useArrivalPunchRotation && punchRotation.sqrMagnitude > 0f)
+            {
+                sequence.Append(ResolveModelTransform().DOPunchRotation(
+                    punchRotation,
+                    Mathf.Max(punchDuration, 0.01f),
+                    Mathf.Max(punchVibrato, 1),
+                    Mathf.Clamp01(punchElasticity)));
+            }
+
+            _activeTween = sequence.OnComplete(() => _activeTween = null);
             return _activeTween;
         }
 
@@ -159,11 +222,7 @@ namespace DiaBlackJack.GameScene
 
         private void OnDisable()
         {
-            if (_activeTween != null && _activeTween.IsActive())
-            {
-                _activeTween.Kill();
-                _activeTween = null;
-            }
+            KillActiveTween();
         }
 
         private void OnDestroy()
@@ -214,7 +273,8 @@ namespace DiaBlackJack.GameScene
                 return;
             }
 
-            Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+            Renderer[] renderers = ResolveModelTransform()
+                .GetComponentsInChildren<Renderer>(true);
             for (int rendererIndex = 0;
                  rendererIndex < renderers.Length;
                  rendererIndex++)
@@ -279,6 +339,34 @@ namespace DiaBlackJack.GameScene
             }
 
             _activeTween = null;
+            if (_homeRotationCaptured)
+            {
+                transform.rotation = _homeRotation;
+            }
+            ResetModelRotation();
         }
+
+        private Transform ResolveModelTransform()
+        {
+            if (_modelTransform == null)
+            {
+                _modelTransform = transform.Find("Model");
+                if (_modelTransform == null)
+                {
+                    _modelTransform = transform;
+                }
+            }
+
+            return _modelTransform;
+        }
+
+        private void ResetModelRotation()
+        {
+            if (_homeModelRotationCaptured)
+            {
+                ResolveModelTransform().localRotation = _homeModelLocalRotation;
+            }
+        }
+
     }
 }

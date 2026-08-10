@@ -469,9 +469,13 @@ namespace DiaBlackJack.CoreLoop.Tests
             CombatActionSkullView skull =
                 skullPrefab.GetComponent<CombatActionSkullView>();
             Assert.That(skull, Is.Not.Null);
-            Renderer renderer = skullPrefab.GetComponentInChildren<Renderer>(
-                true);
+            Transform model = skullPrefab.transform.Find("Model");
+            Assert.That(model, Is.Not.Null);
+            Renderer renderer = model.GetComponentInChildren<Renderer>(true);
             Assert.That(renderer, Is.Not.Null);
+            MeshRenderer rootRenderer = skullPrefab.GetComponent<MeshRenderer>();
+            Assert.That(rootRenderer, Is.Not.Null);
+            Assert.That(rootRenderer.enabled, Is.False);
             Assert.That(
                 renderer.sharedMaterial.HasProperty("_DissolveAmount"),
                 Is.True);
@@ -479,6 +483,37 @@ namespace DiaBlackJack.CoreLoop.Tests
                 renderer.sharedMaterial.shader.keywordSpace.FindKeyword(
                     "_DISSOLVE_ON").isValid,
                 Is.True);
+            var skullObject = new SerializedObject(skull);
+            Assert.That(
+                skullObject.FindProperty("useArrivalPunchRotation").boolValue,
+                Is.True);
+            Assert.That(
+                skullObject.FindProperty("punchRotation").vector3Value.sqrMagnitude,
+                Is.GreaterThan(0f));
+            Assert.That(
+                skullObject.FindProperty("punchDuration").floatValue,
+                Is.GreaterThan(0f));
+            Assert.That(
+                skullObject.FindProperty("punchVibrato").intValue,
+                Is.GreaterThanOrEqualTo(1));
+            Assert.That(
+                skullObject.FindProperty("punchElasticity").floatValue,
+                Is.InRange(0f, 1f));
+            Assert.That(
+                skullObject.FindProperty("useRandomYRotation").boolValue,
+                Is.True);
+            Vector2 randomYRotationRange =
+                skullObject.FindProperty("randomYRotationRange").vector2Value;
+            Assert.That(randomYRotationRange.x, Is.LessThanOrEqualTo(
+                randomYRotationRange.y));
+            float configuredMoveDuration =
+                skullObject.FindProperty("moveDuration").floatValue;
+            float configuredPunchDuration =
+                skullObject.FindProperty("punchDuration").floatValue;
+            Assert.That(
+                skull.MoveDuration,
+                Is.EqualTo(configuredMoveDuration + configuredPunchDuration)
+                    .Within(0.000001f));
 
             GameObject managerPrefab =
                 AssetDatabase.LoadAssetAtPath<GameObject>(GameManagerPrefabPath);
@@ -841,7 +876,9 @@ namespace DiaBlackJack.CoreLoop.Tests
         {
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
                 SkullPrefabPath);
-            Renderer prefabRenderer = prefab.GetComponentInChildren<Renderer>(
+            Transform prefabModel = prefab.transform.Find("Model");
+            Assert.That(prefabModel, Is.Not.Null);
+            Renderer prefabRenderer = prefabModel.GetComponentInChildren<Renderer>(
                 true);
             Material sharedMaterial = prefabRenderer.sharedMaterial;
             Color sharedBaseColor = sharedMaterial.GetColor("_BaseColor");
@@ -851,8 +888,10 @@ namespace DiaBlackJack.CoreLoop.Tests
             {
                 CombatActionSkullView view =
                     instance.GetComponent<CombatActionSkullView>();
+                Transform instanceModel = instance.transform.Find("Model");
+                Assert.That(instanceModel, Is.Not.Null);
                 Renderer instanceRenderer =
-                    instance.GetComponentInChildren<Renderer>(true);
+                    instanceModel.GetComponentInChildren<Renderer>(true);
                 Color expected = new Color(0.25f, 0.5f, 0.75f, 1f);
                 Color expectedFresnel = new Color(0.9f, 0.55f, 0.3f, 1f);
 
@@ -921,6 +960,62 @@ namespace DiaBlackJack.CoreLoop.Tests
             }
             finally
             {
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        public void GSV19_U18_RandomYRotationAppliesToModelOnly()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                SkullPrefabPath);
+            GameObject instance = UnityEngine.Object.Instantiate(prefab);
+            GameObject target = new GameObject("Gsv19RandomYRotationTarget");
+            try
+            {
+                CombatActionSkullView view =
+                    instance.GetComponent<CombatActionSkullView>();
+                Transform model = instance.transform.Find("Model");
+                Assert.That(model, Is.Not.Null);
+                view.Initialize(Color.white, new Vector3(1f, 2f, 3f));
+                Vector3 modelBasePosition = model.localPosition;
+                Quaternion modelBaseRotation = model.localRotation;
+                Vector3 worldOffset = new Vector3(0.4f, -0.25f, 0.6f);
+                UnityEngine.Random.InitState(19081926);
+                MethodInfo moveToMethod =
+                    typeof(CombatActionSkullView).GetMethod("MoveTo");
+                Assert.That(moveToMethod, Is.Not.Null);
+                moveToMethod.Invoke(
+                    view,
+                    new object[] { target.transform, worldOffset });
+
+                FieldInfo followOffsetField =
+                    typeof(CombatActionSkullView).GetField(
+                        "_followOffset",
+                        BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(followOffsetField, Is.Not.Null);
+                Vector3 followOffset =
+                    (Vector3)followOffsetField.GetValue(view);
+                Quaternion relativeRotation =
+                    Quaternion.Inverse(modelBaseRotation) * model.localRotation;
+                float modelYRotation = Mathf.DeltaAngle(
+                    0f,
+                    relativeRotation.eulerAngles.y);
+                Vector2 configuredRange = new SerializedObject(view)
+                    .FindProperty("randomYRotationRange")
+                    .vector2Value;
+
+                Assert.That(followOffset.x, Is.EqualTo(worldOffset.x));
+                Assert.That(followOffset.y, Is.EqualTo(worldOffset.y));
+                Assert.That(followOffset.z, Is.EqualTo(worldOffset.z));
+                Assert.That(model.localPosition,
+                    Is.EqualTo(modelBasePosition));
+                Assert.That(modelYRotation,
+                    Is.InRange(configuredRange.x, configuredRange.y));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(target);
                 UnityEngine.Object.DestroyImmediate(instance);
             }
         }
