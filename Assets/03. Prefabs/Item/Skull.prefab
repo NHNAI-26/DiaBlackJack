@@ -195,12 +195,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6879631068684602bb1a2c262351c8e4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Border::DiaBlackJack.GameScene.CombatActionSkullView
-  moveDuration: 0.3
+  moveDuration: 0.35
   jumpHeight: 0.22
   useArrivalPunchRotation: 1
-  punchRotation: {x: 30, y: 4.2, z: 40}
-  punchDuration: 0.2
-  punchVibrato: 50
+  punchRotation: {x: 10, y: 6, z: 10}
+  punchDuration: 0.25
+  punchVibrato: 20
   punchElasticity: 0.7
   useRandomYRotation: 1
   randomYRotationRange: {x: -160, y: -20}
