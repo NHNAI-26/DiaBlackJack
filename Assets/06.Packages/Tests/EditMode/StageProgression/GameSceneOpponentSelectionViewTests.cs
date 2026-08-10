@@ -9,8 +9,10 @@ using DiaBlackJack.StageProgression;
 using DiaBlackJack.StageProgression.UI;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace DiaBlackJack.StageProgression.Tests
@@ -24,6 +26,8 @@ namespace DiaBlackJack.StageProgression.Tests
             "Assets/03. Prefabs/UI/GameScene/OpponentSelectionOverlay.prefab";
         private const string WorldPrefabPath =
             "Assets/03. Prefabs/UI/GameScene/OpponentSelectionWorld.prefab";
+        private const string GameScenePath =
+            "Assets/00. Scenes/GameScene.unity";
         private const string EnemyCatalogPath =
             "Assets/02. ScriptableObjects/Enemies/EnemyContentCatalog.asset";
         private const string WantedSpritePath =
@@ -393,7 +397,7 @@ namespace DiaBlackJack.StageProgression.Tests
                 world.GetComponentsInChildren<OpponentWantedPosterView>(true);
             Assert.That(posters.Select(poster =>
                     ((RectTransform)poster.transform).anchoredPosition.x),
-                Is.EquivalentTo(new[] { -400f, 400f }));
+                Is.EquivalentTo(new[] { -325f, 325f }));
             Assert.That(posters.All(poster =>
                     Mathf.Approximately(
                         ((RectTransform)poster.transform).anchoredPosition.y,
@@ -402,7 +406,7 @@ namespace DiaBlackJack.StageProgression.Tests
             Assert.That(posters.All(poster =>
                     Vector3.Distance(
                         poster.transform.localScale,
-                        Vector3.one * 1.7f) < 0.0001f),
+                        Vector3.one * 1.105f) < 0.0001f),
                 Is.True);
             Assert.That(posters.All(poster =>
                     Mathf.Abs(Mathf.DeltaAngle(
@@ -530,6 +534,174 @@ namespace DiaBlackJack.StageProgression.Tests
             finally
             {
                 UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        [Category("GSV20")]
+        public void GSV20_U04_FinalBossUsesCenteredWorldPosterAndRestoresPair()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                WorldPrefabPath);
+            GameObject instance = UnityEngine.Object.Instantiate(prefab);
+
+            try
+            {
+                OpponentSelectionView selection =
+                    instance.GetComponent<OpponentSelectionView>();
+                SerializedObject serialized = new SerializedObject(selection);
+                OpponentWantedPosterView[] slots = GetPosterSlots(serialized);
+
+                selection.RenderFinalBossReveal(
+                    CreateCandidate(),
+                    "boss-stage");
+
+                Assert.That(selection.IsVisible, Is.True);
+                Assert.That(selection.IsReadyForSelection, Is.True);
+                Assert.That(slots[0].gameObject.activeSelf, Is.True);
+                Assert.That(slots[1].gameObject.activeSelf, Is.False);
+                Assert.That(
+                    ((RectTransform)slots[0].transform).anchoredPosition,
+                    Is.EqualTo(Vector2.zero));
+
+                selection.Render(CreateSelectionModel(11));
+
+                Assert.That(slots.All(slot => slot.gameObject.activeSelf),
+                    Is.True);
+                Assert.That(slots.Select(slot =>
+                        ((RectTransform)slot.transform).anchoredPosition.x),
+                    Is.EquivalentTo(new[] { -325f, 325f }));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        [Category("GSV20")]
+        public void GSV20_U05_FinalBossBlocksClickAndRestoresRejectedCommit()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(
+                WorldPrefabPath);
+            GameObject instance = UnityEngine.Object.Instantiate(prefab);
+
+            try
+            {
+                OpponentSelectionView selection =
+                    instance.GetComponent<OpponentSelectionView>();
+                SerializedObject serialized = new SerializedObject(selection);
+                OpponentWantedPosterView poster =
+                    GetPosterSlots(serialized)[0];
+                int selectionCount = 0;
+                string selectedProfileKey = null;
+                selection.OpponentSelected += profileKey =>
+                {
+                    selectionCount++;
+                    selectedProfileKey = profileKey;
+                };
+                PointerEventData click = new PointerEventData(null)
+                {
+                    button = PointerEventData.InputButton.Left
+                };
+
+                selection.RenderFinalBossReveal(
+                    CreateCandidate(),
+                    "boss-stage");
+                selection.BeginEntranceState();
+                poster.OnPointerClick(click);
+                Assert.That(selectionCount, Is.Zero);
+
+                selection.CompleteEntranceState();
+                poster.OnPointerClick(click);
+                Assert.That(selectionCount, Is.EqualTo(1));
+                Assert.That(selectedProfileKey, Is.EqualTo("gunslinger"));
+                Assert.That(selection.CanCommitFinalBossReveal(
+                        "boss-stage",
+                        selectedProfileKey),
+                    Is.True);
+                Assert.That(selection.CanCommitFinalBossReveal(
+                        "other-stage",
+                        selectedProfileKey),
+                    Is.False);
+
+                Assert.That(selection
+                        .RestoreFinalBossRevealAfterRejectedCommit(
+                            "boss-stage",
+                            selectedProfileKey),
+                    Is.True);
+                Assert.That(selection.IsReadyForSelection, Is.True);
+                Assert.That(
+                    ((RectTransform)poster.transform).anchoredPosition,
+                    Is.EqualTo(Vector2.zero));
+                Assert.That(
+                    poster.GetComponent<CanvasGroup>().alpha,
+                    Is.EqualTo(1f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
+        }
+
+        [Test]
+        [Category("GSV20")]
+        public void GSV20_U06_GameSceneUsesOneLoweredWorldPosterView()
+        {
+            Scene scene = SceneManager.GetSceneByPath(GameScenePath);
+            bool openedForTest = !scene.isLoaded;
+            if (openedForTest)
+            {
+                scene = EditorSceneManager.OpenScene(
+                    GameScenePath,
+                    OpenSceneMode.Additive);
+            }
+
+            try
+            {
+                Transform[] transforms = scene.GetRootGameObjects()
+                    .SelectMany(root =>
+                        root.GetComponentsInChildren<Transform>(true))
+                    .ToArray();
+                Transform worldSelection = transforms.Single(transform =>
+                    transform.name == "WorldOpponentSelection");
+                MeshRenderer table = transforms
+                    .Single(transform => transform.name == "Table")
+                    .GetComponent<MeshRenderer>();
+                GameFlowController flow = transforms
+                    .Select(transform =>
+                        transform.GetComponent<GameFlowController>())
+                    .Single(controller => controller != null);
+                SerializedObject serializedFlow =
+                    new SerializedObject(flow);
+
+                Assert.That(worldSelection.position.y,
+                    Is.EqualTo(3.54f).Within(0.0001f));
+                Assert.That(worldSelection.position.y,
+                    Is.GreaterThan(table.bounds.max.y));
+                Assert.That(transforms.Count(transform =>
+                        transform.GetComponent<OpponentSelectionView>() != null),
+                    Is.EqualTo(1));
+                Assert.That(transforms.Any(transform =>
+                        transform.name == "WantedPosterFinalBoss"),
+                    Is.False);
+                Assert.That(transforms.Any(transform =>
+                        transform.name == "UIOpponentSelection_Legacy"),
+                    Is.False);
+                Assert.That(serializedFlow.FindProperty("opponentSelection")
+                        .objectReferenceValue,
+                    Is.Not.Null);
+                Assert.That(serializedFlow.FindProperty("finalBossReveal"),
+                    Is.Null);
+            }
+            finally
+            {
+                if (openedForTest)
+                {
+                    EditorSceneManager.CloseScene(
+                        scene,
+                        removeScene: true);
+                }
             }
         }
 

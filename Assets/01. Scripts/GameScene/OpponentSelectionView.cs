@@ -10,6 +10,13 @@ namespace DiaBlackJack.GameScene
     [DisallowMultipleComponent]
     public sealed class OpponentSelectionView : MonoBehaviour
     {
+        private enum PresentationMode
+        {
+            None,
+            OpponentSelection,
+            FinalBossReveal
+        }
+
         [SerializeField] private GameObject contentRoot;
         [SerializeField] private EnemyContentCatalogSO enemyContentCatalog;
         [SerializeField] private OpponentWantedPosterView[] posterSlots =
@@ -22,11 +29,15 @@ namespace DiaBlackJack.GameScene
         [Min(0f)]
         [SerializeField] private float slideDuration = 0.9f;
 
+        private Vector2[] _authoredPosterPositions = Array.Empty<Vector2>();
         private Vector2[] _restingPosterPositions = Array.Empty<Vector2>();
         private CanvasGroup[] _posterCanvasGroups = Array.Empty<CanvasGroup>();
         private Coroutine _presentationRoutine;
         private Sequence _slideTween;
+        private PresentationMode _presentationMode;
+        private int _presentationVersion;
         private int? _presentedOfferId;
+        private string _presentedFinalBossStageId;
         private string _pendingProfileKey;
         private bool _cameraInputLocked;
         private bool _modelAllowsInteraction;
@@ -39,9 +50,6 @@ namespace DiaBlackJack.GameScene
         internal bool IsReadyForSelection { get; private set; }
 
         internal bool IsEntrancePlaying => _presentationRoutine != null;
-
-        /// <summary>Exposed so other flow-driven posters (the final boss reveal) can resolve portraits without a duplicate serialized reference.</summary>
-        internal EnemyContentCatalogSO ContentCatalog => enemyContentCatalog;
 
         private void OnEnable()
         {
@@ -81,14 +89,21 @@ namespace DiaBlackJack.GameScene
                     "OpponentSelectionView does not have enough poster slots.");
             }
 
-            CaptureRestingPosterPositions();
+            SetSlotSubscriptions(true);
+            CapturePosterLayout();
             int? offerId = model.OpponentOfferId;
-            bool isNewOffer = _presentedOfferId != offerId;
+            bool isNewOffer =
+                _presentationMode != PresentationMode.OpponentSelection ||
+                _presentedOfferId != offerId;
             _modelAllowsInteraction = model.CanFocusOpponent;
             if (isNewOffer)
             {
                 CancelPresentation(resetPosterPositions: true);
+                _presentationVersion++;
+                _presentationMode = PresentationMode.OpponentSelection;
                 _presentedOfferId = offerId;
+                _presentedFinalBossStageId = null;
+                ApplyOpponentSelectionLayout();
                 BeginEntranceState();
             }
 
@@ -136,16 +151,113 @@ namespace DiaBlackJack.GameScene
 
             MovePostersOffTable();
             _presentationRoutine = StartCoroutine(
-                PlayEntranceSequence(offerId));
+                PlayEntranceSequence(_presentationVersion));
+        }
+
+        internal void RenderFinalBossReveal(
+            OpponentCandidateViewModel candidate,
+            string stageId)
+        {
+            if (candidate == null)
+            {
+                Hide();
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(stageId))
+            {
+                throw new ArgumentException(
+                    "Final boss reveal requires a stage id.",
+                    nameof(stageId));
+            }
+
+            if (enemyContentCatalog == null)
+            {
+                throw new MissingReferenceException(
+                    "OpponentSelectionView requires EnemyContentCatalogSO.");
+            }
+
+            if (posterSlots == null || posterSlots.Length == 0)
+            {
+                throw new InvalidOperationException(
+                    "OpponentSelectionView requires at least one poster slot.");
+            }
+
+            SetSlotSubscriptions(true);
+            CapturePosterLayout();
+            bool isNewReveal =
+                _presentationMode != PresentationMode.FinalBossReveal ||
+                !StringComparer.Ordinal.Equals(
+                    _presentedFinalBossStageId,
+                    stageId);
+            _modelAllowsInteraction = true;
+            if (isNewReveal)
+            {
+                CancelPresentation(resetPosterPositions: true);
+                _presentationVersion++;
+                _presentationMode = PresentationMode.FinalBossReveal;
+                _presentedOfferId = null;
+                _presentedFinalBossStageId = stageId;
+                ApplyFinalBossLayout();
+                BeginEntranceState();
+            }
+
+            IsVisible = true;
+            EnsureWorldCanvasCamera();
+            if (contentRoot != null)
+            {
+                contentRoot.SetActive(true);
+            }
+
+            for (int index = 0; index < posterSlots.Length; index++)
+            {
+                OpponentWantedPosterView slot = posterSlots[index];
+                if (slot == null)
+                {
+                    throw new MissingReferenceException(
+                        $"OpponentSelectionView poster slot {index} is missing.");
+                }
+
+                if (index > 0)
+                {
+                    slot.Hide();
+                    continue;
+                }
+
+                slot.Render(
+                    candidate,
+                    enemyContentCatalog.GetPortrait(candidate.ProfileKey),
+                    IsReadyForSelection && _modelAllowsInteraction);
+            }
+
+            if (!isNewReveal)
+            {
+                return;
+            }
+
+            if (!playEntranceAnimation || !Application.isPlaying)
+            {
+                ResetPosterPositions();
+                CompleteEntranceState();
+                return;
+            }
+
+            MovePostersOffTable();
+            _presentationRoutine = StartCoroutine(
+                PlayEntranceSequence(_presentationVersion));
         }
 
         public void Hide()
         {
             CancelPresentation(resetPosterPositions: true);
+            _presentationVersion++;
             IsVisible = false;
             IsReadyForSelection = false;
             _modelAllowsInteraction = false;
+            _presentationMode = PresentationMode.None;
             _presentedOfferId = null;
+            _presentedFinalBossStageId = null;
+            ApplyOpponentSelectionLayout();
             if (posterSlots != null)
             {
                 foreach (OpponentWantedPosterView slot in posterSlots)
@@ -175,6 +287,7 @@ namespace DiaBlackJack.GameScene
             string profileKey)
         {
             return _selectionCommitReady &&
+                _presentationMode == PresentationMode.OpponentSelection &&
                 IsVisible &&
                 !IsReadyForSelection &&
                 _presentedOfferId == offerId &&
@@ -193,12 +306,46 @@ namespace DiaBlackJack.GameScene
                 return false;
             }
 
+            return RestoreRejectedCommit();
+        }
+
+        internal bool CanCommitFinalBossReveal(
+            string stageId,
+            string profileKey)
+        {
+            return _selectionCommitReady &&
+                _presentationMode == PresentationMode.FinalBossReveal &&
+                IsVisible &&
+                !IsReadyForSelection &&
+                StringComparer.Ordinal.Equals(
+                    _presentedFinalBossStageId,
+                    stageId) &&
+                StringComparer.Ordinal.Equals(
+                    _pendingProfileKey,
+                    profileKey);
+        }
+
+        internal bool RestoreFinalBossRevealAfterRejectedCommit(
+            string stageId,
+            string profileKey)
+        {
+            if (!CanCommitFinalBossReveal(stageId, profileKey))
+            {
+                return false;
+            }
+
+            return RestoreRejectedCommit();
+        }
+
+        private bool RestoreRejectedCommit()
+        {
             _selectionCommitReady = false;
             _pendingProfileKey = null;
             BeginEntranceState();
 
             if (!playEntranceAnimation || !Application.isPlaying)
             {
+                SetPosterAlpha(1f);
                 ResetPosterPositions();
                 CompleteEntranceState();
                 return true;
@@ -206,7 +353,7 @@ namespace DiaBlackJack.GameScene
 
             MovePostersOffTable();
             _presentationRoutine = StartCoroutine(
-                PlayEntranceSequence(_presentedOfferId));
+                PlayEntranceSequence(_presentationVersion));
             return true;
         }
 
@@ -229,7 +376,7 @@ namespace DiaBlackJack.GameScene
             }
 
             _presentationRoutine = StartCoroutine(
-                PlayExitSequence(_presentedOfferId, profileKey));
+                PlayExitSequence(_presentationVersion, profileKey));
         }
 
         internal void BeginEntranceState()
@@ -251,7 +398,7 @@ namespace DiaBlackJack.GameScene
             SetSlotsInteractable(_modelAllowsInteraction);
         }
 
-        private IEnumerator PlayEntranceSequence(int? offerId)
+        private IEnumerator PlayEntranceSequence(int presentationVersion)
         {
             GameSceneCameraViewController controller =
                 ResolveCameraViewController();
@@ -263,7 +410,7 @@ namespace DiaBlackJack.GameScene
                 yield return WaitForCameraTransition(controller);
             }
 
-            if (!IsCurrentOffer(offerId))
+            if (!IsCurrentPresentation(presentationVersion))
             {
                 yield break;
             }
@@ -271,7 +418,7 @@ namespace DiaBlackJack.GameScene
             yield return PlayPosterSlide(
                 useRestingPosition: true,
                 Ease.OutCubic);
-            if (!IsCurrentOffer(offerId))
+            if (!IsCurrentPresentation(presentationVersion))
             {
                 yield break;
             }
@@ -282,7 +429,7 @@ namespace DiaBlackJack.GameScene
                 yield return WaitForCameraTransition(controller);
             }
 
-            if (!IsCurrentOffer(offerId))
+            if (!IsCurrentPresentation(presentationVersion))
             {
                 yield break;
             }
@@ -292,13 +439,13 @@ namespace DiaBlackJack.GameScene
         }
 
         private IEnumerator PlayExitSequence(
-            int? offerId,
+            int presentationVersion,
             string profileKey)
         {
             yield return PlayPosterSlide(
                 useRestingPosition: false,
                 Ease.InCubic);
-            if (!IsCurrentSelection(offerId, profileKey))
+            if (!IsCurrentSelection(presentationVersion, profileKey))
             {
                 yield break;
             }
@@ -311,7 +458,7 @@ namespace DiaBlackJack.GameScene
                 yield return WaitForCameraTransition(controller);
             }
 
-            if (!IsCurrentSelection(offerId, profileKey))
+            if (!IsCurrentSelection(presentationVersion, profileKey))
             {
                 yield break;
             }
@@ -366,7 +513,7 @@ namespace DiaBlackJack.GameScene
 
         private void CompleteSelectionExit(string profileKey)
         {
-            if (!IsCurrentSelection(_presentedOfferId, profileKey))
+            if (!IsCurrentSelection(_presentationVersion, profileKey))
             {
                 return;
             }
@@ -385,38 +532,79 @@ namespace DiaBlackJack.GameScene
             }
         }
 
-        private bool IsCurrentOffer(int? offerId)
+        private bool IsCurrentPresentation(int presentationVersion)
         {
-            return IsVisible && _presentedOfferId == offerId;
+            return IsVisible && _presentationVersion == presentationVersion;
         }
 
         private bool IsCurrentSelection(
-            int? offerId,
+            int presentationVersion,
             string profileKey)
         {
-            return IsCurrentOffer(offerId) &&
+            return IsCurrentPresentation(presentationVersion) &&
                 StringComparer.Ordinal.Equals(
                     _pendingProfileKey,
                     profileKey);
         }
 
-        private void CaptureRestingPosterPositions()
+        private void CapturePosterLayout()
         {
             if (posterSlots == null ||
-                _restingPosterPositions.Length == posterSlots.Length)
+                _authoredPosterPositions.Length == posterSlots.Length)
             {
                 return;
             }
 
+            _authoredPosterPositions = new Vector2[posterSlots.Length];
             _restingPosterPositions = new Vector2[posterSlots.Length];
             _posterCanvasGroups = new CanvasGroup[posterSlots.Length];
             for (int index = 0; index < posterSlots.Length; index++)
             {
                 RectTransform poster = ResolvePosterTransform(index);
-                _restingPosterPositions[index] = poster == null
+                _authoredPosterPositions[index] = poster == null
                     ? Vector2.zero
                     : poster.anchoredPosition;
+                _restingPosterPositions[index] =
+                    _authoredPosterPositions[index];
                 _posterCanvasGroups[index] = ResolvePosterCanvasGroup(index);
+            }
+        }
+
+        private void ApplyOpponentSelectionLayout()
+        {
+            ApplyPosterLayout(singleCenteredPoster: false);
+        }
+
+        private void ApplyFinalBossLayout()
+        {
+            ApplyPosterLayout(singleCenteredPoster: true);
+        }
+
+        private void ApplyPosterLayout(bool singleCenteredPoster)
+        {
+            if (_authoredPosterPositions.Length == 0 ||
+                _authoredPosterPositions.Length !=
+                _restingPosterPositions.Length)
+            {
+                return;
+            }
+
+            for (int index = 0;
+                index < _authoredPosterPositions.Length;
+                index++)
+            {
+                Vector2 resting = _authoredPosterPositions[index];
+                if (singleCenteredPoster && index == 0)
+                {
+                    resting.x = 0f;
+                }
+
+                _restingPosterPositions[index] = resting;
+                RectTransform poster = ResolvePosterTransform(index);
+                if (poster != null)
+                {
+                    poster.anchoredPosition = resting;
+                }
             }
         }
 

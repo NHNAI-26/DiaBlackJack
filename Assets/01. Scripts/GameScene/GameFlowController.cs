@@ -18,7 +18,6 @@ namespace DiaBlackJack.GameScene
         [SerializeField] private GameManager gameManager;
         [SerializeField] private StartingDemonRevealView startingDemonReveal;
         [SerializeField] private OpponentSelectionView opponentSelection;
-        [SerializeField] private OpponentWantedPosterView finalBossReveal;
         [SerializeField] private RunResultView resultView;
         [SerializeField] private CodexController codex;
         [SerializeField] private GameObject hudRoot;
@@ -131,11 +130,6 @@ namespace DiaBlackJack.GameScene
                     HandleOpponentSelected;
             }
 
-            if (finalBossReveal != null)
-            {
-                finalBossReveal.Selected += HandleFinalBossRevealSelected;
-            }
-
             if (resultView != null)
             {
                 resultView.RestartRequested += HandleRestartRequested;
@@ -206,11 +200,6 @@ namespace DiaBlackJack.GameScene
             {
                 opponentSelection.OpponentSelected -=
                     HandleOpponentSelected;
-            }
-
-            if (finalBossReveal != null)
-            {
-                finalBossReveal.Selected -= HandleFinalBossRevealSelected;
             }
 
             if (resultView != null)
@@ -498,6 +487,31 @@ namespace DiaBlackJack.GameScene
 
         private void HandleOpponentSelected(string profileKey)
         {
+            if (CurrentScreen == GameFlowScreen.FinalBossReveal)
+            {
+                StageDefinition activeStage =
+                    _session?.CombatSession?.ActiveStage;
+                if (opponentSelection == null ||
+                    activeStage == null ||
+                    !opponentSelection.CanCommitFinalBossReveal(
+                        activeStage.Id,
+                        profileKey))
+                {
+                    return;
+                }
+
+                bool bossAccepted = RequestAcknowledgeFinalBossReveal();
+                if (!bossAccepted)
+                {
+                    opponentSelection
+                        .RestoreFinalBossRevealAfterRejectedCommit(
+                            activeStage.Id,
+                            profileKey);
+                }
+
+                return;
+            }
+
             if (opponentSelection == null ||
                 CurrentViewModel == null ||
                 !CurrentViewModel.OpponentOfferId.HasValue)
@@ -521,11 +535,6 @@ namespace DiaBlackJack.GameScene
                 opponentSelection.RestoreSelectionAfterRejectedCommit(
                     profileKey);
             }
-        }
-
-        private void HandleFinalBossRevealSelected(string profileKey)
-        {
-            RequestAcknowledgeFinalBossReveal();
         }
 
         private void HandleFormalShopCardPurchaseRequested(int optionId)
@@ -783,18 +792,13 @@ namespace DiaBlackJack.GameScene
             {
                 opponentSelection?.Render(CurrentViewModel);
             }
-            else
-            {
-                opponentSelection?.Hide();
-            }
-
-            if (isFinalBossReveal)
+            else if (isFinalBossReveal)
             {
                 RenderFinalBossReveal();
             }
             else
             {
-                finalBossReveal?.Hide();
+                opponentSelection?.Hide();
             }
 
             RunSaveViewModel save = RunSavePresenter.Create(_runtime.SaveFlow);
@@ -843,23 +847,17 @@ namespace DiaBlackJack.GameScene
         {
             OpponentCandidateViewModel bossCandidate =
                 StageProgressionPresenter.CreateFinalBossRevealCandidate(_session);
-            if (bossCandidate == null || finalBossReveal == null)
+            StageDefinition activeStage =
+                _session?.CombatSession?.ActiveStage;
+            if (bossCandidate == null || activeStage == null)
             {
-                finalBossReveal?.Hide();
+                opponentSelection?.Hide();
                 return;
             }
 
-            finalBossReveal.Render(
+            opponentSelection?.RenderFinalBossReveal(
                 bossCandidate,
-                ResolveBossPortrait(bossCandidate.ProfileKey),
-                interactable: true);
-        }
-
-        private Sprite ResolveBossPortrait(string profileKey)
-        {
-            return opponentSelection != null && opponentSelection.ContentCatalog != null
-                ? opponentSelection.ContentCatalog.GetPortrait(profileKey)
-                : null;
+                activeStage.Id);
         }
 
         private bool ShouldShowFinalBossReveal()
@@ -1353,7 +1351,6 @@ namespace DiaBlackJack.GameScene
 
             startingDemonReveal?.Hide();
             opponentSelection?.Hide();
-            finalBossReveal?.Hide();
             resultView?.Hide();
             codex?.SetAvailable(false);
             hud?.SetEnemyStatusVisible(false);
@@ -1618,14 +1615,6 @@ namespace DiaBlackJack.GameScene
             moodController ??= GetComponent<MoodController>();
             opponentSelection ??= FindFirstObjectByType<OpponentSelectionView>(
                 FindObjectsInactive.Include);
-            if (finalBossReveal == null)
-            {
-                GameObject finalBossPosterObject =
-                    GameObject.Find("WantedPosterFinalBoss");
-                finalBossReveal = finalBossPosterObject == null
-                    ? null
-                    : finalBossPosterObject.GetComponent<OpponentWantedPosterView>();
-            }
 
             if (hudRoot == null)
             {
