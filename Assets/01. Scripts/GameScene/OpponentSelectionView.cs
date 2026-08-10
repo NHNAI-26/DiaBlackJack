@@ -471,10 +471,7 @@ namespace DiaBlackJack.GameScene
             bool useRestingPosition,
             Ease ease)
         {
-            if (useRestingPosition)
-            {
-                Border.Audio.SoundManager.Current?.PlaySfx("paperSlide");
-            }
+            Border.Audio.SoundManager.Current?.PlaySfx("paperSlide");
 
             _slideTween = DOTween.Sequence()
                 .SetLink(gameObject, LinkBehaviour.KillOnDisable);

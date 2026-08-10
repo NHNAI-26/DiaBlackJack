@@ -129,6 +129,7 @@ namespace DiaBlackJack.GameScene
 
             _interactable = false;
             SetHovered(false);
+            Border.Audio.SoundManager.Current?.PlaySfx("paperSelect");
             Selected?.Invoke(_profileKey);
         }
 

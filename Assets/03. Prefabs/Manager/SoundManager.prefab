@@ -258,7 +258,7 @@ MonoBehaviour:
     loop: 0
   - id: woodOpenDoor
     clip: {fileID: 8300000, guid: 7aa4d5442847fff4e95ebf1724bba68e, type: 3}
-    volume: 0.1
+    volume: 0.05
     pitch: 1
     loop: 0
   - id: enemyIn
@@ -268,12 +268,12 @@ MonoBehaviour:
     loop: 0
   - id: enemyOut01
     clip: {fileID: 8300000, guid: 32bbe0f82673d424ca39f6b4d9d3a84d, type: 3}
-    volume: 0.5
+    volume: 0.2
     pitch: 1
     loop: 0
   - id: enemyOut02
     clip: {fileID: 8300000, guid: 20c1bce8679ff9646b6f123d49e892fc, type: 3}
-    volume: 0.5
+    volume: 0.2
     pitch: 1
     loop: 0
   - id: bookDrop
@@ -454,6 +454,11 @@ MonoBehaviour:
   - id: paperGrab
     clip: {fileID: 8300000, guid: fdbd8c4e307656c40858b5752564ce22, type: 3}
     volume: 0.2
+    pitch: 1
+    loop: 0
+  - id: paperSelect
+    clip: {fileID: 8300000, guid: fe91f7e2583433546b63fe30c30bd1fd, type: 3}
+    volume: 0.35
     pitch: 1
     loop: 0
   crossfadeDuration: 1
